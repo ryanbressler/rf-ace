@@ -1,3 +1,4 @@
+#include<iostream>
 #include<cassert>
 #include "node.hpp"
 
@@ -65,5 +66,48 @@ int Node::percolate(cat_t value)
 int Node::percolate(num_t value)
 {
   if(value <= threshold_) {return(leftchild_);} else {return(rightchild_);}
+}
+
+void Node::print()
+{
+  cout << endl << "***NODE PRINT***" << endl;
+  if(isregr_) 
+    {
+      cout << "-Regression node" << endl;
+    } 
+  else 
+    {
+      cout << "-Classification node" << endl;
+    }
+  if(haschildren_) 
+    {
+      cout << "-Splitter feature is " << splitter_ << endl;
+      if(isregr_)
+	{
+	  cout << "-Feature value x<=" << threshold_ << " sends left (node " << leftchild_ 
+	       << ") and x>" << threshold_ << " right (node " << rightchild_ << ")" << endl;
+	}
+      else
+	{
+	  cout << "-Feature value x in {" << *classet_.begin();
+	  for(set<cat_t>::const_iterator it = ++classet_.begin(); it != classet_.end(); ++it)
+	    {
+	      cout << "," << *it;
+	    }
+	  cout << "} sends left (node " << leftchild_ << ") and otherwise right (node " << rightchild_ << ")" << endl;
+	}
+
+    } 
+  else 
+    {
+      cout << "-Leaf node" << endl;
+    }
+  
+  cout << endl;
+}
+
+void Node::print_compact()
+{
+  cout << "***NODE PRINT IMPLEMENTATION MISSING***" << endl;
 }
 
