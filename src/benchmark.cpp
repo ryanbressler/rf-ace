@@ -17,6 +17,9 @@ int main()
   Node node_regr(nsamples,isregr);
   Node node_class(nsamples,!isregr);
 
+  node_regr.print();
+  node_class.print();
+
   int splitter = 6;
   num_t threshold = 3.4;
   int leftchild = 1;
@@ -32,9 +35,9 @@ int main()
   rightchild = 5;
   node_class.set_splitter(splitter,classet,leftchild,rightchild);
 
-  cout << "Classification node: splitter is " << node_class.get_splitter() << endl;
-  cout << "Regression node: splitter is " << node_regr.get_splitter() << endl;
   
+  node_regr.print();
+  node_class.print();
 
   return(EXIT_SUCCESS);
 }

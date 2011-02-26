@@ -21,6 +21,10 @@ public:
   int percolate(cat_t value);
   int percolate(num_t value);
 
+  //Helper functions
+  void print();
+  void print_compact();
+
 private:
   bool isregr_;
 
