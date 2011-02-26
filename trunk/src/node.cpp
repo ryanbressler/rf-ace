@@ -4,20 +4,12 @@
 
 Node::Node(int nsamples, bool isregr):
   isregr_(isregr),
+  trainsampleics_(nsamples),
+  testsampleics_(nsamples),
   ntrainsamples_(0),
   ntestsamples_(0),
   haschildren_(false)
 {
-  if(isregr_)
-    {
-      vector<num_t> num_trainsamples_(nsamples);
-      vector<num_t> num_testsamples_(nsamples);
-    }
-  else
-    {
-      vector<cat_t> cat_trainsamples_(nsamples);
-      vector<cat_t> cat_testsamples_(nsamples);
-    }
 }
 
 Node::~Node()
@@ -58,14 +50,64 @@ int Node::get_splitter()
   return(splitter_);
 }
 
-int Node::percolate(cat_t value)
+bool Node::descend(cat_t value, int& child)
 {
-  if(classet_.find(value) != classet_.end()) {return(leftchild_);} else {return(rightchild_);}
+  if(!haschildren_)
+    {
+      return(false);
+    }
+
+  if(classet_.find(value) != classet_.end()) 
+    {
+      child = leftchild_;
+    } 
+  else 
+    {
+      child = rightchild_;
+    }
+
+  return(true);
 }
 
-int Node::percolate(num_t value)
+bool Node::descend(num_t value, int& child)
 {
-  if(value <= threshold_) {return(leftchild_);} else {return(rightchild_);}
+  if(!haschildren_)
+    {
+      return(false);
+    }
+
+  if(value <= threshold_) 
+    {
+      child = leftchild_;
+    } 
+  else 
+    {
+      child = rightchild_;
+    }
+
+  return(true);
+}
+
+void Node::add_trainsample_idx(int idx)
+{
+  trainsampleics_[ntrainsamples_] = idx;
+  ++ntrainsamples_;
+}
+
+void Node::add_testsample_idx(int idx)
+{
+  testsampleics_[ntestsamples_] = idx;
+  ++ntestsamples_;
+}
+
+void Node::reset_testsample_ics()
+{
+  ntestsamples_ = 0;
+}
+
+bool Node::is_leaf()
+{
+  return(haschildren_);
 }
 
 void Node::print()
@@ -85,7 +127,7 @@ void Node::print()
       if(isregr_)
 	{
 	  cout << "-Feature value x<=" << threshold_ << " sends left (node " << leftchild_ 
-	       << ") and x>" << threshold_ << " right (node " << rightchild_ << ")" << endl;
+	       << ") and " << threshold_ << "<x right (node " << rightchild_ << ")" << endl;
 	}
       else
 	{
@@ -102,8 +144,37 @@ void Node::print()
     {
       cout << "-Leaf node" << endl;
     }
-  
+  cout << "-" << ntrainsamples_ << " train sample ics";
+  if(ntrainsamples_)
+    {
+      cout << ": " << trainsampleics_[0]; 
+      size_t i = 1;
+      for(i = 1; i < 10 && i < ntrainsamples_; ++i)
+	{
+	  cout << "," << trainsampleics_[i];
+	}
+      if(i < ntrainsamples_)
+	{
+	  cout << "...";
+	}
+    }
   cout << endl;
+  cout << "-" << ntestsamples_ << " test sample ics";
+  if(ntestsamples_)
+    {
+      cout << ": " << testsampleics_[0];
+      size_t i = 1;
+      for(i = 1; i < 10 && i < ntestsamples_; ++i)
+        {
+          cout << "," << testsampleics_[i];
+        }
+      if(i < ntestsamples_)
+        {
+          cout << "...";
+        }
+    }
+
+  cout << endl << endl;
 }
 
 void Node::print_compact()
