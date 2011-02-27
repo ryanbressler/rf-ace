@@ -34,7 +34,7 @@ int main()
   classet.insert(4);
   rootnode_class.set_splitter(splitter_class,classet,leftchild_class,rightchild_class);
 
-  Node* childp = &rootnode_regr; 
+  Node* childp(NULL); 
   for(int i = 0; i < 10; ++i)
     {
       if(rootnode_class.descend(i,&childp))
