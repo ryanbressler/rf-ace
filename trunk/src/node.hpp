@@ -30,12 +30,15 @@ public:
   int get_splitter();
   
   //Given value, descends to either one of the child nodes if existent and returns true, otherwise false.
+  //NOTE: childp is a ref-to-ptr that will be modified to point to the child node if descend is successful. 
   bool descend(cat_t value, Node** childp);
   bool descend(num_t value, Node** childp);
 
+  //Add an index of a sample to the node
   void add_trainsample_idx(int idx);
   void add_testsample_idx(int idx);
 
+  //Reset sample indices
   void reset_testsample_ics();
 
   //Logic test whether the node has children or not
