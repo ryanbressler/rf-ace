@@ -23,13 +23,8 @@ int main()
   Node leftchild_class(nsamples,!isregr);
   Node rightchild_class(nsamples,!isregr);
 
-  //node_regr.print();
-  //node_class.print();
-
   int splitter_regr = 6;
   num_t threshold = 3.4;
-  //int leftchild = 1;
-  //int rightchild = 2;
   rootnode_regr.set_splitter(splitter_regr,threshold,leftchild_regr,rightchild_regr);
 
   int splitter_class = 11;
@@ -42,19 +37,16 @@ int main()
   Node* childp = &rootnode_regr; 
   for(int i = 0; i < 10; ++i)
     {
-      if(rootnode_class.descend(splitter_class,i,&childp))
+      if(rootnode_class.descend(i,&childp))
 	{
-	  //cout << childp << endl;
 	  childp->add_trainsample_idx(i);
 	}
       num_t j = i*1.0;
-      if(rootnode_regr.descend(splitter_regr,j,&childp))
+      if(rootnode_regr.descend(j,&childp))
       	{
 	  childp->add_trainsample_idx(i);
 	}
    }
-
-  
 
   rootnode_regr.print();
   leftchild_regr.print();

@@ -51,9 +51,8 @@ int Node::get_splitter()
 
   return(splitter_);
 }
-bool Node::descend(int splitter, cat_t value, Node** childp)
+bool Node::descend(cat_t value, Node** childp)
 {
-  assert(splitter_ == splitter);
 
   if(!haschildren_)
     {
@@ -74,9 +73,8 @@ bool Node::descend(int splitter, cat_t value, Node** childp)
   return(true);
 }
 
-bool Node::descend(int splitter, num_t value, Node** childp)
+bool Node::descend(num_t value, Node** childp)
 {
-  assert(splitter_ == splitter);
   
   if(!haschildren_)
     {
