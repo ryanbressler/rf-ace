@@ -8,7 +8,9 @@ Node::Node(int nsamples, bool isregr):
   testsampleics_(nsamples),
   ntrainsamples_(0),
   ntestsamples_(0),
-  haschildren_(false)
+  haschildren_(false),
+  leftchild_(NULL),
+  rightchild_(NULL)
 {
 }
 
@@ -17,7 +19,7 @@ Node::~Node()
 
 }
 
-void Node::set_splitter(int splitter, set<cat_t> classet, int leftchild, int rightchild)
+void Node::set_splitter(int splitter, set<cat_t> classet, Node& leftchild, Node& rightchild)
 {
   assert(!isregr_);
   assert(!haschildren_);
@@ -25,12 +27,12 @@ void Node::set_splitter(int splitter, set<cat_t> classet, int leftchild, int rig
   splitter_ = splitter;
   classet_ = classet;
 
-  leftchild_ = leftchild;
-  rightchild_ = rightchild;
+  leftchild_ = &leftchild;
+  rightchild_ = &rightchild;
   haschildren_ = true;
 }
 
-void Node::set_splitter(int splitter, num_t threshold, int leftchild, int rightchild)
+void Node::set_splitter(int splitter, num_t threshold, Node& leftchild, Node& rightchild)
 {
   assert(isregr_);
   assert(!haschildren_);
@@ -38,8 +40,8 @@ void Node::set_splitter(int splitter, num_t threshold, int leftchild, int rightc
   splitter_ = splitter;
   threshold_ = threshold;
 
-  leftchild_ = leftchild;
-  rightchild_ = rightchild;
+  leftchild_ = &leftchild;
+  rightchild_ = &rightchild;
   haschildren_ = true;
 }
 
@@ -49,9 +51,10 @@ int Node::get_splitter()
 
   return(splitter_);
 }
-
-bool Node::descend(cat_t value, int& child)
+bool Node::descend(int splitter, cat_t value, Node** childp)
 {
+  assert(splitter_ == splitter);
+
   if(!haschildren_)
     {
       return(false);
@@ -59,18 +62,22 @@ bool Node::descend(cat_t value, int& child)
 
   if(classet_.find(value) != classet_.end()) 
     {
-      child = leftchild_;
+      *childp = leftchild_;
+      //cout << childp << "," << leftchild_ << endl;
     } 
   else 
     {
-      child = rightchild_;
+      *childp = rightchild_;
+      //cout << childp << "," << rightchild_ << endl;
     }
 
   return(true);
 }
 
-bool Node::descend(num_t value, int& child)
+bool Node::descend(int splitter, num_t value, Node** childp)
 {
+  assert(splitter_ == splitter);
+  
   if(!haschildren_)
     {
       return(false);
@@ -78,11 +85,11 @@ bool Node::descend(num_t value, int& child)
 
   if(value <= threshold_) 
     {
-      child = leftchild_;
+      *childp = leftchild_;
     } 
   else 
     {
-      child = rightchild_;
+      *childp = rightchild_;
     }
 
   return(true);
@@ -112,22 +119,22 @@ bool Node::is_leaf()
 
 void Node::print()
 {
-  cout << endl << "***NODE PRINT***" << endl;
+  //cout << endl << "***NODE PRINT***" << endl;
   if(isregr_) 
     {
-      cout << "-Regression node" << endl;
+      cout << "***Regression node***" << endl;
     } 
   else 
     {
-      cout << "-Classification node" << endl;
+      cout << "***Classification node***" << endl;
     }
   if(haschildren_) 
     {
       cout << "-Splitter feature is " << splitter_ << endl;
       if(isregr_)
 	{
-	  cout << "-Feature value x<=" << threshold_ << " sends left (node " << leftchild_ 
-	       << ") and " << threshold_ << "<x right (node " << rightchild_ << ")" << endl;
+	  cout << "-Feature value x<=" << threshold_ << " sends left (node " << &leftchild_ 
+	       << ") and " << threshold_ << "<x right (node " << &rightchild_ << ")" << endl;
 	}
       else
 	{
@@ -136,7 +143,7 @@ void Node::print()
 	    {
 	      cout << "," << *it;
 	    }
-	  cout << "} sends left (node " << leftchild_ << ") and otherwise right (node " << rightchild_ << ")" << endl;
+	  cout << "} sends left (node " << &leftchild_ << ") and otherwise right (node " << &rightchild_ << ")" << endl;
 	}
 
     } 

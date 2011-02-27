@@ -23,17 +23,15 @@ public:
 
   //Sets a splitter feature for the node.
   //NOTE: splitter can be assigned only once! Subsequent setter calls will raise an assertion failure.
-  void set_splitter(int splitter, set<cat_t> classet, int leftchild, int rightchild);
-  void set_splitter(int splitter, num_t threshold, int leftchild, int rightchild);
+  void set_splitter(int splitter, set<cat_t> classet, Node& leftchild, Node& rightchild);
+  void set_splitter(int splitter, num_t threshold, Node& leftchild, Node& rightchild);
 
-  //Gets the splitter feature for the node
+  //Gets the splitter for the node
   int get_splitter();
   
   //Given value, descends to either one of the child nodes if existent and returns true, otherwise false.
-  //NOTE: the nodes aren't aware of each other, they just know the indices referring to their children, if existent.
-  //NOTE: thus, nodes don't constitute a tree per se, that must be performed inside the CART implementation.
-  bool descend(cat_t value, int& child);
-  bool descend(num_t value, int& child);
+  bool descend(int splitter, cat_t value, Node** childp);
+  bool descend(int splitter, num_t value, Node** childp);
 
   void add_trainsample_idx(int idx);
   void add_testsample_idx(int idx);
@@ -64,8 +62,8 @@ private:
   size_t ntestsamples_;
   
   bool haschildren_;
-  int leftchild_;
-  int rightchild_;
+  Node* leftchild_;
+  Node* rightchild_;
 };
 
 #endif

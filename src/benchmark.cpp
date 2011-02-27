@@ -14,38 +14,55 @@ int main()
 {
   int nsamples = 20;
   bool isregr = true;
-  Node node_regr(nsamples,isregr);
-  Node node_class(nsamples,!isregr);
 
-  node_regr.print();
-  node_class.print();
+  Node rootnode_regr(nsamples,isregr);
+  Node leftchild_regr(nsamples,isregr);
+  Node rightchild_regr(nsamples,isregr);
 
-  int splitter = 6;
+  Node rootnode_class(nsamples,!isregr);
+  Node leftchild_class(nsamples,!isregr);
+  Node rightchild_class(nsamples,!isregr);
+
+  //node_regr.print();
+  //node_class.print();
+
+  int splitter_regr = 6;
   num_t threshold = 3.4;
-  int leftchild = 1;
-  int rightchild = 2;
-  node_regr.set_splitter(splitter,threshold,leftchild,rightchild);
+  //int leftchild = 1;
+  //int rightchild = 2;
+  rootnode_regr.set_splitter(splitter_regr,threshold,leftchild_regr,rightchild_regr);
 
-  splitter = 11;
+  int splitter_class = 11;
   set<cat_t> classet;
   classet.insert(1);
   classet.insert(2);
   classet.insert(4);
-  leftchild = 3;
-  rightchild = 5;
-  node_class.set_splitter(splitter,classet,leftchild,rightchild);
+  rootnode_class.set_splitter(splitter_class,classet,leftchild_class,rightchild_class);
 
-  for(int i = 0; i < 15; ++i)
+  Node* childp = &rootnode_regr; 
+  for(int i = 0; i < 10; ++i)
     {
-      node_class.add_trainsample_idx(i);
-      node_class.add_testsample_idx(2*i);
-      node_regr.add_trainsample_idx(3*i);
-      node_regr.add_testsample_idx(4*i);
-    }
+      if(rootnode_class.descend(splitter_class,i,&childp))
+	{
+	  //cout << childp << endl;
+	  childp->add_trainsample_idx(i);
+	}
+      num_t j = i*1.0;
+      if(rootnode_regr.descend(splitter_regr,j,&childp))
+      	{
+	  childp->add_trainsample_idx(i);
+	}
+   }
 
   
-  node_regr.print();
-  node_class.print();
+
+  rootnode_regr.print();
+  leftchild_regr.print();
+  rightchild_regr.print();
+
+  rootnode_class.print();
+  leftchild_class.print();
+  rightchild_class.print();
 
   return(EXIT_SUCCESS);
 }
