@@ -30,8 +30,8 @@ public:
   int get_splitter();
   
   //Given value, descends to either one of the child nodes if existent and returns true, otherwise false.
-  bool descend(int splitter, cat_t value, Node** childp);
-  bool descend(int splitter, num_t value, Node** childp);
+  bool descend(cat_t value, Node** childp);
+  bool descend(num_t value, Node** childp);
 
   void add_trainsample_idx(int idx);
   void add_testsample_idx(int idx);
