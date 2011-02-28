@@ -36,13 +36,15 @@ int main()
   Node* childp(NULL); 
   for(int i = 0; i < 10; ++i)
     {
-      if(rootnode_cat.descend(i,&childp))
+      if(rootnode_cat.has_children())
 	{
+	  childp = rootnode_cat.descend(i);
 	  childp->add_trainsample_idx(i);
 	}
       num_t j = i*1.0;
-      if(rootnode_num.descend(j,&childp))
+      if(rootnode_num.has_children())
       	{
+	  childp = rootnode_num.descend(j);
 	  childp->add_trainsample_idx(i);
 	}
    }
