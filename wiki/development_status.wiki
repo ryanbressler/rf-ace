@@ -1,0 +1,14 @@
+#summary ... to keep track of what is being done, what will be done, and how everything will be put together.
+
+= Overview =
+
+...
+
+
+= TODO list =
+
+Implement Treedata class that will
+  # store both numerical and categorical data
+  # support missing values
+  # generate artificial contrasts
+  # ...
