@@ -2,19 +2,35 @@
 //
 //
 
+#ifndef TREEDATA_HPP
+#define TREEDATA_HPP
+
 #include<cstdlib>
+#include "datadefs.hpp"
 
 using namespace std;
+using datadefs::cat_t;
+using datadefs::num_t;
 
 class Treedata 
 {
 public:
-  Treedata(string file_str,bool is_feature_rows);
+  Treedata(string fname, bool is_featurerows);
   ~Treedata();
   
 private:
 
-  void read_featurerows();
-  void read_featurecols();
+  void transpose();
+
+  size_t targetidx_;
+
+  vector<vector<cat_t> > catmatrix_;
+  vector<vector<num_t> > nummatrix_;
+
+  size_t nsamples_;
+  size_t nfeatures_;
+
 
 };
+
+#endif

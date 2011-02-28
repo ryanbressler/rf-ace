@@ -37,14 +37,6 @@ public:
   num_t get_impurity();
   void reset_impurity();
 
-  //Add an index of a sample to the node
-  //void add_trainsample_idx(int idx);
-  //void add_testsample_idx(int idx);
-
-  //Reset sample indices
-  //void reset_trainsample_ics();
-  void reset();
-
   //Logic test whether the node has children or not
   bool has_children();
 
