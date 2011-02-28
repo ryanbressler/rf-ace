@@ -13,7 +13,7 @@ using datadefs::num_t;
 
 //This function will demonstrate the functionality of the current development stage of the rf-ace program. The function includes:
 //DONE:generate node hierarchies using the node class (DONE)
-//DONE:demonstrate percolation of samples through the tree using the descend() function (DONE)
+//DONE:demonstrate percolation of samples through the tree (DONE)
 //DONE:demonstrate adding sample indices to the nodes (DONE)
 //NOT DONE:read mixed-type data with missing values into treedata object
 //NOT DONE:embed artificial contrasts into treedata
@@ -26,36 +26,40 @@ int main()
   cout << "PART 1: DEMONSTRATE USAGE OF NODE CLASS" << endl;
   cout << "-create nodes" << endl;
   cout << "-add hierarchies and splitters" << endl;
-  cout << "-percolate samples" << endl;
+  //cout << "-percolate samples" << endl;
   cout << "---------------------------------------" << endl << endl;
   int nsamples = 20;
 
-  Node rootnode_num(nsamples);
-  Node leftchild_num(nsamples);
-  Node rightchild_num(nsamples);
-
-  Node rootnode_cat(nsamples);
-  Node leftchild_cat(nsamples);
-  Node rightchild_cat(nsamples);
+  Node node(nsamples); //rootnode 
+  Node node1(nsamples); //left (LEAF)
+  Node node2(nsamples); //right
+  Node node21(nsamples); //right+left
+  Node node22(nsamples); //right+right (LEAF)
+  Node node211(nsamples); //right+left+left (LEAF)
+  Node node212(nsamples); //right+left+right (LEAF)
 
   int splitter_num = 6;
   num_t threshold = 3.4;
-  rootnode_num.set_splitter(splitter_num,threshold,leftchild_num,rightchild_num);
+  node.set_splitter(splitter_num,threshold,node1,node2);
 
   int splitter_cat = 11;
   set<cat_t> classet;
   classet.insert(1);
   classet.insert(2);
   classet.insert(4);
-  rootnode_cat.set_splitter(splitter_cat,classet,leftchild_cat,rightchild_cat);
+  node2.set_splitter(splitter_cat,classet,node21,node22);
+  
+  splitter_num = 7;
+  threshold = 5.6;
+  node21.set_splitter(splitter_num,threshold,node211,node212);
 
-  rootnode_num.print();
-  leftchild_num.print();
-  rightchild_num.print();
-
-  rootnode_cat.print();
-  leftchild_cat.print();
-  rightchild_cat.print();
+  node.print();
+  node1.print();
+  node2.print();
+  node21.print();
+  node22.print();
+  node211.print();
+  node212.print();
 
   cout << endl;
   cout << "-------------------------------------------" << endl;
