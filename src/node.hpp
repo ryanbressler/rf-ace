@@ -33,13 +33,16 @@ public:
   Node* percolate(cat_t value);
   Node* percolate(num_t value);
 
+  void accumulate_impurity(num_t value);
+  void accumulate_impurity(cat_t value);
+
   //Add an index of a sample to the node
-  void add_trainsample_idx(int idx);
-  void add_testsample_idx(int idx);
+  //void add_trainsample_idx(int idx);
+  //void add_testsample_idx(int idx);
 
   //Reset sample indices
-  void reset_trainsample_ics();
-  void reset_testsample_ics();
+  //void reset_trainsample_ics();
+  void reset();
 
   //Logic test whether the node has children or not
   bool has_children();
@@ -55,11 +58,12 @@ private:
   num_t threshold_;
   set<cat_t> classet_;
 
-  vector<int> trainsampleics_;
-  vector<int> testsampleics_;
+  //vector<int> trainsampleics_;
+  //vector<int> testsampleics_;
 
-  size_t ntrainsamples_;
-  size_t ntestsamples_;
+  //size_t ntrainsamples_;
+  num_t impurity_;
+  size_t n_;
   
   bool haschildren_;
   Node* leftchild_;

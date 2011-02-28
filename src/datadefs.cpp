@@ -6,6 +6,11 @@ using namespace std;
 datadefs::cat_t datadefs::cat_nan = -1;
 datadefs::num_t datadefs::num_nan = sqrt(-1.0);
 
+datadefs::num_t datadefs::cat2num(datadefs::cat_t value)
+{
+  return(float(value));
+}
+
 bool datadefs::is_nan(datadefs::cat_t value)
 {
   if(value == datadefs::cat_nan)
