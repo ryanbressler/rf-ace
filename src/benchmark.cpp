@@ -5,13 +5,22 @@
 #include<string>
 #include "node.hpp"
 #include "datadefs.hpp"
+#include "treedata.hpp"
 
 using namespace std;
 using datadefs::cat_t;
 using datadefs::num_t;
 
+//This function will demonstrate the functionality of the current development stage of the rf-ace program. The function includes:
+//DONE:generate node hierarchies using the node class (DONE)
+//DONE:demonstrate percolation of samples through the tree using the descend() function (DONE)
+//DONE:demonstrate adding sample indices to the nodes (DONE)
+//NOT DONE:read mixed-type data with missing values into treedata object
+//NOT DONE:embed artificial contrasts into treedata
+//MORE TASKS TO COME 
 int main()
 {
+
   int nsamples = 20;
 
   Node rootnode_num(nsamples);
