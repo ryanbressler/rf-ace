@@ -14,6 +14,9 @@ namespace datadefs
   extern cat_t cat_nan;
   extern num_t num_nan;
 
+  bool is_nan(cat_t value);
+  bool is_nan(num_t value);
+
 }
 
 #endif
