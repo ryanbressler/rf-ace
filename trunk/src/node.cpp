@@ -4,10 +4,8 @@
 
 Node::Node(int nsamples):
   isnum_(true),
-  trainsampleics_(nsamples),
-  testsampleics_(nsamples),
-  ntrainsamples_(0),
-  ntestsamples_(0),
+  impurity_(0),
+  n_(0),
   haschildren_(false),
   leftchild_(NULL),
   rightchild_(NULL)
@@ -91,26 +89,39 @@ Node* Node::percolate(num_t value)
     }
 }
 
-void Node::add_trainsample_idx(int idx)
+void Node::accumulate_impurity(cat_t value)
 {
-  trainsampleics_[ntrainsamples_] = idx;
-  ++ntrainsamples_;
+  n_++;
+  impurity_ += datadefs::cat2num(value)/n_;
 }
 
-void Node::add_testsample_idx(int idx)
+void Node::accumulate_impurity(num_t value)
 {
-  testsampleics_[ntestsamples_] = idx;
-  ++ntestsamples_;
+  n_++;
+  impurity_ += value/n_;
 }
 
-void Node::reset_trainsample_ics()
-{
-  ntrainsamples_ = 0;
-}
+//void Node::add_trainsample_idx(int idx)
+//{
+//  trainsampleics_[ntrainsamples_] = idx;
+//  ++ntrainsamples_;
+//}
 
-void Node::reset_testsample_ics()
+//void Node::add_testsample_idx(int idx)
+//{
+// testsampleics_[ntestsamples_] = idx;
+// ++ntestsamples_;
+//}
+
+//void Node::reset_trainsample_ics()
+//{
+//  ntrainsamples_ = 0;
+//}
+
+void Node::reset()
 {
-  ntestsamples_ = 0;
+  n_ = 0;
+  impurity_ = 0.0;
 }
 
 bool Node::has_children()
@@ -151,37 +162,9 @@ void Node::print()
     {
       cout << "-Leaf node" << endl;
     }
-  cout << "-" << ntrainsamples_ << " train sample ics";
-  if(ntrainsamples_)
-    {
-      cout << ": " << trainsampleics_[0]; 
-      size_t i = 1;
-      for(i = 1; i < 10 && i < ntrainsamples_; ++i)
-	{
-	  cout << "," << trainsampleics_[i];
-	}
-      if(i < ntrainsamples_)
-	{
-	  cout << "...";
-	}
-    }
-  cout << endl;
-  cout << "-" << ntestsamples_ << " test sample ics";
-  if(ntestsamples_)
-    {
-      cout << ": " << testsampleics_[0];
-      size_t i = 1;
-      for(i = 1; i < 10 && i < ntestsamples_; ++i)
-        {
-          cout << "," << testsampleics_[i];
-        }
-      if(i < ntestsamples_)
-        {
-          cout << "...";
-        }
-    }
 
-  cout << endl << endl;
+  cout << "-" << n_ << " test samples" << endl;
+  cout << "-" << impurity_ << " impurity" << endl << endl;
 }
 
 void Node::print_compact()

@@ -49,22 +49,6 @@ int main()
   classet.insert(4);
   rootnode_cat.set_splitter(splitter_cat,classet,leftchild_cat,rightchild_cat);
 
-  Node* childp(NULL); 
-  for(int i = 0; i < 10; ++i)
-    {
-      if(rootnode_cat.has_children())
-	{
-	  childp = rootnode_cat.percolate(i);
-	  childp->add_trainsample_idx(i);
-	}
-      num_t j = i*1.0;
-      if(rootnode_num.has_children())
-      	{
-	  childp = rootnode_num.percolate(j);
-	  childp->add_trainsample_idx(i);
-	}
-   }
-
   rootnode_num.print();
   leftchild_num.print();
   rightchild_num.print();
@@ -80,8 +64,6 @@ int main()
   cout << "-..." << endl;
   cout << "-..." << endl;
   cout << "-------------------------------------------" << endl << endl;
-
-
 
   return(EXIT_SUCCESS);
 }
