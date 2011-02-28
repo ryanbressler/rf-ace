@@ -4,8 +4,7 @@
 
 Node::Node(int nsamples):
   isnum_(true),
-  impurity_(0),
-  n_(0),
+  impurity_(0.0),
   haschildren_(false),
   leftchild_(NULL),
   rightchild_(NULL)
@@ -89,38 +88,18 @@ Node* Node::percolate(num_t value)
     }
 }
 
-void Node::accumulate_impurity(cat_t value)
+void Node::set_impurity(num_t impurity)
 {
-  n_++;
-  impurity_ += datadefs::cat2num(value)/n_;
+  impurity_ = impurity;
 }
 
-void Node::accumulate_impurity(num_t value)
+num_t Node::get_impurity()
 {
-  n_++;
-  impurity_ += value/n_;
+  return(impurity_);
 }
 
-//void Node::add_trainsample_idx(int idx)
-//{
-//  trainsampleics_[ntrainsamples_] = idx;
-//  ++ntrainsamples_;
-//}
-
-//void Node::add_testsample_idx(int idx)
-//{
-// testsampleics_[ntestsamples_] = idx;
-// ++ntestsamples_;
-//}
-
-//void Node::reset_trainsample_ics()
-//{
-//  ntrainsamples_ = 0;
-//}
-
-void Node::reset()
+void Node::reset_impurity()
 {
-  n_ = 0;
   impurity_ = 0.0;
 }
 
@@ -162,8 +141,6 @@ void Node::print()
     {
       cout << "-Leaf node" << endl;
     }
-
-  cout << "-" << n_ << " test samples" << endl;
   cout << "-" << impurity_ << " impurity" << endl << endl;
 }
 
