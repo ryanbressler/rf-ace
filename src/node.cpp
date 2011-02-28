@@ -106,6 +106,11 @@ void Node::add_testsample_idx(int idx)
   ++ntestsamples_;
 }
 
+void Node::reset_trainsample_ics()
+{
+  ntrainsamples_ = 0;
+}
+
 void Node::reset_testsample_ics()
 {
   ntestsamples_ = 0;

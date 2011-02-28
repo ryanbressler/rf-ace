@@ -38,6 +38,7 @@ public:
   void add_testsample_idx(int idx);
 
   //Reset sample indices
+  void reset_trainsample_ics();
   void reset_testsample_ics();
 
   //Logic test whether the node has children or not
