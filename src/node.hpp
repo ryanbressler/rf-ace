@@ -30,8 +30,8 @@ public:
   
   //Given value, descends to either one of the child nodes if existent and returns true, otherwise false.
   //NOTE: childp is a ref-to-ptr that will be modified to point to the child node if descend is successful. 
-  bool descend(cat_t value, Node** childp);
-  bool descend(num_t value, Node** childp);
+  Node* descend(cat_t value);
+  Node* descend(num_t value);
 
   //Add an index of a sample to the node
   void add_trainsample_idx(int idx);
@@ -42,7 +42,7 @@ public:
   void reset_testsample_ics();
 
   //Logic test whether the node has children or not
-  bool is_leaf();
+  bool has_children();
 
   //Helper functions
   void print();
@@ -57,9 +57,6 @@ private:
 
   vector<int> trainsampleics_;
   vector<int> testsampleics_;
-
-  //vector<num_t> num_trainsamples_;
-  //vector<num_t> num_testsamples_;
 
   size_t ntrainsamples_;
   size_t ntestsamples_;

@@ -54,44 +54,45 @@ int Node::get_splitter()
 
   return(splitter_);
 }
-bool Node::descend(cat_t value, Node** childp)
+
+Node* Node::descend(cat_t value)
 {
 
   if(!haschildren_)
     {
-      return(false);
+      return(NULL);
     }
 
   if(classet_.find(value) != classet_.end()) 
     {
-      *childp = leftchild_;
+      return(leftchild_);
     } 
   else 
     {
-      *childp = rightchild_;
+      return(rightchild_);
     }
 
-  return(true);
+  //return(true);
 }
 
-bool Node::descend(num_t value, Node** childp)
+Node* Node::descend(num_t value)
 {
   
   if(!haschildren_)
     {
-      return(false);
+      return(NULL);
     }
 
   if(value <= threshold_) 
     {
-      *childp = leftchild_;
+      return(leftchild_);
     } 
   else 
     {
-      *childp = rightchild_;
+      return(rightchild_);
     }
 
-  return(true);
+  //return(true);
 }
 
 void Node::add_trainsample_idx(int idx)
@@ -116,7 +117,7 @@ void Node::reset_testsample_ics()
   ntestsamples_ = 0;
 }
 
-bool Node::is_leaf()
+bool Node::has_children()
 {
   return(haschildren_);
 }
