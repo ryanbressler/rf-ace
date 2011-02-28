@@ -2,8 +2,8 @@
 #include<cassert>
 #include "node.hpp"
 
-Node::Node(int nsamples, bool isregr):
-  isregr_(isregr),
+Node::Node(int nsamples):
+  isnum_(true),
   trainsampleics_(nsamples),
   testsampleics_(nsamples),
   ntrainsamples_(0),
@@ -16,13 +16,15 @@ Node::Node(int nsamples, bool isregr):
 
 Node::~Node()
 {
-
+  leftchild_ = NULL;
+  rightchild_ = NULL;
 }
 
 void Node::set_splitter(int splitter, set<cat_t> classet, Node& leftchild, Node& rightchild)
 {
-  assert(!isregr_);
   assert(!haschildren_);
+  
+  isnum_ = false;
 
   splitter_ = splitter;
   classet_ = classet;
@@ -34,8 +36,9 @@ void Node::set_splitter(int splitter, set<cat_t> classet, Node& leftchild, Node&
 
 void Node::set_splitter(int splitter, num_t threshold, Node& leftchild, Node& rightchild)
 {
-  assert(isregr_);
   assert(!haschildren_);
+
+  isnum_ = true;
 
   splitter_ = splitter;
   threshold_ = threshold;
@@ -62,12 +65,10 @@ bool Node::descend(cat_t value, Node** childp)
   if(classet_.find(value) != classet_.end()) 
     {
       *childp = leftchild_;
-      //cout << childp << "," << leftchild_ << endl;
     } 
   else 
     {
       *childp = rightchild_;
-      //cout << childp << "," << rightchild_ << endl;
     }
 
   return(true);
@@ -117,19 +118,18 @@ bool Node::is_leaf()
 
 void Node::print()
 {
-  //cout << endl << "***NODE PRINT***" << endl;
-  if(isregr_) 
+  if(isnum_) 
     {
-      cout << "***Regression node***" << endl;
+      cout << "***NODE (numerical splitter)***" << endl;
     } 
   else 
     {
-      cout << "***Classification node***" << endl;
+      cout << "***NODE (categorical splitter)***" << endl;
     }
   if(haschildren_) 
     {
       cout << "-Splitter feature is " << splitter_ << endl;
-      if(isregr_)
+      if(isnum_)
 	{
 	  cout << "-Feature value x<=" << threshold_ << " sends left (node " << &leftchild_ 
 	       << ") and " << threshold_ << "<x right (node " << &rightchild_ << ")" << endl;
