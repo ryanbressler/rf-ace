@@ -55,7 +55,7 @@ int Node::get_splitter()
   return(splitter_);
 }
 
-Node* Node::descend(cat_t value)
+Node* Node::percolate(cat_t value)
 {
 
   if(!haschildren_)
@@ -71,11 +71,9 @@ Node* Node::descend(cat_t value)
     {
       return(rightchild_);
     }
-
-  //return(true);
 }
 
-Node* Node::descend(num_t value)
+Node* Node::percolate(num_t value)
 {
   
   if(!haschildren_)
@@ -91,8 +89,6 @@ Node* Node::descend(num_t value)
     {
       return(rightchild_);
     }
-
-  //return(true);
 }
 
 void Node::add_trainsample_idx(int idx)

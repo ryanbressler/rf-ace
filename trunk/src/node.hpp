@@ -30,8 +30,8 @@ public:
   
   //Given value, descends to either one of the child nodes if existent and returns true, otherwise false.
   //NOTE: childp is a ref-to-ptr that will be modified to point to the child node if descend is successful. 
-  Node* descend(cat_t value);
-  Node* descend(num_t value);
+  Node* percolate(cat_t value);
+  Node* percolate(num_t value);
 
   //Add an index of a sample to the node
   void add_trainsample_idx(int idx);

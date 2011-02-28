@@ -21,6 +21,13 @@ using datadefs::num_t;
 int main()
 {
 
+  cout << endl;
+  cout << "---------------------------------------" << endl;
+  cout << "PART 1: DEMONSTRATE USAGE OF NODE CLASS" << endl;
+  cout << "-create nodes" << endl;
+  cout << "-add hierarchies and splitters" << endl;
+  cout << "-percolate samples" << endl;
+  cout << "---------------------------------------" << endl << endl;
   int nsamples = 20;
 
   Node rootnode_num(nsamples);
@@ -47,13 +54,13 @@ int main()
     {
       if(rootnode_cat.has_children())
 	{
-	  childp = rootnode_cat.descend(i);
+	  childp = rootnode_cat.percolate(i);
 	  childp->add_trainsample_idx(i);
 	}
       num_t j = i*1.0;
       if(rootnode_num.has_children())
       	{
-	  childp = rootnode_num.descend(j);
+	  childp = rootnode_num.percolate(j);
 	  childp->add_trainsample_idx(i);
 	}
    }
@@ -65,6 +72,16 @@ int main()
   rootnode_cat.print();
   leftchild_cat.print();
   rightchild_cat.print();
+
+  cout << endl;
+  cout << "-------------------------------------------" << endl;
+  cout << "PART 2: DEMONSTRATE USAGE OF TREEDATA CLASS" << endl;
+  cout << "-..." << endl;
+  cout << "-..." << endl;
+  cout << "-..." << endl;
+  cout << "-------------------------------------------" << endl << endl;
+
+
 
   return(EXIT_SUCCESS);
 }
