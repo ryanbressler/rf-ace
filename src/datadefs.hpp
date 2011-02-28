@@ -2,6 +2,7 @@
 #define DATADEFS_HPP
 
 #include<cstdlib>
+#include<vector>
 
 using namespace std;
 

@@ -64,10 +64,14 @@ int main()
   cout << endl;
   cout << "-------------------------------------------" << endl;
   cout << "PART 2: DEMONSTRATE USAGE OF TREEDATA CLASS" << endl;
-  cout << "-..." << endl;
+  cout << "-Load mixed-type data with missing values" << endl;
   cout << "-..." << endl;
   cout << "-..." << endl;
   cout << "-------------------------------------------" << endl << endl;
+
+  bool is_featurerows = true;
+  string fname = "data/test_6by10_featurerows_matrix.tsv";
+  Treedata treedata(fname,is_featurerows);
 
   return(EXIT_SUCCESS);
 }
