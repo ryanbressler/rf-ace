@@ -60,7 +60,7 @@ Node* Node::descend(cat_t value)
 
   if(!haschildren_)
     {
-      return(NULL);
+      return(this);
     }
 
   if(classet_.find(value) != classet_.end()) 
@@ -80,7 +80,7 @@ Node* Node::descend(num_t value)
   
   if(!haschildren_)
     {
-      return(NULL);
+      return(this);
     }
 
   if(value <= threshold_) 
