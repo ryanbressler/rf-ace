@@ -15,8 +15,23 @@ using datadefs::num_t;
 class Treedata 
 {
 public:
-  Treedata(string fname, bool is_featurerows);
+  Treedata(string fname, bool is_featurerows); //PARTIAL IMPLEMENTATION
   ~Treedata();
+
+  void sort_wrt_feature(size_t featureidx) {/*LACKS IMPLEMENTATION*/};
+  
+  void sort_wrt_target() {/*LACKS IMPLEMENTATION*/};
+  
+  void find_split(size_t featureidx, 
+		  vector<size_t> sampleics, 
+		  size_t& split_pos, 
+		  num_t& impurity_left, 
+		  num_t& impurity_right) {/*LACKS IMPLEMENTATION*/};
+  
+  void split_at_pos(size_t featureidx,
+		    vector<size_t> sampleics,
+		    num_t& impurity_left,
+		    num_t& impurity_right) {/*LACKS IMPLEMENTATION*/};
   
 private:
 
