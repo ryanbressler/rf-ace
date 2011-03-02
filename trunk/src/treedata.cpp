@@ -13,6 +13,8 @@ Treedata::Treedata(string fname, bool is_featurerows):
   nfeatures_(0),
   ncatfeatures_(0),
   nnumfeatures_(0),
+  catfeatureheaders_(0),
+  numfeatureheaders_(0),
   catfeatureics_(0),
   numfeatureics_(0)
 {
@@ -94,25 +96,55 @@ Treedata::Treedata(string fname, bool is_featurerows):
     {
       nfeatures_ = nrows;
       nsamples_ = ncols;
-      featureheaders_ = rowheaders;
+      sampleheaders_ = colheaders;
       for(size_t i = 0; i < nfeatures_; ++i)
 	{
-	  if(featureheaders_[0][0] == 'N')
+	  if(rowheaders[i][0] == 'N')
 	    {
+	      numfeatureheaders_.push_back(rowheaders[i]);
 	      numfeatureics_.push_back(i);
 	      ++nnumfeatures_;
 	    }
-	  else
+	  else if(rowheaders[i][0] == 'C')
 	    {
+	      catfeatureheaders_.push_back(rowheaders[i]);
 	      catfeatureics_.push_back(i);
 	      ++ncatfeatures_;
+	    }
+	  else
+	    {
+	      cerr << "Data type must be either N or C!" << endl;
+	      assert(false);
 	    }
 	}
     }
   else
     {
       cerr << "samples as rows not yet supported!" << endl;
+      assert(false);
     }
+
+  cout << ncatfeatures_ << " (C)ategorical and " << nnumfeatures_ << " (N)umerical features" << endl;
+  cout << "Sample headers: ";
+  for(size_t i = 0; i < nsamples_; ++i)
+    {
+      cout << " " << sampleheaders_[i];
+    }
+  cout << endl;
+  cout << "(N)umerical feature headers: ";
+  for(size_t i = 0; i < nnumfeatures_; ++i)
+    {
+      cout << "\t" << numfeatureheaders_[i] << "(row " << numfeatureics_[i] << ")"; 
+    }
+  cout << endl;
+  cout << "(C)ategorical feature headers: ";
+  for(size_t i = 0; i < ncatfeatures_; ++i)
+    {
+      cout << "\t" << catfeatureheaders_[i] << "(row " << catfeatureics_[i] << ")";
+    }
+  cout << endl;
+
+
 }
 
 Treedata::~Treedata()

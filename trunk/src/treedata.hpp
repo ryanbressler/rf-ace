@@ -33,10 +33,12 @@ private:
   size_t ncatfeatures_;
   size_t nnumfeatures_;
 
+  vector<string> catfeatureheaders_;
+  vector<string> numfeatureheaders_;
+
   vector<size_t> catfeatureics_;
   vector<size_t> numfeatureics_;
 
-  vector<string> featureheaders_;
   vector<string> sampleheaders_;
 
 };
