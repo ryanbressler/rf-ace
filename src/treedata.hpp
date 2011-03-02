@@ -30,6 +30,14 @@ private:
   size_t nsamples_;
   size_t nfeatures_;
 
+  size_t ncatfeatures_;
+  size_t nnumfeatures_;
+
+  vector<size_t> catfeatureics_;
+  vector<size_t> numfeatureics_;
+
+  vector<string> featureheaders_;
+  vector<string> sampleheaders_;
 
 };
 
