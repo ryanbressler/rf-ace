@@ -24,8 +24,11 @@ namespace datadefs
   typedef string NAN_t;
   extern const set<NAN_t> NANs;
 
-  void str2cat(vector<string>& strvec, vector<cat_t>& catvec);
-  void str2num(vector<string>& strvec, vector<num_t>& numvec);
+  void strv2catv(vector<string>& strvec, vector<cat_t>& catvec);
+  void strv2numv(vector<string>& strvec, vector<num_t>& numvec);
+
+  cat_t str2cat(string& str);
+  num_t str2num(string& str);
 
   //Function to convert categorical data to numerical
   num_t cat2num(cat_t value);

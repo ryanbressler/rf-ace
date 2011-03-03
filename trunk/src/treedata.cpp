@@ -9,6 +9,8 @@ using namespace std;
 
 Treedata::Treedata(string fname, bool is_featurerows):
   targetidx_(-1),
+  catmatrix_(0),
+  nummatrix_(0),
   nsamples_(0),
   nfeatures_(0),
   ncatfeatures_(0),
@@ -55,6 +57,7 @@ Treedata::Treedata(string fname, bool is_featurerows):
   ss.clear();
   ss.str("");
 
+  //These are temporary containers
   vector<string> colheaders(ncols);
   vector<string> rowheaders(nrows);
   vector<vector<string> > datamatrix(nrows);
@@ -65,9 +68,11 @@ Treedata::Treedata(string fname, bool is_featurerows):
 
   cout << "read " << datamatrix.size() << " rows and " << datamatrix[0].size() << " columns." << endl;
 
+  //Read first row into the stream
   getline(featurestream,row);
   ss << row;
 
+  //Read column headers from the stream
   for(size_t i = 0; i < ncols; ++i)
     {
       getline(ss,colheaders[i],'\t');
@@ -75,12 +80,18 @@ Treedata::Treedata(string fname, bool is_featurerows):
     }
   cout << endl;
 
+  //Go through the rest of the rows
   for(size_t i = 0; i < nrows; ++i)
     {
+      //Read row from the stream
       getline(featurestream,row);
       ss.clear();
       ss.str("");
+
+      //Read the string back to a stream (REDUNDANCY)
       ss << row;
+
+      //Read one element from the row stream
       getline(ss,rowheaders[i],'\t');
       cout << rowheaders[i];
       for(size_t j = 0; j < ncols; ++j)
@@ -92,13 +103,18 @@ Treedata::Treedata(string fname, bool is_featurerows):
     }
   cout << endl;
   
+  //If the data is row-formatted...
   if(is_featurerows)
     {
+      //We can extract the number of features and samples from the row and column counts, respectively
       nfeatures_ = nrows;
       nsamples_ = ncols;
+
+      //Thus, sample headers are column headers
       sampleheaders_ = colheaders;
       for(size_t i = 0; i < nfeatures_; ++i)
 	{
+	  //First letters in the row headers determine whether the feature is numerical or categorical
 	  if(rowheaders[i][0] == 'N')
 	    {
 	      numfeatureheaders_.push_back(rowheaders[i]);
@@ -124,25 +140,55 @@ Treedata::Treedata(string fname, bool is_featurerows):
       assert(false);
     }
 
-  cout << ncatfeatures_ << " (C)ategorical and " << nnumfeatures_ << " (N)umerical features" << endl;
-  cout << "Sample headers: ";
-  for(size_t i = 0; i < nsamples_; ++i)
-    {
-      cout << " " << sampleheaders_[i];
-    }
-  cout << endl;
-  cout << "(N)umerical feature headers: ";
-  for(size_t i = 0; i < nnumfeatures_; ++i)
-    {
-      cout << "\t" << numfeatureheaders_[i] << "(row " << numfeatureics_[i] << ")"; 
-    }
-  cout << endl;
-  cout << "(C)ategorical feature headers: ";
   for(size_t i = 0; i < ncatfeatures_; ++i)
     {
-      cout << "\t" << catfeatureheaders_[i] << "(row " << catfeatureics_[i] << ")";
+      //cout << '*' << catfeatureics_[i] << '*' << endl;
+      vector<cat_t> foo(nsamples_);
+      datadefs::strv2catv(datamatrix[catfeatureics_[i]],foo);
+      catmatrix_.push_back(foo);
+    }
+  
+  for(size_t i = 0; i < nnumfeatures_; ++i)
+    {
+      //cout << '*' << numfeatureics_[i] << '*' << endl;
+      vector<num_t> foo(nsamples_);
+      datadefs::strv2numv(datamatrix[numfeatureics_[i]],foo);
+      nummatrix_.push_back(foo);
+    }
+
+  cout << "Printing categorical data (missing values encoded to " << datadefs::cat_nan << "):" << endl;
+  for(size_t j = 0; j < nsamples_; ++j)
+    {
+      cout << '\t' << sampleheaders_[j];
     }
   cout << endl;
+  for(size_t i = 0; i < ncatfeatures_; ++i)
+    {
+      cout << catfeatureics_[i] << ':' << catfeatureheaders_[i] << ':';
+      for(size_t j = 0; j < nsamples_; ++j)
+	{
+	  cout << '\t' << catmatrix_[i][j]; 
+	}
+      cout << endl;
+    }
+  cout << "Printing numerical data (missing values encoded to " << datadefs::num_nan << "):" << endl;
+  for(size_t j = 0; j < nsamples_; ++j)
+    {
+      cout << '\t' << sampleheaders_[j];
+    }
+  cout << endl;
+  for(size_t i = 0; i < nnumfeatures_; ++i)
+    {
+      cout << numfeatureics_[i] << ':' << numfeatureheaders_[i] << ':';
+      for(size_t j = 0; j < nsamples_; ++j)
+        {
+          cout << '\t' << nummatrix_[i][j];
+        }
+      cout << endl;
+    }
+
+
+
 
 
 }
