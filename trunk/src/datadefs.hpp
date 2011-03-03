@@ -3,6 +3,8 @@
 
 #include<cstdlib>
 #include<vector>
+#include<set>
+#include<string>
 
 using namespace std;
 
@@ -14,6 +16,10 @@ namespace datadefs
 
   extern cat_t cat_nan;
   extern num_t num_nan;
+
+  //typedef string NAN_t;
+  extern set<string> NANs;
+  //extern string NAN;
 
   num_t cat2num(cat_t value);
 
