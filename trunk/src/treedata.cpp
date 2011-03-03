@@ -140,22 +140,30 @@ Treedata::Treedata(string fname, bool is_featurerows):
       assert(false);
     }
 
+  //Transform raw data to the internal format. First categorical data...
   for(size_t i = 0; i < ncatfeatures_; ++i)
     {
-      //cout << '*' << catfeatureics_[i] << '*' << endl;
       vector<cat_t> foo(nsamples_);
       datadefs::strv2catv(datamatrix[catfeatureics_[i]],foo);
       catmatrix_.push_back(foo);
     }
   
+  
+  //... and next numerical data.
   for(size_t i = 0; i < nnumfeatures_; ++i)
     {
-      //cout << '*' << numfeatureics_[i] << '*' << endl;
       vector<num_t> foo(nsamples_);
       datadefs::strv2numv(datamatrix[numfeatureics_[i]],foo);
       nummatrix_.push_back(foo);
     }
+}
 
+Treedata::~Treedata()
+{
+}
+
+void Treedata::print()
+{
   cout << "Printing categorical data (missing values encoded to " << datadefs::cat_nan << "):" << endl;
   for(size_t j = 0; j < nsamples_; ++j)
     {
@@ -166,9 +174,9 @@ Treedata::Treedata(string fname, bool is_featurerows):
     {
       cout << catfeatureics_[i] << ':' << catfeatureheaders_[i] << ':';
       for(size_t j = 0; j < nsamples_; ++j)
-	{
-	  cout << '\t' << catmatrix_[i][j]; 
-	}
+        {
+          cout << '\t' << catmatrix_[i][j];
+        }
       cout << endl;
     }
   cout << "Printing numerical data (missing values encoded to " << datadefs::num_nan << "):" << endl;
@@ -186,16 +194,35 @@ Treedata::Treedata(string fname, bool is_featurerows):
         }
       cout << endl;
     }
-
-
-
-
-
 }
 
-Treedata::~Treedata()
+template <typename T>
+void Treedata::sort_from_ref(vector<T>& in, vector<int> const& reference)
 {
+  vector<T> foo = in;
+  
+  int n = in.size();
+  for (int i = 0; i < n; ++i)
+    {
+      in[i] = foo[reference[i]];
+    }
 }
+
+void Treedata::select_target(int targetidx)
+{
+  targetidx_ = targetidx;
+}
+
+void Treedata::sort_all_wrt_feature(int featureidx)
+{
+  assert(targetidx_ != -1);
+}
+
+void Treedata::sort_all_wrt_target()
+{
+  assert(targetidx_ != -1);
+}
+
 
 void Treedata::transpose()
 {
