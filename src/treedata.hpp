@@ -19,26 +19,40 @@ public:
   Treedata(string fname, bool is_featurerows); //PARTIAL IMPLEMENTATION
   ~Treedata();
 
-  void sort_wrt_feature(size_t featureidx) {/*LACKS IMPLEMENTATION*/};
+  void select_target(int targetidx);
+
+  void sort_all_wrt_feature(int featureidx);
   
-  void sort_wrt_target() {/*LACKS IMPLEMENTATION*/};
+  void sort_all_wrt_target();
   
-  void find_split(size_t featureidx, 
+  void find_split(int featureidx, 
 		  vector<size_t> sampleics, 
 		  size_t& split_pos, 
 		  num_t& impurity_left, 
 		  num_t& impurity_right) {/*LACKS IMPLEMENTATION*/};
   
-  void split_at_pos(size_t featureidx,
+  void split_at_pos(int featureidx,
 		    vector<size_t> sampleics,
 		    num_t& impurity_left,
 		    num_t& impurity_right) {/*LACKS IMPLEMENTATION*/};
   
+  void print();
+
 private:
+
+  void range(vector<int>& ics);
+  template <typename T1,typename T2> void make_pairv(vector<T1>& v1, vector<T2>& v2, vector<pair<T1,T2> >& p);
+
+  //Sorts a given input data vector of type T based on a given reference ordering of type vector<int>
+  template <typename T> void sort_from_ref(vector<T>& in, vector<int> const& reference);
+
+  //Sorts a given input data vector of type T1 based on a given reference ordering of type vector<pair<int,T2> >
+  //template <typename T1, typename T2>
+  //void sort_from_ref(vector<T1>& in,vector<pair<int,T2> > const& reference);
 
   void transpose();
 
-  size_t targetidx_;
+  int targetidx_;
 
   vector<vector<cat_t> > catmatrix_;
   vector<vector<num_t> > nummatrix_;

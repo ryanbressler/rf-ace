@@ -72,6 +72,8 @@ int main()
   bool is_featurerows = true;
   string fname = "data/test_6by10_featurerows_matrix.tsv";
   Treedata treedata(fname,is_featurerows);
+  treedata.select_target(0);
+  treedata.print();
 
   return(EXIT_SUCCESS);
 }
