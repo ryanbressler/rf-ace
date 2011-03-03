@@ -28,15 +28,15 @@ int main()
   cout << "-add hierarchies and splitters" << endl;
   //cout << "-percolate samples" << endl;
   cout << "---------------------------------------" << endl << endl;
-  int nsamples = 20;
+  //int nsamples = 20;
 
-  Node node(nsamples); //rootnode 
-  Node node1(nsamples); //left (LEAF)
-  Node node2(nsamples); //right
-  Node node21(nsamples); //right+left
-  Node node22(nsamples); //right+right (LEAF)
-  Node node211(nsamples); //right+left+left (LEAF)
-  Node node212(nsamples); //right+left+right (LEAF)
+  Node node; //rootnode 
+  Node node1; //left (LEAF)
+  Node node2; //right
+  Node node21; //right+left
+  Node node22; //right+right (LEAF)
+  Node node211; //right+left+left (LEAF)
+  Node node212; //right+left+right (LEAF)
 
   int splitter_num = 6;
   num_t threshold = 3.4;
