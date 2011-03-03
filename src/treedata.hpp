@@ -15,6 +15,7 @@ using datadefs::num_t;
 class Treedata 
 {
 public:
+  //Initializes the object and reads in a data matrix
   Treedata(string fname, bool is_featurerows); //PARTIAL IMPLEMENTATION
   ~Treedata();
 
