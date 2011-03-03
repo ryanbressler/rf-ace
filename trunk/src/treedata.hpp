@@ -16,12 +16,12 @@ class Treedata
 {
 public:
   //Initializes the object and reads in a data matrix
-  Treedata(string fname, bool is_featurerows); //PARTIAL IMPLEMENTATION
+  Treedata(string fname, bool is_featurerows);
   ~Treedata();
 
-  void select_target(int targetidx);
+  void select_target(size_t targetidx);
 
-  void sort_all_wrt_feature(int featureidx);
+  void sort_all_wrt_feature(size_t featureidx);
   
   void sort_all_wrt_target();
   
@@ -40,7 +40,7 @@ public:
 
 private:
 
-  void range(vector<int>& ics);
+  void fullrange(vector<size_t>& ics);
   template <typename T1,typename T2> void make_pairv(vector<T1>& v1, vector<T2>& v2, vector<pair<T1,T2> >& p);
 
   //Sorts a given input data vector of type T based on a given reference ordering of type vector<int>
@@ -52,7 +52,9 @@ private:
 
   void transpose();
 
-  int targetidx_;
+  bool istarget_;
+  size_t targetidx_;
+  bool isnumtarget_;
 
   vector<vector<cat_t> > catmatrix_;
   vector<vector<num_t> > nummatrix_;

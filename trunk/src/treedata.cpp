@@ -4,11 +4,14 @@
 #include<cassert>
 #include<iostream>
 #include<sstream>
+#include<utility>
 
 using namespace std;
 
 Treedata::Treedata(string fname, bool is_featurerows):
-  targetidx_(-1),
+  istarget_(false),
+  targetidx_(0),
+  isnumtarget_(false),
   catmatrix_(0),
   nummatrix_(0),
   nsamples_(0),
@@ -196,6 +199,26 @@ void Treedata::print()
     }
 }
 
+void Treedata::fullrange(vector<size_t>& ics)
+{
+  assert(nsamples_ == ics.size());
+  for(size_t i = 0; i < nsamples_; ++i)
+    {
+      ics[i] = i;
+    }
+}
+
+template <typename T1,typename T2> 
+void Treedata::make_pairv(vector<T1>& v1, vector<T2>& v2, vector<pair<T1,T2> >& p)
+{
+  assert(v1.size() == v2.size() && v2.size() == p.size() && p.size() == nsamples_);
+  for(size_t i = 0; i < nsamples_; ++i)
+    {
+      p[i] = make_pair(v1[i],v2[i]);
+    }
+}
+
+
 template <typename T>
 void Treedata::sort_from_ref(vector<T>& in, vector<int> const& reference)
 {
@@ -208,19 +231,38 @@ void Treedata::sort_from_ref(vector<T>& in, vector<int> const& reference)
     }
 }
 
-void Treedata::select_target(int targetidx)
+void Treedata::select_target(size_t targetidx)
 {
   targetidx_ = targetidx;
+  istarget_ = true;
+  for(size_t i = 0; i < ncatfeatures_; ++i)
+    {
+      if(catfeatureics_[i] == targetidx_)
+	{
+	  isnumtarget_ = false;
+	  return;
+	}
+    }
+  isnumtarget_ = true;
+  
+  Treedata::sort_all_wrt_target();
 }
 
-void Treedata::sort_all_wrt_feature(int featureidx)
+void Treedata::sort_all_wrt_feature(size_t featureidx)
 {
-  assert(targetidx_ != -1);
+  assert(istarget_);
 }
 
 void Treedata::sort_all_wrt_target()
 {
-  assert(targetidx_ != -1);
+  assert(istarget_);
+  //assert(isnumtarget_);
+
+  vector<size_t> sort_ics(nsamples_);
+  vector<pair<num_t,size_t> > pairedv(nsamples_);
+  Treedata::fullrange(sort_ics);
+  Treedata::make_pairv<num_t,size_t>(nummatrix_[0],sort_ics,pairedv);
+
 }
 
 

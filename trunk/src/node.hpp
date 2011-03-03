@@ -16,8 +16,8 @@ using datadefs::num_t;
 
 class Node {
 public:
-  //Initializes node to store at max nsamples. Excess memory will be reserved in order to avoid dynamic memory allocation.
-  Node(int nsamples);
+  //Initializes node.
+  Node();
   ~Node();
 
   //Sets a splitter feature for the node.

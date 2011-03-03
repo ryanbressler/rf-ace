@@ -2,7 +2,7 @@
 #include<cassert>
 #include "node.hpp"
 
-Node::Node(int nsamples):
+Node::Node():
   isnum_(true),
   impurity_(0.0),
   haschildren_(false),
