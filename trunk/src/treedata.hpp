@@ -19,6 +19,9 @@ public:
   Treedata(string fname, bool is_featurerows);
   ~Treedata();
 
+  size_t nfeatures();
+  size_t nsamples();
+
   void select_target(size_t targetidx);
 
   void sort_all_wrt_feature(size_t featureidx);
@@ -56,6 +59,7 @@ private:
 
   bool istarget_;
   size_t targetidx_;
+  size_t internaltargetidx_;
   bool isnumtarget_;
 
   vector<vector<cat_t> > catmatrix_;

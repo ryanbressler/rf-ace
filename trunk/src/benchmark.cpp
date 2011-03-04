@@ -72,8 +72,13 @@ int main()
   bool is_featurerows = true;
   string fname = "data/test_6by10_featurerows_matrix.tsv";
   Treedata treedata(fname,is_featurerows);
-  treedata.select_target(0);
-  treedata.print();
+  
+  for(size_t targetidx = 0; targetidx < treedata.nfeatures(); ++targetidx)
+    {
+      cout << endl << "Target idx is " << targetidx << ". Sorting:" << endl;
+      treedata.select_target(targetidx);
+      treedata.print();
+    }
 
   return(EXIT_SUCCESS);
 }

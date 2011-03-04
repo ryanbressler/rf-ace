@@ -12,6 +12,7 @@ using namespace std;
 Treedata::Treedata(string fname, bool is_featurerows):
   istarget_(false),
   targetidx_(0),
+  internaltargetidx_(0),
   isnumtarget_(false),
   catmatrix_(0),
   nummatrix_(0),
@@ -166,6 +167,16 @@ Treedata::~Treedata()
 {
 }
 
+size_t Treedata::nfeatures()
+{
+  return(nfeatures_);
+}
+
+size_t Treedata::nsamples()
+{
+  return(nsamples_);
+}
+
 void Treedata::print()
 {
   cout << "Printing categorical data (missing values encoded to " << datadefs::cat_nan << "):" << endl;
@@ -244,18 +255,32 @@ void Treedata::sort_from_ref(vector<T>& in, vector<size_t> const& reference)
 
 void Treedata::select_target(size_t targetidx)
 {
-  targetidx_ = targetidx;
+  targetidx_ = targetidx; 
   istarget_ = true;
+  bool isfound(false);
   for(size_t i = 0; i < ncatfeatures_; ++i)
     {
       if(catfeatureics_[i] == targetidx_)
 	{
 	  isnumtarget_ = false;
-	  return;
+	  internaltargetidx_ = i;
+	  isfound = true;
 	}
     }
-  isnumtarget_ = true;
-  
+  if(!isfound)
+    {
+      for(size_t i = 0; i < nnumfeatures_; ++i)
+	{
+	  if(numfeatureics_[i] == targetidx_)
+	    {
+	      isnumtarget_ = true;
+	      internaltargetidx_ = i;
+	      isfound = true;
+	    } 
+	}
+    }
+  assert(isfound);
+
   Treedata::sort_all_wrt_target();
 }
 
@@ -281,7 +306,7 @@ void Treedata::sort_all_wrt_target()
       Treedata::range(neworder_ics);
       
       //Join the target and index vector
-      Treedata::join_pairedv<num_t,size_t>(nummatrix_[targetidx_],neworder_ics,pairedv);
+      Treedata::join_pairedv<num_t,size_t>(nummatrix_[internaltargetidx_],neworder_ics,pairedv);
       
       //Sort the paired vector (indices will now define the new order)
       sort(pairedv.begin(),pairedv.end(),datadefs::ordering<size_t>());
@@ -299,7 +324,7 @@ void Treedata::sort_all_wrt_target()
       Treedata::range(neworder_ics);
 
       //Join the target and index vector
-      Treedata::join_pairedv<cat_t,size_t>(catmatrix_[targetidx_],neworder_ics,pairedv);
+      Treedata::join_pairedv<cat_t,size_t>(catmatrix_[internaltargetidx_],neworder_ics,pairedv);
 
       //Sort the paired vector (indices will now define the new order)
       sort(pairedv.begin(),pairedv.end(),datadefs::ordering<size_t>());
