@@ -50,8 +50,18 @@ namespace datadefs
 	  return(false);
 	}      
     }
-  };
- 
+    bool operator ()(pair<datadefs::cat_t,T> const& a, pair<datadefs::num_t,T> const& b)
+    {
+      if(a.first < b.first || b.first == -1)
+        {
+          return(true);
+        }
+      else
+        {
+          return(false);
+        }
+    }
+  }; 
 }
 
 #endif
