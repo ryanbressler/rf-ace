@@ -38,20 +38,20 @@ namespace datadefs
   bool is_nan(num_t value);
 
   //A comparator functor that can be passed to STL::sort. Assumes that one is comparing first elements of pairs, first type being num_t and second T
-  template <typename T> struct ordering_ascend {
+  template <typename T> struct ordering {
     bool operator ()(pair<datadefs::num_t,T> const& a, pair<datadefs::num_t,T> const& b)
     {
-      if(b.first != sqrt(-1.0))
+      if(a.first < b.first || b.first != b.first)
 	{
-	  return(false);
+	  return(true);
 	}
       else
 	{
-	  return (a.first < b.first);
+	  return(false);
 	}      
     }
   };
-  
+ 
 }
 
 #endif
