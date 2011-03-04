@@ -210,7 +210,7 @@ void Treedata::range(vector<size_t>& ics)
 }
 
 template <typename T1,typename T2> 
-void Treedata::join_pairv(vector<T1>& v1, vector<T2>& v2, vector<pair<T1,T2> >& p)
+void Treedata::join_pairedv(vector<T1>& v1, vector<T2>& v2, vector<pair<T1,T2> >& p)
 {
   assert(v1.size() == v2.size() && v2.size() == p.size() && p.size() == nsamples_);
   for(size_t i = 0; i < nsamples_; ++i)
@@ -220,7 +220,7 @@ void Treedata::join_pairv(vector<T1>& v1, vector<T2>& v2, vector<pair<T1,T2> >& 
 }
 
 template <typename T1,typename T2> 
-void Treedata::separate_pairv(vector<pair<T1,T2> >& p, vector<T1>& v1, vector<T2>& v2)
+void Treedata::separate_pairedv(vector<pair<T1,T2> >& p, vector<T1>& v1, vector<T2>& v2)
 {
   assert(v1.size() == v2.size() && v2.size() == p.size() && p.size() == nsamples_);
   for(size_t i = 0; i < nsamples_; ++i)
@@ -266,23 +266,47 @@ void Treedata::sort_all_wrt_feature(size_t featureidx)
 
 void Treedata::sort_all_wrt_target()
 {
+  //Check that a target has been set
   assert(istarget_);
+
+  //Check that the target is numerical
   assert(isnumtarget_);
 
+  //Generate and index vector that'll define the new order
   vector<size_t> neworder_ics(nsamples_);
+
+  //Generate a paired vector with which sorting will be performed
   vector<pair<num_t,size_t> > pairedv(nsamples_);
+
+  //Generate indices from 0,1,...,(nsamples-1)
   Treedata::range(neworder_ics);
-  Treedata::join_pairv<num_t,size_t>(nummatrix_[0],neworder_ics,pairedv);
+
+  //Join the target and index vector
+  Treedata::join_pairedv<num_t,size_t>(nummatrix_[0],neworder_ics,pairedv);
+
+  //Sort the paired vector (indices will now define the new order)
   sort(pairedv.begin(),pairedv.end(),datadefs::ordering<size_t>());
-  for(size_t i = 0; i < nsamples_; ++i)
-    {
-      cout << pairedv[i].first << ',' << pairedv[i].second << endl;
-    }
+  //for(size_t i = 0; i < nsamples_; ++i)
+  //  {
+  //    cout << pairedv[i].first << ',' << pairedv[i].second << endl;
+  //  }
 
-  Treedata::separate_pairv<num_t,size_t>(pairedv,nummatrix_[0],neworder_ics);
+  vector<num_t> foo(nsamples_);
+  //Separate the target vector and new order
+  Treedata::separate_pairedv<num_t,size_t>(pairedv,foo,neworder_ics);
 
+  //Use the new order to sort the sample headers
+  Treedata::sort_from_ref<string>(sampleheaders_,neworder_ics);
   
-
+  //Sort categorical and numerical data as well
+  for(size_t i = 0; i < ncatfeatures_; ++i)
+    {
+      Treedata::sort_from_ref<cat_t>(catmatrix_[i],neworder_ics);
+    }
+  for(size_t i = 0; i < nnumfeatures_; ++i)
+    {
+      Treedata::sort_from_ref<num_t>(nummatrix_[i],neworder_ics);
+    }
 
 }
 

@@ -41,8 +41,8 @@ public:
 private:
 
   void range(vector<size_t>& ics);
-  template <typename T1,typename T2> void join_pairv(vector<T1>& v1, vector<T2>& v2, vector<pair<T1,T2> >& p);
-  template <typename T1,typename T2> void separate_pairv(vector<pair<T1,T2> >& p, vector<T1>& v1, vector<T2>& v2);
+  template <typename T1,typename T2> void join_pairedv(vector<T1>& v1, vector<T2>& v2, vector<pair<T1,T2> >& p);
+  template <typename T1,typename T2> void separate_pairedv(vector<pair<T1,T2> >& p, vector<T1>& v1, vector<T2>& v2);
 
 
   //Sorts a given input data vector of type T based on a given reference ordering of type vector<int>
