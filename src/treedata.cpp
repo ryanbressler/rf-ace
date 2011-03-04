@@ -5,6 +5,7 @@
 #include<iostream>
 #include<sstream>
 #include<utility>
+#include<algorithm>
 
 using namespace std;
 
@@ -199,7 +200,7 @@ void Treedata::print()
     }
 }
 
-void Treedata::fullrange(vector<size_t>& ics)
+void Treedata::range(vector<size_t>& ics)
 {
   assert(nsamples_ == ics.size());
   for(size_t i = 0; i < nsamples_; ++i)
@@ -209,7 +210,7 @@ void Treedata::fullrange(vector<size_t>& ics)
 }
 
 template <typename T1,typename T2> 
-void Treedata::make_pairv(vector<T1>& v1, vector<T2>& v2, vector<pair<T1,T2> >& p)
+void Treedata::join_pairv(vector<T1>& v1, vector<T2>& v2, vector<pair<T1,T2> >& p)
 {
   assert(v1.size() == v2.size() && v2.size() == p.size() && p.size() == nsamples_);
   for(size_t i = 0; i < nsamples_; ++i)
@@ -218,9 +219,19 @@ void Treedata::make_pairv(vector<T1>& v1, vector<T2>& v2, vector<pair<T1,T2> >& 
     }
 }
 
+template <typename T1,typename T2> 
+void Treedata::separate_pairv(vector<pair<T1,T2> >& p, vector<T1>& v1, vector<T2>& v2)
+{
+  assert(v1.size() == v2.size() && v2.size() == p.size() && p.size() == nsamples_);
+  for(size_t i = 0; i < nsamples_; ++i)
+    {
+      v1[i] = p[i].first;
+      v2[i] = p[i].second;
+    }
+}
 
 template <typename T>
-void Treedata::sort_from_ref(vector<T>& in, vector<int> const& reference)
+void Treedata::sort_from_ref(vector<T>& in, vector<size_t> const& reference)
 {
   vector<T> foo = in;
   
@@ -256,12 +267,22 @@ void Treedata::sort_all_wrt_feature(size_t featureidx)
 void Treedata::sort_all_wrt_target()
 {
   assert(istarget_);
-  //assert(isnumtarget_);
+  assert(isnumtarget_);
 
-  vector<size_t> sort_ics(nsamples_);
+  vector<size_t> neworder_ics(nsamples_);
   vector<pair<num_t,size_t> > pairedv(nsamples_);
-  Treedata::fullrange(sort_ics);
-  Treedata::make_pairv<num_t,size_t>(nummatrix_[0],sort_ics,pairedv);
+  Treedata::range(neworder_ics);
+  Treedata::join_pairv<num_t,size_t>(nummatrix_[0],neworder_ics,pairedv);
+  sort(pairedv.begin(),pairedv.end(),datadefs::ordering<size_t>());
+  for(size_t i = 0; i < nsamples_; ++i)
+    {
+      cout << pairedv[i].first << ',' << pairedv[i].second << endl;
+    }
+
+  Treedata::separate_pairv<num_t,size_t>(pairedv,nummatrix_[0],neworder_ics);
+
+  
+
 
 }
 
