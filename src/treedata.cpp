@@ -12,18 +12,12 @@ using namespace std;
 Treedata::Treedata(string fname, bool is_featurerows):
   istarget_(false),
   targetidx_(0),
-  internaltargetidx_(0),
-  isnumtarget_(false),
-  catmatrix_(0),
-  nummatrix_(0),
+  featurematrix_(0),
   nsamples_(0),
   nfeatures_(0),
   ncatfeatures_(0),
   nnumfeatures_(0),
-  catfeatureheaders_(0),
-  numfeatureheaders_(0),
-  catfeatureics_(0),
-  numfeatureics_(0)
+  featureheaders_(0)
 {
 
   cout << "Treedata: reading matrix from file '" << fname << "'" << endl;
@@ -65,13 +59,13 @@ Treedata::Treedata(string fname, bool is_featurerows):
   //These are temporary containers
   vector<string> colheaders(ncols);
   vector<string> rowheaders(nrows);
-  vector<vector<string> > datamatrix(nrows);
+  vector<vector<string> > rawmatrix(nrows);
   for(size_t i = 0; i < nrows; ++i)
     {
-      datamatrix[i] = colheaders;
+      rawmatrix[i] = colheaders;
     }
 
-  cout << "read " << datamatrix.size() << " rows and " << datamatrix[0].size() << " columns." << endl;
+  cout << "read " << rawmatrix.size() << " rows and " << rawmatrix[0].size() << " columns." << endl;
 
   //Read first row into the stream
   getline(featurestream,row);
@@ -101,8 +95,8 @@ Treedata::Treedata(string fname, bool is_featurerows):
       cout << rowheaders[i];
       for(size_t j = 0; j < ncols; ++j)
 	{
-	  getline(ss,datamatrix[i][j],'\t');
-	  cout << '\t' << datamatrix[i][j];
+	  getline(ss,rawmatrix[i][j],'\t');
+	  cout << '\t' << rawmatrix[i][j];
 	}
       cout << endl;
     }
@@ -117,19 +111,18 @@ Treedata::Treedata(string fname, bool is_featurerows):
 
       //Thus, sample headers are column headers
       sampleheaders_ = colheaders;
+      featureheaders_ = rowheaders;
       for(size_t i = 0; i < nfeatures_; ++i)
 	{
 	  //First letters in the row headers determine whether the feature is numerical or categorical
 	  if(rowheaders[i][0] == 'N')
 	    {
-	      numfeatureheaders_.push_back(rowheaders[i]);
-	      numfeatureics_.push_back(i);
+	      isnum_.push_back(true);
 	      ++nnumfeatures_;
 	    }
 	  else if(rowheaders[i][0] == 'C')
 	    {
-	      catfeatureheaders_.push_back(rowheaders[i]);
-	      catfeatureics_.push_back(i);
+	      isnum_.push_back(false);
 	      ++ncatfeatures_;
 	    }
 	  else
@@ -145,22 +138,13 @@ Treedata::Treedata(string fname, bool is_featurerows):
       assert(false);
     }
 
-  //Transform raw data to the internal format. First categorical data...
-  for(size_t i = 0; i < ncatfeatures_; ++i)
-    {
-      vector<cat_t> foo(nsamples_);
-      datadefs::strv2catv(datamatrix[catfeatureics_[i]],foo);
-      catmatrix_.push_back(foo);
-    }
-  
-  
-  //... and next numerical data.
-  for(size_t i = 0; i < nnumfeatures_; ++i)
+  //Transform raw data to the internal format.
+  for(size_t i = 0; i < nfeatures_; ++i)
     {
       vector<num_t> foo(nsamples_);
-      datadefs::strv2numv(datamatrix[numfeatureics_[i]],foo);
-      nummatrix_.push_back(foo);
-    }
+      datadefs::strv2numv(rawmatrix[i],foo);
+      featurematrix_.push_back(foo);
+    } 
 }
 
 Treedata::~Treedata()
@@ -179,33 +163,18 @@ size_t Treedata::nsamples()
 
 void Treedata::print()
 {
-  cout << "Printing categorical data (missing values encoded to " << datadefs::cat_nan << "):" << endl;
+  cout << "Printing feature matrix (missing values encoded to " << datadefs::num_nan << "):" << endl;
   for(size_t j = 0; j < nsamples_; ++j)
     {
       cout << '\t' << sampleheaders_[j];
     }
   cout << endl;
-  for(size_t i = 0; i < ncatfeatures_; ++i)
+  for(size_t i = 0; i < nfeatures_; ++i)
     {
-      cout << catfeatureics_[i] << ':' << catfeatureheaders_[i] << ':';
+      cout << i << ':' << featureheaders_[i] << ':';
       for(size_t j = 0; j < nsamples_; ++j)
         {
-          cout << '\t' << catmatrix_[i][j];
-        }
-      cout << endl;
-    }
-  cout << "Printing numerical data (missing values encoded to " << datadefs::num_nan << "):" << endl;
-  for(size_t j = 0; j < nsamples_; ++j)
-    {
-      cout << '\t' << sampleheaders_[j];
-    }
-  cout << endl;
-  for(size_t i = 0; i < nnumfeatures_; ++i)
-    {
-      cout << numfeatureics_[i] << ':' << numfeatureheaders_[i] << ':';
-      for(size_t j = 0; j < nsamples_; ++j)
-        {
-          cout << '\t' << nummatrix_[i][j];
+          cout << '\t' << featurematrix_[i][j];
         }
       cout << endl;
     }
@@ -257,29 +226,6 @@ void Treedata::select_target(size_t targetidx)
 {
   targetidx_ = targetidx; 
   istarget_ = true;
-  bool isfound(false);
-  for(size_t i = 0; i < ncatfeatures_; ++i)
-    {
-      if(catfeatureics_[i] == targetidx_)
-	{
-	  isnumtarget_ = false;
-	  internaltargetidx_ = i;
-	  isfound = true;
-	}
-    }
-  if(!isfound)
-    {
-      for(size_t i = 0; i < nnumfeatures_; ++i)
-	{
-	  if(numfeatureics_[i] == targetidx_)
-	    {
-	      isnumtarget_ = true;
-	      internaltargetidx_ = i;
-	      isfound = true;
-	    } 
-	}
-    }
-  assert(isfound);
 
   Treedata::sort_all_wrt_target();
 }
@@ -296,55 +242,30 @@ void Treedata::sort_all_wrt_target()
 
   //Generate and index vector that'll define the new order
   vector<size_t> neworder_ics(nsamples_);
-
-  if(isnumtarget_)
-    {
-      //Generate a paired vector with which sorting will be performed
-      vector<pair<num_t,size_t> > pairedv(nsamples_);
-      
-      //Generate indices from 0,1,...,(nsamples-1)
-      Treedata::range(neworder_ics);
-      
-      //Join the target and index vector
-      Treedata::join_pairedv<num_t,size_t>(nummatrix_[internaltargetidx_],neworder_ics,pairedv);
-      
-      //Sort the paired vector (indices will now define the new order)
-      sort(pairedv.begin(),pairedv.end(),datadefs::ordering<size_t>());
-      
-      vector<num_t> foo(nsamples_);
-      //Separate the target vector and new order
-      Treedata::separate_pairedv<num_t,size_t>(pairedv,foo,neworder_ics);
-    }
-  else
-    {
-      //Generate a paired vector with which sorting will be performed
-      vector<pair<cat_t,size_t> > pairedv(nsamples_);
-
-      //Generate indices from 0,1,...,(nsamples-1)
-      Treedata::range(neworder_ics);
-
-      //Join the target and index vector
-      Treedata::join_pairedv<cat_t,size_t>(catmatrix_[internaltargetidx_],neworder_ics,pairedv);
-
-      //Sort the paired vector (indices will now define the new order)
-      sort(pairedv.begin(),pairedv.end(),datadefs::ordering<size_t>());
-
-      vector<cat_t> foo(nsamples_);
-      //Separate the target vector and new order
-      Treedata::separate_pairedv<cat_t,size_t>(pairedv,foo,neworder_ics);
-    }      
+  
+  //Generate a paired vector with which sorting will be performed
+  vector<pair<num_t,size_t> > pairedv(nsamples_);
+  
+  //Generate indices from 0,1,...,(nsamples-1)
+  Treedata::range(neworder_ics);
+  
+  //Join the target and index vector
+  Treedata::join_pairedv<num_t,size_t>(featurematrix_[targetidx_],neworder_ics,pairedv);
+  
+  //Sort the paired vector (indices will now define the new order)
+  sort(pairedv.begin(),pairedv.end(),datadefs::ordering<size_t>());
+  
+  vector<num_t> foo(nsamples_);
+  //Separate the target vector and new order
+  Treedata::separate_pairedv<num_t,size_t>(pairedv,foo,neworder_ics);      
 
   //Use the new order to sort the sample headers
   Treedata::sort_from_ref<string>(sampleheaders_,neworder_ics);
   
-  //Sort categorical and numerical data as well
-  for(size_t i = 0; i < ncatfeatures_; ++i)
+  //Sort the other features
+  for(size_t i = 0; i < nfeatures_; ++i)
     {
-      Treedata::sort_from_ref<cat_t>(catmatrix_[i],neworder_ics);
-    }
-  for(size_t i = 0; i < nnumfeatures_; ++i)
-    {
-      Treedata::sort_from_ref<num_t>(nummatrix_[i],neworder_ics);
+      Treedata::sort_from_ref<num_t>(featurematrix_[i],neworder_ics);
     }
 
 }

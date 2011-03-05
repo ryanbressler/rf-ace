@@ -59,11 +59,11 @@ private:
 
   bool istarget_;
   size_t targetidx_;
-  size_t internaltargetidx_;
-  bool isnumtarget_;
+  //size_t internaltargetidx_;
+  //bool isnumtarget_;
 
-  vector<vector<cat_t> > catmatrix_;
-  vector<vector<num_t> > nummatrix_;
+  //vector<vector<cat_t> > catmatrix_;
+  vector<vector<num_t> > featurematrix_;
 
   size_t nsamples_;
   size_t nfeatures_;
@@ -71,13 +71,14 @@ private:
   size_t ncatfeatures_;
   size_t nnumfeatures_;
 
-  vector<string> catfeatureheaders_;
-  vector<string> numfeatureheaders_;
+  vector<string> featureheaders_;
+  //vector<string> numfeatureheaders_;
 
-  vector<size_t> catfeatureics_;
-  vector<size_t> numfeatureics_;
+  //vector<size_t> catfeatureics_;
+  //vector<size_t> numfeatureics_;
 
   vector<string> sampleheaders_;
+  vector<bool> isnum_;
 
 };
 
