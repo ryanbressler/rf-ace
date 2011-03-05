@@ -8,7 +8,7 @@
 #include "treedata.hpp"
 
 using namespace std;
-using datadefs::cat_t;
+//using datadefs::cat_t;
 using datadefs::num_t;
 
 //This function will demonstrate the functionality of the current development stage of the rf-ace program. The function includes:
@@ -43,7 +43,7 @@ int main()
   node.set_splitter(splitter_num,threshold,node1,node2);
 
   int splitter_cat = 11;
-  set<cat_t> classet;
+  set<num_t> classet;
   classet.insert(1);
   classet.insert(2);
   classet.insert(4);

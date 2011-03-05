@@ -6,10 +6,11 @@
 #define TREEDATA_HPP
 
 #include<cstdlib>
+#include<map>
 #include "datadefs.hpp"
 
 using namespace std;
-using datadefs::cat_t;
+//using datadefs::cat_t;
 using datadefs::num_t;
 
 class Treedata 
@@ -47,23 +48,17 @@ private:
   template <typename T1,typename T2> void join_pairedv(vector<T1>& v1, vector<T2>& v2, vector<pair<T1,T2> >& p);
   template <typename T1,typename T2> void separate_pairedv(vector<pair<T1,T2> >& p, vector<T1>& v1, vector<T2>& v2);
 
-
   //Sorts a given input data vector of type T based on a given reference ordering of type vector<int>
   template <typename T> void sort_from_ref(vector<T>& in, vector<size_t> const& reference);
-
-  //Sorts a given input data vector of type T1 based on a given reference ordering of type vector<pair<int,T2> >
-  //template <typename T1, typename T2>
-  //void sort_from_ref(vector<T1>& in,vector<pair<int,T2> > const& reference);
 
   void transpose();
 
   bool istarget_;
   size_t targetidx_;
-  //size_t internaltargetidx_;
-  //bool isnumtarget_;
 
-  //vector<vector<cat_t> > catmatrix_;
   vector<vector<num_t> > featurematrix_;
+  vector<bool> isnum_;
+  vector<map<string,size_t> > datatransform_;
 
   size_t nsamples_;
   size_t nfeatures_;
@@ -72,13 +67,7 @@ private:
   size_t nnumfeatures_;
 
   vector<string> featureheaders_;
-  //vector<string> numfeatureheaders_;
-
-  //vector<size_t> catfeatureics_;
-  //vector<size_t> numfeatureics_;
-
   vector<string> sampleheaders_;
-  vector<bool> isnum_;
 
 };
 
