@@ -6,6 +6,7 @@
 #include<sstream>
 #include<utility>
 #include<algorithm>
+#include<ctime>
 
 using namespace std;
 
@@ -21,6 +22,10 @@ Treedata::Treedata(string fname, bool is_featurerows):
   nnumfeatures_(0),
   featureheaders_(0)
 {
+
+  time_t now;
+  time(&now);
+  srand((unsigned int)now);
 
   cout << "Treedata: reading matrix from file '" << fname << "'" << endl;
 
@@ -281,6 +286,41 @@ void Treedata::sort_all_wrt_target()
       Treedata::sort_from_ref<num_t>(featurematrix_[i],neworder_ics);
     }
 
+}
+
+void Treedata::permute(vector<size_t>& ics)
+{
+  size_t n = ics.size();
+  for (size_t i = 0; i < n; ++i)
+    {
+      size_t j = rand() % (i + 1);
+      ics[i] = ics[j];
+      ics[j] = i;
+    }
+}
+
+void Treedata::permute(vector<num_t>& data)
+{
+  size_t n = data.size();
+  vector<size_t> ics(n);
+  vector<num_t> foo = data;
+  Treedata::permute(ics);
+  for(size_t i = 0; i < n; ++i)
+    {
+      data[i] = foo[ics[i]];
+    }
+}
+
+void Treedata::bootstrap(vector<size_t>& ics, vector<size_t> const& allics, vector<size_t>& oob, size_t& noob)
+{
+  size_t n = ics.size();
+  for(size_t i = 0; i < n; ++i)
+    {
+      ics[i] = rand()%n;
+    }
+  sort(ics.begin(),ics.end());
+  vector<size_t>::iterator it = set_difference(allics.begin(),allics.end(),ics.begin(),ics.end(),oob.begin());
+  noob = distance(oob.begin(),it);
 }
 
 
