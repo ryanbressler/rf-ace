@@ -83,11 +83,6 @@ datadefs::num_t datadefs::str2num(string& str)
   return(ret);
 }
 
-//datadefs::num_t datadefs::cat2num(datadefs::cat_t value)
-//{
-//  return(float(value));
-//}
-
 bool datadefs::is_nan(string& str)
 {
   set<string>::iterator it(NANs.find(str));
@@ -98,5 +93,63 @@ bool datadefs::is_nan(string& str)
   else
     {
       return(true);
+    }
+}
+
+void datadefs::sqerr(vector<num_t> const& data, vector<size_t>::const_iterator it_begin, vector<size_t>::const_iterator it_end, num_t& mu, num_t& se)
+{
+  se = 0.0;
+  mu = data[*it_begin];
+  int n = distance(it_begin,it_end);
+
+  for(vector<size_t>::const_iterator it = it_begin+1; it != it_end; ++it)
+    {
+      mu += data[*it];
+    }
+  mu /= n;
+  for(vector<size_t>::const_iterator it = it_begin; it != it_end; ++it)
+    {
+      se += pow(data[*it] - mu,2);
+    }
+  //se /= n;
+}
+
+//Assuming x_n is a current member of the "right" branch, subtract it from "right" and add it to "left", and update the branch data counts, means, and squared errors.
+void datadefs::update_sqerr(const num_t x_n,
+			    const size_t n_left,
+			    num_t& mu_left,
+			    num_t& se_left,
+			    const size_t n_right,
+			    num_t& mu_right,
+			    num_t& se_right,
+			    num_t& mu_old)
+{
+
+  //Subtract x_n from "right" and update mean and squared error
+  mu_old = mu_right;
+  mu_right -= (x_n - mu_right) / n_right;
+
+  //As long as there are at least two data points on the "right" branch, squared error can be calculated, otherwise assign se_right := 0.0
+  if(n_right > 1)
+    {
+      se_right -= (x_n - mu_right) * (x_n - mu_old);
+    }
+  else
+    {
+      se_right = 0.0;
+    }
+
+  //Add x_n to "left" and update mean and squared error
+  mu_old = mu_left;
+  mu_left += (x_n - mu_left) / n_left;
+
+  //If there are already at least two data points on the "left" branch, squared error can be calculated, otherwise assign se_left := 0.0
+  if(n_left > 1)
+    {
+      se_left += (x_n - mu_left) * (x_n - mu_old);
+    }
+  else
+    {
+      se_left = 0.0;
     }
 }

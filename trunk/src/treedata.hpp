@@ -23,6 +23,10 @@ public:
   size_t nfeatures();
   size_t nsamples();
 
+  void permute(vector<size_t>& ics);
+  void permute(vector<num_t>& x);
+  void bootstrap(vector<size_t>& ics, vector<size_t> const& allics, vector<size_t>& oob, size_t& noob);
+
   void select_target(size_t targetidx);
 
   void sort_all_wrt_feature(size_t featureidx);
