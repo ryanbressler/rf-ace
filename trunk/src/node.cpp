@@ -17,7 +17,7 @@ Node::~Node()
   rightchild_ = NULL;
 }
 
-void Node::set_splitter(int splitter, set<cat_t> classet, Node& leftchild, Node& rightchild)
+void Node::set_splitter(int splitter, set<num_t> classet, Node& leftchild, Node& rightchild)
 {
   assert(!haschildren_);
   
@@ -52,39 +52,18 @@ int Node::get_splitter()
   return(splitter_);
 }
 
-Node* Node::percolate(cat_t value)
-{
-
-  if(!haschildren_)
-    {
-      return(this);
-    }
-
-  if(classet_.find(value) != classet_.end()) 
-    {
-      return(leftchild_);
-    } 
-  else 
-    {
-      return(rightchild_);
-    }
-}
-
 Node* Node::percolate(num_t value)
 {
-  
-  if(!haschildren_)
-    {
-      return(this);
-    }
 
-  if(value <= threshold_) 
+  if(!haschildren_) { return(this); }
+
+  if(isnum_)
     {
-      return(leftchild_);
-    } 
-  else 
+      if(value <= threshold_) { return(leftchild_); } else { return(rightchild_); }
+    }
+  else
     {
-      return(rightchild_);
+      if(classet_.find(value) != classet_.end()) { return(leftchild_); } else { return(rightchild_); }
     }
 }
 
@@ -129,7 +108,7 @@ void Node::print()
       else
 	{
 	  cout << "-Feature value x in {" << *classet_.begin();
-	  for(set<cat_t>::const_iterator it = ++classet_.begin(); it != classet_.end(); ++it)
+	  for(set<num_t>::const_iterator it = ++classet_.begin(); it != classet_.end(); ++it)
 	    {
 	      cout << "," << *it;
 	    }

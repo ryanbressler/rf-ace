@@ -13,6 +13,8 @@ Treedata::Treedata(string fname, bool is_featurerows):
   istarget_(false),
   targetidx_(0),
   featurematrix_(0),
+  isnum_(0),
+  datatransform_(0),
   nsamples_(0),
   nfeatures_(0),
   ncatfeatures_(0),
@@ -141,9 +143,19 @@ Treedata::Treedata(string fname, bool is_featurerows):
   //Transform raw data to the internal format.
   for(size_t i = 0; i < nfeatures_; ++i)
     {
-      vector<num_t> foo(nsamples_);
-      datadefs::strv2numv(rawmatrix[i],foo);
-      featurematrix_.push_back(foo);
+      vector<num_t> featurev(nsamples_);
+      map<string,size_t> str2valmap;
+      if(isnum_[i])
+	{
+	  datadefs::strv2numv(rawmatrix[i],featurev);
+	  //featurematrix_.push_back(featurev);
+	}
+      else
+	{
+	  datadefs::strv2catv(rawmatrix[i],featurev,str2valmap);
+	}
+      featurematrix_.push_back(featurev);
+      datatransform_.push_back(str2valmap);
     } 
 }
 
@@ -228,6 +240,7 @@ void Treedata::select_target(size_t targetidx)
   istarget_ = true;
 
   Treedata::sort_all_wrt_target();
+
 }
 
 void Treedata::sort_all_wrt_feature(size_t featureidx)
