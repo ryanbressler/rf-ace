@@ -20,30 +20,49 @@ public:
   Treedata(string fname, bool is_featurerows);
   ~Treedata();
 
+  //Returns the number of features
   size_t nfeatures();
+
+  //Returns the number of samples
   size_t nsamples();
 
+  //Permutes integers in range 0,1,...,(ics.size()-1). 
+  //NOTE: original contents in ics will be replaced.  
   void permute(vector<size_t>& ics);
-  void permute(vector<num_t>& x);
-  void bootstrap(vector<size_t>& ics, vector<size_t> const& allics, vector<size_t>& oob, size_t& noob);
 
+  //Permutes data in x.
+  void permute(vector<num_t>& x);
+
+  //Generates a bootstrap sample. Samples not in the bootstrap sample will be stored in oob_ics, 
+  //and the number of oob samples is stored in noob. 
+  void bootstrap(vector<size_t>& ics, vector<size_t>& oob_ics, size_t& noob);
+
+  //Selects target feature. 
+  //NOTE: data will be sorted with respect to the target.
   void select_target(size_t targetidx);
 
+  //Sorts data with respect to a given feature.
   void sort_all_wrt_feature(size_t featureidx);
   
+  //Sorts dat awith respect to target.
   void sort_all_wrt_target();
   
+  //Given feature, finds and returns the optimal split point.
+  //**IMPLEMENTATION NOT READY**
   void find_split(size_t featureidx, 
 		  vector<size_t>& sampleics, 
 		  size_t& split_pos, 
 		  num_t& impurity_left, 
 		  num_t& impurity_right);
   
+  //Performs split at given split point.
+  //**IMPLEMENTATION NOT READY**
   void split_at_pos(size_t featureidx,
 		    vector<size_t>& sampleics,
 		    num_t& impurity_left,
 		    num_t& impurity_right);
   
+  //Prints contents in Treedata
   void print();
 
 private:
