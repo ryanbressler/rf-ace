@@ -75,9 +75,29 @@ int main()
   
   for(size_t targetidx = 0; targetidx < treedata.nfeatures(); ++targetidx)
     {
-      cout << endl << "Target idx is " << targetidx << ". Sorting:" << endl;
+      cout << endl << "Target idx is " << targetidx << ". Sorted wrt. target:" << endl;
       treedata.select_target(targetidx);
       treedata.print();
+    }
+
+  vector<size_t> bootstrap_ics(treedata.nsamples());
+  vector<size_t> oob_ics(treedata.nsamples());
+  size_t noob(0);
+  cout << endl << "Bootstrap 10 times and list in-box and out-of-box samples:" << endl;
+  for(size_t i = 0; i < treedata.nsamples(); ++i)
+    {
+      treedata.bootstrap(bootstrap_ics,oob_ics,noob);
+      cout << "in-box:";
+      for(size_t j = 0; j < treedata.nsamples(); ++j)
+	{
+	  cout << " " << bootstrap_ics[j]; 
+	}
+      cout << " ==> out-of-box ( " << noob << " ):";
+      for(size_t j = 0; j < noob; ++j)
+	{
+	  cout << " " << oob_ics[j];
+	}
+      cout << endl;
     }
 
   return(EXIT_SUCCESS);
