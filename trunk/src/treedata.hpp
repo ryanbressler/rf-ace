@@ -46,8 +46,15 @@ public:
   
   //Sorts dat awith respect to target.
   void sort_all_wrt_target();
+
+  //Given feature, finds and returns the optimal split point wrt. all samples.
+  //**IMPLEMENTATION NOT READY**
+  void find_split(size_t featureidx,
+                  size_t& split_pos,
+                  num_t& impurity_left,
+                  num_t& impurity_right);
   
-  //Given feature, finds and returns the optimal split point.
+  //Given feature, finds and returns the optimal split point wrt. all sampleics.
   //**IMPLEMENTATION NOT READY**
   void find_split(size_t featureidx, 
 		  vector<size_t>& sampleics, 
@@ -78,7 +85,7 @@ private:
 							   vector<T2>& v2);
 
   //Sorts a given input data vector of type T based on a given reference ordering of type vector<int>
-  template <typename T> void sort_from_ref(vector<T>& in, vector<size_t> const& reference);
+  template <typename T> void sort_from_ref(vector<T>& in, vector<size_t> const& ref_ics);
 
   bool istarget_;
   size_t targetidx_;

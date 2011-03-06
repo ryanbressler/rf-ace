@@ -96,6 +96,17 @@ bool datadefs::is_nan(string& str)
     }
 }
 
+bool datadefs::is_nan(datadefs::num_t value)
+{
+  if(value != value)
+    {
+      return(true);
+    }
+  else
+    {
+      return(false);
+    }
+}
 
 void datadefs::sqerr(vector<datadefs::num_t> const& data, 
 		     vector<size_t> const& ics,
@@ -106,13 +117,21 @@ void datadefs::sqerr(vector<datadefs::num_t> const& data,
   
   
   se = 0.0;
-  mu = data[ics[0]];
-  n = 0;
+  if(datadefs::is_nan(data[ics[0]]))
+    {
+      mu = 0.0;
+      n = 0;
+    }
+  else
+    {
+      mu = data[ics[0]];
+      n = 1;
+    }
   size_t ntot = ics.size();
   
   for(size_t i = 0; i < ntot; ++i)
     {
-      if(!(data[ics[i]] != data[ics[i]]))
+      if(!datadefs::is_nan(data[ics[i]]))
 	{
 	  ++n;
 	  mu += data[ics[i]];
@@ -124,7 +143,7 @@ void datadefs::sqerr(vector<datadefs::num_t> const& data,
   //This should be computed iteratively inside the previous loop!
   for(size_t i = 0; i < ntot; ++i)
     {
-      if(!(data[ics[i]] != data[ics[i]]))
+      if(!datadefs::is_nan(data[ics[i]]))
 	{
 	  se += pow(data[ics[i]] - mu,2);
 	}
@@ -132,7 +151,7 @@ void datadefs::sqerr(vector<datadefs::num_t> const& data,
 }
 
 
-//Assuming x_n is a current member of the "right" branch, subtract it from "right" and add it to "left", and update the branch data counts, means, and squared errors.
+//Assuming x_n is a current member of the "right" branch, subtract it from "right" and add it to "left", and update the branch data counts, means, and squared errors. NOTE: NaN checks not implemented
 void datadefs::update_sqerr(const datadefs::num_t x_n,
 			    const size_t n_left,
 			    datadefs::num_t& mu_left,

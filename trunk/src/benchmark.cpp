@@ -100,5 +100,14 @@ int main()
       cout << endl;
     }
 
+  cout << endl << "Computing feature impurities:" << endl;
+  for(size_t i = 0; i < treedata.nfeatures(); ++i)
+    {
+      size_t split_pos(0);
+      num_t impurity_left,impurity_right;
+      treedata.find_split(i,split_pos,impurity_left,impurity_right);
+    }
+
+
   return(EXIT_SUCCESS);
 }
