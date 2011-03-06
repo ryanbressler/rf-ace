@@ -29,7 +29,7 @@ namespace datadefs
   num_t str2num(string& str);
 
   bool is_nan(string& str);
-
+  bool is_nan(num_t value);
   
   void sqerr(vector<num_t> const& data, 
 	     vector<size_t> const& ics,

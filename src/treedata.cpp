@@ -235,14 +235,14 @@ void Treedata::separate_pairedv(vector<pair<T1,T2> > const& p, vector<T1>& v1, v
 }
 
 template <typename T>
-void Treedata::sort_from_ref(vector<T>& in, vector<size_t> const& reference)
+void Treedata::sort_from_ref(vector<T>& in, vector<size_t> const& ref_ics)
 {
   vector<T> foo = in;
   
   int n = in.size();
   for (int i = 0; i < n; ++i)
     {
-      in[i] = foo[reference[i]];
+      in[i] = foo[ref_ics[i]];
     }
 }
 
@@ -318,7 +318,7 @@ void Treedata::permute(vector<num_t>& data)
     }
 }
 
-void Treedata::bootstrap(vector<size_t>& ics, vector<size_t>& oob, size_t& noob)
+void Treedata::bootstrap(vector<size_t>& ics, vector<size_t>& oob_ics, size_t& noob)
 {
 
   for(size_t i = 0; i < nsamples_; ++i)
@@ -328,8 +328,16 @@ void Treedata::bootstrap(vector<size_t>& ics, vector<size_t>& oob, size_t& noob)
   sort(ics.begin(),ics.end());
   vector<size_t> allics(nsamples_);
   Treedata::range(allics);
-  vector<size_t>::iterator it = set_difference(allics.begin(),allics.end(),ics.begin(),ics.end(),oob.begin());
-  noob = distance(oob.begin(),it);
+  vector<size_t>::iterator it = set_difference(allics.begin(),allics.end(),ics.begin(),ics.end(),oob_ics.begin());
+  noob = distance(oob_ics.begin(),it);
+}
+
+void Treedata::find_split(size_t featureidx,
+                          size_t& split_pos,
+                          num_t& impurity_left,
+                          num_t& impurity_right)
+{
+  Treedata::find_split(featureidx,allics_,split_pos,impurity_left,impurity_right);
 }
 
 void Treedata::find_split(size_t featureidx,
@@ -343,7 +351,7 @@ void Treedata::find_split(size_t featureidx,
   num_t mu,se;
 
   datadefs::sqerr(featurematrix_[featureidx],sampleics,n,mu,se);
-
+  cout << "feature idx " << featureidx << " squared error: mu = " << mu << "\tsq.err. = " << se << endl;
 }
 
 void Treedata::split_at_pos(size_t featureidx,
