@@ -323,11 +323,30 @@ void Treedata::bootstrap(vector<size_t>& ics, vector<size_t> const& allics, vect
   noob = distance(oob.begin(),it);
 }
 
-
-void Treedata::transpose()
+void Treedata::find_split(size_t featureidx,
+			  vector<size_t>& sampleics,
+			  size_t& split_pos,
+			  num_t& impurity_left,
+			  num_t& impurity_right)
 {
-  
+
+  size_t n;
+  num_t mu,se;
+
+  datadefs::sqerr(featurematrix_[featureidx],sampleics,n,mu,se);
+
 }
+
+void Treedata::split_at_pos(size_t featureidx,
+			    vector<size_t>& sampleics,
+			    num_t& impurity_left,
+			    num_t& impurity_right)
+{
+
+}
+
+
+
 
 
 
