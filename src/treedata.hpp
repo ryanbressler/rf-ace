@@ -33,16 +33,16 @@ public:
   
   void sort_all_wrt_target();
   
-  void find_split(int featureidx, 
-		  vector<size_t> sampleics, 
+  void find_split(size_t featureidx, 
+		  vector<size_t>& sampleics, 
 		  size_t& split_pos, 
 		  num_t& impurity_left, 
-		  num_t& impurity_right) {/*LACKS IMPLEMENTATION*/};
+		  num_t& impurity_right);
   
-  void split_at_pos(int featureidx,
-		    vector<size_t> sampleics,
+  void split_at_pos(size_t featureidx,
+		    vector<size_t>& sampleics,
 		    num_t& impurity_left,
-		    num_t& impurity_right) {/*LACKS IMPLEMENTATION*/};
+		    num_t& impurity_right);
   
   void print();
 

@@ -30,12 +30,15 @@ namespace datadefs
 
   bool is_nan(string& str);
 
+  
   void sqerr(vector<num_t> const& data, 
-	     vector<size_t>::const_iterator it_begin, 
-	     vector<size_t>::const_iterator it_end, 
+	     vector<size_t> const& ics,
+	     size_t& n,
 	     num_t& mu, 
 	     num_t& se);
-
+  
+      
+  
   void update_sqerr(const num_t x_n,
 		    const size_t n_left,
 		    num_t& mu_left,

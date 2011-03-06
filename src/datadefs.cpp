@@ -96,35 +96,53 @@ bool datadefs::is_nan(string& str)
     }
 }
 
-void datadefs::sqerr(vector<num_t> const& data, vector<size_t>::const_iterator it_begin, vector<size_t>::const_iterator it_end, num_t& mu, num_t& se)
-{
-  se = 0.0;
-  mu = data[*it_begin];
-  int n = distance(it_begin,it_end);
 
-  for(vector<size_t>::const_iterator it = it_begin+1; it != it_end; ++it)
+void datadefs::sqerr(vector<datadefs::num_t> const& data, 
+		     vector<size_t> const& ics,
+		     size_t& n,
+		     datadefs::num_t& mu, 
+		     datadefs::num_t& se)
+{
+  
+  
+  se = 0.0;
+  mu = data[ics[0]];
+  n = 0;
+  size_t ntot = ics.size();
+  
+  for(size_t i = 0; i < ntot; ++i)
     {
-      mu += data[*it];
+      if(!(data[ics[i]] != data[ics[i]]))
+	{
+	  ++n;
+	  mu += data[ics[i]];
+	}
     }
+  
   mu /= n;
-  for(vector<size_t>::const_iterator it = it_begin; it != it_end; ++it)
+  
+  //This should be computed iteratively inside the previous loop!
+  for(size_t i = 0; i < ntot; ++i)
     {
-      se += pow(data[*it] - mu,2);
+      if(!(data[ics[i]] != data[ics[i]]))
+	{
+	  se += pow(data[ics[i]] - mu,2);
+	}
     }
-  //se /= n;
 }
 
-//Assuming x_n is a current member of the "right" branch, subtract it from "right" and add it to "left", and update the branch data counts, means, and squared errors.
-void datadefs::update_sqerr(const num_t x_n,
-			    const size_t n_left,
-			    num_t& mu_left,
-			    num_t& se_left,
-			    const size_t n_right,
-			    num_t& mu_right,
-			    num_t& se_right,
-			    num_t& mu_old)
-{
 
+//Assuming x_n is a current member of the "right" branch, subtract it from "right" and add it to "left", and update the branch data counts, means, and squared errors.
+void datadefs::update_sqerr(const datadefs::num_t x_n,
+			    const size_t n_left,
+			    datadefs::num_t& mu_left,
+			    datadefs::num_t& se_left,
+			    const size_t n_right,
+			    datadefs::num_t& mu_right,
+			    datadefs::num_t& se_right,
+			    datadefs::num_t& mu_old)
+{
+  
   //Subtract x_n from "right" and update mean and squared error
   mu_old = mu_right;
   mu_right -= (x_n - mu_right) / n_right;
