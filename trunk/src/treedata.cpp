@@ -257,7 +257,33 @@ void Treedata::select_target(size_t targetidx)
 
 void Treedata::sort_all_wrt_feature(size_t featureidx)
 {
-  assert(istarget_);
+  //Generate and index vector that'll define the new order
+  vector<size_t> neworder_ics(nsamples_);
+
+  //Generate a paired vector with which sorting will be performed
+  vector<pair<num_t,size_t> > pairedv(nsamples_);
+
+  //Generate indices from 0,1,...,(nsamples-1)
+  Treedata::range(neworder_ics);
+
+  //Join the target and index vector
+  Treedata::join_pairedv<num_t,size_t>(featurematrix_[featureidx],neworder_ics,pairedv);
+
+  //Sort the paired vector (indices will now define the new order)
+  sort(pairedv.begin(),pairedv.end(),datadefs::ordering<size_t>());
+
+  vector<num_t> foo(nsamples_);
+  //Separate the target vector and new order
+  Treedata::separate_pairedv<num_t,size_t>(pairedv,foo,neworder_ics);
+
+  //Use the new order to sort the sample headers
+  Treedata::sort_from_ref<string>(sampleheaders_,neworder_ics);
+
+  //Sort the other features as well
+  for(size_t i = 0; i < nfeatures_; ++i)
+    {
+      Treedata::sort_from_ref<num_t>(featurematrix_[i],neworder_ics);
+    }
 }
 
 void Treedata::sort_all_wrt_target()
@@ -265,34 +291,8 @@ void Treedata::sort_all_wrt_target()
   //Check that a target has been set
   assert(istarget_);
 
-  //Generate and index vector that'll define the new order
-  vector<size_t> neworder_ics(nsamples_);
-  
-  //Generate a paired vector with which sorting will be performed
-  vector<pair<num_t,size_t> > pairedv(nsamples_);
-  
-  //Generate indices from 0,1,...,(nsamples-1)
-  Treedata::range(neworder_ics);
-  
-  //Join the target and index vector
-  Treedata::join_pairedv<num_t,size_t>(featurematrix_[targetidx_],neworder_ics,pairedv);
-  
-  //Sort the paired vector (indices will now define the new order)
-  sort(pairedv.begin(),pairedv.end(),datadefs::ordering<size_t>());
-  
-  vector<num_t> foo(nsamples_);
-  //Separate the target vector and new order
-  Treedata::separate_pairedv<num_t,size_t>(pairedv,foo,neworder_ics);      
-
-  //Use the new order to sort the sample headers
-  Treedata::sort_from_ref<string>(sampleheaders_,neworder_ics);
-  
-  //Sort the other features
-  for(size_t i = 0; i < nfeatures_; ++i)
-    {
-      Treedata::sort_from_ref<num_t>(featurematrix_[i],neworder_ics);
-    }
-
+  //Apply sorting
+  Treedata::sort_all_wrt_feature(targetidx_);
 }
 
 void Treedata::permute(vector<size_t>& ics)
