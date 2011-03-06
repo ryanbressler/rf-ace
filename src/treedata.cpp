@@ -311,14 +311,16 @@ void Treedata::permute(vector<num_t>& data)
     }
 }
 
-void Treedata::bootstrap(vector<size_t>& ics, vector<size_t> const& allics, vector<size_t>& oob, size_t& noob)
+void Treedata::bootstrap(vector<size_t>& ics, vector<size_t>& oob, size_t& noob)
 {
-  size_t n = ics.size();
-  for(size_t i = 0; i < n; ++i)
+
+  for(size_t i = 0; i < nsamples_; ++i)
     {
-      ics[i] = rand()%n;
+      ics[i] = rand() % nsamples_;
     }
   sort(ics.begin(),ics.end());
+  vector<size_t> allics(nsamples_);
+  Treedata::range(allics);
   vector<size_t>::iterator it = set_difference(allics.begin(),allics.end(),ics.begin(),ics.end(),oob.begin());
   noob = distance(oob.begin(),it);
 }
