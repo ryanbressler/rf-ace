@@ -18,11 +18,13 @@ Treedata::Treedata(string fname, bool is_featurerows):
   datatransform_(0),
   nsamples_(0),
   nfeatures_(0),
+  allics_(0),
   ncatfeatures_(0),
   nnumfeatures_(0),
   featureheaders_(0)
 {
 
+  //Initialize random number rgenerator
   time_t now;
   time(&now);
   srand((unsigned int)now);
@@ -145,6 +147,11 @@ Treedata::Treedata(string fname, bool is_featurerows):
       assert(false);
     }
 
+  //Store indices 0,1,...,(nsamples_-1) to allics_ 
+  vector<size_t> foo(nsamples_);
+  Treedata::range(foo);
+  allics_ = foo;
+
   //Transform raw data to the internal format.
   for(size_t i = 0; i < nfeatures_; ++i)
     {
@@ -207,7 +214,7 @@ void Treedata::range(vector<size_t>& ics)
 }
 
 template <typename T1,typename T2> 
-void Treedata::join_pairedv(vector<T1>& v1, vector<T2>& v2, vector<pair<T1,T2> >& p)
+void Treedata::join_pairedv(vector<T1> const& v1, vector<T2> const& v2, vector<pair<T1,T2> >& p)
 {
   assert(v1.size() == v2.size() && v2.size() == p.size() && p.size() == nsamples_);
   for(size_t i = 0; i < nsamples_; ++i)
@@ -217,7 +224,7 @@ void Treedata::join_pairedv(vector<T1>& v1, vector<T2>& v2, vector<pair<T1,T2> >
 }
 
 template <typename T1,typename T2> 
-void Treedata::separate_pairedv(vector<pair<T1,T2> >& p, vector<T1>& v1, vector<T2>& v2)
+void Treedata::separate_pairedv(vector<pair<T1,T2> > const& p, vector<T1>& v1, vector<T2>& v2)
 {
   assert(v1.size() == v2.size() && v2.size() == p.size() && p.size() == nsamples_);
   for(size_t i = 0; i < nsamples_; ++i)

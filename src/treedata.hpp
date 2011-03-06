@@ -68,23 +68,29 @@ public:
 private:
 
   void range(vector<size_t>& ics);
-  template <typename T1,typename T2> void join_pairedv(vector<T1>& v1, vector<T2>& v2, vector<pair<T1,T2> >& p);
-  template <typename T1,typename T2> void separate_pairedv(vector<pair<T1,T2> >& p, vector<T1>& v1, vector<T2>& v2);
+  
+  template <typename T1,typename T2> void join_pairedv(vector<T1> const& v1, 
+						       vector<T2> const& v2, 
+						       vector<pair<T1,T2> >& p);
+
+  template <typename T1,typename T2> void separate_pairedv(vector<pair<T1,T2> > const& p, 
+							   vector<T1>& v1, 
+							   vector<T2>& v2);
 
   //Sorts a given input data vector of type T based on a given reference ordering of type vector<int>
   template <typename T> void sort_from_ref(vector<T>& in, vector<size_t> const& reference);
-
-  void transpose();
 
   bool istarget_;
   size_t targetidx_;
 
   vector<vector<num_t> > featurematrix_;
   vector<bool> isnum_;
-  vector<map<string,size_t> > datatransform_;
+  vector<map<string,size_t> > datatransform_; //This is saved for bookkeeping purposes only. 
 
   size_t nsamples_;
   size_t nfeatures_;
+
+  vector<size_t> allics_; //Indices 0,1,...,(nsamples_-1)
 
   size_t ncatfeatures_;
   size_t nnumfeatures_;
