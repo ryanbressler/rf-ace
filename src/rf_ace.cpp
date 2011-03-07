@@ -1,11 +1,25 @@
 #include<cstdlib>
 #include "randomforest.hpp"
-#include "gradientforest.hpp"
-#include "datadefs.hpp"
+//#include "datadefs.hpp"
+#include "treedata.hpp"
 
 using namespace std;
 
 int main()
 {
+  //FIRST PART: read data into Treedata class (features are rows)
+  bool is_featurerows = true;
+  string fname = "data/test_6by10_featurerows_matrix.tsv";
+  Treedata treedata(fname,is_featurerows);
+  
+  //SECOND PART: construct a Random Forest object
+  size_t ntrees(1);
+  size_t mtry(3);
+  size_t nodesize(2);
+  Randomforest RF(&treedata,ntrees,mtry,nodesize);
+  
+
+
+
   return(EXIT_SUCCESS);
 }
