@@ -19,19 +19,41 @@ Randomforest::Randomforest(Treedata* treedata, size_t ntrees, size_t mtry, size_
   
   //Reserve memory for one tree
   vector<Node> tree(nmaxnodes);
+ 
+  //Reserve memory for nnodes
+  vector<size_t> nnodes(ntrees_);
+  nnodes_ = nnodes;
 
   //Reserve memory for the whole forest
   vector<vector<Node> > forest(ntrees_);
-  treemap_ = forest;
+  forest_ = forest;
   for(size_t i = 0; i < ntrees_; ++i)
     {
-      treemap_[i] = tree;
+      forest_[i] = tree;
+      
     }
 
-  cout << "Forest initialized. " << treemap_.size() << " trees and " << nmaxnodes << " max nodes per tree generated." << endl;
+  cout << "Forest initialized. " << forest_.size() << " trees and " 
+       << nmaxnodes << " max nodes per tree generated." << endl;
+
+  Randomforest::grow_forest();
+
 }
 
 Randomforest::~Randomforest()
 {
-  
+
+}
+
+void Randomforest::grow_forest()
+{
+  for(size_t i = 0; i < ntrees_; ++i)
+    {
+      Randomforest::grow_tree(i);
+    }
+}
+
+void Randomforest::grow_tree(size_t treeidx)
+{
+  forest_[treeidx][0].print();
 }
