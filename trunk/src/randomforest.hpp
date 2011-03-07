@@ -18,11 +18,7 @@ private:
 
   void grow_forest();
   void grow_tree(size_t treeidx);
-  void recursive_nodesplit(size_t treeidx, 
-			   size_t nodeidx, 
-			   vector<size_t> const& sampleics, 
-			   Node& leftchild, 
-			   Node& rightchild);
+  void recursive_nodesplit(size_t treeidx, size_t nodeidx, vector<size_t> const& sampleics);
 
   Treedata* treedata_;
 
