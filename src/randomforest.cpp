@@ -57,3 +57,10 @@ void Randomforest::grow_tree(size_t treeidx)
 {
   forest_[treeidx][0].print();
 }
+
+void recursive_nodesplit(size_t treeidx, size_t nodeidx, vector<size_t> const& sampleics)
+{
+
+  
+
+}
