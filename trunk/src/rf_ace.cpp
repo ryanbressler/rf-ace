@@ -13,9 +13,9 @@ int main()
   Treedata treedata(fname,is_featurerows);
   
   //SECOND PART: construct a Random Forest object
-  size_t ntrees(1);
+  size_t ntrees(500);
   size_t mtry(3);
-  size_t nodesize(2);
+  size_t nodesize(1);
   Randomforest RF(&treedata,ntrees,mtry,nodesize);
   
 

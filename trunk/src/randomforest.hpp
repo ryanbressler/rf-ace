@@ -17,6 +17,9 @@ private:
 
   Treedata* treedata_;
 
+  vector<vector<Node> > treemap_; //treemap_[i][j] is the j'th node of i'th tree. treemap_[i][0] is the rootnode.
+  vector<size_t> nnodes_; //Number of used nodes in each tree.
+  
   size_t ntrees_;
   size_t mtry_;
   size_t nodesize_;
