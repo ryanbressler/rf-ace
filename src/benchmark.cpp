@@ -75,7 +75,7 @@ int main()
   
   for(size_t targetidx = 0; targetidx < treedata.nfeatures(); ++targetidx)
     {
-      cout << endl << "Target idx is " << targetidx << ". Sorted wrt. target:" << endl;
+      cout << endl << "Treedata::select_target(" << targetidx << ") (performs sorting wrt. target):" << endl;
       treedata.select_target(targetidx);
       treedata.print();
     }
@@ -83,7 +83,7 @@ int main()
   vector<size_t> bootstrap_ics(treedata.nsamples());
   vector<size_t> oob_ics(treedata.nsamples());
   size_t noob(0);
-  cout << endl << "Bootstrap 10 times and list in-box and out-of-box samples:" << endl;
+  cout << endl << "Treedata::bootstrap() Bootstrap 10 times and list in-box and out-of-box samples:" << endl;
   for(size_t i = 0; i < treedata.nsamples(); ++i)
     {
       treedata.bootstrap(bootstrap_ics,oob_ics,noob);
