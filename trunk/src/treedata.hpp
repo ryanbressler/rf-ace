@@ -37,6 +37,9 @@ public:
   //and the number of oob samples is stored in noob. 
   void bootstrap(vector<size_t>& ics, vector<size_t>& oob_ics, size_t& noob);
 
+  //Samples features
+  void sample_features(size_t nfeatures, vector<size_t>& fsample);
+
   //Selects target feature. 
   //NOTE: data will be sorted with respect to the target.
   void select_target(size_t targetidx);
@@ -83,6 +86,7 @@ private:
   template <typename T1,typename T2> void separate_pairedv(vector<pair<T1,T2> > const& p, 
 							   vector<T1>& v1, 
 							   vector<T2>& v2);
+
 
   //Sorts a given input data vector of type T based on a given reference ordering of type vector<int>
   template <typename T> void sort_from_ref(vector<T>& in, vector<size_t> const& ref_ics);
