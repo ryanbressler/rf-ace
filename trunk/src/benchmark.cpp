@@ -100,12 +100,17 @@ int main()
       cout << endl;
     }
 
+
+  vector<size_t> sampleics(treedata.nsamples());
+  treedata.range(sampleics);
+  vector<size_t> sampleics_left = sampleics;
+  vector<size_t> sampleics_right = sampleics;
   cout << endl << "Computing feature impurities:" << endl;
   for(size_t i = 0; i < treedata.nfeatures(); ++i)
     {
-      size_t split_pos(0);
-      num_t impurity_left,impurity_right;
-      treedata.find_split(i,split_pos,impurity_left,impurity_right);
+      num_t impurity,impurity_left,impurity_right;
+      size_t n_left,n_right;
+      treedata.find_split(i,sampleics,sampleics_left,sampleics_right,n_left,n_right,impurity,impurity_left,impurity_right);
     }
 
 

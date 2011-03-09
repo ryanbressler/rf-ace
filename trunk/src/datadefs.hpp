@@ -49,7 +49,6 @@ namespace datadefs
 		    num_t& mu_old);
 
 
-
   //A comparator functor that can be passed to STL::sort. Assumes that one is comparing first elements of pairs, first type being num_t and second T
   template <typename T> struct ordering {
     bool operator ()(pair<datadefs::num_t,T> const& a, pair<datadefs::num_t,T> const& b)
