@@ -350,8 +350,12 @@ void Treedata::find_split(size_t featureidx,
   size_t n;
   num_t mu,se;
 
+  
   datadefs::sqerr(featurematrix_[featureidx],sampleics,n,mu,se);
   cout << "feature idx " << featureidx << " squared error: mu = " << mu << "\tsq.err. = " << se << endl;
+
+  
+
 }
 
 void Treedata::split_at_pos(size_t featureidx,
