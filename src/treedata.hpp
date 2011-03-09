@@ -47,21 +47,25 @@ public:
   //Sorts data with respect to a given feature.
   void sort_all_wrt_feature(size_t featureidx);
   
-  //Sorts dat awith respect to target.
+  //Sorts data with respect to target.
   void sort_all_wrt_target();
 
   //Given feature, finds and returns the optimal split point wrt. all samples.
   //**IMPLEMENTATION NOT READY**
-  void find_split(size_t featureidx,
-                  size_t& split_pos,
-                  num_t& impurity_left,
-                  num_t& impurity_right);
+  //void find_split(size_t featureidx,
+  //               size_t& split_pos,
+  //               num_t& impurity_left,
+  //               num_t& impurity_right);
   
   //Given feature, finds and returns the optimal split point wrt. all sampleics.
   //**IMPLEMENTATION NOT READY**
   void find_split(size_t featureidx, 
-		  vector<size_t>& sampleics, 
-		  size_t& split_pos, 
+		  vector<size_t>& sampleics,
+		  vector<size_t>& sampleics_left,
+		  vector<size_t>& sampleics_right,
+		  size_t& n_left,
+		  size_t& n_right,
+		  num_t& impurity,
 		  num_t& impurity_left, 
 		  num_t& impurity_right);
   
@@ -75,11 +79,11 @@ public:
   //Prints contents in Treedata
   void print();
 
-private:
-
   void range(vector<size_t>& ics);
+
+private:
   
-  template <typename T1,typename T2> void join_pairedv(vector<T1> const& v1, 
+  template <typename T1,typename T2> void make_pairedv(vector<T1> const& v1, 
 						       vector<T2> const& v2, 
 						       vector<pair<T1,T2> >& p);
 
@@ -87,24 +91,21 @@ private:
 							   vector<T1>& v1, 
 							   vector<T2>& v2);
 
+  template <typename T> void sort_and_make_ref(vector<T>& v, vector<size_t>& ref_ics);
 
   //Sorts a given input data vector of type T based on a given reference ordering of type vector<int>
   template <typename T> void sort_from_ref(vector<T>& in, vector<size_t> const& ref_ics);
 
-  bool istarget_;
   size_t targetidx_;
 
   vector<vector<num_t> > featurematrix_;
-  vector<bool> isnum_;
-  vector<map<string,size_t> > datatransform_; //This is saved for bookkeeping purposes only. 
+  vector<bool> isfeaturenum_;
 
   size_t nsamples_;
   size_t nfeatures_;
 
-  vector<size_t> allics_; //Indices 0,1,...,(nsamples_-1)
-
-  size_t ncatfeatures_;
-  size_t nnumfeatures_;
+  vector<size_t> sampleics_; //Indices 0,1,...,(nsamples_-1)
+  vector<size_t> featureics_; //Indices 0,1,...,(nfeatures_-1)
 
   vector<string> featureheaders_;
   vector<string> sampleheaders_;
