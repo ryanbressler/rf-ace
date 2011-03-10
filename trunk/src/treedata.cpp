@@ -14,10 +14,9 @@ Treedata::Treedata(string fname, bool is_featurerows):
   targetidx_(0),
   featurematrix_(0),
   isfeaturenum_(0),
+  nrealvalues_(0),
   nsamples_(0),
   nfeatures_(0),
-  sampleics_(0),
-  featureics_(0),
   featureheaders_(0)
 {
 
@@ -142,16 +141,6 @@ Treedata::Treedata(string fname, bool is_featurerows):
       assert(false);
     }
 
-  //Store indices 0,1,...,(nsamples_-1) to sampleics_ 
-  vector<size_t> sampleics(nsamples_);
-  Treedata::range(sampleics);
-  sampleics_ = sampleics;
-
-  //Store indices 0,1,...,(nfeatures_-1) to featureics_;
-  vector<size_t> featureics(nfeatures_);
-  Treedata::range(featureics);
-  featureics_ = featureics;
-
   //Transform raw data to the internal format.
   for(size_t i = 0; i < nfeatures_; ++i)
     {
@@ -168,11 +157,19 @@ Treedata::Treedata(string fname, bool is_featurerows):
 	}
       featurematrix_.push_back(featurev);
     } 
-
+  
+  vector<size_t> nrealvalues(nfeatures_);
+  nrealvalues_ = nrealvalues;
+  
+  for(size_t featureidx = 0; featureidx < nfeatures_; ++featureidx)
+    {
+      Treedata::count_real_values(featureidx,nrealvalues_[featureidx]);
+      //cout << nrealvalues_[featureidx] << endl;
+    }
+  
   //By default, make the first feature the target
   targetidx_ = 0;
-  Treedata::select_target(targetidx_);
-  Treedata::sort_all_wrt_target();
+  Treedata::select_target(targetidx_); //This will also sort the data wrt targetidx_
 }
 
 Treedata::~Treedata()
@@ -208,11 +205,23 @@ void Treedata::print()
     }
 }
 
+void Treedata::count_real_values(size_t featureidx, size_t& nreal)
+{
+  nreal = 0;
+  for(size_t i = 0; i < nsamples_; ++i)
+    {
+      if(!datadefs::is_nan(featurematrix_[featureidx][i]))
+	{
+	  ++nreal;
+	}
+    }
+}
+
 template <typename T1,typename T2> 
 void Treedata::make_pairedv(vector<T1> const& v1, vector<T2> const& v2, vector<pair<T1,T2> >& p)
 {
-  assert(v1.size() == v2.size() && v2.size() == p.size() && p.size() == nsamples_);
-  for(size_t i = 0; i < nsamples_; ++i)
+  assert(v1.size() == v2.size() && v2.size() == p.size());
+  for(size_t i = 0; i < p.size(); ++i)
     {
       p[i] = make_pair(v1[i],v2[i]);
     }
@@ -221,8 +230,8 @@ void Treedata::make_pairedv(vector<T1> const& v1, vector<T2> const& v2, vector<p
 template <typename T1,typename T2> 
 void Treedata::separate_pairedv(vector<pair<T1,T2> > const& p, vector<T1>& v1, vector<T2>& v2)
 {
-  assert(v1.size() == v2.size() && v2.size() == p.size() && p.size() == nsamples_);
-  for(size_t i = 0; i < nsamples_; ++i)
+  assert(v1.size() == v2.size() && v2.size() == p.size());
+  for(size_t i = 0; i < p.size(); ++i)
     {
       v1[i] = p[i].first;
       v2[i] = p[i].second;
@@ -231,10 +240,12 @@ void Treedata::separate_pairedv(vector<pair<T1,T2> > const& p, vector<T1>& v1, v
 
 template <typename T> void Treedata::sort_and_make_ref(vector<T>& v, vector<size_t>& ref_ics)
 {
+  assert(v.size() == ref_ics.size());
   
   //Make a paired vector of v and ref_ics
   vector<pair<T,size_t> > pairedv(ref_ics.size());
-  ref_ics = sampleics_;
+  
+  Treedata::range(ref_ics);
   Treedata::make_pairedv<T,size_t>(v,ref_ics,pairedv);
   
   //Sort the paired vector with respect to the first element
@@ -248,6 +259,8 @@ template <typename T> void Treedata::sort_and_make_ref(vector<T>& v, vector<size
 template <typename T>
 void Treedata::sort_from_ref(vector<T>& in, vector<size_t> const& ref_ics)
 {
+  assert(in.size() == ref_ics.size());
+  
   vector<T> foo = in;
   
   int n = in.size();
@@ -263,21 +276,41 @@ void Treedata::select_target(size_t targetidx)
   Treedata::sort_all_wrt_target();
 }
 
+size_t Treedata::get_target()
+{
+  return(targetidx_);
+}
+
+size_t Treedata::nrealvalues()
+{
+  return(nrealvalues_[targetidx_]);
+}
+
+size_t Treedata::nrealvalues(size_t featureidx)
+{
+  return(nrealvalues_[featureidx]);
+}
+
 void Treedata::sort_all_wrt_feature(size_t featureidx)
 {
+  assert(featureidx < nfeatures_);
+
   //Generate and index vector that'll define the new order
   vector<size_t> ref_ics(nsamples_);
   
   //Make a dummy variable so that the original feature matrix will stay intact 
-  vector<num_t> dummy = featurematrix_[featureidx];
+  vector<num_t> dummy(nsamples_);
+
+  dummy = featurematrix_[featureidx];
 
   //Sort specified feature and make reference indices
   Treedata::sort_and_make_ref<num_t>(dummy,ref_ics);
   
   //Use the new order to sort the sample headers
   Treedata::sort_from_ref<string>(sampleheaders_,ref_ics);
+  cout << "jee" << endl;
 
-  //Sort the other features as well
+  //Sort features
   for(size_t i = 0; i < nfeatures_; ++i)
     {
       Treedata::sort_from_ref<num_t>(featurematrix_[i],ref_ics);
@@ -300,8 +333,7 @@ void Treedata::range(vector<size_t>& ics)
 
 void Treedata::permute(vector<size_t>& ics)
 {
-  size_t n = ics.size();
-  for (size_t i = 0; i < n; ++i)
+  for (size_t i = 0; i < ics.size(); ++i)
     {
       size_t j = rand() % (i + 1);
       ics[i] = ics[j];
@@ -309,39 +341,32 @@ void Treedata::permute(vector<size_t>& ics)
     }
 }
 
-void Treedata::permute(vector<num_t>& data)
+void Treedata::permute(vector<num_t>& x)
 {
-  size_t n = data.size();
+  size_t n(x.size());
   vector<size_t> ics(n);
-  vector<num_t> foo = data;
+  vector<num_t> foo = x;
   Treedata::permute(ics);
   for(size_t i = 0; i < n; ++i)
     {
-      data[i] = foo[ics[i]];
+      x[i] = foo[ics[i]];
     }
 }
 
 void Treedata::bootstrap(vector<size_t>& ics, vector<size_t>& oob_ics, size_t& noob)
 {
-
-  for(size_t i = 0; i < nsamples_; ++i)
+  assert(ics.size() == oob_ics.size());
+  size_t n(ics.size());
+  for(size_t i = 0; i < n; ++i)
     {
-      ics[i] = rand() % nsamples_;
+      ics[i] = rand() % n;
     }
   sort(ics.begin(),ics.end());
-  vector<size_t> allics(nsamples_);
+  vector<size_t> allics(n);
   Treedata::range(allics);
   vector<size_t>::iterator it = set_difference(allics.begin(),allics.end(),ics.begin(),ics.end(),oob_ics.begin());
   noob = distance(oob_ics.begin(),it);
 }
-
-//void Treedata::find_split(size_t featureidx,
-//                         size_t& split_pos,
-//                         num_t& impurity_left,
-//                         num_t& impurity_right)
-//{
-// Treedata::find_split(featureidx,sampleics_,split_pos,impurity_left,impurity_right);
-//}
 
 void Treedata::find_split(size_t featureidx,
 			  vector<size_t>& sampleics,
@@ -349,23 +374,55 @@ void Treedata::find_split(size_t featureidx,
 			  vector<size_t>& sampleics_right,
 			  size_t& n_left,
 			  size_t& n_right,
-			  num_t& impurity,
 			  num_t& impurity_left,
 			  num_t& impurity_right)
 {
 
+  assert(targetidx_ != featureidx);
 
-  size_t n(sampleics.size());
-  size_t n_nonnan(0);
+  //Initialize helper variables  
+  num_t mu_old = 0.0;
+  num_t mu_right = 0.0;
+  num_t mu_left = 0.0;
+  num_t se_right = 0.0;
+  num_t se_left = 0.0;
+  num_t se_tot = 0.0;
+
+  num_t H_tot = 0.0;
+  num_t H_left = 0.0;
+  num_t H_right = 0.0;
+
+  //For storing the best target splitter
+  size_t besttargetsplitidx = -1;
+  num_t besttargetse = se_right;
+
   num_t mu,se;
 
-  
-  datadefs::sqerr(featurematrix_[featureidx],sampleics,n_nonnan,mu,se);
-  cout << "feature idx " << featureidx << " squared error: mu = " << mu << "\tsq.err. = " << se << "\t " << n-n_nonnan << " missing values" << endl;
+  //Squared error of the original (non-splitted) sample
+  datadefs::sqerr(featurematrix_[targetidx_],sampleics,mu,se);
+  cout << "target idx " << targetidx_ << " squared error: mu = " << mu << "\tsq.err. = " << se << "\t " << nrealvalues_[targetidx_] << " real (non-NaN) values" << endl;
+  datadefs::sqerr(featurematrix_[featureidx],sampleics,mu,se);
+  cout << "feature idx " << featureidx << " squared error: mu = " << mu << "\tsq.err. = " << se << "\t " << nrealvalues_[featureidx] << " real (non-NaN) values" << endl;
 
-  vector<num_t> fv(n);
-  vector<num_t> tv(n);
+  size_t nrealvalues(nrealvalues_[targetidx_]);
+
+  //Feature values
+  vector<num_t> fv(nrealvalues);
+
+  //Target values
+  vector<num_t> tv(nrealvalues);
+
+  //Collect data for the feature and target into the vectors
+  for(size_t i = 0; i < nrealvalues; ++i)
+    {
+      fv[i] = featurematrix_[featureidx][sampleics[i]];
+      tv[i] = featurematrix_[targetidx_][sampleics[i]];
+    }
   
+  vector<size_t> ref_ics(nrealvalues);
+  Treedata::sort_and_make_ref<num_t>(fv,ref_ics);
+  Treedata::sort_from_ref<num_t>(tv,ref_ics);
+  Treedata::sort_from_ref<size_t>(sampleics,ref_ics);
 
 }
 

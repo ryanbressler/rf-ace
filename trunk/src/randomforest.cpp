@@ -35,28 +35,42 @@ Randomforest::Randomforest(Treedata* treedata, size_t ntrees, size_t mtry, size_
       
     }
 
-  //Reserve memory for the oob-ics and noob
-  vector<vector<size_t> > oob_mat(ntrees_);
-  vector<size_t> oob_ics(nsamples);
-  for(size_t i = 0; i < ntrees_; ++i)
-    {
-      oob_mat[i] = oob_ics;
-    }
-  oob_mat_ = oob_mat;
-  vector<size_t> noob(ntrees_);
-  noob_ = noob;
+  size_t defaulttargetidx = 0;
+  Randomforest::select_target(defaulttargetidx);
 
-  cout << "Forest initialized. " << forest_.size() << " trees and " 
-       << nmaxnodes << " max nodes per tree generated." << endl;
-
-  //Finally, grow the forest
-  Randomforest::grow_forest();
+  cout << forest_.size() << " trees and " << nmaxnodes << " max nodes per tree generated." << endl;
 
 }
 
 Randomforest::~Randomforest()
 {
 
+} 
+
+void Randomforest::select_target(size_t targetidx)
+{
+  //cout << treedata_->get_target() << "\t" << targetidx << endl;
+  if(treedata_->get_target() != targetidx)
+    {
+      treedata_->select_target(targetidx);
+    }
+
+  //Initialize oob_mat_ to store the out-of-box samples for the selected target
+  size_t nrealvalues(treedata_->nrealvalues());
+  vector<vector<size_t> > oob_mat(ntrees_);
+  oob_mat_ = oob_mat;
+  for(size_t i = 0; i < ntrees_; ++i)
+    {
+      vector<size_t> oob_ics(nrealvalues);
+      oob_mat_[i] = oob_ics;
+    }
+  vector<size_t> noob(ntrees_);
+  noob_ = noob;
+}
+
+size_t Randomforest::get_target()
+{
+  return(treedata_->get_target());
 }
 
 void Randomforest::grow_forest()
@@ -67,11 +81,17 @@ void Randomforest::grow_forest()
     }
 }
 
+void Randomforest::grow_forest(size_t targetidx)
+{
+  Randomforest::select_target(targetidx);
+  Randomforest::grow_forest();
+}
+
 void Randomforest::grow_tree(size_t treeidx)
 {
   size_t nsamples(treedata_->nsamples());
-  //Generate the vector for bootstrap (sample) indices
-  vector<size_t> bootstrap_ics(nsamples);
+  //Generate the vector for bootstrap indices
+  vector<size_t> bootstrap_ics;
 
   //Generate bootstrap indices, oob-indices, and noob
   treedata_->bootstrap(bootstrap_ics,oob_mat_[treeidx],noob_[treeidx]);

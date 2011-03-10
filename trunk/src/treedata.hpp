@@ -34,7 +34,8 @@ public:
   void permute(vector<num_t>& x);
 
   //Generates a bootstrap sample. Samples not in the bootstrap sample will be stored in oob_ics, 
-  //and the number of oob samples is stored in noob. 
+  //and the number of oob samples is stored in noob.
+  //NOTE: ics.size() will depend on the number of non-NaN values the current target has
   void bootstrap(vector<size_t>& ics, vector<size_t>& oob_ics, size_t& noob);
 
   //Samples features
@@ -44,19 +45,17 @@ public:
   //NOTE: data will be sorted with respect to the target.
   void select_target(size_t targetidx);
 
+  size_t get_target();
+  
+  size_t nrealvalues();
+  size_t nrealvalues(size_t featureidx);
+
   //Sorts data with respect to a given feature.
   void sort_all_wrt_feature(size_t featureidx);
   
   //Sorts data with respect to target.
   void sort_all_wrt_target();
 
-  //Given feature, finds and returns the optimal split point wrt. all samples.
-  //**IMPLEMENTATION NOT READY**
-  //void find_split(size_t featureidx,
-  //               size_t& split_pos,
-  //               num_t& impurity_left,
-  //               num_t& impurity_right);
-  
   //Given feature, finds and returns the optimal split point wrt. all sampleics.
   //**IMPLEMENTATION NOT READY**
   void find_split(size_t featureidx, 
@@ -65,7 +64,6 @@ public:
 		  vector<size_t>& sampleics_right,
 		  size_t& n_left,
 		  size_t& n_right,
-		  num_t& impurity,
 		  num_t& impurity_left, 
 		  num_t& impurity_right);
   
@@ -83,6 +81,8 @@ public:
 
 private:
   
+  void count_real_values(size_t featureidx, size_t& nreal);
+
   template <typename T1,typename T2> void make_pairedv(vector<T1> const& v1, 
 						       vector<T2> const& v2, 
 						       vector<pair<T1,T2> >& p);
@@ -100,12 +100,13 @@ private:
 
   vector<vector<num_t> > featurematrix_;
   vector<bool> isfeaturenum_;
+  vector<size_t> nrealvalues_;
 
   size_t nsamples_;
   size_t nfeatures_;
 
-  vector<size_t> sampleics_; //Indices 0,1,...,(nsamples_-1)
-  vector<size_t> featureics_; //Indices 0,1,...,(nfeatures_-1)
+  //vector<size_t> sampleics_; //Sample indices from 0 to nsamples_-1, EXCLUDING indices for which the target value is NaN  
+  //vector<size_t> featureics_; //Indices 0,1,...,(nfeatures_-1)
 
   vector<string> featureheaders_;
   vector<string> sampleheaders_;

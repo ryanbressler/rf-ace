@@ -80,15 +80,17 @@ int main()
       treedata.print();
     }
 
-  vector<size_t> bootstrap_ics(treedata.nsamples());
-  vector<size_t> oob_ics(treedata.nsamples());
+  size_t targetidx = 0;
+  treedata.select_target(targetidx);
+  vector<size_t> bootstrap_ics(treedata.nrealvalues(targetidx));
+  vector<size_t> oob_ics(treedata.nrealvalues(targetidx));
   size_t noob(0);
   cout << endl << "Treedata::bootstrap() Bootstrap 10 times and list in-box and out-of-box samples:" << endl;
-  for(size_t i = 0; i < treedata.nsamples(); ++i)
+  for(size_t i = 0; i < 10; ++i)
     {
       treedata.bootstrap(bootstrap_ics,oob_ics,noob);
       cout << "in-box:";
-      for(size_t j = 0; j < treedata.nsamples(); ++j)
+      for(size_t j = 0; j < treedata.nrealvalues(targetidx); ++j)
 	{
 	  cout << " " << bootstrap_ics[j]; 
 	}
@@ -101,16 +103,17 @@ int main()
     }
 
 
-  vector<size_t> sampleics(treedata.nsamples());
+  vector<size_t> sampleics(treedata.nrealvalues());
   treedata.range(sampleics);
   vector<size_t> sampleics_left = sampleics;
   vector<size_t> sampleics_right = sampleics;
-  cout << endl << "Computing feature impurities:" << endl;
-  for(size_t i = 0; i < treedata.nfeatures(); ++i)
+  for(size_t i = 1; i < treedata.nfeatures(); ++i)
     {
+      cout << "Computing feature impurities between " << treedata.get_target() << "(target) and " << i << endl;
       num_t impurity,impurity_left,impurity_right;
       size_t n_left,n_right;
-      treedata.find_split(i,sampleics,sampleics_left,sampleics_right,n_left,n_right,impurity,impurity_left,impurity_right);
+      
+      treedata.find_split(i,sampleics,sampleics_left,sampleics_right,n_left,n_right,impurity_left,impurity_right);
     }
 
 
