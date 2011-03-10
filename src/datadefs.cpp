@@ -110,26 +110,20 @@ bool datadefs::is_nan(datadefs::num_t value)
 
 void datadefs::sqerr(vector<datadefs::num_t> const& data, 
 		     vector<size_t> const& ics,
-		     size_t& n,
 		     datadefs::num_t& mu, 
 		     datadefs::num_t& se)
 {
   
-  
+  size_t n(0);
+  mu = 0.0;
   se = 0.0;
-  if(datadefs::is_nan(data[ics[0]]))
-    {
-      mu = 0.0;
-      n = 0;
-    }
-  else
+  if(!datadefs::is_nan(data[ics[0]]))
     {
       mu = data[ics[0]];
       n = 1;
     }
-  size_t ntot = ics.size();
   
-  for(size_t i = 1; i < ntot; ++i)
+  for(size_t i = 1; i < ics.size(); ++i)
     {
       if(!datadefs::is_nan(data[ics[i]]))
 	{
@@ -141,7 +135,7 @@ void datadefs::sqerr(vector<datadefs::num_t> const& data,
   mu /= n;
   
   //This should be computed iteratively inside the previous loop (speed-up)!
-  for(size_t i = 0; i < ntot; ++i)
+  for(size_t i = 0; i < ics.size(); ++i)
     {
       if(!datadefs::is_nan(data[ics[i]]))
 	{

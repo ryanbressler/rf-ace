@@ -15,9 +15,14 @@ public:
   Randomforest(Treedata* treedata, size_t ntrees, size_t mtry, size_t nodesize);
   ~Randomforest();
 
-private:
+  void select_target(size_t targetidx);
+  size_t get_target();
 
   void grow_forest();
+  void grow_forest(size_t targetidx);
+
+private:
+
   void grow_tree(size_t treeidx);
   void recursive_nodesplit(size_t treeidx, size_t nodeidx, vector<size_t> const& sampleics);
 

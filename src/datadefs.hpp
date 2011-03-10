@@ -33,7 +33,6 @@ namespace datadefs
   
   void sqerr(vector<num_t> const& data, 
 	     vector<size_t> const& ics,
-	     size_t& n,
 	     num_t& mu, 
 	     num_t& se);
   
