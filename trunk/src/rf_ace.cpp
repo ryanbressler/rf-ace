@@ -1,6 +1,5 @@
 #include<cstdlib>
 #include "randomforest.hpp"
-//#include "datadefs.hpp"
 #include "treedata.hpp"
 
 using namespace std;

@@ -99,10 +99,10 @@ Treedata::Treedata(string fname, bool is_featurerows):
       getline(ss,rowheaders[i],'\t');
       cout << rowheaders[i];
       for(size_t j = 0; j < ncols; ++j)
-	{
-	  getline(ss,rawmatrix[i][j],'\t');
-	  cout << '\t' << rawmatrix[i][j];
-	}
+        {
+          getline(ss,rawmatrix[i][j],'\t');
+          cout << '\t' << rawmatrix[i][j];
+        }
       cout << endl;
     }
   cout << endl;
@@ -118,22 +118,22 @@ Treedata::Treedata(string fname, bool is_featurerows):
       sampleheaders_ = colheaders;
       featureheaders_ = rowheaders;
       for(size_t i = 0; i < nfeatures_; ++i)
-	{
-	  //First letters in the row headers determine whether the feature is numerical or categorical
-	  if(rowheaders[i][0] == 'N')
-	    {
-	      isfeaturenum_.push_back(true);
-	    }
-	  else if(rowheaders[i][0] == 'C')
-	    {
-	      isfeaturenum_.push_back(false);
-	    }
-	  else
-	    {
-	      cerr << "Data type must be either N or C!" << endl;
-	      assert(false);
-	    }
-	}
+        {
+          //First letters in the row headers determine whether the feature is numerical or categorical
+          if(rowheaders[i][0] == 'N')
+            {
+              isfeaturenum_.push_back(true);
+            }
+          else if(rowheaders[i][0] == 'C')
+            {
+              isfeaturenum_.push_back(false);
+            }
+          else
+            {
+              cerr << "Data type must be either N or C!" << endl;
+              assert(false);
+            }
+        }
     }
   else
     {
@@ -147,14 +147,14 @@ Treedata::Treedata(string fname, bool is_featurerows):
       vector<num_t> featurev(nsamples_);
       map<string,size_t> str2valmap;
       if(isfeaturenum_[i])
-	{
-	  datadefs::strv2numv(rawmatrix[i],featurev);
-	  //featurematrix_.push_back(featurev);
-	}
+        {
+          datadefs::strv2numv(rawmatrix[i],featurev);
+          //featurematrix_.push_back(featurev);
+        }
       else
-	{
-	  datadefs::strv2catv(rawmatrix[i],featurev,str2valmap);
-	}
+        {
+          datadefs::strv2catv(rawmatrix[i],featurev,str2valmap);
+        }
       featurematrix_.push_back(featurev);
     } 
   
@@ -211,9 +211,9 @@ void Treedata::count_real_values(size_t featureidx, size_t& nreal)
   for(size_t i = 0; i < nsamples_; ++i)
     {
       if(!datadefs::is_nan(featurematrix_[featureidx][i]))
-	{
-	  ++nreal;
-	}
+        {
+          ++nreal;
+        }
     }
 }
 
@@ -369,68 +369,67 @@ void Treedata::bootstrap(vector<size_t>& ics, vector<size_t>& oob_ics, size_t& n
 }
 
 void Treedata::find_split(size_t featureidx,
-			  vector<size_t>& sampleics,
-			  vector<size_t>& sampleics_left,
-			  vector<size_t>& sampleics_right,
-			  size_t& n_left,
-			  size_t& n_right,
-			  num_t& impurity_left,
-			  num_t& impurity_right)
+                          vector<size_t>& sampleics,
+                          vector<size_t>& sampleics_left,
+                          vector<size_t>& sampleics_right,
+                          num_t& impurity_left,
+                          num_t& impurity_right)
 {
 
-  assert(targetidx_ != featureidx);
+  //We allow the possibility to have target feature as splitter candidate, but we don't allow one to split with it 
+  if(targetidx_ == featureidx)
+    {
+      impurity_left = datadefs::num_nan;
+      impurity_right = datadefs::num_nan;
+      return;
+    }
 
-  //Initialize helper variables  
-  num_t mu_old = 0.0;
-  num_t mu_right = 0.0;
-  num_t mu_left = 0.0;
-  num_t se_right = 0.0;
-  num_t se_left = 0.0;
-  num_t se_tot = 0.0;
+  /////////////////////////////////////////////////////
+  // FIRST PART -- PREPARE TARGET AND FEATURE VECTOR //
+  /////////////////////////////////////////////////////
 
-  num_t H_tot = 0.0;
-  num_t H_left = 0.0;
-  num_t H_right = 0.0;
+  num_t mu_tot(0.0);
+  num_t mu_right(0.0);
+  num_t mu_left(0.0);
+  
+  num_t impurity_tot(0.0);
 
+  size_t n_tot(sampleics.size());
+  size_t n_left(0);
+  size_t n_right(n_tot);
+  
   //For storing the best target splitter
-  size_t besttargetsplitidx = -1;
-  num_t besttargetse = se_right;
-
-  num_t mu,se;
-
-  //Squared error of the original (non-splitted) sample
-  datadefs::sqerr(featurematrix_[targetidx_],sampleics,mu,se);
-  cout << "target idx " << targetidx_ << " squared error: mu = " << mu << "\tsq.err. = " << se << "\t " << nrealvalues_[targetidx_] << " real (non-NaN) values" << endl;
-  datadefs::sqerr(featurematrix_[featureidx],sampleics,mu,se);
-  cout << "feature idx " << featureidx << " squared error: mu = " << mu << "\tsq.err. = " << se << "\t " << nrealvalues_[featureidx] << " real (non-NaN) values" << endl;
-
-  size_t nrealvalues(nrealvalues_[targetidx_]);
-
+  size_t bestsplitidx = -1;
+  num_t bestimpurity = impurity_right;
+  
   //Feature values
-  vector<num_t> fv(nrealvalues);
-
+  vector<num_t> fv(n_tot);
+  
   //Target values
-  vector<num_t> tv(nrealvalues);
-
+  vector<num_t> tv(n_tot);
+  
   //Collect data for the feature and target into the vectors
-  for(size_t i = 0; i < nrealvalues; ++i)
+  for(size_t i = 0; i < n_tot; ++i)
     {
       fv[i] = featurematrix_[featureidx][sampleics[i]];
       tv[i] = featurematrix_[targetidx_][sampleics[i]];
     }
   
-  vector<size_t> ref_ics(nrealvalues);
+  //Make reference indices that define the sorting wrt. feature
+  vector<size_t> ref_ics(n_tot);
+  
+  //Sort feature vector and collect reference indices
   Treedata::sort_and_make_ref<num_t>(fv,ref_ics);
+  
+  //Use the reference indices to sort the target vector and sample indices
   Treedata::sort_from_ref<num_t>(tv,ref_ics);
   Treedata::sort_from_ref<size_t>(sampleics,ref_ics);
+  
+  /////////////////////////////////////
+  // SECOND PART -- DEFINE THE SPLIT // 
+  /////////////////////////////////////
 
-}
-
-void Treedata::split_at_pos(size_t featureidx,
-			    vector<size_t>& sampleics,
-			    num_t& impurity_left,
-			    num_t& impurity_right)
-{
+  
 
 }
 
