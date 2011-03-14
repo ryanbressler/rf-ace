@@ -56,24 +56,15 @@ public:
   //Sorts data with respect to target.
   void sort_all_wrt_target();
 
-  //Given feature, finds and returns the optimal split point wrt. all sampleics.
-  //**IMPLEMENTATION NOT READY**
+  //Given feature, finds and returns the optimal split point wrt. sampleics. 
+  //Samples branching left and right will be stored in sampleics_left (resp. right)
   void find_split(size_t featureidx, 
 		  vector<size_t>& sampleics,
 		  vector<size_t>& sampleics_left,
 		  vector<size_t>& sampleics_right,
-		  size_t& n_left,
-		  size_t& n_right,
 		  num_t& impurity_left, 
 		  num_t& impurity_right);
-  
-  //Performs split at given split point.
-  //**IMPLEMENTATION NOT READY**
-  void split_at_pos(size_t featureidx,
-		    vector<size_t>& sampleics,
-		    num_t& impurity_left,
-		    num_t& impurity_right);
-  
+    
   //Prints contents in Treedata
   void print();
 
@@ -104,9 +95,6 @@ private:
 
   size_t nsamples_;
   size_t nfeatures_;
-
-  //vector<size_t> sampleics_; //Sample indices from 0 to nsamples_-1, EXCLUDING indices for which the target value is NaN  
-  //vector<size_t> featureics_; //Indices 0,1,...,(nfeatures_-1)
 
   vector<string> featureheaders_;
   vector<string> sampleheaders_;

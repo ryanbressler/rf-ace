@@ -111,9 +111,9 @@ int main()
     {
       cout << "Computing feature impurities between " << treedata.get_target() << "(target) and " << i << endl;
       num_t impurity,impurity_left,impurity_right;
-      size_t n_left,n_right;
+      //size_t n_left,n_right;
       
-      treedata.find_split(i,sampleics,sampleics_left,sampleics_right,n_left,n_right,impurity_left,impurity_right);
+      treedata.find_split(i,sampleics,sampleics_left,sampleics_right,impurity_left,impurity_right);
     }
 
 
