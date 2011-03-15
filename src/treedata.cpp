@@ -15,6 +15,7 @@ Treedata::Treedata(string fname, bool is_featurerows):
   featurematrix_(0),
   isfeaturenum_(0),
   nrealvalues_(0),
+  ncatvalues_(0),
   nsamples_(0),
   nfeatures_(0),
   featureheaders_(0)
@@ -141,6 +142,9 @@ Treedata::Treedata(string fname, bool is_featurerows):
       assert(false);
     }
 
+  vector<size_t> ncatvalues(nfeatures_);
+  ncatvalues_ = ncatvalues;
+
   //Transform raw data to the internal format.
   for(size_t i = 0; i < nfeatures_; ++i)
     {
@@ -149,11 +153,12 @@ Treedata::Treedata(string fname, bool is_featurerows):
       if(isfeaturenum_[i])
         {
           datadefs::strv2numv(rawmatrix[i],featurev);
-          //featurematrix_.push_back(featurev);
+          ncatvalues_[i] = 0;
         }
       else
         {
           datadefs::strv2catv(rawmatrix[i],featurev,str2valmap);
+	  ncatvalues_[i] = str2valmap.size();
         }
       featurematrix_.push_back(featurev);
     } 
@@ -429,7 +434,14 @@ void Treedata::find_split(size_t featureidx,
   // SECOND PART -- DEFINE THE SPLIT // 
   /////////////////////////////////////
 
-  
+  if(isfeaturenum_[targetidx_])
+    {
+      datadefs::sqerr(tv,mu_right,impurity_right);
+    }
+  else
+    {
+      datadefs::gini(tv,impurity_right);
+    }
 
 }
 

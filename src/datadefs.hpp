@@ -32,10 +32,11 @@ namespace datadefs
   bool is_nan(num_t value);
   
   void sqerr(vector<num_t> const& data, 
-	     vector<size_t> const& ics,
 	     num_t& mu, 
 	     num_t& se);
-  
+
+  void gini(vector<num_t> const& data,
+	    num_t& gi);
       
   
   void update_sqerr(const num_t x_n,

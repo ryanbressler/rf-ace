@@ -92,6 +92,7 @@ private:
   vector<vector<num_t> > featurematrix_;
   vector<bool> isfeaturenum_;
   vector<size_t> nrealvalues_;
+  vector<size_t> ncatvalues_;
 
   size_t nsamples_;
   size_t nfeatures_;
