@@ -66,6 +66,9 @@ void Randomforest::select_target(size_t targetidx)
     }
   vector<size_t> noob(ntrees_);
   noob_ = noob;
+
+  cout << "Feature " << targetidx << " selected as target. Data sorted." << endl;
+  treedata_->print();
 }
 
 size_t Randomforest::get_target()
@@ -91,13 +94,13 @@ void Randomforest::grow_tree(size_t treeidx)
 {
   size_t nsamples(treedata_->nsamples());
   //Generate the vector for bootstrap indices
-  vector<size_t> bootstrap_ics;
+  vector<size_t> bootstrap_ics(treedata_->nrealvalues());
 
   //Generate bootstrap indices, oob-indices, and noob
   treedata_->bootstrap(bootstrap_ics,oob_mat_[treeidx],noob_[treeidx]);
 
   cout << "Growing tree " << treeidx << " with bootstrap sample:";
-  for(size_t i = 0; i < nsamples; ++i)
+  for(size_t i = 0; i < treedata_->nrealvalues(); ++i)
     {
       cout << " " << bootstrap_ics[i];
     }
@@ -109,10 +112,13 @@ void Randomforest::grow_tree(size_t treeidx)
   Randomforest::recursive_nodesplit(treeidx,rootnode,bootstrap_ics);
 }
 
-void Randomforest::recursive_nodesplit(size_t treeidx, size_t nodeidx, vector<size_t> const& sampleics)
+void Randomforest::recursive_nodesplit(size_t treeidx, size_t nodeidx, vector<size_t>& sampleics)
 {
 
-  cout << "Splitting..." << endl;
-  forest_[treeidx][nodeidx].print();
+  vector<size_t> mtrysample(treedata_->nfeatures());
+  treedata_->permute(mtrysample);
+
+  //cout << "Splitting..." << endl;
+  //forest_[treeidx][nodeidx].print();
 
 }

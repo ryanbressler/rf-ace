@@ -36,7 +36,8 @@ namespace datadefs
 	     num_t& se);
 
   void gini(vector<num_t> const& data,
-	    num_t& gi);
+	    num_t& gi,
+	    map<num_t,size_t>& freq);
       
   
   void update_sqerr(const num_t x_n,
