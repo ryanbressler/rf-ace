@@ -117,7 +117,10 @@ Treedata::Treedata(string fname, bool is_featurerows):
 
       //Thus, sample headers are column headers
       sampleheaders_ = colheaders;
+
+      //... and feature headers are row headers
       featureheaders_ = rowheaders;
+
       for(size_t i = 0; i < nfeatures_; ++i)
         {
           //First letters in the row headers determine whether the feature is numerical or categorical
@@ -169,7 +172,6 @@ Treedata::Treedata(string fname, bool is_featurerows):
   for(size_t featureidx = 0; featureidx < nfeatures_; ++featureidx)
     {
       Treedata::count_real_values(featureidx,nrealvalues_[featureidx]);
-      //cout << nrealvalues_[featureidx] << endl;
     }
   
   //By default, make the first feature the target
@@ -402,6 +404,10 @@ void Treedata::find_split(size_t featureidx,
   size_t n_tot(sampleics.size());
   size_t n_left(0);
   size_t n_right(n_tot);
+
+  map<num_t,size_t> freq_tot;
+  map<num_t,size_t> freq_right;
+  map<num_t,size_t> freq_left;
   
   //For storing the best target splitter
   size_t bestsplitidx = -1;
@@ -440,7 +446,7 @@ void Treedata::find_split(size_t featureidx,
     }
   else
     {
-      datadefs::gini(tv,impurity_right);
+      datadefs::gini(tv,impurity_right,freq_right);
     }
 
 }

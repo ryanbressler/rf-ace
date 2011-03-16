@@ -35,7 +35,7 @@ private:
 
   //Recursive tree-generating node splitter algorithm
   //NOTE: there will be at least two alternative node splitter algorithms in the future
-  void recursive_nodesplit(size_t treeidx, size_t nodeidx, vector<size_t> const& sampleics);
+  void recursive_nodesplit(size_t treeidx, size_t nodeidx, vector<size_t>& sampleics);
 
   //Pointer to treedata_ object, stores all the feature information
   Treedata* treedata_;

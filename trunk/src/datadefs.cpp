@@ -184,7 +184,32 @@ void datadefs::update_sqerr(const datadefs::num_t x_n,
 }
 
 void datadefs::gini(vector<datadefs::num_t> const& data,
-		    datadefs::num_t& gi)
+		    datadefs::num_t& gi,
+		    map<datadefs::num_t,size_t>& freq)
 {
+  map<datadefs::num_t,size_t> freqfoo;
+  freq = freqfoo;
+  map<num_t,size_t>::iterator it;
+  for(size_t i = 0; i < data.size(); ++i)
+    {
+      if(!datadefs::is_nan(data[i]))
+	{
+	  it = freq.find(data[i]);
+          if(it == freq.end())
+            {
+              freq.insert(pair<datadefs::num_t,size_t>(data[i],0));
+            }
+	  else
+	    {
+	      ++freq[data[i]];
+	    }
+	}
+    }
+
+  cout << "freq: ";
+  for(it = freq.begin(); it != freq.end(); ++it)
+    {
+      cout << " " << it->first << "(" << it->second << ")"; 
+    }
   
 }
