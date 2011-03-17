@@ -42,9 +42,6 @@ protected:
   //NOTE: ics.size() will depend on the number of non-NaN values the current target has
   void bootstrap(vector<size_t>& ics, vector<size_t>& oob_ics, size_t& noob);
 
-  //Samples features
-  void sample_features(size_t nfeatures, vector<size_t>& fsample);
-
   //Selects target feature. 
   //NOTE: data will be sorted with respect to the target.
   void select_target(size_t targetidx);

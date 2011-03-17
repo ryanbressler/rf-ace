@@ -211,5 +211,5 @@ void datadefs::gini(vector<datadefs::num_t> const& data,
     {
       cout << " " << it->first << "(" << it->second << ")"; 
     }
-  
+  cout << endl;
 }

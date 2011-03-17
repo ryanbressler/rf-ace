@@ -118,7 +118,24 @@ void Randomforest::recursive_nodesplit(size_t treeidx, size_t nodeidx, vector<si
   vector<size_t> mtrysample(treedata_->nfeatures());
   treedata_->permute(mtrysample);
 
-  //cout << "Splitting..." << endl;
-  //forest_[treeidx][nodeidx].print();
+  cout << "tree " << treeidx << ", nodeidx " << nodeidx << ": sampleics";
+  for(size_t i = 0; i < sampleics.size(); ++i)
+    {
+      cout << " " << sampleics[i];
+    }
+  cout << endl << "Selecting best splitter among features";
+  for(size_t i = 0; i < mtry_; ++i)
+    {
+      cout << " " << mtrysample[i];
+    }
+  cout << endl;
+  
+  for(size_t i = 0; i < mtry_; ++i)
+    {
+      vector<size_t> sampleics_left,sampleics_right;
+      num_t impurity_left,impurity_right;
+      treedata_->find_split(mtrysample[i],sampleics,sampleics_left,sampleics_right,impurity_left,impurity_right);
+    }
+  
 
 }
