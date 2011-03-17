@@ -20,7 +20,5 @@ int main()
   size_t targetidx(2);
   RF.grow_forest(targetidx);
 
-
-
   return(EXIT_SUCCESS);
 }
