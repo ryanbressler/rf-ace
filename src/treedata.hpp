@@ -26,6 +26,10 @@ public:
   //Returns the number of samples
   size_t nsamples();
 
+protected: 
+
+  friend class Randomforest;
+
   //Permutes integers in range 0,1,...,(ics.size()-1). 
   //NOTE: original contents in ics will be replaced.  
   void permute(vector<size_t>& ics);
