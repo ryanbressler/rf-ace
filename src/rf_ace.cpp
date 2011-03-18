@@ -17,7 +17,7 @@ int main()
   size_t nodesize(1);
   Randomforest RF(&treedata,ntrees,mtry,nodesize);
   
-  size_t targetidx(2);
+  size_t targetidx(4);
   RF.grow_forest(targetidx);
 
   return(EXIT_SUCCESS);
