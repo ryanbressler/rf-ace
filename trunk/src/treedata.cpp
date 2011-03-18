@@ -451,11 +451,12 @@ void Treedata::find_split(size_t featureidx,
 
 }
 
-void Treedata::find_target_split(vector<size_t>& sampleics,
-		       vector<size_t>& sampleics_left,
-		       vector<size_t>& sampleics_right,
-		       num_t& impurity_left,
-		       num_t& impurity_right)
+void Treedata::find_target_split(const size_t min_split,
+				 vector<size_t>& sampleics,
+				 vector<size_t>& sampleics_left,
+				 vector<size_t>& sampleics_right,
+				 num_t& impurity_left,
+				 num_t& impurity_right)
 {
   size_t n_tot(sampleics.size());
   size_t n_right(n_tot);
@@ -469,9 +470,19 @@ void Treedata::find_target_split(vector<size_t>& sampleics,
 
   if(isfeaturenum_[targetidx_])
     {
+      num_t mu_old(0.0);
       num_t mu_right(0.0);
       num_t mu_left(0.0);
       datadefs::sqerr(tv,mu_right,impurity_right);
+      num_t impurity_tot(impurity_right);
+      
+      while(n_left < n_tot - min_split)
+	{
+	  cout << "nleft=" << n_left << " nright=" << n_right << endl;
+	  ++n_left;
+	  --n_right;
+	  datadefs::update_sqerr(tv[n_left-1],n_left,mu_left,impurity_left,n_right,mu_right,impurity_right,mu_old);
+	}
     }
   else
     {

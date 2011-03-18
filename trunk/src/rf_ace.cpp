@@ -1,11 +1,15 @@
 #include<cstdlib>
+#include<cassert>
 #include "randomforest.hpp"
 #include "treedata.hpp"
 
 using namespace std;
 
-int main()
+int main(int argc, char* argv[])
 {
+  
+  assert(argc == 2);
+
   //FIRST PART: read data into Treedata class (features are rows)
   bool is_featurerows = true;
   string fname = "data/test_6by10_featurerows_matrix.tsv";
@@ -17,7 +21,7 @@ int main()
   size_t nodesize(1);
   Randomforest RF(&treedata,ntrees,mtry,nodesize);
   
-  size_t targetidx(4);
+  size_t targetidx(atoi(argv[1]));
   RF.grow_forest(targetidx);
 
   return(EXIT_SUCCESS);
