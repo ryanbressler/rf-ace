@@ -183,21 +183,38 @@ void datadefs::update_sqerr(const datadefs::num_t x_n,
     }
 }
 
-void datadefs::gini(vector<datadefs::num_t> const& data,
-		    datadefs::num_t& gi,
-		    map<datadefs::num_t,size_t>& freq)
+void datadefs::gini(const size_t n, 
+		    map<datadefs::num_t,size_t> const& freq, 
+		    datadefs::num_t& gi)
 {
+  cout << "freq: ";
+  gi = 0.0;
+  map<datadefs::num_t,size_t>::const_iterator it;
+  for(it = freq.begin(); it != freq.end(); ++it)
+    {
+      cout << " " << it->first << "(" << it->second << ")";
+      gi += pow(it->second,2);
+    }
+  gi = 1-gi/pow(n,2);
+  cout << " => impurity = " << gi << endl;
+}
+
+void datadefs::gini(vector<datadefs::num_t> const& data,
+		    map<datadefs::num_t,size_t>& freq,
+		    datadefs::num_t& gi)
+{
+  size_t n = data.size();
   map<datadefs::num_t,size_t> freqfoo;
   freq = freqfoo;
-  map<num_t,size_t>::iterator it;
-  for(size_t i = 0; i < data.size(); ++i)
+  map<datadefs::num_t,size_t>::const_iterator it;
+  for(size_t i = 0; i < n; ++i)
     {
       if(!datadefs::is_nan(data[i]))
 	{
 	  it = freq.find(data[i]);
           if(it == freq.end())
             {
-              freq.insert(pair<datadefs::num_t,size_t>(data[i],0));
+              freq.insert(pair<datadefs::num_t,size_t>(data[i],1));
             }
 	  else
 	    {
@@ -206,10 +223,39 @@ void datadefs::gini(vector<datadefs::num_t> const& data,
 	}
     }
 
-  cout << "freq: ";
-  for(it = freq.begin(); it != freq.end(); ++it)
-    {
-      cout << " " << it->first << "(" << it->second << ")"; 
-    }
-  cout << endl;
+  datadefs::gini(n,freq,gi); 
 }
+
+void datadefs::update_gini(num_t x_n,
+			   const size_t n_left,
+			   num_t& gi_left,
+			   map<num_t,size_t>& freq_left,
+			   const size_t n_right,
+			   num_t& gi_right,
+			   map<num_t,size_t>& freq_right)
+{
+  map<datadefs::num_t,size_t>::const_iterator it(freq_left.find(x_n));
+  if(it == freq_left.end())
+    {
+      freq_left.insert(pair<datadefs::num_t,size_t>(x_n,1));
+    }
+  else
+    {
+      ++freq_left[x_n];
+    }
+
+  it = freq_right.find(x_n);
+  assert(it != freq_right.end() && it->second > 0);
+
+  --freq_right[x_n];
+
+  if(it->second == 0)
+    {
+      freq_right.erase(x_n);
+    }
+
+  datadefs::gini(n_left,freq_left,gi_left);
+  datadefs::gini(n_right,freq_right,gi_right);
+
+}
+

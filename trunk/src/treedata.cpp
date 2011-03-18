@@ -446,7 +446,7 @@ void Treedata::find_split(size_t featureidx,
     }
   else
     {
-      datadefs::gini(tv,impurity_right,freq_right);
+      datadefs::gini(tv,freq_right,impurity_right);
     }
 
 }

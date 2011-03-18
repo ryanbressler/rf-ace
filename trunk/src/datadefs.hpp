@@ -33,12 +33,7 @@ namespace datadefs
   
   void sqerr(vector<num_t> const& data, 
 	     num_t& mu, 
-	     num_t& se);
-
-  void gini(vector<num_t> const& data,
-	    num_t& gi,
-	    map<num_t,size_t>& freq);
-      
+	     num_t& se);      
   
   void update_sqerr(const num_t x_n,
 		    const size_t n_left,
@@ -48,6 +43,23 @@ namespace datadefs
 		    num_t& mu_right,
 		    num_t& se_right,
 		    num_t& mu_old);
+
+  void gini(const size_t n,
+	    map<num_t,size_t> const& freq, 
+	    num_t& gi);
+
+  void gini(vector<num_t> const& data,
+            map<num_t,size_t>& freq,
+	    num_t& gi);
+
+  void update_gini(num_t x_n,
+		   const size_t n_left,
+		   num_t& gi_left,
+		   map<num_t,size_t>& freq_left,
+		   const size_t n_right,
+		   num_t& gi_right,
+		   map<num_t,size_t>& freq_right);
+
 
 
   //A comparator functor that can be passed to STL::sort. Assumes that one is comparing first elements of pairs, first type being num_t and second T
