@@ -451,6 +451,35 @@ void Treedata::find_split(size_t featureidx,
 
 }
 
+void Treedata::find_target_split(vector<size_t>& sampleics,
+		       vector<size_t>& sampleics_left,
+		       vector<size_t>& sampleics_right,
+		       num_t& impurity_left,
+		       num_t& impurity_right)
+{
+  size_t n_tot(sampleics.size());
+  size_t n_right(n_tot);
+  size_t n_left(0);
+
+  vector<num_t> tv(n_tot);
+  for(size_t i = 0; i < n_tot; ++i)
+    {
+      tv[i] = featurematrix_[targetidx_][sampleics[i]];
+    }
+
+  if(isfeaturenum_[targetidx_])
+    {
+      num_t mu_right(0.0);
+      num_t mu_left(0.0);
+      datadefs::sqerr(tv,mu_right,impurity_right);
+    }
+  else
+    {
+      map<num_t,size_t> freq_right;
+      map<num_t,size_t> freq_left;
+      datadefs::gini(tv,freq_right,impurity_right);
+    }
+}
 
 
 
