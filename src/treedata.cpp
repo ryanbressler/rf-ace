@@ -462,6 +462,8 @@ void Treedata::find_target_split(const size_t min_split,
   size_t n_right(n_tot);
   size_t n_left(0);
 
+  assert(n_tot > min_split);
+
   vector<num_t> tv(n_tot);
   for(size_t i = 0; i < n_tot; ++i)
     {
@@ -475,13 +477,21 @@ void Treedata::find_target_split(const size_t min_split,
       num_t mu_left(0.0);
       datadefs::sqerr(tv,mu_right,impurity_right);
       num_t impurity_tot(impurity_right);
-      
+      num_t bestimpurity(impurity_tot);
+      size_t bestsplitidx = 0;
+
       while(n_left < n_tot - min_split)
 	{
-	  cout << "nleft=" << n_left << " nright=" << n_right << endl;
+	  size_t idx(n_left);
+	  cout << "nleft=" << n_left << " nright=" << n_right << " bestimpurity=" << bestimpurity << " at idx=" << bestsplitidx << endl;
 	  ++n_left;
 	  --n_right;
-	  datadefs::update_sqerr(tv[n_left-1],n_left,mu_left,impurity_left,n_right,mu_right,impurity_right,mu_old);
+	  datadefs::update_sqerr(tv[idx],n_left,mu_left,impurity_left,n_right,mu_right,impurity_right,mu_old);
+	  if((impurity_left+impurity_right) < bestimpurity)
+	    {
+	      bestsplitidx = idx;
+	      bestimpurity = (impurity_left + impurity_right);
+	    }
 	}
     }
   else
