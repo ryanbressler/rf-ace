@@ -132,7 +132,7 @@ void Randomforest::recursive_nodesplit(size_t treeidx, size_t nodeidx, vector<si
   
   vector<size_t> sampleics_left,sampleics_right;
   num_t impurity_left,impurity_right;
-  treedata_->find_target_split(sampleics,sampleics_left,sampleics_right,impurity_left,impurity_right);
+  treedata_->find_target_split(nodesize_,sampleics,sampleics_left,sampleics_right,impurity_left,impurity_right);
   for(size_t i = 0; i < mtry_; ++i)
     {
       //vector<size_t> sampleics_left,sampleics_right;

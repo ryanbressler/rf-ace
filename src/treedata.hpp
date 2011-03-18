@@ -66,7 +66,8 @@ protected:
 		  num_t& impurity_left, 
 		  num_t& impurity_right);
 
-  void find_target_split(vector<size_t>& sampleics,
+  void find_target_split(const size_t min_split,
+			 vector<size_t>& sampleics,
 			 vector<size_t>& sampleics_left,
 			 vector<size_t>& sampleics_right,
 			 num_t& impurity_left,
