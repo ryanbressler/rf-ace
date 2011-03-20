@@ -1,10 +1,11 @@
 COMPILER = g++
-CFLAGS = -pg -O3 -Wall -pedantic
+CFLAGS = -g -pg -O3 -Wall -pedantic
+RF_ACE_LIBS = -lboost_program_options
 
 all: rf_ace benchmark
 
 rf_ace: src/rf_ace.cpp src/randomforest.cpp src/node.cpp src/treedata.cpp src/datadefs.cpp
-	$(COMPILER) $(CFLAGS) src/rf_ace.cpp src/randomforest.cpp src/node.cpp src/treedata.cpp src/datadefs.cpp -o bin/rf_ace
+	$(COMPILER) $(CFLAGS) $(RF_ACE_LIBS) src/rf_ace.cpp src/randomforest.cpp src/node.cpp src/treedata.cpp src/datadefs.cpp -o bin/rf_ace
 
 benchmark: src/benchmark.cpp src/randomforest.cpp src/node.cpp src/treedata.cpp src/datadefs.cpp
 	$(COMPILER) $(CFLAGS) src/benchmark.cpp src/randomforest.cpp src/node.cpp src/treedata.cpp src/datadefs.cpp -o bin/benchmark
