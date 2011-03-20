@@ -1,6 +1,7 @@
 #include <cstdlib>
 #include <cassert>
 #include <string>
+#include <iostream>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/program_options.hpp>
@@ -96,14 +97,14 @@ int main(int argc, char* argv[])
         
         size_t mtry = 0;
         if (var_map.count("mtry")) {
-            ntrees = var_map["mtry"].as<size_t>();
+            mtry = var_map["mtry"].as<size_t>();
         } else {
             cout << "Parameter 'mtry' not set, defaulting to number of 10% of features in the feature matrix." << endl;
         }
         
         size_t nodesize = 0;
         if (var_map.count("nodesize")) {
-            ntrees = var_map["nodesize"].as<size_t>();
+            nodesize = var_map["nodesize"].as<size_t>();
         } else {
             cout << "Parameter 'nodesize' not set, defaulting to " << DEFAULT_NODESIZE << "." << endl;
         }

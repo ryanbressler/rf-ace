@@ -67,8 +67,8 @@ void Randomforest::select_target(size_t targetidx)
   vector<size_t> noob(ntrees_);
   noob_ = noob;
 
-  cout << "Feature " << targetidx << " selected as target. Data sorted." << endl;
-  treedata_->print();
+  //cout << "Feature " << targetidx << " selected as target. Data sorted." << endl;
+  //treedata_->print();
 }
 
 size_t Randomforest::get_target()
@@ -98,12 +98,12 @@ void Randomforest::grow_tree(size_t treeidx)
   //Generate bootstrap indices, oob-indices, and noob
   treedata_->bootstrap(bootstrap_ics,oob_mat_[treeidx],noob_[treeidx]);
 
-  cout << "Growing tree " << treeidx << " with bootstrap sample:";
-  for(size_t i = 0; i < treedata_->nrealvalues(); ++i)
-    {
-      cout << " " << bootstrap_ics[i];
-    }
-  cout << endl;
+  //cout << "Growing tree " << treeidx << " with bootstrap sample:";
+  //for(size_t i = 0; i < treedata_->nrealvalues(); ++i)
+  //  {
+  //    cout << " " << bootstrap_ics[i];
+  //  }
+  //cout << endl;
 
   size_t rootnode = 0;
   
@@ -118,25 +118,23 @@ void Randomforest::recursive_nodesplit(size_t treeidx, size_t nodeidx, vector<si
   vector<size_t> mtrysample(treedata_->nfeatures());
   treedata_->permute(mtrysample);
 
-  cout << "tree " << treeidx << ", nodeidx " << nodeidx << ": sampleics";
+  cout << "tree=" << treeidx << "  nodeidx=" << nodeidx << "  sampleics=[";
   for(size_t i = 0; i < sampleics.size(); ++i)
     {
       cout << " " << sampleics[i];
     }
-  cout << endl << "Selecting best splitter among features";
+  cout << " ].  Selecting best splitter among features=[";
   for(size_t i = 0; i < mtry_; ++i)
     {
       cout << " " << mtrysample[i];
     }
-  cout << endl;
+  cout << " ]" << endl;
   
   vector<size_t> sampleics_left,sampleics_right;
   treedata_->find_target_split(nodesize_,sampleics,sampleics_left,sampleics_right);
   for(size_t i = 0; i < mtry_; ++i)
     {
-      //vector<size_t> sampleics_left,sampleics_right;
-      //num_t impurity_left,impurity_right;
-      //treedata_->find_split(mtrysample[i],sampleics,sampleics_left,sampleics_right,impurity_left,impurity_right);
+      //treedata_->sample_impurity(...)
     }
   
 
