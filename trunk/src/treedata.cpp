@@ -514,13 +514,40 @@ void Treedata::find_target_split(const size_t min_split,
     }
   else
     {
-      //num_t impurity_left(0.0);
+      num_t impurity_left(0.0);
       num_t impurity_right(0.0);
 
       map<num_t,size_t> freq_right;
       map<num_t,size_t> freq_left;
       datadefs::gini(tv,freq_right,impurity_right);
-      //num_t impurity_tot(impurity_right);
+      num_t impurity_tot(impurity_right);
+
+      map<num_t,size_t>::iterator bestcategory;
+      num_t bestimpurity(impurity_tot);
+
+      bool converged(false);
+      while(!converged)
+	{
+	  for(map<num_t,size_t>::iterator it(freq_right.begin()); it != freq_right.end(); ++it)
+	    {
+	      n_left += it->second;
+	      n_right -= it->second;
+
+	      freq_left.insert(pair<num_t,size_t>(it->first,it->second));
+	      freq_right.erase(it);
+
+	      datadefs::gini(n_left,freq_left,impurity_left);
+	      datadefs::gini(n_right,freq_right,impurity_right);
+
+	      if((impurity_left+impurity_right) < bestimpurity)
+		{
+		  bestcategory = it;
+		  bestimpurity = (impurity_left + impurity_right);
+		}
+
+	    }
+	}
+
     }
 }
 
