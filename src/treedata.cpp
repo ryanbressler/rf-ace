@@ -315,7 +315,6 @@ void Treedata::sort_all_wrt_feature(size_t featureidx)
   
   //Use the new order to sort the sample headers
   Treedata::sort_from_ref<string>(sampleheaders_,ref_ics);
-  cout << "jee" << endl;
 
   //Sort features
   for(size_t i = 0; i < nfeatures_; ++i)
@@ -382,6 +381,8 @@ void Treedata::find_split(size_t featureidx,
                           num_t& impurity_left,
                           num_t& impurity_right)
 {
+
+  assert(false);
 
   //We allow the possibility to have target feature as splitter candidate, but we don't allow one to split with it 
   if(targetidx_ == featureidx)
@@ -487,7 +488,7 @@ void Treedata::find_target_split(const size_t min_split,
       while(n_left < n_tot - min_split)
 	{
 	  int idx(n_left);
-	  cout << "nleft=" << n_left << " nright=" << n_right << " bestimpurity=" << bestimpurity << " at idx=" << bestsplitidx << endl;
+	  //cout << "nleft=" << n_left << " nright=" << n_right << " bestimpurity=" << bestimpurity << " at idx=" << bestsplitidx << endl;
 	  ++n_left;
 	  --n_right;
 	  datadefs::update_sqerr(tv[idx],n_left,mu_left,impurity_left,n_right,mu_right,impurity_right);
@@ -499,17 +500,17 @@ void Treedata::find_target_split(const size_t min_split,
 	}
 
       Treedata::divide_samples(sampleics,bestsplitidx,sampleics_left,sampleics_right);
-      cout << "left=[";
+      cout << "target splitted: left=[";
       for(size_t i = 0; i < sampleics_left.size(); ++i)
 	{
 	  cout << " " << sampleics_left[i];
 	}
-      cout << "] right=[";
+      cout << " ] right=[";
       for(size_t i = 0; i < sampleics_right.size(); ++i)
         {
           cout << " " << sampleics_right[i];
         }
-      cout << "]" << endl;
+      cout << " ]" << endl;
 
     }
   else
@@ -528,6 +529,7 @@ void Treedata::find_target_split(const size_t min_split,
       bool converged(false);
       while(!converged)
 	{
+	  bestcategory = freq_right.end();
 	  for(map<num_t,size_t>::iterator it(freq_right.begin()); it != freq_right.end(); ++it)
 	    {
 	      n_left += it->second;
@@ -545,6 +547,24 @@ void Treedata::find_target_split(const size_t min_split,
 		  bestimpurity = (impurity_left + impurity_right);
 		}
 
+	      n_left -= it->second;
+	      n_right += it->second;
+	      
+	      freq_left.erase(it->first);
+	      freq_right.insert(pair<num_t,size_t>(it->first,it->second));
+	      
+	    }
+	  if(bestcategory == freq_right.end())
+	    {
+	      converged = true;
+	    }
+	  else
+	    {
+	      n_left += bestcategory->second;
+              n_right -= bestcategory->second;
+
+              freq_left.insert(pair<num_t,size_t>(bestcategory->first,bestcategory->second));
+              freq_right.erase(bestcategory);
 	    }
 	}
 

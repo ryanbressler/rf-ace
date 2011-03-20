@@ -186,16 +186,16 @@ void datadefs::gini(const size_t n,
 		    map<datadefs::num_t,size_t> const& freq, 
 		    datadefs::num_t& gi)
 {
-  cout << "freq: ";
+  //cout << "freq: ";
   gi = 0.0;
   map<datadefs::num_t,size_t>::const_iterator it;
   for(it = freq.begin(); it != freq.end(); ++it)
     {
-      cout << " " << it->first << "(" << it->second << ")";
+      //cout << " " << it->first << "(" << it->second << ")";
       gi += pow(it->second,2);
     }
   gi = 1-gi/pow(n,2);
-  cout << " => impurity = " << gi << endl;
+  //cout << " => impurity = " << gi << endl;
 }
 
 void datadefs::gini(vector<datadefs::num_t> const& data,
@@ -233,6 +233,9 @@ void datadefs::update_gini(num_t x_n,
 			   num_t& gi_right,
 			   map<num_t,size_t>& freq_right)
 {
+
+  assert(false);
+
   map<datadefs::num_t,size_t>::const_iterator it(freq_left.find(x_n));
   if(it == freq_left.end())
     {
