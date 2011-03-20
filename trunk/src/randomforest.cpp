@@ -92,7 +92,6 @@ void Randomforest::grow_forest(size_t targetidx)
 
 void Randomforest::grow_tree(size_t treeidx)
 {
-  size_t nsamples(treedata_->nsamples());
   //Generate the vector for bootstrap indices
   vector<size_t> bootstrap_ics(treedata_->nrealvalues());
 
@@ -115,6 +114,7 @@ void Randomforest::grow_tree(size_t treeidx)
 void Randomforest::recursive_nodesplit(size_t treeidx, size_t nodeidx, vector<size_t>& sampleics)
 {
 
+  //Create mtry randomly selected feature indices to determine the split
   vector<size_t> mtrysample(treedata_->nfeatures());
   treedata_->permute(mtrysample);
 
@@ -131,8 +131,7 @@ void Randomforest::recursive_nodesplit(size_t treeidx, size_t nodeidx, vector<si
   cout << endl;
   
   vector<size_t> sampleics_left,sampleics_right;
-  num_t impurity_left,impurity_right;
-  treedata_->find_target_split(nodesize_,sampleics,sampleics_left,sampleics_right,impurity_left,impurity_right);
+  treedata_->find_target_split(nodesize_,sampleics,sampleics_left,sampleics_right);
   for(size_t i = 0; i < mtry_; ++i)
     {
       //vector<size_t> sampleics_left,sampleics_right;

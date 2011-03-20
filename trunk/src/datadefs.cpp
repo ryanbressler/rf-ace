@@ -150,12 +150,11 @@ void datadefs::update_sqerr(const datadefs::num_t x_n,
 			    datadefs::num_t& se_left,
 			    const size_t n_right,
 			    datadefs::num_t& mu_right,
-			    datadefs::num_t& se_right,
-			    datadefs::num_t& mu_old)
+			    datadefs::num_t& se_right)
 {
   
   //Subtract x_n from "right" and update mean and squared error
-  mu_old = mu_right;
+  datadefs::num_t mu_old(mu_right);
   mu_right -= (x_n - mu_right) / n_right;
 
   //As long as there are at least two data points on the "right" branch, squared error can be calculated, otherwise assign se_right := 0.0
