@@ -69,9 +69,7 @@ protected:
   void find_target_split(const size_t min_split,
 			 vector<size_t>& sampleics,
 			 vector<size_t>& sampleics_left,
-			 vector<size_t>& sampleics_right,
-			 num_t& impurity_left,
-			 num_t& impurity_right);
+			 vector<size_t>& sampleics_right);
     
   //Prints contents in Treedata
   void print();
@@ -80,6 +78,11 @@ protected:
 
 private:
   
+  void divide_samples(vector<size_t>& sampleics,
+		      size_t splitidx,
+		      vector<size_t>& sampleics_left,
+		      vector<size_t>& sampleics_right);
+    
   void count_real_values(size_t featureidx, size_t& nreal);
 
   template <typename T1,typename T2> void make_pairedv(vector<T1> const& v1, 

@@ -12,7 +12,7 @@ int main(int argc, char* argv[])
 
   //FIRST PART: read data into Treedata class (features are rows)
   bool is_featurerows = true;
-  string fname = "data/test_6by10_featurerows_matrix.tsv";
+  string fname = "data/test_4by10_feature1_splits_target0.tsv";
   Treedata treedata(fname,is_featurerows);
   
   //SECOND PART: construct a Random Forest object

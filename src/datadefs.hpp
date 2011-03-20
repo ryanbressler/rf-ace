@@ -41,8 +41,7 @@ namespace datadefs
 		    num_t& se_left,
 		    const size_t n_right,
 		    num_t& mu_right,
-		    num_t& se_right,
-		    num_t& mu_old);
+		    num_t& se_right);
 
   void gini(const size_t n,
 	    map<num_t,size_t> const& freq, 

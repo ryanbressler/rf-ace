@@ -395,23 +395,23 @@ void Treedata::find_split(size_t featureidx,
   // FIRST PART -- PREPARE TARGET AND FEATURE VECTOR //
   /////////////////////////////////////////////////////
 
-  num_t mu_tot(0.0);
+  //num_t mu_tot(0.0);
   num_t mu_right(0.0);
-  num_t mu_left(0.0);
+  //num_t mu_left(0.0);
   
-  num_t impurity_tot(0.0);
+  //num_t impurity_tot(0.0);
 
   size_t n_tot(sampleics.size());
-  size_t n_left(0);
-  size_t n_right(n_tot);
+  //size_t n_left(0);
+  //size_t n_right(n_tot);
 
   map<num_t,size_t> freq_tot;
   map<num_t,size_t> freq_right;
   map<num_t,size_t> freq_left;
   
   //For storing the best target splitter
-  size_t bestsplitidx = -1;
-  num_t bestimpurity = impurity_right;
+  //size_t bestsplitidx = -1;
+  //num_t bestimpurity = impurity_right;
   
   //Feature values
   vector<num_t> fv(n_tot);
@@ -454,55 +454,112 @@ void Treedata::find_split(size_t featureidx,
 void Treedata::find_target_split(const size_t min_split,
 				 vector<size_t>& sampleics,
 				 vector<size_t>& sampleics_left,
-				 vector<size_t>& sampleics_right,
-				 num_t& impurity_left,
-				 num_t& impurity_right)
+				 vector<size_t>& sampleics_right)
 {
+
+  //Number of samples
   size_t n_tot(sampleics.size());
   size_t n_right(n_tot);
   size_t n_left(0);
-
-  assert(n_tot > min_split);
-
+  
+  //Number of samples must exceed the number 
+  //assert(n_tot > min_split);
+  
   vector<num_t> tv(n_tot);
   for(size_t i = 0; i < n_tot; ++i)
     {
       tv[i] = featurematrix_[targetidx_][sampleics[i]];
     }
-
+  
   if(isfeaturenum_[targetidx_])
     {
-      num_t mu_old(0.0);
+      //num_t mu_old(0.0);
       num_t mu_right(0.0);
       num_t mu_left(0.0);
+      num_t impurity_left(0.0);
+      num_t impurity_right(0.0);
+
       datadefs::sqerr(tv,mu_right,impurity_right);
       num_t impurity_tot(impurity_right);
       num_t bestimpurity(impurity_tot);
-      size_t bestsplitidx = 0;
-
+      int bestsplitidx = -1;
+      
       while(n_left < n_tot - min_split)
 	{
-	  size_t idx(n_left);
+	  int idx(n_left);
 	  cout << "nleft=" << n_left << " nright=" << n_right << " bestimpurity=" << bestimpurity << " at idx=" << bestsplitidx << endl;
 	  ++n_left;
 	  --n_right;
-	  datadefs::update_sqerr(tv[idx],n_left,mu_left,impurity_left,n_right,mu_right,impurity_right,mu_old);
+	  datadefs::update_sqerr(tv[idx],n_left,mu_left,impurity_left,n_right,mu_right,impurity_right);
 	  if((impurity_left+impurity_right) < bestimpurity)
 	    {
 	      bestsplitidx = idx;
 	      bestimpurity = (impurity_left + impurity_right);
 	    }
 	}
+
+      Treedata::divide_samples(sampleics,bestsplitidx,sampleics_left,sampleics_right);
+      cout << "left=[";
+      for(size_t i = 0; i < sampleics_left.size(); ++i)
+	{
+	  cout << " " << sampleics_left[i];
+	}
+      cout << "] right=[";
+      for(size_t i = 0; i < sampleics_right.size(); ++i)
+        {
+          cout << " " << sampleics_right[i];
+        }
+      cout << "]" << endl;
+
     }
   else
     {
+      //num_t impurity_left(0.0);
+      num_t impurity_right(0.0);
+
       map<num_t,size_t> freq_right;
       map<num_t,size_t> freq_left;
       datadefs::gini(tv,freq_right,impurity_right);
+      //num_t impurity_tot(impurity_right);
     }
 }
 
+void Treedata::divide_samples(vector<size_t>& sampleics, 
+			      size_t splitidx, 
+			      vector<size_t>& sampleics_left, 
+			      vector<size_t>& sampleics_right)
+{
+  //Split the sample indices
+  size_t n_tot(sampleics.size());
+  size_t n_left(splitidx + 1);
+  size_t n_right(n_tot - n_left);
 
+  if(n_left == 0)
+    {
+      sampleics_right = sampleics;
+      vector<size_t> sampleics_left_copy(0);
+      sampleics_left = sampleics_left_copy;
+      return;
+    }
+
+  vector<size_t> sampleics_left_copy(n_left);
+  vector<size_t> sampleics_right_copy(n_right);
+  size_t i(0);
+  while(i < n_left)
+    {
+      sampleics_left_copy[i] = sampleics[i];
+      ++i;
+    }
+  while(i < n_tot)
+    {
+      sampleics_right_copy[i-n_left] = sampleics[i];
+      ++i;
+    }
+
+  sampleics_left = sampleics_left_copy;
+  sampleics_right = sampleics_right_copy;
+
+}
 
 
 
