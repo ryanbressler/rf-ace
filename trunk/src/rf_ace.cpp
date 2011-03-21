@@ -119,7 +119,11 @@ int main(int argc, char* argv[])
         
         //SECOND PART: construct a Random Forest object
         Randomforest RF(&treedata,ntrees,mtry,nodesize);
-        RF.grow_forest(targetidx);
+        
+	RF.select_target(targetidx);
+	treedata.print();
+	
+	RF.grow_forest();
         
         return(EXIT_SUCCESS);
     }
