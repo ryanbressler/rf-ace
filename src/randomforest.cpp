@@ -132,10 +132,40 @@ void Randomforest::recursive_nodesplit(size_t treeidx, size_t nodeidx, vector<si
   
   vector<size_t> sampleics_left,sampleics_right;
   treedata_->find_target_split(nodesize_,sampleics,sampleics_left,sampleics_right);
+  
+  size_t n_tot(sampleics.size());
+  size_t n_left(sampleics_left.size());
+  size_t n_right(sampleics_right.size());
+
+  num_t bestrelativedecrease(0);
+  size_t bestsplitterfeatureidx(-1);
   for(size_t i = 0; i < mtry_; ++i)
     {
-      //treedata_->sample_impurity(...)
+
+      size_t featureidx = mtrysample[i];
+
+      if(featureidx == treedata_->get_target())
+	{
+	  continue;
+	}
+      
+      num_t impurity_tot,impurity_left,impurity_right;
+
+      treedata_->impurity(featureidx,sampleics,impurity_tot);
+      treedata_->impurity(featureidx,sampleics_left,impurity_left);
+      treedata_->impurity(featureidx,sampleics_right,impurity_right);
+
+      num_t relativedecrease((impurity_tot-n_left*impurity_left/n_tot-n_right*impurity_right/n_tot)/impurity_tot);
+
+      if(relativedecrease > bestrelativedecrease)
+	{
+	  bestrelativedecrease = relativedecrease;
+	  bestsplitterfeatureidx = featureidx;
+	}
+
     }
+
+  cout << "Best splitter featureidx=" << bestsplitterfeatureidx << " with relative decrease in impurity of " << bestrelativedecrease << endl; 
   
 
 }
