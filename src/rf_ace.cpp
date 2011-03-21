@@ -117,6 +117,9 @@ int main(int argc, char* argv[])
         
         Treedata treedata(matrix_filename, is_featurerows);
         
+	assert(treedata.nfeatures() >= mtry);
+	assert(treedata.nsamples() > 2*nodesize);
+
         //SECOND PART: construct a Random Forest object
         Randomforest RF(&treedata,ntrees,mtry,nodesize);
         

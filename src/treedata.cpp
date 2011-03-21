@@ -81,9 +81,9 @@ Treedata::Treedata(string fname, bool is_featurerows):
   for(size_t i = 0; i < ncols; ++i)
     {
       getline(ss,colheaders[i],'\t');
-      cout << '\t' << colheaders[i];
+      //cout << '\t' << colheaders[i];
     }
-  cout << endl;
+  //cout << endl;
 
   //Go through the rest of the rows
   for(size_t i = 0; i < nrows; ++i)
@@ -98,15 +98,15 @@ Treedata::Treedata(string fname, bool is_featurerows):
 
       //Read one element from the row stream
       getline(ss,rowheaders[i],'\t');
-      cout << rowheaders[i];
+      //cout << rowheaders[i];
       for(size_t j = 0; j < ncols; ++j)
         {
           getline(ss,rawmatrix[i][j],'\t');
-          cout << '\t' << rawmatrix[i][j];
+          //cout << '\t' << rawmatrix[i][j];
         }
-      cout << endl;
+      //cout << endl;
     }
-  cout << endl;
+  //cout << endl;
   
   //If the data is row-formatted...
   if(is_featurerows)

@@ -22,11 +22,11 @@ public:
 
   //Sets a splitter feature for the node.
   //NOTE: splitter can be assigned only once! Subsequent setter calls will raise an assertion failure.
-  void set_splitter(int splitter, set<num_t> classet, Node& leftchild, Node& rightchild);
-  void set_splitter(int splitter, num_t threshold, Node& leftchild, Node& rightchild);
+  void set_splitter(size_t splitter, set<num_t> classet, Node& leftchild, Node& rightchild);
+  void set_splitter(size_t splitter, num_t threshold, Node& leftchild, Node& rightchild);
 
   //Gets the splitter for the node
-  int get_splitter();
+  size_t get_splitter();
   
   //Given value, descends to either one of the child nodes if existent and returns true, otherwise false.
   //NOTE: childp is a ref-to-ptr that will be modified to point to the child node if descend is successful. 
@@ -47,7 +47,7 @@ public:
 private:
   bool isnum_;
 
-  int splitter_;
+  size_t splitter_;
   num_t threshold_;
   set<num_t> classet_;
 
