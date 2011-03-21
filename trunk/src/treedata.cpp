@@ -443,7 +443,8 @@ void Treedata::find_split(size_t featureidx,
 
   if(isfeaturenum_[targetidx_])
     {
-      datadefs::sqerr(tv,mu_right,impurity_right);
+      size_t nreal;
+      datadefs::sqerr(tv,mu_right,impurity_right,nreal);
     }
   else
     {
@@ -462,10 +463,7 @@ void Treedata::find_target_split(const size_t min_split,
   size_t n_tot(sampleics.size());
   size_t n_right(n_tot);
   size_t n_left(0);
-  
-  //Number of samples must exceed the number 
-  //assert(n_tot > min_split);
-  
+    
   vector<num_t> tv(n_tot);
   for(size_t i = 0; i < n_tot; ++i)
     {
@@ -480,7 +478,8 @@ void Treedata::find_target_split(const size_t min_split,
       num_t impurity_left(0.0);
       num_t impurity_right(0.0);
 
-      datadefs::sqerr(tv,mu_right,impurity_right);
+      size_t nreal;
+      datadefs::sqerr(tv,mu_right,impurity_right,nreal);
       num_t impurity_tot(impurity_right);
       num_t bestimpurity(impurity_tot);
       int bestsplitidx = -1;
@@ -492,14 +491,14 @@ void Treedata::find_target_split(const size_t min_split,
 	  ++n_left;
 	  --n_right;
 	  datadefs::update_sqerr(tv[idx],n_left,mu_left,impurity_left,n_right,mu_right,impurity_right);
-	  if((impurity_left+impurity_right) < bestimpurity)
+	  if((impurity_left+impurity_right) < bestimpurity && n_left >= min_split)
 	    {
 	      bestsplitidx = idx;
 	      bestimpurity = (impurity_left + impurity_right);
 	    }
 	}
 
-      Treedata::divide_samples(sampleics,bestsplitidx,sampleics_left,sampleics_right);
+      Treedata::split_samples(sampleics,bestsplitidx,sampleics_left,sampleics_right);
       cout << "target splitted: left=[";
       for(size_t i = 0; i < sampleics_left.size(); ++i)
 	{
@@ -513,7 +512,7 @@ void Treedata::find_target_split(const size_t min_split,
       cout << " ]" << endl;
 
     }
-  else
+  else //This will be split to two separate functions in the future
     {
       num_t impurity_left(0.0);
       num_t impurity_right(0.0);
@@ -522,16 +521,17 @@ void Treedata::find_target_split(const size_t min_split,
       map<num_t,size_t> freq_left;
       datadefs::gini(tv,freq_right,impurity_right);
       num_t impurity_tot(impurity_right);
+      //size_t ncats_tot(freq_right.size());
 
       set<num_t>::iterator bestcatit;
       num_t bestimpurity(impurity_tot);
 
       set<num_t> categories_right;
       for(map<num_t,size_t>::const_iterator it(freq_right.begin()); it != freq_right.end(); ++it)
-	{
-	  categories_right.insert(it->first);
-	}
-
+        {
+          categories_right.insert(it->first);
+        }
+      
       while(true)
 	{
 
@@ -594,11 +594,59 @@ void Treedata::find_target_split(const size_t min_split,
 	      cout << " " << it->first << ":" << it->second;
 	    }
 	  cout << " ](" << n_right << ")  impurity=" << impurity_left+impurity_right << "  bestimpurity=" << bestimpurity << endl;
-	}     
+	}
+      
+      set<num_t> categories_left;
+      for(map<num_t,size_t>::const_iterator it(freq_left.begin()); it != freq_left.end(); ++it)
+        {
+          categories_left.insert(it->first);
+        }
+
+      Treedata::split_samples(targetidx_,sampleics,categories_left,sampleics_left,sampleics_right);
+      
+      cout << "target splitted: left=[";
+      for(size_t i = 0; i < sampleics_left.size(); ++i)
+        {
+          cout << " " << sampleics_left[i];
+        }
+      cout << " ] right=[";
+      for(size_t i = 0; i < sampleics_right.size(); ++i)
+        {
+          cout << " " << sampleics_right[i];
+        }
+      cout << " ]" << endl;
+      
     }
 }
 
-void Treedata::divide_samples(vector<size_t>& sampleics, 
+void Treedata::impurity(size_t featureidx, vector<size_t>& sampleics, num_t& impurity)
+{
+
+  size_t n(sampleics.size());
+  vector<num_t> data(n);
+
+  for(size_t i = 0; i < n; ++i)
+    {
+      data[i] = featurematrix_[featureidx][sampleics[i]];
+    }
+
+  if(isfeaturenum_[featureidx])
+    {
+      num_t mu,se;
+      size_t nreal;
+      datadefs::sqerr(data,mu,se,nreal);
+      impurity = se/nreal;
+    }
+  else
+    {
+      map<num_t,size_t> freq;
+      num_t impurity;
+      datadefs::gini(data,freq,impurity);
+    }
+
+}
+
+void Treedata::split_samples(vector<size_t>& sampleics, 
 			      size_t splitidx, 
 			      vector<size_t>& sampleics_left, 
 			      vector<size_t>& sampleics_right)
@@ -635,5 +683,27 @@ void Treedata::divide_samples(vector<size_t>& sampleics,
 
 }
 
+void Treedata::split_samples(size_t featureidx,
+			     vector<size_t>& sampleics,
+			     set<num_t>& categories_left,
+			     vector<size_t>& sampleics_left,
+			     vector<size_t>& sampleics_right)
+{
 
+  sampleics_left.clear();
+  sampleics_right.clear();
+
+  for(size_t i = 0; i < sampleics.size(); ++i)
+    {
+      if(categories_left.find(featurematrix_[featureidx][sampleics[i]]) != categories_left.end())
+	{
+	  sampleics_left.push_back(sampleics[i]);
+	}
+      else
+	{
+	  sampleics_right.push_back(sampleics[i]);
+	}
+    }
+
+}
 

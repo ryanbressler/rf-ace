@@ -76,12 +76,25 @@ protected:
 
   void range(vector<size_t>& ics);
 
+  void impurity(size_t featureidx, vector<size_t>& sampleics, num_t& impurity);
+
 private:
-  
-  void divide_samples(vector<size_t>& sampleics,
+
+
+  //Splits a set of samples to "left" and "right", given a splitidx
+  void split_samples(vector<size_t>& sampleics,
 		      size_t splitidx,
 		      vector<size_t>& sampleics_left,
 		      vector<size_t>& sampleics_right);
+
+  //Splits a set of samples to "left" and "right", given a set of categories
+  void split_samples(size_t featureidx,
+		     vector<size_t>& sampleics,
+		     set<num_t>& categories_left,
+		     vector<size_t>& sampleics_left,
+		     vector<size_t>& sampleics_right);
+    
+
     
   void count_real_values(size_t featureidx, size_t& nreal);
 
