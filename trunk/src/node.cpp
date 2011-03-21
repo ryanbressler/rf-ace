@@ -17,7 +17,7 @@ Node::~Node()
   rightchild_ = NULL;
 }
 
-void Node::set_splitter(int splitter, set<num_t> classet, Node& leftchild, Node& rightchild)
+void Node::set_splitter(size_t splitter, set<num_t> classet, Node& leftchild, Node& rightchild)
 {
   assert(!haschildren_);
   
@@ -31,7 +31,7 @@ void Node::set_splitter(int splitter, set<num_t> classet, Node& leftchild, Node&
   haschildren_ = true;
 }
 
-void Node::set_splitter(int splitter, num_t threshold, Node& leftchild, Node& rightchild)
+void Node::set_splitter(size_t splitter, num_t threshold, Node& leftchild, Node& rightchild)
 {
   assert(!haschildren_);
 
@@ -45,7 +45,7 @@ void Node::set_splitter(int splitter, num_t threshold, Node& leftchild, Node& ri
   haschildren_ = true;
 }
 
-int Node::get_splitter()
+size_t Node::get_splitter()
 {
   assert(haschildren_);
 

@@ -114,6 +114,13 @@ void Randomforest::grow_tree(size_t treeidx)
 void Randomforest::recursive_nodesplit(size_t treeidx, size_t nodeidx, vector<size_t>& sampleics)
 {
 
+  size_t n_tot(sampleics.size());
+
+  if(n_tot < 2*nodesize_)
+    {
+      return;
+    }
+
   //Create mtry randomly selected feature indices to determine the split
   vector<size_t> mtrysample(treedata_->nfeatures());
   treedata_->permute(mtrysample);
@@ -133,12 +140,11 @@ void Randomforest::recursive_nodesplit(size_t treeidx, size_t nodeidx, vector<si
   vector<size_t> sampleics_left,sampleics_right;
   treedata_->find_target_split(nodesize_,sampleics,sampleics_left,sampleics_right);
   
-  size_t n_tot(sampleics.size());
   size_t n_left(sampleics_left.size());
   size_t n_right(sampleics_right.size());
 
   num_t bestrelativedecrease(0);
-  size_t bestsplitterfeatureidx(-1);
+  size_t bestsplitter_i(mtry_);
   for(size_t i = 0; i < mtry_; ++i)
     {
 
@@ -160,12 +166,27 @@ void Randomforest::recursive_nodesplit(size_t treeidx, size_t nodeidx, vector<si
       if(relativedecrease > bestrelativedecrease)
 	{
 	  bestrelativedecrease = relativedecrease;
-	  bestsplitterfeatureidx = featureidx;
+	  bestsplitter_i = i;
 	}
-
     }
 
-  cout << "Best splitter featureidx=" << bestsplitterfeatureidx << " with relative decrease in impurity of " << bestrelativedecrease << endl; 
-  
+  if(bestsplitter_i == mtry_)
+    {
+      cout << "No splitter found, quitting." << endl;
+      return;
+    }
 
+  cout << "Best splitter featureidx=" << mtrysample[bestsplitter_i] << " with relative decrease in impurity of " << bestrelativedecrease << endl; 
+  
+  //WE STILL HAVE TO MAKE THE FINAL SPLIT
+
+  size_t nodeidx_left(++nnodes_[treeidx]);
+  size_t nodeidx_right(++nnodes_[treeidx]);
+
+  forest_[treeidx][nodeidx].set_splitter(mtrysample[bestsplitter_i],datadefs::num_nan,forest_[treeidx][nodeidx_left],forest_[treeidx][nodeidx_right]);
+  
+  Randomforest::recursive_nodesplit(treeidx,nodeidx_left,sampleics_left);
+  Randomforest::recursive_nodesplit(treeidx,nodeidx_right,sampleics_right);
+  
+  
 }
