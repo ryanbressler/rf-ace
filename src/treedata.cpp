@@ -523,51 +523,78 @@ void Treedata::find_target_split(const size_t min_split,
       datadefs::gini(tv,freq_right,impurity_right);
       num_t impurity_tot(impurity_right);
 
-      map<num_t,size_t>::iterator bestcategory;
+      set<num_t>::iterator bestcatit;
       num_t bestimpurity(impurity_tot);
 
-      bool converged(false);
-      while(!converged)
+      set<num_t> categories_right;
+      for(map<num_t,size_t>::const_iterator it(freq_right.begin()); it != freq_right.end(); ++it)
 	{
-	  bestcategory = freq_right.end();
-	  for(map<num_t,size_t>::iterator it(freq_right.begin()); it != freq_right.end(); ++it)
-	    {
-	      n_left += it->second;
-	      n_right -= it->second;
+	  categories_right.insert(it->first);
+	}
 
-	      freq_left.insert(pair<num_t,size_t>(it->first,it->second));
-	      freq_right.erase(it);
+      while(true)
+	{
+
+	  size_t ncats_right(categories_right.size());
+	  if(ncats_right == 0)
+	    {
+	      break;
+	    }
+
+	  bestcatit = categories_right.end();
+	  for(set<num_t>::const_iterator catit(categories_right.begin()); catit != categories_right.end(); ++catit)
+	    {
+	      
+	      size_t n_diff(freq_right[*catit]);
+
+	      n_left += n_diff;
+	      n_right -= n_diff;
+
+	      freq_left.insert(pair<num_t,size_t>(*catit,n_diff));
+	      freq_right.erase(*catit);
 
 	      datadefs::gini(n_left,freq_left,impurity_left);
 	      datadefs::gini(n_right,freq_right,impurity_right);
 
-	      if((impurity_left+impurity_right) < bestimpurity)
+	      if((n_left*impurity_left+n_right*impurity_right) < n_tot*bestimpurity)
 		{
-		  bestcategory = it;
+		  bestcatit = catit;
 		  bestimpurity = (impurity_left + impurity_right);
 		}
 
-	      n_left -= it->second;
-	      n_right += it->second;
+	      n_left -= n_diff;
+	      n_right += n_diff;
 	      
-	      freq_left.erase(it->first);
-	      freq_right.insert(pair<num_t,size_t>(it->first,it->second));
+	      freq_left.erase(*catit);
+	      freq_right.insert(pair<num_t,size_t>(*catit,n_diff));
 	      
 	    }
-	  if(bestcategory == freq_right.end())
+	  if(bestcatit == categories_right.end())
 	    {
-	      converged = true;
+	      break;
 	    }
-	  else
+	  
+	  //num_t bestcat(categories_right[bestcatidx]);
+	  size_t n_diff(freq_right[*bestcatit]);
+	  n_left += n_diff;
+	  n_right -= n_diff;
+	  
+	  freq_left.insert(pair<num_t,size_t>(*bestcatit,n_diff));
+	  freq_right.erase(*bestcatit);
+	  categories_right.erase(bestcatit);
+
+	  cout << "catleft=[";
+	  for(map<num_t,size_t>::iterator it(freq_left.begin()); it != freq_left.end(); ++it)
 	    {
-	      n_left += bestcategory->second;
-              n_right -= bestcategory->second;
-
-              freq_left.insert(pair<num_t,size_t>(bestcategory->first,bestcategory->second));
-              freq_right.erase(bestcategory);
+	      cout << " " << it->first << ":" << it->second;
 	    }
-	}
-
+	  cout << " ](" << n_left << ")  catright=[";
+	  for(map<num_t,size_t>::iterator it(freq_right.begin()); it != freq_right.end(); ++it)
+	    {
+	      cout << " " << it->first << ":" << it->second;
+	    }
+	  cout << " ](" << n_right << ")  impurity=" << impurity_left+impurity_right << "  bestimpurity=" << bestimpurity << endl;
+	}     
     }
 }
 

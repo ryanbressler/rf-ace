@@ -26,6 +26,9 @@ public:
   //Returns the number of samples
   size_t nsamples();
 
+  //Prints the treedata matrix in its internal form
+  void print();
+
 protected: 
 
   friend class Randomforest;
@@ -70,9 +73,6 @@ protected:
 			 vector<size_t>& sampleics,
 			 vector<size_t>& sampleics_left,
 			 vector<size_t>& sampleics_right);
-    
-  //Prints contents in Treedata
-  void print();
 
   void range(vector<size_t>& ics);
 
