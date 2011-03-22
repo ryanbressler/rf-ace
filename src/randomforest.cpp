@@ -172,30 +172,8 @@ void Randomforest::recursive_nodesplit(size_t treeidx, size_t nodeidx, vector<si
   size_t splitterfeatureidx(mtrysample[bestsplitter_i]);
 
   cout << "Best splitter featureidx=" << splitterfeatureidx << " with relative decrease in impurity of " << bestrelativedecrease << endl; 
-  
-  //WE STILL HAVE TO MAKE THE FINAL SPLIT
-
 
   //treedata_->split_target_wrt_feature(splitterfeatureidx,nodesize_,sampleics,sampleics_left,sampleics_right);
-
-  //featurematrix_[splitterfeatureidx]
-  //featurematrix_[targetidx_]
-
-  //vector<num_t> tv(n_tot);
-  //vector<num_t> fv(n_tot);
-
-  //for(size_t i = 0; i < n_tot; ++i)
-  //  {
-  //    tv[i] = featurematrix_[targetidx_][sampleics[i]];
-  //    fv[i] = featurematrix_[splitterfeatureidx][sampleics[i]];
-  //  }
-
-  //vector<size_t> ref_ics(n_tot);
-
-  //These functions will be moved under data definitions
-  //treedata_->sort_and_make_ref<num_t>(fv,ref_ics);
-  //treedata_->sort_from_ref<num_t>(tv,ref_ics);
-  //treedata_->sort_from_ref<size_t>(sampleics);
 
   size_t nodeidx_left(++nnodes_[treeidx]);
   size_t nodeidx_right(++nnodes_[treeidx]);

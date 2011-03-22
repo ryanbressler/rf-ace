@@ -183,47 +183,43 @@ void datadefs::update_sqerr(const datadefs::num_t x_n,
     }
 }
 
-void datadefs::gini(const size_t n, 
-		    map<datadefs::num_t,size_t> const& freq, 
+void datadefs::gini(map<datadefs::num_t,size_t> const& cat2freq, 
 		    datadefs::num_t& gi)
 {
   //cout << "freq: ";
   gi = 0.0;
+  size_t n(0);
   map<datadefs::num_t,size_t>::const_iterator it;
-  for(it = freq.begin(); it != freq.end(); ++it)
+  for(it = cat2freq.begin(); it != cat2freq.end(); ++it)
     {
-      //cout << " " << it->first << "(" << it->second << ")";
       gi += pow(it->second,2);
+      n += it->second;
     }
   gi = 1-gi/pow(n,2);
   //cout << " => impurity = " << gi << endl;
 }
 
-void datadefs::gini(vector<datadefs::num_t> const& data,
-		    map<datadefs::num_t,size_t>& freq,
-		    datadefs::num_t& gi)
+void datadefs::count_freq(vector<datadefs::num_t> const& data, map<datadefs::num_t,size_t>& cat2freq)
 {
   size_t n = data.size();
-  map<datadefs::num_t,size_t> freqfoo;
-  freq = freqfoo;
+  map<datadefs::num_t,size_t> cat2freqfoo;
+  cat2freq = cat2freqfoo;
   map<datadefs::num_t,size_t>::const_iterator it;
   for(size_t i = 0; i < n; ++i)
     {
       if(!datadefs::is_nan(data[i]))
-	{
-	  it = freq.find(data[i]);
-          if(it == freq.end())
+        {
+          it = cat2freq.find(data[i]);
+          if(it == cat2freq.end())
             {
-              freq.insert(pair<datadefs::num_t,size_t>(data[i],1));
+              cat2freq.insert(pair<datadefs::num_t,size_t>(data[i],1));
             }
-	  else
-	    {
-	      ++freq[data[i]];
-	    }
-	}
+          else
+            {
+              ++cat2freq[data[i]];
+            }
+        }
     }
-
-  datadefs::gini(n,freq,gi); 
 }
 
 void datadefs::update_gini(num_t x_n,
@@ -257,8 +253,8 @@ void datadefs::update_gini(num_t x_n,
       freq_right.erase(x_n);
     }
 
-  datadefs::gini(n_left,freq_left,gi_left);
-  datadefs::gini(n_right,freq_right,gi_right);
+  datadefs::gini(freq_left,gi_left);
+  datadefs::gini(freq_right,gi_right);
 
 }
 
