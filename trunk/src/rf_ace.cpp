@@ -124,7 +124,7 @@ int main(int argc, char* argv[])
         Randomforest RF(&treedata,ntrees,mtry,nodesize);
         
 	RF.select_target(targetidx);
-	treedata.print();
+	//treedata.print();
 	
 	RF.grow_forest();
         
