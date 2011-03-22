@@ -125,32 +125,25 @@ void Randomforest::recursive_nodesplit(size_t treeidx, size_t nodeidx, vector<si
   vector<size_t> mtrysample(treedata_->nfeatures());
   treedata_->permute(mtrysample);
 
-  cout << "tree=" << treeidx << "  nodeidx=" << nodeidx << "  sampleics=[";
-  for(size_t i = 0; i < sampleics.size(); ++i)
-    {
-      cout << " " << sampleics[i];
-    }
-  cout << " ].  Selecting best splitter among features=[";
-  for(size_t i = 0; i < mtry_; ++i)
-    {
-      cout << " " << mtrysample[i];
-    }
-  cout << " ]" << endl;
+  cout << "tree=" << treeidx << "  nodeidx=" << nodeidx << "  #sampleics=" << sampleics.size();
   
   vector<size_t> sampleics_left,sampleics_right;
-  treedata_->find_target_split(nodesize_,sampleics,sampleics_left,sampleics_right);
+  treedata_->split_target(nodesize_,sampleics,sampleics_left,sampleics_right);
   
+  cout << "  #left=" << sampleics_left.size() << "  #right=" << sampleics_right.size() << endl;
+
   size_t n_left(sampleics_left.size());
   size_t n_right(sampleics_right.size());
 
   num_t bestrelativedecrease(0);
   size_t bestsplitter_i(mtry_);
+  size_t targetidx(treedata_->get_target());
   for(size_t i = 0; i < mtry_; ++i)
     {
 
       size_t featureidx = mtrysample[i];
 
-      if(featureidx == treedata_->get_target())
+      if(featureidx == targetidx)
 	{
 	  continue;
 	}
@@ -176,9 +169,33 @@ void Randomforest::recursive_nodesplit(size_t treeidx, size_t nodeidx, vector<si
       return;
     }
 
-  cout << "Best splitter featureidx=" << mtrysample[bestsplitter_i] << " with relative decrease in impurity of " << bestrelativedecrease << endl; 
+  size_t splitterfeatureidx(mtrysample[bestsplitter_i]);
+
+  cout << "Best splitter featureidx=" << splitterfeatureidx << " with relative decrease in impurity of " << bestrelativedecrease << endl; 
   
   //WE STILL HAVE TO MAKE THE FINAL SPLIT
+
+
+  //treedata_->split_target_wrt_feature(splitterfeatureidx,nodesize_,sampleics,sampleics_left,sampleics_right);
+
+  //featurematrix_[splitterfeatureidx]
+  //featurematrix_[targetidx_]
+
+  //vector<num_t> tv(n_tot);
+  //vector<num_t> fv(n_tot);
+
+  //for(size_t i = 0; i < n_tot; ++i)
+  //  {
+  //    tv[i] = featurematrix_[targetidx_][sampleics[i]];
+  //    fv[i] = featurematrix_[splitterfeatureidx][sampleics[i]];
+  //  }
+
+  //vector<size_t> ref_ics(n_tot);
+
+  //These functions will be moved under data definitions
+  //treedata_->sort_and_make_ref<num_t>(fv,ref_ics);
+  //treedata_->sort_from_ref<num_t>(tv,ref_ics);
+  //treedata_->sort_from_ref<size_t>(sampleics);
 
   size_t nodeidx_left(++nnodes_[treeidx]);
   size_t nodeidx_right(++nnodes_[treeidx]);

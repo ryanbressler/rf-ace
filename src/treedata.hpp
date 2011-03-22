@@ -62,24 +62,26 @@ protected:
 
   //Given feature, finds and returns the optimal split point wrt. sampleics. 
   //Samples branching left and right will be stored in sampleics_left (resp. right)
-  void find_split(size_t featureidx, 
-		  vector<size_t>& sampleics,
-		  vector<size_t>& sampleics_left,
-		  vector<size_t>& sampleics_right,
-		  num_t& impurity_left, 
-		  num_t& impurity_right);
-
-  void find_target_split(const size_t min_split,
-			 vector<size_t>& sampleics,
-			 vector<size_t>& sampleics_left,
-			 vector<size_t>& sampleics_right);
-
+  void split_target_wrt_feature(size_t featureidx,
+				const size_t min_split,
+				vector<size_t>& sampleics,
+				vector<size_t>& sampleics_left,
+				vector<size_t>& sampleics_right);
+  
+  void split_target(const size_t min_split,
+		    vector<size_t>& sampleics,
+		    vector<size_t>& sampleics_left,
+		    vector<size_t>& sampleics_right);
+  
   void range(vector<size_t>& ics);
 
   void impurity(size_t featureidx, vector<size_t>& sampleics, num_t& impurity);
 
 private:
 
+  void incremental_split(const size_t min_split, vector<size_t>& sampleics, vector<size_t>& sampleics_left, vector<size_t>& sampleics_right);
+
+  void categorical_split(vector<size_t>& sampleics, vector<size_t>& sampleics_left, vector<size_t>& sampleics_right);
 
   //Splits a set of samples to "left" and "right", given a splitidx
   void split_samples(vector<size_t>& sampleics,
@@ -98,6 +100,7 @@ private:
     
   void count_real_values(size_t featureidx, size_t& nreal);
 
+  //These could be moved to datadefs::
   template <typename T1,typename T2> void make_pairedv(vector<T1> const& v1, 
 						       vector<T2> const& v2, 
 						       vector<pair<T1,T2> >& p);
