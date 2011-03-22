@@ -431,133 +431,22 @@ void Treedata::split_target(const size_t min_split,
 			    vector<size_t>& sampleics_right)
 {
 
-  sort(sampleics.begin(),sampleics.end());
-
   if(isfeaturenum_[targetidx_])
     {
+      sort(sampleics.begin(),sampleics.end());
       Treedata::incremental_split(min_split,sampleics,sampleics_left,sampleics_right);
     }
   else
     {
-
-      size_t n_tot(sampleics.size());
-      size_t n_left(0);
-      size_t n_right(n_tot);
-
-      vector<num_t> tv(n_tot);
-      for(size_t i = 0; i < n_tot; ++i)
-	{
-	  tv[i] = featurematrix_[targetidx_][sampleics[i]];
-	}
-
-      num_t impurity_left(0.0);
-      num_t impurity_right(0.0);
       
-      map<num_t,size_t> freq_right;
-      map<num_t,size_t> freq_left;
-      datadefs::gini(tv,freq_right,impurity_right);
-      num_t impurity_tot(impurity_right);
-      //size_t ncats_tot(freq_right.size());
-      
-      set<num_t>::iterator bestcatit;
-      num_t bestimpurity(impurity_tot);
-      
-      set<num_t> categories_right;
-      for(map<num_t,size_t>::const_iterator it(freq_right.begin()); it != freq_right.end(); ++it)
-        {
-          categories_right.insert(it->first);
-        }
-      
-      while(true)
-	{
-	  
-	  size_t ncats_right(categories_right.size());
-	  if(ncats_right == 0)
-	    {
-	      break;
-	    }
-	  
-	  bestcatit = categories_right.end();
-	  for(set<num_t>::const_iterator catit(categories_right.begin()); catit != categories_right.end(); ++catit)
-	    {
-	      
-	      size_t n_diff(freq_right[*catit]);
-	      
-	      n_left += n_diff;
-	      n_right -= n_diff;
-	      
-	      freq_left.insert(pair<num_t,size_t>(*catit,n_diff));
-	      freq_right.erase(*catit);
-	      
-	      datadefs::gini(n_left,freq_left,impurity_left);
-	      datadefs::gini(n_right,freq_right,impurity_right);
-	      
-	      if((n_left*impurity_left+n_right*impurity_right) < n_tot*bestimpurity)
-		{
-		  bestcatit = catit;
-		  bestimpurity = (impurity_left + impurity_right);
-		}
-	      
-	      n_left -= n_diff;
-	      n_right += n_diff;
-	      
-	      freq_left.erase(*catit);
-	      freq_right.insert(pair<num_t,size_t>(*catit,n_diff));
-	      
-	    }
-	  if(bestcatit == categories_right.end())
-	    {
-	      break;
-	    }
-	  
-	  //num_t bestcat(categories_right[bestcatidx]);
-	  size_t n_diff(freq_right[*bestcatit]);
-	  n_left += n_diff;
-	  n_right -= n_diff;
-	  
-	  freq_left.insert(pair<num_t,size_t>(*bestcatit,n_diff));
-	  freq_right.erase(*bestcatit);
-	  categories_right.erase(bestcatit);
-
-	  //cout << "catleft=[";
-	  //for(map<num_t,size_t>::iterator it(freq_left.begin()); it != freq_left.end(); ++it)
-	  //  {
-	  //    cout << " " << it->first << ":" << it->second;
-	  //  }
-	  //cout << " ](" << n_left << ")  catright=[";
-	  //for(map<num_t,size_t>::iterator it(freq_right.begin()); it != freq_right.end(); ++it)
-	  //  {
-	  //    cout << " " << it->first << ":" << it->second;
-	  //  }
-	  //cout << " ](" << n_right << ")  impurity=" << impurity_left+impurity_right << "  bestimpurity=" << bestimpurity << endl;
-	}
-      
-      set<num_t> categories_left;
-      for(map<num_t,size_t>::const_iterator it(freq_left.begin()); it != freq_left.end(); ++it)
-        {
-          categories_left.insert(it->first);
-        }
-
-      Treedata::split_samples(targetidx_,sampleics,categories_left,sampleics_left,sampleics_right);
-      
-      //cout << "target splitted: left=[";
-      //for(size_t i = 0; i < sampleics_left.size(); ++i)
-      //  {
-      //    cout << " " << sampleics_left[i];
-      //  }
-      //cout << " ] right=[";
-      //for(size_t i = 0; i < sampleics_right.size(); ++i)
-      //  {
-      //    cout << " " << sampleics_right[i];
-      //  }
-      //cout << " ]" << endl;
+      Treedata::categorical_split(sampleics,sampleics_left,sampleics_right);
       
     }
 }
 
 void Treedata::incremental_split(const size_t min_split, vector<size_t>& sampleics, vector<size_t>& sampleics_left, vector<size_t>& sampleics_right)
 {
-
+  
   //Number of samples
   size_t n_tot(sampleics.size());
   size_t n_right(n_tot);
@@ -601,6 +490,96 @@ void Treedata::incremental_split(const size_t min_split, vector<size_t>& samplei
 void Treedata::categorical_split(vector<size_t>& sampleics, vector<size_t>& sampleics_left, vector<size_t>& sampleics_right)
 {
 
+  size_t n_tot(sampleics.size());
+  size_t n_left(0);
+  size_t n_right(n_tot);
+  
+  vector<num_t> tv(n_tot);
+  for(size_t i = 0; i < n_tot; ++i)
+    {
+      tv[i] = featurematrix_[targetidx_][sampleics[i]];
+    }
+  
+  num_t impurity_left(0.0);
+  num_t impurity_right(0.0);
+  
+  map<num_t,size_t> freq_right;
+  map<num_t,size_t> freq_left;
+  datadefs::gini(tv,freq_right,impurity_right);
+  num_t impurity_tot(impurity_right);
+  //size_t ncats_tot(freq_right.size());
+  
+  set<num_t>::iterator bestcatit;
+  num_t bestimpurity(impurity_tot);
+  
+  set<num_t> categories_right;
+  for(map<num_t,size_t>::const_iterator it(freq_right.begin()); it != freq_right.end(); ++it)
+    {
+      categories_right.insert(it->first);
+    }
+
+
+  while(true)
+    {
+
+      size_t ncats_right(categories_right.size());
+      if(ncats_right == 0)
+	{
+	  break;
+	}
+
+      bestcatit = categories_right.end();
+      for(set<num_t>::const_iterator catit(categories_right.begin()); catit != categories_right.end(); ++catit)
+	{
+
+	  size_t n_diff(freq_right[*catit]);
+
+	  n_left += n_diff;
+	  n_right -= n_diff;
+
+	  freq_left.insert(pair<num_t,size_t>(*catit,n_diff));
+	  freq_right.erase(*catit);
+
+	  datadefs::gini(n_left,freq_left,impurity_left);
+	  datadefs::gini(n_right,freq_right,impurity_right);
+
+	  if((n_left*impurity_left+n_right*impurity_right) < n_tot*bestimpurity)
+	    {
+	      bestcatit = catit;
+	      bestimpurity = (impurity_left + impurity_right);
+	    }
+
+	  n_left -= n_diff;
+	  n_right += n_diff;
+
+	  freq_left.erase(*catit);
+	  freq_right.insert(pair<num_t,size_t>(*catit,n_diff));
+
+	}
+      if(bestcatit == categories_right.end())
+	{
+	  break;
+	}
+
+      //num_t bestcat(categories_right[bestcatidx]);
+      size_t n_diff(freq_right[*bestcatit]);
+      n_left += n_diff;
+      n_right -= n_diff;
+
+      freq_left.insert(pair<num_t,size_t>(*bestcatit,n_diff));
+      freq_right.erase(*bestcatit);
+      categories_right.erase(bestcatit);
+    }
+
+  set<num_t> categories_left;
+  for(map<num_t,size_t>::const_iterator it(freq_left.begin()); it != freq_left.end(); ++it)
+    {
+      categories_left.insert(it->first);
+    }
+  
+  Treedata::split_samples(targetidx_,sampleics,categories_left,sampleics_left,sampleics_right);
+  
+ 
 }
 
 
