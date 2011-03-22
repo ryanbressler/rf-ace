@@ -381,47 +381,59 @@ void Treedata::split_target_wrt_feature(size_t featureidx,
 					vector<size_t>& sampleics_right)
 {
   
-  //We allow the possibility to have target feature as splitter candidate, but we don't allow one to split with it 
-  if(targetidx_ == featureidx)
-    {
-      sampleics_left.clear();
-      sampleics_right.clear();
-      return;
-    }
-
+  assert(featureidx != targetidx_);
+  
   //Number of samples
   size_t n_tot(sampleics.size());
-
+  
+  //Feature values
+  vector<num_t> fv(n_tot);
+  
+  //Collect data for the feature and target into the vectors
+  for(size_t i = 0; i < n_tot; ++i)
+    {
+      fv[i] = featurematrix_[featureidx][sampleics[i]];
+    }
+  
   if(isfeaturenum_[featureidx])
     {
-    
-      //Feature values
-      vector<num_t> fv(n_tot);
-      
-      //Target values
-      vector<num_t> tv(n_tot);
-  
-      //Collect data for the feature and target into the vectors
-      for(size_t i = 0; i < n_tot; ++i)
-	{
-	  fv[i] = featurematrix_[featureidx][sampleics[i]];
-	  tv[i] = featurematrix_[targetidx_][sampleics[i]];
-	}
-      
       //Make reference indices that define the sorting wrt. feature
       vector<size_t> ref_ics(n_tot);
       
       //Sort feature vector and collect reference indices
       Treedata::sort_and_make_ref<num_t>(fv,ref_ics);
       
-      //Use the reference indices to sort the target vector and sample indices
-      Treedata::sort_from_ref<num_t>(tv,ref_ics);
+      //Use the reference indices to sort sample indices
       Treedata::sort_from_ref<size_t>(sampleics,ref_ics);
       
+      if(isfeaturenum_[targetidx_])
+	{
+	  Treedata::incremental_num_target_split(min_split,sampleics,sampleics_left,sampleics_right);
+	}
+      else
+	{
+	  assert(false);
+	  //Treedata::incremental_cat_target_split(sampleics,sampleics_left,sampleics_right);
+	}
     }
   else
     {
+      assert(false);
       
+      map<num_t,size_t> freq;
+      
+      datadefs::count_freq(fv,freq);
+      //Treedata::categorical
+
+      if(isfeaturenum_[targetidx_])
+	{
+	  //Treedata::categorical_num_target_split(...);
+	}
+      else
+	{
+	  //Treedata::categorical_cat_target_split(...);
+	}
+
     }  
 }
 
@@ -434,17 +446,18 @@ void Treedata::split_target(const size_t min_split,
   if(isfeaturenum_[targetidx_])
     {
       sort(sampleics.begin(),sampleics.end());
-      Treedata::incremental_split(min_split,sampleics,sampleics_left,sampleics_right);
+      Treedata::incremental_num_target_split(min_split,sampleics,sampleics_left,sampleics_right);
     }
   else
     {
-      
-      Treedata::categorical_split(sampleics,sampleics_left,sampleics_right);
-      
+      Treedata::categorical_cat_target_split(sampleics,sampleics_left,sampleics_right); 
     }
 }
 
-void Treedata::incremental_split(const size_t min_split, vector<size_t>& sampleics, vector<size_t>& sampleics_left, vector<size_t>& sampleics_right)
+void Treedata::incremental_num_target_split(const size_t min_split, 
+					    vector<size_t>& sampleics, 
+					    vector<size_t>& sampleics_left, 
+					    vector<size_t>& sampleics_right)
 {
   
   //Number of samples
@@ -487,7 +500,7 @@ void Treedata::incremental_split(const size_t min_split, vector<size_t>& samplei
   
 }
 
-void Treedata::categorical_split(vector<size_t>& sampleics, vector<size_t>& sampleics_left, vector<size_t>& sampleics_right)
+void Treedata::categorical_cat_target_split(vector<size_t>& sampleics, vector<size_t>& sampleics_left, vector<size_t>& sampleics_right)
 {
 
   size_t n_tot(sampleics.size());
@@ -505,9 +518,9 @@ void Treedata::categorical_split(vector<size_t>& sampleics, vector<size_t>& samp
   
   map<num_t,size_t> freq_right;
   map<num_t,size_t> freq_left;
-  datadefs::gini(tv,freq_right,impurity_right);
+  datadefs::count_freq(tv,freq_right);
+  datadefs::gini(freq_right,impurity_right);
   num_t impurity_tot(impurity_right);
-  //size_t ncats_tot(freq_right.size());
   
   set<num_t>::iterator bestcatit;
   num_t bestimpurity(impurity_tot);
@@ -540,8 +553,8 @@ void Treedata::categorical_split(vector<size_t>& sampleics, vector<size_t>& samp
 	  freq_left.insert(pair<num_t,size_t>(*catit,n_diff));
 	  freq_right.erase(*catit);
 
-	  datadefs::gini(n_left,freq_left,impurity_left);
-	  datadefs::gini(n_right,freq_right,impurity_right);
+	  datadefs::gini(freq_left,impurity_left);
+	  datadefs::gini(freq_right,impurity_right);
 
 	  if((n_left*impurity_left+n_right*impurity_right) < n_tot*bestimpurity)
 	    {
@@ -607,15 +620,16 @@ void Treedata::impurity(size_t featureidx, vector<size_t>& sampleics, num_t& imp
     {
       map<num_t,size_t> freq;
       num_t impurity;
-      datadefs::gini(data,freq,impurity);
+      datadefs::count_freq(data,freq);
+      datadefs::gini(freq,impurity);
     }
-
+  
 }
 
 void Treedata::split_samples(vector<size_t>& sampleics, 
-			      size_t splitidx, 
-			      vector<size_t>& sampleics_left, 
-			      vector<size_t>& sampleics_right)
+			     size_t splitidx, 
+			     vector<size_t>& sampleics_left, 
+			     vector<size_t>& sampleics_right)
 {
   //Split the sample indices
   size_t n_tot(sampleics.size());

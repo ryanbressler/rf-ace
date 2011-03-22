@@ -44,13 +44,14 @@ namespace datadefs
 		    num_t& mu_right,
 		    num_t& se_right);
 
-  void gini(const size_t n,
-	    map<num_t,size_t> const& freq, 
-	    num_t& gi);
+  void count_freq(vector<num_t> const& data, map<num_t,size_t>& cat2freq);
 
-  void gini(vector<num_t> const& data,
-            map<num_t,size_t>& freq,
+  void gini(map<num_t,size_t> const& cat2freq, 
 	    num_t& gi);
+  
+  //void gini(vector<num_t> const& data,
+  //          map<num_t,size_t>& cat2freq,
+  //	    num_t& gi);
 
   void update_gini(num_t x_n,
 		   const size_t n_left,

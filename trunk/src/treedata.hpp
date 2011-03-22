@@ -79,9 +79,12 @@ protected:
 
 private:
 
-  void incremental_split(const size_t min_split, vector<size_t>& sampleics, vector<size_t>& sampleics_left, vector<size_t>& sampleics_right);
+  void incremental_num_target_split(const size_t min_split, 
+				    vector<size_t>& sampleics, 
+				    vector<size_t>& sampleics_left, 
+				    vector<size_t>& sampleics_right);
 
-  void categorical_split(vector<size_t>& sampleics, vector<size_t>& sampleics_left, vector<size_t>& sampleics_right);
+  void categorical_cat_target_split(vector<size_t>& sampleics, vector<size_t>& sampleics_left, vector<size_t>& sampleics_right);
 
   //Splits a set of samples to "left" and "right", given a splitidx
   void split_samples(vector<size_t>& sampleics,
