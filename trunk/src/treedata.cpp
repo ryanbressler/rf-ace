@@ -406,15 +406,8 @@ void Treedata::split_target_wrt_feature(size_t featureidx,
       //Use the reference indices to sort sample indices
       Treedata::sort_from_ref<size_t>(sampleics,ref_ics);
       
-      if(isfeaturenum_[targetidx_])
-	{
-	  Treedata::incremental_num_target_split(min_split,sampleics,sampleics_left,sampleics_right);
-	}
-      else
-	{
-	  assert(false);
-	  //Treedata::incremental_cat_target_split(sampleics,sampleics_left,sampleics_right);
-	}
+      Treedata::incremental_target_split(min_split,sampleics,sampleics_left,sampleics_right);
+      
     }
   else
     {
@@ -425,14 +418,7 @@ void Treedata::split_target_wrt_feature(size_t featureidx,
       datadefs::count_freq(fv,freq);
       //Treedata::categorical
 
-      if(isfeaturenum_[targetidx_])
-	{
-	  //Treedata::categorical_num_target_split(...);
-	}
-      else
-	{
-	  //Treedata::categorical_cat_target_split(...);
-	}
+      //Treedata::categorical_target_split(...)
 
     }  
 }
@@ -446,22 +432,27 @@ void Treedata::split_target(const size_t min_split,
   if(isfeaturenum_[targetidx_])
     {
       sort(sampleics.begin(),sampleics.end());
-      Treedata::incremental_num_target_split(min_split,sampleics,sampleics_left,sampleics_right);
+      Treedata::incremental_target_split(min_split,sampleics,sampleics_left,sampleics_right);
     }
   else
     {
-      Treedata::categorical_cat_target_split(sampleics,sampleics_left,sampleics_right); 
+      Treedata::categorical_target_split(sampleics,sampleics_left,sampleics_right); 
     }
 }
 
-void Treedata::incremental_num_target_split(const size_t min_split, 
-					    vector<size_t>& sampleics, 
-					    vector<size_t>& sampleics_left, 
-					    vector<size_t>& sampleics_right)
+void Treedata::incremental_target_split(const size_t min_split, 
+					vector<size_t>& sampleics, 
+					vector<size_t>& sampleics_left, 
+					vector<size_t>& sampleics_right)
 {
   
+
+
   //Number of samples
   size_t n_tot(sampleics.size());
+
+  assert(n_tot >= 2*min_split);
+
   size_t n_right(n_tot);
   size_t n_left(0);
 
@@ -470,37 +461,69 @@ void Treedata::incremental_num_target_split(const size_t min_split,
     {
       tv[i] = featurematrix_[targetidx_][sampleics[i]];
     }
-  
-  //num_t mu_old(0.0);
-  num_t mu_right(0.0);
-  num_t mu_left(0.0);
+ 
   num_t impurity_left(0.0);
   num_t impurity_right(0.0);
-  
-  size_t nreal;
-  datadefs::sqerr(tv,mu_right,impurity_right,nreal);
-  num_t impurity_tot(impurity_right);
-  num_t bestimpurity(impurity_tot);
+
   int bestsplitidx = -1;
-  
-  while(n_left < n_tot - min_split)
+ 
+  if(isfeaturenum_[targetidx_])
     {
-      int idx(n_left);
-      ++n_left;
-      --n_right;
-      datadefs::update_sqerr(tv[idx],n_left,mu_left,impurity_left,n_right,mu_right,impurity_right);
-      if((impurity_left+impurity_right) < bestimpurity && n_left >= min_split)
+      num_t mu_right(0.0);
+      num_t mu_left(0.0);
+      
+      size_t nreal;
+      datadefs::sqerr(tv,mu_right,impurity_right,nreal);
+      num_t impurity_tot(impurity_right);
+      num_t bestimpurity(impurity_tot);
+
+      while(n_left < n_tot - min_split)
 	{
-	  bestsplitidx = idx;
-	  bestimpurity = (impurity_left + impurity_right);
+	  int idx(n_left);
+	  ++n_left;
+	  --n_right;
+	  datadefs::update_sqerr(tv[idx],n_left,mu_left,impurity_left,n_right,mu_right,impurity_right);
+	  if((impurity_left+impurity_right) < bestimpurity && n_left >= min_split)
+	    {
+	      bestsplitidx = idx;
+	      bestimpurity = (impurity_left + impurity_right);
+	    }
 	}
     }
-  
+  else
+    {
+
+      map<num_t,size_t> freq_tot;
+      map<num_t,size_t> freq_left;
+      map<num_t,size_t> freq_right;
+
+      datadefs::count_freq(tv,freq_right);
+      datadefs::gini(freq_right,impurity_right);
+      num_t impurity_tot(impurity_right);
+      num_t bestimpurity(impurity_tot);
+
+      while(n_left < n_tot - min_split)
+        {
+          int idx(n_left);
+          ++n_left;
+          --n_right;
+	  datadefs::update_gini(tv[idx],n_left,freq_left,impurity_left,n_right,freq_right,impurity_right); //INCREMENTAL GINI INDEX COMPUTATION IS INEFFICIENT AT THE MOMENT
+          if((n_left*impurity_left+n_right*impurity_right) < n_tot*bestimpurity && n_left >= min_split) //THIS NEEDS TO BE FIXED
+            {
+              bestsplitidx = idx;
+              bestimpurity = (impurity_left + impurity_right);
+            }
+        }
+      
+    }
+
   Treedata::split_samples(sampleics,bestsplitidx,sampleics_left,sampleics_right);
   
 }
 
-void Treedata::categorical_cat_target_split(vector<size_t>& sampleics, vector<size_t>& sampleics_left, vector<size_t>& sampleics_right)
+
+
+void Treedata::categorical_target_split(vector<size_t>& sampleics, vector<size_t>& sampleics_left, vector<size_t>& sampleics_right)
 {
 
   size_t n_tot(sampleics.size());
@@ -530,7 +553,6 @@ void Treedata::categorical_cat_target_split(vector<size_t>& sampleics, vector<si
     {
       categories_right.insert(it->first);
     }
-
 
   while(true)
     {
@@ -594,8 +616,6 @@ void Treedata::categorical_cat_target_split(vector<size_t>& sampleics, vector<si
   
  
 }
-
-
 
 
 void Treedata::impurity(size_t featureidx, vector<size_t>& sampleics, num_t& impurity)
