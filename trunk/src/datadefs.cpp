@@ -183,7 +183,15 @@ void datadefs::update_sqerr(const datadefs::num_t x_n,
     }
 }
 
-void datadefs::gini(map<datadefs::num_t,size_t> const& cat2freq, 
+void datadefs::gini(vector<datadefs::num_t>& data,
+		    datadefs::num_t& gi)
+{
+  map<datadefs::num_t,size_t> freq;
+  datadefs::count_freq(data,freq);
+  datadefs::gini(freq,gi);
+}
+
+void datadefs::gini(map<datadefs::num_t,size_t>& cat2freq, 
 		    datadefs::num_t& gi)
 {
   gi = 0.0;
@@ -197,26 +205,66 @@ void datadefs::gini(map<datadefs::num_t,size_t> const& cat2freq,
   gi = 1-gi/pow(n,2);
 }
 
-void datadefs::count_freq(vector<datadefs::num_t> const& data, map<datadefs::num_t,size_t>& cat2freq)
+/*
+  void datadefs::gini(multimap<datadefs::num_t,size_t>& datamap,
+  datadefs::num_t& gi)
+  {
+  gi = 0.0;
+  size_t n(0);
+  multimap<datadefs::num_t,size_t>::const_iterator it;
+  for(it = datamap.begin(); it != datamap.end(); ++it)
+  {
+  size_t n_count(datamap.count(it->first));
+  gi += pow(n_count,2);
+  n += n_count;
+  }
+  gi = 1-gi/pow(n,2);
+  }
+*/
+
+void datadefs::count_freq(vector<datadefs::num_t>& data, map<datadefs::num_t,size_t>& cat2freq)
 {
-  size_t n = data.size();
-  map<datadefs::num_t,size_t> cat2freqfoo;
-  cat2freq = cat2freqfoo;
+  cat2freq.clear();
   map<datadefs::num_t,size_t>::const_iterator it;
-  for(size_t i = 0; i < n; ++i)
+  for(size_t i = 0; i < data.size(); ++i)
     {
       if(!datadefs::is_nan(data[i]))
-        {
-          it = cat2freq.find(data[i]);
-          if(it == cat2freq.end())
-            {
-              cat2freq.insert(pair<datadefs::num_t,size_t>(data[i],1));
-            }
-          else
-            {
-              ++cat2freq[data[i]];
-            }
-        }
+	{
+	  it = cat2freq.find(data[i]);
+	  if(it == cat2freq.end())
+	    {
+	      cat2freq.insert(pair<datadefs::num_t,size_t>(data[i],1));
+	    }
+	  else
+	    {
+	      ++cat2freq[data[i]];
+	    }
+	}
+    }
+}
+
+
+void datadefs::map_data(vector<datadefs::num_t>& data, 
+			map<datadefs::num_t,vector<size_t> >& datamap)
+{
+  datamap.clear();
+  map<datadefs::num_t,vector<size_t> >::iterator it;
+  for(size_t i = 0; i < data.size(); ++i)
+    {
+      if(!datadefs::is_nan(data[i]))
+	{
+	  it = datamap.find(data[i]);
+	  if(it == datamap.end())
+	    {
+	      vector<size_t> foo;
+	      foo.push_back(i);
+	      datamap.insert(pair<datadefs::num_t,vector<size_t> >(data[i],foo));
+	    }
+	  else
+	    {
+	      it->second.push_back(i);
+	    }
+	}
     }
 }
 
@@ -228,8 +276,6 @@ void datadefs::update_gini(num_t x_n,
 			   map<num_t,size_t>& cat2freq_right,
 			   num_t& gi_right)
 {
-
-  //assert(false);
 
   map<datadefs::num_t,size_t>::const_iterator it(cat2freq_left.find(x_n));
   if(it == cat2freq_left.end())

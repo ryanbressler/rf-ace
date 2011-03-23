@@ -15,6 +15,7 @@ namespace datadefs
   
   //Numerical data type
   typedef float num_t;
+  typedef num_t* num_tp;
 
   //NaN as represented by the program
   extern const num_t num_nan;
@@ -44,10 +45,19 @@ namespace datadefs
 		    num_t& mu_right,
 		    num_t& se_right);
 
-  void count_freq(vector<num_t> const& data, map<num_t,size_t>& cat2freq);
+  void count_freq(vector<num_t>& data, map<num_t,size_t>& cat2freq);
 
-  void gini(map<num_t,size_t> const& cat2freq, 
+  void map_data(vector<num_t>& data, 
+		map<num_t,vector<size_t> >& datamap);
+
+  void gini(vector<num_t>& data,
 	    num_t& gi);
+
+  void gini(map<num_t,size_t>& cat2freq,
+            num_t& gi);
+
+  //void gini(map<num_t,vector<size_t> >& datamap, 
+  //	    num_t& gi);
   
   void update_gini(num_t x_n,
 		   const size_t n_left,
@@ -72,8 +82,23 @@ namespace datadefs
 	  return(false);
 	}      
     }
-    
   }; 
+
+  struct paired_ptr_ordering {
+    bool operator ()(pair<datadefs::num_tp,datadefs::num_tp> const& a, pair<datadefs::num_tp,datadefs::num_tp> const& b)
+    {
+      if(*(a.first) < *(b.first) || *(b.first) != *(b.first))
+        {
+          return(true);
+        }
+      else
+        {
+          return(false);
+        }
+    }
+  };
+
+
 }
 
 #endif

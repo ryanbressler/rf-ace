@@ -374,13 +374,15 @@ void Treedata::bootstrap(vector<size_t>& ics, vector<size_t>& oob_ics, size_t& n
   noob = distance(oob_ics.begin(),it);
 }
 
-void Treedata::split_target_wrt_feature(size_t featureidx,
-					const size_t min_split,
-					vector<size_t>& sampleics,
-					vector<size_t>& sampleics_left,
-					vector<size_t>& sampleics_right)
+void Treedata::split_target_with_num_feature(size_t featureidx,
+					     const size_t min_split,
+					     vector<size_t>& sampleics,
+					     vector<size_t>& sampleics_left,
+					     vector<size_t>& sampleics_right,
+					     num_t& splitvalue)
 {
   
+  assert(isfeaturenum_[featureidx]);
   assert(featureidx != targetidx_);
   
   //Number of samples
@@ -395,32 +397,31 @@ void Treedata::split_target_wrt_feature(size_t featureidx,
       fv[i] = featurematrix_[featureidx][sampleics[i]];
     }
   
-  if(isfeaturenum_[featureidx])
-    {
-      //Make reference indices that define the sorting wrt. feature
-      vector<size_t> ref_ics(n_tot);
-      
-      //Sort feature vector and collect reference indices
-      Treedata::sort_and_make_ref<num_t>(fv,ref_ics);
-      
-      //Use the reference indices to sort sample indices
-      Treedata::sort_from_ref<size_t>(sampleics,ref_ics);
-      
-      Treedata::incremental_target_split(min_split,sampleics,sampleics_left,sampleics_right);
-      
-    }
-  else
-    {
-      assert(false);
-      
-      map<num_t,size_t> freq;
-      
-      datadefs::count_freq(fv,freq);
-      //Treedata::categorical
+  //Make reference indices that define the sorting wrt. feature
+  vector<size_t> ref_ics(n_tot);
+  
+  //Sort feature vector and collect reference indices
+  Treedata::sort_and_make_ref<num_t>(fv,ref_ics);
+  
+  //Use the reference indices to sort sample indices
+  Treedata::sort_from_ref<size_t>(sampleics,ref_ics);
+  
+  Treedata::incremental_target_split(featureidx,min_split,sampleics,sampleics_left,sampleics_right,splitvalue);
+  
+}
 
-      //Treedata::categorical_target_split(...)
+void Treedata::split_target_with_cat_feature(size_t featureidx,
+					     const size_t min_split,
+					     vector<size_t>& sampleics,
+					     vector<size_t>& sampleics_left,
+					     vector<size_t>& sampleics_right,
+					     set<num_t>& values_left)
+{
+  assert(!isfeaturenum_[featureidx]);
+  assert(featureidx != targetidx_);
+  
+  Treedata::categorical_target_split(featureidx,sampleics,sampleics_left,sampleics_right,values_left);
 
-    }  
 }
 
 void Treedata::split_target(const size_t min_split,
@@ -431,31 +432,63 @@ void Treedata::split_target(const size_t min_split,
 
   if(isfeaturenum_[targetidx_])
     {
+      num_t splitvalue;
       sort(sampleics.begin(),sampleics.end());
-      Treedata::incremental_target_split(min_split,sampleics,sampleics_left,sampleics_right);
+      Treedata::incremental_target_split(targetidx_,min_split,sampleics,sampleics_left,sampleics_right,splitvalue);
     }
   else
     {
-      Treedata::categorical_target_split(sampleics,sampleics_left,sampleics_right); 
+      set<num_t> values_left;
+      Treedata::categorical_target_split(targetidx_,sampleics,sampleics_left,sampleics_right,values_left); 
     }
 }
 
-void Treedata::incremental_target_split(const size_t min_split, 
+void Treedata::incremental_target_split(size_t featureidx,
+					const size_t min_split, 
 					vector<size_t>& sampleics, 
 					vector<size_t>& sampleics_left, 
-					vector<size_t>& sampleics_right)
+					vector<size_t>& sampleics_right,
+					num_t& splitvalue)
 {
-  
 
+  //The splitter feature needs to be numerical
+  assert(isfeaturenum_[featureidx]);
 
   //Number of samples
   size_t n_tot(sampleics.size());
-
-  assert(n_tot >= 2*min_split);
-
   size_t n_right(n_tot);
   size_t n_left(0);
 
+  //Check that there are enough samples to make the split in the first place
+  assert(n_tot >= 2*min_split);
+
+  //If target is split wrt. feature, then we first need to sort the target data (indices) wrt. feature data (indices)
+  //if(featureidx != targetidx_)
+  //  {
+  //Feature values
+  vector<num_t> fv(n_tot);
+  
+  //Collect data for the feature and target into the vectors
+  for(size_t i = 0; i < n_tot; ++i)
+    {
+      fv[i] = featurematrix_[featureidx][sampleics[i]];
+    }
+  
+  //Make reference indices that define the sorting wrt. feature
+  vector<size_t> ref_ics(n_tot);
+  
+  //Sort feature vector and collect reference indices
+  Treedata::sort_and_make_ref<num_t>(fv,ref_ics);
+  
+  //Use the reference indices to sort sample indices
+  Treedata::sort_from_ref<size_t>(sampleics,ref_ics);
+  //  }
+  //else //Otherwise we just sort the sample indices
+  //  {
+  //    sort(sampleics.begin(),sampleics.end());
+  //  }
+      
+  //Next we collect the target data in the order specified by the reordered sampleics
   vector<num_t> tv(n_tot);
   for(size_t i = 0; i < n_tot; ++i)
     {
@@ -467,6 +500,7 @@ void Treedata::incremental_target_split(const size_t min_split,
 
   int bestsplitidx = -1;
  
+  //If the target is numerical, we use the iterative squared error formula to update impurity scores while we traverse "right"
   if(isfeaturenum_[targetidx_])
     {
       num_t mu_right(0.0);
@@ -490,10 +524,10 @@ void Treedata::incremental_target_split(const size_t min_split,
 	    }
 	}
     }
-  else
+  else //Otherwise we use the iterative gini index formula to update impurity scores while we traverse "right"
     {
 
-      map<num_t,size_t> freq_tot;
+      //map<num_t,size_t> freq_tot;
       map<num_t,size_t> freq_left;
       map<num_t,size_t> freq_right;
 
@@ -513,108 +547,179 @@ void Treedata::incremental_target_split(const size_t min_split,
               bestsplitidx = idx;
               bestimpurity = (impurity_left + impurity_right);
             }
-        }
-      
+        }      
     }
 
+  //Finally, make the split at the best point
   Treedata::split_samples(sampleics,bestsplitidx,sampleics_left,sampleics_right);
+  
+  //Return the split value
+  splitvalue = fv[bestsplitidx];
   
 }
 
 
-
-void Treedata::categorical_target_split(vector<size_t>& sampleics, vector<size_t>& sampleics_left, vector<size_t>& sampleics_right)
+void Treedata::categorical_target_split(size_t featureidx, 
+					vector<size_t>& sampleics, 
+					vector<size_t>& sampleics_left, 
+					vector<size_t>& sampleics_right,
+					set<num_t>& categories_left)
 {
 
+  assert(!isfeaturenum_[featureidx]);
+
+  //Sample size
   size_t n_tot(sampleics.size());
+  
+  //Check that sample size is positive
+  assert(n_tot > 0);
   size_t n_left(0);
+
+  //In the beginning all the samples are on "right"
   size_t n_right(n_tot);
   
+  num_t impurity_tot;
+
+  //Target data
   vector<num_t> tv(n_tot);
   for(size_t i = 0; i < n_tot; ++i)
     {
       tv[i] = featurematrix_[targetidx_][sampleics[i]];
     }
+
+  if(isfeaturenum_[targetidx_])
+    {
+      num_t mu;
+      size_t nreal;
+      datadefs::sqerr(tv,mu,impurity_tot,nreal);
+      assert(nreal == n_tot);
+      impurity_tot /= n_tot;
+    }
+  else
+    {
+      datadefs::gini(tv,impurity_tot);
+    }
   
+  //Feature data
+  vector<num_t> fv(n_tot);
+  for(size_t i = 0; i < n_tot; ++i)
+    {
+      fv[i] = featurematrix_[featureidx][sampleics[i]];
+    }
+
+  //Impurity scores for the left and right branches
   num_t impurity_left(0.0);
   num_t impurity_right(0.0);
   
-  map<num_t,size_t> freq_right;
-  map<num_t,size_t> freq_left;
-  datadefs::count_freq(tv,freq_right);
-  datadefs::gini(freq_right,impurity_right);
-  num_t impurity_tot(impurity_right);
-  
-  set<num_t>::iterator bestcatit;
-  num_t bestimpurity(impurity_tot);
-  
-  set<num_t> categories_right;
-  for(map<num_t,size_t>::const_iterator it(freq_right.begin()); it != freq_right.end(); ++it)
+  map<num_t,vector<size_t> > fmap;
+  datadefs::map_data(fv,fmap);
+
+  for(map<num_t,vector<size_t> >::iterator it(fmap.begin()); it != fmap.end(); ++it)
     {
-      categories_right.insert(it->first);
+      cout << "fmap(" << it->first << ") [";
+      for(size_t i = 0; i < it->second.size(); ++i)
+	{
+	  it->second[i] = sampleics[it->second[i]];
+	  cout << " " << it->second[i];
+	}
+      cout << " ]" << endl;
     }
+
+  
+  map<num_t,vector<size_t> > fmap_left;
+  map<num_t,vector<size_t> > fmap_right = fmap;
+
+  num_t bestimpurity(impurity_tot);
 
   while(true)
     {
 
-      size_t ncats_right(categories_right.size());
-      if(ncats_right == 0)
-	{
-	  break;
-	}
+      map<num_t,vector<size_t> > fmap_right_copy = fmap_right;
+      
+      //num_t bestkey(datadefs::num_nan);
+      map<num_t,vector<size_t> >::iterator bestit(fmap_right.end());
 
-      bestcatit = categories_right.end();
-      for(set<num_t>::const_iterator catit(categories_right.begin()); catit != categories_right.end(); ++catit)
+      for(map<num_t,vector<size_t> >::iterator it(fmap_right.begin()); it != fmap_right.end(); ++it)
 	{
 
-	  size_t n_diff(freq_right[*catit]);
-
-	  n_left += n_diff;
-	  n_right -= n_diff;
-
-	  freq_left.insert(pair<num_t,size_t>(*catit,n_diff));
-	  freq_right.erase(*catit);
-
-	  datadefs::gini(freq_left,impurity_left);
-	  datadefs::gini(freq_right,impurity_right);
-
-	  if((n_left*impurity_left+n_right*impurity_right) < n_tot*bestimpurity)
+	  //num_t key(it->first);
+	  fmap_left.insert(*it);
+	  fmap_right_copy.erase(it->first);
+	  cout << "fmap_left [";
+	  vector<num_t> data_left;
+	  for(map<num_t,vector<size_t> >::const_iterator it2(fmap_left.begin()); it2 != fmap_left.end(); ++it2)
 	    {
-	      bestcatit = catit;
-	      bestimpurity = (impurity_left + impurity_right);
+	      cout << " " << it2->first;
+	      for(size_t i = 0; i < it2->second.size(); ++i)
+		{
+		  data_left.push_back(featurematrix_[targetidx_][it2->second[i]]);
+		}
 	    }
+	  cout << " ]  fmap_right [";
+	  vector<num_t> data_right;
+          for(map<num_t,vector<size_t> >::const_iterator it2(fmap_right_copy.begin()); it2 != fmap_right_copy.end(); ++it2)
+            {
+	      cout << " " << it2->first;
+              for(size_t i = 0; i < it2->second.size(); ++i)
+                {
+                  data_right.push_back(featurematrix_[targetidx_][it2->second[i]]);
+                }
+            }
+	  cout << " ] impurity_left=";
 
-	  n_left -= n_diff;
-	  n_right += n_diff;
+	  if(isfeaturenum_[targetidx_])
+	    {
+	      num_t mu,impurity_left,impurity_right;
+	      size_t nreal;
+	      datadefs::sqerr(data_left,mu,impurity_left,nreal);
+	      assert(nreal == data_left.size());
+	      impurity_left /= nreal;
+	      datadefs::sqerr(data_right,mu,impurity_right,nreal);
+	      assert(nreal == data_right.size());
+	      impurity_right /= nreal;
+	    }
+	  else
+	    {
+	      datadefs::gini(data_left,impurity_left);
+	      datadefs::gini(data_right,impurity_right);
+	    }	    
 
-	  freq_left.erase(*catit);
-	  freq_right.insert(pair<num_t,size_t>(*catit,n_diff));
+	  cout << impurity_left << "  impurity_right=" << impurity_right << " (best=" << bestimpurity << ")" << endl;
 
+	  size_t n_left(data_left.size());
+	  size_t n_right(data_right.size());
+	  
+	  if(n_left*impurity_left+n_right*impurity_right < n_tot*bestimpurity)
+	    {
+
+	      bestit = it;
+	      bestimpurity = (n_left*impurity_left+n_right*impurity_right) / n_tot;
+	    }
+	  
+	  fmap_left.erase(it->first);
+	  fmap_right_copy.insert(*it);
+	 	  
 	}
-      if(bestcatit == categories_right.end())
+
+      if(bestit == fmap_right.end())
 	{
 	  break;
 	}
 
-      //num_t bestcat(categories_right[bestcatidx]);
-      size_t n_diff(freq_right[*bestcatit]);
-      n_left += n_diff;
-      n_right -= n_diff;
+      fmap_left.insert(*bestit);
+      fmap_right.erase(bestit->first);
+      
 
-      freq_left.insert(pair<num_t,size_t>(*bestcatit,n_diff));
-      freq_right.erase(*bestcatit);
-      categories_right.erase(bestcatit);
-    }
-
-  set<num_t> categories_left;
-  for(map<num_t,size_t>::const_iterator it(freq_left.begin()); it != freq_left.end(); ++it)
-    {
-      categories_left.insert(it->first);
     }
   
-  Treedata::split_samples(targetidx_,sampleics,categories_left,sampleics_left,sampleics_right);
   
- 
+  assert(false);
+  
+  
+
+  //Treedata::split_samples(targetidx_,sampleics,categories_left,sampleics_left,sampleics_right);
+  
+  
 }
 
 

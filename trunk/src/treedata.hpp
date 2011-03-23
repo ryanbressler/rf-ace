@@ -57,11 +57,19 @@ protected:
 
   //Given feature, finds and returns the optimal split point wrt. sampleics. 
   //Samples branching left and right will be stored in sampleics_left (resp. right)
-  void split_target_wrt_feature(size_t featureidx,
-				const size_t min_split,
-				vector<size_t>& sampleics,
-				vector<size_t>& sampleics_left,
-				vector<size_t>& sampleics_right);
+  void split_target_with_num_feature(size_t featureidx,
+				     const size_t min_split,
+				     vector<size_t>& sampleics,
+				     vector<size_t>& sampleics_left,
+				     vector<size_t>& sampleics_right,
+				     num_t& splitvalue);
+  
+  void split_target_with_cat_feature(size_t featureidx,
+				     const size_t min_split,
+				     vector<size_t>& sampleics,
+				     vector<size_t>& sampleics_left,
+				     vector<size_t>& sampleics_right,
+				     set<num_t>& values_left);
   
   void split_target(const size_t min_split,
 		    vector<size_t>& sampleics,
@@ -74,20 +82,25 @@ protected:
 
 private:
 
-  //Sorts data with respect to a given feature.
+  //Sorts data with respect to a given feature
   void sort_all_wrt_feature(size_t featureidx);
 
-  //Sorts data with respect to target.
+  //Sorts data with respect to target
   void sort_all_wrt_target();
 
-  void incremental_target_split(const size_t min_split, 
+  //Finds the best split for target with respect to selected feature splitter, which needs to be numerical.
+  void incremental_target_split(size_t featureidx,
+				const size_t min_split, 
 				vector<size_t>& sampleics, 
 				vector<size_t>& sampleics_left, 
-				vector<size_t>& sampleics_right);
+				vector<size_t>& sampleics_right,
+				num_t& splitvalue);
   
-  void categorical_target_split(vector<size_t>& sampleics, 
+  void categorical_target_split(size_t featureidx,
+				vector<size_t>& sampleics, 
 				vector<size_t>& sampleics_left, 
-				vector<size_t>& sampleics_right);
+				vector<size_t>& sampleics_right,
+				set<num_t>& values_left);
 
   //Splits a set of samples to "left" and "right", given a splitidx
   void split_samples(vector<size_t>& sampleics,
@@ -95,18 +108,18 @@ private:
 		      vector<size_t>& sampleics_left,
 		      vector<size_t>& sampleics_right);
 
-  //Splits a set of samples to "left" and "right", given a set of categories
+  //Splits a set of samples to "left" and "right", given a set of categories (NEEDS REWORKING!)
   void split_samples(size_t featureidx,
 		     vector<size_t>& sampleics,
 		     set<num_t>& categories_left,
 		     vector<size_t>& sampleics_left,
 		     vector<size_t>& sampleics_right);
-    
-
-    
+  
+  
+  
   void count_real_values(size_t featureidx, size_t& nreal);
-
-  //These could be moved to datadefs::
+  
+  //THESE WILL BE MOVED TO DATADEFS
   template <typename T1,typename T2> void make_pairedv(vector<T1> const& v1, 
 						       vector<T2> const& v2, 
 						       vector<pair<T1,T2> >& p);
