@@ -49,19 +49,15 @@ namespace datadefs
   void gini(map<num_t,size_t> const& cat2freq, 
 	    num_t& gi);
   
-  //void gini(vector<num_t> const& data,
-  //          map<num_t,size_t>& cat2freq,
-  //	    num_t& gi);
-
   void update_gini(num_t x_n,
 		   const size_t n_left,
+		   map<num_t,size_t>& cat2freq_left,
 		   num_t& gi_left,
-		   map<num_t,size_t>& freq_left,
 		   const size_t n_right,
-		   num_t& gi_right,
-		   map<num_t,size_t>& freq_right);
+		   map<num_t,size_t>& cat2freq_right,
+		   num_t& gi_right);
 
-
+  //TODO: ALL SORTING TO BE PERFORMED WITH VECTORS OF POINTERS TO DATA (THIS WILL REDUCE THE AMOUNT OF COPYING)
 
   //A comparator functor that can be passed to STL::sort. Assumes that one is comparing first elements of pairs, first type being num_t and second T
   template <typename T> struct ordering {

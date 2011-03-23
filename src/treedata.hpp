@@ -32,6 +32,7 @@ public:
 protected: 
 
   friend class Randomforest;
+  friend class GBT;
 
   //Permutes integers in range 0,1,...,(ics.size()-1). 
   //NOTE: original contents in ics will be replaced.  
@@ -54,12 +55,6 @@ protected:
   size_t nrealvalues();
   size_t nrealvalues(size_t featureidx);
 
-  //Sorts data with respect to a given feature.
-  void sort_all_wrt_feature(size_t featureidx);
-  
-  //Sorts data with respect to target.
-  void sort_all_wrt_target();
-
   //Given feature, finds and returns the optimal split point wrt. sampleics. 
   //Samples branching left and right will be stored in sampleics_left (resp. right)
   void split_target_wrt_feature(size_t featureidx,
@@ -79,12 +74,20 @@ protected:
 
 private:
 
-  void incremental_num_target_split(const size_t min_split, 
-				    vector<size_t>& sampleics, 
-				    vector<size_t>& sampleics_left, 
-				    vector<size_t>& sampleics_right);
+  //Sorts data with respect to a given feature.
+  void sort_all_wrt_feature(size_t featureidx);
 
-  void categorical_cat_target_split(vector<size_t>& sampleics, vector<size_t>& sampleics_left, vector<size_t>& sampleics_right);
+  //Sorts data with respect to target.
+  void sort_all_wrt_target();
+
+  void incremental_target_split(const size_t min_split, 
+				vector<size_t>& sampleics, 
+				vector<size_t>& sampleics_left, 
+				vector<size_t>& sampleics_right);
+  
+  void categorical_target_split(vector<size_t>& sampleics, 
+				vector<size_t>& sampleics_left, 
+				vector<size_t>& sampleics_right);
 
   //Splits a set of samples to "left" and "right", given a splitidx
   void split_samples(vector<size_t>& sampleics,
