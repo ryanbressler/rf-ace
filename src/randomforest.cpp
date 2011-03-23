@@ -98,13 +98,6 @@ void Randomforest::grow_tree(size_t treeidx)
   //Generate bootstrap indices, oob-indices, and noob
   treedata_->bootstrap(bootstrap_ics,oob_mat_[treeidx],noob_[treeidx]);
 
-  //cout << "Growing tree " << treeidx << " with bootstrap sample:";
-  //for(size_t i = 0; i < treedata_->nrealvalues(); ++i)
-  //  {
-  //    cout << " " << bootstrap_ics[i];
-  //  }
-  //cout << endl;
-
   size_t rootnode = 0;
   
   //Start the recursive node splitting from the root node. This will generate the tree.
@@ -125,9 +118,18 @@ void Randomforest::recursive_nodesplit(size_t treeidx, size_t nodeidx, vector<si
   vector<size_t> mtrysample(treedata_->nfeatures());
   treedata_->permute(mtrysample);
 
-  cout << "tree=" << treeidx << "  nodeidx=" << nodeidx << "  #sampleics=" << sampleics.size();
-  
+  cout << "tree=" << treeidx << "  nodeidx=" << nodeidx << "  sampleics=[";
+  for(size_t i = 0; i < sampleics.size(); ++i)
+    {
+      cout << " " << sampleics[i];
+    }
+  cout << " ]" << endl;
+
+  //This is testing...
   vector<size_t> sampleics_left,sampleics_right;
+  set<num_t> values_left;
+  treedata_->split_target_with_cat_feature(4,nodesize_,sampleics,sampleics_left,sampleics_right,values_left);
+
   treedata_->split_target(nodesize_,sampleics,sampleics_left,sampleics_right);
   
   cout << "  #left=" << sampleics_left.size() << "  #right=" << sampleics_right.size() << endl;
