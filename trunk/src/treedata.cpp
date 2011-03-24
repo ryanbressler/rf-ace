@@ -573,10 +573,10 @@ void Treedata::categorical_target_split(size_t featureidx,
   
   //Check that sample size is positive
   assert(n_tot > 0);
-  size_t n_left(0);
+  //size_t n_left(0);
 
   //In the beginning all the samples are on "right"
-  size_t n_right(n_tot);
+  //size_t n_right(n_tot);
   
   num_t impurity_tot;
 
@@ -649,27 +649,32 @@ void Treedata::categorical_target_split(size_t featureidx,
 	  vector<num_t> data_left;
 	  for(map<num_t,vector<size_t> >::const_iterator it2(fmap_left.begin()); it2 != fmap_left.end(); ++it2)
 	    {
-	      cout << " " << it2->first;
+	      cout << " " << it2->first << "(";
 	      for(size_t i = 0; i < it2->second.size(); ++i)
 		{
 		  data_left.push_back(featurematrix_[targetidx_][it2->second[i]]);
+		  cout << " " << featurematrix_[targetidx_][it2->second[i]];
 		}
+	      cout << ")";
 	    }
 	  cout << " ]  fmap_right [";
 	  vector<num_t> data_right;
           for(map<num_t,vector<size_t> >::const_iterator it2(fmap_right_copy.begin()); it2 != fmap_right_copy.end(); ++it2)
             {
-	      cout << " " << it2->first;
+	      cout << " " << it2->first << "(";
               for(size_t i = 0; i < it2->second.size(); ++i)
                 {
                   data_right.push_back(featurematrix_[targetidx_][it2->second[i]]);
-                }
+		  cout << " " << featurematrix_[targetidx_][it2->second[i]];
+		}
+	      cout << ")";
             }
 	  cout << " ] impurity_left=";
 
+	  //num_t impurity_left, impurity_right;
 	  if(isfeaturenum_[targetidx_])
 	    {
-	      num_t mu,impurity_left,impurity_right;
+	      num_t mu;
 	      size_t nreal;
 	      datadefs::sqerr(data_left,mu,impurity_left,nreal);
 	      assert(nreal == data_left.size());
@@ -713,9 +718,32 @@ void Treedata::categorical_target_split(size_t featureidx,
     }
   
   
-  assert(false);
+  //assert(false);
   
-  
+  sampleics_left.clear();
+  for(map<num_t,vector<size_t> >::const_iterator it(fmap_left.begin()); it != fmap_left.end(); ++it)
+    {
+      //cout << " " << it2->first << "(";
+      for(size_t i = 0; i < it->second.size(); ++i)
+	{
+	  sampleics_left.push_back(it->second[i]);
+	  //cout << " " << featurematrix_[targetidx_][it2->second[i]];
+	}
+      //cout << ")";
+    }
+
+  sampleics_right.clear();
+  for(map<num_t,vector<size_t> >::const_iterator it(fmap_right.begin()); it != fmap_right.end(); ++it)
+    {
+      //cout << " " << it2->first << "(";
+      for(size_t i = 0; i < it->second.size(); ++i)
+        {
+          sampleics_right.push_back(it->second[i]);
+          //cout << " " << featurematrix_[targetidx_][it2->second[i]];
+        }
+      //cout << ")";
+    }
+
 
   //Treedata::split_samples(targetidx_,sampleics,categories_left,sampleics_left,sampleics_right);
   
@@ -788,27 +816,29 @@ void Treedata::split_samples(vector<size_t>& sampleics,
 
 }
 
-void Treedata::split_samples(size_t featureidx,
-			     vector<size_t>& sampleics,
-			     set<num_t>& categories_left,
-			     vector<size_t>& sampleics_left,
-			     vector<size_t>& sampleics_right)
-{
-
+/*
+  void Treedata::split_samples(size_t featureidx,
+  vector<size_t>& sampleics,
+  set<num_t>& categories_left,
+  vector<size_t>& sampleics_left,
+  vector<size_t>& sampleics_right)
+  {
+  
   sampleics_left.clear();
   sampleics_right.clear();
-
+  
   for(size_t i = 0; i < sampleics.size(); ++i)
-    {
-      if(categories_left.find(featurematrix_[featureidx][sampleics[i]]) != categories_left.end())
-	{
-	  sampleics_left.push_back(sampleics[i]);
-	}
-      else
-	{
-	  sampleics_right.push_back(sampleics[i]);
-	}
-    }
-
-}
+  {
+  if(categories_left.find(featurematrix_[featureidx][sampleics[i]]) != categories_left.end())
+  {
+  sampleics_left.push_back(sampleics[i]);
+  }
+  else
+  {
+  sampleics_right.push_back(sampleics[i]);
+  }
+  }
+  
+  }
+*/
 
