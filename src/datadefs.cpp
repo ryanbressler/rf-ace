@@ -202,7 +202,10 @@ void datadefs::gini(map<datadefs::num_t,size_t>& cat2freq,
       gi += pow(it->second,2);
       n += it->second;
     }
-  gi = 1-gi/pow(n,2);
+  if(n)
+    {
+      gi = 1-gi/pow(n,2);
+    }
 }
 
 /*

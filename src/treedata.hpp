@@ -109,11 +109,11 @@ private:
 		      vector<size_t>& sampleics_right);
 
   //Splits a set of samples to "left" and "right", given a set of categories (NEEDS REWORKING!)
-  void split_samples(size_t featureidx,
-		     vector<size_t>& sampleics,
-		     set<num_t>& categories_left,
-		     vector<size_t>& sampleics_left,
-		     vector<size_t>& sampleics_right);
+  //void split_samples(size_t featureidx,
+  //		     vector<size_t>& sampleics,
+  //		     set<num_t>& categories_left,
+  //		     vector<size_t>& sampleics_left,
+  //		     vector<size_t>& sampleics_right);
   
   
   
