@@ -645,29 +645,29 @@ void Treedata::categorical_target_split(size_t featureidx,
 	  //num_t key(it->first);
 	  fmap_left.insert(*it);
 	  fmap_right_copy.erase(it->first);
-	  cout << "fmap_left [";
+	  cout << "[";
 	  vector<num_t> data_left;
 	  for(map<num_t,vector<size_t> >::const_iterator it2(fmap_left.begin()); it2 != fmap_left.end(); ++it2)
 	    {
-	      cout << " " << it2->first << "(";
+	      //cout << " " << it2->first << "(";
 	      for(size_t i = 0; i < it2->second.size(); ++i)
 		{
 		  data_left.push_back(featurematrix_[targetidx_][it2->second[i]]);
 		  cout << " " << featurematrix_[targetidx_][it2->second[i]];
 		}
-	      cout << ")";
+	      //cout << ")";
 	    }
-	  cout << " ]  fmap_right [";
+	  cout << " ] <==> [";
 	  vector<num_t> data_right;
           for(map<num_t,vector<size_t> >::const_iterator it2(fmap_right_copy.begin()); it2 != fmap_right_copy.end(); ++it2)
             {
-	      cout << " " << it2->first << "(";
+	      //cout << " " << it2->first << "(";
               for(size_t i = 0; i < it2->second.size(); ++i)
                 {
                   data_right.push_back(featurematrix_[targetidx_][it2->second[i]]);
 		  cout << " " << featurematrix_[targetidx_][it2->second[i]];
 		}
-	      cout << ")";
+	      //cout << ")";
             }
 	  cout << " ] impurity_left=";
 
@@ -689,16 +689,17 @@ void Treedata::categorical_target_split(size_t featureidx,
 	      datadefs::gini(data_right,impurity_right);
 	    }	    
 
-	  cout << impurity_left << "  impurity_right=" << impurity_right << " (best=" << bestimpurity << ")" << endl;
-
 	  size_t n_left(data_left.size());
-	  size_t n_right(data_right.size());
+          size_t n_right(data_right.size());
+	  num_t impurity_new = (n_left*impurity_left+n_right*impurity_right) / n_tot;
+
+	  cout << impurity_left << "  impurity_right=" << impurity_right << " (total=" << impurity_new << "\tcurr.best=" << bestimpurity << ")" << endl;
 	  
-	  if(n_left*impurity_left+n_right*impurity_right < n_tot*bestimpurity)
+	  if(impurity_new < bestimpurity)
 	    {
 
 	      bestit = it;
-	      bestimpurity = (n_left*impurity_left+n_right*impurity_right) / n_tot;
+	      bestimpurity = impurity_new;
 	    }
 	  
 	  fmap_left.erase(it->first);
