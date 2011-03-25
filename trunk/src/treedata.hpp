@@ -52,6 +52,8 @@ protected:
 
   size_t get_target();
   
+  bool isfeaturenum(size_t featureidx);
+
   size_t nrealvalues();
   size_t nrealvalues(size_t featureidx);
 

@@ -288,6 +288,11 @@ size_t Treedata::get_target()
   return(targetidx_);
 }
 
+bool Treedata::isfeaturenum(size_t featureidx)
+{
+  return(isfeaturenum_[featureidx]);
+}
+
 size_t Treedata::nrealvalues()
 {
   return(nrealvalues_[targetidx_]);
@@ -430,10 +435,12 @@ void Treedata::split_target(const size_t min_split,
 			    vector<size_t>& sampleics_right)
 {
 
+  num_t splitvalue;
+
   if(isfeaturenum_[targetidx_])
     {
-      num_t splitvalue;
-      sort(sampleics.begin(),sampleics.end());
+      //num_t splitvalue;
+      //sort(sampleics.begin(),sampleics.end());
       Treedata::incremental_target_split(targetidx_,min_split,sampleics,sampleics_left,sampleics_right,splitvalue);
     }
   else
@@ -441,6 +448,22 @@ void Treedata::split_target(const size_t min_split,
       set<num_t> values_left;
       Treedata::categorical_target_split(targetidx_,sampleics,sampleics_left,sampleics_right,values_left); 
     }
+
+  cout << "[";
+  for(size_t i = 0; i < sampleics_left.size(); ++i)
+    {
+      cout << " " << featurematrix_[targetidx_][sampleics_left[i]];
+    }
+  cout << " ] <==> [";
+  for(size_t i = 0; i < sampleics_right.size(); ++i)
+    {
+      cout << " " << featurematrix_[targetidx_][sampleics_right[i]];
+    }
+  cout << " ]" << endl;
+
+
+
+
 }
 
 void Treedata::incremental_target_split(size_t featureidx,
@@ -545,7 +568,7 @@ void Treedata::incremental_target_split(size_t featureidx,
           if((n_left*impurity_left+n_right*impurity_right) < n_tot*bestimpurity && n_left >= min_split) //THIS NEEDS TO BE FIXED
             {
               bestsplitidx = idx;
-              bestimpurity = (impurity_left + impurity_right);
+              bestimpurity = (n_left*impurity_left+n_right*impurity_right) / n_tot;
             }
         }      
     }
@@ -555,7 +578,7 @@ void Treedata::incremental_target_split(size_t featureidx,
   
   //Return the split value
   splitvalue = fv[bestsplitidx];
-  
+
 }
 
 
@@ -616,13 +639,13 @@ void Treedata::categorical_target_split(size_t featureidx,
 
   for(map<num_t,vector<size_t> >::iterator it(fmap.begin()); it != fmap.end(); ++it)
     {
-      cout << "fmap(" << it->first << ") [";
+      //cout << "fmap(" << it->first << ") [";
       for(size_t i = 0; i < it->second.size(); ++i)
 	{
 	  it->second[i] = sampleics[it->second[i]];
-	  cout << " " << it->second[i];
+	  //cout << " " << it->second[i];
 	}
-      cout << " ]" << endl;
+      //cout << " ]" << endl;
     }
 
   
@@ -631,7 +654,7 @@ void Treedata::categorical_target_split(size_t featureidx,
 
   num_t bestimpurity(impurity_tot);
 
-  while(true)
+  while(fmap_right.size() > 1)
     {
 
       map<num_t,vector<size_t> > fmap_right_copy = fmap_right;
@@ -645,31 +668,31 @@ void Treedata::categorical_target_split(size_t featureidx,
 	  //num_t key(it->first);
 	  fmap_left.insert(*it);
 	  fmap_right_copy.erase(it->first);
-	  cout << "[";
+	  //cout << "[";
 	  vector<num_t> data_left;
-	  for(map<num_t,vector<size_t> >::const_iterator it2(fmap_left.begin()); it2 != fmap_left.end(); ++it2)
-	    {
+	  //for(map<num_t,vector<size_t> >::const_iterator it2(fmap_left.begin()); it2 != fmap_left.end(); ++it2)
+	  //  {
 	      //cout << " " << it2->first << "(";
-	      for(size_t i = 0; i < it2->second.size(); ++i)
-		{
-		  data_left.push_back(featurematrix_[targetidx_][it2->second[i]]);
-		  cout << " " << featurematrix_[targetidx_][it2->second[i]];
-		}
-	      //cout << ")";
-	    }
-	  cout << " ] <==> [";
+	  //    for(size_t i = 0; i < it2->second.size(); ++i)
+	  //	{
+	  //	  data_left.push_back(featurematrix_[targetidx_][it2->second[i]]);
+	  //	  cout << " " << featurematrix_[targetidx_][it2->second[i]];
+	  //	}
+	  //    //cout << ")";
+	  //  }
+	  //cout << " ] <==> [";
 	  vector<num_t> data_right;
-          for(map<num_t,vector<size_t> >::const_iterator it2(fmap_right_copy.begin()); it2 != fmap_right_copy.end(); ++it2)
-            {
-	      //cout << " " << it2->first << "(";
-              for(size_t i = 0; i < it2->second.size(); ++i)
-                {
-                  data_right.push_back(featurematrix_[targetidx_][it2->second[i]]);
-		  cout << " " << featurematrix_[targetidx_][it2->second[i]];
-		}
+          //for(map<num_t,vector<size_t> >::const_iterator it2(fmap_right_copy.begin()); it2 != fmap_right_copy.end(); ++it2)
+          //  {
+	  //    //cout << " " << it2->first << "(";
+          //    for(size_t i = 0; i < it2->second.size(); ++i)
+          //      {
+          //        data_right.push_back(featurematrix_[targetidx_][it2->second[i]]);
+	  //		  cout << " " << featurematrix_[targetidx_][it2->second[i]];
+	  //	}
 	      //cout << ")";
-            }
-	  cout << " ] impurity_left=";
+	  // }
+	  //cout << " ] impurity_left=";
 
 	  //num_t impurity_left, impurity_right;
 	  if(isfeaturenum_[targetidx_])
@@ -693,7 +716,7 @@ void Treedata::categorical_target_split(size_t featureidx,
           size_t n_right(data_right.size());
 	  num_t impurity_new = (n_left*impurity_left+n_right*impurity_right) / n_tot;
 
-	  cout << impurity_left << "  impurity_right=" << impurity_right << " (total=" << impurity_new << "\tcurr.best=" << bestimpurity << ")" << endl;
+	  //cout << impurity_left << "  impurity_right=" << impurity_right << " (total=" << impurity_new << "\tcurr.best=" << bestimpurity << ")" << endl;
 	  
 	  if(impurity_new < bestimpurity)
 	    {
@@ -712,8 +735,11 @@ void Treedata::categorical_target_split(size_t featureidx,
 	  break;
 	}
 
+      //cout << "it's now...";
       fmap_left.insert(*bestit);
       fmap_right.erase(bestit->first);
+      //cout << " or never." << endl;
+      
       
 
     }
@@ -721,9 +747,13 @@ void Treedata::categorical_target_split(size_t featureidx,
   
   //assert(false);
   
+  //cout << "left" << endl;
+
   sampleics_left.clear();
+  categories_left.clear();
   for(map<num_t,vector<size_t> >::const_iterator it(fmap_left.begin()); it != fmap_left.end(); ++it)
     {
+      categories_left.insert(it->first);
       //cout << " " << it2->first << "(";
       for(size_t i = 0; i < it->second.size(); ++i)
 	{
@@ -732,6 +762,8 @@ void Treedata::categorical_target_split(size_t featureidx,
 	}
       //cout << ")";
     }
+
+  //cout << "right" << endl;
 
   sampleics_right.clear();
   for(map<num_t,vector<size_t> >::const_iterator it(fmap_right.begin()); it != fmap_right.end(); ++it)
