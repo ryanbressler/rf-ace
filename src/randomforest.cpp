@@ -118,21 +118,15 @@ void Randomforest::recursive_nodesplit(size_t treeidx, size_t nodeidx, vector<si
   vector<size_t> mtrysample(treedata_->nfeatures());
   treedata_->permute(mtrysample);
 
-  cout << "tree=" << treeidx << "  nodeidx=" << nodeidx << "  sampleics=[";
-  for(size_t i = 0; i < sampleics.size(); ++i)
-    {
-      cout << " " << sampleics[i];
-    }
-  cout << " ]" << endl;
+  cout << "tree=" << treeidx << "  nodeidx=" << nodeidx;
 
   //This is testing...
   vector<size_t> sampleics_left,sampleics_right;
   set<num_t> values_left;
-  treedata_->split_target_with_cat_feature(4,nodesize_,sampleics,sampleics_left,sampleics_right,values_left);
-
+  ///HERE'S SOMETHING GOING WRONG
+  //treedata_->split_target_with_cat_feature(4,nodesize_,sampleics,sampleics_left,sampleics_right,values_left);
+  //cout << "jee" << endl;
   treedata_->split_target(nodesize_,sampleics,sampleics_left,sampleics_right);
-  
-  cout << "  #left=" << sampleics_left.size() << "  #right=" << sampleics_right.size() << endl;
 
   size_t n_left(sampleics_left.size());
   size_t n_right(sampleics_right.size());
@@ -175,12 +169,21 @@ void Randomforest::recursive_nodesplit(size_t treeidx, size_t nodeidx, vector<si
 
   cout << "Best splitter featureidx=" << splitterfeatureidx << " with relative decrease in impurity of " << bestrelativedecrease << endl; 
 
-  //treedata_->split_target_wrt_feature(splitterfeatureidx,nodesize_,sampleics,sampleics_left,sampleics_right);
-
   size_t nodeidx_left(++nnodes_[treeidx]);
   size_t nodeidx_right(++nnodes_[treeidx]);
 
-  forest_[treeidx][nodeidx].set_splitter(mtrysample[bestsplitter_i],datadefs::num_nan,forest_[treeidx][nodeidx_left],forest_[treeidx][nodeidx_right]);
+  if(treedata_->isfeaturenum(splitterfeatureidx))
+    {
+      num_t splitvalue;
+      treedata_->split_target_with_num_feature(splitterfeatureidx,nodesize_,sampleics,sampleics_left,sampleics_right,splitvalue);
+      forest_[treeidx][nodeidx].set_splitter(splitterfeatureidx,splitvalue,forest_[treeidx][nodeidx_left],forest_[treeidx][nodeidx_right]);
+    }
+  else
+    {
+      set<num_t> values_left;
+      treedata_->split_target_with_cat_feature(splitterfeatureidx,nodesize_,sampleics,sampleics_left,sampleics_right,values_left);
+      forest_[treeidx][nodeidx].set_splitter(splitterfeatureidx,values_left,forest_[treeidx][nodeidx_left],forest_[treeidx][nodeidx_right]);
+    }
   
   Randomforest::recursive_nodesplit(treeidx,nodeidx_left,sampleics_left);
   Randomforest::recursive_nodesplit(treeidx,nodeidx_right,sampleics_right);
