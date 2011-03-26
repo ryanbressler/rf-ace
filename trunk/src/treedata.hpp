@@ -44,7 +44,7 @@ protected:
   //Generates a bootstrap sample. Samples not in the bootstrap sample will be stored in oob_ics, 
   //and the number of oob samples is stored in noob.
   //NOTE: ics.size() will depend on the number of non-NaN values the current target has
-  void bootstrap(vector<size_t>& ics, vector<size_t>& oob_ics, size_t& noob);
+  void bootstrap(vector<size_t>& ics, vector<size_t>& oob_ics);
 
   //Selects target feature. 
   //NOTE: data will be sorted with respect to the target.
@@ -81,6 +81,8 @@ protected:
   void range(vector<size_t>& ics);
 
   void impurity(size_t featureidx, vector<size_t>& sampleics, num_t& impurity);
+
+  void percolate_sampleics(vector<size_t>& sampleics);
 
 private:
 
