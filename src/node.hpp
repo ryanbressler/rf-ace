@@ -30,12 +30,16 @@ public:
   
   //Given value, descends to either one of the child nodes if existent and returns true, otherwise false.
   //NOTE: childp is a ref-to-ptr that will be modified to point to the child node if descend is successful. 
-  //Node* percolate(cat_t value);
   Node* percolate(num_t value);
 
+  //THESE WILL POSSIBLY BECOME DEPRECATED
   void set_impurity(num_t value);
   num_t get_impurity();
   void reset_impurity();
+
+  void set_trainidx(size_t trainidx);
+  vector<size_t>* get_trainics();
+  void clear_trainics();
 
   //Logic test whether the node has children or not
   bool has_children();
@@ -56,6 +60,8 @@ private:
   bool haschildren_;
   Node* leftchild_;
   Node* rightchild_;
+
+  vector<size_t> trainics_;
 };
 
 #endif

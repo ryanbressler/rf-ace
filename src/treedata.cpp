@@ -364,9 +364,9 @@ void Treedata::permute(vector<num_t>& x)
     }
 }
 
-void Treedata::bootstrap(vector<size_t>& ics, vector<size_t>& oob_ics, size_t& noob)
+void Treedata::bootstrap(vector<size_t>& ics, vector<size_t>& oob_ics)
 {
-  assert(ics.size() == oob_ics.size());
+  //assert(ics.size() == oob_ics.size());
   size_t n(ics.size());
   for(size_t i = 0; i < n; ++i)
     {
@@ -375,8 +375,16 @@ void Treedata::bootstrap(vector<size_t>& ics, vector<size_t>& oob_ics, size_t& n
   sort(ics.begin(),ics.end());
   vector<size_t> allics(n);
   Treedata::range(allics);
-  vector<size_t>::iterator it = set_difference(allics.begin(),allics.end(),ics.begin(),ics.end(),oob_ics.begin());
-  noob = distance(oob_ics.begin(),it);
+
+  vector<size_t> foo(n);
+  vector<size_t>::iterator it = set_difference(allics.begin(),allics.end(),ics.begin(),ics.end(),foo.begin());
+  //noob = distance(foo.begin(),it);
+
+  oob_ics.clear();
+  for(vector<size_t>::const_iterator it2(foo.begin()); it != it; ++it)
+    {
+      oob_ics.push_back(*it2);
+    }
 }
 
 void Treedata::split_target_with_num_feature(size_t featureidx,
@@ -448,22 +456,19 @@ void Treedata::split_target(const size_t min_split,
       set<num_t> values_left;
       Treedata::categorical_target_split(targetidx_,sampleics,sampleics_left,sampleics_right,values_left); 
     }
-
-  cout << "[";
-  for(size_t i = 0; i < sampleics_left.size(); ++i)
+  /*
+    cout << "[";
+    for(size_t i = 0; i < sampleics_left.size(); ++i)
     {
-      cout << " " << featurematrix_[targetidx_][sampleics_left[i]];
+    cout << " " << featurematrix_[targetidx_][sampleics_left[i]];
     }
-  cout << " ] <==> [";
-  for(size_t i = 0; i < sampleics_right.size(); ++i)
+    cout << " ] <==> [";
+    for(size_t i = 0; i < sampleics_right.size(); ++i)
     {
-      cout << " " << featurematrix_[targetidx_][sampleics_right[i]];
+    cout << " " << featurematrix_[targetidx_][sampleics_right[i]];
     }
-  cout << " ]" << endl;
-
-
-
-
+    cout << " ]" << endl;
+  */
 }
 
 void Treedata::incremental_target_split(size_t featureidx,
@@ -579,6 +584,18 @@ void Treedata::incremental_target_split(size_t featureidx,
   //Return the split value
   splitvalue = fv[bestsplitidx];
 
+  cout << "[";
+  for(size_t i = 0; i < sampleics_left.size(); ++i)
+    {
+      cout << " " << featurematrix_[targetidx_][sampleics_left[i]];
+    }
+  cout << " ] <==> [";
+  for(size_t i = 0; i < sampleics_right.size(); ++i)
+    {
+      cout << " " << featurematrix_[targetidx_][sampleics_right[i]];
+    }
+  cout << " ]" << endl;
+
 }
 
 
@@ -597,9 +614,6 @@ void Treedata::categorical_target_split(size_t featureidx,
   //Check that sample size is positive
   assert(n_tot > 0);
   //size_t n_left(0);
-
-  //In the beginning all the samples are on "right"
-  //size_t n_right(n_tot);
   
   num_t impurity_tot;
 
@@ -743,12 +757,7 @@ void Treedata::categorical_target_split(size_t featureidx,
       
 
     }
-  
-  
-  //assert(false);
-  
-  //cout << "left" << endl;
-
+ 
   sampleics_left.clear();
   categories_left.clear();
   for(map<num_t,vector<size_t> >::const_iterator it(fmap_left.begin()); it != fmap_left.end(); ++it)
@@ -779,10 +788,25 @@ void Treedata::categorical_target_split(size_t featureidx,
 
 
   //Treedata::split_samples(targetidx_,sampleics,categories_left,sampleics_left,sampleics_right);
-  
+ 
+  cout << "[";
+  for(size_t i = 0; i < sampleics_left.size(); ++i)
+    {
+      cout << " " << featurematrix_[targetidx_][sampleics_left[i]];
+    }
+  cout << " ] <==> [";
+  for(size_t i = 0; i < sampleics_right.size(); ++i)
+    {
+      cout << " " << featurematrix_[targetidx_][sampleics_right[i]];
+    }
+  cout << " ]" << endl;
   
 }
 
+void Treedata::percolate_sampleics(vector<size_t>& sampleics)
+{
+
+}
 
 void Treedata::impurity(size_t featureidx, vector<size_t>& sampleics, num_t& impurity)
 {

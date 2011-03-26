@@ -6,7 +6,8 @@ Randomforest::Randomforest(Treedata* treedata, size_t ntrees, size_t mtry, size_
   treedata_(treedata),
   ntrees_(ntrees),
   mtry_(mtry),
-  nodesize_(nodesize)
+  nodesize_(nodesize),
+  oobmatrix_(ntrees)
 {
 
   size_t nsamples(treedata_->nsamples());
@@ -55,17 +56,17 @@ void Randomforest::select_target(size_t targetidx)
       treedata_->select_target(targetidx);
     }
 
-  //Initialize oob_mat_ to store the out-of-box samples for the selected target
-  size_t nrealvalues(treedata_->nrealvalues());
-  vector<vector<size_t> > oob_mat(ntrees_);
-  oob_mat_ = oob_mat;
   for(size_t i = 0; i < ntrees_; ++i)
     {
-      vector<size_t> oob_ics(nrealvalues);
-      oob_mat_[i] = oob_ics;
+      oobmatrix_.clear();
     }
-  vector<size_t> noob(ntrees_);
-  noob_ = noob;
+  //for(size_t i = 0; i < ntrees_; ++i)
+  //  {
+  //    vector<size_t> oob_ics(nrealvalues);
+  //    oob_mat_[i] = oob_ics;
+  //  }
+  //vector<size_t> noob(ntrees_);
+  //noob_ = noob;
 
   //cout << "Feature " << targetidx << " selected as target. Data sorted." << endl;
   //treedata_->print();
@@ -96,12 +97,15 @@ void Randomforest::grow_tree(size_t treeidx)
   vector<size_t> bootstrap_ics(treedata_->nrealvalues());
 
   //Generate bootstrap indices, oob-indices, and noob
-  treedata_->bootstrap(bootstrap_ics,oob_mat_[treeidx],noob_[treeidx]);
+  treedata_->bootstrap(bootstrap_ics,oobmatrix_[treeidx]);
 
   size_t rootnode = 0;
   
   //Start the recursive node splitting from the root node. This will generate the tree.
   Randomforest::recursive_nodesplit(treeidx,rootnode,bootstrap_ics);
+  
+  //Percolate oob samples
+  //Randomforest::
 }
 
 void Randomforest::recursive_nodesplit(size_t treeidx, size_t nodeidx, vector<size_t>& sampleics)
@@ -189,4 +193,9 @@ void Randomforest::recursive_nodesplit(size_t treeidx, size_t nodeidx, vector<si
   Randomforest::recursive_nodesplit(treeidx,nodeidx_right,sampleics_right);
   
   
+}
+
+void Randomforest::percolate_sampleics(size_t treeidx, vector<size_t>& sampleics)
+{
+  treedata_->percolate_sampleics(sampleics);
 }

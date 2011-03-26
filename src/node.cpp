@@ -82,6 +82,21 @@ void Node::reset_impurity()
   impurity_ = 0.0;
 }
 
+void Node::set_trainidx(size_t trainidx)
+{
+  trainics_.push_back(trainidx);
+}
+
+vector<size_t>* Node::get_trainics()
+{
+  return(&trainics_);
+}
+
+void Node::clear_trainics()
+{
+  trainics_.clear();
+}
+
 bool Node::has_children()
 {
   return(haschildren_);
