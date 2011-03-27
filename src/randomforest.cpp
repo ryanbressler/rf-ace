@@ -7,7 +7,8 @@ Randomforest::Randomforest(Treedata* treedata, size_t ntrees, size_t mtry, size_
   ntrees_(ntrees),
   mtry_(mtry),
   nodesize_(nodesize),
-  oobmatrix_(ntrees)
+  oobmatrix_(ntrees),
+  trainics_(ntrees)
 {
 
   size_t nsamples(treedata_->nsamples());
@@ -105,7 +106,7 @@ void Randomforest::grow_tree(size_t treeidx)
   Randomforest::recursive_nodesplit(treeidx,rootnode,bootstrap_ics);
   
   //Percolate oob samples
-  //Randomforest::
+  Randomforest::percolate_sampleics(treeidx,oobmatrix_[treeidx]);
 }
 
 void Randomforest::recursive_nodesplit(size_t treeidx, size_t nodeidx, vector<size_t>& sampleics)
@@ -197,5 +198,24 @@ void Randomforest::recursive_nodesplit(size_t treeidx, size_t nodeidx, vector<si
 
 void Randomforest::percolate_sampleics(size_t treeidx, vector<size_t>& sampleics)
 {
-  treedata_->percolate_sampleics(sampleics);
+  //treedata_->percolate_sampleics(sampleics);
+
+  for(size_t i = 0; i < sampleics.size(); ++i)
+    {
+      Node* nodep(&forest_[treeidx][0]);
+      size_t sampleidx(sampleics[i]);
+      treedata_->percolate_sampleidx(sampleidx,nodep);
+      map<Node*,vector<size_t> >::iterator it(trainics_[treeidx].find(nodep));
+      if(it == trainics_[treeidx].end())
+	{
+	  vector<size_t> foo(1);
+	  foo[0] = sampleidx;
+	  trainics_[treeidx].insert(pair<Node*,vector<size_t> >(nodep,foo));
+	}
+      else
+	{
+	  trainics_[treeidx][it->first].push_back(sampleidx);
+	}
+      
+    }
 }

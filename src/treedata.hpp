@@ -8,6 +8,7 @@
 #include<cstdlib>
 #include<map>
 #include "datadefs.hpp"
+#include "node.hpp"
 
 using namespace std;
 //using datadefs::cat_t;
@@ -82,7 +83,7 @@ protected:
 
   void impurity(size_t featureidx, vector<size_t>& sampleics, num_t& impurity);
 
-  void percolate_sampleics(vector<size_t>& sampleics);
+  void percolate_sampleidx(size_t sampleidx, Node* nodep);
 
 private:
 
