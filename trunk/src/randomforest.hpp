@@ -37,7 +37,7 @@ private:
   //NOTE: there will be at least two alternative node splitter algorithms in the future
   void recursive_nodesplit(size_t treeidx, size_t nodeidx, vector<size_t>& sampleics);
 
-  void percolate_sampleics(size_t treeidx,vector<size_t>& sampleics);
+  void percolate_sampleics(size_t treeidx, vector<size_t>& sampleics);
 
   //Pointer to treedata_ object, stores all the feature information
   Treedata* treedata_;
@@ -50,6 +50,8 @@ private:
   vector<vector<Node> > forest_; //forest_[i][j] is the j'th node of i'th tree. forest_[i][0] is the rootnode.
   vector<size_t> nnodes_; //Number of used nodes in each tree.
   vector<vector<size_t> > oobmatrix_;
+  
+  vector<map<Node*,vector<size_t> > > trainics_;
 
 };
 

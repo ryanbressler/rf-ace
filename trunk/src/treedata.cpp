@@ -803,8 +803,14 @@ void Treedata::categorical_target_split(size_t featureidx,
   
 }
 
-void Treedata::percolate_sampleics(vector<size_t>& sampleics)
+void Treedata::percolate_sampleidx(size_t sampleidx, Node* nodep)
 {
+  
+  while(nodep->has_children())
+    {
+      size_t featureidx(nodep->get_splitter());
+      nodep = nodep->percolate(featurematrix_[featureidx][sampleidx]);
+    }
 
 }
 
