@@ -2,7 +2,7 @@
 #define RANDOMFOREST_HPP
 
 #include<cstdlib>
-//#include "node.hpp"
+#include "node.hpp"
 #include "treedata.hpp"
 
 using namespace std;

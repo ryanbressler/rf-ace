@@ -18,7 +18,8 @@ Treedata::Treedata(string fname, bool is_featurerows):
   ncatvalues_(0),
   nsamples_(0),
   nfeatures_(0),
-  featureheaders_(0)
+  featureheaders_(0),
+  ispermuted_(false)
 {
 
   //Initialize random number rgenerator
@@ -177,6 +178,10 @@ Treedata::Treedata(string fname, bool is_featurerows):
   //By default, make the first feature the target
   targetidx_ = 0;
   Treedata::select_target(targetidx_); //This will also sort the data wrt targetidx_
+
+  contrastmatrix_.resize(nfeatures_);
+  Treedata::generate_contrasts();
+
 }
 
 Treedata::~Treedata()
@@ -281,6 +286,7 @@ void Treedata::select_target(size_t targetidx)
 {
   targetidx_ = targetidx; 
   Treedata::sort_all_wrt_target();
+  ispermuted_ = false;
 }
 
 size_t Treedata::get_target()
@@ -356,13 +362,53 @@ void Treedata::permute(vector<num_t>& x)
 {
   size_t n(x.size());
   vector<size_t> ics(n);
-  vector<num_t> foo = x;
+  //vector<num_t> foo = x;
   Treedata::permute(ics);
   for(size_t i = 0; i < n; ++i)
     {
-      x[i] = foo[ics[i]];
+      num_t temp(x[i]);
+      x[i] = x[ics[i]];
+      x[ics[i]] = temp;
     }
 }
+
+void Treedata::generate_contrasts()
+{
+  size_t nrealvalues(nrealvalues_[targetidx_]);
+  for(size_t i = 0; i < nfeatures_; ++i)
+    {
+      vector<num_t> x(nrealvalues);
+      contrastmatrix_[i].resize(nrealvalues);
+      for(size_t j = 0; j < nrealvalues; ++j)
+        {
+          contrastmatrix_[i][j] = featurematrix_[i][j];
+        }
+      Treedata::permute(contrastmatrix_[i]);
+    }
+}
+
+/*
+  void Treedata::unpermute_feature()
+  {
+  ispermuted_ = false;
+  }
+  
+  void Treedata::permute_feature(size_t featureidx)
+  {
+  assert(featureidx != targetidx_);
+  
+  ispermuted_ = true;
+  permutedfeatureidx_ = featureidx;
+  
+  size_t n(nrealvalues_[targetidx_]);
+  permutedfeaturevector_.resize(nrealvalues_[targetidx_]);
+  for(size_t i = 0; i < n; ++i)
+  {
+  permutedfeaturevector_[i] = featurematrix_[permutedfeatureidx_][i];
+  }
+  Treedata::permute(permutedfeaturevector_);
+  }
+*/
 
 void Treedata::bootstrap(vector<size_t>& ics, vector<size_t>& oob_ics)
 {
@@ -882,29 +928,5 @@ void Treedata::split_samples(vector<size_t>& sampleics,
 
 }
 
-/*
-  void Treedata::split_samples(size_t featureidx,
-  vector<size_t>& sampleics,
-  set<num_t>& categories_left,
-  vector<size_t>& sampleics_left,
-  vector<size_t>& sampleics_right)
-  {
-  
-  sampleics_left.clear();
-  sampleics_right.clear();
-  
-  for(size_t i = 0; i < sampleics.size(); ++i)
-  {
-  if(categories_left.find(featurematrix_[featureidx][sampleics[i]]) != categories_left.end())
-  {
-  sampleics_left.push_back(sampleics[i]);
-  }
-  else
-  {
-  sampleics_right.push_back(sampleics[i]);
-  }
-  }
-  
-  }
-*/
+
 
