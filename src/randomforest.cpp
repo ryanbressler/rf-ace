@@ -8,8 +8,7 @@ Randomforest::Randomforest(Treedata* treedata, size_t ntrees, size_t mtry, size_
   ntrees_(ntrees),
   mtry_(mtry),
   nodesize_(nodesize),
-  oobmatrix_(ntrees),
-  trainics_(ntrees)
+  oobmatrix_(ntrees)
 {
 
   size_t nsamples(treedata_->nsamples());
@@ -85,14 +84,13 @@ void Randomforest::grow_forest()
     {
       Randomforest::grow_tree(i);
     }
-  //cout << "done" << endl;
 }
 
-void Randomforest::grow_forest(size_t targetidx)
-{
-  Randomforest::select_target(targetidx);
-  Randomforest::grow_forest();
-}
+//void Randomforest::grow_forest(size_t targetidx)
+//{
+//  Randomforest::select_target(targetidx);
+//  Randomforest::grow_forest();
+//}
 
 void Randomforest::grow_tree(size_t treeidx)
 {
@@ -119,8 +117,10 @@ void Randomforest::grow_tree(size_t treeidx)
   //Start the recursive node splitting from the root node. This will generate the tree.
   Randomforest::recursive_nodesplit(treeidx,rootnode,bootstrap_ics);
   
+  cout << "Tree creation done." << endl;
+
   //Percolate oob samples
-  Randomforest::percolate_sampleics(treeidx,oobmatrix_[treeidx]);
+  //Randomforest::percolate_sampleics(treeidx,oobmatrix_[treeidx]);
 }
 
 void Randomforest::recursive_nodesplit(size_t treeidx, size_t nodeidx, vector<size_t>& sampleics)
@@ -223,40 +223,42 @@ void Randomforest::recursive_nodesplit(size_t treeidx, size_t nodeidx, vector<si
   
 }
 
-void Randomforest::percolate_sampleics(size_t treeidx, vector<size_t>& sampleics)
-{
-
+/*
+  void Randomforest::percolate_sampleics(size_t treeidx, vector<size_t>& sampleics)
+  {
+  
   for(size_t i = 0; i < sampleics.size(); ++i)
-    {
-      Node* nodep(&forest_[treeidx][0]);
-      size_t sampleidx(sampleics[i]);
-      treedata_->percolate_sampleidx(sampleidx,&nodep);
-      map<Node*,vector<size_t> >::iterator it(trainics_[treeidx].find(nodep));
-      if(it == trainics_[treeidx].end())
-	{
-	  Node* foop(nodep);
-	  vector<size_t> foo(1);
-	  foo[0] = sampleidx;
-	  trainics_[treeidx].insert(pair<Node*,vector<size_t> >(foop,foo));
-	}
-      else
-	{
-	  trainics_[treeidx][it->first].push_back(sampleidx);
-	}
-      
-    }
-
+  {
+  Node* nodep(&forest_[treeidx][0]);
+  size_t sampleidx(sampleics[i]);
+  treedata_->percolate_sampleidx(sampleidx,&nodep);
+  //map<Node*,vector<size_t> >::iterator it(trainics_[treeidx].find(nodep));
+  //if(it == trainics_[treeidx].end())
+  //{
+  //  Node* foop(nodep);
+  //  vector<size_t> foo(1);
+  //  foo[0] = sampleidx;
+  trainics_[treeidx].insert(pair<Node*,size_t>(nodep,sampleidx));
+  //}
+  //else
+  //	{
+  //	  trainics_[treeidx][it->first].push_back(sampleidx);
+  //	}
+  
+  }
+  
   cout << "treeidx=" << treeidx << ", train samples percolated accordingly:" << endl;
-  size_t iter = 0;
-  for(map<Node*,vector<size_t> >::const_iterator it(trainics_[treeidx].begin()); it != trainics_[treeidx].end(); ++it,++iter)
-    {
-      cout << "leaf node " << iter << ":"; 
-      for(size_t i = 0; i < it->second.size(); ++i)
-	{
-	  cout << " " << it->second[i];
-	}
-      cout << endl;
-    }
+  //size_t iter = 0;
+  for(multimap<Node*,size_t>::const_iterator it(trainics_[treeidx].begin()); it != trainics_[treeidx].end(); ++it)
+  {
+  //cout << "leaf node " << iter << ":"; 
+  //for(size_t i = 0; i < it->second.size(); ++i)
+  //{
+  cout << it->first << ":" << it->second << endl;
+  //	}
+  //cout << endl;
+  }
   //cout << "done" << endl;
-
-}
+  
+  }
+*/
