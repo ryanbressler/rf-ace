@@ -19,6 +19,7 @@ namespace datadefs
 
   //NaN as represented by the program
   extern const num_t num_nan;
+  extern const num_t eps;
 
   //NaNs supported in the delimited file 
   typedef string NAN_t;

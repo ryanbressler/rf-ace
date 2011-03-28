@@ -1,4 +1,5 @@
 #include "randomforest.hpp"
+#include "datadefs.hpp"
 #include<cmath>
 #include<iostream>
 
@@ -84,6 +85,7 @@ void Randomforest::grow_forest()
     {
       Randomforest::grow_tree(i);
     }
+  //cout << "done" << endl;
 }
 
 void Randomforest::grow_forest(size_t targetidx)
@@ -99,6 +101,18 @@ void Randomforest::grow_tree(size_t treeidx)
 
   //Generate bootstrap indices, oob-indices, and noob
   treedata_->bootstrap(bootstrap_ics,oobmatrix_[treeidx]);
+
+  cout << "tree=" << treeidx << "  bootstrap indices [";
+  for(size_t i = 0; i < bootstrap_ics.size(); ++i)
+    {
+      cout << " " << bootstrap_ics[i];
+    }
+  cout << " ]  oob [";
+  for(size_t i = 0; i < oobmatrix_[treeidx].size(); ++i)
+    {
+      cout << " " << oobmatrix_[treeidx][i];
+    }
+  cout << " ]" << endl;
 
   size_t rootnode = 0;
   
@@ -152,6 +166,12 @@ void Randomforest::recursive_nodesplit(size_t treeidx, size_t nodeidx, vector<si
       num_t impurity_tot,impurity_left,impurity_right;
 
       treedata_->impurity(featureidx,sampleics,impurity_tot);
+      
+      if(impurity_tot < datadefs::eps)
+	{
+	  continue;
+	}
+
       treedata_->impurity(featureidx,sampleics_left,impurity_left);
       treedata_->impurity(featureidx,sampleics_right,impurity_right);
 
@@ -172,7 +192,7 @@ void Randomforest::recursive_nodesplit(size_t treeidx, size_t nodeidx, vector<si
 
   size_t splitterfeatureidx(mtrysample[bestsplitter_i]);
 
-  cout << "Best splitter featureidx=" << splitterfeatureidx << " with relative decrease in impurity of " << bestrelativedecrease << endl; 
+  //cout << "Best splitter featureidx=" << splitterfeatureidx << " with relative decrease in impurity of " << bestrelativedecrease << endl; 
 
   size_t nodeidx_left(++nnodes_[treeidx]);
   size_t nodeidx_right(++nnodes_[treeidx]);
@@ -182,14 +202,21 @@ void Randomforest::recursive_nodesplit(size_t treeidx, size_t nodeidx, vector<si
       num_t splitvalue;
       treedata_->split_target_with_num_feature(splitterfeatureidx,nodesize_,sampleics,sampleics_left,sampleics_right,splitvalue);
       forest_[treeidx][nodeidx].set_splitter(splitterfeatureidx,splitvalue,forest_[treeidx][nodeidx_left],forest_[treeidx][nodeidx_right]);
+      //cout << forest_[treeidx][nodeidx].has_children() << endl;
     }
   else
     {
       set<num_t> values_left;
       treedata_->split_target_with_cat_feature(splitterfeatureidx,nodesize_,sampleics,sampleics_left,sampleics_right,values_left);
       forest_[treeidx][nodeidx].set_splitter(splitterfeatureidx,values_left,forest_[treeidx][nodeidx_left],forest_[treeidx][nodeidx_right]);
+      //cout << forest_[treeidx][nodeidx].has_children() << endl;
     }
   
+  if(sampleics_left.size() == 0 || sampleics_right.size() == 0)
+    {
+      return;
+    }
+
   Randomforest::recursive_nodesplit(treeidx,nodeidx_left,sampleics_left);
   Randomforest::recursive_nodesplit(treeidx,nodeidx_right,sampleics_right);
   
@@ -198,19 +225,19 @@ void Randomforest::recursive_nodesplit(size_t treeidx, size_t nodeidx, vector<si
 
 void Randomforest::percolate_sampleics(size_t treeidx, vector<size_t>& sampleics)
 {
-  //treedata_->percolate_sampleics(sampleics);
 
   for(size_t i = 0; i < sampleics.size(); ++i)
     {
       Node* nodep(&forest_[treeidx][0]);
       size_t sampleidx(sampleics[i]);
-      treedata_->percolate_sampleidx(sampleidx,nodep);
+      treedata_->percolate_sampleidx(sampleidx,&nodep);
       map<Node*,vector<size_t> >::iterator it(trainics_[treeidx].find(nodep));
       if(it == trainics_[treeidx].end())
 	{
+	  Node* foop(nodep);
 	  vector<size_t> foo(1);
 	  foo[0] = sampleidx;
-	  trainics_[treeidx].insert(pair<Node*,vector<size_t> >(nodep,foo));
+	  trainics_[treeidx].insert(pair<Node*,vector<size_t> >(foop,foo));
 	}
       else
 	{
@@ -218,4 +245,18 @@ void Randomforest::percolate_sampleics(size_t treeidx, vector<size_t>& sampleics
 	}
       
     }
+
+  cout << "treeidx=" << treeidx << ", train samples percolated accordingly:" << endl;
+  size_t iter = 0;
+  for(map<Node*,vector<size_t> >::const_iterator it(trainics_[treeidx].begin()); it != trainics_[treeidx].end(); ++it,++iter)
+    {
+      cout << "leaf node " << iter << ":"; 
+      for(size_t i = 0; i < it->second.size(); ++i)
+	{
+	  cout << " " << it->second[i];
+	}
+      cout << endl;
+    }
+  //cout << "done" << endl;
+
 }
