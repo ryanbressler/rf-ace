@@ -130,12 +130,13 @@ int main(int argc, char* argv[])
 
 	//cout << "done" << endl;
         
-        //return(EXIT_SUCCESS);
+        return(EXIT_SUCCESS);
+	//cout << "done" << endl;
     }
     catch(exception& e) {
         cerr << e.what() << "\n";
     }
 
     //cout << "done" << endl;
-    return(EXIT_SUCCESS);
+    //return(EXIT_SUCCESS);
 }
