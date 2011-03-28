@@ -378,13 +378,10 @@ void Treedata::bootstrap(vector<size_t>& ics, vector<size_t>& oob_ics)
 
   vector<size_t> foo(n);
   vector<size_t>::iterator it = set_difference(allics.begin(),allics.end(),ics.begin(),ics.end(),foo.begin());
-  //noob = distance(foo.begin(),it);
+  size_t noob = distance(foo.begin(),it);
 
-  oob_ics.clear();
-  for(vector<size_t>::const_iterator it2(foo.begin()); it2 != it; ++it2)
-    {
-      oob_ics.push_back(*it2);
-    }
+  foo.resize(noob);
+  oob_ics = foo;
 }
 
 void Treedata::split_target_with_num_feature(size_t featureidx,
@@ -803,6 +800,7 @@ void Treedata::categorical_target_split(size_t featureidx,
   
 }
 
+
 void Treedata::percolate_sampleidx(size_t sampleidx, Node** nodep)
 {
   //cout << nodep->has_children() << endl;
@@ -814,8 +812,8 @@ void Treedata::percolate_sampleidx(size_t sampleidx, Node** nodep)
       *nodep = (*nodep)->percolate(value);
       //cout << &*nodep << endl;
     }
-
 }
+
 
 void Treedata::impurity(size_t featureidx, vector<size_t>& sampleics, num_t& impurity)
 {
