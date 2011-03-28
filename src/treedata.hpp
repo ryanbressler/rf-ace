@@ -42,6 +42,10 @@ protected:
   //Permutes data in x.
   void permute(vector<num_t>& x);
 
+  //void permute_feature(size_t featureidx);
+
+  //void unpermute_feature();
+
   //Generates a bootstrap sample. Samples not in the bootstrap sample will be stored in oob_ics, 
   //and the number of oob samples is stored in noob.
   //NOTE: ics.size() will depend on the number of non-NaN values the current target has
@@ -124,6 +128,8 @@ private:
   
   void count_real_values(size_t featureidx, size_t& nreal);
   
+  void generate_contrasts();
+
   //THESE WILL BE MOVED TO DATADEFS
   template <typename T1,typename T2> void make_pairedv(vector<T1> const& v1, 
 						       vector<T2> const& v2, 
@@ -151,6 +157,11 @@ private:
   vector<string> featureheaders_;
   vector<string> sampleheaders_;
 
+  bool ispermuted_;
+  size_t permutedfeatureidx_;
+  vector<num_t> permutedfeaturevector_;
+
+  vector<vector<num_t> > contrastmatrix_;
 };
 
 #endif

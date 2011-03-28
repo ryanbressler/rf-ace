@@ -66,6 +66,7 @@ void Randomforest::select_target(size_t targetidx)
   for(size_t i = 0; i < ntrees_; ++i)
     {
       oobmatrix_[i].clear();
+      trainics_[i].clear();
     }
   //for(size_t i = 0; i < ntrees_; ++i)
   //  {
