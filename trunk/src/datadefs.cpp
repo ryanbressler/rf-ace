@@ -9,6 +9,7 @@ using namespace std;
 
 //const datadefs::cat_t datadefs::cat_nan = -1;
 const datadefs::num_t datadefs::num_nan = sqrt(-1.0);
+const datadefs::num_t datadefs::eps = 1e-10;
 
 const string initNANs[] = {"NA","NAN"};
 const set<datadefs::NAN_t> datadefs::NANs(initNANs,initNANs+2);

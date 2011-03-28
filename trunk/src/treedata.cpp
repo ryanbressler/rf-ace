@@ -381,7 +381,7 @@ void Treedata::bootstrap(vector<size_t>& ics, vector<size_t>& oob_ics)
   //noob = distance(foo.begin(),it);
 
   oob_ics.clear();
-  for(vector<size_t>::const_iterator it2(foo.begin()); it != it; ++it)
+  for(vector<size_t>::const_iterator it2(foo.begin()); it2 != it; ++it2)
     {
       oob_ics.push_back(*it2);
     }
@@ -803,13 +803,16 @@ void Treedata::categorical_target_split(size_t featureidx,
   
 }
 
-void Treedata::percolate_sampleidx(size_t sampleidx, Node* nodep)
+void Treedata::percolate_sampleidx(size_t sampleidx, Node** nodep)
 {
-  
-  while(nodep->has_children())
+  //cout << nodep->has_children() << endl;
+  while((*nodep)->has_children())
     {
-      size_t featureidx(nodep->get_splitter());
-      nodep = nodep->percolate(featurematrix_[featureidx][sampleidx]);
+      size_t featureidx((*nodep)->get_splitter());
+      num_t value(featurematrix_[featureidx][sampleidx]);
+      //cout << featureidx << ":" << value << endl;
+      *nodep = (*nodep)->percolate(value);
+      //cout << &*nodep << endl;
     }
 
 }
@@ -825,6 +828,7 @@ void Treedata::impurity(size_t featureidx, vector<size_t>& sampleics, num_t& imp
       data[i] = featurematrix_[featureidx][sampleics[i]];
     }
 
+  //cout << "before impurity -- ";
   if(isfeaturenum_[featureidx])
     {
       num_t mu,se;
@@ -836,9 +840,10 @@ void Treedata::impurity(size_t featureidx, vector<size_t>& sampleics, num_t& imp
     {
       map<num_t,size_t> freq;
       num_t impurity;
-      datadefs::count_freq(data,freq);
-      datadefs::gini(freq,impurity);
+      //datadefs::count_freq(data,freq);
+      datadefs::gini(data,impurity);
     }
+  //cout << "after impurity" << endl;
   
 }
 

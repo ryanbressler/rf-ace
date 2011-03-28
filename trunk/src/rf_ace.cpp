@@ -127,10 +127,15 @@ int main(int argc, char* argv[])
 	//treedata.print();
 	
 	RF.grow_forest();
+
+	//cout << "done" << endl;
         
-        return(EXIT_SUCCESS);
+        //return(EXIT_SUCCESS);
     }
     catch(exception& e) {
         cerr << e.what() << "\n";
-    }    
+    }
+
+    //cout << "done" << endl;
+    return(EXIT_SUCCESS);
 }
