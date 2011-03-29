@@ -83,7 +83,11 @@ protected:
 
   void impurity(size_t featureidx, vector<size_t>& sampleics, num_t& impurity);
 
-  void percolate_sampleidx(size_t sampleidx, Node** nodep);
+  //void percolate_sampleidx(size_t sampleidx, Node** nodep);
+  //void percolate_sampleidx_with_feature_permuted(size_t featureidx, size_t sampleidx, Node** nodep);
+
+  num_t at(size_t featureidx, size_t sampleidx);
+  num_t atp(size_t featureidx, size_t sampleidx);
 
 private:
 

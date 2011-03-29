@@ -24,9 +24,7 @@ public:
 
   //Grow the Random Forest with respect to selected target feature
   void grow_forest();
-
-  //Grow the Random Forest with respect to targetidx
-  //void grow_forest(size_t targetidx);
+  void rank_features();
 
 private:
 
@@ -37,7 +35,13 @@ private:
   //NOTE: there will be at least two alternative node splitter algorithms in the future
   void recursive_nodesplit(size_t treeidx, size_t nodeidx, vector<size_t>& sampleics);
 
-  void percolate_sampleics(size_t treeidx, vector<size_t>& sampleics);
+  void percolate_sampleics(Node& rootnode, vector<size_t>& sampleics, map<Node*,vector<size_t> >& trainics);
+  void percolate_sampleics_perm(size_t featureidx, Node& rootnode, vector<size_t>& sampleics, map<Node*,vector<size_t> >& trainics);
+  
+  void percolate_sampleidx(size_t sampleidx, Node** nodep);
+  void percolate_sampleidx_perm(size_t featureidx, size_t sampleidx, Node** nodep);
+
+  bool is_feature_in_tree(size_t featureidx, size_t treeidx);
 
   //Pointer to treedata_ object, stores all the feature information
   Treedata* treedata_;
@@ -51,7 +55,7 @@ private:
   vector<size_t> nnodes_; //Number of used nodes in each tree.
   vector<vector<size_t> > oobmatrix_;
   
-  vector<map<Node*,vector<size_t> > > trainics_;
+  //vector<map<Node*,vector<size_t> > > trainics_;
 
 };
 
