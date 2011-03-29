@@ -194,6 +194,16 @@ size_t Treedata::nsamples()
   return(nsamples_);
 }
 
+string Treedata::get_featureheader(size_t featureidx)
+{
+  return(featureheaders_[featureidx]);
+}
+
+string Treedata::get_targetheader()
+{
+  return(featureheaders_[targetidx_]);
+}
+
 void Treedata::print()
 {
   cout << "Printing feature matrix (missing values encoded to " << datadefs::num_nan << "):" << endl;
@@ -746,41 +756,6 @@ num_t Treedata::atp(size_t featureidx, size_t sampleidx)
 {
   return(contrastmatrix_[featureidx][sampleidx]);
 }
-
-/*
-  void Treedata::percolate_sampleidx(size_t sampleidx, Node** nodep)
-  {
-  //cout << nodep->has_children() << endl;
-  while((*nodep)->has_children())
-  {
-  size_t featureidx((*nodep)->get_splitter());
-  num_t value(featurematrix_[featureidx][sampleidx]);
-  //cout << featureidx << ":" << value << endl;
-  *nodep = (*nodep)->percolate(value);
-  //cout << &*nodep << endl;
-  }
-  }
-  
-  void Treedata::percolate_sampleidx_with_feature_permuted(size_t featureidx, size_t sampleidx, Node** nodep)
-  {
-  while((*nodep)->has_children())
-  {
-  size_t featureidx_new((*nodep)->get_splitter());
-  num_t value;
-  if(featureidx == featureidx_new)
-  {
-  value = contrastmatrix_[featureidx][sampleidx];
-  }
-  else
-  {
-  value = featurematrix_[featureidx][sampleidx];
-  }
-  //cout << featureidx << ":" << value << endl;
-  *nodep = (*nodep)->percolate(value);
-  //cout << &*nodep << endl;
-  }
-  }
-*/
 
 void Treedata::impurity(size_t featureidx, vector<size_t>& sampleics, num_t& impurity)
 {
