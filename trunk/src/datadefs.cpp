@@ -118,13 +118,21 @@ void datadefs::sqerr(vector<datadefs::num_t> const& data,
   nreal = 0;
   mu = 0.0;
   se = 0.0;
+  
+  size_t n(data.size());
+
+  if(n == 0)
+    {
+      return;
+    }
+
   if(!datadefs::is_nan(data[0]))
     {
       mu = data[0];
       nreal = 1;
     }
   
-  for(size_t i = 1; i < data.size(); ++i)
+  for(size_t i = 1; i < n; ++i)
     {
       if(!datadefs::is_nan(data[i]))
 	{
@@ -133,10 +141,13 @@ void datadefs::sqerr(vector<datadefs::num_t> const& data,
 	}
     }
   
-  mu /= nreal;
+  if(nreal > 0)
+    {
+      mu /= nreal;
+    }
   
   //This should be computed iteratively inside the previous loop (speed-up)!
-  for(size_t i = 0; i < data.size(); ++i)
+  for(size_t i = 0; i < n; ++i)
     {
       if(!datadefs::is_nan(data[i]))
 	{

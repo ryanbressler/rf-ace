@@ -124,19 +124,16 @@ int main(int argc, char* argv[])
         Randomforest RF(&treedata,ntrees,mtry,nodesize);
         
 	RF.select_target(targetidx);
-	//treedata.print();
+	//RF.print();
 	
 	RF.grow_forest();
+	RF.rank_features();
 
-	//cout << "done" << endl;
-        
-        return(EXIT_SUCCESS);
-	//cout << "done" << endl;
+        //return(EXIT_SUCCESS);
     }
     catch(exception& e) {
         cerr << e.what() << "\n";
     }
 
-    //cout << "done" << endl;
-    //return(EXIT_SUCCESS);
+    return(EXIT_SUCCESS);
 }

@@ -225,62 +225,6 @@ void Treedata::count_real_values(size_t featureidx, size_t& nreal)
     }
 }
 
-/*
-  template <typename T1,typename T2> 
-  void Treedata::make_pairedv(vector<T1> const& v1, vector<T2> const& v2, vector<pair<T1,T2> >& p)
-  {
-  assert(v1.size() == v2.size() && v2.size() == p.size());
-  for(size_t i = 0; i < p.size(); ++i)
-  {
-  p[i] = make_pair(v1[i],v2[i]);
-  }
-  }
-  
-  template <typename T1,typename T2> 
-  void Treedata::separate_pairedv(vector<pair<T1,T2> > const& p, vector<T1>& v1, vector<T2>& v2)
-  {
-  assert(v1.size() == v2.size() && v2.size() == p.size());
-  for(size_t i = 0; i < p.size(); ++i)
-  {
-  v1[i] = p[i].first;
-  v2[i] = p[i].second;
-  }
-  }
-  
-  
-  template <typename T> void Treedata::sort_and_make_ref(vector<T>& v, vector<size_t>& ref_ics)
-  {
-  assert(v.size() == ref_ics.size());
-  
-  //Make a paired vector of v and ref_ics
-  vector<pair<T,size_t> > pairedv(ref_ics.size());
-  
-  Treedata::range(ref_ics);
-  Treedata::make_pairedv<T,size_t>(v,ref_ics,pairedv);
-  
-  //Sort the paired vector with respect to the first element
-  sort(pairedv.begin(),pairedv.end(),datadefs::ordering<T>());
-  
-  //Separate the paired vector
-  Treedata::separate_pairedv<T,size_t>(pairedv,v,ref_ics);
-  }
-  
-  
-  template <typename T>
-  void Treedata::sort_from_ref(vector<T>& in, vector<size_t> const& ref_ics)
-  {
-  assert(in.size() == ref_ics.size());
-  
-  vector<T> foo = in;
-  
-  int n = in.size();
-  for (int i = 0; i < n; ++i)
-  {
-  in[i] = foo[ref_ics[i]];
-  }
-  }
-*/
-
 void Treedata::select_target(size_t targetidx)
 {
   targetidx_ = targetidx; 
@@ -337,18 +281,6 @@ void Treedata::sort_all_wrt_target()
 {
   Treedata::sort_all_wrt_feature(targetidx_);
 }
-
-
-/*
-  void Treedata::range(vector<size_t>& ics)
-  {
-  for(size_t i = 0; i < ics.size(); ++i)
-  {
-  ics[i] = i;
-  }
-  }
-*/
-
 
 void Treedata::permute(vector<size_t>& ics)
 {
@@ -517,11 +449,6 @@ void Treedata::incremental_target_split(size_t featureidx,
   
   //Use the reference indices to sort sample indices
   datadefs::sort_from_ref<size_t>(sampleics,ref_ics);
-  //  }
-  //else //Otherwise we just sort the sample indices
-  //  {
-  //    sort(sampleics.begin(),sampleics.end());
-  //  }
       
   //Next we collect the target data in the order specified by the reordered sampleics
   vector<num_t> tv(n_tot);
@@ -810,20 +737,50 @@ void Treedata::categorical_target_split(size_t featureidx,
   
 }
 
-
-void Treedata::percolate_sampleidx(size_t sampleidx, Node** nodep)
+num_t Treedata::at(size_t featureidx, size_t sampleidx)
 {
-  //cout << nodep->has_children() << endl;
-  while((*nodep)->has_children())
-    {
-      size_t featureidx((*nodep)->get_splitter());
-      num_t value(featurematrix_[featureidx][sampleidx]);
-      //cout << featureidx << ":" << value << endl;
-      *nodep = (*nodep)->percolate(value);
-      //cout << &*nodep << endl;
-    }
+  return(featurematrix_[featureidx][sampleidx]);
 }
 
+num_t Treedata::atp(size_t featureidx, size_t sampleidx)
+{
+  return(contrastmatrix_[featureidx][sampleidx]);
+}
+
+/*
+  void Treedata::percolate_sampleidx(size_t sampleidx, Node** nodep)
+  {
+  //cout << nodep->has_children() << endl;
+  while((*nodep)->has_children())
+  {
+  size_t featureidx((*nodep)->get_splitter());
+  num_t value(featurematrix_[featureidx][sampleidx]);
+  //cout << featureidx << ":" << value << endl;
+  *nodep = (*nodep)->percolate(value);
+  //cout << &*nodep << endl;
+  }
+  }
+  
+  void Treedata::percolate_sampleidx_with_feature_permuted(size_t featureidx, size_t sampleidx, Node** nodep)
+  {
+  while((*nodep)->has_children())
+  {
+  size_t featureidx_new((*nodep)->get_splitter());
+  num_t value;
+  if(featureidx == featureidx_new)
+  {
+  value = contrastmatrix_[featureidx][sampleidx];
+  }
+  else
+  {
+  value = featurematrix_[featureidx][sampleidx];
+  }
+  //cout << featureidx << ":" << value << endl;
+  *nodep = (*nodep)->percolate(value);
+  //cout << &*nodep << endl;
+  }
+  }
+*/
 
 void Treedata::impurity(size_t featureidx, vector<size_t>& sampleics, num_t& impurity)
 {
