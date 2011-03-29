@@ -301,20 +301,56 @@ void Randomforest::percolate_sampleidx_perm(size_t featureidx, size_t sampleidx,
 
 void Randomforest::rank_features()
 {
+
+  size_t nfeatures(treedata_->nfeatures());
+  size_t noob_tot(0);
+  vector<num_t> importance(nfeatures);
+  
+  for(size_t i = 0; i < nfeatures; ++i)
+    {
+      importance[i] = 0;
+    }
+
   for(size_t i = 0; i < ntrees_; ++i)
     {
+      size_t noob(oobmatrix_[i].size());
+      noob_tot += noob;
       Node rootnode(forest_[i][0]);
       map<Node*,vector<size_t> > trainics;
       Randomforest::percolate_sampleics(rootnode,oobmatrix_[i],trainics);
+      num_t impurity_tree;
+      Randomforest::tree_impurity(trainics,impurity_tree);
       cout << "#nodes_with_train_samples=" << trainics.size() << endl;  
-      for(size_t f = 0; f < treedata_->nfeatures(); ++f)
+      //size_t iter(0);
+      for(size_t f = 0; f < nfeatures; ++f)
 	{
 	  if(Randomforest::is_feature_in_tree(f,i))
 	    {
 	      Randomforest::percolate_sampleics_perm(f,rootnode,oobmatrix_[i],trainics);
+	      //cout << ++iter << "\t" << treedata_->get_targetheader() << "\t" << treedata_->get_featureheader(f) << "\t" << "importance" << endl;
+	      num_t impurity_perm;
+	      Randomforest::tree_impurity(trainics,impurity_perm);
+	      importance[f] += noob * (impurity_perm - impurity_tree) / impurity_tree; 
 	    }
 	}
     }
+
+  if(noob_tot > 0)
+    {
+      for(size_t i = 0; i < nfeatures; ++i)
+	{
+	  importance[i] /= noob_tot;
+	}
+    }
+
+  for(size_t i = 0; i < nfeatures; ++i)
+    {
+      if(importance[i] > datadefs::eps)
+	{
+	  cout << treedata_->get_targetheader() << "\t" << treedata_->get_featureheader(i) << "\t" << importance[i] << endl;
+	}
+    }
+
 }
 
 bool Randomforest::is_feature_in_tree(size_t featureidx, size_t treeidx)
@@ -330,4 +366,27 @@ bool Randomforest::is_feature_in_tree(size_t featureidx, size_t treeidx)
 	}
     }
   return(false);
+}
+
+void Randomforest::tree_impurity(map<Node*,vector<size_t> >& trainics, num_t& impurity)
+{
+
+  impurity = 0.0;
+  size_t n_tot(0);
+  
+  size_t targetidx(treedata_->get_target());
+
+  for(map<Node*,vector<size_t> >::iterator it(trainics.begin()); it != trainics.end(); ++it)
+    {
+      num_t impurity_leaf;
+      treedata_->impurity(targetidx,it->second,impurity_leaf);
+      size_t n(it->second.size());
+      n_tot += n;
+      impurity += n * impurity_leaf;
+    }
+
+  if(n_tot > 0)
+    {
+      impurity /= n_tot;
+    }
 }

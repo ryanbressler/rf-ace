@@ -43,6 +43,8 @@ private:
 
   bool is_feature_in_tree(size_t featureidx, size_t treeidx);
 
+  void tree_impurity(map<Node*,vector<size_t> >& trainics, num_t& impurity);
+
   //Pointer to treedata_ object, stores all the feature information
   Treedata* treedata_;
   

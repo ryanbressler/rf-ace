@@ -24,6 +24,9 @@ public:
   //Returns the number of features
   size_t nfeatures();
 
+  string get_featureheader(size_t featureidx);
+  string get_targetheader();
+
   //Returns the number of samples
   size_t nsamples();
 
