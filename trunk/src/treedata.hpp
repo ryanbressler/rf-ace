@@ -42,10 +42,6 @@ protected:
   //Permutes data in x.
   void permute(vector<num_t>& x);
 
-  //void permute_feature(size_t featureidx);
-
-  //void unpermute_feature();
-
   //Generates a bootstrap sample. Samples not in the bootstrap sample will be stored in oob_ics, 
   //and the number of oob samples is stored in noob.
   //NOTE: ics.size() will depend on the number of non-NaN values the current target has
@@ -83,7 +79,7 @@ protected:
 		    vector<size_t>& sampleics_left,
 		    vector<size_t>& sampleics_right);
   
-  void range(vector<size_t>& ics);
+  //void range(vector<size_t>& ics);
 
   void impurity(size_t featureidx, vector<size_t>& sampleics, num_t& impurity);
 
@@ -115,38 +111,16 @@ private:
   void split_samples(vector<size_t>& sampleics,
 		      size_t splitidx,
 		      vector<size_t>& sampleics_left,
-		      vector<size_t>& sampleics_right);
-
-  //Splits a set of samples to "left" and "right", given a set of categories (NEEDS REWORKING!)
-  //void split_samples(size_t featureidx,
-  //		     vector<size_t>& sampleics,
-  //		     set<num_t>& categories_left,
-  //		     vector<size_t>& sampleics_left,
-  //		     vector<size_t>& sampleics_right);
-  
-  
+		      vector<size_t>& sampleics_right);  
   
   void count_real_values(size_t featureidx, size_t& nreal);
   
-  void generate_contrasts();
-
-  //THESE WILL BE MOVED TO DATADEFS
-  template <typename T1,typename T2> void make_pairedv(vector<T1> const& v1, 
-						       vector<T2> const& v2, 
-						       vector<pair<T1,T2> >& p);
-
-  template <typename T1,typename T2> void separate_pairedv(vector<pair<T1,T2> > const& p, 
-							   vector<T1>& v1, 
-							   vector<T2>& v2);
-
-  template <typename T> void sort_and_make_ref(vector<T>& v, vector<size_t>& ref_ics);
-
-  //Sorts a given input data vector of type T based on a given reference ordering of type vector<int>
-  template <typename T> void sort_from_ref(vector<T>& in, vector<size_t> const& ref_ics);
-
+  void generate_contrasts();    
+  
   size_t targetidx_;
 
   vector<vector<num_t> > featurematrix_;
+  vector<vector<num_t> > contrastmatrix_;
   vector<bool> isfeaturenum_;
   vector<size_t> nrealvalues_;
   vector<size_t> ncatvalues_;
@@ -156,12 +130,6 @@ private:
 
   vector<string> featureheaders_;
   vector<string> sampleheaders_;
-
-  bool ispermuted_;
-  size_t permutedfeatureidx_;
-  vector<num_t> permutedfeaturevector_;
-
-  vector<vector<num_t> > contrastmatrix_;
 };
 
 #endif

@@ -209,23 +209,6 @@ void datadefs::gini(map<datadefs::num_t,size_t>& cat2freq,
     }
 }
 
-/*
-  void datadefs::gini(multimap<datadefs::num_t,size_t>& datamap,
-  datadefs::num_t& gi)
-  {
-  gi = 0.0;
-  size_t n(0);
-  multimap<datadefs::num_t,size_t>::const_iterator it;
-  for(it = datamap.begin(); it != datamap.end(); ++it)
-  {
-  size_t n_count(datamap.count(it->first));
-  gi += pow(n_count,2);
-  n += n_count;
-  }
-  gi = 1-gi/pow(n,2);
-  }
-*/
-
 void datadefs::count_freq(vector<datadefs::num_t>& data, map<datadefs::num_t,size_t>& cat2freq)
 {
   cat2freq.clear();
@@ -305,4 +288,13 @@ void datadefs::update_gini(num_t x_n,
   datadefs::gini(cat2freq_right,gi_right);
 
 }
+
+void datadefs::range(vector<size_t>& ics)
+{
+  for(size_t i = 0; i < ics.size(); ++i)
+    {
+      ics[i] = i;
+    }
+}
+
 
