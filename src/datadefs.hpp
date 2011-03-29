@@ -7,6 +7,7 @@
 #include<string>
 #include<math.h>
 #include<map>
+#include<cassert>
 
 using namespace std;
 
@@ -15,7 +16,7 @@ namespace datadefs
   
   //Numerical data type
   typedef float num_t;
-  typedef num_t* num_tp;
+  //typedef num_t* num_tp;
 
   //NaN as represented by the program
   extern const num_t num_nan;
@@ -56,9 +57,6 @@ namespace datadefs
 
   void gini(map<num_t,size_t>& cat2freq,
             num_t& gi);
-
-  //void gini(map<num_t,vector<size_t> >& datamap, 
-  //	    num_t& gi);
   
   void update_gini(num_t x_n,
 		   const size_t n_left,
@@ -68,7 +66,7 @@ namespace datadefs
 		   map<num_t,size_t>& cat2freq_right,
 		   num_t& gi_right);
 
-  //TODO: ALL SORTING TO BE PERFORMED WITH VECTORS OF POINTERS TO DATA (THIS WILL REDUCE THE AMOUNT OF COPYING)
+  void range(vector<size_t>& ics);
 
   //A comparator functor that can be passed to STL::sort. Assumes that one is comparing first elements of pairs, first type being num_t and second T
   template <typename T> struct ordering {
@@ -85,21 +83,51 @@ namespace datadefs
     }
   }; 
 
-  struct paired_ptr_ordering {
-    bool operator ()(pair<datadefs::num_tp,datadefs::num_tp> const& a, pair<datadefs::num_tp,datadefs::num_tp> const& b)
-    {
-      if(*(a.first) < *(b.first) || *(b.first) != *(b.first))
-        {
-          return(true);
-        }
-      else
-        {
-          return(false);
-        }
-    }
-  };
+  template <typename T1,typename T2> void make_pairedv(vector<T1> const& v1,
+                                                       vector<T2> const& v2,
+                                                       vector<pair<T1,T2> >& p)
+  {
+    assert(v1.size() == v2.size() && v2.size() == p.size());
+    for(size_t i = 0; i < p.size(); ++i)
+      {
+	p[i] = make_pair(v1[i],v2[i]);
+      }
+  }
 
 
+  template <typename T1,typename T2> void separate_pairedv(vector<pair<T1,T2> > const& p,
+                                                           vector<T1>& v1,
+                                                           vector<T2>& v2)
+  {
+    assert(v1.size() == v2.size() && v2.size() == p.size());
+    for(size_t i = 0; i < p.size(); ++i)
+      {
+	v1[i] = p[i].first;
+	v2[i] = p[i].second;
+      }
+  }
+
+  template <typename T> void sort_and_make_ref(vector<T>& v, vector<size_t>& ref_ics)
+  {
+    assert(v.size() == ref_ics.size());
+    vector<pair<T,size_t> > pairedv(ref_ics.size());
+    datadefs::range(ref_ics);
+    datadefs::make_pairedv<T,size_t>(v,ref_ics,pairedv);
+    sort(pairedv.begin(),pairedv.end(),datadefs::ordering<T>());
+    datadefs::separate_pairedv<T,size_t>(pairedv,v,ref_ics);
+  }
+
+  //Sorts a given input data vector of type T based on a given reference ordering of type vector<int>
+  template <typename T> void sort_from_ref(vector<T>& in, vector<size_t> const& ref_ics)
+  {
+    assert(in.size() == ref_ics.size());  
+    vector<T> foo = in;
+    int n = in.size();
+    for (int i = 0; i < n; ++i)
+      {
+	in[i] = foo[ref_ics[i]];
+      }
+  }
 }
 
 #endif
