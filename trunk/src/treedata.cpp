@@ -439,9 +439,6 @@ void Treedata::incremental_target_split(size_t featureidx,
   //Check that there are enough samples to make the split in the first place
   assert(n_tot >= 2*min_split);
 
-  //If target is split wrt. feature, then we first need to sort the target data (indices) wrt. feature data (indices)
-  //if(featureidx != targetidx_)
-  //  {
   //Feature values
   vector<num_t> fv(n_tot);
   
