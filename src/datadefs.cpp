@@ -156,6 +156,57 @@ void datadefs::sqerr(vector<datadefs::num_t> const& data,
     }
 }
 
+/*
+  Assuming x_n is a current member of the "right" branch, subtract it from "right" and add it to "left", and update the branch data counts, means, and squared errors. NOTE: NaN checks not implemented
+  void datadefs::twoway_update_sqerr(const datadefs::num_t x_n,
+  size_t& n_left,
+  datadefs::num_t& mu_left,
+  datadefs::num_t& se_left,
+  size_t& n_right,
+  datadefs::num_t& mu_right,
+  datadefs::num_t& se_right)
+  {
+  
+  if(datadefs::is_nan(x_n))
+  {
+  return;
+  }
+  
+  assert(n_right > 0);
+  
+  ++n_left;
+  --n_right;
+  
+  //Subtract x_n from "right" and update mean and squared error
+  datadefs::num_t mu_old(mu_right);
+  mu_right -= (x_n - mu_right) / n_right;
+  
+  //As long as there are at least two data points on the "right" branch, squared error can be calculated, otherwise assign se_right := 0.0
+  if(n_right > 1)
+  {
+  se_right -= (x_n - mu_right) * (x_n - mu_old);
+  }
+  else
+  {
+  se_right = 0.0;
+  }
+  
+  //Add x_n to "left" and update mean and squared error
+  mu_old = mu_left;
+  mu_left += (x_n - mu_left) / n_left;
+  
+  //If there are already at least two data points on the "left" branch, squared error can be calculated, otherwise assign se_left := 0.0
+  if(n_left > 1)
+  {
+  se_left += (x_n - mu_left) * (x_n - mu_old);
+  }
+  else
+  {
+  se_left = 0.0;
+  }
+  }
+*/
+
 //Assuming x_n is a current member of the "right" branch, subtract it from "right" and add it to "left", and update the branch data counts, means, and squared errors. NOTE: NaN checks not implemented
 void datadefs::update_sqerr(const datadefs::num_t x_n,
 			    const size_t n_left,
@@ -165,6 +216,8 @@ void datadefs::update_sqerr(const datadefs::num_t x_n,
 			    datadefs::num_t& mu_right,
 			    datadefs::num_t& se_right)
 {
+
+  //assert(!datadefs::is_nan(x_n));
   
   //Subtract x_n from "right" and update mean and squared error
   datadefs::num_t mu_old(mu_right);

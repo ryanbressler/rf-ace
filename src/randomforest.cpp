@@ -303,18 +303,19 @@ void Randomforest::rank_features()
 {
 
   size_t nfeatures(treedata_->nfeatures());
-  size_t noob_tot(0);
+  vector<size_t> noob(nfeatures);
   vector<num_t> importance(nfeatures);
   
   for(size_t i = 0; i < nfeatures; ++i)
     {
+      noob[i] = 0;
       importance[i] = 0;
     }
 
   for(size_t i = 0; i < ntrees_; ++i)
     {
-      size_t noob(oobmatrix_[i].size());
-      noob_tot += noob;
+      size_t noob_new(oobmatrix_[i].size());
+      //noob_tot += noob;
       Node rootnode(forest_[i][0]);
       map<Node*,vector<size_t> > trainics;
       Randomforest::percolate_sampleics(rootnode,oobmatrix_[i],trainics);
@@ -327,25 +328,25 @@ void Randomforest::rank_features()
 	  if(Randomforest::is_feature_in_tree(f,i))
 	    {
 	      Randomforest::percolate_sampleics_perm(f,rootnode,oobmatrix_[i],trainics);
-	      //cout << ++iter << "\t" << treedata_->get_targetheader() << "\t" << treedata_->get_featureheader(f) << "\t" << "importance" << endl;
 	      num_t impurity_perm;
 	      Randomforest::tree_impurity(trainics,impurity_perm);
-	      importance[f] += noob * (impurity_perm - impurity_tree) / impurity_tree; 
+	      noob[f] += noob_new;
+	      importance[f] += noob_new * (impurity_perm - impurity_tree) / impurity_tree; 
 	    }
 	}
     }
 
-  if(noob_tot > 0)
+  
+  for(size_t i = 0; i < nfeatures; ++i)
+    if(noob[i] > 0)
     {
-      for(size_t i = 0; i < nfeatures; ++i)
-	{
-	  importance[i] /= noob_tot;
-	}
+      importance[i] /= noob[i];
     }
+    
 
   for(size_t i = 0; i < nfeatures; ++i)
     {
-      if(importance[i] > datadefs::eps)
+      if(importance[i] > 0.3)
 	{
 	  cout << treedata_->get_targetheader() << "\t" << treedata_->get_featureheader(i) << "\t" << importance[i] << endl;
 	}

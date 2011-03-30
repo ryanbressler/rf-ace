@@ -38,6 +38,16 @@ namespace datadefs
 	     num_t& mu, 
 	     num_t& se,
 	     size_t& nreal);      
+
+  /*
+    void twoway_update_sqerr(const datadefs::num_t x_n,
+    size_t& n_left,
+    datadefs::num_t& mu_left,
+    datadefs::num_t& se_left,
+    size_t& n_right,
+    datadefs::num_t& mu_right,
+    datadefs::num_t& se_right);
+  */
   
   void update_sqerr(const num_t x_n,
 		    const size_t n_left,
