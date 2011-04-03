@@ -366,7 +366,7 @@ void Randomforest::rank_features()
 
   for(size_t i = 0; i < nfeatures; ++i)
     {
-      if(importance[i] > 0.3)
+      if(importance[i] > 0.2)
 	{
 	  cout << treedata_->get_targetheader() << "\t" << treedata_->get_featureheader(i) << "\t" << importance[i] << endl;
 	}
