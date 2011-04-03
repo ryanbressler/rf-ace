@@ -38,9 +38,6 @@ protected:
   friend class Randomforest;
   friend class GBT;
 
-  //WILL BECOME DEPRECATED
-  //void randidx(const size_t ulim, size_t& idx);
-
   //Permutes integers in range 0,1,...,(ics.size()-1). 
   //NOTE: original contents in ics will be replaced.  
   void permute(vector<size_t>& ics);
@@ -59,6 +56,8 @@ protected:
 
   size_t get_target();
   
+  void permute_contrasts();
+
   bool isfeaturenum(size_t featureidx);
 
   size_t nrealvalues();

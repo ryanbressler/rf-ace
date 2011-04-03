@@ -228,19 +228,13 @@ void Treedata::print()
     }
 }
 
-/*
-  void Treedata::count_real_values(size_t featureidx, size_t& nreal)
-  {
-  nreal = 0;
-  for(size_t i = 0; i < nsamples_; ++i)
-  {
-  if(!datadefs::is_nan(featurematrix_[featureidx][i]))
-  {
-  ++nreal;
-  }
-  }
-  }
-*/
+void Treedata::permute_contrasts()
+{
+  for(size_t i = 0; i < nfeatures_; ++i)
+    {
+      Treedata::permute(contrastmatrix_[i]);
+    }
+}
 
 void Treedata::select_target(size_t targetidx)
 {
@@ -283,23 +277,17 @@ void Treedata::remove_nans(size_t featureidx,
   int maxidx(nreal-1);
   for(int i = maxidx; i >= 0; --i)
     {
-      //cout << "f(" << i << ")=";
-      //cout << featurematrix_[featureidx][sampleics[i]];
       if(datadefs::is_nan(featurematrix_[featureidx][sampleics[i]]))
 	{
 	  --nreal;
 	  sampleics.erase(sampleics.begin()+i);
-	  //cout << "=>erase";
 	}
-      //cout << endl;
     }
 }
 
 void Treedata::sort_all_wrt_feature(size_t featureidx)
 {
   assert(featureidx < nfeatures_);
-
-  //cout << "sort_all_wrt_features: " << nsamples_ << " samples" << endl;
 
   //Generate and index vector that'll define the new order
   vector<size_t> ref_ics(nsamples_);
@@ -309,24 +297,11 @@ void Treedata::sort_all_wrt_feature(size_t featureidx)
 
   dummy = featurematrix_[featureidx];
 
-  //cout << "sort_all_wrt_feature: dummy vector created" << endl;
-
-  //for(size_t i = 0; i < dummy.size(); ++i)
-  //  {
-  //    cout << " " << dummy[i];
-  //  }
-  //cout << endl;
-
-
   //Sort specified feature and make reference indices
   datadefs::sort_and_make_ref<num_t>(dummy,ref_ics);
-  
-  //cout << "sort_all_wrt_feature: dummy vector sorted" << endl;
 
   //Use the new order to sort the sample headers
   datadefs::sort_from_ref<string>(sampleheaders_,ref_ics);
-
-  //cout << "sort_all_wrt_feature: sampleheaders sorted" << endl;
 
   //Sort features
   for(size_t i = 0; i < nfeatures_; ++i)
@@ -339,13 +314,6 @@ void Treedata::sort_all_wrt_target()
 {
   Treedata::sort_all_wrt_feature(targetidx_);
 }
-
-/*
-  void Treedata::randidx(const size_t ulim, size_t& idx)
-  {
-  idx = rand() % ulim;
-  }
-*/
 
 void Treedata::permute(vector<size_t>& ics)
 {
@@ -383,8 +351,9 @@ void Treedata::generate_contrasts()
         {
           contrastmatrix_[i][j] = featurematrix_[i][j];
         }
-      Treedata::permute(contrastmatrix_[i]);
     }
+
+  Treedata::permute_contrasts();
 }
 
 void Treedata::bootstrap(vector<size_t>& ics, vector<size_t>& oob_ics)
@@ -550,8 +519,6 @@ void Treedata::incremental_target_split(size_t featureidx,
       size_t idx(0);
       while(n_left < n_tot - min_split)
 	{
-	  //++n_left;
-	  //--n_right;
 	  datadefs::update_sqerr(tv[idx],n_left,mu_left,se_left,n_right,mu_right,se_right);
 	  if((se_left+se_right) < se_best && n_left >= min_split)
 	    {
@@ -563,8 +530,6 @@ void Treedata::incremental_target_split(size_t featureidx,
     }
   else //Otherwise we use the iterative gini index formula to update impurity scores while we traverse "right"
     {
-
-      //map<num_t,size_t> freq_tot;
       map<num_t,size_t> freq_left;
       map<num_t,size_t> freq_right;
       num_t sf_left(0.0);
@@ -579,14 +544,11 @@ void Treedata::incremental_target_split(size_t featureidx,
       size_t idx(0);
       while(n_left < n_tot - min_split)
         {
-          //int idx(n_left);
-          //++n_left;
-          //--n_right;
 	  datadefs::update_sqfreq(tv[idx],n_left,freq_left,sf_left,n_right,freq_right,sf_right);
-          if(sf_left/n_left + sf_right/n_right > nsf_best && n_left >= min_split) //POSSIBLY WRONG! 
+          if(sf_left/n_left + sf_right/n_right > nsf_best && n_left >= min_split) 
             {
               bestsplitidx = idx;
-              nsf_best = sf_left/n_left + sf_right/n_right; //POSSIBLY WRONG!
+              nsf_best = sf_left/n_left + sf_right/n_right;
             }
 	  ++idx;
         }      
@@ -615,7 +577,7 @@ void Treedata::incremental_target_split(size_t featureidx,
 
 }
 
-
+//THIS NEEDS REWORKING AND OPTIMIZING
 void Treedata::categorical_target_split(size_t featureidx, 
 					vector<size_t>& sampleics, 
 					vector<size_t>& sampleics_left, 
