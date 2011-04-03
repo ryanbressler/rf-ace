@@ -38,6 +38,9 @@ protected:
   friend class Randomforest;
   friend class GBT;
 
+  //WILL BECOME DEPRECATED
+  //void randidx(const size_t ulim, size_t& idx);
+
   //Permutes integers in range 0,1,...,(ics.size()-1). 
   //NOTE: original contents in ics will be replaced.  
   void permute(vector<size_t>& ics);
@@ -60,6 +63,9 @@ protected:
 
   size_t nrealvalues();
   size_t nrealvalues(size_t featureidx);
+
+  void remove_nans(size_t featureidx, vector<size_t>& sampleics, size_t& nreal);
+  
 
   //Given feature, finds and returns the optimal split point wrt. sampleics. 
   //Samples branching left and right will be stored in sampleics_left (resp. right)
@@ -84,7 +90,7 @@ protected:
   
   //void range(vector<size_t>& ics);
 
-  void impurity(size_t featureidx, vector<size_t>& sampleics, num_t& impurity);
+  void impurity(size_t featureidx, vector<size_t> const& sampleics, num_t& impurity, size_t& nreal);
 
   //void percolate_sampleidx(size_t sampleidx, Node** nodep);
   //void percolate_sampleidx_with_feature_permuted(size_t featureidx, size_t sampleidx, Node** nodep);
@@ -120,7 +126,7 @@ private:
 		      vector<size_t>& sampleics_left,
 		      vector<size_t>& sampleics_right);  
   
-  void count_real_values(size_t featureidx, size_t& nreal);
+  //void count_real_values(size_t featureidx, size_t& nreal);
   
   void generate_contrasts();    
   
@@ -129,8 +135,8 @@ private:
   vector<vector<num_t> > featurematrix_;
   vector<vector<num_t> > contrastmatrix_;
   vector<bool> isfeaturenum_;
-  vector<size_t> nrealvalues_;
-  vector<size_t> ncatvalues_;
+  //vector<size_t> nrealvalues_;
+  //vector<size_t> ncatvalues_;
 
   size_t nsamples_;
   size_t nfeatures_;

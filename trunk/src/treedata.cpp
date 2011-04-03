@@ -14,11 +14,10 @@ Treedata::Treedata(string fname, bool is_featurerows):
   targetidx_(0),
   featurematrix_(0),
   isfeaturenum_(0),
-  nrealvalues_(0),
-  ncatvalues_(0),
   nsamples_(0),
   nfeatures_(0),
-  featureheaders_(0)
+  featureheaders_(0),
+  sampleheaders_()
 {
 
   //Initialize random number rgenerator
@@ -145,39 +144,45 @@ Treedata::Treedata(string fname, bool is_featurerows):
       assert(false);
     }
 
-  vector<size_t> ncatvalues(nfeatures_);
-  ncatvalues_ = ncatvalues;
+  //vector<size_t> ncatvalues(nfeatures_);
+  //ncatvalues_ = ncatvalues;
 
   //Transform raw data to the internal format.
+  featurematrix_.resize(nfeatures_);
   for(size_t i = 0; i < nfeatures_; ++i)
     {
       vector<num_t> featurev(nsamples_);
-      map<string,size_t> str2valmap;
+      //map<string,size_t> str2valmap;
       if(isfeaturenum_[i])
         {
           datadefs::strv2numv(rawmatrix[i],featurev);
-          ncatvalues_[i] = 0;
+          //ncatvalues_[i] = 0;
         }
       else
         {
-          datadefs::strv2catv(rawmatrix[i],featurev,str2valmap);
-	  ncatvalues_[i] = str2valmap.size();
+          datadefs::strv2catv(rawmatrix[i],featurev);
+	  //ncatvalues_[i] = str2valmap.size();
         }
-      featurematrix_.push_back(featurev);
+      featurematrix_[i] = featurev;
     } 
   
-  vector<size_t> nrealvalues(nfeatures_);
-  nrealvalues_ = nrealvalues;
+  //vector<size_t> nrealvalues(nfeatures_);
+  //nrealvalues_ = nrealvalues;
   
-  for(size_t featureidx = 0; featureidx < nfeatures_; ++featureidx)
-    {
-      Treedata::count_real_values(featureidx,nrealvalues_[featureidx]);
-    }
+  //for(size_t featureidx = 0; featureidx < nfeatures_; ++featureidx)
+  //  {
+  //    datadefs::count_real_values(featurematrix_[featureidx],nrealvalues_[featureidx]);
+  //  }
   
+  //cout << "Data loaded" << endl;
+
   //By default, make the first feature the target
   targetidx_ = 0;
   contrastmatrix_.resize(nfeatures_);
+  //cout << "Contrastmatrix resized" << endl;
   Treedata::select_target(targetidx_); //This will sort the data wrt. selected target and generate the contrasts
+
+  //cout << "Target selected" << endl;
 }
 
 Treedata::~Treedata()
@@ -223,22 +228,25 @@ void Treedata::print()
     }
 }
 
-void Treedata::count_real_values(size_t featureidx, size_t& nreal)
-{
+/*
+  void Treedata::count_real_values(size_t featureidx, size_t& nreal)
+  {
   nreal = 0;
   for(size_t i = 0; i < nsamples_; ++i)
-    {
-      if(!datadefs::is_nan(featurematrix_[featureidx][i]))
-        {
-          ++nreal;
-        }
-    }
-}
+  {
+  if(!datadefs::is_nan(featurematrix_[featureidx][i]))
+  {
+  ++nreal;
+  }
+  }
+  }
+*/
 
 void Treedata::select_target(size_t targetidx)
 {
   targetidx_ = targetidx; 
   Treedata::sort_all_wrt_target();
+  cout << "Data sorted" << endl;
   Treedata::generate_contrasts();
 }
 
@@ -254,17 +262,44 @@ bool Treedata::isfeaturenum(size_t featureidx)
 
 size_t Treedata::nrealvalues()
 {
-  return(nrealvalues_[targetidx_]);
+  size_t nreal;
+  datadefs::count_real_values(featurematrix_[targetidx_],nreal);
+  return(nreal);
 }
 
 size_t Treedata::nrealvalues(size_t featureidx)
 {
-  return(nrealvalues_[featureidx]);
+  size_t nreal;
+  datadefs::count_real_values(featurematrix_[featureidx],nreal);
+  return(nreal);
+}
+
+void Treedata::remove_nans(size_t featureidx, 
+			   vector<size_t>& sampleics, 
+			   size_t& nreal)
+{
+
+  nreal = sampleics.size();
+  int maxidx(nreal-1);
+  for(int i = maxidx; i >= 0; --i)
+    {
+      //cout << "f(" << i << ")=";
+      //cout << featurematrix_[featureidx][sampleics[i]];
+      if(datadefs::is_nan(featurematrix_[featureidx][sampleics[i]]))
+	{
+	  --nreal;
+	  sampleics.erase(sampleics.begin()+i);
+	  //cout << "=>erase";
+	}
+      //cout << endl;
+    }
 }
 
 void Treedata::sort_all_wrt_feature(size_t featureidx)
 {
   assert(featureidx < nfeatures_);
+
+  //cout << "sort_all_wrt_features: " << nsamples_ << " samples" << endl;
 
   //Generate and index vector that'll define the new order
   vector<size_t> ref_ics(nsamples_);
@@ -274,11 +309,24 @@ void Treedata::sort_all_wrt_feature(size_t featureidx)
 
   dummy = featurematrix_[featureidx];
 
+  //cout << "sort_all_wrt_feature: dummy vector created" << endl;
+
+  //for(size_t i = 0; i < dummy.size(); ++i)
+  //  {
+  //    cout << " " << dummy[i];
+  //  }
+  //cout << endl;
+
+
   //Sort specified feature and make reference indices
   datadefs::sort_and_make_ref<num_t>(dummy,ref_ics);
   
+  //cout << "sort_all_wrt_feature: dummy vector sorted" << endl;
+
   //Use the new order to sort the sample headers
   datadefs::sort_from_ref<string>(sampleheaders_,ref_ics);
+
+  //cout << "sort_all_wrt_feature: sampleheaders sorted" << endl;
 
   //Sort features
   for(size_t i = 0; i < nfeatures_; ++i)
@@ -291,6 +339,13 @@ void Treedata::sort_all_wrt_target()
 {
   Treedata::sort_all_wrt_feature(targetidx_);
 }
+
+/*
+  void Treedata::randidx(const size_t ulim, size_t& idx)
+  {
+  idx = rand() % ulim;
+  }
+*/
 
 void Treedata::permute(vector<size_t>& ics)
 {
@@ -318,7 +373,8 @@ void Treedata::permute(vector<num_t>& x)
 
 void Treedata::generate_contrasts()
 {
-  size_t nrealvalues(nrealvalues_[targetidx_]);
+  size_t nrealvalues;
+  datadefs::count_real_values(featurematrix_[targetidx_],nrealvalues);
   for(size_t i = 0; i < nfeatures_; ++i)
     {
       vector<num_t> x(nrealvalues);
@@ -409,6 +465,8 @@ void Treedata::split_target(const size_t min_split,
 
   num_t splitvalue;
 
+  size_t n_tot(sampleics.size());
+
   if(isfeaturenum_[targetidx_])
     {
       Treedata::incremental_target_split(targetidx_,min_split,sampleics,sampleics_left,sampleics_right,splitvalue);
@@ -418,6 +476,9 @@ void Treedata::split_target(const size_t min_split,
       set<num_t> values_left;
       Treedata::categorical_target_split(targetidx_,sampleics,sampleics_left,sampleics_right,values_left); 
     }
+
+  assert(sampleics.size() == n_tot);
+  assert(sampleics_left.size() + sampleics_right.size() == n_tot);
 }
 
 void Treedata::incremental_target_split(size_t featureidx,
@@ -456,16 +517,19 @@ void Treedata::incremental_target_split(size_t featureidx,
   
   //Use the reference indices to sort sample indices
   datadefs::sort_from_ref<size_t>(sampleics,ref_ics);
-      
+        
   //Next we collect the target data in the order specified by the reordered sampleics
   vector<num_t> tv(n_tot);
   for(size_t i = 0; i < n_tot; ++i)
     {
       tv[i] = featurematrix_[targetidx_][sampleics[i]];
     }
- 
-  num_t impurity_left(0.0);
-  num_t impurity_right(0.0);
+
+  //Count how many real values the feature and target has
+  size_t nreal_f,nreal_t;
+  datadefs::count_real_values(fv,nreal_f);
+  datadefs::count_real_values(tv,nreal_t);
+  assert(nreal_t == n_tot && nreal_f == n_tot);
 
   int bestsplitidx = -1;
  
@@ -473,24 +537,28 @@ void Treedata::incremental_target_split(size_t featureidx,
   if(isfeaturenum_[targetidx_])
     {
       num_t mu_right(0.0);
+      num_t se_right(0.0);
       num_t mu_left(0.0);
+      num_t se_left(0.0);
+      num_t se_best(0.0);
+      size_t nreal_right(0);
       
-      size_t nreal;
-      datadefs::sqerr(tv,mu_right,impurity_right,nreal);
-      num_t impurity_tot(impurity_right);
-      num_t bestimpurity(impurity_tot);
+      datadefs::sqerr(tv,mu_right,se_right,nreal_right);
+      assert(n_tot == nreal_right);
+      se_best = se_right;
 
+      size_t idx(0);
       while(n_left < n_tot - min_split)
 	{
-	  int idx(n_left);
-	  ++n_left;
-	  --n_right;
-	  datadefs::update_sqerr(tv[idx],n_left,mu_left,impurity_left,n_right,mu_right,impurity_right);
-	  if((impurity_left+impurity_right) < bestimpurity && n_left >= min_split)
+	  //++n_left;
+	  //--n_right;
+	  datadefs::update_sqerr(tv[idx],n_left,mu_left,se_left,n_right,mu_right,se_right);
+	  if((se_left+se_right) < se_best && n_left >= min_split)
 	    {
 	      bestsplitidx = idx;
-	      bestimpurity = (impurity_left + impurity_right);
+	      se_best = se_left + se_right;
 	    }
+	  ++idx;
 	}
     }
   else //Otherwise we use the iterative gini index formula to update impurity scores while we traverse "right"
@@ -499,33 +567,41 @@ void Treedata::incremental_target_split(size_t featureidx,
       //map<num_t,size_t> freq_tot;
       map<num_t,size_t> freq_left;
       map<num_t,size_t> freq_right;
-
-      datadefs::count_freq(tv,freq_right);
-      datadefs::gini(freq_right,impurity_right);
-      num_t impurity_tot(impurity_right);
-      num_t bestimpurity(impurity_tot);
-
+      num_t sf_left(0.0);
+      num_t sf_right(0.0);
+      //num_t sf_best(0.0);
+      size_t nreal_right(0);
+ 
+      datadefs::sqfreq(tv,freq_right,sf_right,nreal_right);
+      num_t nsf_best(sf_right/nreal_right);
+      assert(n_tot == nreal_right);
+      
+      size_t idx(0);
       while(n_left < n_tot - min_split)
         {
-          int idx(n_left);
-          ++n_left;
-          --n_right;
-	  datadefs::update_gini(tv[idx],n_left,freq_left,impurity_left,n_right,freq_right,impurity_right); //INCREMENTAL GINI INDEX COMPUTATION IS INEFFICIENT AT THE MOMENT
-          if((n_left*impurity_left+n_right*impurity_right) < n_tot*bestimpurity && n_left >= min_split) //THIS NEEDS TO BE FIXED
+          //int idx(n_left);
+          //++n_left;
+          //--n_right;
+	  datadefs::update_sqfreq(tv[idx],n_left,freq_left,sf_left,n_right,freq_right,sf_right);
+          if(sf_left/n_left + sf_right/n_right > nsf_best && n_left >= min_split) //POSSIBLY WRONG! 
             {
               bestsplitidx = idx;
-              bestimpurity = (n_left*impurity_left+n_right*impurity_right) / n_tot;
+              nsf_best = sf_left/n_left + sf_right/n_right; //POSSIBLY WRONG!
             }
+	  ++idx;
         }      
     }
 
   //Finally, make the split at the best point
   Treedata::split_samples(sampleics,bestsplitidx,sampleics_left,sampleics_right);
   
+  assert(sampleics.size() == n_tot);
+  assert(sampleics_left.size() + sampleics_right.size() == n_tot);
+
   //Return the split value
   splitvalue = fv[bestsplitidx];
 
-  cout << "[";
+  cout << "Feature " << featureidx << " splits target " << targetidx_ << " [";
   for(size_t i = 0; i < sampleics_left.size(); ++i)
     {
       cout << " " << featurematrix_[targetidx_][sampleics_left[i]];
@@ -555,9 +631,23 @@ void Treedata::categorical_target_split(size_t featureidx,
   //Check that sample size is positive
   assert(n_tot > 0);
   //size_t n_left(0);
-  
-  num_t impurity_tot;
 
+  //Feature data
+  vector<num_t> fv(n_tot);
+  for(size_t i = 0; i < n_tot; ++i)
+    {
+      fv[i] = featurematrix_[featureidx][sampleics[i]];
+    }
+  
+  //Make reference indices that define the sorting wrt. feature
+  vector<size_t> ref_ics(n_tot);
+
+  //Sort feature vector and collect reference indices
+  datadefs::sort_and_make_ref<num_t>(fv,ref_ics);
+
+  //Use the reference indices to sort sample indices
+  datadefs::sort_from_ref<size_t>(sampleics,ref_ics);
+  
   //Target data
   vector<num_t> tv(n_tot);
   for(size_t i = 0; i < n_tot; ++i)
@@ -565,32 +655,35 @@ void Treedata::categorical_target_split(size_t featureidx,
       tv[i] = featurematrix_[targetidx_][sampleics[i]];
     }
 
+  //Count how many real values the feature and target has
+  size_t nreal_f,nreal_t;
+  datadefs::count_real_values(fv,nreal_f);
+  datadefs::count_real_values(tv,nreal_t);
+  assert(nreal_t == n_tot && nreal_f == n_tot);
+
+  size_t nreal;
+  num_t impurity_tot;
+
   if(isfeaturenum_[targetidx_])
     {
       num_t mu;
-      size_t nreal;
+      //size_t nreal;
       datadefs::sqerr(tv,mu,impurity_tot,nreal);
       assert(nreal == n_tot);
       impurity_tot /= n_tot;
     }
   else
     {
-      datadefs::gini(tv,impurity_tot);
+      datadefs::gini(tv,impurity_tot,nreal);
+      assert(nreal == n_tot);
     }
   
-  //Feature data
-  vector<num_t> fv(n_tot);
-  for(size_t i = 0; i < n_tot; ++i)
-    {
-      fv[i] = featurematrix_[featureidx][sampleics[i]];
-    }
-
   //Impurity scores for the left and right branches
   num_t impurity_left(0.0);
   num_t impurity_right(0.0);
   
   map<num_t,vector<size_t> > fmap;
-  datadefs::map_data(fv,fmap);
+  datadefs::map_data(fv,fmap,n_tot);
 
   for(map<num_t,vector<size_t> >::iterator it(fmap.begin()); it != fmap.end(); ++it)
     {
@@ -650,25 +743,28 @@ void Treedata::categorical_target_split(size_t featureidx,
 	  //cout << " ] impurity_left=";
 
 	  //num_t impurity_left, impurity_right;
+	  
+	  size_t n_left,n_right;
+	  
 	  if(isfeaturenum_[targetidx_])
 	    {
 	      num_t mu;
-	      size_t nreal;
-	      datadefs::sqerr(data_left,mu,impurity_left,nreal);
-	      assert(nreal == data_left.size());
-	      impurity_left /= nreal;
-	      datadefs::sqerr(data_right,mu,impurity_right,nreal);
-	      assert(nreal == data_right.size());
-	      impurity_right /= nreal;
+	      //size_t nreal;
+	      datadefs::sqerr(data_left,mu,impurity_left,n_left);
+	      //assert(nreal == );
+	      impurity_left /= n_left;
+	      datadefs::sqerr(data_right,mu,impurity_right,n_right);
+	      //assert(nreal == data_right.size());
+	      impurity_right /= n_right;
 	    }
 	  else
 	    {
-	      datadefs::gini(data_left,impurity_left);
-	      datadefs::gini(data_right,impurity_right);
+	      datadefs::gini(data_left,impurity_left,n_left);
+	      datadefs::gini(data_right,impurity_right,n_right);
 	    }	    
 
-	  size_t n_left(data_left.size());
-          size_t n_right(data_right.size());
+	  //size_t n_left(data_left.size());
+          //size_t n_right(data_right.size());
 	  num_t impurity_new = (n_left*impurity_left+n_right*impurity_right) / n_tot;
 
 	  //cout << impurity_left << "  impurity_right=" << impurity_right << " (total=" << impurity_new << "\tcurr.best=" << bestimpurity << ")" << endl;
@@ -730,7 +826,7 @@ void Treedata::categorical_target_split(size_t featureidx,
 
   //Treedata::split_samples(targetidx_,sampleics,categories_left,sampleics_left,sampleics_right);
  
-  cout << "[";
+  cout << "Feature " << featureidx << " splits target " << targetidx_ << " [";
   for(size_t i = 0; i < sampleics_left.size(); ++i)
     {
       cout << " " << featurematrix_[targetidx_][sampleics_left[i]];
@@ -754,7 +850,7 @@ num_t Treedata::atp(size_t featureidx, size_t sampleidx)
   return(contrastmatrix_[featureidx][sampleidx]);
 }
 
-void Treedata::impurity(size_t featureidx, vector<size_t>& sampleics, num_t& impurity)
+void Treedata::impurity(size_t featureidx, vector<size_t> const& sampleics, num_t& impurity, size_t& nreal)
 {
 
   size_t n(sampleics.size());
@@ -769,16 +865,17 @@ void Treedata::impurity(size_t featureidx, vector<size_t>& sampleics, num_t& imp
   if(isfeaturenum_[featureidx])
     {
       num_t mu,se;
-      size_t nreal;
+      //size_t nreal;
       datadefs::sqerr(data,mu,se,nreal);
       impurity = se/nreal;
     }
   else
     {
       map<num_t,size_t> freq;
-      num_t impurity;
+      num_t sf;
       //datadefs::count_freq(data,freq);
-      datadefs::gini(data,impurity);
+      datadefs::sqfreq(data,freq,sf,nreal);
+      impurity = 1-sf/pow(nreal,2);
     }
   //cout << "after impurity" << endl;
   

@@ -72,7 +72,7 @@ void Randomforest::grow_forest()
 
   for(size_t i = 0; i < ntrees_; ++i)
     {
-      cout << "starting to grow treeidx=" << i << endl;
+      cout << "Growing tree " << i << "..." << endl;
       Randomforest::grow_tree(i);
     }
 }
@@ -85,7 +85,7 @@ void Randomforest::grow_tree(size_t treeidx)
   //Generate bootstrap indices and oob-indices
   treedata_->bootstrap(bootstrap_ics,oobmatrix_[treeidx]);
 
-  cout << "tree=" << treeidx << "  bootstrap indices [";
+  cout << "tree " << treeidx << "  bootstrap indices [";
   for(size_t i = 0; i < bootstrap_ics.size(); ++i)
     {
       cout << " " << bootstrap_ics[i];
@@ -95,7 +95,7 @@ void Randomforest::grow_tree(size_t treeidx)
     {
       cout << " " << oobmatrix_[treeidx][i];
     }
-  cout << " ]" << endl;
+  cout << " ]" << endl << endl;
 
   size_t rootnode = 0;
   
@@ -111,6 +111,7 @@ void Randomforest::recursive_nodesplit(size_t treeidx, size_t nodeidx, vector<si
 
   if(n_tot < 2*nodesize_)
     {
+      cout << endl;
       return;
     }
 
@@ -118,12 +119,15 @@ void Randomforest::recursive_nodesplit(size_t treeidx, size_t nodeidx, vector<si
   vector<size_t> mtrysample(treedata_->nfeatures());
   treedata_->permute(mtrysample);
 
-  cout << "tree=" << treeidx << "  nodeidx=" << nodeidx;
+  cout << "tree " << treeidx << "  node " << nodeidx << endl;
 
   vector<size_t> sampleics_left,sampleics_right;
   set<num_t> values_left;
   treedata_->split_target(nodesize_,sampleics,sampleics_left,sampleics_right);
 
+  assert(n_tot == sampleics.size());
+
+  size_t nreal_tot;
   size_t n_left(sampleics_left.size());
   size_t n_right(sampleics_right.size());
 
@@ -132,7 +136,6 @@ void Randomforest::recursive_nodesplit(size_t treeidx, size_t nodeidx, vector<si
   size_t targetidx(treedata_->get_target());
   for(size_t i = 0; i < mtry_; ++i)
     {
-
       size_t featureidx = mtrysample[i];
 
       if(featureidx == targetidx)
@@ -141,18 +144,24 @@ void Randomforest::recursive_nodesplit(size_t treeidx, size_t nodeidx, vector<si
 	}
       
       num_t impurity_tot,impurity_left,impurity_right;
+      size_t nreal_left,nreal_right;
 
-      treedata_->impurity(featureidx,sampleics,impurity_tot);
+      treedata_->impurity(featureidx,sampleics,impurity_tot,nreal_tot);
+
+      assert(sampleics.size() == n_tot);
       
-      if(impurity_tot < datadefs::eps)
+      if(impurity_tot < datadefs::eps || nreal_tot < 2*nodesize_)
 	{
 	  continue;
 	}
 
-      treedata_->impurity(featureidx,sampleics_left,impurity_left);
-      treedata_->impurity(featureidx,sampleics_right,impurity_right);
+      treedata_->impurity(featureidx,sampleics_left,impurity_left,nreal_left);
+      assert(sampleics_left.size() == n_left);
 
-      num_t relativedecrease((impurity_tot-n_left*impurity_left/n_tot-n_right*impurity_right/n_tot)/impurity_tot);
+      treedata_->impurity(featureidx,sampleics_right,impurity_right,nreal_right);
+      assert(sampleics_right.size() == n_right);
+
+      num_t relativedecrease((impurity_tot-nreal_left*impurity_left/nreal_tot-nreal_right*impurity_right/nreal_tot)/impurity_tot);
 
       if(relativedecrease > bestrelativedecrease)
 	{
@@ -163,13 +172,17 @@ void Randomforest::recursive_nodesplit(size_t treeidx, size_t nodeidx, vector<si
 
   if(bestsplitter_i == mtry_)
     {
-      cout << "No splitter found, quitting." << endl;
+      cout << "No splitter found, quitting." << endl << endl;
       return;
     }
 
   size_t splitterfeatureidx(mtrysample[bestsplitter_i]);
 
-  //cout << "Best splitter featureidx=" << splitterfeatureidx << " with relative decrease in impurity of " << bestrelativedecrease << endl; 
+  cout << "Best splitter feature is " << splitterfeatureidx << " with relative decrease in impurity of " << bestrelativedecrease << endl; 
+
+  treedata_->remove_nans(splitterfeatureidx,sampleics,nreal_tot);
+  cout << "Splitter feature has " << n_tot - nreal_tot << " missing values, which will be omitted in splitting" << endl;
+  n_tot = nreal_tot;
 
   size_t nodeidx_left(++nnodes_[treeidx]);
   size_t nodeidx_right(++nnodes_[treeidx]);
@@ -178,8 +191,11 @@ void Randomforest::recursive_nodesplit(size_t treeidx, size_t nodeidx, vector<si
     {
       num_t splitvalue;
       treedata_->split_target_with_num_feature(splitterfeatureidx,nodesize_,sampleics,sampleics_left,sampleics_right,splitvalue);
-      if(sampleics_left.size() == 0 || sampleics_right.size() == 0)
+      assert(sampleics.size() == n_tot);
+      assert(sampleics_left.size() + sampleics_right.size() == n_tot);
+      if(sampleics_left.size() < nodesize_ || sampleics_right.size() < nodesize_)
 	{
+	  cout << endl;
 	  return;
 	}
       forest_[treeidx][nodeidx].set_splitter(splitterfeatureidx,splitvalue,forest_[treeidx][nodeidx_left],forest_[treeidx][nodeidx_right]);
@@ -189,17 +205,21 @@ void Randomforest::recursive_nodesplit(size_t treeidx, size_t nodeidx, vector<si
     {
       set<num_t> values_left;
       treedata_->split_target_with_cat_feature(splitterfeatureidx,nodesize_,sampleics,sampleics_left,sampleics_right,values_left);
-      if(sampleics_left.size() == 0 || sampleics_right.size() == 0)
+      assert(sampleics.size() == n_tot);
+      assert(sampleics_left.size() + sampleics_right.size() == n_tot);
+      if(sampleics_left.size() < nodesize_ || sampleics_right.size() < nodesize_)
 	{
+	  cout << endl;
 	  return;
 	}
       forest_[treeidx][nodeidx].set_splitter(splitterfeatureidx,values_left,forest_[treeidx][nodeidx_left],forest_[treeidx][nodeidx_right]);
       //cout << forest_[treeidx][nodeidx].has_children() << endl;
     }
-  
+
+  cout << endl;
+
   Randomforest::recursive_nodesplit(treeidx,nodeidx_left,sampleics_left);
   Randomforest::recursive_nodesplit(treeidx,nodeidx_right,sampleics_right);
-  
   
 }
 
@@ -380,10 +400,11 @@ void Randomforest::tree_impurity(map<Node*,vector<size_t> >& trainics, num_t& im
   for(map<Node*,vector<size_t> >::iterator it(trainics.begin()); it != trainics.end(); ++it)
     {
       num_t impurity_leaf;
-      treedata_->impurity(targetidx,it->second,impurity_leaf);
-      size_t n(it->second.size());
-      n_tot += n;
-      impurity += n * impurity_leaf;
+      size_t nreal;
+      treedata_->impurity(targetidx,it->second,impurity_leaf,nreal);
+      //size_t n(it->second.size());
+      n_tot += nreal;
+      impurity += nreal * impurity_leaf;
     }
 
   if(n_tot > 0)

@@ -2,6 +2,7 @@
 #include <cassert>
 #include <string>
 #include <iostream>
+#include <ctime>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/program_options.hpp>
@@ -123,11 +124,12 @@ int main(int argc, char* argv[])
         //SECOND PART: construct a Random Forest object
         Randomforest RF(&treedata,ntrees,mtry,nodesize);
         
+	clock_t time_start(clock());
 	RF.select_target(targetidx);
-	//RF.print();
-	
+	//treedata.print();	
 	RF.grow_forest();
 	RF.rank_features();
+	cout << "Time elapsed: " << float(clock() - time_start)/CLOCKS_PER_SEC << " seconds" << endl;
 
         //return(EXIT_SUCCESS);
     }
