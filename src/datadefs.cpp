@@ -356,42 +356,6 @@ void datadefs::map_data(vector<datadefs::num_t>& data,
     }
 }
 
-/*
-  void datadefs::update_gini(num_t x_n,
-  const size_t n_left,			   
-  map<num_t,size_t>& cat2freq_left,
-  num_t& gi_left,
-  const size_t n_right,
-  map<num_t,size_t>& cat2freq_right,
-  num_t& gi_right)
-  {
-  
-  map<datadefs::num_t,size_t>::const_iterator it(cat2freq_left.find(x_n));
-  if(it == cat2freq_left.end())
-  {
-  cat2freq_left.insert(pair<datadefs::num_t,size_t>(x_n,1));
-  }
-  else
-  {
-  ++cat2freq_left[x_n];
-  }
-  
-  it = cat2freq_right.find(x_n);
-  assert(it != cat2freq_right.end() && it->second > 0);
-  
-  --cat2freq_right[x_n];
-  
-  if(it->second == 0)
-  {
-  cat2freq_right.erase(x_n);
-  }
-  
-  datadefs::gini(cat2freq_left,gi_left);
-  datadefs::gini(cat2freq_right,gi_right);
-  
-  }
-*/
-
 void datadefs::sqfreq(vector<datadefs::num_t> const& data, 
 		      map<datadefs::num_t,size_t>& freq, 
 		      datadefs::num_t& sf, 
@@ -438,7 +402,8 @@ void datadefs::update_sqfreq(const datadefs::num_t x_n,
     }
 
   it = freq_right.find(x_n);
-  assert(it != freq_right.end() && freq_right[x_n] > 0);
+  assert(it != freq_right.end());
+  assert(freq_right[x_n] > 0);
 
   sf_right -= 2*freq_right[x_n] - 1;
   --freq_right[x_n];

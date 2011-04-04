@@ -594,22 +594,19 @@ void Treedata::incremental_target_split(size_t featureidx,
 
 }
 
-//THIS NEEDS REWORKING AND OPTIMIZING
-void Treedata::categorical_target_split(size_t featureidx, 
-					vector<size_t>& sampleics, 
-					vector<size_t>& sampleics_left, 
+void Treedata::categorical_target_split(size_t featureidx,
+					vector<size_t>& sampleics,
+					vector<size_t>& sampleics_left,
 					vector<size_t>& sampleics_right,
 					set<num_t>& categories_left)
 {
-
   assert(!isfeaturenum_[featureidx]);
 
   //Sample size
   size_t n_tot(sampleics.size());
-  
+
   //Check that sample size is positive
   assert(n_tot > 0);
-  //size_t n_left(0);
 
   //Feature data
   vector<num_t> fv(n_tot);
@@ -617,16 +614,7 @@ void Treedata::categorical_target_split(size_t featureidx,
     {
       fv[i] = featurematrix_[featureidx][sampleics[i]];
     }
-  
-  //Make reference indices that define the sorting wrt. feature
-  vector<size_t> ref_ics(n_tot);
 
-  //Sort feature vector and collect reference indices
-  datadefs::sort_and_make_ref<num_t>(fv,ref_ics);
-
-  //Use the reference indices to sort sample indices
-  datadefs::sort_from_ref<size_t>(sampleics,ref_ics);
-  
   //Target data
   vector<num_t> tv(n_tot);
   for(size_t i = 0; i < n_tot; ++i)
@@ -634,177 +622,175 @@ void Treedata::categorical_target_split(size_t featureidx,
       tv[i] = featurematrix_[targetidx_][sampleics[i]];
     }
 
-  //Count how many real values the feature and target has
+  //Count how many real values the feature and target has (this is just to make sure there are no mising values thrown in)
   size_t nreal_f,nreal_t;
   datadefs::count_real_values(fv,nreal_f);
   datadefs::count_real_values(tv,nreal_t);
   assert(nreal_t == n_tot && nreal_f == n_tot);
 
-  size_t nreal;
-  num_t impurity_tot;
+  //Map all feature categories to the corresponding samples and represent it as map. The map is used to assign samples to left and right branches
+  map<num_t,vector<size_t> > fmap_right;
+  datadefs::map_data(fv,fmap_right,nreal_f);
+  assert(n_tot == nreal_f);
+
+  categories_left.clear();
+  sampleics_left.clear();
+  size_t n_left(0);
+  size_t n_right(n_tot);
 
   if(isfeaturenum_[targetidx_])
     {
-      num_t mu;
-      //size_t nreal;
-      datadefs::sqerr(tv,mu,impurity_tot,nreal);
-      assert(nreal == n_tot);
-      impurity_tot /= n_tot;
-    }
+      
+      num_t mu_right;
+      num_t mu_left(0.0);
+      num_t se_right;
+      num_t se_left(0.0);
+      datadefs::sqerr(tv,mu_right,se_right,n_right);
+      assert(n_tot == n_right);
+      num_t se_best(se_right);
+      
+      while(fmap_right.size() > 0)
+	{
+	  
+	  map<num_t,vector<size_t> >::iterator it_best(fmap_right.end());
+
+	  for(map<num_t,vector<size_t> >::iterator it(fmap_right.begin()); it != fmap_right.end(); ++it)
+	    {
+	      
+	      //Take samples from right and put them left
+	      for(size_t i = 0; i < it->second.size(); ++i)
+		{
+		  datadefs::update_sqerr(tv[it->second[i]],n_left,mu_left,se_left,n_right,mu_right,se_right);
+		  //cout << n_left << "\t" << n_right << "\t" << se_left << "\t" << se_right << endl;
+		}
+
+	      if(se_left+se_right < se_best)
+		{
+		  it_best = it;
+		  se_best = se_left+se_right;
+		}
+
+	      //Take samples from left back to right
+	      for(size_t i = 0; i < it->second.size(); ++i)
+                {
+		  //cout << tv[it->second[i]] << ": ";
+		  datadefs::update_sqerr(tv[it->second[i]],n_right,mu_right,se_right,n_left,mu_left,se_left);
+		  //cout << n_left << "\t" << n_right << "\t" << se_left << "\t" << se_right << endl;
+                }
+	    }
+	  
+	  //If we found a categorical split that reduces impurity...
+	  if(it_best == fmap_right.end())
+	    {
+	      break;
+	    }
+
+
+	  //Take samples from right and put them left
+	  for(size_t i = 0; i < it_best->second.size(); ++i)
+	    {
+	      categories_left.insert(it_best->first);
+	      //cout << "removing index " << it_best->second[i] << " (value " << tv[it_best->second[i]] << ") from right: ";
+	      datadefs::update_sqerr(tv[it_best->second[i]],n_left,mu_left,se_left,n_right,mu_right,se_right);
+	      sampleics_left.push_back(it_best->second[i]);
+	      //cout << n_left << "\t" << n_right << "\t" << se_left << "\t" << se_right << endl;
+	    }
+	  fmap_right.erase(it_best->first);
+	  
+	}
+    }  
   else
     {
-      datadefs::gini(tv,impurity_tot,nreal);
-      assert(nreal == n_tot);
-    }
-  
-  //Impurity scores for the left and right branches
-  num_t impurity_left(0.0);
-  num_t impurity_right(0.0);
-  
-  map<num_t,vector<size_t> > fmap;
-  datadefs::map_data(fv,fmap,n_tot);
-
-  for(map<num_t,vector<size_t> >::iterator it(fmap.begin()); it != fmap.end(); ++it)
-    {
-      //cout << "fmap(" << it->first << ") [";
-      for(size_t i = 0; i < it->second.size(); ++i)
+      map<num_t,size_t> freq_left,freq_right;
+      num_t sf_left(0.0);
+      num_t sf_right;
+      datadefs::sqfreq(tv,freq_right,sf_right,n_right);
+      assert(n_tot == n_right);
+      //datadefs::count_freq(fv,freq_right,n_right);
+      for(map<num_t,size_t>::const_iterator it(freq_right.begin()); it != freq_right.end(); ++it)
 	{
-	  it->second[i] = sampleics[it->second[i]];
-	  //cout << " " << it->second[i];
+	  cout << " " << it->first << ":" << it->second;
 	}
-      //cout << " ]" << endl;
-    }
+      cout << endl;
+      num_t nsf_best(sf_right/n_right);
 
-  
-  map<num_t,vector<size_t> > fmap_left;
-  map<num_t,vector<size_t> > fmap_right = fmap;
+      while(fmap_right.size() > 1)
+        {
 
-  num_t bestimpurity(impurity_tot);
+          map<num_t,vector<size_t> >::iterator it_best(fmap_right.end());
 
-  while(fmap_right.size() > 1)
-    {
+          for(map<num_t,vector<size_t> >::iterator it(fmap_right.begin()); it != fmap_right.end(); ++it)
+            {
 
-      map<num_t,vector<size_t> > fmap_right_copy = fmap_right;
-      
-      //num_t bestkey(datadefs::num_nan);
-      map<num_t,vector<size_t> >::iterator bestit(fmap_right.end());
+	      size_t n_left_c(n_left);
+	      size_t n_right_c(n_right);
+	      map<num_t,size_t> freq_left_c = freq_left;
+	      map<num_t,size_t> freq_right_c = freq_right;
 
-      for(map<num_t,vector<size_t> >::iterator it(fmap_right.begin()); it != fmap_right.end(); ++it)
-	{
+              //Take samples from right and put them left
+	      cout << "Moving " << it->second.size() << " samples corresponding to feature category " << it->first << " from right to left" << endl;
+              for(size_t i = 0; i < it->second.size(); ++i)
+                {
+		  cout << " " << tv[it->second[i]];
+		  datadefs::update_sqfreq(tv[it->second[i]],n_left,freq_left,sf_left,n_right,freq_right,sf_right);
+		  //cout << n_left << "\t" << n_right << "\t" << sf_left << "\t" << sf_right << endl;
+                }
+	      cout << endl;
 
-	  //num_t key(it->first);
-	  fmap_left.insert(*it);
-	  fmap_right_copy.erase(it->first);
-	  //cout << "[";
-	  vector<num_t> data_left;
-	  //for(map<num_t,vector<size_t> >::const_iterator it2(fmap_left.begin()); it2 != fmap_left.end(); ++it2)
-	  //  {
-	      //cout << " " << it2->first << "(";
-	  //    for(size_t i = 0; i < it2->second.size(); ++i)
-	  //	{
-	  //	  data_left.push_back(featurematrix_[targetidx_][it2->second[i]]);
-	  //	  cout << " " << featurematrix_[targetidx_][it2->second[i]];
-	  //	}
-	  //    //cout << ")";
-	  //  }
-	  //cout << " ] <==> [";
-	  vector<num_t> data_right;
-          //for(map<num_t,vector<size_t> >::const_iterator it2(fmap_right_copy.begin()); it2 != fmap_right_copy.end(); ++it2)
-          //  {
-	  //    //cout << " " << it2->first << "(";
-          //    for(size_t i = 0; i < it2->second.size(); ++i)
-          //      {
-          //        data_right.push_back(featurematrix_[targetidx_][it2->second[i]]);
-	  //		  cout << " " << featurematrix_[targetidx_][it2->second[i]];
-	  //	}
-	      //cout << ")";
-	  // }
-	  //cout << " ] impurity_left=";
+              if(sf_left/n_left + sf_right/n_right > nsf_best)
+                {
+                  it_best = it;
+                  nsf_best = sf_left/n_left + sf_right/n_right;
+                }
 
-	  //num_t impurity_left, impurity_right;
-	  
-	  size_t n_left,n_right;
-	  
-	  if(isfeaturenum_[targetidx_])
-	    {
-	      num_t mu;
-	      //size_t nreal;
-	      datadefs::sqerr(data_left,mu,impurity_left,n_left);
-	      //assert(nreal == );
-	      impurity_left /= n_left;
-	      datadefs::sqerr(data_right,mu,impurity_right,n_right);
-	      //assert(nreal == data_right.size());
-	      impurity_right /= n_right;
-	    }
-	  else
-	    {
-	      datadefs::gini(data_left,impurity_left,n_left);
-	      datadefs::gini(data_right,impurity_right,n_right);
-	    }	    
+	      cout << "Moving " << it->second.size() << " samples corresponding to feature category " << it->first << " from left to right" << endl;
+              //Take samples from left back to right
+              for(size_t i = 0; i < it->second.size(); ++i)
+                {
+		  cout << " " << tv[it->second[i]];
+		  datadefs::update_sqfreq(tv[it->second[i]],n_right,freq_right,sf_right,n_left,freq_left,sf_left);
+		  //cout << n_left << "\t" << n_right << "\t" << sf_left << "\t" << sf_right << endl;
+                }
+	      cout << endl;
 
-	  //size_t n_left(data_left.size());
-          //size_t n_right(data_right.size());
-	  num_t impurity_new = (n_left*impurity_left+n_right*impurity_right) / n_tot;
+	      assert(n_left_c == n_left);
+	      assert(n_right_c == n_right);
+	      assert(freq_left_c.size() == freq_left.size());
+	      assert(freq_right_c.size() == freq_right.size());
 
-	  //cout << impurity_left << "  impurity_right=" << impurity_right << " (total=" << impurity_new << "\tcurr.best=" << bestimpurity << ")" << endl;
-	  
-	  if(impurity_new < bestimpurity)
-	    {
+            }
 
-	      bestit = it;
-	      bestimpurity = impurity_new;
-	    }
-	  
-	  fmap_left.erase(it->first);
-	  fmap_right_copy.insert(*it);
-	 	  
-	}
+          //If we found a categorical split that reduces impurity...
+          if(it_best == fmap_right.end())
+            {
+              break;
+            }
 
-      if(bestit == fmap_right.end())
-	{
-	  break;
-	}
 
-      //cout << "it's now...";
-      fmap_left.insert(*bestit);
-      fmap_right.erase(bestit->first);
-      //cout << " or never." << endl;
-      
-      
+          //Take samples from right and put them left
+          for(size_t i = 0; i < it_best->second.size(); ++i)
+            {
+	      categories_left.insert(it_best->first);
+	      //cout << "removing index " << it_best->second[i] << " (value " << tv[it_best->second[i]] << ") from right: ";
+	      datadefs::update_sqfreq(tv[it_best->second[i]],n_left,freq_left,sf_left,n_right,freq_right,sf_right);
+              sampleics_left.push_back(sampleics[it_best->second[i]]);
+	      //cout << n_left << "\t" << n_right << "\t" << sf_left << "\t" << sf_right << endl;
+            }
+          fmap_right.erase(it_best->first);
 
-    }
- 
-  sampleics_left.clear();
-  categories_left.clear();
-  for(map<num_t,vector<size_t> >::const_iterator it(fmap_left.begin()); it != fmap_left.end(); ++it)
-    {
-      categories_left.insert(it->first);
-      //cout << " " << it2->first << "(";
-      for(size_t i = 0; i < it->second.size(); ++i)
-	{
-	  sampleics_left.push_back(it->second[i]);
-	  //cout << " " << featurematrix_[targetidx_][it2->second[i]];
-	}
-      //cout << ")";
+        }
     }
 
-  //cout << "right" << endl;
-
+  //Next we assign samples remaining on right
   sampleics_right.clear();
   for(map<num_t,vector<size_t> >::const_iterator it(fmap_right.begin()); it != fmap_right.end(); ++it)
     {
-      //cout << " " << it2->first << "(";
       for(size_t i = 0; i < it->second.size(); ++i)
-        {
-          sampleics_right.push_back(it->second[i]);
-          //cout << " " << featurematrix_[targetidx_][it2->second[i]];
-        }
-      //cout << ")";
-    }
+	{
+	  sampleics_right.push_back(sampleics[it->second[i]]);
+	}
+    }  
 
-
-  //Treedata::split_samples(targetidx_,sampleics,categories_left,sampleics_left,sampleics_right);
- 
   cout << "Feature " << featureidx << " splits target " << targetidx_ << " [";
   for(size_t i = 0; i < sampleics_left.size(); ++i)
     {
