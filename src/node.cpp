@@ -82,6 +82,16 @@ void Node::reset_impurity()
   impurity_ = 0.0;
 }
 
+void Node::set_prediction(num_t value)
+{
+  prediction_ = value;
+}
+
+num_t Node::get_prediction()
+{
+  return(prediction_);
+}
+
 void Node::set_trainidx(size_t trainidx)
 {
   trainics_.push_back(trainidx);
