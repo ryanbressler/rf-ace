@@ -112,12 +112,12 @@ private:
 				vector<size_t>& sampleics_left, 
 				vector<size_t>& sampleics_right,
 				num_t& splitvalue);
-  
+
   void categorical_target_split(size_t featureidx,
-				vector<size_t>& sampleics, 
-				vector<size_t>& sampleics_left, 
-				vector<size_t>& sampleics_right,
-				set<num_t>& values_left);
+				   vector<size_t>& sampleics,
+				   vector<size_t>& sampleics_left,
+				   vector<size_t>& sampleics_right,
+				   set<num_t>& categories_left);
 
   //Splits a set of samples to "left" and "right", given a splitidx
   void split_samples(vector<size_t>& sampleics,
