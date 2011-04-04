@@ -37,6 +37,9 @@ public:
   num_t get_impurity();
   void reset_impurity();
 
+  void set_prediction(num_t value);
+  num_t get_prediction();
+
   void set_trainidx(size_t trainidx);
   vector<size_t>* get_trainics();
   void clear_trainics();
@@ -56,6 +59,7 @@ private:
   set<num_t> classet_;
 
   num_t impurity_;
+  num_t prediction_; // saves the prediction of the node
     
   bool haschildren_;
   Node* leftchild_;
