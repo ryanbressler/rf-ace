@@ -56,7 +56,7 @@ protected:
 
   size_t get_target();
   
-  void permute_contrasts();
+  //void permute_contrasts();
 
   bool isfeaturenum(size_t featureidx);
 
@@ -95,7 +95,7 @@ protected:
   //void percolate_sampleidx_with_feature_permuted(size_t featureidx, size_t sampleidx, Node** nodep);
 
   num_t at(size_t featureidx, size_t sampleidx);
-  num_t atp(size_t featureidx, size_t sampleidx);
+  num_t atp(size_t featureidx);
 
 private:
 
@@ -127,14 +127,14 @@ private:
   
   //void count_real_values(size_t featureidx, size_t& nreal);
   
-  void generate_contrasts();    
+  //void generate_contrasts();    
   
   size_t targetidx_;
 
   vector<vector<num_t> > featurematrix_;
-  vector<vector<num_t> > contrastmatrix_;
+  //vector<vector<num_t> > contrastmatrix_;
   vector<bool> isfeaturenum_;
-  //vector<size_t> nrealvalues_;
+  size_t nrealvalues_;
   //vector<size_t> ncatvalues_;
 
   size_t nsamples_;

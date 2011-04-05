@@ -308,7 +308,7 @@ void Randomforest::percolate_sampleidx_perm(size_t featureidx, size_t sampleidx,
       num_t value;
       if(featureidx == featureidx_new)
 	{
-	  value = treedata_->atp(featureidx,sampleidx);
+	  value = treedata_->atp(featureidx);
 	}
       else
 	{

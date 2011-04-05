@@ -13,8 +13,8 @@ using namespace std;
 Treedata::Treedata(string fname, bool is_featurerows):
   targetidx_(0),
   featurematrix_(0),
-  contrastmatrix_(0),
   isfeaturenum_(0),
+  nrealvalues_(0),
   nsamples_(0),
   nfeatures_(0),
   featureheaders_(0),
@@ -25,6 +25,7 @@ Treedata::Treedata(string fname, bool is_featurerows):
   time_t now;
   time(&now);
   srand((unsigned int)now);
+  //datadefs::seedMT((size_t)now);
 
   cout << "Treedata: reading matrix from file '" << fname << "'" << endl;
 
@@ -147,7 +148,7 @@ Treedata::Treedata(string fname, bool is_featurerows):
 
   //Transform raw data to the internal format.
   featurematrix_.resize(nfeatures_);
-  contrastmatrix_.resize(nfeatures_);
+  //contrastmatrix_.resize(nfeatures_);
   for(size_t i = 0; i < nfeatures_; ++i)
     {
       vector<num_t> featurev(nsamples_);
@@ -226,36 +227,41 @@ void Treedata::print()
     }
 }
 
-void Treedata::generate_contrasts()
-{
+/*
+  void Treedata::generate_contrasts()
+  {
   size_t nrealvalues;
   datadefs::count_real_values(featurematrix_[targetidx_],nrealvalues);
   for(size_t i = 0; i < nfeatures_; ++i)
-    {
-      vector<num_t> x(nrealvalues);
-      contrastmatrix_[i].resize(nrealvalues);
-      for(size_t j = 0; j < nrealvalues; ++j)
-        {
-          contrastmatrix_[i][j] = featurematrix_[i][j];
-        }
-    }
-
+  {
+  vector<num_t> x(nrealvalues);
+  contrastmatrix_[i].resize(nrealvalues);
+  for(size_t j = 0; j < nrealvalues; ++j)
+  {
+  contrastmatrix_[i][j] = featurematrix_[i][j];
+  }
+  }
+  
   Treedata::permute_contrasts();
-}
+  }
+*/
 
-void Treedata::permute_contrasts()
-{
+/*
+  void Treedata::permute_contrasts()
+  {
   for(size_t i = 0; i < nfeatures_; ++i)
-    {
-      Treedata::permute(contrastmatrix_[i]);
-    }
-}
+  {
+  Treedata::permute(contrastmatrix_[i]);
+  }
+  }
+*/
 
 void Treedata::select_target(size_t targetidx)
 {
   targetidx_ = targetidx; 
   Treedata::sort_all_wrt_target();
-  Treedata::generate_contrasts();
+  datadefs::count_real_values(featurematrix_[targetidx_],nrealvalues_);
+  //Treedata::generate_contrasts();
 }
 
 size_t Treedata::get_target()
@@ -811,11 +817,10 @@ num_t Treedata::at(size_t featureidx, size_t sampleidx)
 }
 
 
-num_t Treedata::atp(size_t featureidx, size_t sampleidx)
+num_t Treedata::atp(size_t featureidx)
 {
-  return(contrastmatrix_[featureidx][sampleidx]);
+  return(featurematrix_[featureidx][rand() % nrealvalues_]);
 }
-
 
 void Treedata::impurity(size_t featureidx, vector<size_t> const& sampleics, num_t& impurity, size_t& nreal)
 {
