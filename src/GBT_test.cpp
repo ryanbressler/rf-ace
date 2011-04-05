@@ -1,8 +1,3 @@
-/*
- * GBT_test.cpp
- *
- *  Created on: Mar 13, 2011
- */
 
 #include<cstdlib>
 #include "GBT.hpp"
@@ -16,8 +11,7 @@ int main()
 	// 1: read data into Treedata class (features are rows)
 	cout <<endl<< "READ:" << endl;
 	bool is_featurerows = true;
-	//string fname = "../svn/trunk/data/test_6by10_featurerows_matrix.tsv";
-	string fname = "./6_num_features_X_10_cases.tsv";
+	string fname = "data/6_num_features_X_10_cases.tsv";
 	Treedata treeData(fname,is_featurerows);
 
 
