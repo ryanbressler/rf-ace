@@ -15,10 +15,6 @@ const datadefs::num_t datadefs::eps = 1e-10;
 const string initNANs[] = {"NA","NAN"};
 const set<datadefs::NAN_t> datadefs::NANs(initNANs,initNANs+2);
 
-//static size_t   state[N+1];     // state vector + 1 extra to not violate ANSI C
-//static size_t   *next;          // next random value is computed from here
-//static int      left = -1;      // can *next++ this many times before reloading
-
 void toupper(string& str)
 {
   int (*pf)(int) = toupper;
@@ -175,19 +171,52 @@ void datadefs::count_real_values(vector<num_t> const& data, size_t& nreal)
     }  
 }
 
-//Assuming x_n is a current member of the "right" branch, subtract it from "right" and add it to "left", and update the branch data counts, means, and squared errors. NOTE: NaN checks not implemented
-void datadefs::update_sqerr(const datadefs::num_t x_n,
-			    size_t& n_left,
-			    datadefs::num_t& mu_left,
-			    datadefs::num_t& se_left,
-			    size_t& n_right,
-			    datadefs::num_t& mu_right,
-			    datadefs::num_t& se_right)
+void datadefs::forward_sqerr(const datadefs::num_t x_n,
+			     size_t& n,
+			     datadefs::num_t& mu,
+			     datadefs::num_t& se)
 {
+  if(datadefs::is_nan(x_n))
+    {
+      return;
+    }
 
-  //assert(n_left > 0);
+  ++n;
+  
+  datadefs::num_t mu_old(mu);
+
+  //Add x_n and update mean and squared error
+  mu_old = mu;
+  mu += (x_n - mu) / n;
+
+  //If there are already at least two data points, squared error can be calculated, otherwise assign se_left := 0.0
+  if(n > 1)
+    {
+      se += (x_n - mu) * (x_n - mu_old);
+    }
+  else
+    {
+      se = 0.0;
+    }
+
+
+}
+
+//Assuming x_n is a current member of the "right" branch, subtract it from "right" and add it to "left", and update the branch data counts, means, and squared errors. NOTE: NaN checks not implemented
+void datadefs::forward_backward_sqerr(const datadefs::num_t x_n,
+				      size_t& n_left,
+				      datadefs::num_t& mu_left,
+				      datadefs::num_t& se_left,
+				      size_t& n_right,
+				      datadefs::num_t& mu_right,
+				      datadefs::num_t& se_right)
+{
   assert(n_right > 0);
-  assert(!datadefs::is_nan(x_n));
+ 
+  if(datadefs::is_nan(x_n))
+    {
+      return;
+    }
   
   ++n_left;
   --n_right;
@@ -311,18 +340,51 @@ void datadefs::sqfreq(vector<datadefs::num_t> const& data,
     }
 }
 
-void datadefs::update_sqfreq(const datadefs::num_t x_n,
-			     size_t& n_left,
-			     map<datadefs::num_t,size_t>& freq_left, 
-			     datadefs::num_t& sf_left,
-			     size_t& n_right,
-			     map<datadefs::num_t,size_t>& freq_right,
-			     datadefs::num_t& sf_right)
+void datadefs::forward_sqfreq(const datadefs::num_t x_n,
+			      size_t& n,
+			      map<datadefs::num_t,size_t>& freq,
+			      datadefs::num_t& sf)
 {
 
-  //assert(n_left > 1);
+  if(datadefs::is_nan(x_n))
+    {
+      return;
+    }
+
+  ++n;
+  
+  //Check if the value already exists
+  map<datadefs::num_t,size_t>::const_iterator it(freq.find(x_n));
+  if(it == freq.end())
+    {
+      sf += 1;
+
+      //If not, add a new category and set its frequency to 1...
+      freq.insert(pair<datadefs::num_t,size_t>(x_n,1));
+
+    }
+  else
+    {
+      sf += 2*freq[x_n] + 1;
+      ++freq[x_n];
+    }
+}
+
+
+void datadefs::forward_backward_sqfreq(const datadefs::num_t x_n,
+				       size_t& n_left,
+				       map<datadefs::num_t,size_t>& freq_left, 
+				       datadefs::num_t& sf_left,
+				       size_t& n_right,
+				       map<datadefs::num_t,size_t>& freq_right,
+				       datadefs::num_t& sf_right)
+{
   assert(n_right > 0);
-  assert(!datadefs::is_nan(x_n));
+ 
+  if(datadefs::is_nan(x_n))
+    {
+      return;
+    }
 
   ++n_left;
   --n_right;
@@ -371,80 +433,14 @@ void datadefs::ttest(vector<datadefs::num_t> const& x,
 {
   
 }
-/*
-  #define N              (624)                 // length of state vector
-  #define M              (397)                 // a period parameter
-  #define K              (0x9908B0DFU)         // a magic constant
-  #define hiBit(u)       ((u) & 0x80000000U)   // mask all but highest   bit of u
-  #define loBit(u)       ((u) & 0x00000001U)   // mask all but lowest    bit of u
-  #define loBits(u)      ((u) & 0x7FFFFFFFU)   // mask     the highest   bit of u
-  #define mixBits(u, v)  (hiBit(u)|loBits(v))  // move hi bit of u to hi bit of v
-*/
 
-/*
-  size_t   datadefs::state[N+1];     // state vector + 1 extra to not violate ANSI C
-  size_t   *datadefs::next;          // next random value is computed from here
-  int      datadefs::left = -1;      // can *next++ this many times before reloading
-  
-  void datadefs::seedMT(size_t seed)
-  {
-  //size_t state[N+1];     // state vector + 1 extra to not violate ANSI C
-  //size_t *next;          // next random value is computed from here
-  //int left = -1;      // can *next++ this many times before reloading
-  
-  register size_t x = (seed | 1U) & 0xFFFFFFFFU, *s = datadefs::state;
-  register int    j;
-  
-  for(datadefs::left=0, *s++=x, j=N; --j;
-  *s++ = (x*=69069U) & 0xFFFFFFFFU);
-  }
-  
-  size_t datadefs::reloadMT()
-  {
-  //size_t state[N+1];     // state vector + 1 extra to not violate ANSI C
-  //size_t *next;          // next random value is computed from here
-  //int left = -1;      // can *next++ this many times before reloading
-  
-  register size_t *p0=datadefs::state, *p2=datadefs::state+2, *pM=datadefs::state+M, s0, s1;
-  register int    j;
-  
-  if(datadefs::left < -1)
-  seedMT(4357U);
-  
-  datadefs::left=N-1, datadefs::next=datadefs::state+1;
-  
-  for(s0=datadefs::state[0], s1=datadefs::state[1], j=N-M+1; --j; s0=s1, s1=*p2++)
-  *p0++ = *pM++ ^ (mixBits(s0, s1) >> 1) ^ (loBit(s1) ? K : 0U);
-  
-  for(pM=datadefs::state, j=M; --j; s0=s1, s1=*p2++)
-  *p0++ = *pM++ ^ (mixBits(s0, s1) >> 1) ^ (loBit(s1) ? K : 0U);
-  
-  s1=datadefs::state[0], *p0 = *pM ^ (mixBits(s0, s1) >> 1) ^ (loBit(s1) ? K : 0U);
-  s1 ^= (s1 >> 11);
-  s1 ^= (s1 <<  7) & 0x9D2C5680U;
-  s1 ^= (s1 << 15) & 0xEFC60000U;
-  return(s1 ^ (s1 >> 18));
-  }
-  
-  
-  size_t datadefs::randMT()
-  {
-  
-  //size_t *next;          // next random value is computed from here
-  //int left = -1;      // can *next++ this many times before reloading
-  
-  size_t y;
-  
-  if(--datadefs::left < 0)
-  return(reloadMT());
-  
-  y  = *datadefs::next++;
-  y ^= (y >> 11);
-  y ^= (y <<  7) & 0x9D2C5680U;
-  y ^= (y << 15) & 0xEFC60000U;
-  y ^= (y >> 18);
-  return(y);
-  }
-*/
+void datadefs::spearman_correlation(vector<datadefs::num_t> const& x,
+				    vector<datadefs::num_t> const& y,
+				    datadefs::num_t& corr)
+{
+
+
+
+}
 
 

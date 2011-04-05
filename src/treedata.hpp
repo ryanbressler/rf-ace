@@ -56,7 +56,7 @@ protected:
 
   size_t get_target();
   
-  //void permute_contrasts();
+  void permute_contrasts();
 
   bool isfeaturenum(size_t featureidx);
 
@@ -90,12 +90,13 @@ protected:
   //void range(vector<size_t>& ics);
 
   void impurity(size_t featureidx, vector<size_t> const& sampleics, num_t& impurity, size_t& nreal);
+  //void impurity(const size_t featureidx, const size_t n, num_t& impurity);
 
   //void percolate_sampleidx(size_t sampleidx, Node** nodep);
   //void percolate_sampleidx_with_feature_permuted(size_t featureidx, size_t sampleidx, Node** nodep);
 
   num_t at(size_t featureidx, size_t sampleidx);
-  num_t atp(size_t featureidx);
+  num_t randf(size_t featureidx);
 
 private:
 

@@ -66,13 +66,18 @@ namespace datadefs
   
   void count_real_values(vector<num_t> const& data, size_t& nreal);
 
-  void update_sqerr(const num_t x_n,
-		    size_t& n_left,
-		    num_t& mu_left,
-		    num_t& se_left,
-		    size_t& n_right,
-		    num_t& mu_right,
-		    num_t& se_right);
+  void forward_sqerr(const num_t x_n,
+		     size_t& n,
+		     num_t& mu,
+		     num_t& se);
+  
+  void forward_backward_sqerr(const num_t x_n,
+			      size_t& n_left,
+			      num_t& mu_left,
+			      num_t& se_left,
+			      size_t& n_right,
+			      num_t& mu_right,
+			      num_t& se_right);
 
   void count_freq(vector<num_t> const& data, map<num_t,size_t>& cat2freq, size_t& nreal);
 
@@ -92,13 +97,18 @@ namespace datadefs
 	      num_t& sf, 
 	      size_t& nreal);
 
-  void update_sqfreq(const num_t x_n,
-		     size_t& n_left,
-		     map<num_t,size_t>& freq_left,
-		     num_t& sf_left,
-		     size_t& n_right,
-		     map<num_t,size_t>& freq_right,
-		     num_t& sf_right);
+  void forward_sqfreq(const num_t x_n,
+		      size_t& n,
+		      map<num_t,size_t>& freq,
+		      num_t& sf);
+  
+  void forward_backward_sqfreq(const num_t x_n,
+			       size_t& n_left,
+			       map<num_t,size_t>& freq_left,
+			       num_t& sf_left,
+			       size_t& n_right,
+			       map<num_t,size_t>& freq_right,
+			       num_t& sf_right);
 
   void range(vector<size_t>& ics);
 
@@ -106,6 +116,9 @@ namespace datadefs
 	     vector<num_t> const& y, 
 	     num_t& pvalue);
 
+  void spearman_correlation(vector<num_t> const& x, 
+			    vector<num_t> const& y,
+			    num_t& corr);
 
   /*
     void seedMT(size_t seed);

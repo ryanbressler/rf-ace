@@ -147,7 +147,7 @@ Treedata::Treedata(string fname, bool is_featurerows):
     }
 
   //Transform raw data to the internal format.
-  featurematrix_.resize(nfeatures_);
+  featurematrix_.resize(2*nfeatures_);
   //contrastmatrix_.resize(nfeatures_);
   for(size_t i = 0; i < nfeatures_; ++i)
     {
@@ -166,17 +166,15 @@ Treedata::Treedata(string fname, bool is_featurerows):
       featurematrix_[i] = featurev;
     } 
   
-  /*
-    featureheaders_.resize(2*nfeatures_);
-    isfeaturenum_.resize(2*nfeatures_);
-    for(size_t i = nfeatures_; i < 2*nfeatures_; ++i)
+  featureheaders_.resize(2*nfeatures_);
+  isfeaturenum_.resize(2*nfeatures_);
+  for(size_t i = nfeatures_; i < 2*nfeatures_; ++i)
     {
-    featurematrix_[i] = featurematrix_[i-nfeatures_];
-    featureheaders_[i] = "CONTRAST";
-    isfeaturenum_[i] = isfeaturenum_[i-nfeatures_];
+      featurematrix_[i] = featurematrix_[i-nfeatures_];
+      featureheaders_[i] = "CONTRAST";
+      isfeaturenum_[i] = isfeaturenum_[i-nfeatures_];
     }
-  */
-    
+      
   //Treedata::permute_contrasts();
 
   targetidx_ = 0;
@@ -246,28 +244,38 @@ void Treedata::print()
   }
 */
 
-/*
-  void Treedata::permute_contrasts()
-  {
-  for(size_t i = 0; i < nfeatures_; ++i)
-  {
-  Treedata::permute(contrastmatrix_[i]);
-  }
-  }
-*/
+
+void Treedata::permute_contrasts()
+{
+  for(size_t i = nfeatures_; i < 2*nfeatures_; ++i)
+    {
+      Treedata::permute(featurematrix_[i]);
+    }
+}
+
 
 void Treedata::select_target(size_t targetidx)
 {
   targetidx_ = targetidx; 
   Treedata::sort_all_wrt_target();
   datadefs::count_real_values(featurematrix_[targetidx_],nrealvalues_);
-  //Treedata::generate_contrasts();
+  Treedata::permute_contrasts();
 }
 
 size_t Treedata::get_target()
 {
   return(targetidx_);
 }
+
+/*
+  void Treedata::generate_contrasts(vector<bool>& contrasts)
+  {
+  for(size_t i = 0; i < contrasts.size(); ++i)
+  {
+  contrasts[i] = rand() % 2;
+  }
+  }
+*/
 
 bool Treedata::isfeaturenum(size_t featureidx)
 {
@@ -542,7 +550,7 @@ void Treedata::incremental_target_split(size_t featureidx,
       size_t idx(0);
       while(n_left < n_tot - min_split)
 	{
-	  datadefs::update_sqerr(tv[idx],n_left,mu_left,se_left,n_right,mu_right,se_right);
+	  datadefs::forward_backward_sqerr(tv[idx],n_left,mu_left,se_left,n_right,mu_right,se_right);
 	  if((se_left+se_right) < se_best && n_left >= min_split)
 	    {
 	      bestsplitidx = idx;
@@ -567,7 +575,7 @@ void Treedata::incremental_target_split(size_t featureidx,
       size_t idx(0);
       while(n_left < n_tot - min_split)
         {
-	  datadefs::update_sqfreq(tv[idx],n_left,freq_left,sf_left,n_right,freq_right,sf_right);
+	  datadefs::forward_backward_sqfreq(tv[idx],n_left,freq_left,sf_left,n_right,freq_right,sf_right);
           if(sf_left/n_left + sf_right/n_right > nsf_best && n_left >= min_split) 
             {
               bestsplitidx = idx;
@@ -666,7 +674,7 @@ void Treedata::categorical_target_split(size_t featureidx,
 	      //Take samples from right and put them left
 	      for(size_t i = 0; i < it->second.size(); ++i)
 		{
-		  datadefs::update_sqerr(tv[it->second[i]],n_left,mu_left,se_left,n_right,mu_right,se_right);
+		  datadefs::forward_backward_sqerr(tv[it->second[i]],n_left,mu_left,se_left,n_right,mu_right,se_right);
 		  //cout << n_left << "\t" << n_right << "\t" << se_left << "\t" << se_right << endl;
 		}
 
@@ -680,7 +688,7 @@ void Treedata::categorical_target_split(size_t featureidx,
 	      for(size_t i = 0; i < it->second.size(); ++i)
                 {
 		  //cout << tv[it->second[i]] << ": ";
-		  datadefs::update_sqerr(tv[it->second[i]],n_right,mu_right,se_right,n_left,mu_left,se_left);
+		  datadefs::forward_backward_sqerr(tv[it->second[i]],n_right,mu_right,se_right,n_left,mu_left,se_left);
 		  //cout << n_left << "\t" << n_right << "\t" << se_left << "\t" << se_right << endl;
                 }
 	    }
@@ -697,7 +705,7 @@ void Treedata::categorical_target_split(size_t featureidx,
 	    {
 	      categories_left.insert(it_best->first);
 	      //cout << "removing index " << it_best->second[i] << " (value " << tv[it_best->second[i]] << ") from right: ";
-	      datadefs::update_sqerr(tv[it_best->second[i]],n_left,mu_left,se_left,n_right,mu_right,se_right);
+	      datadefs::forward_backward_sqerr(tv[it_best->second[i]],n_left,mu_left,se_left,n_right,mu_right,se_right);
 	      sampleics_left.push_back(it_best->second[i]);
 	      //cout << n_left << "\t" << n_right << "\t" << se_left << "\t" << se_right << endl;
 	    }
@@ -738,7 +746,7 @@ void Treedata::categorical_target_split(size_t featureidx,
               for(size_t i = 0; i < it->second.size(); ++i)
                 {
 		  cout << " " << tv[it->second[i]];
-		  datadefs::update_sqfreq(tv[it->second[i]],n_left,freq_left,sf_left,n_right,freq_right,sf_right);
+		  datadefs::forward_backward_sqfreq(tv[it->second[i]],n_left,freq_left,sf_left,n_right,freq_right,sf_right);
 		  //cout << n_left << "\t" << n_right << "\t" << sf_left << "\t" << sf_right << endl;
                 }
 	      cout << endl;
@@ -754,7 +762,7 @@ void Treedata::categorical_target_split(size_t featureidx,
               for(size_t i = 0; i < it->second.size(); ++i)
                 {
 		  cout << " " << tv[it->second[i]];
-		  datadefs::update_sqfreq(tv[it->second[i]],n_right,freq_right,sf_right,n_left,freq_left,sf_left);
+		  datadefs::forward_backward_sqfreq(tv[it->second[i]],n_right,freq_right,sf_right,n_left,freq_left,sf_left);
 		  //cout << n_left << "\t" << n_right << "\t" << sf_left << "\t" << sf_right << endl;
                 }
 	      cout << endl;
@@ -778,7 +786,7 @@ void Treedata::categorical_target_split(size_t featureidx,
             {
 	      categories_left.insert(it_best->first);
 	      //cout << "removing index " << it_best->second[i] << " (value " << tv[it_best->second[i]] << ") from right: ";
-	      datadefs::update_sqfreq(tv[it_best->second[i]],n_left,freq_left,sf_left,n_right,freq_right,sf_right);
+	      datadefs::forward_backward_sqfreq(tv[it_best->second[i]],n_left,freq_left,sf_left,n_right,freq_right,sf_right);
               sampleics_left.push_back(sampleics[it_best->second[i]]);
 	      //cout << n_left << "\t" << n_right << "\t" << sf_left << "\t" << sf_right << endl;
             }
@@ -817,10 +825,47 @@ num_t Treedata::at(size_t featureidx, size_t sampleidx)
 }
 
 
-num_t Treedata::atp(size_t featureidx)
+
+num_t Treedata::randf(size_t featureidx)
 {
-  return(featurematrix_[featureidx][rand() % nrealvalues_]);
+  assert(nrealvalues_ > 0);
+  num_t value(datadefs::num_nan);
+  while(datadefs::is_nan(value))
+    {
+      value = featurematrix_[featureidx][rand() % nrealvalues_];
+    }
+  return(value);
 }
+
+/*
+  void Treedata::impurity(size_t featureidx, vector<size_t> const& sampleics, num_t& impurity, size_t& nreal)
+  {
+  
+  size_t n(sampleics.size());
+  
+  size_t n_acc(0);
+  if(isfeaturenum_[featureidx])
+  {
+  num_t mu(0.0);
+  num_t se(0.0);
+  for(size_t i = 0; i < n; ++i)
+  {
+  datadefs::forward_sqerr(featurematrix_[featureidx][sampleics[i]],n_acc,mu,se); 
+  }
+  impurity = se/n_acc;
+  }
+  else
+  {
+  map<num_t,size_t> freq;
+  num_t sf(0.0);
+  for(size_t i = 0; i < n; ++i)
+  {
+  datadefs::forward_sqfreq(featurematrix_[featureidx][sampleics[i]],n_acc,freq,sf);
+  }
+  impurity = 1-sf/pow(n_acc,2);
+  }
+  }
+*/
 
 void Treedata::impurity(size_t featureidx, vector<size_t> const& sampleics, num_t& impurity, size_t& nreal)
 {
@@ -832,26 +877,55 @@ void Treedata::impurity(size_t featureidx, vector<size_t> const& sampleics, num_
     {
       data[i] = featurematrix_[featureidx][sampleics[i]];
     }
-
-  //cout << "before impurity -- ";
+  
   if(isfeaturenum_[featureidx])
     {
       num_t mu,se;
-      //size_t nreal;
       datadefs::sqerr(data,mu,se,nreal);
       impurity = se/nreal;
     }
   else
     {
       map<num_t,size_t> freq;
-      num_t sf;
-      //datadefs::count_freq(data,freq);
+      num_t sf(0.0);
+      
       datadefs::sqfreq(data,freq,sf,nreal);
       impurity = 1-sf/pow(nreal,2);
     }
-  //cout << "after impurity" << endl;
-  
 }
+
+
+
+/*
+  void Treedata::impurity(const size_t featureidx, 
+  const size_t n, 
+  num_t& impurity)
+  {
+  
+  size_t n_acc(0);
+  if(isfeaturenum_[featureidx])
+  {
+  num_t mu(0.0);
+  num_t se(0.0);
+  for(size_t i = 0; i < n; ++i)
+  {
+  datadefs::forward_sqerr(Treedata::atp(featureidx),n_acc,mu,se);
+  }
+  impurity = se/n_acc;
+  }
+  else
+  {
+  map<num_t,size_t> freq;
+  num_t sf(0.0);
+  for(size_t i = 0; i < n; ++i)
+  {
+  datadefs::forward_sqfreq(Treedata::atp(featureidx),n_acc,freq,sf);
+  }
+  impurity = 1-sf/pow(n_acc,2);
+  }
+  
+  }
+*/
 
 void Treedata::split_samples(vector<size_t>& sampleics, 
 			     size_t splitidx, 
