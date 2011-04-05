@@ -1,6 +1,16 @@
 #ifndef DATADEFS_HPP
 #define DATADEFS_HPP
 
+/*
+  #define N              (624)                 // length of state vector
+  #define M              (397)                 // a period parameter
+  #define K              (0x9908B0DFU)         // a magic constant
+  #define hiBit(u)       ((u) & 0x80000000U)   // mask all but highest   bit of u
+  #define loBit(u)       ((u) & 0x00000001U)   // mask all but lowest    bit of u
+  #define loBits(u)      ((u) & 0x7FFFFFFFU)   // mask     the highest   bit of u
+  #define mixBits(u, v)  (hiBit(u)|loBits(v))  // move hi bit of u to hi bit of v
+*/
+
 #include<cstdlib>
 #include<vector>
 #include<set>
@@ -27,6 +37,20 @@ namespace datadefs
   typedef string NAN_t;
   extern const set<NAN_t> NANs;
 
+  //extern static size_t state[];     // state vector + 1 extra to not violate ANSI C
+  //extern static size_t *next;          // next random value is computed from here
+  //extern static int j;      // can *next++ this many times before reloading
+
+  //size_t state[N+1];     // state vector + 1 extra to not violate ANSI C
+  //size_t *next;          // next random value is computed from here
+  //int left = -1;      // can *next++ this many times before reloading
+
+  /*
+    extern size_t state[N+1];     // state vector + 1 extra to not violate ANSI C
+    extern size_t *next;          // next random value is computed from here
+    extern int left;      // can *next++ this many times before reloading
+  */    
+
   void strv2catv(vector<string>& strvec, vector<num_t>& catvec);
   void strv2numv(vector<string>& strvec, vector<num_t>& numvec);
 
@@ -40,8 +64,6 @@ namespace datadefs
 	     num_t& se,
 	     size_t& nreal);      
   
-  //void quicksort(vector<num_t>& data);
-
   void count_real_values(vector<num_t> const& data, size_t& nreal);
 
   void update_sqerr(const num_t x_n,
@@ -64,16 +86,6 @@ namespace datadefs
 
   void gini(map<num_t,size_t>& cat2freq,
             num_t& gi);
-  
-  /*
-    void update_gini(num_t x_n,
-    const size_t n_left,
-    map<num_t,size_t>& cat2freq_left,
-    num_t& gi_left,
-    const size_t n_right,
-    map<num_t,size_t>& cat2freq_right,
-    num_t& gi_right);
-  */
 
   void sqfreq(vector<num_t> const& data, 
 	      map<num_t,size_t>& freq, 
@@ -90,8 +102,21 @@ namespace datadefs
 
   void range(vector<size_t>& ics);
 
+  void ttest(vector<num_t> const& x, 
+	     vector<num_t> const& y, 
+	     num_t& pvalue);
+
+
+  /*
+    void seedMT(size_t seed);
+    
+    size_t reloadMT();
+    
+    size_t randMT();
+  */
+
+
   //A comparator functor that can be passed to STL::sort. Assumes that one is comparing first elements of pairs, first type being num_t and second T
-  
   template <typename T> struct ordering {
     bool operator ()(pair<datadefs::num_t,T> const& a, pair<datadefs::num_t,T> const& b)
     {

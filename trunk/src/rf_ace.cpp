@@ -8,6 +8,7 @@
 #include <boost/program_options.hpp>
 
 #include "randomforest.hpp"
+#include "GBT.hpp"
 #include "treedata.hpp"
 
 using namespace std;

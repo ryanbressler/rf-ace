@@ -15,6 +15,10 @@ const datadefs::num_t datadefs::eps = 1e-10;
 const string initNANs[] = {"NA","NAN"};
 const set<datadefs::NAN_t> datadefs::NANs(initNANs,initNANs+2);
 
+//static size_t   state[N+1];     // state vector + 1 extra to not violate ANSI C
+//static size_t   *next;          // next random value is computed from here
+//static int      left = -1;      // can *next++ this many times before reloading
+
 void toupper(string& str)
 {
   int (*pf)(int) = toupper;
@@ -100,20 +104,6 @@ bool datadefs::is_nan(const string& str)
     }
 }
 
-/*
-  bool datadefs::is_nan(datadefs::num_t value)
-  {
-  if(value != value)
-  {
-  return(true);
-  }
-  else
-  {
-  return(false);
-  }
-  }
-*/
-
 bool datadefs::is_nan(const datadefs::num_t value)
 {
   if(value == datadefs::num_nan)
@@ -125,54 +115,6 @@ bool datadefs::is_nan(const datadefs::num_t value)
       return(false);
     }
 }
-
-
-/*
-  int partition(vector<datadefs::num_t>& data, size_t beg, int end)
-  {
-  datadefs::num_t x = data[beg];
-  size_t i = beg - 1;
-  size_t j = end + 1;
-  datadefs::num_t temp;
-  do
-  {
-  do      
-  {
-  j--;
-  }while (x >array[j]);
-  
-  do  
-  {
-  i++;
-  } while (x <array[i]);
-  
-  if (i < j)
-  { 
-  temp = array[i];    
-  array[i] = array[j];
-  array[j] = temp;
-  }
-  }while (i < j);     
-  return j;           // returns middle subscript  
-  }
-  
-  void recursive_quicksort(vector<datadefs::num_t>& data, size_t beg, size_t end)
-  {
-  size_t mid;
-  if (beg < end)
-  {
-  mid = partition(data, beg, end);
-  quicksort(data, beg, mid);   // sort first section
-  quicksort(data, mid+1, end);    // sort second section
-  }
-  return;
-  }
-  
-  void datadefs::quicksort(vector<datadefs::num_t>& data)
-  {
-  recursive_quicksort(data,0,data.size());
-  }
-*/
 
 void datadefs::sqerr(vector<datadefs::num_t> const& data, 
 		     datadefs::num_t& mu, 
@@ -422,5 +364,87 @@ void datadefs::range(vector<size_t>& ics)
       ics[i] = i;
     }
 }
+
+void datadefs::ttest(vector<datadefs::num_t> const& x, 
+		     vector<datadefs::num_t> const& y, 
+		     datadefs::num_t& pvalue)
+{
+  
+}
+/*
+  #define N              (624)                 // length of state vector
+  #define M              (397)                 // a period parameter
+  #define K              (0x9908B0DFU)         // a magic constant
+  #define hiBit(u)       ((u) & 0x80000000U)   // mask all but highest   bit of u
+  #define loBit(u)       ((u) & 0x00000001U)   // mask all but lowest    bit of u
+  #define loBits(u)      ((u) & 0x7FFFFFFFU)   // mask     the highest   bit of u
+  #define mixBits(u, v)  (hiBit(u)|loBits(v))  // move hi bit of u to hi bit of v
+*/
+
+/*
+  size_t   datadefs::state[N+1];     // state vector + 1 extra to not violate ANSI C
+  size_t   *datadefs::next;          // next random value is computed from here
+  int      datadefs::left = -1;      // can *next++ this many times before reloading
+  
+  void datadefs::seedMT(size_t seed)
+  {
+  //size_t state[N+1];     // state vector + 1 extra to not violate ANSI C
+  //size_t *next;          // next random value is computed from here
+  //int left = -1;      // can *next++ this many times before reloading
+  
+  register size_t x = (seed | 1U) & 0xFFFFFFFFU, *s = datadefs::state;
+  register int    j;
+  
+  for(datadefs::left=0, *s++=x, j=N; --j;
+  *s++ = (x*=69069U) & 0xFFFFFFFFU);
+  }
+  
+  size_t datadefs::reloadMT()
+  {
+  //size_t state[N+1];     // state vector + 1 extra to not violate ANSI C
+  //size_t *next;          // next random value is computed from here
+  //int left = -1;      // can *next++ this many times before reloading
+  
+  register size_t *p0=datadefs::state, *p2=datadefs::state+2, *pM=datadefs::state+M, s0, s1;
+  register int    j;
+  
+  if(datadefs::left < -1)
+  seedMT(4357U);
+  
+  datadefs::left=N-1, datadefs::next=datadefs::state+1;
+  
+  for(s0=datadefs::state[0], s1=datadefs::state[1], j=N-M+1; --j; s0=s1, s1=*p2++)
+  *p0++ = *pM++ ^ (mixBits(s0, s1) >> 1) ^ (loBit(s1) ? K : 0U);
+  
+  for(pM=datadefs::state, j=M; --j; s0=s1, s1=*p2++)
+  *p0++ = *pM++ ^ (mixBits(s0, s1) >> 1) ^ (loBit(s1) ? K : 0U);
+  
+  s1=datadefs::state[0], *p0 = *pM ^ (mixBits(s0, s1) >> 1) ^ (loBit(s1) ? K : 0U);
+  s1 ^= (s1 >> 11);
+  s1 ^= (s1 <<  7) & 0x9D2C5680U;
+  s1 ^= (s1 << 15) & 0xEFC60000U;
+  return(s1 ^ (s1 >> 18));
+  }
+  
+  
+  size_t datadefs::randMT()
+  {
+  
+  //size_t *next;          // next random value is computed from here
+  //int left = -1;      // can *next++ this many times before reloading
+  
+  size_t y;
+  
+  if(--datadefs::left < 0)
+  return(reloadMT());
+  
+  y  = *datadefs::next++;
+  y ^= (y >> 11);
+  y ^= (y <<  7) & 0x9D2C5680U;
+  y ^= (y << 15) & 0xEFC60000U;
+  y ^= (y >> 18);
+  return(y);
+  }
+*/
 
 
