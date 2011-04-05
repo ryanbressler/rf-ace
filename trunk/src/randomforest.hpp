@@ -36,10 +36,10 @@ private:
   void recursive_nodesplit(size_t treeidx, size_t nodeidx, vector<size_t>& sampleics);
 
   void percolate_sampleics(Node& rootnode, vector<size_t>& sampleics, map<Node*,vector<size_t> >& trainics);
-  void percolate_sampleics_perm(size_t featureidx, Node& rootnode, vector<size_t>& sampleics, map<Node*,vector<size_t> >& trainics);
+  void percolate_sampleics_randf(size_t featureidx, Node& rootnode, vector<size_t>& sampleics, map<Node*,vector<size_t> >& trainics);
   
   void percolate_sampleidx(size_t sampleidx, Node** nodep);
-  void percolate_sampleidx_perm(size_t featureidx, size_t sampleidx, Node** nodep);
+  void percolate_sampleidx_randf(size_t featureidx, size_t sampleidx, Node** nodep);
 
   bool is_feature_in_tree(size_t featureidx, size_t treeidx);
 

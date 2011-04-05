@@ -117,7 +117,9 @@ void Randomforest::recursive_nodesplit(size_t treeidx, size_t nodeidx, vector<si
 
   //Create mtry randomly selected feature indices to determine the split
   vector<size_t> mtrysample(treedata_->nfeatures());
+  //vector<bool> iscontrast(mtry_);
   treedata_->permute(mtrysample);
+  //treedata_->generate_contrasts(iscontrast);
 
   cout << "tree " << treeidx << "  node " << nodeidx << endl;
 
@@ -146,43 +148,53 @@ void Randomforest::recursive_nodesplit(size_t treeidx, size_t nodeidx, vector<si
       num_t impurity_tot,impurity_left,impurity_right;
       size_t nreal_left,nreal_right;
 
-      treedata_->impurity(featureidx,sampleics,impurity_tot,nreal_tot);
-
+      treedata_->impurity(featureidx,sampleics,impurity_tot,nreal_tot);	  
       assert(sampleics.size() == n_tot);
       
       if(impurity_tot < datadefs::eps || nreal_tot < 2*nodesize_)
 	{
 	  continue;
 	}
-
+      
       treedata_->impurity(featureidx,sampleics_left,impurity_left,nreal_left);
       assert(sampleics_left.size() == n_left);
-
+      
       treedata_->impurity(featureidx,sampleics_right,impurity_right,nreal_right);
       assert(sampleics_right.size() == n_right);
-
+      
       num_t relativedecrease((impurity_tot-nreal_left*impurity_left/nreal_tot-nreal_right*impurity_right/nreal_tot)/impurity_tot);
-
+      
       if(relativedecrease > bestrelativedecrease)
 	{
 	  bestrelativedecrease = relativedecrease;
 	  bestsplitter_i = i;
 	}
     }
-
+  
   if(bestsplitter_i == mtry_)
     {
       cout << "No splitter found, quitting." << endl << endl;
       return;
     }
-
+  
   size_t splitterfeatureidx(mtrysample[bestsplitter_i]);
-
+  
   cout << "Best splitter feature is " << splitterfeatureidx << " with relative decrease in impurity of " << bestrelativedecrease << endl; 
+  
+  if(splitterfeatureidx > treedata_->nfeatures())
+    {
+      cout << "Splitter is CONTRAST" << endl;
+    }
 
   treedata_->remove_nans(splitterfeatureidx,sampleics,nreal_tot);
   cout << "Splitter feature has " << n_tot - nreal_tot << " missing values, which will be omitted in splitting" << endl;
   n_tot = nreal_tot;
+
+  if(n_tot < 2*nodesize_)
+    {
+      cout << "Splitter has too few non-missing values -- quitting." << endl;
+      return;
+    }
 
   size_t nodeidx_left(++nnodes_[treeidx]);
   size_t nodeidx_right(++nnodes_[treeidx]);
@@ -264,7 +276,7 @@ void Randomforest::percolate_sampleics(Node& rootnode, vector<size_t>& sampleics
     }
 }
 
-void Randomforest::percolate_sampleics_perm(size_t featureidx, Node& rootnode, vector<size_t>& sampleics, map<Node*,vector<size_t> >& trainics)
+void Randomforest::percolate_sampleics_randf(size_t featureidx, Node& rootnode, vector<size_t>& sampleics, map<Node*,vector<size_t> >& trainics)
 {
 
   trainics.clear();
@@ -273,7 +285,7 @@ void Randomforest::percolate_sampleics_perm(size_t featureidx, Node& rootnode, v
     {
       Node* nodep(&rootnode);
       size_t sampleidx(sampleics[i]);
-      Randomforest::percolate_sampleidx_perm(featureidx,sampleidx,&nodep);
+      Randomforest::percolate_sampleidx_randf(featureidx,sampleidx,&nodep);
       map<Node*,vector<size_t> >::iterator it(trainics.find(nodep));
       if(it == trainics.end())
         {
@@ -294,13 +306,13 @@ void Randomforest::percolate_sampleidx(size_t sampleidx, Node** nodep)
 {
   while((*nodep)->has_children())
     {
-      size_t featureidx((*nodep)->get_splitter());
-      num_t value(treedata_->at(featureidx,sampleidx));
+      size_t featureidx_new((*nodep)->get_splitter());
+      num_t value(treedata_->at(featureidx_new,sampleidx));
       *nodep = (*nodep)->percolate(value);
     }
 }
 
-void Randomforest::percolate_sampleidx_perm(size_t featureidx, size_t sampleidx, Node** nodep)
+void Randomforest::percolate_sampleidx_randf(size_t featureidx, size_t sampleidx, Node** nodep)
 {
   while((*nodep)->has_children())
     {
@@ -308,7 +320,7 @@ void Randomforest::percolate_sampleidx_perm(size_t featureidx, size_t sampleidx,
       num_t value;
       if(featureidx == featureidx_new)
 	{
-	  value = treedata_->atp(featureidx);
+	  value = treedata_->randf(featureidx);
 	}
       else
 	{
@@ -347,7 +359,7 @@ void Randomforest::rank_features()
 	{
 	  if(Randomforest::is_feature_in_tree(f,i))
 	    {
-	      Randomforest::percolate_sampleics_perm(f,rootnode,oobmatrix_[i],trainics);
+	      Randomforest::percolate_sampleics_randf(f,rootnode,oobmatrix_[i],trainics);
 	      num_t impurity_perm;
 	      Randomforest::tree_impurity(trainics,impurity_perm);
 	      noob[f] += noob_new;
@@ -366,7 +378,7 @@ void Randomforest::rank_features()
 
   for(size_t i = 0; i < nfeatures; ++i)
     {
-      if(importance[i] > 0.2)
+      if(importance[i] > 0.3)
 	{
 	  cout << treedata_->get_targetheader() << "\t" << treedata_->get_featureheader(i) << "\t" << importance[i] << endl;
 	}
