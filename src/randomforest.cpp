@@ -332,17 +332,16 @@ void Randomforest::percolate_sampleidx_randf(size_t featureidx, size_t sampleidx
 }
 
 
-void Randomforest::rank_features()
+void Randomforest::calculate_importance(const num_t alpha, vector<num_t>& importance, num_t& contrast_prc)
 {
 
-  size_t nfeatures(2*treedata_->nfeatures());
-  //vector<size_t> noob(nfeatures);
-  vector<num_t> importance(nfeatures);
+  size_t nrealfeatures(treedata_->nfeatures());
+  size_t nallfeatures(2*nrealfeatures);
+  importance.resize(nallfeatures);
   size_t noob_tot(0);
 
-  for(size_t i = 0; i < nfeatures; ++i)
+  for(size_t i = 0; i < nallfeatures; ++i)
     {
-      //noob[i] = 0;
       importance[i] = 0;
     }
 
@@ -356,34 +355,44 @@ void Randomforest::rank_features()
       num_t impurity_tree;
       Randomforest::tree_impurity(trainics,impurity_tree);
       cout << "#nodes_with_train_samples=" << trainics.size() << endl;  
-      //size_t iter(0);
-      for(size_t f = 0; f < nfeatures; ++f)
+      for(size_t f = 0; f < nallfeatures; ++f)
 	{
 	  if(Randomforest::is_feature_in_tree(f,i))
 	    {
 	      Randomforest::percolate_sampleics_randf(f,rootnode,oobmatrix_[i],trainics);
 	      num_t impurity_perm;
 	      Randomforest::tree_impurity(trainics,impurity_perm);
-	      //noob[f] += noob_new;
 	      importance[f] += noob_new * (impurity_perm - impurity_tree) / impurity_tree; 
 	    }
 	}
     }
 
   
-  for(size_t i = 0; i < nfeatures; ++i)
+  for(size_t i = 0; i < nallfeatures; ++i)
     {
       importance[i] /= noob_tot;
     }
     
-  for(size_t i = 0; i < nfeatures; ++i)
+  vector<num_t> contrast_importance(nrealfeatures);
+  for(size_t i = nrealfeatures; i < nallfeatures; ++i)
     {
-      if(importance[i] > 0.0001)
-	{
-	  cout << treedata_->get_targetheader() << "\t" << treedata_->get_featureheader(i) << "\t" << importance[i] << endl;
-	}
+      contrast_importance[i - nrealfeatures] = importance[i];
     }
-  
+  importance.resize(nrealfeatures);
+
+  datadefs::percentile(contrast_importance,alpha,contrast_prc);
+  cout << "CONTRAST: " << 100*alpha << "th percentile is " << contrast_prc << endl;
+
+  /*
+    for(size_t i = 0; i < nrealfeatures; ++i)
+    {
+    if(importance[i] > 0.0001)
+    {
+    cout << treedata_->get_targetheader() << "\t" << treedata_->get_featureheader(i) << "\t" << importance[i] << endl;
+    }
+    }
+  */
+
 }
 
 bool Randomforest::is_feature_in_tree(size_t featureidx, size_t treeidx)
