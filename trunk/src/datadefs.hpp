@@ -116,6 +116,10 @@ namespace datadefs
 	     vector<num_t> const& y, 
 	     num_t& pvalue);
 
+  void t_test_equal_sd(num_t p_m1, num_t p_var1, size_t p_n1,
+                       num_t p_m2, num_t p_var2, size_t p_n2,
+                       num_t& p_pvalue);
+
   void spearman_correlation(vector<num_t> const& x, 
 			    vector<num_t> const& y,
 			    num_t& corr);
