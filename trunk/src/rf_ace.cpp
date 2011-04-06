@@ -125,11 +125,15 @@ int main(int argc, char* argv[])
         //SECOND PART: construct a Random Forest object
         Randomforest RF(&treedata,ntrees,mtry,nodesize);
         
+	num_t alpha(1.0);
+	vector<num_t> importance(treedata.nfeatures());
+	num_t contrast_alpha;
+
 	clock_t time_start(clock());
 	RF.select_target(targetidx);
 	//treedata.print();	
 	RF.grow_forest();
-	RF.rank_features();
+	RF.calculate_importance(alpha,importance,contrast_alpha);
 	cout << "Time elapsed: " << float(clock() - time_start)/CLOCKS_PER_SEC << " seconds" << endl;
 
         //return(EXIT_SUCCESS);

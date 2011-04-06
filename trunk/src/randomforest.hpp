@@ -24,7 +24,7 @@ public:
 
   //Grow the Random Forest with respect to selected target feature
   void grow_forest();
-  void rank_features();
+  void calculate_importance(const num_t alpha, vector<num_t>& importance, num_t& contrast_prc);
 
 private:
 
