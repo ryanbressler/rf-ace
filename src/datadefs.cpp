@@ -185,8 +185,6 @@ void datadefs::forward_sqerr(const datadefs::num_t x_n,
   
   datadefs::num_t mu_old(mu);
 
-  //Add x_n and update mean and squared error
-  mu_old = mu;
   mu += (x_n - mu) / n;
 
   //If there are already at least two data points, squared error can be calculated, otherwise assign se_left := 0.0
@@ -352,12 +350,14 @@ void datadefs::forward_sqfreq(const datadefs::num_t x_n,
     }
 
   ++n;
-  
+  //cout << "sf_old=" << sf;
   //Check if the value already exists
   map<datadefs::num_t,size_t>::const_iterator it(freq.find(x_n));
   if(it == freq.end())
     {
+      //cout << "sf_old=" << sf;
       sf += 1;
+      //cout << "  sf_new=" << sf << endl;
 
       //If not, add a new category and set its frequency to 1...
       freq.insert(pair<datadefs::num_t,size_t>(x_n,1));
@@ -368,6 +368,8 @@ void datadefs::forward_sqfreq(const datadefs::num_t x_n,
       sf += 2*freq[x_n] + 1;
       ++freq[x_n];
     }
+  //cout << "  sf_new=" << sf << endl;
+
 }
 
 
