@@ -837,39 +837,10 @@ num_t Treedata::randf(size_t featureidx)
   return(value);
 }
 
-/*
-  void Treedata::impurity(size_t featureidx, vector<size_t> const& sampleics, num_t& impurity, size_t& nreal)
-  {
-  
-  size_t n(sampleics.size());
-  
-  size_t n_acc(0);
-  if(isfeaturenum_[featureidx])
-  {
-  num_t mu(0.0);
-  num_t se(0.0);
-  for(size_t i = 0; i < n; ++i)
-  {
-  datadefs::forward_sqerr(featurematrix_[featureidx][sampleics[i]],n_acc,mu,se); 
-  }
-  impurity = se/n_acc;
-  }
-  else
-  {
-  map<num_t,size_t> freq;
-  num_t sf(0.0);
-  for(size_t i = 0; i < n; ++i)
-  {
-  datadefs::forward_sqfreq(featurematrix_[featureidx][sampleics[i]],n_acc,freq,sf);
-  }
-  impurity = 1-sf/pow(n_acc,2);
-  }
-  }
-*/
 
 void Treedata::impurity(size_t featureidx, vector<size_t> const& sampleics, num_t& impurity, size_t& nreal)
 {
-
+  
   size_t n(sampleics.size());
   vector<num_t> data(n);
 
@@ -878,22 +849,89 @@ void Treedata::impurity(size_t featureidx, vector<size_t> const& sampleics, num_
       data[i] = featurematrix_[featureidx][sampleics[i]];
     }
   
+  nreal = 0;
   if(isfeaturenum_[featureidx])
     {
-      num_t mu,se;
-      datadefs::sqerr(data,mu,se,nreal);
+      num_t mu(0.0);
+      num_t se(0.0);
+      for(size_t i = 0; i < n; ++i)
+	{
+	  datadefs::forward_sqerr(featurematrix_[featureidx][sampleics[i]],nreal,mu,se); 
+	}
       impurity = se/nreal;
+
+      /*
+	num_t mu_test,se_test,impurity_test;
+	size_t nreal;
+	datadefs::sqerr(data,mu_test,se_test,nreal);
+	impurity_test = se_test/nreal;
+	
+	//cout << "sqerr: impurity_iter=" << impurity << " impurity_ref=" << impurity_test << endl;
+	
+	assert(nreal == n_acc);
+	if(nreal > 0)
+	{
+	assert(int(impurity_test-impurity) < 2);
+	}
+      */
+
     }
   else
     {
       map<num_t,size_t> freq;
       num_t sf(0.0);
-      
-      datadefs::sqfreq(data,freq,sf,nreal);
+      for(size_t i = 0; i < n; ++i)
+	{
+	  datadefs::forward_sqfreq(featurematrix_[featureidx][sampleics[i]],nreal,freq,sf);
+	}
       impurity = 1-sf/pow(nreal,2);
+      
+      /*
+	num_t sf_test,impurity_test;
+	map<num_t,size_t> freq_test;
+	size_t nreal;
+	datadefs::sqfreq(data,freq_test,sf_test,nreal);
+	impurity_test = 1-sf_test/pow(nreal,2);
+	
+	//cout << "sqfreq: impurity_iter=" << impurity << " impurity_ref=" << impurity_test << endl;
+	
+	assert(nreal == n_acc);
+	if(nreal > 0)
+	{
+	assert(int(impurity_test-impurity) < 2);
+	}
+      */
     }
 }
 
+/*
+  void Treedata::impurity(size_t featureidx, vector<size_t> const& sampleics, num_t& impurity, size_t& nreal)
+  {
+  
+  size_t n(sampleics.size());
+  vector<num_t> data(n);
+  
+  for(size_t i = 0; i < n; ++i)
+  {
+  data[i] = featurematrix_[featureidx][sampleics[i]];
+  }
+  
+  if(isfeaturenum_[featureidx])
+  {
+  num_t mu,se;
+  datadefs::sqerr(data,mu,se,nreal);
+  impurity = se/nreal;
+  }
+  else
+  {
+  map<num_t,size_t> freq;
+  num_t sf(0.0);
+  
+  datadefs::sqfreq(data,freq,sf,nreal);
+  impurity = 1-sf/pow(nreal,2);
+  }
+  }
+*/
 
 
 /*
