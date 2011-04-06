@@ -6,6 +6,8 @@
 #include<iostream>
 #include<limits>
 
+#include <boost/math/distributions/students_t.hpp>
+
 using namespace std;
 
 //const datadefs::cat_t datadefs::cat_nan = -1;
@@ -433,15 +435,49 @@ void datadefs::ttest(vector<datadefs::num_t> const& x,
 		     vector<datadefs::num_t> const& y, 
 		     datadefs::num_t& pvalue)
 {
-  
+    // Sample mean and variance of x
+    datadefs::num_t mean_x = 0;
+    datadefs::num_t var_x = 0;
+    size_t nreal_x = 0;
+
+    datadefs::sqerr(x, mean_x, var_x, nreal_x);
+    var_x /= nreal_x;
+
+    // Sample mean and variance of y
+    datadefs::num_t mean_y = 0;
+    datadefs::num_t var_y = 0;
+    size_t nreal_y = 0;
+
+    datadefs::sqerr(y, mean_y, var_y, nreal_y);
+    var_y /= nreal_y;
+    
+    datadefs::t_test_equal_sd(mean_x, var_x, nreal_x, mean_y, var_y, nreal_y, pvalue);
+}
+
+void datadefs::t_test_equal_sd(datadefs::num_t p_m1, datadefs::num_t p_var1, size_t p_n1,
+                               datadefs::num_t p_m2, datadefs::num_t p_var2, size_t p_n2,
+                               datadefs::num_t& p_pvalue)
+{
+    namespace bm = boost::math;
+    
+    // Degrees of freedom:
+    datadefs::num_t v = p_n1 + p_n2 - 2;
+
+    // Pooled variance:
+    datadefs::num_t sp = sqrt(((p_n1-1) * p_var1 + (p_n2-1) * p_var2) / v);
+
+    // t-statistic:
+    datadefs::num_t t_stat = (p_m1 - p_m2) / (sp * sqrt(1.0 / p_n1 + 1.0 / p_n2));
+    
+    // Define our distribution, and get the probability:
+    bm::students_t dist(v);
+    p_pvalue = 2 * bm::cdf(bm::complement(dist, fabs(t_stat)));
 }
 
 void datadefs::spearman_correlation(vector<datadefs::num_t> const& x,
 				    vector<datadefs::num_t> const& y,
 				    datadefs::num_t& corr)
 {
-
-
 
 }
 
