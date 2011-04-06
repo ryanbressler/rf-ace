@@ -116,7 +116,7 @@ void Randomforest::recursive_nodesplit(size_t treeidx, size_t nodeidx, vector<si
     }
 
   //Create mtry randomly selected feature indices to determine the split
-  vector<size_t> mtrysample(treedata_->nfeatures());
+  vector<size_t> mtrysample(2*treedata_->nfeatures());
   //vector<bool> iscontrast(mtry_);
   treedata_->permute(mtrysample);
   //treedata_->generate_contrasts(iscontrast);
@@ -181,7 +181,7 @@ void Randomforest::recursive_nodesplit(size_t treeidx, size_t nodeidx, vector<si
   
   cout << "Best splitter feature is " << splitterfeatureidx << " with relative decrease in impurity of " << bestrelativedecrease << endl; 
   
-  if(splitterfeatureidx > treedata_->nfeatures())
+  if(splitterfeatureidx >= treedata_->nfeatures())
     {
       cout << "Splitter is CONTRAST" << endl;
     }
@@ -193,6 +193,7 @@ void Randomforest::recursive_nodesplit(size_t treeidx, size_t nodeidx, vector<si
   if(n_tot < 2*nodesize_)
     {
       cout << "Splitter has too few non-missing values -- quitting." << endl;
+      //This needs to be fixed such that one of the surrogates will determine the split instead
       return;
     }
 
@@ -320,7 +321,7 @@ void Randomforest::percolate_sampleidx_randf(size_t featureidx, size_t sampleidx
       num_t value;
       if(featureidx == featureidx_new)
 	{
-	  value = treedata_->randf(featureidx);
+	  value = treedata_->randf(featureidx_new);
 	}
       else
 	{
@@ -334,7 +335,7 @@ void Randomforest::percolate_sampleidx_randf(size_t featureidx, size_t sampleidx
 void Randomforest::rank_features()
 {
 
-  size_t nfeatures(treedata_->nfeatures());
+  size_t nfeatures(2*treedata_->nfeatures());
   //vector<size_t> noob(nfeatures);
   vector<num_t> importance(nfeatures);
   size_t noob_tot(0);
@@ -377,7 +378,7 @@ void Randomforest::rank_features()
     
   for(size_t i = 0; i < nfeatures; ++i)
     {
-      if(importance[i] > 0.003)
+      if(importance[i] > 0.0001)
 	{
 	  cout << treedata_->get_targetheader() << "\t" << treedata_->get_featureheader(i) << "\t" << importance[i] << endl;
 	}
