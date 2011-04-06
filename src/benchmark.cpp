@@ -12,7 +12,7 @@ using datadefs::num_t;
 int main()
 {
 
-  size_t n(6);
+  size_t n(50);
   vector<num_t> numdata(n);
   vector<num_t> catdata(n);
   
@@ -49,7 +49,12 @@ int main()
   datadefs::sqfreq(catdata,freq,sf,nreal);
   cout << " => total:\tn=" << nreal << "\tnfreq=" << freq.size() << "\tsf=" << sf << endl;
 
-  
+  for(size_t i = 0; i < 100; ++i)
+    {
+      num_t prc;
+      datadefs::percentile(numdata,0.01*i,prc);
+      cout << i << "th percentile " << prc << endl;
+    }
 
   
   return(EXIT_SUCCESS);
