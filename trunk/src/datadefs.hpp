@@ -120,6 +120,8 @@ namespace datadefs
 			    vector<num_t> const& y,
 			    num_t& corr);
 
+  void percentile(vector<num_t> x, const num_t alpha, num_t& prc);
+
   /*
     void seedMT(size_t seed);
     
