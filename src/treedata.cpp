@@ -594,6 +594,7 @@ void Treedata::incremental_target_split(size_t featureidx,
   //Return the split value
   splitvalue = fv[bestsplitidx];
 
+  
   cout << "Feature " << featureidx << " splits target " << targetidx_ << " [";
   for(size_t i = 0; i < sampleics_left.size(); ++i)
     {
@@ -605,7 +606,7 @@ void Treedata::incremental_target_split(size_t featureidx,
       cout << " " << featurematrix_[targetidx_][sampleics_right[i]];
     }
   cout << " ]" << endl;
-
+    
 }
 
 void Treedata::categorical_target_split(size_t featureidx,
@@ -721,11 +722,11 @@ void Treedata::categorical_target_split(size_t featureidx,
       datadefs::sqfreq(tv,freq_right,sf_right,n_right);
       assert(n_tot == n_right);
       //datadefs::count_freq(fv,freq_right,n_right);
-      for(map<num_t,size_t>::const_iterator it(freq_right.begin()); it != freq_right.end(); ++it)
-	{
-	  cout << " " << it->first << ":" << it->second;
-	}
-      cout << endl;
+      //for(map<num_t,size_t>::const_iterator it(freq_right.begin()); it != freq_right.end(); ++it)
+      //	{
+      //	  cout << " " << it->first << ":" << it->second;
+      //	}
+      //cout << endl;
       num_t nsf_best(sf_right/n_right);
 
       while(fmap_right.size() > 1)
@@ -742,14 +743,14 @@ void Treedata::categorical_target_split(size_t featureidx,
 	      map<num_t,size_t> freq_right_c = freq_right;
 
               //Take samples from right and put them left
-	      cout << "Moving " << it->second.size() << " samples corresponding to feature category " << it->first << " from right to left" << endl;
+	      //cout << "Moving " << it->second.size() << " samples corresponding to feature category " << it->first << " from right to left" << endl;
               for(size_t i = 0; i < it->second.size(); ++i)
                 {
-		  cout << " " << tv[it->second[i]];
+		  //cout << " " << tv[it->second[i]];
 		  datadefs::forward_backward_sqfreq(tv[it->second[i]],n_left,freq_left,sf_left,n_right,freq_right,sf_right);
 		  //cout << n_left << "\t" << n_right << "\t" << sf_left << "\t" << sf_right << endl;
                 }
-	      cout << endl;
+	      //cout << endl;
 
               if(sf_left/n_left + sf_right/n_right > nsf_best)
                 {
@@ -757,15 +758,15 @@ void Treedata::categorical_target_split(size_t featureidx,
                   nsf_best = sf_left/n_left + sf_right/n_right;
                 }
 
-	      cout << "Moving " << it->second.size() << " samples corresponding to feature category " << it->first << " from left to right" << endl;
+	      //cout << "Moving " << it->second.size() << " samples corresponding to feature category " << it->first << " from left to right" << endl;
               //Take samples from left back to right
               for(size_t i = 0; i < it->second.size(); ++i)
                 {
-		  cout << " " << tv[it->second[i]];
+		  //cout << " " << tv[it->second[i]];
 		  datadefs::forward_backward_sqfreq(tv[it->second[i]],n_right,freq_right,sf_right,n_left,freq_left,sf_left);
 		  //cout << n_left << "\t" << n_right << "\t" << sf_left << "\t" << sf_right << endl;
                 }
-	      cout << endl;
+	      //cout << endl;
 
 	      assert(n_left_c == n_left);
 	      assert(n_right_c == n_right);
@@ -805,6 +806,7 @@ void Treedata::categorical_target_split(size_t featureidx,
 	}
     }  
 
+  
   cout << "Feature " << featureidx << " splits target " << targetidx_ << " [";
   for(size_t i = 0; i < sampleics_left.size(); ++i)
     {
@@ -856,7 +858,7 @@ void Treedata::impurity(size_t featureidx, vector<size_t> const& sampleics, num_
       num_t se(0.0);
       for(size_t i = 0; i < n; ++i)
 	{
-	  datadefs::forward_sqerr(featurematrix_[featureidx][sampleics[i]],nreal,mu,se); 
+	  datadefs::forward_sqerr(featurematrix_[featureidx][sampleics[i]],nreal,mu,se);  
 	}
       impurity = se/nreal;
 
