@@ -16,6 +16,8 @@ public:
   Randomforest(Treedata* treedata, size_t ntrees, size_t mtry, size_t nodesize);
   ~Randomforest();
 
+  void init_forest(size_t nsamples, size_t ntrees, size_t nodesize);
+
   //Selects the target feature that is to be predicted
   void select_target(size_t targetidx);
 

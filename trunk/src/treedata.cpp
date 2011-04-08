@@ -129,7 +129,7 @@ Treedata::Treedata(string fname, bool is_featurerows):
             {
               isfeaturenum_.push_back(true);
             }
-          else if(rowheaders[i][0] == 'C' or rowheaders[i][0] == 'B')
+          else if(rowheaders[i][0] == 'C' || rowheaders[i][0] == 'B')
             {
               isfeaturenum_.push_back(false);
             }
