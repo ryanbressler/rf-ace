@@ -37,20 +37,6 @@ namespace datadefs
   typedef string NAN_t;
   extern const set<NAN_t> NANs;
 
-  //extern static size_t state[];     // state vector + 1 extra to not violate ANSI C
-  //extern static size_t *next;          // next random value is computed from here
-  //extern static int j;      // can *next++ this many times before reloading
-
-  //size_t state[N+1];     // state vector + 1 extra to not violate ANSI C
-  //size_t *next;          // next random value is computed from here
-  //int left = -1;      // can *next++ this many times before reloading
-
-  /*
-    extern size_t state[N+1];     // state vector + 1 extra to not violate ANSI C
-    extern size_t *next;          // next random value is computed from here
-    extern int left;      // can *next++ this many times before reloading
-  */    
-
   void strv2catv(vector<string>& strvec, vector<num_t>& catvec);
   void strv2numv(vector<string>& strvec, vector<num_t>& numvec);
 
@@ -116,15 +102,17 @@ namespace datadefs
 	     vector<num_t> const& y, 
 	     num_t& pvalue);
 
-  void t_test_equal_sd(num_t p_m1, num_t p_var1, size_t p_n1,
-                       num_t p_m2, num_t p_var2, size_t p_n2,
-                       num_t& p_pvalue);
+  void regularized_betainc(const num_t x, 
+			   const size_t a, 
+			   num_t& ibval);
 
   void spearman_correlation(vector<num_t> const& x, 
 			    vector<num_t> const& y,
 			    num_t& corr);
 
   void percentile(vector<num_t> x, const num_t alpha, num_t& prc);
+
+  //void beta_symmetric(size_t n, num_t& b);
 
   /*
     void seedMT(size_t seed);

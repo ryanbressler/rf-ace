@@ -132,9 +132,15 @@ int main(int argc, char* argv[])
 	clock_t time_start(clock());
 	RF.select_target(targetidx);
 	//treedata.print();	
-	RF.grow_forest();
-	RF.calculate_importance(alpha,importance,contrast_alpha);
-	cout << "Time elapsed: " << float(clock() - time_start)/CLOCKS_PER_SEC << " seconds" << endl;
+	
+	size_t nperms = 1;
+	for(size_t i = 0; i < nperms; ++i)
+	  {
+	    cout << "Growing forest " << i << endl;
+	    RF.grow_forest();
+	    RF.calculate_importance(alpha,importance,contrast_alpha);
+	    cout << "Time elapsed: " << float(clock() - time_start)/CLOCKS_PER_SEC << " seconds" << endl;
+	  }
 
         //return(EXIT_SUCCESS);
     }
