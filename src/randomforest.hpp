@@ -16,7 +16,7 @@ public:
   Randomforest(Treedata* treedata, size_t ntrees, size_t mtry, size_t nodesize);
   ~Randomforest();
 
-  void init_forest(size_t nsamples, size_t ntrees, size_t nodesize);
+  void init_forest();
 
   //Selects the target feature that is to be predicted
   void select_target(size_t targetidx);
@@ -25,8 +25,8 @@ public:
   size_t get_target();
 
   //Grow the Random Forest with respect to selected target feature
-  void grow_forest();
-  void calculate_importance(const num_t alpha, vector<num_t>& importance, num_t& contrast_prc);
+  void grow_forest(const size_t nperms, const num_t alpha, vector<num_t>& pvalues);
+  //void calculate_importance(const num_t alpha, vector<num_t>& importance, num_t& contrast_prc);
 
 private:
 
@@ -46,6 +46,9 @@ private:
   bool is_feature_in_tree(size_t featureidx, size_t treeidx);
 
   void tree_impurity(map<Node*,vector<size_t> >& trainics, num_t& impurity);
+
+  //void calculate_importance(const num_t alpha, vector<num_t>& importance, num_t& contrast_prc);
+  void calculate_importance(vector<num_t>& importance);
 
   //Pointer to treedata_ object, stores all the feature information
   Treedata* treedata_;

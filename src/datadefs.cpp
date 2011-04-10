@@ -12,7 +12,7 @@ using namespace std;
 
 //const datadefs::cat_t datadefs::cat_nan = -1;
 const datadefs::num_t datadefs::num_nan = numeric_limits<float>::infinity();
-const datadefs::num_t datadefs::eps = 1e-10;
+const datadefs::num_t datadefs::eps = 1e-12;
 
 const string initNANs[] = {"NA","NAN"};
 const set<datadefs::NAN_t> datadefs::NANs(initNANs,initNANs+2);
@@ -441,6 +441,9 @@ void datadefs::ttest(vector<datadefs::num_t> const& x,
     size_t nreal_x = 0;
 
     datadefs::sqerr(x, mean_x, var_x, nreal_x);
+
+    assert(nreal_x > 1);
+
     var_x /= (nreal_x - 1);
 
     // Sample mean and variance of y
@@ -449,23 +452,40 @@ void datadefs::ttest(vector<datadefs::num_t> const& x,
     size_t nreal_y = 0;
 
     datadefs::sqerr(y, mean_y, var_y, nreal_y);
+    
+    assert(nreal_y > 1);
+
     var_y /= (nreal_y - 1);
     
-    // Degrees of freedom:
-    datadefs::num_t v = nreal_x + nreal_y - 2;
+    assert(nreal_x == nreal_y);
 
-    // Pooled variance:
-    datadefs::num_t sp = sqrt(((nreal_x-1) * var_x + (nreal_y-1) * var_y) / v);
+    if((fabs(mean_x - mean_y) < datadefs::eps && var_x < datadefs::eps && var_y < datadefs::eps) || var_x < datadefs::eps)
+      {
+        pvalue = 1;
+	return;
+      }
 
-    // t-statistic:
-    datadefs::num_t t = fabs(mean_x - mean_y) / (sp * sqrt(1.0 / nreal_x + 1.0 / nreal_y));
+    size_t v;
+    datadefs::num_t sp,t,ttrans;
+    if(fabs(mean_y) < datadefs::eps && var_y < datadefs::eps) //Reduce to one-sample t-test
+      {
+	v = nreal_x - 1;
+	sp = sqrt(var_x/nreal_x);
+	t = sqrt(1.0*nreal_x)*mean_x / sqrt(var_x);
+      }
+    else //Two-sample t-test
+      {
+	v = nreal_x + nreal_y - 2;
+	sp = sqrt(((nreal_x-1) * var_x + (nreal_y-1) * var_y) / v);
+	t = (mean_x - mean_y) / (sp * sqrt(1.0 / nreal_x + 1.0 / nreal_y));
+      }
+    ttrans = (t+sqrt(pow(t,2) + v)) / (2 * sqrt(pow(t,2) + v));
 
-    datadefs::num_t ttrans = (t+sqrt(pow(t,2) + v)) / (2 * sqrt(pow(t,2) + v));
+    datadefs::regularized_betainc(ttrans,nreal_x - 1,pvalue);	
+    pvalue = 1-pvalue;
+    
+    cout << mean_x << "\t" << var_x << "\t" << mean_y << "\t" << var_y << "\t" << v << "\t" << sp << "\t" << t << "\t" << ttrans << "\t" << pvalue << endl;
 
-    datadefs::regularized_betainc(ttrans,nreal_x - 1,pvalue);
-    pvalue = 2*(1-pvalue);
-
-    //datadefs::t_test_equal_sd(mean_x, var_x, nreal_x, mean_y, var_y, nreal_y, pvalue);
 }
 
 void datadefs::regularized_betainc(const num_t x,
@@ -497,28 +517,6 @@ void datadefs::regularized_betainc(const num_t x,
     }
 
 }
-
-/*
-  void datadefs::t_test_equal_sd(datadefs::num_t p_m1, datadefs::num_t p_var1, size_t p_n1,
-  datadefs::num_t p_m2, datadefs::num_t p_var2, size_t p_n2,
-  datadefs::num_t& p_pvalue)
-  {
-  namespace bm = boost::math;
-  
-  // Degrees of freedom:
-  datadefs::num_t v = p_n1 + p_n2 - 2;
-  
-  // Pooled variance:
-  datadefs::num_t sp = sqrt(((p_n1-1) * p_var1 + (p_n2-1) * p_var2) / v);
-  
-  // t-statistic:
-  datadefs::num_t t_stat = (p_m1 - p_m2) / (sp * sqrt(1.0 / p_n1 + 1.0 / p_n2));
-  
-  // Define our distribution, and get the probability:
-  bm::students_t dist(v);
-  p_pvalue = 2 * bm::cdf(bm::complement(dist, fabs(t_stat)));
-  }
-*/
 
 void datadefs::spearman_correlation(vector<datadefs::num_t> const& x,
 				    vector<datadefs::num_t> const& y,

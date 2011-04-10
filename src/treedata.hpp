@@ -5,10 +5,11 @@
 #ifndef TREEDATA_HPP
 #define TREEDATA_HPP
 
-#include<cstdlib>
-#include<map>
+#include <cstdlib>
+#include <map>
 #include "datadefs.hpp"
 #include "node.hpp"
+#include "mtrand.h"
 
 using namespace std;
 //using datadefs::cat_t;
@@ -23,6 +24,8 @@ public:
 
   //Returns the number of features
   size_t nfeatures();
+
+
 
   string get_featureheader(size_t featureidx);
   string get_targetheader();
@@ -143,6 +146,8 @@ private:
 
   vector<string> featureheaders_;
   vector<string> sampleheaders_;
+
+  MTRand_int32 irand_;
 };
 
 #endif
