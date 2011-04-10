@@ -11,10 +11,6 @@ Randomforest::Randomforest(Treedata* treedata, size_t ntrees, size_t mtry, size_
   oobmatrix_(ntrees)
 {
 
-  size_t nsamples(treedata_->nsamples());
-
-  Randomforest::init_forest(nsamples,ntrees,nodesize);
-
   size_t defaulttargetidx = 0;
   Randomforest::select_target(defaulttargetidx);
 
@@ -27,8 +23,11 @@ Randomforest::~Randomforest()
 
 } 
 
-void Randomforest::init_forest(size_t nsamples, size_t ntrees, size_t nodesize)
+void Randomforest::init_forest()
 {
+
+  size_t nsamples = treedata_->nsamples();
+
   //First we count the theoretical maximum number of nodes per tree.
   //Because each leaf must contain at least nodesize amount of data points, nmaxleaves is
   int nmaxleaves = int(ceil(float(nsamples)/nodesize_));
@@ -36,6 +35,9 @@ void Randomforest::init_forest(size_t nsamples, size_t ntrees, size_t nodesize)
   int maxdepth = int(ceil(log10(float(nmaxleaves))/log10(2.0)));
   //Thus, the number of nodes in a complete binary tree of depth maxdepth, there are
   int nmaxnodes = int(pow(2.0,maxdepth+1)); //In reality it's nmaxnodes-1 but this way we'll get a power of two which is supposed to be faster :)
+
+  nnodes_.clear();
+  forest_.clear();
 
   nnodes_.resize(ntrees_);
   forest_.resize(ntrees_);
@@ -56,6 +58,7 @@ void Randomforest::select_target(size_t targetidx)
     {
       oobmatrix_[i].clear();
     } 
+  Randomforest::init_forest();
 }
 
 size_t Randomforest::get_target()
@@ -63,15 +66,39 @@ size_t Randomforest::get_target()
   return(treedata_->get_target());
 }
 
-void Randomforest::grow_forest()
+void Randomforest::grow_forest(const size_t nperms, const num_t alpha, vector<num_t>& pvalues)
 {
-  Randomforest::init_forest(treedata_->nsamples(),ntrees_,nodesize_);
-  treedata_->permute_contrasts();
-  for(size_t i = 0; i < ntrees_; ++i)
+  assert(nperms > 5);
+  vector<vector<num_t> > importancemat(nperms);
+  //vector<num_t> csample(nperms);
+
+  for(size_t p = 0; p < nperms; ++p)
     {
-      cout << "Growing tree " << i << "..." << endl;
-      Randomforest::grow_tree(i);
+      cout << "Growing forest " << p << endl;
+      Randomforest::init_forest();
+      treedata_->permute_contrasts();
+      for(size_t t = 0; t < ntrees_; ++t)
+	{
+	  Randomforest::grow_tree(t);
+	}
+      //Randomforest::calculate_importance(alpha,importancemat[p],csample[p]);
+      Randomforest::calculate_importance(importancemat[p]);
     }
+
+  size_t nfeatures = treedata_->nfeatures();
+  pvalues.resize(nfeatures);
+  for(size_t f = 0; f < nfeatures; ++f)
+    {
+      vector<num_t> fsample(nperms);
+      vector<num_t> csample(nperms);
+      for(size_t p = 0; p < nperms; ++p)
+	{
+	  fsample[p] = importancemat[p][f];
+	  csample[p] = importancemat[p][f + nfeatures];
+	}
+      datadefs::ttest(fsample,csample,pvalues[f]);
+    }
+
 }
 
 void Randomforest::grow_tree(size_t treeidx)
@@ -82,17 +109,20 @@ void Randomforest::grow_tree(size_t treeidx)
   //Generate bootstrap indices and oob-indices
   treedata_->bootstrap(bootstrap_ics,oobmatrix_[treeidx]);
 
-  cout << "tree " << treeidx << "  bootstrap indices [";
-  for(size_t i = 0; i < bootstrap_ics.size(); ++i)
+  if(false)
     {
-      cout << " " << bootstrap_ics[i];
+      cout << "tree " << treeidx << "  bootstrap indices [";
+      for(size_t i = 0; i < bootstrap_ics.size(); ++i)
+	{
+	  cout << " " << bootstrap_ics[i];
+	}
+      cout << " ]  oob [";
+      for(size_t i = 0; i < oobmatrix_[treeidx].size(); ++i)
+	{
+	  cout << " " << oobmatrix_[treeidx][i];
+	}
+      cout << " ]" << endl << endl;
     }
-  cout << " ]  oob [";
-  for(size_t i = 0; i < oobmatrix_[treeidx].size(); ++i)
-    {
-      cout << " " << oobmatrix_[treeidx][i];
-    }
-  cout << " ]" << endl << endl;
 
   size_t rootnode = 0;
   
@@ -108,17 +138,21 @@ void Randomforest::recursive_nodesplit(size_t treeidx, size_t nodeidx, vector<si
 
   if(n_tot < 2*nodesize_)
     {
-      cout << endl;
+      //cout << endl;
       return;
     }
 
+  //size_t nfeatures = treedata_->nfeatures();
   //Create mtry randomly selected feature indices to determine the split
   vector<size_t> mtrysample(2*treedata_->nfeatures());
+
+  //size_t contrast_lower_limit = mtry_/2;
+  
   //vector<bool> iscontrast(mtry_);
   treedata_->permute(mtrysample);
   //treedata_->generate_contrasts(iscontrast);
 
-  cout << "tree " << treeidx << "  node " << nodeidx << endl;
+  //cout << "tree " << treeidx << "  node " << nodeidx << endl;
 
   vector<size_t> sampleics_left,sampleics_right;
   set<num_t> values_left;
@@ -138,9 +172,14 @@ void Randomforest::recursive_nodesplit(size_t treeidx, size_t nodeidx, vector<si
       size_t featureidx = mtrysample[i];
 
       if(featureidx == targetidx)
-	{
-	  continue;
-	}
+        {
+          continue;
+        }
+
+      //if(i > contrast_lower_limit)
+      //	{
+      //	  featureidx += nfeatures;
+      //	}
       
       num_t impurity_tot,impurity_left,impurity_right;
       size_t nreal_left,nreal_right;
@@ -170,26 +209,28 @@ void Randomforest::recursive_nodesplit(size_t treeidx, size_t nodeidx, vector<si
   
   if(bestsplitter_i == mtry_)
     {
-      cout << "No splitter found, quitting." << endl << endl;
+      //cout << "No splitter found, quitting." << endl << endl;
       return;
     }
   
   size_t splitterfeatureidx(mtrysample[bestsplitter_i]);
   
-  cout << "Best splitter feature is " << splitterfeatureidx << " with relative decrease in impurity of " << bestrelativedecrease << endl; 
+  //cout << "Best splitter feature is " << splitterfeatureidx << " with relative decrease in impurity of " << bestrelativedecrease << endl; 
   
-  if(splitterfeatureidx >= treedata_->nfeatures())
+  /*
+    if(splitterfeatureidx >= treedata_->nfeatures())
     {
-      cout << "Splitter is CONTRAST" << endl;
+    cout << "Splitter is CONTRAST" << endl;
     }
+  */
 
   treedata_->remove_nans(splitterfeatureidx,sampleics,nreal_tot);
-  cout << "Splitter feature has " << n_tot - nreal_tot << " missing values, which will be omitted in splitting" << endl;
+  //cout << "Splitter feature has " << n_tot - nreal_tot << " missing values, which will be omitted in splitting" << endl;
   n_tot = nreal_tot;
 
   if(n_tot < 2*nodesize_)
     {
-      cout << "Splitter has too few non-missing values -- quitting." << endl;
+      //cout << "Splitter has too few non-missing values -- quitting." << endl;
       //This needs to be fixed such that one of the surrogates will determine the split instead
       return;
     }
@@ -205,7 +246,7 @@ void Randomforest::recursive_nodesplit(size_t treeidx, size_t nodeidx, vector<si
       assert(sampleics_left.size() + sampleics_right.size() == n_tot);
       if(sampleics_left.size() < nodesize_ || sampleics_right.size() < nodesize_)
 	{
-	  cout << endl;
+	  //cout << endl;
 	  return;
 	}
       forest_[treeidx][nodeidx].set_splitter(splitterfeatureidx,splitvalue,forest_[treeidx][nodeidx_left],forest_[treeidx][nodeidx_right]);
@@ -219,14 +260,14 @@ void Randomforest::recursive_nodesplit(size_t treeidx, size_t nodeidx, vector<si
       assert(sampleics_left.size() + sampleics_right.size() == n_tot);
       if(sampleics_left.size() < nodesize_ || sampleics_right.size() < nodesize_)
 	{
-	  cout << endl;
+	  //cout << endl;
 	  return;
 	}
       forest_[treeidx][nodeidx].set_splitter(splitterfeatureidx,values_left,forest_[treeidx][nodeidx_left],forest_[treeidx][nodeidx_right]);
       //cout << forest_[treeidx][nodeidx].has_children() << endl;
     }
 
-  cout << endl;
+  //cout << endl;
 
   Randomforest::recursive_nodesplit(treeidx,nodeidx_left,sampleics_left);
   Randomforest::recursive_nodesplit(treeidx,nodeidx_right,sampleics_right);
@@ -261,17 +302,19 @@ void Randomforest::percolate_sampleics(Node& rootnode, vector<size_t>& sampleics
     }
   
   
-  cout << "Train samples percolated accordingly:" << endl;
-  size_t iter = 0;
-  for(map<Node*,vector<size_t> >::const_iterator it(trainics.begin()); it != trainics.end(); ++it, ++iter)
+  /*
+    cout << "Train samples percolated accordingly:" << endl;
+    size_t iter = 0;
+    for(map<Node*,vector<size_t> >::const_iterator it(trainics.begin()); it != trainics.end(); ++it, ++iter)
     {
-      cout << "leaf node " << iter << ":"; 
-      for(size_t i = 0; i < it->second.size(); ++i)
-	{
-	  cout << " " << it->second[i];
-	}
-      cout << endl;
+    cout << "leaf node " << iter << ":"; 
+    for(size_t i = 0; i < it->second.size(); ++i)
+    {
+    cout << " " << it->second[i];
     }
+    cout << endl;
+    }
+  */
 }
 
 void Randomforest::percolate_sampleics_randf(size_t featureidx, Node& rootnode, vector<size_t>& sampleics, map<Node*,vector<size_t> >& trainics)
@@ -329,7 +372,7 @@ void Randomforest::percolate_sampleidx_randf(size_t featureidx, size_t sampleidx
 }
 
 
-void Randomforest::calculate_importance(const num_t alpha, vector<num_t>& importance, num_t& contrast_prc)
+void Randomforest::calculate_importance(vector<num_t>& importance)
 {
 
   size_t nrealfeatures(treedata_->nfeatures());
@@ -351,7 +394,7 @@ void Randomforest::calculate_importance(const num_t alpha, vector<num_t>& import
       Randomforest::percolate_sampleics(rootnode,oobmatrix_[i],trainics);
       num_t impurity_tree;
       Randomforest::tree_impurity(trainics,impurity_tree);
-      cout << "#nodes_with_train_samples=" << trainics.size() << endl;  
+      //cout << "#nodes_with_train_samples=" << trainics.size() << endl;  
       for(size_t f = 0; f < nallfeatures; ++f)
 	{
 	  if(Randomforest::is_feature_in_tree(f,i))
@@ -370,25 +413,29 @@ void Randomforest::calculate_importance(const num_t alpha, vector<num_t>& import
       importance[i] /= noob_tot;
     }
     
-  vector<num_t> contrast_importance(nrealfeatures);
-  for(size_t i = nrealfeatures; i < nallfeatures; ++i)
-    {
-      contrast_importance[i - nrealfeatures] = importance[i];
-    }
-  importance.resize(nrealfeatures);
-
-  datadefs::percentile(contrast_importance,alpha,contrast_prc);
-  cout << "CONTRAST: " << 100*alpha << "th percentile is " << contrast_prc << endl;
-
   /*
+    vector<num_t> contrast_importance(nrealfeatures);
+    for(size_t i = nrealfeatures; i < nallfeatures; ++i)
+    {
+    contrast_importance[i - nrealfeatures] = importance[i];
+    }
+    importance.resize(nrealfeatures);
+    
+    datadefs::percentile(contrast_importance,alpha,contrast_prc);
+    cout << "CONTRAST: " << 100*alpha << "th percentile is " << contrast_prc << endl;
+    
+    if(false)
+    {
     for(size_t i = 0; i < nrealfeatures; ++i)
     {
-    if(importance[i] > 0.0001)
+    if(importance[i] > contrast_prc)
     {
     cout << treedata_->get_targetheader() << "\t" << treedata_->get_featureheader(i) << "\t" << importance[i] << endl;
     }
     }
+    }
   */
+  
 
 }
 

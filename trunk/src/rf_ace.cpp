@@ -10,6 +10,7 @@
 #include "randomforest.hpp"
 #include "GBT.hpp"
 #include "treedata.hpp"
+#include "datadefs.hpp"
 
 using namespace std;
 
@@ -111,38 +112,43 @@ int main(int argc, char* argv[])
             cout << "Parameter 'nodesize' not set, defaulting to " << DEFAULT_NODESIZE << "." << endl;
         }
         
-        //FIRST PART: read data into Treedata class (features are rows)
         bool is_featurerows = true;
         if (mat_format == FEATURE_COLUMNS) {
             is_featurerows = false;
         }
         
+	//Read data into Treedata object
         Treedata treedata(matrix_filename, is_featurerows);
         
 	assert(treedata.nfeatures() >= mtry);
 	assert(treedata.nsamples() > 2*nodesize);
 
-        //SECOND PART: construct a Random Forest object
+        //Construct a Random Forest object
         Randomforest RF(&treedata,ntrees,mtry,nodesize);
-        
-	num_t alpha(1.0);
-	vector<num_t> importance(treedata.nfeatures());
-	num_t contrast_alpha;
+	RF.select_target(targetidx);
+	//treedata.print();   
+	
+	size_t nperms = 10;
+	num_t alpha(0.5);
+        vector<num_t> pvalues(treedata.nfeatures());
 
 	clock_t time_start(clock());
-	RF.select_target(targetidx);
-	//treedata.print();	
+	RF.grow_forest(nperms,alpha,pvalues);
+	cout << "Time elapsed: " << float(clock() - time_start)/CLOCKS_PER_SEC << " seconds" << endl;
+
+	vector<size_t> ref_ics(treedata.nfeatures());
+	//vector<string> fnames = treedata.featureheaders();
+	datadefs::sort_and_make_ref<num_t>(pvalues,ref_ics);
+	//datadefs::sort_from_ref<string>(fnames,ref_ics);
 	
-	size_t nperms = 1;
-	for(size_t i = 0; i < nperms; ++i)
+	string target_str = treedata.get_featureheader(targetidx);
+
+	for(size_t i = 0; i < treedata.nfeatures(); ++i)
 	  {
-	    cout << "Growing forest " << i << endl;
-	    RF.grow_forest();
-	    RF.calculate_importance(alpha,importance,contrast_alpha);
-	    cout << "Time elapsed: " << float(clock() - time_start)/CLOCKS_PER_SEC << " seconds" << endl;
+	    cout << target_str << "\t" << treedata.get_featureheader(ref_ics[i]) << "\t" << pvalues[i] << endl;
 	  }
 
-        //return(EXIT_SUCCESS);
+	
     }
     catch(exception& e) {
         cerr << e.what() << "\n";

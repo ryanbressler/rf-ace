@@ -1,12 +1,12 @@
 #include "treedata.hpp"
-#include<cstdlib>
-#include<fstream>
-#include<cassert>
-#include<iostream>
-#include<sstream>
-#include<utility>
-#include<algorithm>
-#include<ctime>
+#include <cstdlib>
+#include <fstream>
+#include <cassert>
+#include <iostream>
+#include <sstream>
+#include <utility>
+#include <algorithm>
+#include <ctime>
 
 using namespace std;
 
@@ -24,7 +24,10 @@ Treedata::Treedata(string fname, bool is_featurerows):
   //Initialize random number rgenerator
   time_t now;
   time(&now);
-  srand((unsigned int)now);
+  //srand((unsigned int)now);
+  
+  //MTRand_int32 irand((unsigned int)now);
+  irand_.seed((unsigned int)now);
   //datadefs::seedMT((size_t)now);
 
   cout << "Treedata: reading matrix from file '" << fname << "'" << endl;
@@ -347,7 +350,7 @@ void Treedata::permute(vector<size_t>& ics)
 {
   for (size_t i = 0; i < ics.size(); ++i)
     {
-      size_t j = rand() % (i + 1);
+      size_t j = irand_() % (i + 1);
       ics[i] = ics[j];
       ics[j] = i;
     }
@@ -393,7 +396,7 @@ void Treedata::bootstrap(vector<size_t>& ics, vector<size_t>& oob_ics)
   size_t n(ics.size());
   for(size_t i = 0; i < n; ++i)
     {
-      ics[i] = rand() % n;
+      ics[i] = irand_() % n;
     }
   sort(ics.begin(),ics.end());
   vector<size_t> allics(n);
@@ -594,19 +597,21 @@ void Treedata::incremental_target_split(size_t featureidx,
   //Return the split value
   splitvalue = fv[bestsplitidx];
 
-  
-  cout << "Feature " << featureidx << " splits target " << targetidx_ << " [";
-  for(size_t i = 0; i < sampleics_left.size(); ++i)
+  if(false)
     {
-      cout << " " << featurematrix_[targetidx_][sampleics_left[i]];
+      cout << "Feature " << featureidx << " splits target " << targetidx_ << " [";
+      for(size_t i = 0; i < sampleics_left.size(); ++i)
+	{
+	  cout << " " << featurematrix_[targetidx_][sampleics_left[i]];
+	}
+      cout << " ] <==> [";
+      for(size_t i = 0; i < sampleics_right.size(); ++i)
+	{
+	  cout << " " << featurematrix_[targetidx_][sampleics_right[i]];
+	}
+      cout << " ]" << endl;
+      
     }
-  cout << " ] <==> [";
-  for(size_t i = 0; i < sampleics_right.size(); ++i)
-    {
-      cout << " " << featurematrix_[targetidx_][sampleics_right[i]];
-    }
-  cout << " ]" << endl;
-    
 }
 
 void Treedata::categorical_target_split(size_t featureidx,
@@ -806,19 +811,21 @@ void Treedata::categorical_target_split(size_t featureidx,
 	}
     }  
 
-  
-  cout << "Feature " << featureidx << " splits target " << targetidx_ << " [";
-  for(size_t i = 0; i < sampleics_left.size(); ++i)
+ 
+  if(false)
     {
-      cout << " " << featurematrix_[targetidx_][sampleics_left[i]];
+      cout << "Feature " << featureidx << " splits target " << targetidx_ << " [";
+      for(size_t i = 0; i < sampleics_left.size(); ++i)
+	{
+	  cout << " " << featurematrix_[targetidx_][sampleics_left[i]];
+	}
+      cout << " ] <==> [";
+      for(size_t i = 0; i < sampleics_right.size(); ++i)
+	{
+	  cout << " " << featurematrix_[targetidx_][sampleics_right[i]];
+	}
+      cout << " ]" << endl;
     }
-  cout << " ] <==> [";
-  for(size_t i = 0; i < sampleics_right.size(); ++i)
-    {
-      cout << " " << featurematrix_[targetidx_][sampleics_right[i]];
-    }
-  cout << " ]" << endl;
-  
 }
 
 num_t Treedata::at(size_t featureidx, size_t sampleidx)
@@ -828,13 +835,14 @@ num_t Treedata::at(size_t featureidx, size_t sampleidx)
 
 
 
+//This is slow if the feature has lots of missing values. Consider re-implementing for speed-up
 num_t Treedata::randf(size_t featureidx)
 {
   assert(nrealvalues_ > 0);
   num_t value(datadefs::num_nan);
   while(datadefs::is_nan(value))
     {
-      value = featurematrix_[featureidx][rand() % nrealvalues_];
+      value = featurematrix_[featureidx][irand_() % nrealvalues_];
     }
   return(value);
 }
@@ -861,22 +869,6 @@ void Treedata::impurity(size_t featureidx, vector<size_t> const& sampleics, num_
 	  datadefs::forward_sqerr(featurematrix_[featureidx][sampleics[i]],nreal,mu,se);  
 	}
       impurity = se/nreal;
-
-      /*
-	num_t mu_test,se_test,impurity_test;
-	size_t nreal;
-	datadefs::sqerr(data,mu_test,se_test,nreal);
-	impurity_test = se_test/nreal;
-	
-	//cout << "sqerr: impurity_iter=" << impurity << " impurity_ref=" << impurity_test << endl;
-	
-	assert(nreal == n_acc);
-	if(nreal > 0)
-	{
-	assert(int(impurity_test-impurity) < 2);
-	}
-      */
-
     }
   else
     {
@@ -887,85 +879,8 @@ void Treedata::impurity(size_t featureidx, vector<size_t> const& sampleics, num_
 	  datadefs::forward_sqfreq(featurematrix_[featureidx][sampleics[i]],nreal,freq,sf);
 	}
       impurity = 1-sf/pow(nreal,2);
-      
-      /*
-	num_t sf_test,impurity_test;
-	map<num_t,size_t> freq_test;
-	size_t nreal;
-	datadefs::sqfreq(data,freq_test,sf_test,nreal);
-	impurity_test = 1-sf_test/pow(nreal,2);
-	
-	//cout << "sqfreq: impurity_iter=" << impurity << " impurity_ref=" << impurity_test << endl;
-	
-	assert(nreal == n_acc);
-	if(nreal > 0)
-	{
-	assert(int(impurity_test-impurity) < 2);
-	}
-      */
     }
 }
-
-/*
-  void Treedata::impurity(size_t featureidx, vector<size_t> const& sampleics, num_t& impurity, size_t& nreal)
-  {
-  
-  size_t n(sampleics.size());
-  vector<num_t> data(n);
-  
-  for(size_t i = 0; i < n; ++i)
-  {
-  data[i] = featurematrix_[featureidx][sampleics[i]];
-  }
-  
-  if(isfeaturenum_[featureidx])
-  {
-  num_t mu,se;
-  datadefs::sqerr(data,mu,se,nreal);
-  impurity = se/nreal;
-  }
-  else
-  {
-  map<num_t,size_t> freq;
-  num_t sf(0.0);
-  
-  datadefs::sqfreq(data,freq,sf,nreal);
-  impurity = 1-sf/pow(nreal,2);
-  }
-  }
-*/
-
-
-/*
-  void Treedata::impurity(const size_t featureidx, 
-  const size_t n, 
-  num_t& impurity)
-  {
-  
-  size_t n_acc(0);
-  if(isfeaturenum_[featureidx])
-  {
-  num_t mu(0.0);
-  num_t se(0.0);
-  for(size_t i = 0; i < n; ++i)
-  {
-  datadefs::forward_sqerr(Treedata::atp(featureidx),n_acc,mu,se);
-  }
-  impurity = se/n_acc;
-  }
-  else
-  {
-  map<num_t,size_t> freq;
-  num_t sf(0.0);
-  for(size_t i = 0; i < n; ++i)
-  {
-  datadefs::forward_sqfreq(Treedata::atp(featureidx),n_acc,freq,sf);
-  }
-  impurity = 1-sf/pow(n_acc,2);
-  }
-  
-  }
-*/
 
 void Treedata::split_samples(vector<size_t>& sampleics, 
 			     size_t splitidx, 
@@ -980,27 +895,34 @@ void Treedata::split_samples(vector<size_t>& sampleics,
   if(n_left == 0)
     {
       sampleics_right = sampleics;
-      vector<size_t> sampleics_left_copy(0);
-      sampleics_left = sampleics_left_copy;
+      sampleics_left.clear();
+      return;
+    }
+  else if(n_right == 0)
+    {
+      sampleics_right.clear();
+      sampleics_left = sampleics;
       return;
     }
 
-  vector<size_t> sampleics_left_copy(n_left);
-  vector<size_t> sampleics_right_copy(n_right);
+  //vector<size_t> sampleics_left_copy(n_left);
+  //vector<size_t> sampleics_right_copy(n_right);
+  sampleics_left.resize(n_left);
+  sampleics_right.resize(n_right);
   size_t i(0);
   while(i < n_left)
     {
-      sampleics_left_copy[i] = sampleics[i];
+      sampleics_left[i] = sampleics[i];
       ++i;
     }
   while(i < n_tot)
     {
-      sampleics_right_copy[i-n_left] = sampleics[i];
+      sampleics_right[i-n_left] = sampleics[i];
       ++i;
     }
 
-  sampleics_left = sampleics_left_copy;
-  sampleics_right = sampleics_right_copy;
+  //sampleics_left = sampleics_left_copy;
+  //sampleics_right = sampleics_right_copy;
 
 }
 
