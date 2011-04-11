@@ -161,6 +161,56 @@ void datadefs::sqerr(vector<datadefs::num_t> const& data,
     }
 }
 
+/*
+  void datadefs::sqerr2(vector<datadefs::num_t> const& x, 
+  vector<datadefs::num_t> const& y,  
+  datadefs::num_t& se,
+  size_t& nreal)
+  {
+  
+  mu_x = 0.0;
+  mu_y = 0.0;
+  se = 0.0;
+  
+  
+  size_t n(data.size());
+  
+  if(n == 0)
+  {
+  return;
+  }
+  
+  if(!datadefs::is_nan(data[0]))
+  {
+  mu = data[0];
+  nreal = 1;
+  }
+  
+  for(size_t i = 1; i < n; ++i)
+  {
+  if(!datadefs::is_nan(data[i]))
+  {
+  ++nreal;
+  mu += data[i];
+  }
+  }
+  
+  if(nreal > 0)
+  {
+  mu /= nreal;
+  }
+  
+  //This should be computed iteratively inside the previous loop (speed-up)!
+  for(size_t i = 0; i < n; ++i)
+  {
+  if(!datadefs::is_nan(data[i]))
+  {
+  se += pow(data[i] - mu,2);
+  }
+  }
+  }
+*/
+
 void datadefs::count_real_values(vector<num_t> const& data, size_t& nreal)
 {
   nreal = 0;
@@ -211,32 +261,37 @@ void datadefs::forward_backward_sqerr(const datadefs::num_t x_n,
 				      datadefs::num_t& mu_right,
 				      datadefs::num_t& se_right)
 {
-  assert(n_right > 0);
- 
+
   if(datadefs::is_nan(x_n))
     {
       return;
     }
   
+  assert(n_right > 0);
+
   ++n_left;
   --n_right;
-
-  //Subtract x_n from "right" and update mean and squared error
-  datadefs::num_t mu_old(mu_right);
-  mu_right -= (x_n - mu_right) / n_right;
 
   //As long as there are at least two data points on the "right" branch, squared error can be calculated, otherwise assign se_right := 0.0
   if(n_right > 1)
     {
+      datadefs::num_t mu_old(mu_right);
+      mu_right -= (x_n - mu_right) / n_right;
       se_right -= (x_n - mu_right) * (x_n - mu_old);
+    }
+  else if(n_right == 1)
+    {
+      mu_right -= (x_n - mu_right) / n_right;
+      se_right = 0.0;
     }
   else
     {
+      mu_right = 0.0;
       se_right = 0.0;
     }
 
   //Add x_n to "left" and update mean and squared error
-  mu_old = mu_left;
+  datadefs::num_t mu_old = mu_left;
   mu_left += (x_n - mu_left) / n_left;
 
   //If there are already at least two data points on the "left" branch, squared error can be calculated, otherwise assign se_left := 0.0
@@ -383,12 +438,13 @@ void datadefs::forward_backward_sqfreq(const datadefs::num_t x_n,
 				       map<datadefs::num_t,size_t>& freq_right,
 				       datadefs::num_t& sf_right)
 {
-  assert(n_right > 0);
  
   if(datadefs::is_nan(x_n))
     {
       return;
     }
+
+  assert(n_right > 0);
 
   ++n_left;
   --n_right;
@@ -524,6 +580,46 @@ void datadefs::spearman_correlation(vector<datadefs::num_t> const& x,
 {
   assert(false);
 }
+
+void datadefs::pearson_correlation(vector<datadefs::num_t> const& x,
+				   vector<datadefs::num_t> const& y,
+				   datadefs::num_t& corr)
+{
+
+  corr = 0.0;
+
+  datadefs::num_t mu_x,se_x,mu_y,se_y;
+  size_t nreal_x,nreal_y;
+
+  vector<datadefs::num_t> x_real;
+  vector<datadefs::num_t> y_real;
+
+  size_t n = x.size();
+  assert(n == y.size());
+  
+  for(size_t i = 0; i < n; ++i)
+    {
+      if(!datadefs::is_nan(x[i]) && !datadefs::is_nan(y[i]))
+	{
+	  x_real.push_back(x[i]);
+	  y_real.push_back(y[i]);
+	}
+    }
+
+  datadefs::sqerr(x_real,mu_x,se_x,nreal_x);
+  datadefs::sqerr(y_real,mu_y,se_y,nreal_y);
+  assert(nreal_x == nreal_y);
+  
+  for(size_t i = 0; i < nreal_x; ++i)
+    {
+      corr += ( x_real[i] - mu_x ) * ( y_real[i] - mu_y ); 
+    }
+
+  corr /= sqrt(se_x*se_y);
+
+}
+
+
 
 void datadefs::percentile(vector<datadefs::num_t> x, 
 			  const datadefs::num_t alpha, 

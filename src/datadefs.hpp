@@ -49,7 +49,16 @@ namespace datadefs
 	     num_t& mu, 
 	     num_t& se,
 	     size_t& nreal);      
-  
+
+  /*
+    void sqerr2(vector<num_t> const& x,
+    vector<num_t> const& y,
+    num_t& mu_x,
+    num_t& mu_y,
+    num_t& se,
+    size_t& nreal)
+  */    
+
   void count_real_values(vector<num_t> const& data, size_t& nreal);
 
   void forward_sqerr(const num_t x_n,
@@ -109,6 +118,11 @@ namespace datadefs
   void spearman_correlation(vector<num_t> const& x, 
 			    vector<num_t> const& y,
 			    num_t& corr);
+
+  void pearson_correlation(vector<num_t> const& x,
+                            vector<num_t> const& y,
+                            num_t& corr);
+
 
   void percentile(vector<num_t> x, const num_t alpha, num_t& prc);
 

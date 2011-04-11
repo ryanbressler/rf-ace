@@ -25,7 +25,7 @@ public:
   //Returns the number of features
   size_t nfeatures();
 
-
+  num_t corr(size_t featureidx1, size_t featureidx2);
 
   string get_featureheader(size_t featureidx);
   string get_targetheader();
@@ -90,6 +90,12 @@ protected:
 		    vector<size_t>& sampleics_left,
 		    vector<size_t>& sampleics_right);
   
+  num_t split_fitness(const size_t featureidx,
+		      const size_t min_split,
+		      vector<size_t> const& sampleics,
+		      vector<size_t> const& sampleics_left,
+		      vector<size_t> const& sampleics_right);
+
   //void range(vector<size_t>& ics);
 
   void impurity(size_t featureidx, vector<size_t> const& sampleics, num_t& impurity, size_t& nreal);
