@@ -199,6 +199,13 @@ size_t Treedata::nsamples()
   return(nsamples_);
 }
 
+num_t Treedata::corr(size_t featureidx1, size_t featureidx2)
+{
+  num_t r;
+  datadefs::pearson_correlation(featurematrix_[featureidx1],featurematrix_[featureidx2],r);
+  return(r);
+}
+
 string Treedata::get_featureheader(size_t featureidx)
 {
   return(featureheaders_[featureidx]);
@@ -572,7 +579,7 @@ void Treedata::incremental_target_split(size_t featureidx,
       size_t nreal_right(0);
  
       datadefs::sqfreq(tv,freq_right,sf_right,nreal_right);
-      num_t nsf_best(sf_right/nreal_right);
+      num_t nsf_best = sf_right/nreal_right;
       assert(n_tot == nreal_right);
       
       size_t idx(0);
@@ -597,21 +604,18 @@ void Treedata::incremental_target_split(size_t featureidx,
   //Return the split value
   splitvalue = fv[bestsplitidx];
 
-  if(false)
+  cout << "Feature " << featureidx << " splits target " << targetidx_ << " [";
+  for(size_t i = 0; i < sampleics_left.size(); ++i)
     {
-      cout << "Feature " << featureidx << " splits target " << targetidx_ << " [";
-      for(size_t i = 0; i < sampleics_left.size(); ++i)
-	{
-	  cout << " " << featurematrix_[targetidx_][sampleics_left[i]];
-	}
-      cout << " ] <==> [";
-      for(size_t i = 0; i < sampleics_right.size(); ++i)
-	{
-	  cout << " " << featurematrix_[targetidx_][sampleics_right[i]];
-	}
-      cout << " ]" << endl;
-      
+      cout << " " << featurematrix_[targetidx_][sampleics_left[i]];
     }
+  cout << " ] <==> [";
+  for(size_t i = 0; i < sampleics_right.size(); ++i)
+    {
+      cout << " " << featurematrix_[targetidx_][sampleics_right[i]];
+    }
+  cout << " ]" << endl;
+  
 }
 
 void Treedata::categorical_target_split(size_t featureidx,
@@ -811,21 +815,19 @@ void Treedata::categorical_target_split(size_t featureidx,
 	}
     }  
 
- 
-  if(false)
+
+  cout << "Feature " << featureidx << " splits target " << targetidx_ << " [";
+  for(size_t i = 0; i < sampleics_left.size(); ++i)
     {
-      cout << "Feature " << featureidx << " splits target " << targetidx_ << " [";
-      for(size_t i = 0; i < sampleics_left.size(); ++i)
-	{
-	  cout << " " << featurematrix_[targetidx_][sampleics_left[i]];
-	}
-      cout << " ] <==> [";
-      for(size_t i = 0; i < sampleics_right.size(); ++i)
-	{
-	  cout << " " << featurematrix_[targetidx_][sampleics_right[i]];
-	}
-      cout << " ]" << endl;
+      cout << " " << featurematrix_[targetidx_][sampleics_left[i]];
     }
+  cout << " ] <==> [";
+  for(size_t i = 0; i < sampleics_right.size(); ++i)
+    {
+      cout << " " << featurematrix_[targetidx_][sampleics_right[i]];
+    }
+  cout << " ]" << endl;
+  
 }
 
 num_t Treedata::at(size_t featureidx, size_t sampleidx)
@@ -852,12 +854,12 @@ void Treedata::impurity(size_t featureidx, vector<size_t> const& sampleics, num_
 {
   
   size_t n(sampleics.size());
-  vector<num_t> data(n);
+  //vector<num_t> data(n);
 
-  for(size_t i = 0; i < n; ++i)
-    {
-      data[i] = featurematrix_[featureidx][sampleics[i]];
-    }
+  //for(size_t i = 0; i < n; ++i)
+  //  {
+  //    data[i] = featurematrix_[featureidx][sampleics[i]];
+  //  }
   
   nreal = 0;
   if(isfeaturenum_[featureidx])
@@ -920,11 +922,105 @@ void Treedata::split_samples(vector<size_t>& sampleics,
       sampleics_right[i-n_left] = sampleics[i];
       ++i;
     }
-
-  //sampleics_left = sampleics_left_copy;
-  //sampleics_right = sampleics_right_copy;
-
 }
 
+num_t Treedata::split_fitness(const size_t featureidx,
+			      const size_t min_split,
+			      vector<size_t> const& sampleics,
+			      vector<size_t> const& sampleics_left,
+			      vector<size_t> const& sampleics_right)
+{
+  
+  assert(sampleics.size() == sampleics_left.size() + sampleics_right.size());
+
+  size_t n_left = 0;
+  size_t n_right = 0;
+  if(isfeaturenum_[featureidx])
+    {
+      num_t mu_left = 0.0;
+      num_t se_left = 0.0;
+      num_t mu_right = 0.0;
+      num_t se_right = 0.0;
+ 
+      for(size_t i = 0; i < sampleics_left.size(); ++i)
+	{
+	  datadefs::forward_sqerr(featurematrix_[featureidx][sampleics_left[i]],n_right,mu_right,se_right);
+	  //cout << "forward sqerr: " << featurematrix_[featureidx][sampleics_left[i]] << " " << n_right << " " << mu_right << " " << se_right << endl; 
+	}
+
+      for(size_t i = 0; i < sampleics_right.size(); ++i)
+        {
+	  datadefs::forward_sqerr(featurematrix_[featureidx][sampleics_right[i]],n_right,mu_right,se_right);
+	  //cout << "forward sqerr: " << featurematrix_[featureidx][sampleics_right[i]] << " " << n_right << " " << mu_right << " " << se_right << endl;
+        }
+
+      if(n_right < 2*min_split)
+        {
+          return(0.0);
+        }
+
+      num_t se_tot = se_right;
+      
+      for(size_t i = 0; i < sampleics_left.size(); ++i)
+	{
+	  datadefs::forward_backward_sqerr(featurematrix_[featureidx][sampleics_left[i]],n_left,mu_left,se_left,n_right,mu_right,se_right);
+	  //cout << "fw bw sqerr: " << featurematrix_[featureidx][sampleics_left[i]] << " " << n_left << " " << mu_left << " " << se_left << " " << n_right << " " << mu_right << " " << se_right << endl;
+	}
+
+      if(n_left < min_split || n_right < min_split)
+	{
+      	  return(0.0);
+	}
+      
+      return(( se_tot - se_left - se_right ) / se_tot);
+      
+    }
+  else
+    {
+      map<num_t,size_t> freq_left,freq_right;
+      num_t sf_left = 0.0;
+      num_t sf_right = 0.0;
+
+      for(size_t i = 0; i < sampleics_left.size(); ++i)
+        {
+	  datadefs::forward_sqfreq(featurematrix_[featureidx][sampleics_left[i]],n_right,freq_right,sf_right);
+	  //cout << "forward sqfreq: " << featurematrix_[featureidx][sampleics_left[i]] << " " << n_right << " " << sf_right << endl;
+        }
+
+      for(size_t i = 0; i < sampleics_right.size(); ++i)
+        {
+	  datadefs::forward_sqfreq(featurematrix_[featureidx][sampleics_right[i]],n_right,freq_right,sf_right);
+	  //cout << "forward sqfreq: " << featurematrix_[featureidx][sampleics_right[i]] << " " << n_right << " " << sf_right << endl;
+        }
+
+      if(n_right < 2*min_split)
+       {
+         return(0.0);
+       }
+
+      size_t n_tot = n_right;
+      num_t sf_tot = sf_right;
+
+      for(size_t i = 0; i < sampleics_left.size(); ++i)
+        {
+	  datadefs::forward_backward_sqfreq(featurematrix_[featureidx][sampleics_left[i]],n_left,freq_left,sf_left,n_right,freq_right,sf_right);
+	  //cout << "fw bw sqfreq: " << featurematrix_[featureidx][sampleics_left[i]] << " " << n_left << " "<< sf_left << " " << n_right << " " << sf_right << endl;
+        }
+
+      if(n_left < min_split || n_right < min_split)
+        {
+          return(0.0);
+        }
+
+      //cout << n_left << " " << n_right << " " << sf_tot << " " << n_tot << " " << n_right << " " << sf_left << " " << n_tot*n_left*sf_right << " " << n_left*n_right << " " << pow(n_tot,2) - sf_tot << endl;
+
+      //num_t fitness = (-1.0*(n_left*n_right*sf_tot) + n_tot*n_right*sf_left + n_tot*n_left*sf_right) / (n_left*n_right*(pow(n_tot,2) - sf_tot));
+      //cout << "Fitness " << fitness << endl;
+
+      return((-1.0*(n_left*n_right*sf_tot) + n_tot*n_right*sf_left + n_tot*n_left*sf_right) / (n_left*n_right*(pow(n_tot,2) - sf_tot)));
+      
+    }
+
+}
 
 

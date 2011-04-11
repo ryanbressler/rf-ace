@@ -2,6 +2,7 @@
 #include <cassert>
 #include <string>
 #include <iostream>
+#include <fstream>
 #include <ctime>
 
 #include <boost/algorithm/string.hpp>
@@ -19,6 +20,7 @@ namespace po = boost::program_options;
 enum MatrixFormat { FEATURE_ROWS, FEATURE_COLUMNS };
 
 const size_t DEFAULT_NODESIZE = 5;
+const size_t DEFAULT_NPERMS = 9;
 
 int main(int argc, char* argv[])
 {
@@ -26,9 +28,10 @@ int main(int argc, char* argv[])
         // Declare the supported options.
         po::options_description general_opts("General options");
         general_opts.add_options()
-          ("filename", po::value<std::string>(), "Name of feature matrix file")
-          ("format", po::value<std::string>(), "Featrure matrix file format")
-          ("targetidx,i", po::value<size_t>(), "Index of target feature")
+          ("input,I", po::value<std::string>(), "Input feature matrix")
+          ("format,f", po::value<std::string>(), "Feature matrix file format")
+          ("targetidx,i", po::value<size_t>(), "Index of target feature (0-base)")
+	  ("output,O", po::value<std::string>(), "Output association file")
         ;
         
         po::options_description rf_opts("Random forest options");
@@ -36,6 +39,7 @@ int main(int argc, char* argv[])
           ("ntrees,n", po::value<size_t>(), "Number of decision trees")
           ("mtry,m", po::value<size_t>(), "Number of randomly selected features for each split process")
           ("nodesize,s", po::value<size_t>(), "Minimum number of samples per node")
+	  ("nperms,p", po::value<size_t>(), "Number of permutations (must be odd and >6)")
           ("help,h", "Display help message")
         ;
         
@@ -54,14 +58,25 @@ int main(int argc, char* argv[])
         
         // Parse feature matrix file name
         std::string matrix_filename;
-        if (var_map.count("filename")) {
-            matrix_filename = var_map["filename"].as<std::string>();
+        if (var_map.count("input")) {
+            matrix_filename = var_map["input"].as<std::string>();
             cout << "Matrix: " << matrix_filename << endl;
         } else {
             cout << "Feature matrix file name not set, quitting." << endl;
             cout << all_options << "\n";
             return(EXIT_FAILURE);
         }    
+
+        // Parse output file name
+	std::string output_filename;
+        if (var_map.count("output")) {
+	  output_filename = var_map["output"].as<std::string>();
+	  cout << "Output: " << output_filename << endl;
+        } else {
+	  cout << "Output file name not set, quitting." << endl;
+	  cout << all_options << "\n";
+	  return(EXIT_FAILURE);
+        }
         
         // Parse feature matrix file format
         enum MatrixFormat mat_format = FEATURE_ROWS;
@@ -110,8 +125,18 @@ int main(int argc, char* argv[])
             nodesize = var_map["nodesize"].as<size_t>();
         } else {
             cout << "Parameter 'nodesize' not set, defaulting to " << DEFAULT_NODESIZE << "." << endl;
+	    nodesize = DEFAULT_NODESIZE;
         }
         
+        size_t nperms = 0;
+        if (var_map.count("nperms")) {
+	  nperms = var_map["nperms"].as<size_t>();
+        } else {
+	  cout << "Parameter 'nperms' not set, defaulting to " << DEFAULT_NPERMS << "." << endl;
+	  nperms = DEFAULT_NPERMS;
+        }
+
+
         bool is_featurerows = true;
         if (mat_format == FEATURE_COLUMNS) {
             is_featurerows = false;
@@ -128,7 +153,7 @@ int main(int argc, char* argv[])
 	RF.select_target(targetidx);
 	//treedata.print();   
 	
-	size_t nperms = 10;
+	//size_t nperms = 9;
 	num_t alpha(0.5);
         vector<num_t> pvalues(treedata.nfeatures());
 
@@ -143,11 +168,13 @@ int main(int argc, char* argv[])
 	
 	string target_str = treedata.get_featureheader(targetidx);
 
+	ofstream os(output_filename.c_str());
 	for(size_t i = 0; i < treedata.nfeatures(); ++i)
 	  {
-	    cout << target_str << "\t" << treedata.get_featureheader(ref_ics[i]) << "\t" << pvalues[i] << endl;
+	    os << target_str << "\t" << treedata.get_featureheader(ref_ics[i]) << "\t" 
+	       << pvalues[i] << "\t" << treedata.corr(targetidx,ref_ics[i]) << endl;
 	  }
-
+	os.close();
 	
     }
     catch(exception& e) {
