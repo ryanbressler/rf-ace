@@ -43,29 +43,50 @@ namespace datadefs
   num_t str2num(string& str);
 
   bool is_nan(const string& str);
+  /*
+    {
+    set<string>::iterator it(NANs.find(str));
+    if(it == NANs.end()) { return(false); } else { return(true); }
+    }
+  */
+  
   bool is_nan(const num_t value);
+  /*
+    {
+    if(value == numeric_limits<float>::infinity()) { return(false); } else { return(true); }
+    }
+  */
   
   void sqerr(vector<num_t> const& data, 
 	     num_t& mu, 
 	     num_t& se,
 	     size_t& nreal);      
 
-  /*
-    void sqerr2(vector<num_t> const& x,
-    vector<num_t> const& y,
-    num_t& mu_x,
-    num_t& mu_y,
-    num_t& se,
-    size_t& nreal)
-  */    
-
   void count_real_values(vector<num_t> const& data, size_t& nreal);
+  /*
+    {
+    nreal = 0;
+    for(size_t i = 0; i < data.size(); ++i) { if(!is_nan(data[i])) { ++nreal; } } 
+    }
+  */
 
-  void forward_sqerr(const num_t x_n,
-		     size_t& n,
-		     num_t& mu,
-		     num_t& se);
-  
+
+  /*
+    inline void forward_sqerr(const num_t x_n,
+    size_t& n,
+    num_t& mu,
+    num_t& se)
+    {  
+    if(is_nan(x_n)) { return; } 
+    ++n;
+    num_t mu_old(mu);
+    mu += (x_n - mu) / n;
+    //If there are already at least two data points, squared error can be calculated, otherwise assign se_left := 0.0
+    if(n > 1) { se += (x_n - mu) * (x_n - mu_old);} else { se = 0.0; }
+    }
+  */
+    
+    
   void forward_backward_sqerr(const num_t x_n,
 			      size_t& n_left,
 			      num_t& mu_left,
@@ -73,7 +94,7 @@ namespace datadefs
 			      size_t& n_right,
 			      num_t& mu_right,
 			      num_t& se_right);
-
+  
   void count_freq(vector<num_t> const& data, map<num_t,size_t>& cat2freq, size_t& nreal);
 
   void map_data(vector<num_t>& data, 

@@ -45,7 +45,7 @@ public:
   void clear_trainics();
 
   //Logic test whether the node has children or not
-  bool has_children();
+  inline bool has_children() { return(haschildren_); }
 
   //Helper functions
   void print();

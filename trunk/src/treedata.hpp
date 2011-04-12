@@ -71,24 +71,29 @@ protected:
 
   //Given feature, finds and returns the optimal split point wrt. sampleics. 
   //Samples branching left and right will be stored in sampleics_left (resp. right)
-  void split_target_with_num_feature(size_t featureidx,
-				     const size_t min_split,
-				     vector<size_t>& sampleics,
-				     vector<size_t>& sampleics_left,
-				     vector<size_t>& sampleics_right,
-				     num_t& splitvalue);
-  
-  void split_target_with_cat_feature(size_t featureidx,
-				     const size_t min_split,
-				     vector<size_t>& sampleics,
-				     vector<size_t>& sampleics_left,
-				     vector<size_t>& sampleics_right,
-				     set<num_t>& values_left);
-  
-  void split_target(const size_t min_split,
+  void split_target(size_t featureidx,
+		    const size_t min_split,
 		    vector<size_t>& sampleics,
 		    vector<size_t>& sampleics_left,
-		    vector<size_t>& sampleics_right);
+		    vector<size_t>& sampleics_right,
+		    num_t& splitvalue,
+		    set<num_t>& values_left);
+  
+  /*
+    void split_target_with_cat_feature(size_t featureidx,
+    const size_t min_split,
+    vector<size_t>& sampleics,
+    vector<size_t>& sampleics_left,
+    vector<size_t>& sampleics_right,
+    set<num_t>& values_left);
+  */
+  
+  /*
+    void split_target(const size_t min_split,
+    vector<size_t>& sampleics,
+    vector<size_t>& sampleics_left,
+    vector<size_t>& sampleics_right);
+  */
   
   num_t split_fitness(const size_t featureidx,
 		      const size_t min_split,
@@ -106,6 +111,8 @@ protected:
 
   num_t at(size_t featureidx, size_t sampleidx);
   num_t randf(size_t featureidx);
+
+  inline size_t randidx(const size_t n) { return(irand_() % n); }
 
 private:
 
