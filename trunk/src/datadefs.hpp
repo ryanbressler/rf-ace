@@ -71,21 +71,19 @@ namespace datadefs
   */
 
 
-  /*
-    inline void forward_sqerr(const num_t x_n,
-    size_t& n,
-    num_t& mu,
-    num_t& se)
-    {  
+  
+  inline void forward_sqerr(const num_t x_n,
+			    size_t& n,
+			    num_t& mu,
+			    num_t& se)
+  {  
     if(is_nan(x_n)) { return; } 
     ++n;
     num_t mu_old(mu);
     mu += (x_n - mu) / n;
     //If there are already at least two data points, squared error can be calculated, otherwise assign se_left := 0.0
     if(n > 1) { se += (x_n - mu) * (x_n - mu_old);} else { se = 0.0; }
-    }
-  */
-    
+  } 
     
   void forward_backward_sqerr(const num_t x_n,
 			      size_t& n_left,
