@@ -546,7 +546,7 @@ void datadefs::ttest(vector<datadefs::num_t> const& x,
     datadefs::regularized_betainc(ttrans,nreal_x - 1,pvalue);	
     pvalue = 1-pvalue;
     
-    cout << mean_x << "\t" << var_x << "\t" << mean_y << "\t" << var_y << "\t" << v << "\t" << sp << "\t" << t << "\t" << ttrans << "\t" << pvalue << endl;
+    //cout << mean_x << "\t" << var_x << "\t" << mean_y << "\t" << var_y << "\t" << v << "\t" << sp << "\t" << t << "\t" << ttrans << "\t" << pvalue << endl;
 
 }
 
