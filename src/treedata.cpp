@@ -10,18 +10,20 @@
 
 using namespace std;
 
-inline void forward_sqerr(const num_t x_n,
-			  size_t& n,
-			  num_t& mu,
-			  num_t& se)
-{
+/*
+  inline void forward_sqerr(const num_t x_n,
+  size_t& n,
+  num_t& mu,
+  num_t& se)
+  {
   if(datadefs::is_nan(x_n)) { return; }
   ++n;
   num_t mu_old(mu);
   mu += (x_n - mu) / n;
   //If there are already at least two data points, squared error can be calculated, otherwise assign se_left := 0.0
   if(n > 1) { se += (x_n - mu) * (x_n - mu_old);} else { se = 0.0; }
-}
+  }
+*/
 
 
 Treedata::Treedata(string fname, bool is_featurerows):
@@ -539,7 +541,7 @@ void Treedata::incremental_target_split(size_t featureidx,
   size_t nreal_f,nreal_t;
   datadefs::count_real_values(fv,nreal_f);
   datadefs::count_real_values(tv,nreal_t);
-  cout << nreal_f << " " << nreal_t << " " << n_tot << endl;
+  //cout << nreal_f << " " << nreal_t << " " << n_tot << endl;
   assert(nreal_t == n_tot && nreal_f == n_tot);
 
   int bestsplitidx = -1;
@@ -870,7 +872,7 @@ void Treedata::impurity(size_t featureidx, vector<size_t> const& sampleics, num_
       num_t se(0.0);
       for(size_t i = 0; i < n; ++i)
 	{
-	  forward_sqerr(featurematrix_[featureidx][sampleics[i]],nreal,mu,se);  
+	  datadefs::forward_sqerr(featurematrix_[featureidx][sampleics[i]],nreal,mu,se);  
 	}
       impurity = se/nreal;
     }
@@ -947,13 +949,13 @@ num_t Treedata::split_fitness(const size_t featureidx,
  
       for(size_t i = 0; i < sampleics_left.size(); ++i)
 	{
-	  forward_sqerr(featurematrix_[featureidx][sampleics_left[i]],n_right,mu_right,se_right);
+	  datadefs::forward_sqerr(featurematrix_[featureidx][sampleics_left[i]],n_right,mu_right,se_right);
 	  //cout << "forward sqerr: " << featurematrix_[featureidx][sampleics_left[i]] << " " << n_right << " " << mu_right << " " << se_right << endl; 
 	}
 
       for(size_t i = 0; i < sampleics_right.size(); ++i)
         {
-	  forward_sqerr(featurematrix_[featureidx][sampleics_right[i]],n_right,mu_right,se_right);
+	  datadefs::forward_sqerr(featurematrix_[featureidx][sampleics_right[i]],n_right,mu_right,se_right);
 	  //cout << "forward sqerr: " << featurematrix_[featureidx][sampleics_right[i]] << " " << n_right << " " << mu_right << " " << se_right << endl;
         }
 
