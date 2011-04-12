@@ -89,6 +89,7 @@ datadefs::num_t datadefs::str2num(string& str)
   return(ret);
 }
 
+
 bool datadefs::is_nan(const string& str)
 {
   set<string>::iterator it(NANs.find(str));
@@ -102,6 +103,8 @@ bool datadefs::is_nan(const string& str)
     }
 }
 
+
+
 bool datadefs::is_nan(const datadefs::num_t value)
 {
   if(value == datadefs::num_nan)
@@ -113,6 +116,7 @@ bool datadefs::is_nan(const datadefs::num_t value)
       return(false);
     }
 }
+
 
 void datadefs::sqerr(vector<datadefs::num_t> const& data, 
 		     datadefs::num_t& mu, 
@@ -211,6 +215,7 @@ void datadefs::sqerr(vector<datadefs::num_t> const& data,
   }
 */
 
+
 void datadefs::count_real_values(vector<num_t> const& data, size_t& nreal)
 {
   nreal = 0;
@@ -223,34 +228,35 @@ void datadefs::count_real_values(vector<num_t> const& data, size_t& nreal)
     }  
 }
 
-void datadefs::forward_sqerr(const datadefs::num_t x_n,
-			     size_t& n,
-			     datadefs::num_t& mu,
-			     datadefs::num_t& se)
-{
-  if(datadefs::is_nan(x_n))
-    {
-      return;
-    }
 
+/*
+  void datadefs::forward_sqerr(const datadefs::num_t x_n,
+  size_t& n,
+  datadefs::num_t& mu,
+  datadefs::num_t& se)
+  {
+  if(datadefs::is_nan(x_n))
+  {
+  return;
+  }
+  
   ++n;
   
   datadefs::num_t mu_old(mu);
-
+  
   mu += (x_n - mu) / n;
-
+  
   //If there are already at least two data points, squared error can be calculated, otherwise assign se_left := 0.0
   if(n > 1)
-    {
-      se += (x_n - mu) * (x_n - mu_old);
-    }
+  {
+  se += (x_n - mu) * (x_n - mu_old);
+  }
   else
-    {
-      se = 0.0;
-    }
-
-
-}
+  {
+  se = 0.0;
+  }
+  }
+*/
 
 //Assuming x_n is a current member of the "right" branch, subtract it from "right" and add it to "left", and update the branch data counts, means, and squared errors. NOTE: NaN checks not implemented
 void datadefs::forward_backward_sqerr(const datadefs::num_t x_n,

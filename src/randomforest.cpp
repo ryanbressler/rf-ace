@@ -143,24 +143,26 @@ void Randomforest::recursive_nodesplit(size_t treeidx, size_t nodeidx, vector<si
 
   //size_t nfeatures = treedata_->nfeatures();
   //Create mtry randomly selected feature indices to determine the split
-  vector<size_t> mtrysample(2*treedata_->nfeatures());
+  vector<size_t> mtrysample(mtry_);
 
   //size_t contrast_lower_limit = mtry_/2;
   
+  for(size_t i = 0; i < mtry_; ++i)
+    {
+      size_t nallfeatures = 2*treedata_->nfeatures();
+      mtrysample[i] = treedata_->randidx(nallfeatures);
+    }
+
   //vector<bool> iscontrast(mtry_);
-  treedata_->permute(mtrysample);
+  //treedata_->permute(mtrysample);
   //treedata_->generate_contrasts(iscontrast);
 
   cout << "Tree " << treeidx << "  Node " << nodeidx << endl;
 
   vector<size_t> sampleics_left,sampleics_right;
+  num_t splitvalue;
   set<num_t> values_left;
-  treedata_->split_target(nodesize_,sampleics,sampleics_left,sampleics_right);
-
-  //if(sampleics_left.size() < nodesize_ || sampleics_right.size() < nodesize_)
-  //  {
-  //    return;
-  //  }
+  treedata_->split_target(treedata_->get_target(),nodesize_,sampleics,sampleics_left,sampleics_right,splitvalue,values_left);
 
   assert(n_tot == sampleics.size());
 
@@ -171,7 +173,7 @@ void Randomforest::recursive_nodesplit(size_t treeidx, size_t nodeidx, vector<si
   size_t bestfeatureidx = mtry_;
   size_t targetidx = treedata_->get_target();
 
-  vector<num_t> fitness(mtry_);
+  //vector<num_t> fitness(mtry_);
 
   for(size_t i = 0; i < mtry_; ++i)
     {
@@ -181,36 +183,12 @@ void Randomforest::recursive_nodesplit(size_t treeidx, size_t nodeidx, vector<si
         {
           continue;
         }
-      
-      //cout << "Trying to split with feature " << featureidx << endl;
 
-      /*
-	num_t impurity_tot,impurity_left,impurity_right;
-	size_t nreal_left,nreal_right;
-	
-	
-	treedata_->impurity(featureidx,sampleics,impurity_tot,nreal_tot);	  
-	assert(sampleics.size() == n_tot);
-	
-	if(impurity_tot < datadefs::eps || nreal_tot < 2*nodesize_)
+      num_t fitness = treedata_->split_fitness(featureidx,nodesize_,sampleics,sampleics_left,sampleics_right);
+
+      if(fitness > bestfitness)
 	{
-	continue;
-	}
-	
-	treedata_->impurity(featureidx,sampleics_left,impurity_left,nreal_left);
-	assert(sampleics_left.size() == n_left);
-	
-	treedata_->impurity(featureidx,sampleics_right,impurity_right,nreal_right);
-	assert(sampleics_right.size() == n_right);
-	
-	num_t relativedecrease((impurity_tot-nreal_left*impurity_left/nreal_tot-nreal_right*impurity_right/nreal_tot)/impurity_tot);
-      */
-
-      fitness[i] = treedata_->split_fitness(featureidx,nodesize_,sampleics,sampleics_left,sampleics_right);
-
-      if(fitness[i] > bestfitness)
-	{
-	  bestfitness = fitness[i];
+	  bestfitness = fitness;
 	  bestfeatureidx = featureidx;
 	  if(fabs(bestfitness - 1.0) < datadefs::eps)
 	    {
@@ -226,17 +204,8 @@ void Randomforest::recursive_nodesplit(size_t treeidx, size_t nodeidx, vector<si
       return;
     }
   
-  //size_t splitterfeatureidx(mtrysample[bestsplitter_i]);
-  
   //cout << "Best splitter feature is " << splitterfeatureidx << " with relative decrease in impurity of " << bestrelativedecrease << endl; 
   
-  /*
-    if(splitterfeatureidx >= treedata_->nfeatures())
-    {
-    cout << "Splitter is CONTRAST" << endl;
-    }
-  */
-
   //vector<size_t> sampleics_copy = sampleics;
 
   size_t nreal_tot;
@@ -254,45 +223,40 @@ void Randomforest::recursive_nodesplit(size_t treeidx, size_t nodeidx, vector<si
   size_t nodeidx_left; //(++nnodes_[treeidx]);
   size_t nodeidx_right; //(++nnodes_[treeidx]);
 
+  //if(treedata_->isfeaturenum(bestfeatureidx))
+    // {
+  //num_t splitvalue;
+  //set<num_t> values_left;
+  treedata_->split_target(bestfeatureidx,nodesize_,sampleics,sampleics_left,sampleics_right,splitvalue,values_left);
+  assert(sampleics.size() == n_tot);
+  assert(sampleics_left.size() + sampleics_right.size() == n_tot);
+  if(sampleics_left.size() < nodesize_ || sampleics_right.size() < nodesize_)
+    {
+      cout << "Split was unsuccessful, quitting" << endl;
+      return;
+    }
+  
+  nodeidx_left = ++nnodes_[treeidx];
+  nodeidx_right = ++nnodes_[treeidx];
+  
   if(treedata_->isfeaturenum(bestfeatureidx))
     {
-      num_t splitvalue;
-      treedata_->split_target_with_num_feature(bestfeatureidx,nodesize_,sampleics,sampleics_left,sampleics_right,splitvalue);
-      assert(sampleics.size() == n_tot);
-      assert(sampleics_left.size() + sampleics_right.size() == n_tot);
-      if(sampleics_left.size() < nodesize_ || sampleics_right.size() < nodesize_)
-	{
-	  cout << "Split was unsuccessful, quitting" << endl;
-	  //Randomforest::recursive_nodesplit(treeidx,nodeidx,sampleics_copy);
-	  return;
-	}
-      nodeidx_left = ++nnodes_[treeidx];
-      nodeidx_right = ++nnodes_[treeidx];
       forest_[treeidx][nodeidx].set_splitter(bestfeatureidx,splitvalue,forest_[treeidx][nodeidx_left],forest_[treeidx][nodeidx_right]);
-      //cout << forest_[treeidx][nodeidx].has_children() << endl;
     }
   else
     {
-      set<num_t> values_left;
-      treedata_->split_target_with_cat_feature(bestfeatureidx,nodesize_,sampleics,sampleics_left,sampleics_right,values_left);
-      assert(sampleics.size() == n_tot);
-      assert(sampleics_left.size() + sampleics_right.size() == n_tot);
-      if(sampleics_left.size() < nodesize_ || sampleics_right.size() < nodesize_)
-	{
-	  cout << "Split was unsuccessful, quitting" << endl;
-	  //Randomforest::recursive_nodesplit(treeidx,nodeidx,sampleics_copy);
-	  return;
-	}
-      nodeidx_left = ++nnodes_[treeidx];
-      nodeidx_right = ++nnodes_[treeidx];
       forest_[treeidx][nodeidx].set_splitter(bestfeatureidx,values_left,forest_[treeidx][nodeidx_left],forest_[treeidx][nodeidx_right]);
-      //cout << forest_[treeidx][nodeidx].has_children() << endl;
+    }
+  
+  if(sampleics_left.size() > 2*nodesize_)
+    {
+      Randomforest::recursive_nodesplit(treeidx,nodeidx_left,sampleics_left);
     }
 
-  //cout << endl;
-
-  Randomforest::recursive_nodesplit(treeidx,nodeidx_left,sampleics_left);
-  Randomforest::recursive_nodesplit(treeidx,nodeidx_right,sampleics_right);
+  if(sampleics_right.size() > 2*nodesize_)
+    {
+      Randomforest::recursive_nodesplit(treeidx,nodeidx_right,sampleics_right);
+    }
   
 }
 

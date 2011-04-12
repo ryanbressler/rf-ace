@@ -107,10 +107,12 @@ void Node::clear_trainics()
   trainics_.clear();
 }
 
-bool Node::has_children()
-{
+/*
+  bool Node::has_children()
+  {
   return(haschildren_);
-}
+  }
+*/
 
 void Node::print()
 {
