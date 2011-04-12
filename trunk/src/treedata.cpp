@@ -607,18 +607,20 @@ void Treedata::incremental_target_split(size_t featureidx,
   //Return the split value
   splitvalue = fv[bestsplitidx];
 
-  cout << "Feature " << featureidx << " splits target " << targetidx_ << " [";
-  for(size_t i = 0; i < sampleics_left.size(); ++i)
+  if(false)
     {
-      cout << " " << featurematrix_[targetidx_][sampleics_left[i]];
+      cout << "Feature " << featureidx << " splits target " << targetidx_ << " [";
+      for(size_t i = 0; i < sampleics_left.size(); ++i)
+	{
+	  cout << " " << featurematrix_[targetidx_][sampleics_left[i]];
+	}
+      cout << " ] <==> [";
+      for(size_t i = 0; i < sampleics_right.size(); ++i)
+	{
+	  cout << " " << featurematrix_[targetidx_][sampleics_right[i]];
+	}
+      cout << " ]" << endl;
     }
-  cout << " ] <==> [";
-  for(size_t i = 0; i < sampleics_right.size(); ++i)
-    {
-      cout << " " << featurematrix_[targetidx_][sampleics_right[i]];
-    }
-  cout << " ]" << endl;
-  
 }
 
 void Treedata::categorical_target_split(size_t featureidx,
@@ -818,19 +820,20 @@ void Treedata::categorical_target_split(size_t featureidx,
 	}
     }  
 
-
-  cout << "Feature " << featureidx << " splits target " << targetidx_ << " [";
-  for(size_t i = 0; i < sampleics_left.size(); ++i)
+  if(false)
     {
-      cout << " " << featurematrix_[targetidx_][sampleics_left[i]];
+      cout << "Feature " << featureidx << " splits target " << targetidx_ << " [";
+      for(size_t i = 0; i < sampleics_left.size(); ++i)
+	{
+	  cout << " " << featurematrix_[targetidx_][sampleics_left[i]];
+	}
+      cout << " ] <==> [";
+      for(size_t i = 0; i < sampleics_right.size(); ++i)
+	{
+	  cout << " " << featurematrix_[targetidx_][sampleics_right[i]];
+	}
+      cout << " ]" << endl;
     }
-  cout << " ] <==> [";
-  for(size_t i = 0; i < sampleics_right.size(); ++i)
-    {
-      cout << " " << featurematrix_[targetidx_][sampleics_right[i]];
-    }
-  cout << " ]" << endl;
-  
 }
 
 num_t Treedata::at(size_t featureidx, size_t sampleidx)

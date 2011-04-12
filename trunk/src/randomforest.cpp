@@ -14,7 +14,7 @@ Randomforest::Randomforest(Treedata* treedata, size_t ntrees, size_t mtry, size_
   size_t defaulttargetidx = 0;
   Randomforest::select_target(defaulttargetidx);
 
-  cout << forest_.size() << " trees and " << forest_[0].size() << " max nodes per tree generated." << endl;
+  cout << forest_.size() << " trees and " << forest_[0].size() << " max nodes per tree initialized." << endl;
 
 }
 
@@ -128,6 +128,13 @@ void Randomforest::grow_tree(size_t treeidx)
   //Start the recursive node splitting from the root node. This will generate the tree.
   Randomforest::recursive_nodesplit(treeidx,rootnode,bootstrap_ics);
   
+  cout << "Tree " << treeidx << ", nodes:";
+  for(size_t i = 0; i < nnodes_[treeidx]; ++i)
+    {
+      cout << "|";
+    }
+  cout << endl;
+
 }
 
 void Randomforest::recursive_nodesplit(size_t treeidx, size_t nodeidx, vector<size_t>& sampleics)
@@ -137,7 +144,7 @@ void Randomforest::recursive_nodesplit(size_t treeidx, size_t nodeidx, vector<si
 
   if(n_tot < 2*nodesize_)
     {
-      cout << "Too few samples to start with, quitting" << endl;
+      //cout << "Too few samples to start with, quitting" << endl;
       return;
     }
 
@@ -157,7 +164,7 @@ void Randomforest::recursive_nodesplit(size_t treeidx, size_t nodeidx, vector<si
   //treedata_->permute(mtrysample);
   //treedata_->generate_contrasts(iscontrast);
 
-  cout << "Tree " << treeidx << "  Node " << nodeidx << endl;
+  //cout << "Tree " << treeidx << "  Node " << nodeidx << endl;
 
   vector<size_t> sampleics_left,sampleics_right;
   num_t splitvalue;
@@ -200,7 +207,7 @@ void Randomforest::recursive_nodesplit(size_t treeidx, size_t nodeidx, vector<si
   
   if(bestfeatureidx == mtry_)
     {
-      cout << "No splitter found, quitting" << endl << endl;
+      //cout << "No splitter found, quitting" << endl << endl;
       return;
     }
   
@@ -210,12 +217,12 @@ void Randomforest::recursive_nodesplit(size_t treeidx, size_t nodeidx, vector<si
 
   size_t nreal_tot;
   treedata_->remove_nans(bestfeatureidx,sampleics,nreal_tot);
-  cout << "Splitter " << bestfeatureidx << " has " << n_tot - nreal_tot << " missing values, which will be omitted in splitting" << endl;
+  //cout << "Splitter " << bestfeatureidx << " has " << n_tot - nreal_tot << " missing values, which will be omitted in splitting" << endl;
   n_tot = nreal_tot;
 
   if(n_tot < 2*nodesize_)
     {
-      cout << "Splitter has too few non-missing values, quitting" << endl;
+      //cout << "Splitter has too few non-missing values, quitting" << endl;
       //This needs to be fixed such that one of the surrogates will determine the split instead
       return;
     }
@@ -232,7 +239,7 @@ void Randomforest::recursive_nodesplit(size_t treeidx, size_t nodeidx, vector<si
   assert(sampleics_left.size() + sampleics_right.size() == n_tot);
   if(sampleics_left.size() < nodesize_ || sampleics_right.size() < nodesize_)
     {
-      cout << "Split was unsuccessful, quitting" << endl;
+      //cout << "Split was unsuccessful, quitting" << endl;
       return;
     }
   
