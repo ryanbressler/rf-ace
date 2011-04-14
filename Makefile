@@ -2,7 +2,7 @@ COMPILER = g++
 CFLAGS = -g -pg -O3 -Wall -pedantic
 RF_ACE_LIBS = -lboost_program_options
 
-all: rf_ace benchmark GBT_test
+all: rf_ace
 
 rf_ace: src/rf_ace.cpp src/randomforest.cpp src/node.cpp src/treedata.cpp src/mtrand.cpp src/datadefs.cpp
 	$(COMPILER) $(CFLAGS) src/rf_ace.cpp src/randomforest.cpp src/node.cpp src/treedata.cpp src/mtrand.cpp src/datadefs.cpp -o bin/rf_ace $(RF_ACE_LIBS)
