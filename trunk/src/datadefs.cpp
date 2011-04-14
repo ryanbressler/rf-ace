@@ -550,35 +550,74 @@ void datadefs::ttest(vector<datadefs::num_t> const& x,
 
 }
 
-void datadefs::regularized_betainc(const num_t x,
-				   const size_t a,
-				   num_t& ibval)
-{
-
-  ibval = 0;
-
+/*
+  void datadefs::regularized_betainc(const num_t x,
+  const size_t a,
+  num_t& ibval)
+  {
+  
+  ibval = 0.0;
+  
   num_t jfac = 1;
   for(size_t i = 1; i < a; ++i)
-    {
-      jfac *= i;
-    }
+  {
+  jfac *= i;
+  }
   
   num_t kfac = 1;
   for(size_t i = a+1; i < 2*a; ++i)
-    {
-      kfac *= i;
-    }
+  {
+  kfac *= i;
+  }
+  
+  for(size_t i = a; i < 2*a; ++i)
+  {
+  jfac *= i;
+  kfac *= 2*a - i;
+  ibval += kfac/jfac*powf(x,i)*powf(1-x,2*a-1-i);
+  
+  //cout << jfac << "\t" << kfac << "\t" << ibval << endl;
+  }
+  
+  }
+*/
 
+void datadefs::regularized_betainc(const datadefs::num_t x,
+                                   const size_t a,
+                                   datadefs::num_t& ibval)
+{
+
+  ibval = 0.0;
+  
+  datadefs::num_t jfac = 1;
+  for(size_t i = 1; i < a; ++i)
+    {
+      jfac += log(static_cast<datadefs::num_t>(i));
+    }
+  
+  datadefs::num_t kfac = 1;
+  for(size_t i = a+1; i < 2*a; ++i)
+    {
+      kfac += log(static_cast<datadefs::num_t>(i));
+    }
+  
   for(size_t i = a; i < 2*a; ++i)
     {
-      jfac *= i;
-      kfac *= 2*a - i;
-      ibval += kfac/jfac*powf(x,i)*powf(1-x,2*a-1-i);
-
+      jfac += log(static_cast<datadefs::num_t>(i));
+      kfac += log(static_cast<datadefs::num_t>(2*a - i));
+      datadefs::num_t temp = kfac - jfac + i*log(x) + (2*a-1-i)*log(1-x);
+      ibval += exp(temp);
+      
       //cout << jfac << "\t" << kfac << "\t" << ibval << endl;
     }
 
+  if(ibval > 1.0)
+    {
+      ibval = 1.0;
+    }
+  
 }
+
 
 void datadefs::spearman_correlation(vector<datadefs::num_t> const& x,
 				    vector<datadefs::num_t> const& y,
