@@ -1,0 +1,20 @@
+#summary Manual pages.
+
+= Installation =
+
+Linux:
+  # `svn checkout http://rf-ace.googlecode.com/svn/trunk/ rf-ace/`
+  # `make` (or `make rf_ace`) 
+
+Windows:
+  # 
+  # 
+
+OS X:
+  #
+  #
+
+= Usage =
+
+Linux:
+  # `bin/rf_ace --help`
