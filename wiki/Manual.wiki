@@ -17,4 +17,5 @@ OS X:
 = Usage =
 
 Linux:
-  # `bin/rf_ace --help`
+  * `bin/rf_ace --help`
+  * `bin/rf_ace -I input_matrix.tsv -i 0 -n 100 -m 100 -O output_asociations.tsv` 
