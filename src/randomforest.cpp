@@ -93,7 +93,7 @@ void Randomforest::grow_forest(const size_t nperms, const num_t alpha, vector<nu
     }
 
   num_t time_diff = 1.0*(clock() - time_start) / CLOCKS_PER_SEC;
-  cout << nperms << " RFs generated in " << time_diff << " seconds (" << 1.0*nnodesinallforests / time_diff << " nodes per second)" << endl;
+  cout << nperms << " RFs, " << nperms*ntrees_ << " trees, and " << nnodesinallforests << " nodes generated in " << time_diff << " seconds (" << 1.0*nnodesinallforests / time_diff << " nodes per second)" << endl;
 
   size_t nfeatures = treedata_->nfeatures();
   pvalues.resize(nfeatures);
