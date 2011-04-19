@@ -258,6 +258,18 @@ void datadefs::count_real_values(vector<num_t> const& data, size_t& nreal)
   }
 */
 
+void datadefs::zerotrim(vector<datadefs::num_t>& data)
+{
+  int n = data.size();
+  for(int i = n-1; i >= 0; --i)
+    {
+      if(fabs(data[i]) < datadefs::eps)
+	{
+	  data.erase(data.begin() + i);
+	}
+    }
+}
+
 //Assuming x_n is a current member of the "right" branch, subtract it from "right" and add it to "left", and update the branch data counts, means, and squared errors. NOTE: NaN checks not implemented
 void datadefs::forward_backward_sqerr(const datadefs::num_t x_n,
 				      size_t& n_left,
@@ -529,18 +541,18 @@ void datadefs::ttest(vector<datadefs::num_t> const& x,
 
     size_t v;
     datadefs::num_t sp,t,ttrans;
-    if(fabs(mean_y) < datadefs::eps && var_y < datadefs::eps) //Reduce to one-sample t-test
-      {
-	v = nreal_x - 1;
-	sp = sqrt(var_x/nreal_x);
-	t = sqrt(1.0*nreal_x)*mean_x / sqrt(var_x);
-      }
-    else //Two-sample t-test
-      {
-	v = nreal_x + nreal_y - 2;
-	sp = sqrt(((nreal_x-1) * var_x + (nreal_y-1) * var_y) / v);
-	t = (mean_x - mean_y) / (sp * sqrt(1.0 / nreal_x + 1.0 / nreal_y));
-      }
+    //if(fabs(mean_y) < datadefs::eps && var_y < datadefs::eps) //Reduce to one-sample t-test
+    //  {
+    //	v = nreal_x - 1;
+    //	sp = sqrt(var_x/nreal_x);
+    //	t = sqrt(1.0*nreal_x)*mean_x / sqrt(var_x);
+    // }
+    //else //Two-sample t-test
+    // {
+    v = nreal_x + nreal_y - 2;
+    sp = sqrt(((nreal_x-1) * var_x + (nreal_y-1) * var_y) / v);
+    t = (mean_x - mean_y) / (sp * sqrt(1.0 / nreal_x + 1.0 / nreal_y));
+    //  }
     ttrans = (t+sqrt(pow(t,2) + v)) / (2 * sqrt(pow(t,2) + v));
 
     datadefs::regularized_betainc(ttrans,nreal_x - 1,pvalue);	

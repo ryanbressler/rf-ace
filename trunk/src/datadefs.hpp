@@ -70,6 +70,7 @@ namespace datadefs
     }
   */
 
+  void zerotrim(vector<num_t>& data);
 
   
   inline void forward_sqerr(const num_t x_n,
