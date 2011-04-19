@@ -108,7 +108,7 @@ void Randomforest::grow_forest(const size_t nperms, const num_t alpha, vector<nu
 	}
       datadefs::zerotrim(tempvec);
       datadefs::percentile(tempvec,alpha,csample[p]);
-      cout << csample[p] << endl;
+      //cout << csample[p] << endl;
     }
   
   for(size_t f = 0; f < nfeatures; ++f)
