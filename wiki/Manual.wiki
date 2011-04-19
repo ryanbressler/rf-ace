@@ -2,7 +2,7 @@
 
 = Installation =
 
-Download rface_src_v0.1.2.tar.gz and uncompress it.
+Download the latest package from the Download page and uncompress it.
 
 Linux:
   # `make` (or `make rf_ace`) 
