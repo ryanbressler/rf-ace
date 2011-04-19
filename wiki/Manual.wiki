@@ -2,8 +2,9 @@
 
 = Installation =
 
+Download rface_src_v0.1.2.tar.gz and uncompress it.
+
 Linux:
-  # `svn checkout http://rf-ace.googlecode.com/svn/trunk/ rf-ace/`
   # `make` (or `make rf_ace`) 
 
 Windows:
