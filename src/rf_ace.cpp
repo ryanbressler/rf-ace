@@ -154,12 +154,12 @@ int main(int argc, char* argv[])
 	//treedata.print();   
 	
 	//size_t nperms = 9;
-	num_t alpha(0.5);
+	num_t alpha = 0.95;
         vector<num_t> pvalues(treedata.nfeatures());
 
-	clock_t time_start(clock());
+	//clock_t time_start(clock());
 	RF.grow_forest(nperms,alpha,pvalues);
-	cout << "Time elapsed: " << float(clock() - time_start)/CLOCKS_PER_SEC << " seconds" << endl;
+	//cout << "Time elapsed: " << float(clock() - time_start)/CLOCKS_PER_SEC << " seconds" << endl;
 
 	vector<size_t> ref_ics(treedata.nfeatures());
 	//vector<string> fnames = treedata.featureheaders();

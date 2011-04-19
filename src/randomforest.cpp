@@ -1,7 +1,8 @@
 #include "randomforest.hpp"
 #include "datadefs.hpp"
-#include<cmath>
-#include<iostream>
+#include <cmath>
+#include <ctime>
+#include <iostream>
 
 Randomforest::Randomforest(Treedata* treedata, size_t ntrees, size_t mtry, size_t nodesize):
   treedata_(treedata),
@@ -72,32 +73,68 @@ void Randomforest::grow_forest(const size_t nperms, const num_t alpha, vector<nu
   vector<vector<num_t> > importancemat(nperms);
   //vector<num_t> csample(nperms);
 
+  clock_t time_start(clock());
+  size_t nnodesinallforests = 0;
   for(size_t p = 0; p < nperms; ++p)
     {
-      cout << "Growing forest " << p << endl;
+      cout << "Growing forest " << p << ": ";
       Randomforest::init_forest();
       treedata_->permute_contrasts();
+      size_t nnodesinforest = 0;
       for(size_t t = 0; t < ntrees_; ++t)
 	{
 	  Randomforest::grow_tree(t);
+	  nnodesinforest += nnodes_[t];
 	}
+      nnodesinallforests += nnodesinforest;
       //Randomforest::calculate_importance(alpha,importancemat[p],csample[p]);
       Randomforest::calculate_importance(importancemat[p]);
+      cout << nnodesinforest << " nodes (avg. " << 1.0*nnodesinforest / ntrees_ << " nodes / tree)" << endl;
     }
+
+  num_t time_diff = 1.0*(clock() - time_start) / CLOCKS_PER_SEC;
+  cout << nperms << " RFs generated in " << time_diff << " seconds (" << 1.0*nnodesinallforests / time_diff << " nodes per second)" << endl;
 
   size_t nfeatures = treedata_->nfeatures();
   pvalues.resize(nfeatures);
+  
+  vector<num_t> csample(nperms);
+  for(size_t p = 0; p < nperms; ++p)
+    {
+      vector<num_t> tempvec(nfeatures);
+      for(size_t f = 0; f < nfeatures; ++f)
+	{
+	  tempvec[f] = importancemat[p][f + nfeatures];
+	}
+      datadefs::zerotrim(tempvec);
+      datadefs::percentile(tempvec,alpha,csample[p]);
+      cout << csample[p] << endl;
+    }
+  
   for(size_t f = 0; f < nfeatures; ++f)
     {
       vector<num_t> fsample(nperms);
-      vector<num_t> csample(nperms);
       for(size_t p = 0; p < nperms; ++p)
 	{
 	  fsample[p] = importancemat[p][f];
-	  csample[p] = importancemat[p][f + nfeatures];
 	}
       datadefs::ttest(fsample,csample,pvalues[f]);
     }
+  
+  /*
+    for(size_t f = 0; f < nfeatures; ++f)
+    {
+    vector<num_t> fsample(nperms);
+    vector<num_t> csample(nperms);
+    for(size_t p = 0; p < nperms; ++p)
+    {
+    fsample[p] = importancemat[p][f];
+    csample[p] = importancemat[p][f + nfeatures];
+    }
+    datadefs::ttest(fsample,csample,pvalues[f]);
+    }
+  */
+  
 }
 
 void Randomforest::grow_tree(size_t treeidx)
@@ -128,12 +165,12 @@ void Randomforest::grow_tree(size_t treeidx)
   //Start the recursive node splitting from the root node. This will generate the tree.
   Randomforest::recursive_nodesplit(treeidx,rootnode,bootstrap_ics);
   
-  cout << "Tree " << treeidx << ", nodes:";
-  for(size_t i = 0; i < nnodes_[treeidx]; ++i)
-    {
-      cout << "|";
-    }
-  cout << endl;
+  //cout << "Tree " << treeidx << ", nodes:";
+  //for(size_t i = 0; i < nnodes_[treeidx]; ++i)
+  //  {
+  //    cout << "|";
+  //  }
+  //cout << endl;
 
 }
 

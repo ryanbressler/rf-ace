@@ -1,5 +1,5 @@
 COMPILER = g++
-CFLAGS = -g -pg -O3 -Wall -pedantic
+CFLAGS = -O3 -Wall -pedantic
 RF_ACE_LIBS = -lboost_program_options
 
 all: rf_ace
