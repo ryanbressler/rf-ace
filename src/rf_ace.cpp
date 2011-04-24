@@ -154,7 +154,7 @@ int main(int argc, char* argv[])
 	//treedata.print();   
 	
 	//size_t nperms = 9;
-	num_t alpha = 0.95;
+	num_t alpha = 0.50;
         vector<num_t> pvalues(treedata.nfeatures());
 
 	//clock_t time_start(clock());
@@ -171,6 +171,10 @@ int main(int argc, char* argv[])
 	ofstream os(output_filename.c_str());
 	for(size_t i = 0; i < treedata.nfeatures(); ++i)
 	  {
+	    if(pvalues[i] > 0.5)
+	      {
+		break;
+	      }
 	    os << target_str << "\t" << treedata.get_featureheader(ref_ics[i]) << "\t" 
 	       << pvalues[i] << "\t" << treedata.corr(targetidx,ref_ics[i]) << endl;
 	  }
