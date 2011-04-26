@@ -14,6 +14,7 @@
 #include "datadefs.hpp"
 
 using namespace std;
+using datadefs::num_t;
 
 namespace po = boost::program_options;
 
@@ -21,6 +22,7 @@ enum MatrixFormat { FEATURE_ROWS, FEATURE_COLUMNS };
 
 const size_t DEFAULT_NODESIZE = 5;
 const size_t DEFAULT_NPERMS = 9;
+const num_t DEFAULT_PTHRESHOLD = 0.5;
 
 int main(int argc, char* argv[])
 {
@@ -39,7 +41,8 @@ int main(int argc, char* argv[])
           ("ntrees,n", po::value<size_t>(), "Number of decision trees")
           ("mtry,m", po::value<size_t>(), "Number of randomly selected features for each split process")
           ("nodesize,s", po::value<size_t>(), "Minimum number of samples per node")
-	  ("nperms,p", po::value<size_t>(), "Number of permutations (must be odd and >6)")
+	  ("nperms,p", po::value<size_t>(), "Number of permutations")
+	  ("pthreshold,t", po::value<num_t>(), "p-value threshold for output associations")
           ("help,h", "Display help message")
         ;
         
@@ -136,6 +139,15 @@ int main(int argc, char* argv[])
 	  nperms = DEFAULT_NPERMS;
         }
 
+        num_t pthreshold = 0;
+        if (var_map.count("pthreshold")) {
+          pthreshold = var_map["pthreshold"].as<num_t>();
+        } else {
+          cout << "Parameter 'pthreshold' not set, defaulting to " << DEFAULT_PTHRESHOLD << "." << endl;
+          pthreshold = DEFAULT_PTHRESHOLD;
+        }
+
+
 
         bool is_featurerows = true;
         if (mat_format == FEATURE_COLUMNS) {
@@ -171,7 +183,7 @@ int main(int argc, char* argv[])
 	ofstream os(output_filename.c_str());
 	for(size_t i = 0; i < treedata.nfeatures(); ++i)
 	  {
-	    if(pvalues[i] > 0.5)
+	    if(pvalues[i] > pthreshold)
 	      {
 		break;
 	      }
