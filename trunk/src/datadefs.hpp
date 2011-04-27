@@ -1,16 +1,6 @@
 #ifndef DATADEFS_HPP
 #define DATADEFS_HPP
 
-/*
-  #define N              (624)                 // length of state vector
-  #define M              (397)                 // a period parameter
-  #define K              (0x9908B0DFU)         // a magic constant
-  #define hiBit(u)       ((u) & 0x80000000U)   // mask all but highest   bit of u
-  #define loBit(u)       ((u) & 0x00000001U)   // mask all but lowest    bit of u
-  #define loBits(u)      ((u) & 0x7FFFFFFFU)   // mask     the highest   bit of u
-  #define mixBits(u, v)  (hiBit(u)|loBits(v))  // move hi bit of u to hi bit of v
-*/
-
 #include<cstdlib>
 #include<vector>
 #include<set>
@@ -43,32 +33,16 @@ namespace datadefs
   num_t str2num(string& str);
 
   bool is_nan(const string& str);
-  /*
-    {
-    set<string>::iterator it(NANs.find(str));
-    if(it == NANs.end()) { return(false); } else { return(true); }
-    }
-  */
-  
   bool is_nan(const num_t value);
-  /*
-    {
-    if(value == numeric_limits<float>::infinity()) { return(false); } else { return(true); }
-    }
-  */
   
+  void mean(vector<num_t> const& data, num_t& mu, size_t& nreal);
+
   void sqerr(vector<num_t> const& data, 
 	     num_t& mu, 
 	     num_t& se,
 	     size_t& nreal);      
 
   void count_real_values(vector<num_t> const& data, size_t& nreal);
-  /*
-    {
-    nreal = 0;
-    for(size_t i = 0; i < data.size(); ++i) { if(!is_nan(data[i])) { ++nreal; } } 
-    }
-  */
 
   void zerotrim(vector<num_t>& data);
 
