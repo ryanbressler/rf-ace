@@ -117,46 +117,38 @@ bool datadefs::is_nan(const datadefs::num_t value)
     }
 }
 
+void datadefs::mean(vector<datadefs::num_t> const& data, datadefs::num_t& mu, size_t& nreal)
+{
+ 
+  nreal = 0;
+  mu = 0.0;
+ 
+  for(size_t i = 0; i < data.size(); ++i)
+    {
+      if(!datadefs::is_nan(data[i]))
+        {
+          ++nreal;
+          mu += data[i];
+        }
+    }
+
+  if(nreal > 0)
+    {
+      mu /= nreal;
+    }
+
+}
 
 void datadefs::sqerr(vector<datadefs::num_t> const& data, 
 		     datadefs::num_t& mu, 
 		     datadefs::num_t& se,
 		     size_t& nreal)
 {
+    
+  datadefs::mean(data,mu,nreal);
   
-  nreal = 0;
-  mu = 0.0;
   se = 0.0;
-  
-  size_t n(data.size());
-
-  if(n == 0)
-    {
-      return;
-    }
-
-  if(!datadefs::is_nan(data[0]))
-    {
-      mu = data[0];
-      nreal = 1;
-    }
-  
-  for(size_t i = 1; i < n; ++i)
-    {
-      if(!datadefs::is_nan(data[i]))
-	{
-	  ++nreal;
-	  mu += data[i];
-	}
-    }
-  
-  if(nreal > 0)
-    {
-      mu /= nreal;
-    }
-  
-  //This should be computed iteratively inside the previous loop (speed-up)!
-  for(size_t i = 0; i < n; ++i)
+  for(size_t i = 0; i < data.size(); ++i)
     {
       if(!datadefs::is_nan(data[i]))
 	{
@@ -164,57 +156,6 @@ void datadefs::sqerr(vector<datadefs::num_t> const& data,
 	}
     }
 }
-
-/*
-  void datadefs::sqerr2(vector<datadefs::num_t> const& x, 
-  vector<datadefs::num_t> const& y,  
-  datadefs::num_t& se,
-  size_t& nreal)
-  {
-  
-  mu_x = 0.0;
-  mu_y = 0.0;
-  se = 0.0;
-  
-  
-  size_t n(data.size());
-  
-  if(n == 0)
-  {
-  return;
-  }
-  
-  if(!datadefs::is_nan(data[0]))
-  {
-  mu = data[0];
-  nreal = 1;
-  }
-  
-  for(size_t i = 1; i < n; ++i)
-  {
-  if(!datadefs::is_nan(data[i]))
-  {
-  ++nreal;
-  mu += data[i];
-  }
-  }
-  
-  if(nreal > 0)
-  {
-  mu /= nreal;
-  }
-  
-  //This should be computed iteratively inside the previous loop (speed-up)!
-  for(size_t i = 0; i < n; ++i)
-  {
-  if(!datadefs::is_nan(data[i]))
-  {
-  se += pow(data[i] - mu,2);
-  }
-  }
-  }
-*/
-
 
 void datadefs::count_real_values(vector<num_t> const& data, size_t& nreal)
 {
@@ -227,36 +168,6 @@ void datadefs::count_real_values(vector<num_t> const& data, size_t& nreal)
 	}
     }  
 }
-
-
-/*
-  void datadefs::forward_sqerr(const datadefs::num_t x_n,
-  size_t& n,
-  datadefs::num_t& mu,
-  datadefs::num_t& se)
-  {
-  if(datadefs::is_nan(x_n))
-  {
-  return;
-  }
-  
-  ++n;
-  
-  datadefs::num_t mu_old(mu);
-  
-  mu += (x_n - mu) / n;
-  
-  //If there are already at least two data points, squared error can be calculated, otherwise assign se_left := 0.0
-  if(n > 1)
-  {
-  se += (x_n - mu) * (x_n - mu_old);
-  }
-  else
-  {
-  se = 0.0;
-  }
-  }
-*/
 
 void datadefs::zerotrim(vector<datadefs::num_t>& data)
 {
@@ -540,7 +451,7 @@ void datadefs::ttest(vector<datadefs::num_t> const& x,
       }
 
     size_t v;
-    datadefs::num_t sp,t,ttrans;
+    datadefs::num_t sp,tvalue,ttrans;
     //if(fabs(mean_y) < datadefs::eps && var_y < datadefs::eps) //Reduce to one-sample t-test
     //  {
     //	v = nreal_x - 1;
@@ -551,9 +462,9 @@ void datadefs::ttest(vector<datadefs::num_t> const& x,
     // {
     v = nreal_x + nreal_y - 2;
     sp = sqrt(((nreal_x-1) * var_x + (nreal_y-1) * var_y) / v);
-    t = (mean_x - mean_y) / (sp * sqrt(1.0 / nreal_x + 1.0 / nreal_y));
+    tvalue = (mean_x - mean_y) / (sp * sqrt(1.0 / nreal_x + 1.0 / nreal_y));
     //  }
-    ttrans = (t+sqrt(pow(t,2) + v)) / (2 * sqrt(pow(t,2) + v));
+    ttrans = (tvalue+sqrt(pow(tvalue,2) + v)) / (2 * sqrt(pow(tvalue,2) + v));
 
     datadefs::regularized_betainc(ttrans,nreal_x - 1,pvalue);	
     pvalue = 1-pvalue;

@@ -147,8 +147,6 @@ int main(int argc, char* argv[])
           pthreshold = DEFAULT_PTHRESHOLD;
         }
 
-
-
         bool is_featurerows = true;
         if (mat_format == FEATURE_COLUMNS) {
             is_featurerows = false;
@@ -168,14 +166,17 @@ int main(int argc, char* argv[])
 	//size_t nperms = 9;
 	num_t alpha = 0.50;
         vector<num_t> pvalues(treedata.nfeatures());
+	vector<num_t> ivalues(treedata.nfeatures());
+	//vector<num_t> ivalues(treedata.nfeatures());
 
 	//clock_t time_start(clock());
-	RF.grow_forest(nperms,alpha,pvalues);
+	RF.grow_forest(nperms,alpha,pvalues,ivalues);
 	//cout << "Time elapsed: " << float(clock() - time_start)/CLOCKS_PER_SEC << " seconds" << endl;
 
 	vector<size_t> ref_ics(treedata.nfeatures());
 	//vector<string> fnames = treedata.featureheaders();
 	datadefs::sort_and_make_ref<num_t>(pvalues,ref_ics);
+	datadefs::sort_from_ref<num_t>(ivalues,ref_ics);
 	//datadefs::sort_from_ref<string>(fnames,ref_ics);
 	
 	string target_str = treedata.get_featureheader(targetidx);
@@ -188,7 +189,7 @@ int main(int argc, char* argv[])
 		break;
 	      }
 	    os << target_str << "\t" << treedata.get_featureheader(ref_ics[i]) << "\t" 
-	       << pvalues[i] << "\t" << treedata.corr(targetidx,ref_ics[i]) << endl;
+	       << pvalues[i] << "\t" << ivalues[i] << "\t" << treedata.corr(targetidx,ref_ics[i]) << endl;
 	  }
 	os.close();
 	
