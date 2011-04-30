@@ -174,7 +174,9 @@ int main(int argc, char* argv[])
 	RF.select_target(targetidx);
 	//treedata.print();   
 	
-	treedata.print(targetidx);
+	//treedata.print(targetidx);
+
+	cout << "Target feature (" << targetidx << ") " << treedata.get_featureheader(targetidx) << endl;
 
 	//size_t nperms = 9;
 	//num_t alpha = 0.50;
