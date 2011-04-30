@@ -23,6 +23,7 @@ enum MatrixFormat { FEATURE_ROWS, FEATURE_COLUMNS };
 const size_t DEFAULT_NODESIZE = 5;
 const size_t DEFAULT_NPERMS = 9;
 const num_t DEFAULT_PTHRESHOLD = 0.5;
+const num_t DEFAULT_ALPHA = 0.95;
 
 int main(int argc, char* argv[])
 {
@@ -43,6 +44,7 @@ int main(int argc, char* argv[])
           ("nodesize,s", po::value<size_t>(), "Minimum number of samples per node")
 	  ("nperms,p", po::value<size_t>(), "Number of permutations")
 	  ("pthreshold,t", po::value<num_t>(), "p-value threshold for output associations")
+	  ("alpha,a", po::value<num_t>(), "alpha percentile, controls the noise level for the t-test")
           ("help,h", "Display help message")
         ;
         
@@ -147,6 +149,15 @@ int main(int argc, char* argv[])
           pthreshold = DEFAULT_PTHRESHOLD;
         }
 
+	num_t alpha = 0;
+        if (var_map.count("alpha")) {
+          alpha = var_map["alpha"].as<num_t>();
+        } else {
+          cout << "Parameter 'alpha' not set, defaulting to " << DEFAULT_ALPHA << "." << endl;
+          alpha = DEFAULT_ALPHA;
+        }
+
+
         bool is_featurerows = true;
         if (mat_format == FEATURE_COLUMNS) {
             is_featurerows = false;
@@ -166,7 +177,7 @@ int main(int argc, char* argv[])
 	treedata.print(targetidx);
 
 	//size_t nperms = 9;
-	num_t alpha = 0.50;
+	//num_t alpha = 0.50;
         vector<num_t> pvalues(treedata.nfeatures());
 	vector<num_t> ivalues(treedata.nfeatures());
 	//vector<num_t> ivalues(treedata.nfeatures());
