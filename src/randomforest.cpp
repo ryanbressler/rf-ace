@@ -45,6 +45,7 @@ void Randomforest::init_forest()
   for(size_t i = 0; i < ntrees_; ++i)
     {
       forest_[i].resize(nmaxnodes);
+      nnodes_[i] = 1;
     }
 }
   
@@ -109,7 +110,14 @@ void Randomforest::grow_forest(const size_t nperms, const num_t alpha, vector<nu
 	  tempvec[f] = importancemat[p][f + nfeatures];
 	}
       datadefs::zerotrim(tempvec);
-      datadefs::percentile(tempvec,alpha,csample[p]);
+      if(tempvec.size() > 0)
+	{
+	  datadefs::percentile(tempvec,alpha,csample[p]);
+	}
+      else
+	{
+	  csample[p] = 0;
+	}
       //cout << csample[p] << endl;
     }
   
@@ -145,6 +153,8 @@ void Randomforest::grow_forest(const size_t nperms, const num_t alpha, vector<nu
     datadefs::ttest(fsample,csample,pvalues[f]);
     }
   */
+
+  //cout << "done" << endl;
   
 }
 
@@ -291,8 +301,8 @@ void Randomforest::recursive_nodesplit(size_t treeidx, size_t nodeidx, vector<si
       return;
     }
   
-  nodeidx_left = ++nnodes_[treeidx];
-  nodeidx_right = ++nnodes_[treeidx];
+  nodeidx_left = nnodes_[treeidx]++;
+  nodeidx_right = nnodes_[treeidx]++;
   
   if(treedata_->isfeaturenum(bestfeatureidx))
     {
@@ -356,6 +366,7 @@ void Randomforest::percolate_sampleics(Node& rootnode, vector<size_t>& sampleics
     cout << endl;
     }
   */
+  
 }
 
 void Randomforest::percolate_sampleics_randf(size_t featureidx, Node& rootnode, vector<size_t>& sampleics, map<Node*,vector<size_t> >& trainics)
