@@ -163,6 +163,8 @@ int main(int argc, char* argv[])
 	RF.select_target(targetidx);
 	//treedata.print();   
 	
+	treedata.print(targetidx);
+
 	//size_t nperms = 9;
 	num_t alpha = 0.50;
         vector<num_t> pvalues(treedata.nfeatures());
