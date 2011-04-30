@@ -120,6 +120,13 @@ void Randomforest::grow_forest(const size_t nperms, const num_t alpha, vector<nu
 	{
 	  fsample[p] = importancemat[p][f];
 	}
+      // cout << "ttest " << f << ":";
+      //for(size_t i = 0; i < nperms; ++i)
+      //	{
+      //  cout << "(" << fsample[i] << "," << csample[i] << ")";
+      //	}
+      //cout << endl;
+ 
       datadefs::ttest(fsample,csample,pvalues[f]);
       size_t nreal;
       datadefs::mean(fsample,ivalues[f],nreal);
@@ -436,7 +443,10 @@ void Randomforest::calculate_importance(vector<num_t>& importance)
 	      Randomforest::percolate_sampleics_randf(f,rootnode,oobmatrix_[i],trainics);
 	      num_t impurity_perm;
 	      Randomforest::tree_impurity(trainics,impurity_perm);
-	      importance[f] += noob_new * (impurity_perm - impurity_tree) / impurity_tree; 
+	      if(fabs(impurity_tree) > datadefs::eps)
+		{
+		  importance[f] += noob_new * (impurity_perm - impurity_tree) / impurity_tree;
+		} 
 	    }
 	}
     }
@@ -492,7 +502,7 @@ void Randomforest::tree_impurity(map<Node*,vector<size_t> >& trainics, num_t& im
 {
 
   impurity = 0.0;
-  size_t n_tot(0);
+  size_t n_tot = 0;
   
   size_t targetidx(treedata_->get_target());
 

@@ -35,6 +35,7 @@ public:
 
   //Prints the treedata matrix in its internal form
   void print();
+  void print(const size_t featureidx);
 
 protected: 
 

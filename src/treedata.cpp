@@ -10,22 +10,6 @@
 
 using namespace std;
 
-/*
-  inline void forward_sqerr(const num_t x_n,
-  size_t& n,
-  num_t& mu,
-  num_t& se)
-  {
-  if(datadefs::is_nan(x_n)) { return; }
-  ++n;
-  num_t mu_old(mu);
-  mu += (x_n - mu) / n;
-  //If there are already at least two data points, squared error can be calculated, otherwise assign se_left := 0.0
-  if(n > 1) { se += (x_n - mu) * (x_n - mu_old);} else { se = 0.0; }
-  }
-*/
-
-
 Treedata::Treedata(string fname, bool is_featurerows):
   targetidx_(0),
   featurematrix_(0),
@@ -249,6 +233,16 @@ void Treedata::print()
         }
       cout << endl;
     }
+}
+
+void Treedata::print(const size_t featureidx)
+{
+  cout << "Print " << featureheaders_[featureidx] << ":";
+  for(size_t i = 0; i < nsamples_; ++i)
+    {
+      cout << " " << featurematrix_[featureidx][i];
+    }
+  cout << endl;
 }
 
 /*
