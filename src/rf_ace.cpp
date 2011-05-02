@@ -29,11 +29,27 @@ const size_t DEFAULT_NTREES = 0;
 const size_t DEFAULT_MTRY = 0;
 const size_t DEFAULT_NODESIZE = 5;
 const size_t DEFAULT_NPERMS = 20;
-const num_t DEFAULT_PTHRESHOLD = 0.5;
+const num_t DEFAULT_PTHRESHOLD = 0.10;
 const num_t DEFAULT_ALPHA = 0.95;
 
 int main(int argc, char* argv[])
 {
+
+  if(argc == 1)
+    {
+      cout << "REQUIRED:" << endl;
+      cout << "-I / --input        input feature matrix" << endl;
+      cout << "-O / --output       output association file" << endl << endl;
+      cout << "OPTIONAL:" << endl;
+      cout << "-i / --targetidx    target index, ref. to feature matrix (default " << DEFAULT_TARGETIDX << ")" << endl;
+      cout << "-n / --ntrees       number of trees per RF (default nsamples)" << endl;
+      cout << "-m / --mtry         number of randomly drawn features per node split (default sqrt(nfeatures))" << endl;
+      cout << "-s / --nodesize     minimum number of train samples per node, affects tree depth (default " << DEFAULT_NODESIZE << ")" << endl;
+      cout << "-p / --nperms       number of Random Forests (default " << DEFAULT_NPERMS << ")" << endl;
+      cout << "-t / --pthreshold   p-value threshold below which associations are listed (default " << DEFAULT_PTHRESHOLD << ")" << endl;
+      cout << "-a / --alpha        percentile of contrast importances, defines stringency of the t-test (default " << DEFAULT_ALPHA << ")" << endl;
+      return EXIT_SUCCESS;
+    }
 
   //using namespace GetOpt;
   string input = "";
