@@ -4,8 +4,8 @@ RF_ACE_LIBS = -lboost_program_options
 
 all: rf_ace
 
-rf_ace: src/rf_ace.cpp src/randomforest.cpp src/node.cpp src/treedata.cpp src/mtrand.cpp src/datadefs.cpp
-	$(COMPILER) $(CFLAGS) src/rf_ace.cpp src/randomforest.cpp src/node.cpp src/treedata.cpp src/mtrand.cpp src/datadefs.cpp -o bin/rf_ace $(RF_ACE_LIBS)
+rf_ace: src/rf_ace.cpp src/getopt_pp.cpp src/randomforest.cpp src/node.cpp src/treedata.cpp src/mtrand.cpp src/datadefs.cpp
+	$(COMPILER) $(CFLAGS) src/rf_ace.cpp src/getopt_pp.cpp src/randomforest.cpp src/node.cpp src/treedata.cpp src/mtrand.cpp src/datadefs.cpp -o bin/rf_ace
 
 benchmark: src/benchmark.cpp src/randomforest.cpp src/node.cpp src/treedata.cpp src/datadefs.cpp 
 	$(COMPILER) $(CFLAGS) src/benchmark.cpp src/randomforest.cpp src/node.cpp src/treedata.cpp src/datadefs.cpp -o bin/benchmark
