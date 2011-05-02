@@ -935,6 +935,7 @@ num_t Treedata::split_fitness(const size_t featureidx,
   
   assert(sampleics.size() == sampleics_left.size() + sampleics_right.size());
 
+  size_t n_tot = sampleics.size();
   size_t n_left = 0;
   size_t n_right = 0;
   if(isfeaturenum_[featureidx])
@@ -1000,7 +1001,7 @@ num_t Treedata::split_fitness(const size_t featureidx,
          return(0.0);
        }
 
-      size_t n_tot = n_right;
+      //size_t n_tot = n_right;
       num_t sf_tot = sf_right;
 
       for(size_t i = 0; i < sampleics_left.size(); ++i)
