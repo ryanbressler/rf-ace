@@ -37,10 +37,12 @@ int main(int argc, char* argv[])
 
   if(argc == 1)
     {
-      cout << "REQUIRED:" << endl;
+      cout << endl;
+      cout << "REQUIRED ARGUMENTS:" << endl;
       cout << "-I / --input        input feature matrix" << endl;
-      cout << "-O / --output       output association file" << endl << endl;
-      cout << "OPTIONAL:" << endl;
+      cout << "-O / --output       output association file" << endl;
+      cout << endl;
+      cout << "OPTIONAL ARGUMENTS:" << endl;
       cout << "-i / --targetidx    target index, ref. to feature matrix (default " << DEFAULT_TARGETIDX << ")" << endl;
       cout << "-n / --ntrees       number of trees per RF (default nsamples)" << endl;
       cout << "-m / --mtry         number of randomly drawn features per node split (default sqrt(nfeatures))" << endl;
@@ -48,6 +50,7 @@ int main(int argc, char* argv[])
       cout << "-p / --nperms       number of Random Forests (default " << DEFAULT_NPERMS << ")" << endl;
       cout << "-t / --pthreshold   p-value threshold below which associations are listed (default " << DEFAULT_PTHRESHOLD << ")" << endl;
       cout << "-a / --alpha        percentile of contrast importances, defines stringency of the t-test (default " << DEFAULT_ALPHA << ")" << endl;
+      cout << endl;
       return EXIT_SUCCESS;
     }
 
