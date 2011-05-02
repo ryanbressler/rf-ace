@@ -28,8 +28,10 @@ class identifiers. Also note how missing values are indiciated by NA or NAN.
 
 USAGE
 
-bin/rf_ace --help
+simple long:
+bin/rf_ace --input input.tsv --targetidx 2 --output output.tsv
 
-bin/rf_ace -I input.tsv -i 2 -n 500 -m 100 -p 20 -O output.tsv
+simple short:
+bin/rf_ace -I input.tsv -i 2 -O output.tsv 
 
 
