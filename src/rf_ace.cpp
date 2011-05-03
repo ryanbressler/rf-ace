@@ -6,10 +6,6 @@
 #include <ctime>
 #include <cmath>
 
-
-//#include <boost/algorithm/string.hpp>
-//#include <boost/program_options.hpp>
-
 #include "getopt_pp.h"
 #include "randomforest.hpp"
 //#include "GBT.hpp"
@@ -19,8 +15,6 @@
 using namespace std;
 using datadefs::num_t;
 using namespace GetOpt;
-
-//namespace po = boost::program_options;
 
 enum MatrixFormat { FEATURE_ROWS, FEATURE_COLUMNS };
 
@@ -35,8 +29,19 @@ const num_t DEFAULT_ALPHA = 0.95;
 int main(int argc, char* argv[])
 {
 
-  if(argc == 1)
+  if(argc == 1 || argc == 2)
     {
+
+      if(argc == 2)
+	{
+	  string helphandle(argv[1]);
+	  if(helphandle != "-h" && helphandle != "--help")
+	    {
+	      cerr << "use -h or --help to get started" << endl;
+	      return EXIT_FAILURE;
+	    }
+	}
+
       cout << endl;
       cout << "REQUIRED ARGUMENTS:" << endl;
       cout << "-I / --input        input feature matrix" << endl;
@@ -73,7 +78,20 @@ int main(int argc, char* argv[])
   ops >> Option('n',"ntrees",ntrees);
   ops >> Option('m',"mtry",mtry);
   ops >> Option('p',"nperms",nperms);
+  ops >> Option('t',"pthreshold",pthreshold);
   ops >> Option('O',"output",output);
+
+  if(input == "")
+    {
+      cerr << "input file not specified" << endl;
+      return EXIT_FAILURE;
+    }
+
+  if(output == "")
+    {
+      cerr << "output file not specified" << endl;
+      return EXIT_FAILURE;
+    }
 
   //Read data into Treedata object
   Treedata treedata(input, is_featurerows);
@@ -91,7 +109,7 @@ int main(int argc, char* argv[])
   //treedata.print(targetidx);
   
   cout << "Selected options:" << endl;
-  cout << "--targetidx = " << targetidx << " (" << treedata.get_featureheader(targetidx) << ")" << endl;
+  cout << "--targetidx = " << targetidx << ", header = " << treedata.get_featureheader(targetidx) << endl;
   cout << "--input     = " << input << endl;
   cout << "--ntrees    = " << ntrees << endl;
   cout << "--mtry      = " << mtry << endl;
