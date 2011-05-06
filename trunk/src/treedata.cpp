@@ -206,6 +206,24 @@ num_t Treedata::corr(size_t featureidx1, size_t featureidx2)
   return(r);
 }
 
+void Treedata::kill(const size_t featureidx)
+{
+  assert(featureidx != targetidx_);
+  assert(featureidx < nfeatures_);
+
+  featurematrix_.erase(featurematrix_.begin() + nfeatures_ + featureidx);
+  featureheaders_.erase(featureheaders_.begin() + nfeatures_ + featureidx);
+  
+  featurematrix_.erase(featurematrix_.begin() + featureidx);
+  featureheaders_.erase(featureheaders_.begin() + featureidx);
+  
+  --nfeatures_;
+  if(featureidx < targetidx_)
+    {
+      --targetidx_;
+    }
+}
+
 string Treedata::get_featureheader(size_t featureidx)
 {
   return(featureheaders_[featureidx]);

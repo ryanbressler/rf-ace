@@ -124,6 +124,7 @@ int main(int argc, char* argv[])
 
   Randomforest RF(&treedata,ntrees,mtry,nodesize);
   RF.select_target(targetidx);
+  //RF.blacklist_and_kill(0.8,blistheaders,blistcorrelations);
 
   //size_t nperms = 9;
   //num_t alpha = 0.50;

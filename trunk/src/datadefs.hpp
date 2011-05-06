@@ -9,6 +9,7 @@
 #include<map>
 #include<cassert>
 #include<iostream>
+#include<algorithm>
 
 using namespace std;
 
