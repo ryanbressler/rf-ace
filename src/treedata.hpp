@@ -42,6 +42,8 @@ protected:
   friend class Randomforest;
   friend class GBT;
 
+  void kill(const size_t featureidx);
+
   //Permutes integers in range 0,1,...,(ics.size()-1). 
   //NOTE: original contents in ics will be replaced.  
   void permute(vector<size_t>& ics);

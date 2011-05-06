@@ -28,6 +28,8 @@ public:
   void grow_forest(const size_t nperms, const num_t alpha, vector<num_t>& pvalues, vector<num_t>& ivalues);
   //void calculate_importance(const num_t alpha, vector<num_t>& importance, num_t& contrast_prc);
 
+  //blacklist_and_kill
+
 private:
 
   //Grows one tree with respect to selected target feature
