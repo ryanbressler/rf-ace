@@ -18,13 +18,14 @@ GetOpt_pp:  Yet another C++ version of getopt.
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#if __APPLE__
-extern char** environ;
-#elif _WIN32
+//#if __APPLE__
+//extern char** environ;
+#if _WIN32
 #include <Stdio.h>
 #define environ _environ
 #else
 #include <unistd.h>
+extern char** environ;
 #endif
 
 #include "getopt_pp.h"
