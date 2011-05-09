@@ -95,10 +95,16 @@ int main(int argc, char* argv[])
 
   //Read data into Treedata object
   Treedata treedata(input, is_featurerows);
+
+  if(targetidx >= treedata.nfeatures())
+    {
+      cerr << "targetidx must point to a valid feature (0.." << treedata.nfeatures()-1 << ")" << endl;
+      return EXIT_FAILURE;
+    }
   
   if(ntrees == DEFAULT_NTREES)
     {
-      ntrees = treedata.nsamples();
+      ntrees = 500;
     }
   
   if(mtry == DEFAULT_MTRY)
