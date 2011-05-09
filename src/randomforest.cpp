@@ -27,7 +27,8 @@ Randomforest::~Randomforest()
 void Randomforest::init_forest()
 {
 
-  size_t nsamples = treedata_->nsamples();
+  //size_t nsamples = treedata_->nsamples();
+  size_t nsamples = treedata_->nrealvalues();
 
   //First we count the theoretical maximum number of nodes per tree.
   //Because each leaf must contain at least nodesize amount of data points, nmaxleaves is
