@@ -234,8 +234,13 @@ void GBT::recursiveNodesplit(size_t treeidx, size_t nodeidx, vector<size_t>& sam
 
 
 	// Find the best target split
+	size_t targetidx = treeData_->get_target();
 	vector<size_t> sampleics_left, sampleics_right;
-	treeData_->split_target(minSplit, sampleics, sampleics_left, sampleics_right);
+	num_t splitvalue;
+	set<num_t> values_left;	
+	// treeData_->split_target(minSplit, sampleics, sampleics_left, sampleics_right);
+	treeData_->split_target(targetidx,minSplit,sampleics,sampleics_left,sampleics_right,splitvalue,values_left);
+
 
 	size_t nreal_tot;
 	size_t n_left = sampleics_left.size();
@@ -243,7 +248,6 @@ void GBT::recursiveNodesplit(size_t treeidx, size_t nodeidx, vector<size_t>& sam
 
 	num_t bestrelativedecrease = 0;
 	size_t bestsplitter_i = nFeatures;
-	size_t targetidx = treeData_->get_target();
 
 	// TODO Instead of going through all features, sample features here
 	// using sampling weights proportional to current importances
@@ -297,32 +301,25 @@ void GBT::recursiveNodesplit(size_t treeidx, size_t nodeidx, vector<size_t>& sam
 	size_t nodeidx_left  = ++nNodes_[treeidx];
 	size_t nodeidx_right = ++nNodes_[treeidx];
 
+
+	treeData_->split_target(splitterfeatureidx,minSplit,sampleics,sampleics_left,sampleics_right,splitvalue,values_left);
+	if(sampleics_left.size() == 0 || sampleics_right.size() == 0)
+	{
+		// Leaf node
+		GBT::SetNodePrediction(treeidx, nodeidx, sampleics);
+		return;
+	}
 	if(treeData_->isfeaturenum(splitterfeatureidx))
 	{
-		num_t splitvalue;
-		treeData_->split_target_with_num_feature(splitterfeatureidx,minSplit,sampleics,sampleics_left,sampleics_right,splitvalue);
-		if(sampleics_left.size() == 0 || sampleics_right.size() == 0)
-		{
-			// Leaf node
-			GBT::SetNodePrediction(treeidx, nodeidx, sampleics);
-			return;
-		}
 		forest_[treeidx][nodeidx].set_splitter(splitterfeatureidx,splitvalue,forest_[treeidx][nodeidx_left],forest_[treeidx][nodeidx_right]);
-		cout << forest_[treeidx][nodeidx].has_children() << endl;
 	}
 	else
 	{
-		set<num_t> values_left;
-		treeData_->split_target_with_cat_feature(splitterfeatureidx,minSplit,sampleics,sampleics_left,sampleics_right,values_left);
-		if(sampleics_left.size() == 0 || sampleics_right.size() == 0)
-		{
-			// Leaf node
-			GBT::SetNodePrediction(treeidx, nodeidx, sampleics);
-			return;
-		}
 		forest_[treeidx][nodeidx].set_splitter(splitterfeatureidx,values_left,forest_[treeidx][nodeidx_left],forest_[treeidx][nodeidx_right]);
-		cout << forest_[treeidx][nodeidx].has_children() << endl;
 	}
+	cout << forest_[treeidx][nodeidx].has_children() << endl;
+
+	
 
 	GBT::recursiveNodesplit(treeidx, nodeidx_left, sampleics_left);
 	GBT::recursiveNodesplit(treeidx, nodeidx_right, sampleics_right);
