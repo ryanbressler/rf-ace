@@ -96,15 +96,19 @@ int main(int argc, char* argv[])
   //Read data into Treedata object
   Treedata treedata(input, is_featurerows);
 
+  
+
   if(targetidx >= treedata.nfeatures())
     {
       cerr << "targetidx must point to a valid feature (0.." << treedata.nfeatures()-1 << ")" << endl;
       return EXIT_FAILURE;
     }
   
+  num_t realfraction = static_cast<num_t>(treedata.nrealvalues(targetidx)) / static_cast<num_t>(treedata.nsamples());
+
   if(ntrees == DEFAULT_NTREES)
     {
-      ntrees = 500;
+      ntrees = static_cast<size_t>(2.0 * static_cast<num_t>(treedata.nsamples()) / realfraction );
     }
   
   if(mtry == DEFAULT_MTRY)
@@ -114,16 +118,20 @@ int main(int argc, char* argv[])
 
   //treedata.print(targetidx);
   
-  cout << "Selected options:" << endl;
-  cout << "--targetidx = " << targetidx << ", header = " << treedata.get_featureheader(targetidx) << endl;
+  cout << endl;
+  cout << "RF-ACE parameter configuration:" << endl;
   cout << "--input     = " << input << endl;
+  cout << "--nsamples  = " << treedata.nsamples() << endl;
+  cout << "--nfeatures = " << treedata.nfeatures() << endl;
+  cout << "--targetidx = " << targetidx << ", header '" << treedata.get_featureheader(targetidx) << "'" << endl;
+  cout << "--nmissing  = " << treedata.nsamples() - treedata.nrealvalues(targetidx) << " (" << 100 * ( 1 - realfraction ) << "%)" << endl;
   cout << "--ntrees    = " << ntrees << endl;
   cout << "--mtry      = " << mtry << endl;
   cout << "--nodesize  = " << nodesize << endl;
   cout << "--nperms    = " << nperms << endl;
   cout << "--pthresold = " << pthreshold << endl;
   cout << "--alpha     = " << alpha << endl;
-  cout << "--output    = " << output << endl;
+  cout << "--output    = " << output << endl << endl;
 
   assert(treedata.nfeatures() >= mtry);
   assert(treedata.nsamples() > 2*nodesize);
