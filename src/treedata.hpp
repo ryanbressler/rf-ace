@@ -33,6 +33,9 @@ public:
   //Returns the number of samples
   size_t nsamples();
 
+  size_t nrealvalues();
+  size_t nrealvalues(size_t featureidx);
+
   //Prints the treedata matrix in its internal form
   void print();
   void print(const size_t featureidx);
@@ -66,8 +69,8 @@ protected:
 
   bool isfeaturenum(size_t featureidx);
 
-  size_t nrealvalues();
-  size_t nrealvalues(size_t featureidx);
+  //size_t nrealvalues();
+  //size_t nrealvalues(size_t featureidx);
 
   void remove_nans(size_t featureidx, vector<size_t>& sampleics, size_t& nreal);
   
