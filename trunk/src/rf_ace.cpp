@@ -157,18 +157,21 @@ int main(int argc, char* argv[])
   //datadefs::sort_from_ref<string>(fnames,ref_ics);
   
   string target_str = treedata.get_featureheader(targetidx);
-  
-  ofstream os(output.c_str());
-  for(size_t i = 0; i < treedata.nfeatures(); ++i)
+
+  if(pvalues[0] > pthreshold)
     {
-      if(pvalues[i] > pthreshold)
+      ofstream os(output.c_str());
+      for(size_t i = 0; i < treedata.nfeatures(); ++i)
 	{
-	  break;
+	  if(pvalues[i] > pthreshold)
+	    {
+	      break;
+	    }
+	  os << target_str << "\t" << treedata.get_featureheader(ref_ics[i]) << "\t" 
+	     << pvalues[i] << "\t" << ivalues[i] << "\t" << treedata.corr(targetidx,ref_ics[i]) << endl;
 	}
-      os << target_str << "\t" << treedata.get_featureheader(ref_ics[i]) << "\t" 
-	 << pvalues[i] << "\t" << ivalues[i] << "\t" << treedata.corr(targetidx,ref_ics[i]) << endl;
+      os.close();
     }
-  os.close();
  
   return(EXIT_SUCCESS);
 }
