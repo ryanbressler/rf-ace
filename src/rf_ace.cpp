@@ -158,7 +158,7 @@ int main(int argc, char* argv[])
   
   string target_str = treedata.get_featureheader(targetidx);
 
-  if(pvalues[0] > pthreshold)
+  if(pvalues[0] <= pthreshold)
     {
       ofstream os(output.c_str());
       for(size_t i = 0; i < treedata.nfeatures(); ++i)
