@@ -320,14 +320,16 @@ bool Treedata::isfeaturenum(size_t featureidx)
   return(isfeaturenum_[featureidx]);
 }
 
-size_t Treedata::nrealvalues()
+
+size_t Treedata::nrealsamples()
 {
   size_t nreal;
   datadefs::count_real_values(featurematrix_[targetidx_],nreal);
   return(nreal);
 }
 
-size_t Treedata::nrealvalues(size_t featureidx)
+
+size_t Treedata::nrealsamples(size_t featureidx)
 {
   size_t nreal;
   datadefs::count_real_values(featurematrix_[featureidx],nreal);
