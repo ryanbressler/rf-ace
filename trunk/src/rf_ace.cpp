@@ -104,7 +104,15 @@ int main(int argc, char* argv[])
       return EXIT_FAILURE;
     }
   
-  num_t realfraction = static_cast<num_t>(treedata.nrealvalues(targetidx)) / static_cast<num_t>(treedata.nsamples());
+  size_t nrealsamples = treedata.nrealsamples(targetidx);
+
+  if(nrealsamples == 0)
+    {
+      cout << "Target has no real samples, quitting..." << endl;
+      return EXIT_SUCCESS;
+    }
+
+  num_t realfraction = static_cast<num_t>(nrealsamples) / static_cast<num_t>(treedata.nsamples());
 
   if(ntrees == DEFAULT_NTREES)
     {
@@ -124,7 +132,7 @@ int main(int argc, char* argv[])
   cout << "--nsamples  = " << treedata.nsamples() << endl;
   cout << "--nfeatures = " << treedata.nfeatures() << endl;
   cout << "--targetidx = " << targetidx << ", header '" << treedata.get_featureheader(targetidx) << "'" << endl;
-  cout << "--nmissing  = " << treedata.nsamples() - treedata.nrealvalues(targetidx) << " (" << 100 * ( 1 - realfraction ) << "%)" << endl;
+  cout << "--nmissing  = " << treedata.nsamples() - treedata.nrealsamples(targetidx) << " (" << 100 * ( 1 - realfraction ) << "%)" << endl;
   cout << "--ntrees    = " << ntrees << endl;
   cout << "--mtry      = " << mtry << endl;
   cout << "--nodesize  = " << nodesize << endl;

@@ -28,7 +28,7 @@ void Randomforest::init_forest()
 {
 
   //size_t nsamples = treedata_->nsamples();
-  size_t nsamples = treedata_->nrealvalues();
+  size_t nsamples = treedata_->nrealsamples();
 
   //First we count the theoretical maximum number of nodes per tree.
   //Because each leaf must contain at least nodesize amount of data points, nmaxleaves is
@@ -162,7 +162,7 @@ void Randomforest::grow_forest(const size_t nperms, const num_t alpha, vector<nu
 void Randomforest::grow_tree(size_t treeidx)
 {
   //Generate the vector for bootstrap indices
-  vector<size_t> bootstrap_ics(treedata_->nrealvalues());
+  vector<size_t> bootstrap_ics(treedata_->nrealsamples());
 
   //Generate bootstrap indices and oob-indices
   treedata_->bootstrap(bootstrap_ics,oobmatrix_[treeidx]);

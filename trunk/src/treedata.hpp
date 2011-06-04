@@ -33,8 +33,9 @@ public:
   //Returns the number of samples
   size_t nsamples();
 
-  size_t nrealvalues();
-  size_t nrealvalues(size_t featureidx);
+  //Returns the number of real samples the target (resp. any feature) has
+  size_t nrealsamples();
+  size_t nrealsamples(size_t featureidx);
 
   //Prints the treedata matrix in its internal form
   void print();
