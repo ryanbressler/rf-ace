@@ -10,7 +10,7 @@
 
 using namespace std;
 
-Treedata::Treedata(string fname, bool is_featurerows):
+Treedata::Treedata(string filename, string filetype):
   targetidx_(0),
   featurematrix_(0),
   isfeaturenum_(0),
@@ -30,7 +30,67 @@ Treedata::Treedata(string fname, bool is_featurerows):
   irand_.seed((unsigned int)now);
   //datadefs::seedMT((size_t)now);
 
-  cout << "Treedata: reading matrix from file '" << fname << "'" << endl;
+  cout << "Treedata: reading matrix from file '" << filename << "'" << endl;
+
+  //Initialize stream to read from file
+  //ifstream featurestream;
+  //featurestream.open(fname.c_str());
+  //assert(featurestream.good());
+
+  vector<vector<string> > rawmatrix;
+  if(filetype == "MATRIX")
+    {
+      cout << "File type is 'MATRIX'" << endl;
+      Treedata::read_matrix(filename,rawmatrix);
+    }
+  else
+    {
+      cerr << "the only supported format at the moment is MATRIX" << endl;
+      assert(false);
+    }      
+
+  //Transform raw data to the internal format.
+  featurematrix_.resize(2*nfeatures_);
+  //contrastmatrix_.resize(nfeatures_);
+  for(size_t i = 0; i < nfeatures_; ++i)
+    {
+      vector<num_t> featurev(nsamples_);
+      //map<string,size_t> str2valmap;
+      if(isfeaturenum_[i])
+        {
+          datadefs::strv2numv(rawmatrix[i],featurev);
+          //ncatvalues_[i] = 0;
+        }
+      else
+        {
+          datadefs::strv2catv(rawmatrix[i],featurev);
+	  //ncatvalues_[i] = str2valmap.size();
+        }
+      featurematrix_[i] = featurev;
+    } 
+  
+  featureheaders_.resize(2*nfeatures_);
+  isfeaturenum_.resize(2*nfeatures_);
+  for(size_t i = nfeatures_; i < 2*nfeatures_; ++i)
+    {
+      featurematrix_[i] = featurematrix_[i-nfeatures_];
+      featureheaders_[i] = "CONTRAST";
+      isfeaturenum_[i] = isfeaturenum_[i-nfeatures_];
+    }
+      
+  //Treedata::permute_contrasts();
+
+  targetidx_ = 0;
+  Treedata::select_target(targetidx_);
+
+}
+
+Treedata::~Treedata()
+{
+}
+
+void Treedata::read_matrix(string& fname, vector<vector<string> >& rawmatrix)
+{
 
   //Initialize stream to read from file
   ifstream featurestream;
@@ -47,8 +107,13 @@ Treedata::Treedata(string fname, bool is_featurerows):
   getline(featurestream,row);
   stringstream ss(row);
   size_t ncols = 0;
+  bool is_rowformatted = true;
   while(getline(ss,field,'\t'))
     {
+      if(is_rowformatted && is_featureheader(field))
+	{
+	  is_rowformatted = false;
+	}
       ++ncols;
     }
 
@@ -69,7 +134,8 @@ Treedata::Treedata(string fname, bool is_featurerows):
   //These are temporary containers
   vector<string> colheaders(ncols);
   vector<string> rowheaders(nrows);
-  vector<vector<string> > rawmatrix(nrows);
+  //vector<vector<string> > rawmatrix(nrows);
+  rawmatrix.resize(nrows);
   for(size_t i = 0; i < nrows; ++i)
     {
       rawmatrix[i] = colheaders;
@@ -111,12 +177,14 @@ Treedata::Treedata(string fname, bool is_featurerows):
       //cout << endl;
     }
   //cout << endl;
-  
+
   //If the data is row-formatted...
-  if(is_featurerows)
+  if(is_rowformatted)
     {
+      cout << "The matrix was found to be row-formatted (features as rows)" << endl;
+
       //We can extract the number of features and samples from the row and column counts, respectively
-      nfeatures_ = nrows; 
+      nfeatures_ = nrows;
       nsamples_ = ncols;
 
       //Thus, sample headers are column headers
@@ -145,48 +213,47 @@ Treedata::Treedata(string fname, bool is_featurerows):
     }
   else
     {
-      cerr << "samples as rows not yet supported!" << endl;
-      assert(false);
-    }
 
-  //Transform raw data to the internal format.
-  featurematrix_.resize(2*nfeatures_);
-  //contrastmatrix_.resize(nfeatures_);
-  for(size_t i = 0; i < nfeatures_; ++i)
-    {
-      vector<num_t> featurev(nsamples_);
-      //map<string,size_t> str2valmap;
-      if(isfeaturenum_[i])
-        {
-          datadefs::strv2numv(rawmatrix[i],featurev);
-          //ncatvalues_[i] = 0;
-        }
-      else
-        {
-          datadefs::strv2catv(rawmatrix[i],featurev);
-	  //ncatvalues_[i] = str2valmap.size();
-        }
-      featurematrix_[i] = featurev;
-    } 
-  
-  featureheaders_.resize(2*nfeatures_);
-  isfeaturenum_.resize(2*nfeatures_);
-  for(size_t i = nfeatures_; i < 2*nfeatures_; ++i)
-    {
-      featurematrix_[i] = featurematrix_[i-nfeatures_];
-      featureheaders_[i] = "CONTRAST";
-      isfeaturenum_[i] = isfeaturenum_[i-nfeatures_];
-    }
+      cout << "The matrix was found to be column-formatted (features as columns)" << endl;
+      cout << "Transposing...";
       
-  //Treedata::permute_contrasts();
+      Treedata::transpose<string>(rawmatrix);
+      cout << "done" << endl;
 
-  targetidx_ = 0;
-  Treedata::select_target(targetidx_);
+      //We can extract the number of features and samples from the row and column counts, respectively
+      nfeatures_ = ncols;
+      nsamples_ = nrows;
 
+      //Thus, sample headers are column headers
+      sampleheaders_ = rowheaders;
+
+      //... and feature headers are row headers
+      featureheaders_ = colheaders;
+
+      for(size_t i = 0; i < nfeatures_; ++i)
+        {
+          //First letters in the row headers determine whether the feature is numerical or categorical
+          if(colheaders[i][0] == 'N')
+            {
+              isfeaturenum_.push_back(true);
+            }
+          else if(colheaders[i][0] == 'C' || colheaders[i][0] == 'B')
+            {
+              isfeaturenum_.push_back(false);
+            }
+          else
+            {
+              cerr << "Data type must be either N (numerical), C (categorical), or B (binary)!" << endl;
+              assert(false);
+            }
+        }
+      
+    }
 }
 
-Treedata::~Treedata()
+bool Treedata::is_featureheader(const string& str)
 {
+  return((str[0] == 'N' || str[0] == 'C' || str[0] == 'B') && str[1] == ':');
 }
 
 size_t Treedata::nfeatures()
@@ -253,6 +320,7 @@ void Treedata::print()
     }
 }
 
+
 void Treedata::print(const size_t featureidx)
 {
   cout << "Print " << featureheaders_[featureidx] << ":";
@@ -262,25 +330,6 @@ void Treedata::print(const size_t featureidx)
     }
   cout << endl;
 }
-
-/*
-  void Treedata::generate_contrasts()
-  {
-  size_t nrealvalues;
-  datadefs::count_real_values(featurematrix_[targetidx_],nrealvalues);
-  for(size_t i = 0; i < nfeatures_; ++i)
-  {
-  vector<num_t> x(nrealvalues);
-  contrastmatrix_[i].resize(nrealvalues);
-  for(size_t j = 0; j < nrealvalues; ++j)
-  {
-  contrastmatrix_[i][j] = featurematrix_[i][j];
-  }
-  }
-  
-  Treedata::permute_contrasts();
-  }
-*/
 
 
 void Treedata::permute_contrasts()
@@ -300,20 +349,12 @@ void Treedata::select_target(size_t targetidx)
   Treedata::permute_contrasts();
 }
 
+
 size_t Treedata::get_target()
 {
   return(targetidx_);
 }
 
-/*
-  void Treedata::generate_contrasts(vector<bool>& contrasts)
-  {
-  for(size_t i = 0; i < contrasts.size(); ++i)
-  {
-  contrasts[i] = rand() % 2;
-  }
-  }
-*/
 
 bool Treedata::isfeaturenum(size_t featureidx)
 {
@@ -349,6 +390,29 @@ void Treedata::remove_nans(size_t featureidx,
 	{
 	  --nreal;
 	  sampleics.erase(sampleics.begin()+i);
+	}
+    }
+}
+
+template <typename T> void Treedata::transpose(vector<vector<T> >& mat)
+{
+
+  vector<vector<T> > foo = mat;
+
+  size_t ncols = mat.size();
+  size_t nrows = mat[0].size();
+
+  mat.resize(nrows);
+  for(size_t i = 0; i < nrows; ++i)
+    {
+      mat[i].resize(ncols);
+    }
+
+  for(size_t i = 0; i < nrows; ++i)
+    {
+      for(size_t j = 0; j < ncols; ++j)
+	{
+	  mat[i][j] = foo[j][i];
 	}
     }
 }
