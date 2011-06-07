@@ -68,7 +68,7 @@ int main(int argc, char* argv[])
   size_t nperms = DEFAULT_NPERMS;
   num_t pthreshold = DEFAULT_PTHRESHOLD;
   num_t alpha = DEFAULT_ALPHA;
-  bool is_featurerows = true;
+  //bool is_featurerows = true;
   string output = "";
 
   GetOpt_pp ops(argc, argv);
@@ -94,7 +94,7 @@ int main(int argc, char* argv[])
     }
 
   //Read data into Treedata object
-  Treedata treedata(input, is_featurerows);
+  Treedata treedata(input, "MATRIX");
 
   
 

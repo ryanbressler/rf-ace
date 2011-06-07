@@ -19,7 +19,7 @@ class Treedata
 {
 public:
   //Initializes the object and reads in a data matrix
-  Treedata(string fname, bool is_featurerows);
+  Treedata(string filename, string filetype);
   ~Treedata();
 
   //Returns the number of features
@@ -122,6 +122,11 @@ protected:
   inline size_t randidx(const size_t n) { return(irand_() % n); }
 
 private:
+
+  void read_matrix(string& fname, vector<vector<string> >& rawmatrix);
+  bool is_featureheader(const string& str);
+
+  template <typename T> void transpose(vector<vector<T> >& mat);
 
   //Sorts data with respect to a given feature
   void sort_all_wrt_feature(size_t featureidx);
