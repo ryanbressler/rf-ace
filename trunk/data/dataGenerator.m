@@ -189,7 +189,7 @@ for set=1:par.sets,
     fTe.catI = dXi;
     fTr.catLevels = levels;  
     fTe.catLevels = levels;
-    nameId = sprintf('c%d-m%f-set%d', par.maxClasses, par.mixedType, set);
+    nameId = sprintf('n%d-N%d-Kn%d-cl%d-mixed%.2f-miss%.2f-set%d', par.n, par.N, par.Kn, par.maxClasses, par.mixedType, par.missing, set);
     fTr.name = sprintf('tr-%s', nameId);
     fTe.name = sprintf('te-%s', nameId);
     fTr.importances = par.P;
@@ -349,6 +349,8 @@ function dWriteR(f, name, transpose, generateSampleHeader)
 % Saves the data structure in 'f' into file 'name' in delimited format.
 % Delimiter is '\t'.
 % Missing values are written as 'NaN'.
+% We use a convention of prepending either C: or N: as one way to
+% the variable name to distinguish categorical from numeric. 
 %
 % 'f' must have fields:
 % data - Numeric data matrix, rows are items, columns are variables.
@@ -358,16 +360,13 @@ function dWriteR(f, name, transpose, generateSampleHeader)
 % name - Any kind of an id string, written in the file if generateSampleHeader==1
 %
 % if transpose==0, writes items as rows, variables as columns.
-%        In this shape there's no indicator as to whether a variable is 
-%        categorical or numeric, so categoricals are written as strings, 
+%        In this shape categoricals are written as strings, 
 %        prepending 'L' to the integer denoting  the level 
 %        index [1..numLevels] of the categorical variable.
 % Warning: this option is rather slow!
 %
 % if transpose==1, writes variables as rows, items as columns.
-%        In this shape we use a convention of prepending either C: or N: to
-%        the variable name to distinguish categorical from numeric. The
-%        values of categoricals are written as integers, without the
+%        Values of categoricals are written as integers, without the
 %        prepended 'L' (this allows fast vectorized writing that works with 
 %        NaNs not producing 'LNaN' for the missing values!)
 % 
@@ -395,10 +394,17 @@ if transpose==0,
     if generateSampleHeader==1,
         fprintf(fd,['%s' separator],f.name);
     end
-    for myCol=1:length(f.head)-1,
-        fprintf(fd,['%s' separator], f.head{myCol});
+    for myCol=1:length(f.head),
+		if categorical(myCol)==1,
+			fprintf(fd, 'C:%s', f.head{myCol});
+		else
+			fprintf(fd, 'N:%s', f.head{myCol});
+		end
+		if myCol<length(f.head),
+			fprintf(fd,separator);
+		end
     end
-    fprintf(fd,'%s\n', f.head{length(f.head)});
+    fprintf(fd,'\n');
     
 % TODO Vectorized write using fprintf works except missing categoricals 
 % TODO will be written as 'LNaN'   
