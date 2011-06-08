@@ -28,6 +28,8 @@ namespace datadefs
   typedef string NAN_t;
   extern const set<NAN_t> NANs;
 
+  //void toupper(string& str);
+
   void strv2catv(vector<string>& strvec, vector<num_t>& catvec);
   void strv2numv(vector<string>& strvec, vector<num_t>& numvec);
 

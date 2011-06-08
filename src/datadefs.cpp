@@ -444,33 +444,35 @@ void datadefs::ttest(vector<datadefs::num_t> const& x,
     
     assert(nreal_x == nreal_y);
 
-    if((fabs(mean_x - mean_y) < datadefs::eps && var_x < datadefs::eps && var_y < datadefs::eps) || var_x < datadefs::eps)
+    if(var_x < datadefs::eps && var_y < datadefs::eps)
       {
-        pvalue = 1;
+	if(fabs(mean_x - mean_y) < datadefs::eps)
+	  {
+	    pvalue = 0.5;
+	  }
+	else if(mean_x > mean_y)
+	  {
+	    pvalue = 0.0;
+	  }
+	else
+	  {
+	    pvalue = 1.0;
+	  }
 	return;
       }
 
     size_t v;
     datadefs::num_t sp,tvalue,ttrans;
-    //if(fabs(mean_y) < datadefs::eps && var_y < datadefs::eps) //Reduce to one-sample t-test
-    //  {
-    //	v = nreal_x - 1;
-    //	sp = sqrt(var_x/nreal_x);
-    //	t = sqrt(1.0*nreal_x)*mean_x / sqrt(var_x);
-    // }
-    //else //Two-sample t-test
-    // {
+    
     v = nreal_x + nreal_y - 2;
     sp = sqrt(((nreal_x-1) * var_x + (nreal_y-1) * var_y) / v);
     tvalue = (mean_x - mean_y) / (sp * sqrt(1.0 / nreal_x + 1.0 / nreal_y));
-    //  }
+    
     ttrans = (tvalue+sqrt(pow(tvalue,2) + v)) / (2 * sqrt(pow(tvalue,2) + v));
 
     datadefs::regularized_betainc(ttrans,nreal_x - 1,pvalue);	
     pvalue = 1-pvalue;
     
-    //cout << mean_x << "\t" << var_x << "\t" << mean_y << "\t" << var_y << "\t" << v << "\t" << sp << "\t" << t << "\t" << ttrans << "\t" << pvalue << endl;
-
 }
 
 void datadefs::regularized_betainc(const datadefs::num_t x,

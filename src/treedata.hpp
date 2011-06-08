@@ -7,6 +7,7 @@
 
 #include <cstdlib>
 #include <map>
+#include <fstream>
 #include "datadefs.hpp"
 #include "node.hpp"
 #include "mtrand.h"
@@ -19,7 +20,7 @@ class Treedata
 {
 public:
   //Initializes the object and reads in a data matrix
-  Treedata(string filename, string filetype);
+  Treedata(string filename);
   ~Treedata();
 
   //Returns the number of features
@@ -86,35 +87,16 @@ protected:
 		    num_t& splitvalue,
 		    set<num_t>& values_left);
   
-  /*
-    void split_target_with_cat_feature(size_t featureidx,
-    const size_t min_split,
-    vector<size_t>& sampleics,
-    vector<size_t>& sampleics_left,
-    vector<size_t>& sampleics_right,
-    set<num_t>& values_left);
-  */
-  
-  /*
-    void split_target(const size_t min_split,
-    vector<size_t>& sampleics,
-    vector<size_t>& sampleics_left,
-    vector<size_t>& sampleics_right);
-  */
-  
+    
   num_t split_fitness(const size_t featureidx,
 		      const size_t min_split,
 		      vector<size_t> const& sampleics,
 		      vector<size_t> const& sampleics_left,
 		      vector<size_t> const& sampleics_right);
 
-  //void range(vector<size_t>& ics);
-
+  
   void impurity(size_t featureidx, vector<size_t> const& sampleics, num_t& impurity, size_t& nreal);
-  //void impurity(const size_t featureidx, const size_t n, num_t& impurity);
-
-  //void percolate_sampleidx(size_t sampleidx, Node** nodep);
-  //void percolate_sampleidx_with_feature_permuted(size_t featureidx, size_t sampleidx, Node** nodep);
+  
 
   num_t at(size_t featureidx, size_t sampleidx);
   num_t randf(size_t featureidx);
@@ -123,7 +105,13 @@ protected:
 
 private:
 
-  void read_matrix(string& fname, vector<vector<string> >& rawmatrix);
+  enum Filetype {UNKNOWN, AFM, ARFF};
+
+  void read_filetype(string& filename, Filetype& filetype);
+
+  void read_afm(ifstream& featurestream, vector<vector<string> >& rawmatrix);
+  void read_arff(ifstream& featurestream, vector<vector<string> >& rawmatrix);
+
   bool is_featureheader(const string& str);
 
   template <typename T> void transpose(vector<vector<T> >& mat);

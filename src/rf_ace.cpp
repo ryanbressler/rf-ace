@@ -94,7 +94,8 @@ int main(int argc, char* argv[])
     }
 
   //Read data into Treedata object
-  Treedata treedata(input, "MATRIX");
+  cout << "Reading file '" << input << "'" << endl;
+  Treedata treedata(input);
 
   
 
