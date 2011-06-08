@@ -10,7 +10,7 @@
 
 using namespace std;
 
-Treedata::Treedata(string filename, string filetype):
+Treedata::Treedata(string filename):
   targetidx_(0),
   featurematrix_(0),
   isfeaturenum_(0),
@@ -30,24 +30,37 @@ Treedata::Treedata(string filename, string filetype):
   irand_.seed((unsigned int)now);
   //datadefs::seedMT((size_t)now);
 
-  cout << "Treedata: reading matrix from file '" << filename << "'" << endl;
+  //cout << "Treedata: reading matrix from file '" << filename << "'" << endl;
 
   //Initialize stream to read from file
-  //ifstream featurestream;
-  //featurestream.open(fname.c_str());
-  //assert(featurestream.good());
+  ifstream featurestream;
+  featurestream.open(filename.c_str());
+  assert(featurestream.good());
+
+  //TODO: a sniffer function that find out the type of the input file based on its content.
+  //*************************************************************************************** 
+  Filetype filetype = UNKNOWN;
+  Treedata::read_filetype(filename,filetype);
 
   vector<vector<string> > rawmatrix;
-  if(filetype == "MATRIX")
+  if(filetype == AFM)
     {
-      cout << "File type is 'MATRIX'" << endl;
-      Treedata::read_matrix(filename,rawmatrix);
+      cout << "File type interpreted as Annotated Feature Matrix (AFM)" << endl;
+      Treedata::read_afm(featurestream,rawmatrix);
+    }
+  else if(filetype == ARFF)
+    {
+      cout << "File type interpreted as Attribute-Relation File Format (ARFF)" << endl;
+      Treedata::read_arff(featurestream,rawmatrix);
     }
   else
     {
-      cerr << "the only supported format at the moment is MATRIX" << endl;
-      assert(false);
+      cout << "File type is unknown -- defaulting to Annotated Feature Matrix (AFM)" << endl;
+      Treedata::read_afm(featurestream,rawmatrix);
     }      
+
+  //TODO: move the following part, generation of artificial contrasts, to a separate function.
+  //***************************************************** 
 
   //Transform raw data to the internal format.
   featurematrix_.resize(2*nfeatures_);
@@ -89,13 +102,31 @@ Treedata::~Treedata()
 {
 }
 
-void Treedata::read_matrix(string& fname, vector<vector<string> >& rawmatrix)
+void Treedata::read_filetype(string& filename, Filetype& filetype)
 {
 
-  //Initialize stream to read from file
-  ifstream featurestream;
-  featurestream.open(fname.c_str());
-  assert(featurestream.good());
+  stringstream ss(filename);
+  string suffix = "";
+  while(getline(ss,suffix,'.')) {}
+  //datadefs::toupper(suffix);
+
+  if(suffix == "AFM" || suffix == "afm")
+    {
+      filetype = AFM;
+    }
+  else if(suffix == "ARFF" || suffix == "arff")
+    {
+      filetype = ARFF;
+    }
+  else
+    {
+      filetype = UNKNOWN;
+    }
+
+}
+
+void Treedata::read_afm(ifstream& featurestream, vector<vector<string> >& rawmatrix)
+{
 
   string field;
   string row;
@@ -141,7 +172,7 @@ void Treedata::read_matrix(string& fname, vector<vector<string> >& rawmatrix)
       rawmatrix[i] = colheaders;
     }
 
-  cout << "read " << rawmatrix.size() << " rows and " << rawmatrix[0].size() << " columns." << endl;
+  //cout << "read " << rawmatrix.size() << " rows and " << rawmatrix[0].size() << " columns." << endl;
 
   //Read first row into the stream
   getline(featurestream,row);
@@ -181,7 +212,7 @@ void Treedata::read_matrix(string& fname, vector<vector<string> >& rawmatrix)
   //If the data is row-formatted...
   if(is_rowformatted)
     {
-      cout << "The matrix was found to be row-formatted (features as rows)" << endl;
+      cout << "AFM orientation: features as rows" << endl;
 
       //We can extract the number of features and samples from the row and column counts, respectively
       nfeatures_ = nrows;
@@ -214,11 +245,11 @@ void Treedata::read_matrix(string& fname, vector<vector<string> >& rawmatrix)
   else
     {
 
-      cout << "The matrix was found to be column-formatted (features as columns)" << endl;
-      cout << "Transposing...";
+      cout << "AFM orientation: features as columns" << endl;
+      //cout << "Transposing...";
       
       Treedata::transpose<string>(rawmatrix);
-      cout << "done" << endl;
+      //cout << "done" << endl;
 
       //We can extract the number of features and samples from the row and column counts, respectively
       nfeatures_ = ncols;
@@ -250,6 +281,14 @@ void Treedata::read_matrix(string& fname, vector<vector<string> >& rawmatrix)
       
     }
 }
+
+void Treedata::read_arff(ifstream& featurestream, vector<vector<string> >& rawmatrix)
+{
+
+  
+
+}
+
 
 bool Treedata::is_featureheader(const string& str)
 {
