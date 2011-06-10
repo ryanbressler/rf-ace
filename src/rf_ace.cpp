@@ -5,6 +5,7 @@
 #include <fstream>
 #include <ctime>
 #include <cmath>
+#include <stdio.h>
 
 #include "getopt_pp.h"
 #include "randomforest.hpp"
@@ -59,6 +60,11 @@ int main(int argc, char* argv[])
       return EXIT_SUCCESS;
     }
 
+  cout << endl;
+  cout << "  --------------------------------" << endl;
+  cout << "  --    RF-ACE version 0.3.0    --" << endl;
+  cout << "  --------------------------------" << endl;
+
   //using namespace GetOpt;
   string input = "";
   size_t targetidx = DEFAULT_TARGETIDX;
@@ -94,11 +100,10 @@ int main(int argc, char* argv[])
     }
 
   //Read data into Treedata object
-  cout << "Reading file '" << input << "'" << endl;
+  cout << endl << "Reading file '" << input << "'" << endl;
   Treedata treedata(input);
 
-  
-
+ 
   if(targetidx >= treedata.nfeatures())
     {
       cerr << "targetidx must point to a valid feature (0.." << treedata.nfeatures()-1 << ")" << endl;
@@ -129,18 +134,17 @@ int main(int argc, char* argv[])
   
   cout << endl;
   cout << "RF-ACE parameter configuration:" << endl;
-  cout << "--input     = " << input << endl;
-  cout << "--nsamples  = " << treedata.nsamples() << endl;
-  cout << "--nfeatures = " << treedata.nfeatures() << endl;
-  cout << "--targetidx = " << targetidx << ", header '" << treedata.get_featureheader(targetidx) << "'" << endl;
-  cout << "--nmissing  = " << treedata.nsamples() - treedata.nrealsamples(targetidx) << " (" << 100 * ( 1 - realfraction ) << "%)" << endl;
-  cout << "--ntrees    = " << ntrees << endl;
-  cout << "--mtry      = " << mtry << endl;
-  cout << "--nodesize  = " << nodesize << endl;
-  cout << "--nperms    = " << nperms << endl;
-  cout << "--pthresold = " << pthreshold << endl;
-  cout << "--alpha     = " << alpha << endl;
-  cout << "--output    = " << output << endl << endl;
+  cout << "  --input      = " << input << endl;
+  cout << "  --nsamples   = " << nrealsamples << " / " << treedata.nsamples() << " (" << 100 * ( 1 - realfraction )<< "% missing)" << endl;
+  cout << "  --nfeatures  = " << treedata.nfeatures() << endl;
+  cout << "  --targetidx  = " << targetidx << ", header '" << treedata.get_featureheader(targetidx) << "'" << endl;
+  cout << "  --ntrees     = " << ntrees << endl;
+  cout << "  --mtry       = " << mtry << endl;
+  cout << "  --nodesize   = " << nodesize << endl;
+  cout << "  --nperms     = " << nperms << endl;
+  cout << "  --pthresold  = " << pthreshold << endl;
+  cout << "  --alpha      = " << alpha << endl;
+  cout << "  --output     = " << output << endl << endl;
 
   assert(treedata.nfeatures() >= mtry);
   assert(treedata.nsamples() > 2*nodesize);
@@ -155,7 +159,7 @@ int main(int argc, char* argv[])
   vector<num_t> ivalues(treedata.nfeatures());
   //vector<num_t> ivalues(treedata.nfeatures());
   
-  //clock_t time_start(clock());
+  cout << "Growing " << nperms << " Random Forests (RFs), please wait..." << endl;
   RF.grow_forest(nperms,alpha,pvalues,ivalues);
   //cout << "Time elapsed: " << float(clock() - time_start)/CLOCKS_PER_SEC << " seconds" << endl;
   
@@ -169,18 +173,35 @@ int main(int argc, char* argv[])
 
   if(pvalues[0] <= pthreshold)
     {
-      ofstream os(output.c_str());
+      //cout << "Writing associations to file '" << output << "'" << endl;
+      //ofstream os(output.c_str());
+      FILE* po;
+      po = fopen(output.c_str(),"w");
+      
       for(size_t i = 0; i < treedata.nfeatures(); ++i)
 	{
 	  if(pvalues[i] > pthreshold)
 	    {
 	      break;
 	    }
-	  os << target_str << "\t" << treedata.get_featureheader(ref_ics[i]) << "\t" 
-	     << pvalues[i] << "\t" << ivalues[i] << "\t" << treedata.corr(targetidx,ref_ics[i]) << endl;
+
+	  fprintf(po,"%s\t%s\t%9.8f\t%9.8f\t%9.8f\n",target_str.c_str(),treedata.get_featureheader(ref_ics[i]).c_str(),pvalues[i],ivalues[i],treedata.corr(targetidx,ref_ics[i]));
+
+	  //os << target_str << "\t" << treedata.get_featureheader(ref_ics[i]) << "\t" 
+	  //   << pvalues[i] << "\t" << ivalues[i] << "\t" << treedata.corr(targetidx,ref_ics[i]) << endl;
 	}
-      os.close();
+      //os.close();
+      fclose(po);
+      cout << endl << "Association file created. Format:" << endl;
+      cout << "TARGET   PREDICTOR   P-VALUE   IMPORTANCE   CORRELATION" << endl << endl;
+      cout << "Done." << endl;
     }
+  else
+    {
+      cout << endl << "No significant associations found, quitting..." << endl;
+    }
+
+  
  
   return(EXIT_SUCCESS);
 }
