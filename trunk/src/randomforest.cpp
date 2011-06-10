@@ -15,7 +15,7 @@ Randomforest::Randomforest(Treedata* treedata, size_t ntrees, size_t mtry, size_
   size_t defaulttargetidx = 0;
   Randomforest::select_target(defaulttargetidx);
 
-  cout << forest_.size() << " trees and " << forest_[0].size() << " max nodes per tree initialized." << endl;
+  //cout << forest_.size() << " trees and " << forest_[0].size() << " max nodes per tree initialized." << endl;
 
 }
 
@@ -79,7 +79,7 @@ void Randomforest::grow_forest(const size_t nperms, const num_t alpha, vector<nu
   size_t nnodesinallforests = 0;
   for(size_t p = 0; p < nperms; ++p)
     {
-      cout << "Growing forest " << p << ": ";
+      cout << "  RF " << p + 1 << ": ";
       Randomforest::init_forest();
       treedata_->permute_contrasts();
       size_t nnodesinforest = 0;
