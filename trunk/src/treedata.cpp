@@ -285,7 +285,7 @@ void Treedata::read_afm(ifstream& featurestream, vector<vector<string> >& rawmat
 void Treedata::read_arff(ifstream& featurestream, vector<vector<string> >& rawmatrix)
 {
 
-  string field;
+  //string field;
   string row;
 
   bool hasrelation = false;
@@ -305,9 +305,20 @@ void Treedata::read_arff(ifstream& featurestream, vector<vector<string> >& rawma
 	      assert(false);
 	    }
 
-	  //TODO: read one row of data
+	  rawmatrix.resize(nattributes);
+	  
+	  while(getline(featurestream,row))
+	    {
+	      string field;
+	      stringstream ss(row);
+	      for(size_t attribute = 0; attribute < nattributes; ++attribute)
+		{
+		  getline(ss,field,',');
+		  rawmatrix[attribute].push_back(field);
+		}
+	    }
 
-	  continue;
+	  break;
 	}
 
       if(row[0] == '%' || row == "")
@@ -318,42 +329,24 @@ void Treedata::read_arff(ifstream& featurestream, vector<vector<string> >& rawma
       if(!hasrelation && row.compare(0,9,"@relation") == 0)
 	{
 	  hasrelation = true;
-	  cout << "found relation: " << row << endl;
+	  cout << "found relation header: " << row << endl;
 	}
       else if(row.compare(0,10,"@attribute") == 0)
 	{
 	  ++nattributes;
-	  cout << "found attribute: " << row << endl;
+	  cout << "found attribute header: " << row << endl;
 	}
       else if(!hasdata && row.compare(0,5,"@data") == 0)
 	{
 	  hasdata = true;
-	  cout << "found data:" << endl;
+	  cout << "found data header:" << row << endl;
 	}
       else
 	{
 	  cout << "problem" << endl;
 	  assert(false);
 	}
-
     }
-
-  //Count the number of columns
-  getline(featurestream,row);
-  stringstream ss(row);
-  size_t ncols = 0;
-  size_t nrows = 1;
-  while(getline(ss,field,','))
-    {
-      ++ncols;
-    }
-
-  //Count the number of rows
-  while(getline(featurestream,row))
-    {
-      ++nrows;
-    }
-  
 }
 
 

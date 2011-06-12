@@ -61,9 +61,9 @@ int main(int argc, char* argv[])
     }
 
   cout << endl;
-  cout << "  --------------------------------" << endl;
-  cout << "  --    RF-ACE version 0.3.0    --" << endl;
-  cout << "  --------------------------------" << endl;
+  cout << "  ----------------------------------" << endl;
+  cout << "  ---    RF-ACE version 0.3.0    ---" << endl;
+  cout << "  ----------------------------------" << endl;
 
   //using namespace GetOpt;
   string input = "";
