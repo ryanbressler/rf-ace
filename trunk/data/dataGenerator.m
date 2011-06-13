@@ -30,7 +30,8 @@ function [traindata, testdata] = dataGenerator( par )
 % sets - how many data sets to generate [1]
 % missing - fraction of missing values [0]
 % randomizeTarget -  add noise to target(s) with var 'randomizeTarget' [0]
-% mixedType - discretize this fraction of the input variables [0]
+% mixedType - discretize this fraction of the input variables [0],
+%             or if a vector of indices, discretize those variables
 % maxLevels - max num discrete levels in above [32]
 % testFraction - fraction of each set written to a test file [0]
 % L - nonlinear: number of functions added together to construct the  target [20]
@@ -136,7 +137,9 @@ for set=1:par.sets,
     end
 
     % discretize input variables
-    if isfield(par,'mixedType') && par.mixedType>0, 
+    if isfield(par,'mixedType') && ...
+            ( isscalar(par.mixedType) && par.mixedType>0 || ~isempty( par.mixedType ) ),    
+        
         if ~isfield(par,'maxLevels'),
             par.maxLevels = 32;
         end
@@ -189,7 +192,7 @@ for set=1:par.sets,
     fTe.catI = dXi;
     fTr.catLevels = levels;  
     fTe.catLevels = levels;
-    nameId = sprintf('n%d-N%d-Kn%d-cl%d-mixed%.2f-miss%.2f-set%d', par.n, par.N, par.Kn, par.maxClasses, par.mixedType, par.missing, set);
+    nameId = sprintf('n%d-N%d-Kn%d-cl%d-mixed%.2f-miss%.2f-set%d', par.n, par.N, par.Kn, par.maxClasses, par.mixedType(1), par.missing, set);
     fTr.name = sprintf('tr-%s', nameId);
     fTe.name = sprintf('te-%s', nameId);
     fTr.importances = par.P;
@@ -312,11 +315,30 @@ P = P/L; % scale by number of functions added to get indicators of relative impo
 
 
 %%
-function [X, dXi, levels] = discretize(X, fractionToDiscretize, maxLevels)
+function [X, dXi, levels] = discretize(X, whatToDiscretize, maxLevels)
+% 
+% in:
+%   X - real matrix of N rows and d columns
+%   whatToDiscretize - scalar: this fraction of randomly chosen input variables will be discretized
+%                      vector - given indices will be discretized
+%   maxLevels -  max num discrete levels
+%
+% out:
+%   X - input data but with some columns discretized
+%   dXi - index set of discretized columns
+%   levels - corresponding numbers of discretization levels
+%
 [N,d] = size(X);
-dd  = round(d*fractionToDiscretize); % discretize this many variables
-dXi = randperm(d);
-dXi = sort(dXi(1:dd));
+if isscalar( whatToDiscretize ),
+    % scalar - a random fraction of input variables will be discretized
+    dd  = round(d*whatToDiscretize); % discretize this many variables
+    dXi = randperm(d);
+    dXi = sort(dXi(1:dd));
+else
+    % vector - given indices will be discretized
+    dd = length( whatToDiscretize );
+    dXi = whatToDiscretize;
+end
 levels = zeros(1,dd);
 for i=1:dd,
     j = dXi(i);
