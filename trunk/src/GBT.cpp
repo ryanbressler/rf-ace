@@ -105,7 +105,8 @@ void GBT::growForest()
 
 
 		// set target in order to re-sort
-		treeData_->select_target( iTarget );
+		//treeData_->select_target( iTarget );
+		treeData_->targetidx_ = iTarget;
 		// TODO check if sorting might mess up things at some later point
 
 		// Grow a tree to predict the current target
