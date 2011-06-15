@@ -349,6 +349,21 @@ void Treedata::read_arff(ifstream& featurestream, vector<vector<string> >& rawma
     }
 }
 
+void Treedata::parse_arff_attribute(const string& str, vector<string>& fields)
+{
+
+  fields.clear();
+
+  stringstream ss(str);
+  string token = "";
+
+  while(getline(ss,token,' '))
+    {
+      fields.push_back(token);
+      cout << "'" << token << "'";
+    }
+  cout << endl;
+}
 
 bool Treedata::is_featureheader(const string& str)
 {
@@ -898,7 +913,7 @@ void Treedata::categorical_target_split(size_t featureidx,
 	      categories_left.insert(it_best->first);
 	      //cout << "removing index " << it_best->second[i] << " (value " << tv[it_best->second[i]] << ") from right: ";
 	      datadefs::forward_backward_sqerr(tv[it_best->second[i]],n_left,mu_left,se_left,n_right,mu_right,se_right);
-	      sampleics_left.push_back(it_best->second[i]);
+	      sampleics_left.push_back(sampleics[it_best->second[i]]);
 	      //cout << n_left << "\t" << n_right << "\t" << se_left << "\t" << se_right << endl;
 	    }
 	  fmap_right.erase(it_best->first);

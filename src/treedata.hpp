@@ -112,6 +112,8 @@ private:
   void read_afm(ifstream& featurestream, vector<vector<string> >& rawmatrix);
   void read_arff(ifstream& featurestream, vector<vector<string> >& rawmatrix);
 
+  void parse_arff_attribute(const string& str, vector<string>& fields);
+
   bool is_featureheader(const string& str);
 
   template <typename T> void transpose(vector<vector<T> >& mat);
