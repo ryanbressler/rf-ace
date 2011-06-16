@@ -153,7 +153,7 @@ private:
   vector<vector<num_t> > featurematrix_;
   //vector<vector<num_t> > contrastmatrix_;
   vector<bool> isfeaturenum_;
-  size_t nrealvalues_;
+  size_t nrealsamples_;
   //vector<size_t> ncatvalues_;
 
   size_t nsamples_;

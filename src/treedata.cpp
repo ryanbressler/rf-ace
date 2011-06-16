@@ -14,7 +14,7 @@ Treedata::Treedata(string filename):
   targetidx_(0),
   featurematrix_(0),
   isfeaturenum_(0),
-  nrealvalues_(0),
+  nrealsamples_(0),
   nsamples_(0),
   nfeatures_(0),
   featureheaders_(0),
@@ -459,7 +459,7 @@ void Treedata::select_target(size_t targetidx)
 {
   targetidx_ = targetidx; 
   Treedata::sort_all_wrt_target();
-  datadefs::count_real_values(featurematrix_[targetidx_],nrealvalues_);
+  datadefs::count_real_values(featurematrix_[targetidx_],nrealsamples_);
   Treedata::permute_contrasts();
 }
 
@@ -478,17 +478,17 @@ bool Treedata::isfeaturenum(size_t featureidx)
 
 size_t Treedata::nrealsamples()
 {
-  size_t nreal;
-  datadefs::count_real_values(featurematrix_[targetidx_],nreal);
-  return(nreal);
+  //size_t nrealsamples;
+  //datadefs::count_real_values(featurematrix_[targetidx_],nreal);
+  return(nrealsamples_);
 }
 
 
 size_t Treedata::nrealsamples(size_t featureidx)
-{
-  size_t nreal;
-  datadefs::count_real_values(featurematrix_[featureidx],nreal);
-  return(nreal);
+{ 
+  size_t nrealsamples;
+  datadefs::count_real_values(featurematrix_[featureidx],nrealsamples);
+  return(nrealsamples);
 }
 
 void Treedata::remove_nans(size_t featureidx, 
@@ -608,7 +608,7 @@ void Treedata::permute(vector<num_t>& x)
 void Treedata::bootstrap(vector<size_t>& ics, vector<size_t>& oob_ics)
 {
   //assert(ics.size() == oob_ics.size());
-  size_t n(ics.size());
+  size_t n = ics.size();
   for(size_t i = 0; i < n; ++i)
     {
       ics[i] = irand_() % n;
@@ -643,47 +643,6 @@ void Treedata::split_target(size_t featureidx,
     } 
 }
 
-/*
-  void Treedata::split_target_with_cat_feature(size_t featureidx,
-  const size_t min_split,
-  vector<size_t>& sampleics,
-  vector<size_t>& sampleics_left,
-  vector<size_t>& sampleics_right,
-  set<num_t>& values_left)
-  {
-  assert(!isfeaturenum_[featureidx]);
-  assert(featureidx != targetidx_);
-  
-  Treedata::categorical_target_split(featureidx,sampleics,sampleics_left,sampleics_right,values_left);
-  
-  }
-*/
-
-/*
-  void Treedata::split_target(const size_t min_split,
-  vector<size_t>& sampleics,
-  vector<size_t>& sampleics_left,
-  vector<size_t>& sampleics_right)
-  {
-  
-  num_t splitvalue;
-  
-  size_t n_tot(sampleics.size());
-  
-  if(isfeaturenum_[targetidx_])
-  {
-  Treedata::incremental_target_split(targetidx_,min_split,sampleics,sampleics_left,sampleics_right,splitvalue);
-  }
-  else
-  {
-  set<num_t> values_left;
-  Treedata::categorical_target_split(targetidx_,sampleics,sampleics_left,sampleics_right,values_left); 
-  }
-  
-  assert(sampleics.size() == n_tot);
-  assert(sampleics_left.size() + sampleics_right.size() == n_tot);
-  }
-*/
 
 void Treedata::incremental_target_split(size_t featureidx,
 					const size_t min_split, 
@@ -768,20 +727,19 @@ void Treedata::incremental_target_split(size_t featureidx,
     {
       map<num_t,size_t> freq_left;
       map<num_t,size_t> freq_right;
-      num_t sf_left(0.0);
-      num_t sf_right(0.0);
-      //num_t sf_best(0.0);
-      size_t nreal_right(0);
+      size_t sf_left = 0;
+      size_t sf_right = 0;
+      size_t nreal_right = 0;
  
       datadefs::sqfreq(tv,freq_right,sf_right,nreal_right);
-      num_t nsf_best = sf_right/nreal_right;
+      num_t nsf_best = 1.0 * sf_right / nreal_right;
       assert(n_tot == nreal_right);
       
-      size_t idx(0);
+      size_t idx = 0;
       while(n_left < n_tot - min_split)
         {
 	  datadefs::forward_backward_sqfreq(tv[idx],n_left,freq_left,sf_left,n_right,freq_right,sf_right);
-          if(n_right*sf_left + n_left*sf_right > n_left*n_right*nsf_best && n_left >= min_split) 
+          if(1.0*n_right*sf_left + n_left*sf_right > n_left*n_right*nsf_best && n_left >= min_split) 
             {
               bestsplitidx = idx;
               nsf_best = sf_left/n_left + sf_right/n_right;
@@ -923,8 +881,8 @@ void Treedata::categorical_target_split(size_t featureidx,
   else
     {
       map<num_t,size_t> freq_left,freq_right;
-      num_t sf_left(0.0);
-      num_t sf_right;
+      size_t sf_left = 0;
+      size_t sf_right;
       datadefs::sqfreq(tv,freq_right,sf_right,n_right);
       assert(n_tot == n_right);
       //datadefs::count_freq(fv,freq_right,n_right);
@@ -933,7 +891,7 @@ void Treedata::categorical_target_split(size_t featureidx,
       //	  cout << " " << it->first << ":" << it->second;
       //	}
       //cout << endl;
-      num_t nsf_best(sf_right/n_right);
+      num_t nsf_best = 1.0 * sf_right / n_right;
 
       while(fmap_right.size() > 1)
         {
@@ -943,8 +901,8 @@ void Treedata::categorical_target_split(size_t featureidx,
           for(map<num_t,vector<size_t> >::iterator it(fmap_right.begin()); it != fmap_right.end(); ++it)
             {
 
-	      size_t n_left_c(n_left);
-	      size_t n_right_c(n_right);
+	      size_t n_left_c = n_left;
+	      size_t n_right_c = n_right;
 	      map<num_t,size_t> freq_left_c = freq_left;
 	      map<num_t,size_t> freq_right_c = freq_right;
 
@@ -958,10 +916,10 @@ void Treedata::categorical_target_split(size_t featureidx,
                 }
 	      //cout << endl;
 
-              if(n_right*sf_left + n_left*sf_right > n_left*n_right*nsf_best)
+              if(1.0*n_right*sf_left + n_left*sf_right > n_left*n_right*nsf_best)
                 {
                   it_best = it;
-                  nsf_best = sf_left/n_left + sf_right/n_right;
+                  nsf_best = 1.0*sf_left/n_left + 1.0*sf_right/n_right;
                 }
 
 	      //cout << "Moving " << it->second.size() << " samples corresponding to feature category " << it->first << " from left to right" << endl;
@@ -1038,11 +996,11 @@ num_t Treedata::at(size_t featureidx, size_t sampleidx)
 //This is slow if the feature has lots of missing values. Consider re-implementing for speed-up
 num_t Treedata::randf(size_t featureidx)
 {
-  assert(nrealvalues_ > 0);
+  assert(nrealsamples_ > 0);
   num_t value(datadefs::num_nan);
   while(datadefs::is_nan(value))
     {
-      value = featurematrix_[featureidx][irand_() % nrealvalues_];
+      value = featurematrix_[featureidx][irand_() % nrealsamples_];
     }
   return(value);
 }
@@ -1063,23 +1021,23 @@ void Treedata::impurity(size_t featureidx, vector<size_t> const& sampleics, num_
   nreal = 0;
   if(isfeaturenum_[featureidx])
     {
-      num_t mu(0.0);
-      num_t se(0.0);
+      num_t mu = 0.0;
+      num_t se = 0.0;
       for(size_t i = 0; i < n; ++i)
 	{
 	  datadefs::forward_sqerr(featurematrix_[featureidx][sampleics[i]],nreal,mu,se);  
 	}
-      impurity = se/nreal;
+      impurity = se / nreal;
     }
   else
     {
       map<num_t,size_t> freq;
-      num_t sf(0.0);
+      size_t sf = 0;
       for(size_t i = 0; i < n; ++i)
 	{
 	  datadefs::forward_sqfreq(featurematrix_[featureidx][sampleics[i]],nreal,freq,sf);
 	}
-      impurity = 1-sf/pow(nreal,2);
+      impurity = 1.0 - 1.0 * sf / (nreal * nreal);
     }
 }
 
@@ -1090,9 +1048,9 @@ void Treedata::split_samples(vector<size_t>& sampleics,
 			     vector<size_t>& sampleics_right)
 {
   //Split the sample indices
-  size_t n_tot(sampleics.size());
-  size_t n_left(splitidx + 1);
-  size_t n_right(n_tot - n_left);
+  size_t n_tot = sampleics.size();
+  size_t n_left = splitidx + 1;
+  size_t n_right = n_tot - n_left;
 
   if(n_left == 0)
     {
@@ -1111,7 +1069,7 @@ void Treedata::split_samples(vector<size_t>& sampleics,
   //vector<size_t> sampleics_right_copy(n_right);
   sampleics_left.resize(n_left);
   sampleics_right.resize(n_right);
-  size_t i(0);
+  size_t i = 0;
   while(i < n_left)
     {
       sampleics_left[i] = sampleics[i];
@@ -1179,8 +1137,8 @@ num_t Treedata::split_fitness(const size_t featureidx,
   else
     {
       map<num_t,size_t> freq_left,freq_right;
-      num_t sf_left = 0.0;
-      num_t sf_right = 0.0;
+      size_t sf_left = 0;
+      size_t sf_right = 0;
 
       for(size_t i = 0; i < sampleics_left.size(); ++i)
         {
@@ -1200,7 +1158,7 @@ num_t Treedata::split_fitness(const size_t featureidx,
        }
 
       size_t n_tot = n_right;
-      num_t sf_tot = sf_right;
+      size_t sf_tot = sf_right;
 
       for(size_t i = 0; i < sampleics_left.size(); ++i)
         {
@@ -1218,7 +1176,7 @@ num_t Treedata::split_fitness(const size_t featureidx,
       //num_t fitness = (-1.0*(n_left*n_right*sf_tot) + n_tot*n_right*sf_left + n_tot*n_left*sf_right) / (n_left*n_right*(pow(n_tot,2) - sf_tot));
       //cout << "Fitness " << fitness << endl;
 
-      return((-1.0*(n_left*n_right*sf_tot) + n_tot*n_right*sf_left + n_tot*n_left*sf_right) / (n_left*n_right*(pow(n_tot,2) - sf_tot)));
+      return( ( -1.0 * (n_left*n_right*sf_tot) + n_tot*n_right*sf_left + n_tot*n_left*sf_right ) / ( n_left*n_right * (1.0*n_tot*n_tot - sf_tot) ) ) ;
       
     }
 

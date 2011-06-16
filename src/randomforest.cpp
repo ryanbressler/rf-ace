@@ -163,6 +163,9 @@ void Randomforest::grow_tree(size_t treeidx)
 {
   //Generate the vector for bootstrap indices
   vector<size_t> bootstrap_ics(treedata_->nrealsamples());
+  
+  //TODO: Redo generation of bootstrap indices
+  //**************************************
 
   //Generate bootstrap indices and oob-indices
   treedata_->bootstrap(bootstrap_ics,oobmatrix_[treeidx]);

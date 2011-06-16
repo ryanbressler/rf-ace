@@ -109,7 +109,7 @@ int main(int argc, char* argv[])
       cerr << "targetidx must point to a valid feature (0.." << treedata.nfeatures()-1 << ")" << endl;
       return EXIT_FAILURE;
     }
-  
+
   size_t nrealsamples = treedata.nrealsamples(targetidx);
 
   if(nrealsamples == 0)

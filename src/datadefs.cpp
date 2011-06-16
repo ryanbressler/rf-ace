@@ -92,7 +92,7 @@ datadefs::num_t datadefs::str2num(string& str)
 
 bool datadefs::is_nan(const string& str)
 {
-  set<string>::iterator it(NANs.find(str));
+  set<string>::const_iterator it(NANs.find(str));
   if(it == NANs.end())
     {
       return(false);
@@ -251,12 +251,13 @@ void datadefs::gini(map<datadefs::num_t,size_t>& cat2freq,
   map<datadefs::num_t,size_t>::const_iterator it;
   for(it = cat2freq.begin(); it != cat2freq.end(); ++it)
     {
-      gi += pow(it->second,2);
-      n += it->second;
+      size_t freq_new = it->second;
+      gi += freq_new * freq_new;
+      n += freq_new;
     }
   if(n)
     {
-      gi = 1-gi/pow(n,2);
+      gi = 1-gi/(n*n);
     }
 }
 
@@ -313,21 +314,22 @@ void datadefs::map_data(vector<datadefs::num_t>& data,
 
 void datadefs::sqfreq(vector<datadefs::num_t> const& data, 
 		      map<datadefs::num_t,size_t>& freq, 
-		      datadefs::num_t& sf, 
+		      size_t& sf, 
 		      size_t& nreal)
 {
-  sf = 0.0;
+  sf = 0;
   datadefs::count_freq(data,freq,nreal);
   for(map<datadefs::num_t,size_t>::const_iterator it(freq.begin()); it != freq.end(); ++it)
     {
-      sf += pow(it->second,2);
+      size_t freq_new = it->second;
+      sf += freq_new * freq_new;
     }
 }
 
 void datadefs::forward_sqfreq(const datadefs::num_t x_n,
 			      size_t& n,
 			      map<datadefs::num_t,size_t>& freq,
-			      datadefs::num_t& sf)
+			      size_t& sf)
 {
 
   if(datadefs::is_nan(x_n))
@@ -362,10 +364,10 @@ void datadefs::forward_sqfreq(const datadefs::num_t x_n,
 void datadefs::forward_backward_sqfreq(const datadefs::num_t x_n,
 				       size_t& n_left,
 				       map<datadefs::num_t,size_t>& freq_left, 
-				       datadefs::num_t& sf_left,
+				       size_t& sf_left,
 				       size_t& n_right,
 				       map<datadefs::num_t,size_t>& freq_right,
-				       datadefs::num_t& sf_right)
+				       size_t& sf_right)
 {
  
   if(datadefs::is_nan(x_n))
