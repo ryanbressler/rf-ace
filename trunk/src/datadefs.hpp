@@ -86,21 +86,21 @@ namespace datadefs
 
   void sqfreq(vector<num_t> const& data, 
 	      map<num_t,size_t>& freq, 
-	      num_t& sf, 
+	      size_t& sf, 
 	      size_t& nreal);
 
   void forward_sqfreq(const num_t x_n,
 		      size_t& n,
 		      map<num_t,size_t>& freq,
-		      num_t& sf);
+		      size_t& sf);
   
   void forward_backward_sqfreq(const num_t x_n,
 			       size_t& n_left,
 			       map<num_t,size_t>& freq_left,
-			       num_t& sf_left,
+			       size_t& sf_left,
 			       size_t& n_right,
 			       map<num_t,size_t>& freq_right,
-			       num_t& sf_right);
+			       size_t& sf_right);
 
   void range(vector<size_t>& ics);
 
