@@ -700,22 +700,22 @@ void Treedata::incremental_target_split(size_t featureidx,
   //If the target is numerical, we use the iterative squared error formula to update impurity scores while we traverse "right"
   if(isfeaturenum_[targetidx_])
     {
-      num_t mu_right(0.0);
-      num_t se_right(0.0);
-      num_t mu_left(0.0);
-      num_t se_left(0.0);
-      num_t se_best(0.0);
-      size_t nreal_right(0);
+      num_t mu_right = 0.0;
+      num_t se_right = 0.0;
+      num_t mu_left = 0.0;
+      num_t se_left = 0.0;
+      num_t se_best = 0.0;
+      size_t nreal_right = 0;
       
       datadefs::sqerr(tv,mu_right,se_right,nreal_right);
       assert(n_tot == nreal_right);
       se_best = se_right;
 
-      size_t idx(0);
+      size_t idx = 0;
       while(n_left < n_tot - min_split)
 	{
 	  datadefs::forward_backward_sqerr(tv[idx],n_left,mu_left,se_left,n_right,mu_right,se_right);
-	  if((se_left+se_right) < se_best && n_left >= min_split)
+	  if( se_left + se_right < se_best && n_left >= min_split)
 	    {
 	      bestsplitidx = idx;
 	      se_best = se_left + se_right;
@@ -739,10 +739,10 @@ void Treedata::incremental_target_split(size_t featureidx,
       while(n_left < n_tot - min_split)
         {
 	  datadefs::forward_backward_sqfreq(tv[idx],n_left,freq_left,sf_left,n_right,freq_right,sf_right);
-          if(1.0*n_right*sf_left + n_left*sf_right > n_left*n_right*nsf_best && n_left >= min_split) 
+          if(1.0 * n_right * sf_left + 1.0 * n_left * sf_right > n_left * n_right * nsf_best && n_left >= min_split) 
             {
               bestsplitidx = idx;
-              nsf_best = sf_left/n_left + sf_right/n_right;
+              nsf_best = 1.0 * sf_left / n_left + 1.0 * sf_right / n_right;
             }
 	  ++idx;
         }      
@@ -1176,7 +1176,7 @@ num_t Treedata::split_fitness(const size_t featureidx,
       //num_t fitness = (-1.0*(n_left*n_right*sf_tot) + n_tot*n_right*sf_left + n_tot*n_left*sf_right) / (n_left*n_right*(pow(n_tot,2) - sf_tot));
       //cout << "Fitness " << fitness << endl;
 
-      return( ( -1.0 * (n_left*n_right*sf_tot) + n_tot*n_right*sf_left + n_tot*n_left*sf_right ) / ( n_left*n_right * (1.0*n_tot*n_tot - sf_tot) ) ) ;
+      return( ( -1.0 * n_left*n_right*sf_tot + n_tot*n_right*sf_left + n_tot*n_left*sf_right ) / ( n_left*n_right * (1.0*n_tot*n_tot - sf_tot) ) ) ;
       
     }
 
