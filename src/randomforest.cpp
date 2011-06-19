@@ -102,58 +102,62 @@ void Randomforest::grow_forest(const size_t nperms, const num_t alpha, vector<nu
   size_t nfeatures = treedata_->nfeatures();
   pvalues.resize(nfeatures);
   
-  vector<num_t> csample(nperms);
-  for(size_t p = 0; p < nperms; ++p)
-    {
-      vector<num_t> tempvec(nfeatures);
-      for(size_t f = 0; f < nfeatures; ++f)
-	{
-	  tempvec[f] = importancemat[p][f + nfeatures];
-	}
-      datadefs::zerotrim(tempvec);
-      if(tempvec.size() > 0)
-	{
-	  datadefs::percentile(tempvec,alpha,csample[p]);
-	}
-      else
-	{
-	  csample[p] = 0;
-	}
-      //cout << csample[p] << endl;
-    }
-  
-  for(size_t f = 0; f < nfeatures; ++f)
-    {
-      vector<num_t> fsample(nperms);
-      for(size_t p = 0; p < nperms; ++p)
-	{
-	  fsample[p] = importancemat[p][f];
-	}
-      // cout << "ttest " << f << ":";
-      //for(size_t i = 0; i < nperms; ++i)
-      //	{
-      //  cout << "(" << fsample[i] << "," << csample[i] << ")";
-      //	}
-      //cout << endl;
- 
-      datadefs::ttest(fsample,csample,pvalues[f]);
-      size_t nreal;
-      datadefs::mean(fsample,ivalues[f],nreal);
-    }
-  
   /*
-    for(size_t f = 0; f < nfeatures; ++f)
-    {
-    vector<num_t> fsample(nperms);
     vector<num_t> csample(nperms);
     for(size_t p = 0; p < nperms; ++p)
     {
-    fsample[p] = importancemat[p][f];
-    csample[p] = importancemat[p][f + nfeatures];
+    vector<num_t> tempvec(nfeatures);
+    for(size_t f = 0; f < nfeatures; ++f)
+    {
+    tempvec[f] = importancemat[p][f + nfeatures];
     }
+    datadefs::zerotrim(tempvec);
+    if(tempvec.size() > 0)
+    {
+    datadefs::percentile(tempvec,alpha,csample[p]);
+    }
+    else
+    {
+    csample[p] = 0;
+    }
+    //cout << csample[p] << endl;
+    }
+    
+    for(size_t f = 0; f < nfeatures; ++f)
+    {
+    vector<num_t> fsample(nperms);
+    for(size_t p = 0; p < nperms; ++p)
+    {
+    fsample[p] = importancemat[p][f];
+    }
+    // cout << "ttest " << f << ":";
+    //for(size_t i = 0; i < nperms; ++i)
+    //	{
+    //  cout << "(" << fsample[i] << "," << csample[i] << ")";
+    //	}
+    //cout << endl;
+    
     datadefs::ttest(fsample,csample,pvalues[f]);
+    size_t nreal;
+    datadefs::mean(fsample,ivalues[f],nreal);
     }
   */
+  
+  
+  for(size_t f = 0; f < nfeatures; ++f)
+    {
+      size_t nreal;
+      vector<num_t> fsample(nperms);
+      vector<num_t> csample(nperms);
+      for(size_t p = 0; p < nperms; ++p)
+	{
+	  fsample[p] = importancemat[p][f];
+	  csample[p] = importancemat[p][f + nfeatures];
+	}
+      datadefs::utest(fsample,csample,pvalues[f]);
+      datadefs::mean(fsample,ivalues[f],nreal);
+    }
+  
 
   //cout << "done" << endl;
   

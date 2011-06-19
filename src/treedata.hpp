@@ -144,14 +144,20 @@ private:
 		      vector<size_t>& sampleics_left,
 		      vector<size_t>& sampleics_right);  
   
-  //void count_real_values(size_t featureidx, size_t& nreal);
-  
-  //void generate_contrasts();    
-  
+  struct Feature
+  {
+    vector<num_t> data;
+    vector<num_t> contrast;
+    string name;
+    bool isnumeric;
+  };
+
   size_t targetidx_;
 
+  vector<Feature> features_;
+
   vector<vector<num_t> > featurematrix_;
-  //vector<vector<num_t> > contrastmatrix_;
+  vector<vector<num_t> > contrastmatrix_;
   vector<bool> isfeaturenum_;
   size_t nrealsamples_;
   //vector<size_t> ncatvalues_;

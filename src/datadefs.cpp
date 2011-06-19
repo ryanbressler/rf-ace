@@ -13,9 +13,13 @@ using namespace std;
 //const datadefs::cat_t datadefs::cat_nan = -1;
 const datadefs::num_t datadefs::num_nan = numeric_limits<float>::infinity();
 const datadefs::num_t datadefs::eps = 1e-12;
+const datadefs::num_t datadefs::PI = 3.1415926535;
+const datadefs::num_t datadefs::A = 0.140012;
 
 const string initNANs[] = {"NA","NAN"};
 const set<datadefs::NAN_t> datadefs::NANs(initNANs,initNANs+2);
+
+
 
 void toupper(string& str)
 {
@@ -511,6 +515,74 @@ void datadefs::regularized_betainc(const datadefs::num_t x,
       ibval = 1.0;
     }
   
+}
+
+void datadefs::utest(vector<datadefs::num_t> const& x,
+		     vector<datadefs::num_t> const& y,
+		     datadefs::num_t& pvalue)
+{
+  
+  num_t uvalue = 0.0;
+  size_t m = x.size();
+  size_t n = y.size();
+
+  for(size_t i = 0; i < m; ++i)
+    {
+
+      bool xnan = datadefs::is_nan(x[i]);
+
+      for(size_t j = 0; j < n; ++j)
+	{
+	 
+	  bool ynan = datadefs::is_nan(y[j]);
+
+	  if(!xnan && ynan)
+	    {
+	      uvalue += 1;
+	    }
+	  else if(!xnan && !ynan && x[i] > y[j])
+	    {
+	      uvalue += 1;
+	    }
+  
+	}
+    }
+  //uvalue /= m*n;
+  //uvalue = 1.0 - uvalue;
+
+  num_t mu = 1.0*m*n/2.0;
+  num_t s = sqrt(1.0*m*n*(n+m+1)/12.0);
+
+  //cout << uvalue << " " << mu << " " << s;
+
+  pvalue = 1.0 - 0.5 * ( 1 + datadefs::erf( (uvalue-mu) / (s*sqrt(2.0)) ) );
+  //cout << " ==> " << pvalue << endl;
+
+}
+
+datadefs::num_t datadefs::erf(datadefs::num_t x)
+{  
+  /* erf(z) = 2/sqrt(pi) * Integral(0..x) exp( -t^2) dt
+     erf(0.01) = 0.0112834772 erf(3.7) = 0.9999998325
+     Abramowitz/Stegun: p299, |erf(z)-erf| <= 1.5*10^(-7) 
+  */
+  //double y = 1.0 / ( 1.0 + 0.3275911 * x );   
+  //return( 1 - ((((( + 1.061405429  * y - 1.453152027) * y + 1.421413741) * y - 0.284496736) * y + 0.254829592) * y) * exp (-x * x) );      
+
+  num_t x2 = x*x;
+
+  num_t sgn;
+  if(x < 0.0)
+    {
+      sgn = -1.0;
+    }
+  else
+    {
+      sgn = 1.0;
+    }
+
+  return( sgn*sqrt(1.0 - exp(-x2*(4.0/datadefs::PI+datadefs::A*x2) / (1+datadefs::A*x2))) ); 
+
 }
 
 

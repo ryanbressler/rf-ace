@@ -23,6 +23,8 @@ namespace datadefs
   //NaN as represented by the program
   extern const num_t num_nan;
   extern const num_t eps;
+  extern const num_t A;
+  extern const num_t PI;
 
   //NaNs supported in the delimited file 
   typedef string NAN_t;
@@ -107,6 +109,12 @@ namespace datadefs
   void ttest(vector<num_t> const& x, 
 	     vector<num_t> const& y, 
 	     num_t& pvalue);
+
+  void utest(vector<num_t> const& x,
+	     vector<num_t> const& y,
+	     num_t& pvalue);
+
+  num_t erf(num_t x);
 
   void regularized_betainc(const num_t x, 
 			   const size_t a, 
