@@ -69,7 +69,7 @@ size_t Randomforest::get_target()
   return(treedata_->get_target());
 }
 
-void Randomforest::grow_forest(const size_t nperms, const num_t alpha, vector<num_t>& pvalues, vector<num_t>& ivalues)
+void Randomforest::grow_forest(const size_t nperms, vector<num_t>& pvalues, vector<num_t>& ivalues)
 {
   assert(nperms > 5);
   vector<vector<num_t> > importancemat(nperms);
