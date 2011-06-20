@@ -25,7 +25,7 @@ public:
   size_t get_target();
 
   //Grow the Random Forest with respect to selected target feature
-  void grow_forest(const size_t nperms, const num_t alpha, vector<num_t>& pvalues, vector<num_t>& ivalues);
+  void grow_forest(const size_t nperms, vector<num_t>& pvalues, vector<num_t>& ivalues);
   //void calculate_importance(const num_t alpha, vector<num_t>& importance, num_t& contrast_prc);
 
   //blacklist_and_kill

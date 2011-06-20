@@ -25,7 +25,7 @@ const size_t DEFAULT_MTRY = 0;
 const size_t DEFAULT_NODESIZE = 5;
 const size_t DEFAULT_NPERMS = 20;
 const num_t DEFAULT_PTHRESHOLD = 0.10;
-const num_t DEFAULT_ALPHA = 0.95;
+//const num_t DEFAULT_ALPHA = 0.95;
 
 int main(int argc, char* argv[])
 {
@@ -50,12 +50,12 @@ int main(int argc, char* argv[])
       cout << endl;
       cout << "OPTIONAL ARGUMENTS:" << endl;
       cout << "-i / --targetidx    target index, ref. to feature matrix (default " << DEFAULT_TARGETIDX << ")" << endl;
-      cout << "-n / --ntrees       number of trees per RF (default nsamples)" << endl;
+      cout << "-n / --ntrees       number of trees per RF (default 2*nsamples/nrealsamples)" << endl;
       cout << "-m / --mtry         number of randomly drawn features per node split (default sqrt(nfeatures))" << endl;
       cout << "-s / --nodesize     minimum number of train samples per node, affects tree depth (default " << DEFAULT_NODESIZE << ")" << endl;
       cout << "-p / --nperms       number of Random Forests (default " << DEFAULT_NPERMS << ")" << endl;
       cout << "-t / --pthreshold   p-value threshold below which associations are listed (default " << DEFAULT_PTHRESHOLD << ")" << endl;
-      cout << "-a / --alpha        percentile of contrast importances, defines stringency of the t-test (default " << DEFAULT_ALPHA << ")" << endl;
+      //cout << "-a / --alpha        percentile of contrast importances, defines stringency of the t-test (default " << DEFAULT_ALPHA << ")" << endl;
       cout << endl;
       return EXIT_SUCCESS;
     }
@@ -73,7 +73,7 @@ int main(int argc, char* argv[])
   size_t nodesize = DEFAULT_NODESIZE;
   size_t nperms = DEFAULT_NPERMS;
   num_t pthreshold = DEFAULT_PTHRESHOLD;
-  num_t alpha = DEFAULT_ALPHA;
+  //num_t alpha = DEFAULT_ALPHA;
   //bool is_featurerows = true;
   string output = "";
 
@@ -143,7 +143,7 @@ int main(int argc, char* argv[])
   cout << "  --nodesize   = " << nodesize << endl;
   cout << "  --nperms     = " << nperms << endl;
   cout << "  --pthresold  = " << pthreshold << endl;
-  cout << "  --alpha      = " << alpha << endl;
+  //cout << "  --alpha      = " << alpha << endl;
   cout << "  --output     = " << output << endl << endl;
 
   assert(treedata.nfeatures() >= mtry);
@@ -160,7 +160,7 @@ int main(int argc, char* argv[])
   //vector<num_t> ivalues(treedata.nfeatures());
   
   cout << "Growing " << nperms << " Random Forests (RFs), please wait..." << endl;
-  RF.grow_forest(nperms,alpha,pvalues,ivalues);
+  RF.grow_forest(nperms,pvalues,ivalues);
   //cout << "Time elapsed: " << float(clock() - time_start)/CLOCKS_PER_SEC << " seconds" << endl;
   
   vector<size_t> ref_ics(treedata.nfeatures());
