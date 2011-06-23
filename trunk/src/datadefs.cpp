@@ -11,8 +11,8 @@
 using namespace std;
 
 //const datadefs::cat_t datadefs::cat_nan = -1;
-const datadefs::num_t datadefs::num_nan = numeric_limits<float>::infinity();
-const datadefs::num_t datadefs::eps = 1e-12;
+const datadefs::num_t datadefs::NUM_NAN = numeric_limits<float>::infinity();
+const datadefs::num_t datadefs::EPS = 1e-12;
 const datadefs::num_t datadefs::PI = 3.1415926535;
 const datadefs::num_t datadefs::A = 0.140012;
 
@@ -36,33 +36,33 @@ void datadefs::strv2catv(vector<string>& strvec, vector<datadefs::num_t>& catvec
   //Reset the map
   map<string,size_t> foo;
   str2valmap = foo;
-  size_t val(0);
+  size_t val = 0;
 
   //Map unique strings to values and store values in catvec as floats 
-  for(size_t i = 0; i < strvec.size(); ++i)
+  for(size_t strIdx = 0; strIdx < strvec.size(); ++strIdx)
     {
       //Transform string to uppercase
-      toupper(strvec[i]);
+      toupper(strvec[strIdx]);
 
       //If the string is not defined to NaN
-      if(!datadefs::is_nan(strvec[i]))
+      if(!datadefs::isNAN(strvec[strIdx]))
 	{
 	  map<string,size_t>::iterator it;
 
 	  //Try to find the string in the map. If it's not found, add the map...
-	  it = str2valmap.find(strvec[i]);
+	  it = str2valmap.find(strvec[strIdx]);
 	  if(it == str2valmap.end())
 	    {
-	      str2valmap.insert(pair<string,size_t>(strvec[i],val));
+	      str2valmap.insert(pair<string,size_t>(strvec[strIdx],val));
 	      ++val;
 	    }
 	  //...and use the map to set the value for the output vector
-	  catvec[i] = float(str2valmap[strvec[i]]);
+	  catvec[strIdx] = float(str2valmap[strvec[strIdx]]);
 	}
       //If the string is defined to NaN, however...
       else
 	{
-	  catvec[i] = datadefs::num_nan;
+	  catvec[strIdx] = datadefs::NUM_NAN;
 	}
     }  
 }
@@ -71,16 +71,16 @@ void datadefs::strv2numv(vector<string>& strvec, vector<datadefs::num_t>& numvec
 {
   assert(strvec.size() == numvec.size());
   
-  for(size_t i = 0; i < numvec.size(); ++i)
+  for(size_t strIdx = 0; strIdx < strvec.size(); ++strIdx)
     {
-      toupper(strvec[i]);
-      if(!datadefs::is_nan(strvec[i]))
+      toupper(strvec[strIdx]);
+      if(!datadefs::isNAN(strvec[strIdx]))
 	{
-	  numvec[i] = str2num(strvec[i]);
+	  numvec[strIdx] = str2num(strvec[strIdx]);
 	}
       else
 	{
-	  numvec[i] = datadefs::num_nan;
+	  numvec[strIdx] = datadefs::NUM_NAN;
 	}
     }
 }
@@ -94,7 +94,7 @@ datadefs::num_t datadefs::str2num(string& str)
 }
 
 
-bool datadefs::is_nan(const string& str)
+bool datadefs::isNAN(const string& str)
 {
   set<string>::const_iterator it(NANs.find(str));
   if(it == NANs.end())
@@ -109,9 +109,9 @@ bool datadefs::is_nan(const string& str)
 
 
 
-bool datadefs::is_nan(const datadefs::num_t value)
+bool datadefs::isNAN(const datadefs::num_t value)
 {
-  if(value == datadefs::num_nan)
+  if(value == datadefs::NUM_NAN)
     {
       return(true);
     }
@@ -121,24 +121,24 @@ bool datadefs::is_nan(const datadefs::num_t value)
     }
 }
 
-void datadefs::mean(vector<datadefs::num_t> const& data, datadefs::num_t& mu, size_t& nreal)
+void datadefs::mean(vector<datadefs::num_t> const& data, datadefs::num_t& mu, size_t& nRealValues)
 {
  
-  nreal = 0;
+  nRealValues = 0;
   mu = 0.0;
  
   for(size_t i = 0; i < data.size(); ++i)
     {
-      if(!datadefs::is_nan(data[i]))
+      if(!datadefs::isNAN(data[i]))
         {
-          ++nreal;
+          ++nRealValues;
           mu += data[i];
         }
     }
 
-  if(nreal > 0)
+  if(nRealValues > 0)
     {
-      mu /= nreal;
+      mu /= nRealValues;
     }
 
 }
@@ -146,39 +146,40 @@ void datadefs::mean(vector<datadefs::num_t> const& data, datadefs::num_t& mu, si
 void datadefs::sqerr(vector<datadefs::num_t> const& data, 
 		     datadefs::num_t& mu, 
 		     datadefs::num_t& se,
-		     size_t& nreal)
+		     size_t& nRealValues)
 {
     
-  datadefs::mean(data,mu,nreal);
+  datadefs::mean(data,mu,nRealValues);
   
   se = 0.0;
   for(size_t i = 0; i < data.size(); ++i)
     {
-      if(!datadefs::is_nan(data[i]))
+      if(!datadefs::isNAN(data[i]))
 	{
 	  se += pow(data[i] - mu,2);
 	}
     }
 }
 
-void datadefs::count_real_values(vector<num_t> const& data, size_t& nreal)
+void datadefs::countRealValues(vector<num_t> const& data, size_t& nRealValues)
 {
-  nreal = 0;
+  nRealValues = 0;
   for(size_t i = 0; i < data.size(); ++i)
     {
-      if(!datadefs::is_nan(data[i]))
+      if(!datadefs::isNAN(data[i]))
 	{
-	  ++nreal;
+	  ++nRealValues;
 	}
     }  
 }
 
+//DEPRECATED
 void datadefs::zerotrim(vector<datadefs::num_t>& data)
 {
   int n = data.size();
   for(int i = n-1; i >= 0; --i)
     {
-      if(fabs(data[i]) < datadefs::eps)
+      if(fabs(data[i]) < datadefs::EPS)
 	{
 	  data.erase(data.begin() + i);
 	}
@@ -195,7 +196,7 @@ void datadefs::forward_backward_sqerr(const datadefs::num_t x_n,
 				      datadefs::num_t& se_right)
 {
 
-  if(datadefs::is_nan(x_n))
+  if(datadefs::isNAN(x_n))
     {
       return;
     }
@@ -239,42 +240,42 @@ void datadefs::forward_backward_sqerr(const datadefs::num_t x_n,
 }
 
 void datadefs::gini(vector<datadefs::num_t>& data,
-		    datadefs::num_t& gi,
-		    size_t& nreal)
+		    datadefs::num_t& giniIndex,
+		    size_t& nRealValues)
 {
   map<datadefs::num_t,size_t> freq;
-  datadefs::count_freq(data,freq,nreal);
-  datadefs::gini(freq,gi);
+  datadefs::count_freq(data,freq,nRealValues);
+  datadefs::gini(freq,giniIndex);
 }
 
 void datadefs::gini(map<datadefs::num_t,size_t>& cat2freq, 
-		    datadefs::num_t& gi)
+		    datadefs::num_t& giniIndex)
 {
-  gi = 0.0;
-  size_t n(0);
+  giniIndex = 0.0;
+  size_t n = 0;
   map<datadefs::num_t,size_t>::const_iterator it;
   for(it = cat2freq.begin(); it != cat2freq.end(); ++it)
     {
       size_t freq_new = it->second;
-      gi += freq_new * freq_new;
+      giniIndex += freq_new * freq_new;
       n += freq_new;
     }
   if(n)
     {
-      gi = 1-gi/(n*n);
+      giniIndex = 1 - giniIndex / ( n*n );
     }
 }
 
-void datadefs::count_freq(vector<datadefs::num_t> const& data, map<datadefs::num_t,size_t>& cat2freq, size_t& nreal)
+void datadefs::count_freq(vector<datadefs::num_t> const& data, map<datadefs::num_t,size_t>& cat2freq, size_t& nRealValues)
 {
   cat2freq.clear();
   map<datadefs::num_t,size_t>::const_iterator it;
-  nreal = 0;
+  nRealValues = 0;
   for(size_t i = 0; i < data.size(); ++i)
     {
-      if(!datadefs::is_nan(data[i]))
+      if(!datadefs::isNAN(data[i]))
 	{
-	  ++nreal;
+	  ++nRealValues;
 	  it = cat2freq.find(data[i]);
 	  if(it == cat2freq.end())
 	    {
@@ -291,16 +292,16 @@ void datadefs::count_freq(vector<datadefs::num_t> const& data, map<datadefs::num
 
 void datadefs::map_data(vector<datadefs::num_t>& data, 
 			map<datadefs::num_t,vector<size_t> >& datamap, 
-			size_t& nreal)
+			size_t& nRealValues)
 {
   datamap.clear();
   map<datadefs::num_t,vector<size_t> >::iterator it;
-  nreal = 0;
+  nRealValues = 0;
   for(size_t i = 0; i < data.size(); ++i)
     {
-      if(!datadefs::is_nan(data[i]))
+      if(!datadefs::isNAN(data[i]))
 	{
-	  ++nreal;
+	  ++nRealValues;
 	  it = datamap.find(data[i]);
 	  if(it == datamap.end())
 	    {
@@ -318,25 +319,25 @@ void datadefs::map_data(vector<datadefs::num_t>& data,
 
 void datadefs::sqfreq(vector<datadefs::num_t> const& data, 
 		      map<datadefs::num_t,size_t>& freq, 
-		      size_t& sf, 
-		      size_t& nreal)
+		      size_t& sqFreq, 
+		      size_t& nRealValues)
 {
-  sf = 0;
-  datadefs::count_freq(data,freq,nreal);
+  sqFreq = 0;
+  datadefs::count_freq(data,freq,nRealValues);
   for(map<datadefs::num_t,size_t>::const_iterator it(freq.begin()); it != freq.end(); ++it)
     {
       size_t freq_new = it->second;
-      sf += freq_new * freq_new;
+      sqFreq += freq_new * freq_new;
     }
 }
 
 void datadefs::forward_sqfreq(const datadefs::num_t x_n,
 			      size_t& n,
 			      map<datadefs::num_t,size_t>& freq,
-			      size_t& sf)
+			      size_t& sqFreq)
 {
 
-  if(datadefs::is_nan(x_n))
+  if(datadefs::isNAN(x_n))
     {
       return;
     }
@@ -348,7 +349,7 @@ void datadefs::forward_sqfreq(const datadefs::num_t x_n,
   if(it == freq.end())
     {
       //cout << "sf_old=" << sf;
-      sf += 1;
+      sqFreq += 1;
       //cout << "  sf_new=" << sf << endl;
 
       //If not, add a new category and set its frequency to 1...
@@ -357,7 +358,7 @@ void datadefs::forward_sqfreq(const datadefs::num_t x_n,
     }
   else
     {
-      sf += 2*freq[x_n] + 1;
+      sqFreq += 2*freq[x_n] + 1;
       ++freq[x_n];
     }
   //cout << "  sf_new=" << sf << endl;
@@ -374,7 +375,7 @@ void datadefs::forward_backward_sqfreq(const datadefs::num_t x_n,
 				       size_t& sf_right)
 {
  
-  if(datadefs::is_nan(x_n))
+  if(datadefs::isNAN(x_n))
     {
       return;
     }
@@ -422,6 +423,7 @@ void datadefs::range(vector<size_t>& ics)
     }
 }
 
+//DEPRECATED
 void datadefs::ttest(vector<datadefs::num_t> const& x, 
 		     vector<datadefs::num_t> const& y, 
 		     datadefs::num_t& pvalue)
@@ -450,9 +452,9 @@ void datadefs::ttest(vector<datadefs::num_t> const& x,
     
     assert(nreal_x == nreal_y);
 
-    if(var_x < datadefs::eps && var_y < datadefs::eps)
+    if(var_x < datadefs::EPS && var_y < datadefs::EPS)
       {
-	if(fabs(mean_x - mean_y) < datadefs::eps)
+	if(fabs(mean_x - mean_y) < datadefs::EPS)
 	  {
 	    pvalue = 0.5;
 	  }
@@ -481,6 +483,7 @@ void datadefs::ttest(vector<datadefs::num_t> const& x,
     
 }
 
+//DEPRECATED
 void datadefs::regularized_betainc(const datadefs::num_t x,
                                    const size_t a,
                                    datadefs::num_t& ibval)
@@ -529,12 +532,12 @@ void datadefs::utest(vector<datadefs::num_t> const& x,
   for(size_t i = 0; i < m; ++i)
     {
 
-      bool xnan = datadefs::is_nan(x[i]);
+      bool xnan = datadefs::isNAN(x[i]);
 
       for(size_t j = 0; j < n; ++j)
 	{
 	 
-	  bool ynan = datadefs::is_nan(y[j]);
+	  bool ynan = datadefs::isNAN(y[j]);
 
 	  if(!xnan && ynan)
 	    {
@@ -611,7 +614,7 @@ void datadefs::pearson_correlation(vector<datadefs::num_t> const& x,
   
   for(size_t i = 0; i < n; ++i)
     {
-      if(!datadefs::is_nan(x[i]) && !datadefs::is_nan(y[i]))
+      if(!datadefs::isNAN(x[i]) && !datadefs::isNAN(y[i]))
 	{
 	  x_real.push_back(x[i]);
 	  y_real.push_back(y[i]);
@@ -633,6 +636,7 @@ void datadefs::pearson_correlation(vector<datadefs::num_t> const& x,
 
 
 
+//DEPRECATED
 void datadefs::percentile(vector<datadefs::num_t> x, 
 			  const datadefs::num_t alpha, 
 			  datadefs::num_t& prc)
@@ -644,7 +648,7 @@ void datadefs::percentile(vector<datadefs::num_t> x,
   num_t f = floor(k);
   num_t c = ceil(k);
 	  
-  if(fabs(f - c) < datadefs::eps)
+  if(fabs(f - c) < datadefs::EPS)
     {
       prc = x[static_cast<size_t>(k)];
     }
@@ -656,9 +660,4 @@ void datadefs::percentile(vector<datadefs::num_t> x,
     }
 }
 
-/*
-  void datadefs::beta_symmetric(size_t n, datadefs::num_t& b)
-  {
-  b = gamma(2*n)/(gamma(n)*gamma(n));
-  }
-*/
+
