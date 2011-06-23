@@ -417,7 +417,7 @@ string Treedata::get_targetheader()
 
 void Treedata::print()
 {
-  cout << "Printing feature matrix (missing values encoded to " << datadefs::num_nan << "):" << endl;
+  cout << "Printing feature matrix (missing values encoded to " << datadefs::NUM_NAN << "):" << endl;
   for(size_t j = 0; j < nsamples_; ++j)
     {
       cout << '\t' << sampleheaders_[j];
@@ -459,7 +459,7 @@ void Treedata::select_target(size_t targetidx)
 {
   targetidx_ = targetidx; 
   Treedata::sort_all_wrt_target();
-  datadefs::count_real_values(featurematrix_[targetidx_],nrealsamples_);
+  datadefs::countRealValues(featurematrix_[targetidx_],nrealsamples_);
   Treedata::permute_contrasts();
 }
 
@@ -486,9 +486,9 @@ size_t Treedata::nrealsamples()
 
 size_t Treedata::nrealsamples(size_t featureidx)
 { 
-  size_t nrealsamples;
-  datadefs::count_real_values(featurematrix_[featureidx],nrealsamples);
-  return(nrealsamples);
+  size_t nRealSamples;
+  datadefs::countRealValues(featurematrix_[featureidx],nRealSamples);
+  return(nRealSamples);
 }
 
 void Treedata::remove_nans(size_t featureidx, 
@@ -500,7 +500,7 @@ void Treedata::remove_nans(size_t featureidx,
   int maxidx(nreal-1);
   for(int i = maxidx; i >= 0; --i)
     {
-      if(datadefs::is_nan(featurematrix_[featureidx][sampleics[i]]))
+      if(datadefs::isNAN(featurematrix_[featureidx][sampleics[i]]))
 	{
 	  --nreal;
 	  sampleics.erase(sampleics.begin()+i);
@@ -690,8 +690,8 @@ void Treedata::incremental_target_split(size_t featureidx,
 
   //Count how many real values the feature and target has
   size_t nreal_f,nreal_t;
-  datadefs::count_real_values(fv,nreal_f);
-  datadefs::count_real_values(tv,nreal_t);
+  datadefs::countRealValues(fv,nreal_f);
+  datadefs::countRealValues(tv,nreal_t);
   //cout << nreal_f << " " << nreal_t << " " << n_tot << endl;
   assert(nreal_t == n_tot && nreal_f == n_tot);
 
@@ -803,8 +803,8 @@ void Treedata::categorical_target_split(size_t featureidx,
 
   //Count how many real values the feature and target has (this is just to make sure there are no mising values thrown in)
   size_t nreal_f,nreal_t;
-  datadefs::count_real_values(fv,nreal_f);
-  datadefs::count_real_values(tv,nreal_t);
+  datadefs::countRealValues(fv,nreal_f);
+  datadefs::countRealValues(tv,nreal_t);
   assert(nreal_t == n_tot && nreal_f == n_tot);
 
   //Map all feature categories to the corresponding samples and represent it as map. The map is used to assign samples to left and right branches
@@ -997,8 +997,8 @@ num_t Treedata::at(size_t featureidx, size_t sampleidx)
 num_t Treedata::randf(size_t featureidx)
 {
   assert(nrealsamples_ > 0);
-  num_t value(datadefs::num_nan);
-  while(datadefs::is_nan(value))
+  num_t value = datadefs::NUM_NAN;
+  while(datadefs::isNAN(value))
     {
       value = featurematrix_[featureidx][irand_() % nrealsamples_];
     }

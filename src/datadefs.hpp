@@ -21,8 +21,8 @@ namespace datadefs
   //typedef num_t* num_tp;
 
   //NaN as represented by the program
-  extern const num_t num_nan;
-  extern const num_t eps;
+  extern const num_t NUM_NAN;
+  extern const num_t EPS;
   extern const num_t A;
   extern const num_t PI;
 
@@ -30,15 +30,13 @@ namespace datadefs
   typedef string NAN_t;
   extern const set<NAN_t> NANs;
 
-  //void toupper(string& str);
-
   void strv2catv(vector<string>& strvec, vector<num_t>& catvec);
   void strv2numv(vector<string>& strvec, vector<num_t>& numvec);
 
   num_t str2num(string& str);
 
-  bool is_nan(const string& str);
-  bool is_nan(const num_t value);
+  bool isNAN(const string& str);
+  bool isNAN(const num_t value);
   
   void mean(vector<num_t> const& data, num_t& mu, size_t& nreal);
 
@@ -47,8 +45,9 @@ namespace datadefs
 	     num_t& se,
 	     size_t& nreal);      
 
-  void count_real_values(vector<num_t> const& data, size_t& nreal);
+  void countRealValues(vector<num_t> const& data, size_t& nRealValues);
 
+  //DEPRECATED
   void zerotrim(vector<num_t>& data);
 
   
@@ -57,7 +56,7 @@ namespace datadefs
 			    num_t& mu,
 			    num_t& se)
   {  
-    if(is_nan(x_n)) { return; } 
+    if(isNAN(x_n)) { return; } 
     ++n;
     num_t mu_old(mu);
     mu += (x_n - mu) / n;
@@ -73,28 +72,28 @@ namespace datadefs
 			      num_t& mu_right,
 			      num_t& se_right);
   
-  void count_freq(vector<num_t> const& data, map<num_t,size_t>& cat2freq, size_t& nreal);
+  void count_freq(vector<num_t> const& data, map<num_t,size_t>& cat2freq, size_t& nRealValues);
 
   void map_data(vector<num_t>& data, 
 		map<num_t,vector<size_t> >& datamap,
-		size_t& nreal);
+		size_t& nRealValues);
 
   void gini(vector<num_t>& data,
-	    num_t& gi,
-	    size_t& nreal);
+	    num_t& giniIndex,
+	    size_t& nRealValues);
 
   void gini(map<num_t,size_t>& cat2freq,
-            num_t& gi);
+            num_t& giniIndex);
 
   void sqfreq(vector<num_t> const& data, 
 	      map<num_t,size_t>& freq, 
-	      size_t& sf, 
-	      size_t& nreal);
+	      size_t& sqFreq, 
+	      size_t& nRealValues);
 
   void forward_sqfreq(const num_t x_n,
 		      size_t& n,
 		      map<num_t,size_t>& freq,
-		      size_t& sf);
+		      size_t& sqFreq);
   
   void forward_backward_sqfreq(const num_t x_n,
 			       size_t& n_left,
@@ -103,9 +102,10 @@ namespace datadefs
 			       size_t& n_right,
 			       map<num_t,size_t>& freq_right,
 			       size_t& sf_right);
-
+  
   void range(vector<size_t>& ics);
 
+  //DEPRECATED
   void ttest(vector<num_t> const& x, 
 	     vector<num_t> const& y, 
 	     num_t& pvalue);
@@ -116,6 +116,7 @@ namespace datadefs
 
   num_t erf(num_t x);
 
+  //DEPRECATED
   void regularized_betainc(const num_t x, 
 			   const size_t a, 
 			   num_t& ibval);
@@ -129,19 +130,10 @@ namespace datadefs
                             num_t& corr);
 
 
+  //DEPRECATED
   void percentile(vector<num_t> x, const num_t alpha, num_t& prc);
 
-  //void beta_symmetric(size_t n, num_t& b);
-
-  /*
-    void seedMT(size_t seed);
-    
-    size_t reloadMT();
-    
-    size_t randMT();
-  */
-
-
+  
   //A comparator functor that can be passed to STL::sort. Assumes that one is comparing first elements of pairs, first type being num_t and second T
   template <typename T> struct ordering {
     bool operator ()(pair<datadefs::num_t,T> const& a, pair<datadefs::num_t,T> const& b)

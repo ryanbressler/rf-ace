@@ -263,7 +263,7 @@ void Randomforest::recursive_nodesplit(size_t treeidx, size_t nodeidx, vector<si
 	{
 	  bestfitness = fitness;
 	  bestfeatureidx = featureidx;
-	  if(fabs(bestfitness - 1.0) < datadefs::eps)
+	  if(fabs(bestfitness - 1.0) < datadefs::EPS)
 	    {
 	      //cout << "Maximum fitness reached for splitter " << bestfeatureidx << ", stopped searching" << endl;
 	      break;
@@ -435,70 +435,53 @@ void Randomforest::percolate_sampleidx_randf(size_t featureidx, size_t sampleidx
 void Randomforest::calculate_importance(vector<num_t>& importance)
 {
 
-  size_t nrealfeatures(treedata_->nfeatures());
-  size_t nallfeatures(2*nrealfeatures);
-  importance.resize(nallfeatures);
-  size_t noob_tot(0);
+  size_t nRealFeatures = treedata_->nfeatures() ;
+  size_t nAllFeatures = 2*nRealFeatures ;
+  importance.resize(nAllFeatures);
+  size_t nOobSamples = 0;
 
-  for(size_t i = 0; i < nallfeatures; ++i)
+  size_t nContrastsInForest = 0;
+
+  for(size_t i = 0; i < nAllFeatures; ++i)
     {
       importance[i] = 0;
     }
 
-  for(size_t i = 0; i < ntrees_; ++i)
+  for(size_t treeIdx = 0; treeIdx < ntrees_; ++treeIdx)
     {
-      size_t noob_new(oobmatrix_[i].size());
-      noob_tot += noob_new;
-      Node rootnode(forest_[i][0]);
-      map<Node*,vector<size_t> > trainics;
-      Randomforest::percolate_sampleics(rootnode,oobmatrix_[i],trainics);
-      num_t impurity_tree;
-      Randomforest::tree_impurity(trainics,impurity_tree);
+      size_t nNewOobSamples = oobmatrix_[treeIdx].size();
+      nOobSamples += nNewOobSamples;
+      Node rootNode(forest_[treeIdx][0]);
+      map<Node*,vector<size_t> > trainIcs;
+      Randomforest::percolate_sampleics(rootNode,oobmatrix_[treeIdx],trainIcs);
+      num_t treeImpurity;
+      Randomforest::tree_impurity(trainIcs,treeImpurity);
       //cout << "#nodes_with_train_samples=" << trainics.size() << endl;  
-      for(size_t f = 0; f < nallfeatures; ++f)
+      for(size_t featureIdx = 0; featureIdx < nAllFeatures; ++featureIdx)
 	{
-	  if(Randomforest::is_feature_in_tree(f,i))
+	  if(Randomforest::is_feature_in_tree(featureIdx,treeIdx))
 	    {
-	      Randomforest::percolate_sampleics_randf(f,rootnode,oobmatrix_[i],trainics);
-	      num_t impurity_perm;
-	      Randomforest::tree_impurity(trainics,impurity_perm);
-	      if(fabs(impurity_tree) > datadefs::eps)
+	      if(featureIdx >= nRealFeatures)
 		{
-		  importance[f] += noob_new * (impurity_perm - impurity_tree) / impurity_tree;
+		  ++nContrastsInForest;
+		}
+	      Randomforest::percolate_sampleics_randf(featureIdx,rootNode,oobmatrix_[treeIdx],trainIcs);
+	      num_t permutedTreeImpurity;
+	      Randomforest::tree_impurity(trainIcs,permutedTreeImpurity);
+	      if(fabs(treeImpurity) > datadefs::EPS)
+		{
+		  importance[featureIdx] += nNewOobSamples * (permutedTreeImpurity - treeImpurity) / treeImpurity;
 		} 
 	    }
 	}
     }
 
   
-  for(size_t i = 0; i < nallfeatures; ++i)
+  for(size_t featureIdx = 0; featureIdx < nAllFeatures; ++featureIdx)
     {
-      importance[i] /= noob_tot;
+      importance[featureIdx] *= nRealFeatures;
+      importance[featureIdx] /= (nOobSamples*nContrastsInForest);
     }
-    
-  /*
-    vector<num_t> contrast_importance(nrealfeatures);
-    for(size_t i = nrealfeatures; i < nallfeatures; ++i)
-    {
-    contrast_importance[i - nrealfeatures] = importance[i];
-    }
-    importance.resize(nrealfeatures);
-    
-    datadefs::percentile(contrast_importance,alpha,contrast_prc);
-    cout << "CONTRAST: " << 100*alpha << "th percentile is " << contrast_prc << endl;
-    
-    if(false)
-    {
-    for(size_t i = 0; i < nrealfeatures; ++i)
-    {
-    if(importance[i] > contrast_prc)
-    {
-    cout << treedata_->get_targetheader() << "\t" << treedata_->get_featureheader(i) << "\t" << importance[i] << endl;
-    }
-    }
-    }
-  */
-  
 
 }
 
