@@ -15,14 +15,27 @@ svn checkout http://rf-ace.googlecode.com/svn/trunk/ rf-ace
 In Linux, you can compile the program by calling 
 
 {{{
+make
+}}}
+or
+{{{
 make rf_ace
 }}}
 
-Check compiled binaries at the [http://code.google.com/p/rf-ace/downloads/list download page]. A compiler script for Visual Studio will soon be provided.
+Check compiled binaries at the [http://code.google.com/p/rf-ace/downloads/list download page]. (A compiler script for Visual Studio will soon be provided.)
+
+= Input file support =
+
+RF-ACE currently supports two file formats, Annotated Feature Matrix (AFM) and Attribute-Relation File Format (ARFF). AFM is a matrix representation of the data, rows (resp. columns) being feature vectors and columns (resp. rows) being samples. For further information, check file input specifications [http://foo.bar here].     
 
 = Usage =
 
-Linux:
-  * `bin/rf_ace --help`
-  * `bin/rf_ace -I input_matrix.tsv -i 0 -n 100 -m 100 -O output_asociations.tsv` 
-  * `bin/rf_ace -I input_matrix.tsv -i 0 -n 100 -m 100 -s 10 -p 21 -O output_asociations.tsv` 
+RF-ACE can simply be run by calling
+
+{{{
+bin/rf_ace --input featurematrix.afm --targetidx 0 --output associations.tsv 
+}}}
+or with the short-hand notation equivalently as
+{{{
+bin/rf_ace -I featurematrix.afm -i 0 -O associations.tsv 
+}}
