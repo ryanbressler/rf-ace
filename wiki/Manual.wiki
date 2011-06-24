@@ -30,6 +30,30 @@ RF-ACE currently supports two file formats, Annotated Feature Matrix (AFM) and A
 
 = Usage =
 
+Call 
+{{{
+bin/rf_ace --help
+}}}
+or 
+{{{
+bin/rf_ace -h
+}}}
+to bring up help:
+{{{
+REQUIRED ARGUMENTS:
+ -I / --input        input feature matrix
+ -O / --output       output association file
+
+OPTIONAL ARGUMENTS:
+ -i / --targetidx    target index, ref. to feature matrix (default 0)
+ -n / --ntrees       number of trees per RF (default nsamples/nrealsamples)
+ -m / --mtry         number of randomly drawn features per node split (default sqrt(nfeatures))
+ -s / --nodesize     minimum number of train samples per node, affects tree depth (default max{5,nsamples/20})
+ -p / --nperms       number of Random Forests (default 50)
+ -t / --pthreshold   p-value threshold below which associations are listed (default 0.1)
+}}} 
+
+
 RF-ACE can simply be run by calling
 
 {{{
@@ -38,4 +62,4 @@ bin/rf_ace --input featurematrix.afm --targetidx 0 --output associations.tsv
 or with the short-hand notation equivalently as
 {{{
 bin/rf_ace -I featurematrix.afm -i 0 -O associations.tsv 
-}}
+}}}
