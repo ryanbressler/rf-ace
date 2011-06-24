@@ -43,7 +43,7 @@ void printHelp()
 {
   cout << endl;
   cout << "REQUIRED ARGUMENTS:" << endl;
-  cout << " -I / --input        input feature matrix" << endl;
+  cout << " -I / --input        input feature file (AFM or ARFF)" << endl;
   cout << " -O / --output       output association file" << endl;
   cout << endl;
   cout << "OPTIONAL ARGUMENTS:" << endl;
