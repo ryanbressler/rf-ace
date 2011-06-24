@@ -46,17 +46,17 @@ Treedata::Treedata(string filename):
   if(filetype == AFM)
     {
       cout << "File type interpreted as Annotated Feature Matrix (AFM)" << endl;
-      Treedata::read_afm(featurestream,rawmatrix);
+      Treedata::readAFM(featurestream,rawmatrix);
     }
   else if(filetype == ARFF)
     {
       cout << "File type interpreted as Attribute-Relation File Format (ARFF)" << endl;
-      Treedata::read_arff(featurestream,rawmatrix);
+      Treedata::readARFF(featurestream,rawmatrix);
     }
   else
     {
       cout << "File type is unknown -- defaulting to Annotated Feature Matrix (AFM)" << endl;
-      Treedata::read_afm(featurestream,rawmatrix);
+      Treedata::readAFM(featurestream,rawmatrix);
     }      
 
   //TODO: move the following part, generation of artificial contrasts, to a separate function.
@@ -125,11 +125,13 @@ void Treedata::read_filetype(string& filename, Filetype& filetype)
 
 }
 
-void Treedata::read_afm(ifstream& featurestream, vector<vector<string> >& rawmatrix)
+void Treedata::readAFM(ifstream& featurestream, vector<vector<string> >& rawmatrix)
 {
 
   string field;
   string row;
+
+  //TODO: add Treedata::clearData(...)
 
   //Remove upper left element from the matrix as useless
   getline(featurestream,field,'\t');
@@ -282,87 +284,126 @@ void Treedata::read_afm(ifstream& featurestream, vector<vector<string> >& rawmat
     }
 }
 
-void Treedata::read_arff(ifstream& featurestream, vector<vector<string> >& rawmatrix)
+void Treedata::readARFF(ifstream& featurestream, vector<vector<string> >& rawmatrix)
 {
 
-  //string field;
   string row;
 
-  bool hasrelation = false;
-  size_t nattributes = 0;
-  bool hasdata = false;
+  bool hasRelation = false;
+  bool hasData = false;
 
+  //TODO: add Treedata::clearData(...)
+
+  //Read one line from the ARFF file
   while(getline(featurestream,row))
     {
 
-      //cout << row << endl;
-
-      if(hasdata && hasrelation)
+      //This is the final branch: once relation and attributes are read, and we find data header, we'll start reading the data in 
+      if(hasData && hasRelation)
 	{
-	  if(nattributes == 0)
+	  //There must be at least two attributes, otherwise the ARFF file makes no sense
+	  if(nfeatures_ < 2)
 	    {
-	      cerr << "no attributes found from the ARFF file" << endl;
+	      cerr << "too few attributes ( < 2 ) found from the ARFF file" << endl;
 	      assert(false);
 	    }
 
-	  rawmatrix.resize(nattributes);
-	  
+	  rawmatrix.resize(nfeatures_);
+
+	  //Read data row-by-row
 	  while(getline(featurestream,row))
 	    {
+	      ++nsamples_;
 	      string field;
 	      stringstream ss(row);
-	      for(size_t attribute = 0; attribute < nattributes; ++attribute)
+	      
+	      for(size_t attributeIdx = 0; attributeIdx < nfeatures_; ++attributeIdx)
 		{
 		  getline(ss,field,',');
-		  rawmatrix[attribute].push_back(field);
+		  //cout << " " << field;
+		  rawmatrix[attributeIdx].push_back(field);
 		}
+	      //cout << endl;
 	    }
 
+	  sampleheaders_.resize(nsamples_);
+	  for(size_t i = 0; i < nsamples_; ++i)
+	    {
+	      sampleheaders_[i] = "foo";
+	    }
+	  //We're done, exit
 	  break;
 	}
 
+      //Comment lines and empty lines are omitted
       if(row[0] == '%' || row == "")
 	{
-	  continue;
+	  continue;	
 	}
 
-      if(!hasrelation && row.compare(0,9,"@relation") == 0)
+      //Read relation
+      if(!hasRelation && row.compare(0,9,"@relation") == 0)
 	{
-	  hasrelation = true;
-	  cout << "found relation header: " << row << endl;
+	  hasRelation = true;
+	  //cout << "found relation header: " << row << endl;
 	}
+      //Read attribute
       else if(row.compare(0,10,"@attribute") == 0)
 	{
-	  ++nattributes;
-	  cout << "found attribute header: " << row << endl;
+	  string attributeName = "";
+	  bool isNumeric = false;
+	  ++nfeatures_;
+	  //cout << "found attribute header: " << row << endl;
+	  Treedata::parseARFFattribute(row,attributeName,isNumeric);
+	  featureheaders_.push_back(attributeName);
+	  isfeaturenum_.push_back(isNumeric);
+	  //cout << "interpreted as: " << attributeName << " (";
+	  //if(isNumeric)
+	  // {
+	  //   cout << "numeric)" << endl; 
+	  //  }
+	  //else
+	  //  {
+	  //    cout << "categorical)" << endl;
+	  //  }
 	}
-      else if(!hasdata && row.compare(0,5,"@data") == 0)
+      //Read data header
+      else if(!hasData && row.compare(0,5,"@data") == 0)
 	{
-	  hasdata = true;
-	  cout << "found data header:" << row << endl;
+	  hasData = true;
+	  //cout << "found data header:" << row << endl;
 	}
+      //If none of the earlier branches matched, we have a problem
       else
 	{
-	  cout << "problem" << endl;
+	  cerr << "incorrectly formatted ARFF file" << endl;
 	  assert(false);
 	}
     }
 }
 
-void Treedata::parse_arff_attribute(const string& str, vector<string>& fields)
+void Treedata::parseARFFattribute(const string& str, string& attributeName, bool& isNumeric)
 {
 
-  fields.clear();
+  //fields.clear();
 
   stringstream ss(str);
-  string token = "";
+  string attributeHeader = "";
+  attributeName = "";
+  string attributeType = "";
 
-  while(getline(ss,token,' '))
+  getline(ss,attributeHeader,' ');
+  getline(ss,attributeName,' ');
+  getline(ss,attributeType);
+
+  if(attributeType == "real")
     {
-      fields.push_back(token);
-      cout << "'" << token << "'";
+      isNumeric = true;
     }
-  cout << endl;
+  else
+    {
+      isNumeric = false;
+    }
 }
 
 bool Treedata::is_featureheader(const string& str)

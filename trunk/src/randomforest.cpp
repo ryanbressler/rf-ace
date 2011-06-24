@@ -47,6 +47,7 @@ void Randomforest::init_forest()
     {
       forest_[i].resize(nmaxnodes);
       nnodes_[i] = 1;
+      oobmatrix_[i].clear();
     }
 }
   
@@ -57,10 +58,6 @@ void Randomforest::select_target(size_t targetidx)
       treedata_->select_target(targetidx);
     }
 
-  for(size_t i = 0; i < ntrees_; ++i)
-    {
-      oobmatrix_[i].clear();
-    } 
   Randomforest::init_forest();
 }
 
@@ -146,6 +143,7 @@ void Randomforest::grow_forest(const size_t nperms, vector<num_t>& pvalues, vect
   
   for(size_t f = 0; f < nfeatures; ++f)
     {
+
       size_t nreal;
       vector<num_t> fsample(nperms);
       vector<num_t> csample(nperms);
@@ -220,9 +218,11 @@ void Randomforest::recursive_nodesplit(size_t treeidx, size_t nodeidx, vector<si
 
   //size_t contrast_lower_limit = mtry_/2;
   
+  size_t nfeatures = treedata_->nfeatures();
+
   for(size_t i = 0; i < mtry_; ++i)
     {
-      size_t nallfeatures = 2*treedata_->nfeatures();
+      size_t nallfeatures = 2*nfeatures;
       mtrysample[i] = treedata_->randidx(nallfeatures);
     }
 
@@ -251,8 +251,9 @@ void Randomforest::recursive_nodesplit(size_t treeidx, size_t nodeidx, vector<si
   for(size_t i = 0; i < mtry_; ++i)
     {
       size_t featureidx = mtrysample[i];
-
-      if(featureidx == targetidx)
+ 
+      //Neither the real nor the contrast feature can appear in the tree as splitter
+      if(featureidx == targetidx || featureidx == nfeatures + featureidx)
         {
           continue;
         }
@@ -476,11 +477,16 @@ void Randomforest::calculate_importance(vector<num_t>& importance)
 	}
     }
 
+  size_t nNodesInForest = 0;
+  for(size_t i = 0; i < nnodes_.size(); ++i)
+    {
+      nNodesInForest += nnodes_[i];
+    }
   
   for(size_t featureIdx = 0; featureIdx < nAllFeatures; ++featureIdx)
     {
-      importance[featureIdx] *= nRealFeatures;
-      importance[featureIdx] /= (nOobSamples*nContrastsInForest);
+      importance[featureIdx] *= 1.0*nNodesInForest/ntrees_; //nContrastsInForest
+      importance[featureIdx] /= nOobSamples; //nRealFeatures
     }
 
 }

@@ -23,7 +23,7 @@ const size_t DEFAULT_TARGETIDX = 0;
 const size_t DEFAULT_NTREES = 0;
 const size_t DEFAULT_MTRY = 0;
 const size_t DEFAULT_NODESIZE = 5;
-const size_t DEFAULT_NPERMS = 20;
+const size_t DEFAULT_NPERMS = 50;
 const num_t DEFAULT_PVALUETHRESHOLD = 0.10;
 //const num_t DEFAULT_ALPHA = 0.95;
 
@@ -50,7 +50,7 @@ int main(int argc, char* argv[])
       cout << endl;
       cout << "OPTIONAL ARGUMENTS:" << endl;
       cout << "-i / --targetidx    target index, ref. to feature matrix (default " << DEFAULT_TARGETIDX << ")" << endl;
-      cout << "-n / --ntrees       number of trees per RF (default 2*nsamples/nrealsamples)" << endl;
+      cout << "-n / --ntrees       number of trees per RF (default nsamples/nrealsamples)" << endl;
       cout << "-m / --mtry         number of randomly drawn features per node split (default sqrt(nfeatures))" << endl;
       cout << "-s / --nodesize     minimum number of train samples per node, affects tree depth (default " << DEFAULT_NODESIZE << ")" << endl;
       cout << "-p / --nperms       number of Random Forests (default " << DEFAULT_NPERMS << ")" << endl;
@@ -118,16 +118,16 @@ int main(int argc, char* argv[])
       return EXIT_SUCCESS;
     }
 
-  num_t realFraction = static_cast<num_t>(nRealSamples) / static_cast<num_t>(treedata.nsamples());
+  num_t realFraction = 1.0*nRealSamples / treedata.nsamples();
 
   if(nTrees == DEFAULT_NTREES)
     {
-      nTrees = static_cast<size_t>(2.0 * static_cast<num_t>(treedata.nsamples()) / realFraction );
+      nTrees = static_cast<size_t>( 1.0*treedata.nsamples() / realFraction );
     }
   
   if(mTry == DEFAULT_MTRY)
     {
-      mTry = static_cast<size_t>(floor(sqrt(static_cast<num_t>(treedata.nfeatures()))));   
+      mTry = static_cast<size_t>(floor(sqrt(1.0*treedata.nfeatures())));   
     }
 
   //treedata.print(targetidx);
@@ -151,6 +151,7 @@ int main(int argc, char* argv[])
 
   Randomforest RF(&treedata,nTrees,mTry,nodeSize);
   RF.select_target(targetIdx);
+  //treedata.print();
   //RF.blacklist_and_kill(0.8,blistheaders,blistcorrelations);
 
   //size_t nperms = 9;
@@ -167,7 +168,7 @@ int main(int argc, char* argv[])
   //vector<string> fnames = treedata.featureheaders();
   datadefs::sort_and_make_ref<num_t>(pValues,refIcs);
   datadefs::sort_from_ref<num_t>(importanceValues,refIcs);
-  //datadefs::sort_from_ref<string>(fnames,ref_ics);
+  //targetIdx = refIcs[targetIdx];
   
   string targetHeader = treedata.get_featureheader(targetIdx);
 
@@ -178,14 +179,22 @@ int main(int argc, char* argv[])
       FILE* po;
       po = fopen(output.c_str(),"w");
       
-      for(size_t i = 0; i < treedata.nfeatures(); ++i)
+      for(size_t featureIdx = 0; featureIdx < treedata.nfeatures(); ++featureIdx)
 	{
-	  if(pValues[i] > pValueThreshold)
+
+	  if(pValues[featureIdx] > pValueThreshold)
 	    {
 	      break;
 	    }
 
-	  fprintf(po,"%s\t%s\t%9.8f\t%9.8f\t%9.8f\n",targetHeader.c_str(),treedata.get_featureheader(refIcs[i]).c_str(),pValues[i],importanceValues[i],treedata.corr(targetIdx,refIcs[i]));
+	  if(refIcs[featureIdx] == targetIdx)
+	    {
+	      cout << refIcs[featureIdx] << " == " << targetIdx << " (" << targetHeader << ")" << endl;
+	      continue;
+	    }
+
+
+	  fprintf(po,"%s\t%s\t%9.8f\t%9.8f\t%9.8f\n",targetHeader.c_str(),treedata.get_featureheader(refIcs[featureIdx]).c_str(),pValues[featureIdx],importanceValues[featureIdx],treedata.corr(targetIdx,refIcs[featureIdx]));
 
 	  //os << target_str << "\t" << treedata.get_featureheader(ref_ics[i]) << "\t" 
 	  //   << pvalues[i] << "\t" << ivalues[i] << "\t" << treedata.corr(targetidx,ref_ics[i]) << endl;
