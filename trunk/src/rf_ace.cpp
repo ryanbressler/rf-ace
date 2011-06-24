@@ -32,7 +32,7 @@ void printHeader()
   cout << " --------------------------------------------------------------- " << endl;
   cout << "| RF-ACE -- efficient feature selection with heterogeneous data |" << endl;
   cout << "|                                                               |" << endl;
-  cout << "|  Version:      RF-ACE v0.3.1, June 24th, 2011                 |" << endl;
+  cout << "|  Version:      RF-ACE v0.3.5, June 24th, 2011                 |" << endl;
   cout << "|  Project page: http://code.google.com/p/rf-ace                |" << endl;
   cout << "|  Contact:      timo.p.erkkila@tut.fi                          |" << endl;
   cout << "|                                                               |" << endl;
