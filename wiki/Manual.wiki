@@ -6,22 +6,19 @@ RF-ACE is an efficient C++ implementation of a robust machine learning algorithm
 
 = Installation =
 
-Download the latest stable release from the [http://code.google.com/p/rf-ace/downloads/list download page], or checkout the latest development version by calling
+Download the latest stable release from the [http://code.google.com/p/rf-ace/downloads/list download page], or checkout the latest development version (to directory rf-ace/) by calling
 
 {{{
 svn checkout http://rf-ace.googlecode.com/svn/trunk/ rf-ace
 }}}
 
-Linux:
-  # `make` (or `make rf_ace`) 
+In Linux, you can compile the program by calling 
 
-Windows:
-  # 
-  # 
+{{{
+make rf_ace
+}}}
 
-OS X:
-  #
-  #
+Check compiled binaries at the [http://code.google.com/p/rf-ace/downloads/list download page]. A compiler script for Visual Studio will soon be provided.
 
 = Usage =
 
