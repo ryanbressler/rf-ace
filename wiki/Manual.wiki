@@ -41,7 +41,7 @@ bin/rf_ace -h
 to bring up help:
 {{{
 REQUIRED ARGUMENTS:
- -I / --input        input feature matrix
+ -I / --input        input feature file (AFM or ARFF)
  -O / --output       output association file
 
 OPTIONAL ARGUMENTS:
