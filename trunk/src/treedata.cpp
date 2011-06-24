@@ -311,7 +311,7 @@ void Treedata::readARFF(ifstream& featurestream, vector<vector<string> >& rawmat
 	  rawmatrix.resize(nfeatures_);
 
 	  //Read data row-by-row
-	  while(getline(featurestream,row))
+	  while(true)
 	    {
 	      ++nsamples_;
 	      string field;
@@ -324,6 +324,11 @@ void Treedata::readARFF(ifstream& featurestream, vector<vector<string> >& rawmat
 		  rawmatrix[attributeIdx].push_back(field);
 		}
 	      //cout << endl;
+
+	      if(!getline(featurestream,row))
+		{
+		  break;
+		}
 	    }
 
 	  sampleheaders_.resize(nsamples_);
