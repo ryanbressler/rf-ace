@@ -22,10 +22,9 @@ enum MatrixFormat { FEATURE_ROWS, FEATURE_COLUMNS };
 const size_t DEFAULT_TARGETIDX = 0;
 const size_t DEFAULT_NTREES = 0;
 const size_t DEFAULT_MTRY = 0;
-const size_t DEFAULT_NODESIZE = 5;
+const size_t DEFAULT_NODESIZE = 0;
 const size_t DEFAULT_NPERMS = 50;
 const num_t DEFAULT_PVALUETHRESHOLD = 0.10;
-//const num_t DEFAULT_ALPHA = 0.95;
 
 void printHeader()
 {
@@ -51,10 +50,16 @@ void printHelp()
   cout << " -i / --targetidx    target index, ref. to feature matrix (default " << DEFAULT_TARGETIDX << ")" << endl;
   cout << " -n / --ntrees       number of trees per RF (default nsamples/nrealsamples)" << endl;
   cout << " -m / --mtry         number of randomly drawn features per node split (default sqrt(nfeatures))" << endl;
-  cout << " -s / --nodesize     minimum number of train samples per node, affects tree depth (default " << DEFAULT_NODESIZE << ")" << endl;
+  cout << " -s / --nodesize     minimum number of train samples per node, affects tree depth (default max{5,nsamples/20})" << endl;
   cout << " -p / --nperms       number of Random Forests (default " << DEFAULT_NPERMS << ")" << endl;
   cout << " -t / --pthreshold   p-value threshold below which associations are listed (default " << DEFAULT_PVALUETHRESHOLD << ")" << endl;
   cout << endl;
+}
+
+void printHelpHint()
+{
+  cout << endl;
+  cout << "To get started, type \"-h\" or \"--help\"" << endl;
 }
 
 int main(int argc, char* argv[])
@@ -78,8 +83,7 @@ int main(int argc, char* argv[])
 	}
       else
 	{
-	  cout << endl;
-	  cout << "to get started, use \"-h\" or \"--help\"" << endl;
+	  printHelpHint();
 	  return(EXIT_FAILURE);
 	}
     }
@@ -99,19 +103,22 @@ int main(int argc, char* argv[])
   ops >> Option('i',"targetidx",targetIdx);
   ops >> Option('n',"ntrees",nTrees);
   ops >> Option('m',"mtry",mTry);
+  ops >> Option('s',"nodesize",nodeSize);
   ops >> Option('p',"nperms",nPerms);
   ops >> Option('t',"pthreshold",pValueThreshold);
   ops >> Option('O',"output",output);
 
   if(input == "")
     {
-      cerr << "input file not specified" << endl;
+      cerr << "Input file not specified" << endl;
+      printHelpHint();
       return EXIT_FAILURE;
     }
 
   if(output == "")
     {
-      cerr << "output file not specified" << endl;
+      cerr << "Output file not specified" << endl;
+      printHelpHint();
       return EXIT_FAILURE;
     }
 
@@ -123,6 +130,7 @@ int main(int argc, char* argv[])
   if(targetIdx >= treedata.nfeatures())
     {
       cerr << "targetidx must point to a valid feature (0.." << treedata.nfeatures()-1 << ")" << endl;
+      printHelpHint();
       return EXIT_FAILURE;
     }
 
@@ -143,10 +151,18 @@ int main(int argc, char* argv[])
   
   if(mTry == DEFAULT_MTRY)
     {
-      mTry = static_cast<size_t>(floor(sqrt(1.0*treedata.nfeatures())));   
+      mTry = static_cast<size_t>( floor( sqrt( 1.0*treedata.nfeatures() ) ) );   
     }
 
-  //treedata.print(targetidx);
+  if(nodeSize == DEFAULT_NODESIZE)
+    {
+      nodeSize = 5;
+      size_t altNodeSize = static_cast<size_t>( ceil( 1.0*nRealSamples/20 ) );
+      if(altNodeSize > nodeSize)
+	{
+	  nodeSize = altNodeSize;
+	}
+    }
   
   cout << endl;
   cout << "RF-ACE parameter configuration:" << endl;
