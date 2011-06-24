@@ -109,10 +109,10 @@ private:
 
   void read_filetype(string& filename, Filetype& filetype);
 
-  void read_afm(ifstream& featurestream, vector<vector<string> >& rawmatrix);
-  void read_arff(ifstream& featurestream, vector<vector<string> >& rawmatrix);
+  void readAFM(ifstream& featurestream, vector<vector<string> >& rawmatrix);
+  void readARFF(ifstream& featurestream, vector<vector<string> >& rawmatrix);
 
-  void parse_arff_attribute(const string& str, vector<string>& fields);
+  void parseARFFattribute(const string& str, string& attributeName, bool& isNumeric);
 
   bool is_featureheader(const string& str);
 
@@ -144,23 +144,12 @@ private:
 		      vector<size_t>& sampleics_left,
 		      vector<size_t>& sampleics_right);  
   
-  struct Feature
-  {
-    vector<num_t> data;
-    vector<num_t> contrast;
-    string name;
-    bool isnumeric;
-  };
 
   size_t targetidx_;
 
-  vector<Feature> features_;
-
   vector<vector<num_t> > featurematrix_;
-  vector<vector<num_t> > contrastmatrix_;
   vector<bool> isfeaturenum_;
   size_t nrealsamples_;
-  //vector<size_t> ncatvalues_;
 
   size_t nsamples_;
   size_t nfeatures_;
