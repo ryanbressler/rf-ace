@@ -45,7 +45,7 @@ REQUIRED ARGUMENTS:
  -O / --output       output association file
 
 OPTIONAL ARGUMENTS:
- -i / --targetidx    target index, ref. to feature matrix (default 0)
+ -i / --targetidx    target index, reference to feature file (default 0)
  -n / --ntrees       number of trees per RF (default nsamples/nrealsamples)
  -m / --mtry         number of randomly drawn features per node split (default sqrt(nfeatures))
  -s / --nodesize     minimum number of train samples per node, affects tree depth (default max{5,nsamples/20})
@@ -53,9 +53,7 @@ OPTIONAL ARGUMENTS:
  -t / --pthreshold   p-value threshold below which associations are listed (default 0.1)
 }}} 
 
-
 RF-ACE can simply be run by calling
-
 {{{
 bin/rf_ace --input featurematrix.afm --targetidx 0 --output associations.tsv 
 }}}
@@ -63,3 +61,6 @@ or with the short-hand notation equivalently as
 {{{
 bin/rf_ace -I featurematrix.afm -i 0 -O associations.tsv 
 }}}
+which will execute RF-ACE with the default parameters; as the help documentation points out, most of the parameters are estimated dynamically based on the data dimensions and content, so running RF-ACE with no information about the algorithm itself is possible.
+
+
