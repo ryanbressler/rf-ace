@@ -27,45 +27,63 @@ const size_t DEFAULT_NPERMS = 50;
 const num_t DEFAULT_PVALUETHRESHOLD = 0.10;
 //const num_t DEFAULT_ALPHA = 0.95;
 
+void printHeader()
+{
+  cout << endl;
+  cout << " --------------------------------------------------------------- " << endl;
+  cout << "| RF-ACE -- efficient feature selection with heterogeneous data |" << endl;
+  cout << "|  Version:      RF-ACE v0.3.1, June 24th, 2011                 |" << endl;
+  cout << "|  Project page: http://code.google.com/p/rf-ace                |" << endl;
+  cout << "|  Contact:      timo.p.erkkila@tut.fi                          |" << endl;
+  cout << "|                kari.torkkola@gmail.com                        |" << endl;
+  cout << "|                sreynolds@systemsbiology.org                   |" << endl;
+  cout << " --------------------------------------------------------------- " << endl;
+}
+
+void printHelp()
+{
+  cout << endl;
+  cout << "REQUIRED ARGUMENTS:" << endl;
+  cout << " -I / --input        input feature matrix" << endl;
+  cout << " -O / --output       output association file" << endl;
+  cout << endl;
+  cout << "OPTIONAL ARGUMENTS:" << endl;
+  cout << " -i / --targetidx    target index, ref. to feature matrix (default " << DEFAULT_TARGETIDX << ")" << endl;
+  cout << " -n / --ntrees       number of trees per RF (default nsamples/nrealsamples)" << endl;
+  cout << " -m / --mtry         number of randomly drawn features per node split (default sqrt(nfeatures))" << endl;
+  cout << " -s / --nodesize     minimum number of train samples per node, affects tree depth (default " << DEFAULT_NODESIZE << ")" << endl;
+  cout << " -p / --nperms       number of Random Forests (default " << DEFAULT_NPERMS << ")" << endl;
+  cout << " -t / --pthreshold   p-value threshold below which associations are listed (default " << DEFAULT_PVALUETHRESHOLD << ")" << endl;
+  cout << endl;
+}
+
 int main(int argc, char* argv[])
 {
 
-  if(argc == 1 || argc == 2)
+  printHeader();
+
+  if(argc == 1)
     {
-
-      if(argc == 2)
-	{
-	  string helpHandle(argv[1]);
-	  if(helpHandle != "-h" && helpHandle != "--help")
-	    {
-	      cerr << "use -h or --help to get started" << endl;
-	      return EXIT_FAILURE;
-	    }
-	}
-
-      cout << endl;
-      cout << "REQUIRED ARGUMENTS:" << endl;
-      cout << "-I / --input        input feature matrix" << endl;
-      cout << "-O / --output       output association file" << endl;
-      cout << endl;
-      cout << "OPTIONAL ARGUMENTS:" << endl;
-      cout << "-i / --targetidx    target index, ref. to feature matrix (default " << DEFAULT_TARGETIDX << ")" << endl;
-      cout << "-n / --ntrees       number of trees per RF (default nsamples/nrealsamples)" << endl;
-      cout << "-m / --mtry         number of randomly drawn features per node split (default sqrt(nfeatures))" << endl;
-      cout << "-s / --nodesize     minimum number of train samples per node, affects tree depth (default " << DEFAULT_NODESIZE << ")" << endl;
-      cout << "-p / --nperms       number of Random Forests (default " << DEFAULT_NPERMS << ")" << endl;
-      cout << "-t / --pthreshold   p-value threshold below which associations are listed (default " << DEFAULT_PVALUETHRESHOLD << ")" << endl;
-      //cout << "-a / --alpha        percentile of contrast importances, defines stringency of the t-test (default " << DEFAULT_ALPHA << ")" << endl;
-      cout << endl;
-      return EXIT_SUCCESS;
+      printHelp();
+      return(EXIT_SUCCESS);
     }
 
-  cout << endl;
-  cout << "  ----------------------------------" << endl;
-  cout << "  ---    RF-ACE version 0.3.0    ---" << endl;
-  cout << "  ----------------------------------" << endl;
+  if(argc == 2)
+    {
+      string unaryHandle(argv[1]);
+      if(unaryHandle == "-h" || unaryHandle == "--help")
+	{
+	  printHelp();
+	  return(EXIT_SUCCESS);
+	}
+      else
+	{
+	  cout << endl;
+	  cout << "to get started, use \"-h\" or \"--help\"" << endl;
+	  return(EXIT_FAILURE);
+	}
+    }
 
-  //using namespace GetOpt;
   string input = "";
   size_t targetIdx = DEFAULT_TARGETIDX;
   size_t nTrees = DEFAULT_NTREES;
@@ -73,8 +91,6 @@ int main(int argc, char* argv[])
   size_t nodeSize = DEFAULT_NODESIZE;
   size_t nPerms = DEFAULT_NPERMS;
   num_t pValueThreshold = DEFAULT_PVALUETHRESHOLD;
-  //num_t alpha = DEFAULT_ALPHA;
-  //bool is_featurerows = true;
   string output = "";
 
   GetOpt_pp ops(argc, argv);
