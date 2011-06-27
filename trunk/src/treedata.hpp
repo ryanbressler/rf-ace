@@ -114,7 +114,9 @@ private:
 
   void parseARFFattribute(const string& str, string& attributeName, bool& isNumeric);
 
-  bool is_featureheader(const string& str);
+  bool isValidNumericalHeader(const string& str);
+  bool isValidCategoricalHeader(const string& str);
+  bool isValidFeatureHeader(const string& str);
 
   template <typename T> void transpose(vector<vector<T> >& mat);
 
