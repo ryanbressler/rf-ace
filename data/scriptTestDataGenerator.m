@@ -29,11 +29,11 @@ par.missing = 0.1;        % fraction of missing values
 
 % uncomment one output option
 % par.fileFormat='R';     % samples  as rows, tsv, cat levels are strings, (this is slow)
-% par.fileFormat='x';     % features as rows, tsv, cat levels are numbers
+par.fileFormat='x';     % features as rows, tsv, cat levels are numbers
 % par.fileFormat='arff';  % arff file
 % par.fileFormat='none';  % return a cell array of sets
 par.fileFormat={'none','R','x','arff'};
-par.sampleHeader = 0;     % generate a header for samples 
+par.sampleHeader = 1;     % generate a header for samples 
 
 [traindata, testdata] = dataGenerator( par );
 

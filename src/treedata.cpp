@@ -46,17 +46,36 @@ Treedata::Treedata(string filename):
   if(filetype == AFM)
     {
       cout << "File type interpreted as Annotated Feature Matrix (AFM)" << endl;
-      Treedata::readAFM(featurestream,rawmatrix);
+      try {
+	Treedata::readAFM(featurestream,rawmatrix);
+      }
+      catch(...)
+	{
+	  cerr << "The file could not be read. Is the file type really AFM? Quitting..." << endl;
+	}
     }
   else if(filetype == ARFF)
     {
       cout << "File type interpreted as Attribute-Relation File Format (ARFF)" << endl;
-      Treedata::readARFF(featurestream,rawmatrix);
+      try {
+	Treedata::readARFF(featurestream,rawmatrix);
+      }
+      catch(...)
+	{
+	  cerr << "The file could not be read. Is the file type really ARFF? Quitting..." << endl;
+	}
     }
   else
     {
       cout << "File type is unknown -- defaulting to Annotated Feature Matrix (AFM)" << endl;
-      Treedata::readAFM(featurestream,rawmatrix);
+      try
+	{
+	  Treedata::readAFM(featurestream,rawmatrix);
+	}
+      catch(...)
+	{
+	  cerr << "The file could not be read, quitting..." << endl;
+	}
     }      
 
   //TODO: move the following part, generation of artificial contrasts, to a separate function.
@@ -143,7 +162,7 @@ void Treedata::readAFM(ifstream& featurestream, vector<vector<string> >& rawmatr
   bool is_rowformatted = true;
   while(getline(ss,field,'\t'))
     {
-      if(is_rowformatted && is_featureheader(field))
+      if(is_rowformatted && isValidFeatureHeader(field))
 	{
 	  is_rowformatted = false;
 	}
@@ -229,11 +248,11 @@ void Treedata::readAFM(ifstream& featurestream, vector<vector<string> >& rawmatr
       for(size_t i = 0; i < nfeatures_; ++i)
         {
           //First letters in the row headers determine whether the feature is numerical or categorical
-          if(rowheaders[i][0] == 'N')
+          if( isValidNumericalHeader(rowheaders[i]) )
             {
               isfeaturenum_.push_back(true);
             }
-          else if(rowheaders[i][0] == 'C' || rowheaders[i][0] == 'B')
+          else if( isValidCategoricalHeader(rowheaders[i]) )
             {
               isfeaturenum_.push_back(false);
             }
@@ -266,11 +285,11 @@ void Treedata::readAFM(ifstream& featurestream, vector<vector<string> >& rawmatr
       for(size_t i = 0; i < nfeatures_; ++i)
         {
           //First letters in the row headers determine whether the feature is numerical or categorical
-          if(colheaders[i][0] == 'N')
+          if( isValidNumericalHeader(colheaders[i]) )
             {
               isfeaturenum_.push_back(true);
             }
-          else if(colheaders[i][0] == 'C' || colheaders[i][0] == 'B')
+          else if( isValidCategoricalHeader(colheaders[i]) )
             {
               isfeaturenum_.push_back(false);
             }
@@ -411,9 +430,19 @@ void Treedata::parseARFFattribute(const string& str, string& attributeName, bool
     }
 }
 
-bool Treedata::is_featureheader(const string& str)
+bool Treedata::isValidNumericalHeader(const string& str)
 {
-  return((str[0] == 'N' || str[0] == 'C' || str[0] == 'B') && str[1] == ':');
+  return( str.compare(0,2,"N:") == 0 );
+}
+
+bool Treedata::isValidCategoricalHeader(const string& str)
+{
+  return( str.compare(0,2,"C:") == 0 || str.compare(0,2,"B:") == 0 );
+}
+
+bool Treedata::isValidFeatureHeader(const string& str)
+{
+  return( isValidNumericalHeader(str) || isValidCategoricalHeader(str) );
 }
 
 size_t Treedata::nfeatures()
