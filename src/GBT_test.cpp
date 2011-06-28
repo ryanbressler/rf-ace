@@ -104,7 +104,7 @@ int main(int argc, char* argv[])
 	cout <<endl<< "CONSTRUCT:" << endl;
 	size_t nTrees(ntrees);
 	size_t nMaxLeaves(nodesize);
-	float shrinkage(0.2);
+	float shrinkage(1.0);
 	float subSampleSize(0.5);
 	GBT gbt(&treeData, nTrees, nMaxLeaves, shrinkage, subSampleSize);
 
@@ -112,6 +112,7 @@ int main(int argc, char* argv[])
 	// 3: select target and grow the forest
 	cout <<endl<< "GROWING:" << endl;
 	gbt.selectTarget(targetidx);
+	gbt.allocateForest();
 	gbt.growForest();
 
 	//------------------------------------------------------------------------
