@@ -128,14 +128,14 @@ int main(int argc, char* argv[])
   Treedata treedata(input);
 
  
-  if(targetIdx >= treedata.nfeatures())
+  if(targetIdx >= treedata.nFeatures())
     {
-      cerr << "targetidx must point to a valid feature (0.." << treedata.nfeatures()-1 << ")" << endl;
+      cerr << "targetidx must point to a valid feature (0.." << treedata.nFeatures()-1 << ")" << endl;
       printHelpHint();
       return EXIT_FAILURE;
     }
 
-  size_t nRealSamples = treedata.nrealsamples(targetIdx);
+  size_t nRealSamples = treedata.nRealSamples(targetIdx);
 
   if(nRealSamples == 0)
     {
@@ -143,16 +143,16 @@ int main(int argc, char* argv[])
       return EXIT_SUCCESS;
     }
 
-  num_t realFraction = 1.0*nRealSamples / treedata.nsamples();
+  num_t realFraction = 1.0*nRealSamples / treedata.nSamples();
 
   if(nTrees == DEFAULT_NTREES)
     {
-      nTrees = static_cast<size_t>( 1.0*treedata.nsamples() / realFraction );
+      nTrees = static_cast<size_t>( 1.0*treedata.nSamples() / realFraction );
     }
   
   if(mTry == DEFAULT_MTRY)
     {
-      mTry = static_cast<size_t>( floor( sqrt( 1.0*treedata.nfeatures() ) ) );   
+      mTry = static_cast<size_t>( floor( sqrt( 1.0*treedata.nFeatures() ) ) );   
     }
 
   if(nodeSize == DEFAULT_NODESIZE)
@@ -168,9 +168,9 @@ int main(int argc, char* argv[])
   cout << endl;
   cout << "RF-ACE parameter configuration:" << endl;
   cout << "  --input      = " << input << endl;
-  cout << "  --nsamples   = " << nRealSamples << " / " << treedata.nsamples() << " (" << 100 * ( 1 - realFraction )<< "% missing)" << endl;
-  cout << "  --nfeatures  = " << treedata.nfeatures() << endl;
-  cout << "  --targetidx  = " << targetIdx << ", header '" << treedata.get_featureheader(targetIdx) << "'" << endl;
+  cout << "  --nsamples   = " << nRealSamples << " / " << treedata.nSamples() << " (" << 100 * ( 1 - realFraction )<< "% missing)" << endl;
+  cout << "  --nfeatures  = " << treedata.nFeatures() << endl;
+  cout << "  --targetidx  = " << targetIdx << ", header '" << treedata.getFeatureName(targetIdx) << "'" << endl;
   cout << "  --ntrees     = " << nTrees << endl;
   cout << "  --mtry       = " << mTry << endl;
   cout << "  --nodesize   = " << nodeSize << endl;
@@ -179,31 +179,31 @@ int main(int argc, char* argv[])
   //cout << "  --alpha      = " << alpha << endl;
   cout << "  --output     = " << output << endl << endl;
 
-  assert(treedata.nfeatures() >= mTry);
-  assert(treedata.nsamples() > 2*nodeSize);
+  assert(treedata.nFeatures() >= mTry);
+  assert(treedata.nSamples() > 2*nodeSize);
 
-  Randomforest RF(&treedata,nTrees,mTry,nodeSize);
-  RF.selectTarget(targetIdx);
+  Randomforest RF(&treedata,targetIdx,nTrees,mTry,nodeSize);
+  //RF.setTarget(targetIdx);
   //treedata.print();
   //RF.blacklist_and_kill(0.8,blistheaders,blistcorrelations);
 
   //size_t nperms = 9;
   //num_t alpha = 0.50;
-  vector<num_t> pValues(treedata.nfeatures());
-  vector<num_t> importanceValues(treedata.nfeatures());
+  vector<num_t> pValues(treedata.nFeatures());
+  vector<num_t> importanceValues(treedata.nFeatures());
   //vector<num_t> ivalues(treedata.nfeatures());
   
   cout << "Growing " << nPerms << " Random Forests (RFs), please wait..." << endl;
-  RF.growForestEnsemble(nPerms,pValues,importanceValues);
+  RF.learn(nPerms,pValues,importanceValues);
   //cout << "Time elapsed: " << float(clock() - time_start)/CLOCKS_PER_SEC << " seconds" << endl;
   
-  vector<size_t> refIcs(treedata.nfeatures());
+  vector<size_t> refIcs(treedata.nFeatures());
   //vector<string> fnames = treedata.featureheaders();
   datadefs::sortDataAndMakeRef(pValues,refIcs);
   datadefs::sortFromRef<num_t>(importanceValues,refIcs);
   //targetIdx = refIcs[targetIdx];
   
-  string targetHeader = treedata.get_featureheader(targetIdx);
+  string targetName = treedata.getFeatureName(targetIdx);
 
   if(pValues[0] <= pValueThreshold)
     {
@@ -212,7 +212,7 @@ int main(int argc, char* argv[])
       FILE* po;
       po = fopen(output.c_str(),"w");
       
-      for(size_t featureIdx = 0; featureIdx < treedata.nfeatures(); ++featureIdx)
+      for(size_t featureIdx = 0; featureIdx < treedata.nFeatures(); ++featureIdx)
 	{
 
 	  if(pValues[featureIdx] > pValueThreshold)
@@ -227,7 +227,7 @@ int main(int argc, char* argv[])
 	    }
 
 
-	  fprintf(po,"%s\t%s\t%9.8f\t%9.8f\t%9.8f\n",targetHeader.c_str(),treedata.get_featureheader(refIcs[featureIdx]).c_str(),pValues[featureIdx],importanceValues[featureIdx],treedata.corr(targetIdx,refIcs[featureIdx]));
+	  fprintf(po,"%s\t%s\t%9.8f\t%9.8f\t%9.8f\n",targetName.c_str(),treedata.getFeatureName(refIcs[featureIdx]).c_str(),pValues[featureIdx],importanceValues[featureIdx],treedata.pearsonCorrelation(targetIdx,refIcs[featureIdx]));
 
 	  //os << target_str << "\t" << treedata.get_featureheader(ref_ics[i]) << "\t" 
 	  //   << pvalues[i] << "\t" << ivalues[i] << "\t" << treedata.corr(targetidx,ref_ics[i]) << endl;

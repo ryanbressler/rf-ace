@@ -11,7 +11,6 @@
 using namespace std;
 
 Treedata::Treedata(string fileName):
-  targetidx_(0),
   features_(0),
   nsamples_(0),
   nfeatures_(0)
@@ -98,8 +97,8 @@ Treedata::Treedata(string fileName):
       features_[i].contrast = featureData;
     } 
   
-  targetidx_ = 0;
-  Treedata::selectTarget(targetidx_);
+  //targetidx_ = 0;
+  //Treedata::selectTarget(targetidx_);
 
 }
 
@@ -403,17 +402,18 @@ bool Treedata::isValidFeatureHeader(const string& str)
   return( isValidNumericalHeader(str) || isValidCategoricalHeader(str) );
 }
 
-size_t Treedata::nfeatures()
+size_t Treedata::nFeatures()
 {
   return(nfeatures_);
 }
 
-size_t Treedata::nsamples()
+size_t Treedata::nSamples()
 {
   return(nsamples_);
 }
 
-num_t Treedata::corr(size_t featureidx1, size_t featureidx2)
+//WILL BECOME DEPRECATED
+num_t Treedata::pearsonCorrelation(size_t featureidx1, size_t featureidx2)
 {
   num_t r;
   datadefs::pearson_correlation(features_[featureidx1].data,features_[featureidx2].data,r);
@@ -422,27 +422,29 @@ num_t Treedata::corr(size_t featureidx1, size_t featureidx2)
 
 void Treedata::killFeature(const size_t featureIdx)
 {
-  assert(featureIdx != targetidx_);
+  //assert(featureIdx != targetidx_);
   assert(featureIdx < nfeatures_);
 
   features_.erase(features_.begin() + featureIdx);
     
   --nfeatures_;
-  if(featureIdx < targetidx_)
-    {
-      --targetidx_;
-    }
+  //if(featureIdx < targetidx_)
+  //  {
+  //    --targetidx_;
+  //  }
 }
 
-string Treedata::get_featureheader(size_t featureidx)
+string Treedata::getFeatureName(const size_t featureIdx)
 {
-  return(features_[featureidx].name);
+  return(features_[featureIdx].name);
 }
 
-string Treedata::get_targetheader()
-{
+/*
+  string Treedata::get_targetheader()
+  {
   return(features_[targetidx_].name);
-}
+  }
+*/
 
 void Treedata::print()
 {
@@ -484,42 +486,46 @@ void Treedata::permuteContrasts()
 }
 
 
-void Treedata::selectTarget(size_t targetidx)
-{
+/*
+  void Treedata::selectTarget(size_t targetidx)
+  {
   targetidx_ = targetidx; 
   //Treedata::sort_all_wrt_target();
   datadefs::countRealValues(features_[targetidx_].data,nrealsamples_); //WILL BECOME DEPRECATED
   Treedata::permuteContrasts();
-}
+  }
 
-
-size_t Treedata::getTarget()
-{
+  
+  
+  size_t Treedata::getTarget()
+  {
   return(targetidx_);
-}
-
+  }
+*/
 
 bool Treedata::isFeatureNumerical(size_t featureIdx)
 {
   return(features_[featureIdx].isNumerical);
 }
 
-
-size_t Treedata::nrealsamples()
-{
+/*
+  size_t Treedata::nrealsamples()
+  {
   size_t nRealSamples;
   //datadefs::count_real_values(featurematrix_[targetidx_],nreal);
   datadefs::countRealValues(features_[targetidx_].data,nRealSamples);
   return(nRealSamples);
-}
+  }
+*/
 
 
-size_t Treedata::nrealsamples(size_t featureidx)
+size_t Treedata::nRealSamples(const size_t featureIdx)
 { 
   size_t nRealSamples;
-  datadefs::countRealValues(features_[featureidx].data,nRealSamples);
+  datadefs::countRealValues(features_[featureIdx].data,nRealSamples);
   return(nRealSamples);
 }
+
 
 
 template <typename T> void Treedata::transpose(vector<vector<T> >& mat)
@@ -571,13 +577,13 @@ void Treedata::permute(vector<num_t>& x)
 }
 
 
-void Treedata::bootstrap(vector<size_t>& ics, vector<size_t>& oob_ics)
+void Treedata::bootstrap(const size_t featureIdx, vector<size_t>& ics, vector<size_t>& oob_ics)
 {
     
   ics.clear();
   for(size_t i = 0; i < nsamples_; ++i)
     {
-      if(!datadefs::isNAN(features_[targetidx_].data[i]))
+      if(!datadefs::isNAN(features_[featureIdx].data[i]))
 	{
 	  ics.push_back(i);
 	}
@@ -705,7 +711,7 @@ void Treedata::numericalFeatureSplit(vector<num_t>& tv,
 
   if(false)
     {
-      cout << "Feature splits target " << targetidx_ << " [";
+      cout << "Feature splits target [";
       for(size_t i = 0; i < sampleIcs_left.size(); ++i)
 	{
 	  cout << " " << tv[sampleIcs_left[i]];
@@ -901,7 +907,7 @@ void Treedata::categoricalFeatureSplit(vector<num_t>& tv,
 
   if(false)
     {
-      cout << "Feature splits target " << targetidx_ << " [";
+      cout << "Feature splits target [";
       for(size_t i = 0; i < sampleIcs_left.size(); ++i)
 	{
 	  cout << " " << tv[sampleIcs_left[i]];
@@ -963,7 +969,7 @@ void Treedata::getContrastData(size_t featureIdx, const vector<size_t>& sampleIc
 
 }
 
-num_t Treedata::sampleAtRandom(size_t featureIdx)
+void Treedata::getRandomData(const size_t targetIdx, const size_t featureIdx, num_t& data)
 {
   
   num_t featureSample = datadefs::NUM_NAN;
@@ -972,9 +978,9 @@ num_t Treedata::sampleAtRandom(size_t featureIdx)
     {
       size_t randomIdx = irand_() % nsamples_;
       featureSample = features_[featureIdx].data[randomIdx];
-      targetSample = features_[targetidx_].data[randomIdx];
+      targetSample = features_[targetIdx].data[randomIdx];
     }
-  return(featureSample);
+  data = featureSample;
 }
 
 /*
