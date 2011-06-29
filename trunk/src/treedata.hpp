@@ -20,7 +20,7 @@ class Treedata
 {
 public:
   //Initializes the object and reads in a data matrix
-  Treedata(string filename);
+  Treedata(string fileName);
   ~Treedata();
 
   //Returns the number of features
@@ -42,12 +42,23 @@ public:
   void print();
   void print(const size_t featureidx);
 
+  void getFeatureData(const size_t featureIdx, vector<num_t>& data);
+  void getFeatureData(const size_t featureIdx, const size_t sampleIdx, num_t& data);
+  void getFeatureData(const size_t featureIdx, const vector<size_t>& sampleIcs, vector<num_t>& data);
+
+  void getContrastData(const size_t featureIdx, vector<num_t>& data);
+  void getContrastData(const size_t featureIdx, const size_t sampleIdx, num_t& data);
+  void getContrastData(const size_t featureIdx, const vector<size_t>& sampleIcs, vector<num_t>& data);
+
+  inline size_t sampleRandomIdx(const size_t n) { return(irand_() % n); }
+  num_t sampleAtRandom(size_t featureIdx);
+
 protected: 
 
   friend class Randomforest;
   friend class GBT;
 
-  void kill(const size_t featureidx);
+  void killFeature(const size_t featureIdx);
 
   //Permutes integers in range 0,1,...,(ics.size()-1). 
   //NOTE: original contents in ics will be replaced.  
@@ -63,101 +74,117 @@ protected:
 
   //Selects target feature. 
   //NOTE: data will be sorted with respect to the target.
-  void select_target(size_t targetidx);
+  void selectTarget(size_t targetidx);
 
-  size_t get_target();
+  size_t getTarget();
   
-  void permute_contrasts();
+  void permuteContrasts();
 
-  bool isfeaturenum(size_t featureidx);
+  bool isFeatureNumerical(size_t featureIdx);
 
   //size_t nrealvalues();
   //size_t nrealvalues(size_t featureidx);
 
-  void remove_nans(size_t featureidx, vector<size_t>& sampleics, size_t& nreal);
+  //void remove_nans(size_t featureidx, vector<size_t>& sampleics, size_t& nreal);
   
 
   //Given feature, finds and returns the optimal split point wrt. sampleics. 
   //Samples branching left and right will be stored in sampleics_left (resp. right)
-  void split_target(size_t featureidx,
-		    const size_t min_split,
-		    vector<size_t>& sampleics,
-		    vector<size_t>& sampleics_left,
-		    vector<size_t>& sampleics_right,
-		    num_t& splitvalue,
-		    set<num_t>& values_left);
-  
+  /*
+    void split_target(size_t featureidx,
+    const size_t min_split,
+    vector<size_t>& sampleics,
+    vector<size_t>& sampleics_left,
+    vector<size_t>& sampleics_right,
+    num_t& splitvalue,
+    set<num_t>& values_left);
+  */
     
-  num_t split_fitness(const size_t featureidx,
-		      const size_t min_split,
-		      vector<size_t> const& sampleics,
-		      vector<size_t> const& sampleics_left,
-		      vector<size_t> const& sampleics_right);
-
+  num_t splitFitness(vector<num_t> const& data,
+		     bool const& isFeatureNumerical,
+		     size_t const& minSplit,
+		     vector<size_t> const& sampleIcs_left,
+		     vector<size_t> const& sampleIcs_right);
   
-  void impurity(size_t featureidx, vector<size_t> const& sampleics, num_t& impurity, size_t& nreal);
+  void impurity(vector<num_t>& data, bool isFeatureNumerical, num_t& impurity, size_t& nreal);
   
 
-  num_t at(size_t featureidx, size_t sampleidx);
-  num_t randf(size_t featureidx);
 
-  inline size_t randidx(const size_t n) { return(irand_() % n); }
 
 private:
 
-  enum Filetype {UNKNOWN, AFM, ARFF};
+  enum FileType {UNKNOWN, AFM, ARFF};
 
-  void read_filetype(string& filename, Filetype& filetype);
+  void readFileType(string& fileName, FileType& fileType);
 
-  void readAFM(ifstream& featurestream, vector<vector<string> >& rawmatrix);
-  void readARFF(ifstream& featurestream, vector<vector<string> >& rawmatrix);
+  void readAFM(ifstream& featurestream, vector<vector<string> >& rawMatrix, vector<string>& featureHeaders, vector<bool>& isFeatureNumerical);
+  void readARFF(ifstream& featurestream, vector<vector<string> >& rawMatrix, vector<string>& featureHeaders, vector<bool>& isFeatureNumerical);
 
-  void parseARFFattribute(const string& str, string& attributeName, bool& isNumeric);
+  void parseARFFattribute(const string& str, string& attributeName, bool& isFeatureNumerical);
 
   bool isValidNumericalHeader(const string& str);
   bool isValidCategoricalHeader(const string& str);
   bool isValidFeatureHeader(const string& str);
 
-  template <typename T> void transpose(vector<vector<T> >& mat);
-
-  //Sorts data with respect to a given feature
-  void sort_all_wrt_feature(size_t featureidx);
-
-  //Sorts data with respect to target
-  void sort_all_wrt_target();
-
-  //Finds the best split for target with respect to selected feature splitter, which needs to be numerical.
-  void incremental_target_split(size_t featureidx,
-				const size_t min_split, 
-				vector<size_t>& sampleics, 
-				vector<size_t>& sampleics_left, 
-				vector<size_t>& sampleics_right,
-				num_t& splitvalue);
-
-  void categorical_target_split(size_t featureidx,
-				   vector<size_t>& sampleics,
-				   vector<size_t>& sampleics_left,
-				   vector<size_t>& sampleics_right,
-				   set<num_t>& categories_left);
-
-  //Splits a set of samples to "left" and "right", given a splitidx
-  void split_samples(vector<size_t>& sampleics,
-		      size_t splitidx,
-		      vector<size_t>& sampleics_left,
-		      vector<size_t>& sampleics_right);  
+  /*
+    void getFeatureData(size_t featureIdx, num_t& data);
+    void getFeatureData(size_t featureIdx, size_t sampleIdx, num_t& data);
+    void getFeatureData(size_t featureIdx, vector<size_t>& sampleIcs, vector<num_t>& data);
+    
+    void getContrastData(size_t featureIdx, num_t& data);
+    void getContrastData(size_t featureIdx, size_t sampleIdx, num_t& data);
+    void getContrastData(size_t featureIdx, vector<size_t>& sampleIcs, vector<num_t>& data);
+    
+    inline size_t sampleRandomIdx(const size_t n) { return(irand_() % n); }
+    num_t sampleAtRandom(size_t featureIdx);
+  */
   
+  template <typename T> void transpose(vector<vector<T> >& mat);
+  
+  //Finds the best split for target with respect to selected feature splitter, which needs to be numerical.
+  void numericalFeatureSplit(vector<num_t>& tv,
+			     const bool isTargetNumerical,
+			     vector<num_t>& fv,
+			     const size_t min_split,
+			     vector<size_t>& sampleIcs_left,
+			     vector<size_t>& sampleIcs_right,
+			     num_t& splitValue);
+    
+  void categoricalFeatureSplit(vector<num_t>& tv,
+			       const bool isTargetNumerical,
+			       vector<num_t>& fv,
+			       vector<size_t>& sampleIcs_left,
+			       vector<size_t>& sampleIcs_right,
+			       set<num_t>& categories_left);
+  
+  
+  //Splits a set of samples to "left" and "right", given a splitidx
+  /*
+    void split_samples(vector<size_t>& sampleics,
+    size_t splitidx,
+    vector<size_t>& sampleics_left,
+    vector<size_t>& sampleics_right);  
+  */    
+
 
   size_t targetidx_;
 
-  vector<vector<num_t> > featurematrix_;
-  vector<bool> isfeaturenum_;
-  size_t nrealsamples_;
+  struct Feature {
+    vector<num_t> data;
+    vector<num_t> contrast;
+    bool isNumerical;
+    string name;
+  };
+
+  vector<Feature> features_;
+  //vector<bool> isfeaturenum_;
+  size_t nrealsamples_; //WILL BE DEPRECATED
 
   size_t nsamples_;
   size_t nfeatures_;
 
-  vector<string> featureheaders_;
-  vector<string> sampleheaders_;
+  //vector<string> featureheaders_;
+  //vector<string> sampleheaders_;
 
   MTRand_int32 irand_;
 };

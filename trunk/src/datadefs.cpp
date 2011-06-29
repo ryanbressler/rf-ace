@@ -121,6 +121,33 @@ bool datadefs::isNAN(const datadefs::num_t value)
     }
 }
 
+bool datadefs::isNAN(const vector<num_t>& data)
+{
+  for(size_t i = 0; i < data.size(); ++i)
+    {
+      if(datadefs::isNAN(data[i]))
+	{
+	  return(true);
+	}
+    }
+  return(false);
+}
+
+//This is a very poorly designed function
+void datadefs::findNANs(vector<num_t>& data, vector<size_t>& NANIcs)
+{
+  NANIcs.clear();
+  size_t n = data.size();
+  for(size_t i = 0; i < n; ++i)
+    {
+      if(datadefs::isNAN(data[i]))
+        {
+          //data.erase(data.begin() + i);
+	  NANIcs.push_back(i);
+        }
+    }
+}
+
 void datadefs::mean(vector<datadefs::num_t> const& data, datadefs::num_t& mu, size_t& nRealValues)
 {
  
@@ -185,6 +212,22 @@ void datadefs::zerotrim(vector<datadefs::num_t>& data)
 	}
     }
 }
+
+void datadefs::sortDataAndMakeRef(vector<num_t>& data, vector<size_t>& refIcs)
+{
+  //cout << "sort_and_make_ref: in the beginning" << endl;
+  //assert(v.size() == ref_ics.size());
+  vector<pair<num_t,size_t> > pairedv(data.size());
+  refIcs.resize(data.size());
+  datadefs::range(refIcs);
+  //cout << "sort_and_make_ref: used range()" << endl;
+  datadefs::make_pairedv<num_t,size_t>(data,refIcs,pairedv);
+  //cout << "sort_and_make_ref: made pairedv" << endl;
+  sort(pairedv.begin(),pairedv.end(),datadefs::ordering<num_t>());
+  //cout << "sort_and_make_ref: pairedv sorted" << endl;
+  datadefs::separate_pairedv<num_t,size_t>(pairedv,data,refIcs);
+}
+
 
 //Assuming x_n is a current member of the "right" branch, subtract it from "right" and add it to "left", and update the branch data counts, means, and squared errors. NOTE: NaN checks not implemented
 void datadefs::forward_backward_sqerr(const datadefs::num_t x_n,

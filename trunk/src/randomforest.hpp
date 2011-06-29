@@ -16,16 +16,16 @@ public:
   Randomforest(Treedata* treedata, size_t ntrees, size_t mtry, size_t nodesize);
   ~Randomforest();
 
-  void init_forest();
+  void initializeForest();
 
   //Selects the target feature that is to be predicted
-  void select_target(size_t targetidx);
+  void selectTarget(size_t targetidx);
 
   //Gets the selected target feature
-  size_t get_target();
+  size_t getTarget();
 
   //Grow the Random Forest with respect to selected target feature
-  void grow_forest(const size_t nperms, vector<num_t>& pvalues, vector<num_t>& ivalues);
+  void growForestEnsemble(const size_t nperms, vector<num_t>& pvalues, vector<num_t>& ivalues);
   //void calculate_importance(const num_t alpha, vector<num_t>& importance, num_t& contrast_prc);
 
   //blacklist_and_kill
@@ -33,11 +33,11 @@ public:
 private:
 
   //Grows one tree with respect to selected target feature
-  void grow_tree(size_t treeidx);
+  void growTree(size_t treeIdx);
 
   //Recursive tree-generating node splitter algorithm
   //NOTE: there will be at least two alternative node splitter algorithms in the future
-  void recursive_nodesplit(size_t treeidx, size_t nodeidx, vector<size_t>& sampleics);
+  void recursiveNodesplit(const size_t treeidx, const size_t nodeidx, const vector<size_t>& sampleics);
 
   void percolate_sampleics(Node& rootnode, vector<size_t>& sampleics, map<Node*,vector<size_t> >& trainics);
   void percolate_sampleics_randf(size_t featureidx, Node& rootnode, vector<size_t>& sampleics, map<Node*,vector<size_t> >& trainics);

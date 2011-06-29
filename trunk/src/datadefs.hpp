@@ -18,7 +18,6 @@ namespace datadefs
   
   //Numerical data type
   typedef float num_t;
-  //typedef num_t* num_tp;
 
   //NaN as represented by the program
   extern const num_t NUM_NAN;
@@ -37,7 +36,10 @@ namespace datadefs
 
   bool isNAN(const string& str);
   bool isNAN(const num_t value);
+  bool isNAN(const vector<num_t>& data);
   
+  void findNANs(vector<num_t>& data, vector<size_t>& NANIcs);
+
   void mean(vector<num_t> const& data, num_t& mu, size_t& nreal);
 
   void sqerr(vector<num_t> const& data, 
@@ -186,29 +188,33 @@ namespace datadefs
       }
   }
 
-  template <typename T> void sort_and_make_ref(vector<T>& v, vector<size_t>& ref_ics)
-  {
+  void sortDataAndMakeRef(vector<num_t>& data, vector<size_t>& refIcs);
+  
+  /*
+    {
     //cout << "sort_and_make_ref: in the beginning" << endl;
-    assert(v.size() == ref_ics.size());
-    vector<pair<T,size_t> > pairedv(ref_ics.size());
-    datadefs::range(ref_ics);
+    //assert(v.size() == ref_ics.size());
+    vector<pair<num_t,size_t> > pairedv(data.size());
+    refIcs.resize(data.size());
+    datadefs::range(refIcs);
     //cout << "sort_and_make_ref: used range()" << endl;
-    datadefs::make_pairedv<T,size_t>(v,ref_ics,pairedv);
+    datadefs::make_pairedv<num_t,size_t>(data,refIcs,pairedv);
     //cout << "sort_and_make_ref: made pairedv" << endl;
-    sort(pairedv.begin(),pairedv.end(),datadefs::ordering<T>());
+    sort(pairedv.begin(),pairedv.end(),datadefs::ordering<num_t>());
     //cout << "sort_and_make_ref: pairedv sorted" << endl;
-    datadefs::separate_pairedv<T,size_t>(pairedv,v,ref_ics);
-  }
+    datadefs::separate_pairedv<num_t,size_t>(pairedv,data,refIcs);
+    }
+  */
 
   //Sorts a given input data vector of type T based on a given reference ordering of type vector<int>
-  template <typename T> void sort_from_ref(vector<T>& in, vector<size_t> const& ref_ics)
+  template <typename T> void sortFromRef(vector<T>& data, vector<size_t> const& refIcs)
   {
-    assert(in.size() == ref_ics.size());  
-    vector<T> foo = in;
-    int n = in.size();
+    assert(data.size() == refIcs.size());  
+    vector<T> foo = data;
+    int n = data.size();
     for (int i = 0; i < n; ++i)
       {
-	in[i] = foo[ref_ics[i]];
+	data[i] = foo[refIcs[i]];
       }
   }
 }
