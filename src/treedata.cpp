@@ -10,15 +10,11 @@
 
 using namespace std;
 
-Treedata::Treedata(string filename):
+Treedata::Treedata(string fileName):
   targetidx_(0),
-  featurematrix_(0),
-  isfeaturenum_(0),
-  nrealsamples_(0),
+  features_(0),
   nsamples_(0),
-  nfeatures_(0),
-  featureheaders_(0),
-  sampleheaders_(0)
+  nfeatures_(0)
 {
 
   //Initialize random number rgenerator
@@ -34,31 +30,33 @@ Treedata::Treedata(string filename):
 
   //Initialize stream to read from file
   ifstream featurestream;
-  featurestream.open(filename.c_str());
+  featurestream.open(fileName.c_str());
   assert(featurestream.good());
 
   //TODO: a sniffer function that find out the type of the input file based on its content.
   //*************************************************************************************** 
-  Filetype filetype = UNKNOWN;
-  Treedata::read_filetype(filename,filetype);
+  FileType fileType = UNKNOWN;
+  Treedata::readFileType(fileName,fileType);
 
-  vector<vector<string> > rawmatrix;
-  if(filetype == AFM)
+  vector<vector<string> > rawMatrix;
+  vector<string> featureHeaders;
+  vector<bool> isFeatureNumerical;
+  if(fileType == AFM)
     {
       cout << "File type interpreted as Annotated Feature Matrix (AFM)" << endl;
       try {
-	Treedata::readAFM(featurestream,rawmatrix);
+	Treedata::readAFM(featurestream,rawMatrix,featureHeaders,isFeatureNumerical);
       }
       catch(...)
 	{
 	  cerr << "The file could not be read. Is the file type really AFM? Quitting..." << endl;
 	}
     }
-  else if(filetype == ARFF)
+  else if(fileType == ARFF)
     {
       cout << "File type interpreted as Attribute-Relation File Format (ARFF)" << endl;
       try {
-	Treedata::readARFF(featurestream,rawmatrix);
+	Treedata::readARFF(featurestream,rawMatrix,featureHeaders,isFeatureNumerical);
       }
       catch(...)
 	{
@@ -70,7 +68,7 @@ Treedata::Treedata(string filename):
       cout << "File type is unknown -- defaulting to Annotated Feature Matrix (AFM)" << endl;
       try
 	{
-	  Treedata::readAFM(featurestream,rawmatrix);
+	  Treedata::readAFM(featurestream,rawMatrix,featureHeaders,isFeatureNumerical);
 	}
       catch(...)
 	{
@@ -78,42 +76,30 @@ Treedata::Treedata(string filename):
 	}
     }      
 
-  //TODO: move the following part, generation of artificial contrasts, to a separate function.
-  //***************************************************** 
+  nsamples_ = rawMatrix[0].size();
+  nfeatures_ = featureHeaders.size();
+  features_.resize(nfeatures_);
 
-  //Transform raw data to the internal format.
-  featurematrix_.resize(2*nfeatures_);
-  //contrastmatrix_.resize(nfeatures_);
   for(size_t i = 0; i < nfeatures_; ++i)
     {
-      vector<num_t> featurev(nsamples_);
-      //map<string,size_t> str2valmap;
-      if(isfeaturenum_[i])
-        {
-          datadefs::strv2numv(rawmatrix[i],featurev);
-          //ncatvalues_[i] = 0;
+      vector<num_t> featureData(nsamples_);
+      features_[i].name = featureHeaders[i];
+      features_[i].isNumerical = isFeatureNumerical[i];
+      if(features_[i].isNumerical)
+	{
+          datadefs::strv2numv(rawMatrix[i],featureData);
         }
       else
         {
-          datadefs::strv2catv(rawmatrix[i],featurev);
-	  //ncatvalues_[i] = str2valmap.size();
+          datadefs::strv2catv(rawMatrix[i],featureData);
         }
-      featurematrix_[i] = featurev;
+      features_[i].data = featureData;
+      Treedata::permute(featureData);
+      features_[i].contrast = featureData;
     } 
   
-  featureheaders_.resize(2*nfeatures_);
-  isfeaturenum_.resize(2*nfeatures_);
-  for(size_t i = nfeatures_; i < 2*nfeatures_; ++i)
-    {
-      featurematrix_[i] = featurematrix_[i-nfeatures_];
-      featureheaders_[i] = "CONTRAST";
-      isfeaturenum_[i] = isfeaturenum_[i-nfeatures_];
-    }
-      
-  //Treedata::permute_contrasts();
-
   targetidx_ = 0;
-  Treedata::select_target(targetidx_);
+  Treedata::selectTarget(targetidx_);
 
 }
 
@@ -121,36 +107,39 @@ Treedata::~Treedata()
 {
 }
 
-void Treedata::read_filetype(string& filename, Filetype& filetype)
+void Treedata::readFileType(string& fileName, FileType& fileType)
 {
 
-  stringstream ss(filename);
+  stringstream ss(fileName);
   string suffix = "";
   while(getline(ss,suffix,'.')) {}
   //datadefs::toupper(suffix);
 
   if(suffix == "AFM" || suffix == "afm")
     {
-      filetype = AFM;
+      fileType = AFM;
     }
   else if(suffix == "ARFF" || suffix == "arff")
     {
-      filetype = ARFF;
+      fileType = ARFF;
     }
   else
     {
-      filetype = UNKNOWN;
+      fileType = UNKNOWN;
     }
 
 }
 
-void Treedata::readAFM(ifstream& featurestream, vector<vector<string> >& rawmatrix)
+void Treedata::readAFM(ifstream& featurestream, vector<vector<string> >& rawMatrix, vector<string>& featureHeaders, vector<bool>& isFeatureNumerical)
 {
 
   string field;
   string row;
 
   //TODO: add Treedata::clearData(...)
+  rawMatrix.clear();
+  featureHeaders.clear();
+  isFeatureNumerical.clear();
 
   //Remove upper left element from the matrix as useless
   getline(featurestream,field,'\t');
@@ -187,10 +176,10 @@ void Treedata::readAFM(ifstream& featurestream, vector<vector<string> >& rawmatr
   vector<string> colheaders(ncols);
   vector<string> rowheaders(nrows);
   //vector<vector<string> > rawmatrix(nrows);
-  rawmatrix.resize(nrows);
+  rawMatrix.resize(nrows);
   for(size_t i = 0; i < nrows; ++i)
     {
-      rawmatrix[i] = colheaders;
+      rawMatrix[i] = colheaders;
     }
 
   //cout << "read " << rawmatrix.size() << " rows and " << rawmatrix[0].size() << " columns." << endl;
@@ -223,7 +212,7 @@ void Treedata::readAFM(ifstream& featurestream, vector<vector<string> >& rawmatr
       //cout << rowheaders[i];
       for(size_t j = 0; j < ncols; ++j)
         {
-          getline(ss,rawmatrix[i][j],'\t');
+          getline(ss,rawMatrix[i][j],'\t');
           //cout << '\t' << rawmatrix[i][j];
         }
       //cout << endl;
@@ -235,75 +224,38 @@ void Treedata::readAFM(ifstream& featurestream, vector<vector<string> >& rawmatr
     {
       cout << "AFM orientation: features as rows" << endl;
 
-      //We can extract the number of features and samples from the row and column counts, respectively
-      nfeatures_ = nrows;
-      nsamples_ = ncols;
-
-      //Thus, sample headers are column headers
-      sampleheaders_ = colheaders;
-
       //... and feature headers are row headers
-      featureheaders_ = rowheaders;
+      featureHeaders = rowheaders;
 
-      for(size_t i = 0; i < nfeatures_; ++i)
-        {
-          //First letters in the row headers determine whether the feature is numerical or categorical
-          if( isValidNumericalHeader(rowheaders[i]) )
-            {
-              isfeaturenum_.push_back(true);
-            }
-          else if( isValidCategoricalHeader(rowheaders[i]) )
-            {
-              isfeaturenum_.push_back(false);
-            }
-          else
-            {
-              cerr << "Data type must be either N (numerical), C (categorical), or B (binary)!" << endl;
-              assert(false);
-            }
-        }
     }
   else
     {
 
       cout << "AFM orientation: features as columns" << endl;
-      //cout << "Transposing...";
       
-      Treedata::transpose<string>(rawmatrix);
-      //cout << "done" << endl;
-
-      //We can extract the number of features and samples from the row and column counts, respectively
-      nfeatures_ = ncols;
-      nsamples_ = nrows;
-
-      //Thus, sample headers are column headers
-      sampleheaders_ = rowheaders;
-
+      Treedata::transpose<string>(rawMatrix);
+      
       //... and feature headers are row headers
-      featureheaders_ = colheaders;
-
-      for(size_t i = 0; i < nfeatures_; ++i)
-        {
-          //First letters in the row headers determine whether the feature is numerical or categorical
-          if( isValidNumericalHeader(colheaders[i]) )
-            {
-              isfeaturenum_.push_back(true);
-            }
-          else if( isValidCategoricalHeader(colheaders[i]) )
-            {
-              isfeaturenum_.push_back(false);
-            }
-          else
-            {
-              cerr << "Data type must be either N (numerical), C (categorical), or B (binary)!" << endl;
-              assert(false);
-            }
-        }
+      featureHeaders = colheaders;
       
+    }
+
+  size_t nFeatures = featureHeaders.size();
+  isFeatureNumerical.resize(nFeatures);
+  for(size_t i = 0; i < nFeatures; ++i)
+    {
+      if(Treedata::isValidNumericalHeader(featureHeaders[i]))
+	{
+	  isFeatureNumerical[i] = true;
+	}
+      else
+	{
+	  isFeatureNumerical[i] = false;
+	}
     }
 }
 
-void Treedata::readARFF(ifstream& featurestream, vector<vector<string> >& rawmatrix)
+void Treedata::readARFF(ifstream& featurestream, vector<vector<string> >& rawMatrix, vector<string>& featureHeaders, vector<bool>& isFeatureNumerical)
 {
 
   string row;
@@ -311,8 +263,12 @@ void Treedata::readARFF(ifstream& featurestream, vector<vector<string> >& rawmat
   bool hasRelation = false;
   bool hasData = false;
 
+  size_t nFeatures = 0;
   //TODO: add Treedata::clearData(...)
-
+  rawMatrix.clear();
+  featureHeaders.clear();
+  isFeatureNumerical.clear();
+  
   //Read one line from the ARFF file
   while(getline(featurestream,row))
     {
@@ -321,26 +277,26 @@ void Treedata::readARFF(ifstream& featurestream, vector<vector<string> >& rawmat
       if(hasData && hasRelation)
 	{
 	  //There must be at least two attributes, otherwise the ARFF file makes no sense
-	  if(nfeatures_ < 2)
+	  if(nFeatures < 2)
 	    {
 	      cerr << "too few attributes ( < 2 ) found from the ARFF file" << endl;
 	      assert(false);
 	    }
 
-	  rawmatrix.resize(nfeatures_);
+	  rawMatrix.resize(nFeatures);
 
 	  //Read data row-by-row
 	  while(true)
 	    {
-	      ++nsamples_;
+	      //++nsamples_;
 	      string field;
 	      stringstream ss(row);
 	      
-	      for(size_t attributeIdx = 0; attributeIdx < nfeatures_; ++attributeIdx)
+	      for(size_t attributeIdx = 0; attributeIdx < nFeatures; ++attributeIdx)
 		{
 		  getline(ss,field,',');
 		  //cout << " " << field;
-		  rawmatrix[attributeIdx].push_back(field);
+		  rawMatrix[attributeIdx].push_back(field);
 		}
 	      //cout << endl;
 
@@ -350,11 +306,11 @@ void Treedata::readARFF(ifstream& featurestream, vector<vector<string> >& rawmat
 		}
 	    }
 
-	  sampleheaders_.resize(nsamples_);
-	  for(size_t i = 0; i < nsamples_; ++i)
-	    {
-	      sampleheaders_[i] = "foo";
-	    }
+	  //sampleheaders_.resize(nsamples_);
+	  //for(size_t i = 0; i < nsamples_; ++i)
+	  //  {
+	  //    sampleheaders_[i] = "foo";
+	  //  }
 	  //We're done, exit
 	  break;
 	}
@@ -375,12 +331,13 @@ void Treedata::readARFF(ifstream& featurestream, vector<vector<string> >& rawmat
       else if(row.compare(0,10,"@attribute") == 0)
 	{
 	  string attributeName = "";
-	  bool isNumeric = false;
-	  ++nfeatures_;
+	  bool isNumerical;
+	  ++nFeatures;
 	  //cout << "found attribute header: " << row << endl;
-	  Treedata::parseARFFattribute(row,attributeName,isNumeric);
-	  featureheaders_.push_back(attributeName);
-	  isfeaturenum_.push_back(isNumeric);
+	  Treedata::parseARFFattribute(row,attributeName,isNumerical);
+	  featureHeaders.push_back(attributeName);
+	  isFeatureNumerical.push_back(isNumerical);
+	  //isfeaturenum_.push_back(isNumeric);
 	  //cout << "interpreted as: " << attributeName << " (";
 	  //if(isNumeric)
 	  // {
@@ -406,10 +363,8 @@ void Treedata::readARFF(ifstream& featurestream, vector<vector<string> >& rawmat
     }
 }
 
-void Treedata::parseARFFattribute(const string& str, string& attributeName, bool& isNumeric)
+void Treedata::parseARFFattribute(const string& str, string& attributeName, bool& isFeatureNumerical)
 {
-
-  //fields.clear();
 
   stringstream ss(str);
   string attributeHeader = "";
@@ -420,14 +375,17 @@ void Treedata::parseARFFattribute(const string& str, string& attributeName, bool
   getline(ss,attributeName,' ');
   getline(ss,attributeType);
 
+  //string prefix;
   if(attributeType == "real")
     {
-      isNumeric = true;
+      isFeatureNumerical = true;
     }
   else
     {
-      isNumeric = false;
+      isFeatureNumerical = false;
     }
+  //prefix.append(attributeName);
+  //attributeName = prefix;
 }
 
 bool Treedata::isValidNumericalHeader(const string& str)
@@ -458,23 +416,19 @@ size_t Treedata::nsamples()
 num_t Treedata::corr(size_t featureidx1, size_t featureidx2)
 {
   num_t r;
-  datadefs::pearson_correlation(featurematrix_[featureidx1],featurematrix_[featureidx2],r);
+  datadefs::pearson_correlation(features_[featureidx1].data,features_[featureidx2].data,r);
   return(r);
 }
 
-void Treedata::kill(const size_t featureidx)
+void Treedata::killFeature(const size_t featureIdx)
 {
-  assert(featureidx != targetidx_);
-  assert(featureidx < nfeatures_);
+  assert(featureIdx != targetidx_);
+  assert(featureIdx < nfeatures_);
 
-  featurematrix_.erase(featurematrix_.begin() + nfeatures_ + featureidx);
-  featureheaders_.erase(featureheaders_.begin() + nfeatures_ + featureidx);
-  
-  featurematrix_.erase(featurematrix_.begin() + featureidx);
-  featureheaders_.erase(featureheaders_.begin() + featureidx);
-  
+  features_.erase(features_.begin() + featureIdx);
+    
   --nfeatures_;
-  if(featureidx < targetidx_)
+  if(featureIdx < targetidx_)
     {
       --targetidx_;
     }
@@ -482,12 +436,12 @@ void Treedata::kill(const size_t featureidx)
 
 string Treedata::get_featureheader(size_t featureidx)
 {
-  return(featureheaders_[featureidx]);
+  return(features_[featureidx].name);
 }
 
 string Treedata::get_targetheader()
 {
-  return(featureheaders_[targetidx_]);
+  return(features_[targetidx_].name);
 }
 
 void Treedata::print()
@@ -495,15 +449,15 @@ void Treedata::print()
   cout << "Printing feature matrix (missing values encoded to " << datadefs::NUM_NAN << "):" << endl;
   for(size_t j = 0; j < nsamples_; ++j)
     {
-      cout << '\t' << sampleheaders_[j];
+      cout << '\t' << "foo";
     }
   cout << endl;
   for(size_t i = 0; i < nfeatures_; ++i)
     {
-      cout << i << ':' << featureheaders_[i] << ':';
+      cout << i << ':' << features_[i].name << ':';
       for(size_t j = 0; j < nsamples_; ++j)
         {
-          cout << '\t' << featurematrix_[i][j];
+          cout << '\t' << features_[i].data[j];
         }
       cout << endl;
     }
@@ -512,76 +466,61 @@ void Treedata::print()
 
 void Treedata::print(const size_t featureidx)
 {
-  cout << "Print " << featureheaders_[featureidx] << ":";
+  cout << "Print " << features_[featureidx].name << ":";
   for(size_t i = 0; i < nsamples_; ++i)
     {
-      cout << " " << featurematrix_[featureidx][i];
+      cout << " " << features_[featureidx].data[i];
     }
   cout << endl;
 }
 
 
-void Treedata::permute_contrasts()
+void Treedata::permuteContrasts()
 {
-  for(size_t i = nfeatures_; i < 2*nfeatures_; ++i)
+  for(size_t i = 0; i < nfeatures_; ++i)
     {
-      Treedata::permute(featurematrix_[i]);
+      Treedata::permute(features_[i].contrast);
     }
 }
 
 
-void Treedata::select_target(size_t targetidx)
+void Treedata::selectTarget(size_t targetidx)
 {
   targetidx_ = targetidx; 
-  Treedata::sort_all_wrt_target();
-  datadefs::countRealValues(featurematrix_[targetidx_],nrealsamples_);
-  Treedata::permute_contrasts();
+  //Treedata::sort_all_wrt_target();
+  datadefs::countRealValues(features_[targetidx_].data,nrealsamples_); //WILL BECOME DEPRECATED
+  Treedata::permuteContrasts();
 }
 
 
-size_t Treedata::get_target()
+size_t Treedata::getTarget()
 {
   return(targetidx_);
 }
 
 
-bool Treedata::isfeaturenum(size_t featureidx)
+bool Treedata::isFeatureNumerical(size_t featureIdx)
 {
-  return(isfeaturenum_[featureidx]);
+  return(features_[featureIdx].isNumerical);
 }
 
 
 size_t Treedata::nrealsamples()
 {
-  //size_t nrealsamples;
+  size_t nRealSamples;
   //datadefs::count_real_values(featurematrix_[targetidx_],nreal);
-  return(nrealsamples_);
+  datadefs::countRealValues(features_[targetidx_].data,nRealSamples);
+  return(nRealSamples);
 }
 
 
 size_t Treedata::nrealsamples(size_t featureidx)
 { 
   size_t nRealSamples;
-  datadefs::countRealValues(featurematrix_[featureidx],nRealSamples);
+  datadefs::countRealValues(features_[featureidx].data,nRealSamples);
   return(nRealSamples);
 }
 
-void Treedata::remove_nans(size_t featureidx, 
-			   vector<size_t>& sampleics, 
-			   size_t& nreal)
-{
-  
-  nreal = sampleics.size();
-  int maxidx(nreal-1);
-  for(int i = maxidx; i >= 0; --i)
-    {
-      if(datadefs::isNAN(featurematrix_[featureidx][sampleics[i]]))
-	{
-	  --nreal;
-	  sampleics.erase(sampleics.begin()+i);
-	}
-    }
-}
 
 template <typename T> void Treedata::transpose(vector<vector<T> >& mat)
 {
@@ -606,35 +545,6 @@ template <typename T> void Treedata::transpose(vector<vector<T> >& mat)
     }
 }
 
-void Treedata::sort_all_wrt_feature(size_t featureidx)
-{
-  //assert(featureidx < nfeatures_);
-
-  //Generate and index vector that'll define the new order
-  vector<size_t> ref_ics(nsamples_);
-  
-  //Make a dummy variable so that the original feature matrix will stay intact 
-  vector<num_t> dummy(nsamples_);
-
-  dummy = featurematrix_[featureidx];
-
-  //Sort specified feature and make reference indices
-  datadefs::sort_and_make_ref<num_t>(dummy,ref_ics);
-
-  //Use the new order to sort the sample headers
-  datadefs::sort_from_ref<string>(sampleheaders_,ref_ics);
-
-  //Sort features
-  for(size_t i = 0; i < nfeatures_; ++i)
-    {
-      datadefs::sort_from_ref<num_t>(featurematrix_[i],ref_ics);
-    }
-}
-
-void Treedata::sort_all_wrt_target()
-{
-  Treedata::sort_all_wrt_feature(targetidx_);
-}
 
 void Treedata::permute(vector<size_t>& ics)
 {
@@ -660,109 +570,66 @@ void Treedata::permute(vector<num_t>& x)
     }
 }
 
-/*
-  void Treedata::generate_contrasts()
-  {
-  size_t nrealvalues;
-  datadefs::count_real_values(featurematrix_[targetidx_],nrealvalues);
-  for(size_t i = 0; i < nfeatures_; ++i)
-  {
-  vector<num_t> x(nrealvalues);
-  contrastmatrix_[i].resize(nrealvalues);
-  for(size_t j = 0; j < nrealvalues; ++j)
-  {
-  contrastmatrix_[i][j] = featurematrix_[i][j];
-  }
-  }
-  
-  Treedata::permute_contrasts();
-  }
-*/
-
 
 void Treedata::bootstrap(vector<size_t>& ics, vector<size_t>& oob_ics)
 {
-  //assert(ics.size() == oob_ics.size());
+    
+  ics.clear();
+  for(size_t i = 0; i < nsamples_; ++i)
+    {
+      if(!datadefs::isNAN(features_[targetidx_].data[i]))
+	{
+	  ics.push_back(i);
+	}
+    }
+  
   size_t n = ics.size();
+  vector<size_t> allIcs = ics;
   for(size_t i = 0; i < n; ++i)
     {
-      ics[i] = irand_() % n;
+      ics[i] = allIcs[irand_() % n];
     }
-  sort(ics.begin(),ics.end());
-  vector<size_t> allics(n);
-  datadefs::range(allics);
 
   vector<size_t> foo(n);
-  vector<size_t>::iterator it = set_difference(allics.begin(),allics.end(),ics.begin(),ics.end(),foo.begin());
+  vector<size_t>::iterator it = set_difference(allIcs.begin(),allIcs.end(),ics.begin(),ics.end(),foo.begin());
   size_t noob = distance(foo.begin(),it);
 
   foo.resize(noob);
   oob_ics = foo;
 }
 
-void Treedata::split_target(size_t featureidx,
-			    const size_t min_split,
-			    vector<size_t>& sampleics,
-			    vector<size_t>& sampleics_left,
-			    vector<size_t>& sampleics_right,
-			    num_t& splitvalue,
-			    set<num_t>& values_left)
-{  
-  if(isfeaturenum_[featureidx])
-    {
-      Treedata::incremental_target_split(featureidx,min_split,sampleics,sampleics_left,sampleics_right,splitvalue);
-    }
-  else
-    {
-      Treedata::categorical_target_split(featureidx,sampleics,sampleics_left,sampleics_right,values_left);
-    } 
-}
 
-
-void Treedata::incremental_target_split(size_t featureidx,
-					const size_t min_split, 
-					vector<size_t>& sampleics, 
-					vector<size_t>& sampleics_left, 
-					vector<size_t>& sampleics_right,
-					num_t& splitvalue)
+void Treedata::numericalFeatureSplit(vector<num_t>& tv,
+				     const bool isTargetNumerical,
+				     vector<num_t>& fv,
+				     const size_t min_split, 
+				     vector<size_t>& sampleIcs_left, 
+				     vector<size_t>& sampleIcs_right,
+				     num_t& splitValue)
 {
 
-  //The splitter feature needs to be numerical
-  assert(isfeaturenum_[featureidx]);
+  assert(tv.size() == fv.size());
 
-  //Number of samples
-  size_t n_tot(sampleics.size());
-  size_t n_right(n_tot);
-  size_t n_left(0);
+  size_t n_tot = tv.size();
+  size_t n_right = n_tot;
+  size_t n_left = 0;
 
+  sampleIcs_left.clear();
+  sampleIcs_right.clear();
+  
   //Check that there are enough samples to make the split in the first place
   assert(n_tot >= 2*min_split);
-
-  //Feature values
-  vector<num_t> fv(n_tot);
-  
-  //Collect data for the feature and target into the vectors
-  for(size_t i = 0; i < n_tot; ++i)
-    {
-      fv[i] = featurematrix_[featureidx][sampleics[i]];
-    }
   
   //Make reference indices that define the sorting wrt. feature
-  vector<size_t> ref_ics(n_tot);
+  vector<size_t> refIcs;
   
   //Sort feature vector and collect reference indices
-  datadefs::sort_and_make_ref<num_t>(fv,ref_ics);
+  datadefs::sortDataAndMakeRef(fv,sampleIcs_right);
   
   //Use the reference indices to sort sample indices
-  datadefs::sort_from_ref<size_t>(sampleics,ref_ics);
-        
-  //Next we collect the target data in the order specified by the reordered sampleics
-  vector<num_t> tv(n_tot);
-  for(size_t i = 0; i < n_tot; ++i)
-    {
-      tv[i] = featurematrix_[targetidx_][sampleics[i]];
-    }
-
+  //datadefs::sortFromRef<size_t>(sampleics,refIcs);
+  datadefs::sortFromRef<num_t>(tv,sampleIcs_right);
+  
   //Count how many real values the feature and target has
   size_t nreal_f,nreal_t;
   datadefs::countRealValues(fv,nreal_f);
@@ -770,10 +637,10 @@ void Treedata::incremental_target_split(size_t featureidx,
   //cout << nreal_f << " " << nreal_t << " " << n_tot << endl;
   assert(nreal_t == n_tot && nreal_f == n_tot);
 
-  int bestsplitidx = -1;
+  int bestSplitIdx = -1;
  
   //If the target is numerical, we use the iterative squared error formula to update impurity scores while we traverse "right"
-  if(isfeaturenum_[targetidx_])
+  if(isTargetNumerical)
     {
       num_t mu_right = 0.0;
       num_t se_right = 0.0;
@@ -792,7 +659,7 @@ void Treedata::incremental_target_split(size_t featureidx,
 	  datadefs::forward_backward_sqerr(tv[idx],n_left,mu_left,se_left,n_right,mu_right,se_right);
 	  if( se_left + se_right < se_best && n_left >= min_split)
 	    {
-	      bestsplitidx = idx;
+	      bestSplitIdx = idx;
 	      se_best = se_left + se_right;
 	    }
 	  ++idx;
@@ -816,67 +683,64 @@ void Treedata::incremental_target_split(size_t featureidx,
 	  datadefs::forward_backward_sqfreq(tv[idx],n_left,freq_left,sf_left,n_right,freq_right,sf_right);
           if(1.0 * n_right * sf_left + 1.0 * n_left * sf_right > n_left * n_right * nsf_best && n_left >= min_split) 
             {
-              bestsplitidx = idx;
+              bestSplitIdx = idx;
               nsf_best = 1.0 * sf_left / n_left + 1.0 * sf_right / n_right;
             }
 	  ++idx;
         }      
     }
-
-  //Finally, make the split at the best point
-  Treedata::split_samples(sampleics,bestsplitidx,sampleics_left,sampleics_right);
   
-  assert(sampleics.size() == n_tot);
-  assert(sampleics_left.size() + sampleics_right.size() == n_tot);
+  splitValue = fv[bestSplitIdx];
+  n_left = bestSplitIdx + 1;
+  sampleIcs_left.resize(n_left);
 
-  //Return the split value
-  splitvalue = fv[bestsplitidx];
+  for(size_t i = 0; i < n_left; ++i)
+    {
+      sampleIcs_left[i] = sampleIcs_right[i];
+    }
+  sampleIcs_right.erase(sampleIcs_right.begin(),sampleIcs_right.begin() + n_left);
+
+  //cout << sampleIcs_left.size() << " " << sampleIcs_right.size() << " == " << n_tot << endl; 
+  assert(sampleIcs_left.size() + sampleIcs_right.size() == n_tot);
 
   if(false)
     {
-      cout << "Feature " << featureidx << " splits target " << targetidx_ << " [";
-      for(size_t i = 0; i < sampleics_left.size(); ++i)
+      cout << "Feature splits target " << targetidx_ << " [";
+      for(size_t i = 0; i < sampleIcs_left.size(); ++i)
 	{
-	  cout << " " << featurematrix_[targetidx_][sampleics_left[i]];
+	  cout << " " << tv[sampleIcs_left[i]];
 	}
       cout << " ] <==> [";
-      for(size_t i = 0; i < sampleics_right.size(); ++i)
+      for(size_t i = 0; i < sampleIcs_right.size(); ++i)
 	{
-	  cout << " " << featurematrix_[targetidx_][sampleics_right[i]];
+	  cout << " " << tv[sampleIcs_right[i]];
 	}
       cout << " ]" << endl;
     }
 }
 
-void Treedata::categorical_target_split(size_t featureidx,
-					vector<size_t>& sampleics,
-					vector<size_t>& sampleics_left,
-					vector<size_t>& sampleics_right,
-					set<num_t>& categories_left)
+void Treedata::categoricalFeatureSplit(vector<num_t>& tv,
+				       const bool isTargetNumerical,
+				       vector<num_t>& fv,
+				       vector<size_t>& sampleIcs_left,
+				       vector<size_t>& sampleIcs_right,
+				       set<num_t>& categories_left)
 {
-  assert(!isfeaturenum_[featureidx]);
 
-  //Sample size
-  size_t n_tot(sampleics.size());
+  assert(tv.size() == fv.size());
 
+  size_t n_tot = tv.size();
+  size_t n_right = n_tot;
+  size_t n_left = 0;
+
+  sampleIcs_left.clear();
+  sampleIcs_right.clear();
+  categories_left.clear();
+  
   //Check that sample size is positive
   assert(n_tot > 0);
 
-  //Feature data
-  vector<num_t> fv(n_tot);
-  for(size_t i = 0; i < n_tot; ++i)
-    {
-      fv[i] = featurematrix_[featureidx][sampleics[i]];
-    }
-
-  //Target data
-  vector<num_t> tv(n_tot);
-  for(size_t i = 0; i < n_tot; ++i)
-    {
-      tv[i] = featurematrix_[targetidx_][sampleics[i]];
-    }
-
-  //Count how many real values the feature and target has (this is just to make sure there are no mising values thrown in)
+  //Count how many real values the feature and target has (this is just to make sure there are no missing values thrown in)
   size_t nreal_f,nreal_t;
   datadefs::countRealValues(fv,nreal_f);
   datadefs::countRealValues(tv,nreal_t);
@@ -887,21 +751,16 @@ void Treedata::categorical_target_split(size_t featureidx,
   datadefs::map_data(fv,fmap_right,nreal_f);
   assert(n_tot == nreal_f);
 
-  categories_left.clear();
-  sampleics_left.clear();
-  size_t n_left(0);
-  size_t n_right(n_tot);
-
-  if(isfeaturenum_[targetidx_])
+  if(isTargetNumerical)
     {
       
       num_t mu_right;
-      num_t mu_left(0.0);
+      num_t mu_left = 0.0;
       num_t se_right;
-      num_t se_left(0.0);
+      num_t se_left = 0.0;
       datadefs::sqerr(tv,mu_right,se_right,n_right);
       assert(n_tot == n_right);
-      num_t se_best(se_right);
+      num_t se_best = se_right;
       
       while(fmap_right.size() > 0)
 	{
@@ -921,7 +780,7 @@ void Treedata::categorical_target_split(size_t featureidx,
 	      if(se_left+se_right < se_best)
 		{
 		  it_best = it;
-		  se_best = se_left+se_right;
+		  se_best = se_left + se_right;
 		}
 
 	      //Take samples from left back to right
@@ -946,7 +805,7 @@ void Treedata::categorical_target_split(size_t featureidx,
 	      categories_left.insert(it_best->first);
 	      //cout << "removing index " << it_best->second[i] << " (value " << tv[it_best->second[i]] << ") from right: ";
 	      datadefs::forward_backward_sqerr(tv[it_best->second[i]],n_left,mu_left,se_left,n_right,mu_right,se_right);
-	      sampleics_left.push_back(sampleics[it_best->second[i]]);
+	      sampleIcs_left.push_back(it_best->second[i]);
 	      //cout << n_left << "\t" << n_right << "\t" << se_left << "\t" << se_right << endl;
 	    }
 	  fmap_right.erase(it_best->first);
@@ -960,12 +819,7 @@ void Treedata::categorical_target_split(size_t featureidx,
       size_t sf_right;
       datadefs::sqfreq(tv,freq_right,sf_right,n_right);
       assert(n_tot == n_right);
-      //datadefs::count_freq(fv,freq_right,n_right);
-      //for(map<num_t,size_t>::const_iterator it(freq_right.begin()); it != freq_right.end(); ++it)
-      //	{
-      //	  cout << " " << it->first << ":" << it->second;
-      //	}
-      //cout << endl;
+
       num_t nsf_best = 1.0 * sf_right / n_right;
 
       while(fmap_right.size() > 1)
@@ -982,14 +836,14 @@ void Treedata::categorical_target_split(size_t featureidx,
 	      map<num_t,size_t> freq_right_c = freq_right;
 
               //Take samples from right and put them left
-	      //cout << "Moving " << it->second.size() << " samples corresponding to feature category " << it->first << " from right to left" << endl;
+	      cout << "Moving " << it->second.size() << " samples corresponding to feature category " << it->first << " from right to left" << endl;
               for(size_t i = 0; i < it->second.size(); ++i)
                 {
-		  //cout << " " << tv[it->second[i]];
+		  cout << " " << tv[it->second[i]];
 		  datadefs::forward_backward_sqfreq(tv[it->second[i]],n_left,freq_left,sf_left,n_right,freq_right,sf_right);
-		  //cout << n_left << "\t" << n_right << "\t" << sf_left << "\t" << sf_right << endl;
+		  cout << n_left << "\t" << n_right << "\t" << sf_left << "\t" << sf_right << endl;
                 }
-	      //cout << endl;
+	      cout << endl;
 
               if(1.0*n_right*sf_left + n_left*sf_right > n_left*n_right*nsf_best)
                 {
@@ -997,15 +851,15 @@ void Treedata::categorical_target_split(size_t featureidx,
                   nsf_best = 1.0*sf_left/n_left + 1.0*sf_right/n_right;
                 }
 
-	      //cout << "Moving " << it->second.size() << " samples corresponding to feature category " << it->first << " from left to right" << endl;
+	      cout << "Moving " << it->second.size() << " samples corresponding to feature category " << it->first << " from left to right" << endl;
               //Take samples from left back to right
               for(size_t i = 0; i < it->second.size(); ++i)
                 {
-		  //cout << " " << tv[it->second[i]];
+		  cout << " " << tv[it->second[i]];
 		  datadefs::forward_backward_sqfreq(tv[it->second[i]],n_right,freq_right,sf_right,n_left,freq_left,sf_left);
-		  //cout << n_left << "\t" << n_right << "\t" << sf_left << "\t" << sf_right << endl;
+		  cout << n_left << "\t" << n_right << "\t" << sf_left << "\t" << sf_right << endl;
                 }
-	      //cout << endl;
+	      cout << endl;
 
 	      assert(n_left_c == n_left);
 	      assert(n_right_c == n_right);
@@ -1025,10 +879,10 @@ void Treedata::categorical_target_split(size_t featureidx,
           for(size_t i = 0; i < it_best->second.size(); ++i)
             {
 	      categories_left.insert(it_best->first);
-	      //cout << "removing index " << it_best->second[i] << " (value " << tv[it_best->second[i]] << ") from right: ";
+	      cout << "removing index " << it_best->second[i] << " (value " << tv[it_best->second[i]] << ") from right: ";
 	      datadefs::forward_backward_sqfreq(tv[it_best->second[i]],n_left,freq_left,sf_left,n_right,freq_right,sf_right);
-              sampleics_left.push_back(sampleics[it_best->second[i]]);
-	      //cout << n_left << "\t" << n_right << "\t" << sf_left << "\t" << sf_right << endl;
+              sampleIcs_left.push_back(it_best->second[i]);
+	      cout << n_left << "\t" << n_right << "\t" << sf_left << "\t" << sf_right << endl;
             }
           fmap_right.erase(it_best->first);
 
@@ -1036,71 +890,123 @@ void Treedata::categorical_target_split(size_t featureidx,
     }
 
   //Next we assign samples remaining on right
-  sampleics_right.clear();
+  sampleIcs_right.clear();
   for(map<num_t,vector<size_t> >::const_iterator it(fmap_right.begin()); it != fmap_right.end(); ++it)
     {
       for(size_t i = 0; i < it->second.size(); ++i)
 	{
-	  sampleics_right.push_back(sampleics[it->second[i]]);
+	  sampleIcs_right.push_back(it->second[i]);
 	}
     }  
 
   if(false)
     {
-      cout << "Feature " << featureidx << " splits target " << targetidx_ << " [";
-      for(size_t i = 0; i < sampleics_left.size(); ++i)
+      cout << "Feature splits target " << targetidx_ << " [";
+      for(size_t i = 0; i < sampleIcs_left.size(); ++i)
 	{
-	  cout << " " << featurematrix_[targetidx_][sampleics_left[i]];
+	  cout << " " << tv[sampleIcs_left[i]];
 	}
       cout << " ] <==> [";
-      for(size_t i = 0; i < sampleics_right.size(); ++i)
+      for(size_t i = 0; i < sampleIcs_right.size(); ++i)
 	{
-	  cout << " " << featurematrix_[targetidx_][sampleics_right[i]];
+	  cout << " " << tv[sampleIcs_right[i]];
 	}
       cout << " ]" << endl;
     }
 }
 
-num_t Treedata::at(size_t featureidx, size_t sampleidx)
+void Treedata::getFeatureData(size_t featureIdx, vector<num_t>& data)
 {
-  return(featurematrix_[featureidx][sampleidx]);
+  data.resize(nsamples_);
+  for(size_t i = 0; i < nsamples_; ++i)
+    {
+      data[i] = features_[featureIdx].data[i];
+    }
 }
 
-
-
-//This is slow if the feature has lots of missing values. Consider re-implementing for speed-up
-num_t Treedata::randf(size_t featureidx)
+void Treedata::getFeatureData(size_t featureIdx, const size_t sampleIdx, num_t& data)
 {
+  data = features_[featureIdx].data[sampleIdx];
+}
+
+void Treedata::getFeatureData(size_t featureIdx, const vector<size_t>& sampleIcs, vector<num_t>& data)
+{
+  data.resize(sampleIcs.size());
+  for(size_t i = 0; i < sampleIcs.size(); ++i)
+    {
+      data[i] = features_[featureIdx].data[sampleIcs[i]];
+    }
+
+}
+
+void Treedata::getContrastData(size_t featureIdx, vector<num_t>& data)
+{
+  data.resize(nsamples_);
+  for(size_t i = 0; i < nsamples_; ++i)
+    {
+      data[i] = features_[featureIdx].contrast[i];
+    }
+}
+
+void Treedata::getContrastData(size_t featureIdx, const size_t sampleIdx, num_t& data)
+{
+  data = features_[featureIdx].contrast[sampleIdx];
+}
+
+void Treedata::getContrastData(size_t featureIdx, const vector<size_t>& sampleIcs, vector<num_t>& data)
+{
+  data.resize(sampleIcs.size());
+  for(size_t i = 0; i < sampleIcs.size(); ++i)
+    {
+      data[i] = features_[featureIdx].contrast[sampleIcs[i]];
+    }
+
+}
+
+num_t Treedata::sampleAtRandom(size_t featureIdx)
+{
+  
+  num_t featureSample = datadefs::NUM_NAN;
+  num_t targetSample = datadefs::NUM_NAN;
+  while(datadefs::isNAN(featureSample) || datadefs::isNAN(targetSample))
+    {
+      size_t randomIdx = irand_() % nsamples_;
+      featureSample = features_[featureIdx].data[randomIdx];
+      targetSample = features_[targetidx_].data[randomIdx];
+    }
+  return(featureSample);
+}
+
+/*
+  This is slow if the feature has lots of missing values. Consider re-implementing for speed-up
+  num_t Treedata::randf(size_t featureidx)
+  {
   assert(nrealsamples_ > 0);
   num_t value = datadefs::NUM_NAN;
   while(datadefs::isNAN(value))
-    {
-      value = featurematrix_[featureidx][irand_() % nrealsamples_];
-    }
+  {
+  size_t randomIdx = irand_() % nsamples_;
+  
+  //value = features_[featureidx].data[irand_() % nrealsamples_];
+  }
   return(value);
-}
+  }
+*/
 
-
-
-void Treedata::impurity(size_t featureidx, vector<size_t> const& sampleics, num_t& impurity, size_t& nreal)
+void Treedata::impurity(vector<num_t>& data, bool isFeatureNumerical, num_t& impurity, size_t& nreal)
 {
   
-  size_t n(sampleics.size());
-  //vector<num_t> data(n);
+  size_t n = data.size();
   
-  //for(size_t i = 0; i < n; ++i)
-  //  {
-  //    data[i] = featurematrix_[featureidx][sampleics[i]];
-  //  }
   
   nreal = 0;
-  if(isfeaturenum_[featureidx])
+  if(isFeatureNumerical)
     {
       num_t mu = 0.0;
       num_t se = 0.0;
       for(size_t i = 0; i < n; ++i)
 	{
-	  datadefs::forward_sqerr(featurematrix_[featureidx][sampleics[i]],nreal,mu,se);  
+	  datadefs::forward_sqerr(data[i],nreal,mu,se);  
 	}
       impurity = se / nreal;
     }
@@ -1110,98 +1016,98 @@ void Treedata::impurity(size_t featureidx, vector<size_t> const& sampleics, num_
       size_t sf = 0;
       for(size_t i = 0; i < n; ++i)
 	{
-	  datadefs::forward_sqfreq(featurematrix_[featureidx][sampleics[i]],nreal,freq,sf);
+	  datadefs::forward_sqfreq(data[i],nreal,freq,sf);
 	}
       impurity = 1.0 - 1.0 * sf / (nreal * nreal);
     }
 }
 
-
-void Treedata::split_samples(vector<size_t>& sampleics, 
-			     size_t splitidx, 
-			     vector<size_t>& sampleics_left, 
-			     vector<size_t>& sampleics_right)
-{
+/*
+  void Treedata::split_samples(vector<size_t>& sampleics, 
+  size_t splitidx, 
+  vector<size_t>& sampleics_left, 
+  vector<size_t>& sampleics_right)
+  {
   //Split the sample indices
   size_t n_tot = sampleics.size();
   size_t n_left = splitidx + 1;
   size_t n_right = n_tot - n_left;
-
+  
   if(n_left == 0)
-    {
-      sampleics_right = sampleics;
-      sampleics_left.clear();
-      return;
-    }
+  {
+  sampleics_right = sampleics;
+  sampleics_left.clear();
+  return;
+  }
   else if(n_right == 0)
-    {
-      sampleics_right.clear();
-      sampleics_left = sampleics;
-      return;
-    }
-
+  {
+  sampleics_right.clear();
+  sampleics_left = sampleics;
+  return;
+  }
+  
   //vector<size_t> sampleics_left_copy(n_left);
   //vector<size_t> sampleics_right_copy(n_right);
   sampleics_left.resize(n_left);
   sampleics_right.resize(n_right);
   size_t i = 0;
   while(i < n_left)
-    {
-      sampleics_left[i] = sampleics[i];
-      ++i;
-    }
+  {
+  sampleics_left[i] = sampleics[i];
+  ++i;
+  }
   while(i < n_tot)
-    {
-      sampleics_right[i-n_left] = sampleics[i];
-      ++i;
-    }
+  {
+  sampleics_right[i-n_left] = sampleics[i];
+  ++i;
+  }
 }
+*/
 
-num_t Treedata::split_fitness(const size_t featureidx,
-			      const size_t min_split,
-			      vector<size_t> const& sampleics,
-			      vector<size_t> const& sampleics_left,
-			      vector<size_t> const& sampleics_right)
+num_t Treedata::splitFitness(vector<num_t> const& data,
+			     bool const& isFeatureNumerical,
+			     size_t const& minSplit,
+			     vector<size_t> const& sampleIcs_left,
+			     vector<size_t> const& sampleIcs_right)
 {
   
-  assert(sampleics.size() == sampleics_left.size() + sampleics_right.size());
+  assert(data.size() == sampleIcs_left.size() + sampleIcs_right.size());
 
-  //size_t n_tot = sampleics.size();
   size_t n_left = 0;
   size_t n_right = 0;
-  if(isfeaturenum_[featureidx])
+  if(isFeatureNumerical)
     {
       num_t mu_left = 0.0;
       num_t se_left = 0.0;
       num_t mu_right = 0.0;
       num_t se_right = 0.0;
  
-      for(size_t i = 0; i < sampleics_left.size(); ++i)
+      for(size_t i = 0; i < sampleIcs_left.size(); ++i)
 	{
-	  datadefs::forward_sqerr(featurematrix_[featureidx][sampleics_left[i]],n_right,mu_right,se_right);
+	  datadefs::forward_sqerr(data[sampleIcs_left[i]],n_right,mu_right,se_right);
 	  //cout << "forward sqerr: " << featurematrix_[featureidx][sampleics_left[i]] << " " << n_right << " " << mu_right << " " << se_right << endl; 
 	}
 
-      for(size_t i = 0; i < sampleics_right.size(); ++i)
+      for(size_t i = 0; i < sampleIcs_right.size(); ++i)
         {
-	  datadefs::forward_sqerr(featurematrix_[featureidx][sampleics_right[i]],n_right,mu_right,se_right);
+	  datadefs::forward_sqerr(data[sampleIcs_right[i]],n_right,mu_right,se_right);
 	  //cout << "forward sqerr: " << featurematrix_[featureidx][sampleics_right[i]] << " " << n_right << " " << mu_right << " " << se_right << endl;
         }
 
-      if(n_right < 2*min_split)
+      if(n_right < 2*minSplit)
         {
           return(0.0);
         }
 
       num_t se_tot = se_right;
       
-      for(size_t i = 0; i < sampleics_left.size(); ++i)
+      for(size_t i = 0; i < sampleIcs_left.size(); ++i)
 	{
-	  datadefs::forward_backward_sqerr(featurematrix_[featureidx][sampleics_left[i]],n_left,mu_left,se_left,n_right,mu_right,se_right);
+	  datadefs::forward_backward_sqerr(data[sampleIcs_left[i]],n_left,mu_left,se_left,n_right,mu_right,se_right);
 	  //cout << "fw bw sqerr: " << featurematrix_[featureidx][sampleics_left[i]] << " " << n_left << " " << mu_left << " " << se_left << " " << n_right << " " << mu_right << " " << se_right << endl;
 	}
 
-      if(n_left < min_split || n_right < min_split)
+      if(n_left < minSplit || n_right < minSplit)
 	{
       	  return(0.0);
 	}
@@ -1215,19 +1121,19 @@ num_t Treedata::split_fitness(const size_t featureidx,
       size_t sf_left = 0;
       size_t sf_right = 0;
 
-      for(size_t i = 0; i < sampleics_left.size(); ++i)
+      for(size_t i = 0; i < sampleIcs_left.size(); ++i)
         {
-	  datadefs::forward_sqfreq(featurematrix_[featureidx][sampleics_left[i]],n_right,freq_right,sf_right);
+	  datadefs::forward_sqfreq(data[sampleIcs_left[i]],n_right,freq_right,sf_right);
 	  //cout << "forward sqfreq: " << featurematrix_[featureidx][sampleics_left[i]] << " " << n_right << " " << sf_right << endl;
         }
 
-      for(size_t i = 0; i < sampleics_right.size(); ++i)
+      for(size_t i = 0; i < sampleIcs_right.size(); ++i)
         {
-	  datadefs::forward_sqfreq(featurematrix_[featureidx][sampleics_right[i]],n_right,freq_right,sf_right);
+	  datadefs::forward_sqfreq(data[sampleIcs_right[i]],n_right,freq_right,sf_right);
 	  //cout << "forward sqfreq: " << featurematrix_[featureidx][sampleics_right[i]] << " " << n_right << " " << sf_right << endl;
         }
 
-      if(n_right < 2*min_split)
+      if(n_right < 2*minSplit)
        {
          return(0.0);
        }
@@ -1235,13 +1141,13 @@ num_t Treedata::split_fitness(const size_t featureidx,
       size_t n_tot = n_right;
       size_t sf_tot = sf_right;
 
-      for(size_t i = 0; i < sampleics_left.size(); ++i)
+      for(size_t i = 0; i < sampleIcs_left.size(); ++i)
         {
-	  datadefs::forward_backward_sqfreq(featurematrix_[featureidx][sampleics_left[i]],n_left,freq_left,sf_left,n_right,freq_right,sf_right);
+	  datadefs::forward_backward_sqfreq(data[sampleIcs_left[i]],n_left,freq_left,sf_left,n_right,freq_right,sf_right);
 	  //cout << "fw bw sqfreq: " << featurematrix_[featureidx][sampleics_left[i]] << " " << n_left << " "<< sf_left << " " << n_right << " " << sf_right << endl;
         }
 
-      if(n_left < min_split || n_right < min_split)
+      if(n_left < minSplit || n_right < minSplit)
         {
           return(0.0);
         }

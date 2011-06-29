@@ -4,8 +4,8 @@
 clear par;
 
 % basic parameters
-par.dependency = 'linear'; % or 'nonlinear'
-%par.dependency = 'nonlinear'; 
+%par.dependency = 'linear'; % or 'nonlinear'
+par.dependency = 'nonlinear'; 
 par.O = 1;      % number of target variables 
 par.N = 1000;   % number of samples generated
 par.n = 10;     % number of relevant variables from which target is generated
@@ -14,10 +14,11 @@ par.sets = 1;   % how many data sets to generate
 par.testFraction = 0; % fraction of each set written to test file
 
 % used by nonlinear dependency generation
-par.L = 20;     % number of functions added together to construct the target
+par.L = 10;     % number of functions added together to construct the target
 
 % used for linear dependency generation, if not specified, will generate randomly 
-par.P = [1 0.5 0.25 0.125 0.0625];
+par.P = 1:0.1:0.1;
+%par.P = [1 0.5 0.25 0.125 0.0625];
 
 % post dependency generation
 par.Kn = 100;    % number of additional noise variables concatenated to data

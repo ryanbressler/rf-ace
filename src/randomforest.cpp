@@ -13,7 +13,7 @@ Randomforest::Randomforest(Treedata* treedata, size_t ntrees, size_t mtry, size_
 {
 
   size_t defaulttargetidx = 0;
-  Randomforest::select_target(defaulttargetidx);
+  Randomforest::selectTarget(defaulttargetidx);
 
   //cout << forest_.size() << " trees and " << forest_[0].size() << " max nodes per tree initialized." << endl;
 
@@ -24,7 +24,7 @@ Randomforest::~Randomforest()
 
 } 
 
-void Randomforest::init_forest()
+void Randomforest::initializeForest()
 {
 
   //size_t nsamples = treedata_->nsamples();
@@ -51,22 +51,22 @@ void Randomforest::init_forest()
     }
 }
   
-void Randomforest::select_target(size_t targetidx)
+void Randomforest::selectTarget(size_t targetIdx)
 {
-  if(treedata_->get_target() != targetidx)
+  if(treedata_->getTarget() != targetIdx)
     {
-      treedata_->select_target(targetidx);
+      treedata_->selectTarget(targetIdx);
     }
 
-  Randomforest::init_forest();
+  Randomforest::initializeForest();
 }
 
-size_t Randomforest::get_target()
+size_t Randomforest::getTarget()
 {
-  return(treedata_->get_target());
+  return(treedata_->getTarget());
 }
 
-void Randomforest::grow_forest(const size_t nperms, vector<num_t>& pvalues, vector<num_t>& ivalues)
+void Randomforest::growForestEnsemble(const size_t nperms, vector<num_t>& pvalues, vector<num_t>& ivalues)
 {
   assert(nperms > 5);
   vector<vector<num_t> > importancemat(nperms);
@@ -77,13 +77,13 @@ void Randomforest::grow_forest(const size_t nperms, vector<num_t>& pvalues, vect
   for(size_t p = 0; p < nperms; ++p)
     {
       cout << "  RF " << p + 1 << ": ";
-      Randomforest::init_forest();
-      treedata_->permute_contrasts();
+      Randomforest::initializeForest();
+      treedata_->permuteContrasts();
       size_t nnodesinforest = 0;
-      for(size_t t = 0; t < ntrees_; ++t)
+      for(size_t treeIdx = 0; treeIdx < ntrees_; ++treeIdx)
 	{
-	  Randomforest::grow_tree(t);
-	  nnodesinforest += nnodes_[t];
+	  Randomforest::growTree(treeIdx);
+	  nnodesinforest += nnodes_[treeIdx];
 	}
       nnodesinallforests += nnodesinforest;
       //Randomforest::calculate_importance(alpha,importancemat[p],csample[p]);
@@ -98,48 +98,6 @@ void Randomforest::grow_forest(const size_t nperms, vector<num_t>& pvalues, vect
 
   size_t nfeatures = treedata_->nfeatures();
   pvalues.resize(nfeatures);
-  
-  /*
-    vector<num_t> csample(nperms);
-    for(size_t p = 0; p < nperms; ++p)
-    {
-    vector<num_t> tempvec(nfeatures);
-    for(size_t f = 0; f < nfeatures; ++f)
-    {
-    tempvec[f] = importancemat[p][f + nfeatures];
-    }
-    datadefs::zerotrim(tempvec);
-    if(tempvec.size() > 0)
-    {
-    datadefs::percentile(tempvec,alpha,csample[p]);
-    }
-    else
-    {
-    csample[p] = 0;
-    }
-    //cout << csample[p] << endl;
-    }
-    
-    for(size_t f = 0; f < nfeatures; ++f)
-    {
-    vector<num_t> fsample(nperms);
-    for(size_t p = 0; p < nperms; ++p)
-    {
-    fsample[p] = importancemat[p][f];
-    }
-    // cout << "ttest " << f << ":";
-    //for(size_t i = 0; i < nperms; ++i)
-    //	{
-    //  cout << "(" << fsample[i] << "," << csample[i] << ")";
-    //	}
-    //cout << endl;
-    
-    datadefs::ttest(fsample,csample,pvalues[f]);
-    size_t nreal;
-    datadefs::mean(fsample,ivalues[f],nreal);
-    }
-  */
-  
   
   for(size_t f = 0; f < nfeatures; ++f)
     {
@@ -161,50 +119,63 @@ void Randomforest::grow_forest(const size_t nperms, vector<num_t>& pvalues, vect
   
 }
 
-void Randomforest::grow_tree(size_t treeidx)
+void Randomforest::growTree(size_t treeIdx)
 {
   //Generate the vector for bootstrap indices
-  vector<size_t> bootstrap_ics(treedata_->nrealsamples());
+  vector<size_t> bootstrapIcs;
   
   //TODO: Redo generation of bootstrap indices
   //**************************************
 
   //Generate bootstrap indices and oob-indices
-  treedata_->bootstrap(bootstrap_ics,oobmatrix_[treeidx]);
+  treedata_->bootstrap(bootstrapIcs,oobmatrix_[treeIdx]);
 
+  //This is to check that the bootstrap sample doesn't contain any missing values (it shouldn't!)
   if(false)
     {
-      cout << "tree " << treeidx << "  bootstrap indices [";
-      for(size_t i = 0; i < bootstrap_ics.size(); ++i)
+      vector<num_t> targetData;
+      treedata_->getFeatureData(treedata_->getTarget(),bootstrapIcs,targetData);
+      for(size_t i = 0; i < targetData.size(); ++i)
 	{
-	  cout << " " << bootstrap_ics[i];
+	  assert(!datadefs::isNAN(targetData[i]));
+	}
+      
+      treedata_->getFeatureData(treedata_->getTarget(),oobmatrix_[treeIdx],targetData);
+      for(size_t i = 0; i < targetData.size(); ++i)
+        {
+          assert(!datadefs::isNAN(targetData[i]));
+        }
+      cout << "the generated bootstrap sample for tree " << treeIdx << " looks ok" << endl;
+    }
+
+  
+  
+  if(false)
+    {
+      cout << "tree " << treeIdx << "  bootstrap indices [";
+      for(size_t i = 0; i < bootstrapIcs.size(); ++i)
+	{
+	  cout << " " << bootstrapIcs[i];
 	}
       cout << " ]  oob [";
-      for(size_t i = 0; i < oobmatrix_[treeidx].size(); ++i)
+      for(size_t i = 0; i < oobmatrix_[treeIdx].size(); ++i)
 	{
-	  cout << " " << oobmatrix_[treeidx][i];
+	  cout << " " << oobmatrix_[treeIdx][i];
 	}
       cout << " ]" << endl << endl;
     }
 
-  size_t rootnode = 0;
+  size_t rootNode = 0;
   
   //Start the recursive node splitting from the root node. This will generate the tree.
-  Randomforest::recursive_nodesplit(treeidx,rootnode,bootstrap_ics);
-  
-  //cout << "Tree " << treeidx << ", nodes:";
-  //for(size_t i = 0; i < nnodes_[treeidx]; ++i)
-  //  {
-  //    cout << "|";
-  //  }
-  //cout << endl;
+  Randomforest::recursiveNodesplit(treeIdx,rootNode,bootstrapIcs);
 
 }
 
-void Randomforest::recursive_nodesplit(size_t treeidx, size_t nodeidx, vector<size_t>& sampleics)
+void Randomforest::recursiveNodesplit(const size_t treeIdx, const size_t nodeIdx, const vector<size_t>& sampleIcs)
 {
 
-  size_t n_tot(sampleics.size());
+  size_t n_tot = sampleIcs.size();
 
   if(n_tot < 2*nodesize_)
     {
@@ -215,56 +186,70 @@ void Randomforest::recursive_nodesplit(size_t treeidx, size_t nodeidx, vector<si
   //size_t nfeatures = treedata_->nfeatures();
   //Create mtry randomly selected feature indices to determine the split
   vector<size_t> mtrysample(mtry_);
-
-  //size_t contrast_lower_limit = mtry_/2;
   
-  size_t nfeatures = treedata_->nfeatures();
+  const size_t nFeatures = treedata_->nfeatures();
 
   for(size_t i = 0; i < mtry_; ++i)
     {
-      size_t nallfeatures = 2*nfeatures;
-      mtrysample[i] = treedata_->randidx(nallfeatures);
+      mtrysample[i] = treedata_->sampleRandomIdx(nFeatures);
     }
 
-  //vector<bool> iscontrast(mtry_);
-  //treedata_->permute(mtrysample);
-  //treedata_->generate_contrasts(iscontrast);
+  const size_t targetIdx = treedata_->getTarget();
+  vector<num_t> targetData;
+  const bool isTargetNumerical = treedata_->isFeatureNumerical(treedata_->getTarget());
+  treedata_->getFeatureData(treedata_->getTarget(),sampleIcs,targetData);
 
-  //cout << "Tree " << treeidx << "  Node " << nodeidx << endl;
+  //assert(!datadefs::isNAN(targetData));
 
-  vector<size_t> sampleics_left,sampleics_right;
-  num_t splitvalue;
+  vector<size_t> sampleIcs_left,sampleIcs_right;
+  num_t splitValue;
   set<num_t> values_left;
-  treedata_->split_target(treedata_->get_target(),nodesize_,sampleics,sampleics_left,sampleics_right,splitvalue,values_left);
 
-  assert(n_tot == sampleics.size());
+  if(isTargetNumerical)
+    {
+      treedata_->numericalFeatureSplit(targetData,isTargetNumerical,targetData,nodesize_,sampleIcs_left,sampleIcs_right,splitValue);
+    }
+  else
+    {
+      treedata_->categoricalFeatureSplit(targetData,isTargetNumerical,targetData,sampleIcs_left,sampleIcs_right,values_left);
+    }
 
-  //size_t nreal_tot;
+  //cout << "Target splitted with itself." << endl;
 
-  //num_t fitness = 0.0;
-  num_t bestfitness = 0.0;
-  size_t bestfeatureidx = mtry_;
-  size_t targetidx = treedata_->get_target();
+  num_t bestFitness = 0.0;
+  size_t bestFeatureIdx = mtry_;
 
-  //vector<num_t> fitness(mtry_);
+  const size_t halfWay = mtry_ / 2;
 
+  vector<num_t> featureData;
   for(size_t i = 0; i < mtry_; ++i)
     {
-      size_t featureidx = mtrysample[i];
- 
+      size_t featureIdx = mtrysample[i];
+      bool isFeatureNumerical = treedata_->isFeatureNumerical(featureIdx);
+
       //Neither the real nor the contrast feature can appear in the tree as splitter
-      if(featureidx == targetidx || featureidx == nfeatures + featureidx)
+      if(featureIdx == targetIdx)
         {
           continue;
         }
 
-      num_t fitness = treedata_->split_fitness(featureidx,nodesize_,sampleics,sampleics_left,sampleics_right);
-
-      if(fitness > bestfitness)
+      //First half of mtry are real features, the other half contrast features
+      if(i < halfWay)
 	{
-	  bestfitness = fitness;
-	  bestfeatureidx = featureidx;
-	  if(fabs(bestfitness - 1.0) < datadefs::EPS)
+	  treedata_->getFeatureData(featureIdx,sampleIcs,featureData);
+	}
+      else
+	{
+	  treedata_->getContrastData(featureIdx,sampleIcs,featureData);
+	}
+
+      num_t fitness = treedata_->splitFitness(featureData,isFeatureNumerical,nodesize_,sampleIcs_left,sampleIcs_right);
+
+      if(fitness > bestFitness)
+	{
+	  bestFitness = fitness;
+	  bestFeatureIdx = featureIdx;
+	  if(fabs(bestFitness - 1.0) < datadefs::EPS)
 	    {
 	      //cout << "Maximum fitness reached for splitter " << bestfeatureidx << ", stopped searching" << endl;
 	      break;
@@ -272,20 +257,33 @@ void Randomforest::recursive_nodesplit(size_t treeidx, size_t nodeidx, vector<si
 	}
     }
   
-  if(bestfeatureidx == mtry_)
+  if(bestFeatureIdx == mtry_)
     {
       //cout << "No splitter found, quitting" << endl << endl;
       return;
     }
   
-  //cout << "Best splitter feature is " << splitterfeatureidx << " with relative decrease in impurity of " << bestrelativedecrease << endl; 
-  
-  //vector<size_t> sampleics_copy = sampleics;
+  //cout << "Best splitter feature is " << bestFeatureIdx << " with fitness of " << bestFitness << endl; 
 
-  size_t nreal_tot;
-  treedata_->remove_nans(bestfeatureidx,sampleics,nreal_tot);
-  //cout << "Splitter " << bestfeatureidx << " has " << n_tot - nreal_tot << " missing values, which will be omitted in splitting" << endl;
-  n_tot = nreal_tot;
+  treedata_->getFeatureData(bestFeatureIdx,sampleIcs,featureData);
+  
+  vector<size_t> NANIcs;
+  datadefs::findNANs(featureData,NANIcs);
+
+  //cout << "Splitter " << bestFeatureIdx << " has " << NANIcs.size() << " missing values, which will be omitted in splitting" << endl;
+
+  for(int i = NANIcs.size()-1; i >= 0; --i)
+    {
+      size_t removeIdx = NANIcs[i];
+      //cout << "removing sample " << removeIdx << ": " << targetData[removeIdx] << " and " << featureData[removeIdx] << endl;
+      targetData.erase(targetData.begin() + removeIdx);
+      featureData.erase(featureData.begin() + removeIdx);
+      //sampleIcs.erase(sampleIcs.begin() + i);
+    }
+  n_tot = targetData.size();
+
+  //assert(!datadefs::isNAN(featureData));
+  //assert(!datadefs::isNAN(targetData));
 
   if(n_tot < 2*nodesize_)
     {
@@ -294,42 +292,59 @@ void Randomforest::recursive_nodesplit(size_t treeidx, size_t nodeidx, vector<si
       return;
     }
 
-  size_t nodeidx_left; //(++nnodes_[treeidx]);
-  size_t nodeidx_right; //(++nnodes_[treeidx]);
+  size_t nodeIdx_left; 
+  size_t nodeIdx_right;
+  bool isBestFeatureNumerical = treedata_->isFeatureNumerical(bestFeatureIdx);
 
-  //if(treedata_->isfeaturenum(bestfeatureidx))
-    // {
-  //num_t splitvalue;
-  //set<num_t> values_left;
-  treedata_->split_target(bestfeatureidx,nodesize_,sampleics,sampleics_left,sampleics_right,splitvalue,values_left);
-  assert(sampleics.size() == n_tot);
-  assert(sampleics_left.size() + sampleics_right.size() == n_tot);
-  if(sampleics_left.size() < nodesize_ || sampleics_right.size() < nodesize_)
+  if(isBestFeatureNumerical)
+    {
+      treedata_->numericalFeatureSplit(targetData,isTargetNumerical,featureData,nodesize_,sampleIcs_left,sampleIcs_right,splitValue);
+    }
+  else
+    {
+      treedata_->categoricalFeatureSplit(targetData,isTargetNumerical,featureData,sampleIcs_left,sampleIcs_right,values_left);
+    }
+
+  //assert(sampleIcs.size() == n_tot);
+  assert(sampleIcs_left.size() + sampleIcs_right.size() == featureData.size());
+  assert(sampleIcs_left.size() + sampleIcs_right.size() == targetData.size());
+
+  if(sampleIcs_left.size() < nodesize_ || sampleIcs_right.size() < nodesize_)
     {
       //cout << "Split was unsuccessful, quitting" << endl;
       return;
     }
   
-  nodeidx_left = nnodes_[treeidx]++;
-  nodeidx_right = nnodes_[treeidx]++;
+  nodeIdx_left = nnodes_[treeIdx]++;
+  nodeIdx_right = nnodes_[treeIdx]++;
   
-  if(treedata_->isfeaturenum(bestfeatureidx))
+  if(isBestFeatureNumerical)
     {
-      forest_[treeidx][nodeidx].set_splitter(bestfeatureidx,splitvalue,forest_[treeidx][nodeidx_left],forest_[treeidx][nodeidx_right]);
+      forest_[treeIdx][nodeIdx].set_splitter(bestFeatureIdx,splitValue,forest_[treeIdx][nodeIdx_left],forest_[treeIdx][nodeIdx_right]);
     }
   else
     {
-      forest_[treeidx][nodeidx].set_splitter(bestfeatureidx,values_left,forest_[treeidx][nodeidx_left],forest_[treeidx][nodeidx_right]);
+      forest_[treeIdx][nodeIdx].set_splitter(bestFeatureIdx,values_left,forest_[treeIdx][nodeIdx_left],forest_[treeIdx][nodeIdx_right]);
     }
   
-  if(sampleics_left.size() > 2*nodesize_)
+  if(sampleIcs_left.size() > 2*nodesize_)
     {
-      Randomforest::recursive_nodesplit(treeidx,nodeidx_left,sampleics_left);
+      for(size_t i = 0; i < sampleIcs_left.size(); ++i)
+	{
+	  sampleIcs_left[i] = sampleIcs[sampleIcs_left[i]];
+	}
+
+      Randomforest::recursiveNodesplit(treeIdx,nodeIdx_left,sampleIcs_left);
     }
 
-  if(sampleics_right.size() > 2*nodesize_)
+  if(sampleIcs_right.size() > 2*nodesize_)
     {
-      Randomforest::recursive_nodesplit(treeidx,nodeidx_right,sampleics_right);
+      for(size_t i = 0; i < sampleIcs_right.size(); ++i)
+        {
+          sampleIcs_right[i] = sampleIcs[sampleIcs_right[i]];
+        }
+
+      Randomforest::recursiveNodesplit(treeIdx,nodeIdx_right,sampleIcs_right);
     }
   
 }
@@ -362,20 +377,20 @@ void Randomforest::percolate_sampleics(Node& rootnode, vector<size_t>& sampleics
     }
   
   
-  /*
-    cout << "Train samples percolated accordingly:" << endl;
-    size_t iter = 0;
-    for(map<Node*,vector<size_t> >::const_iterator it(trainics.begin()); it != trainics.end(); ++it, ++iter)
+  if(false)
     {
-    cout << "leaf node " << iter << ":"; 
-    for(size_t i = 0; i < it->second.size(); ++i)
-    {
-    cout << " " << it->second[i];
+      cout << "Train samples percolated accordingly:" << endl;
+      size_t iter = 0;
+      for(map<Node*,vector<size_t> >::const_iterator it(trainics.begin()); it != trainics.end(); ++it, ++iter)
+	{
+	  cout << "leaf node " << iter << ":"; 
+	  for(size_t i = 0; i < it->second.size(); ++i)
+	    {
+	      cout << " " << it->second[i];
+	    }
+	  cout << endl;
+	}
     }
-    cout << endl;
-    }
-  */
-  
 }
 
 void Randomforest::percolate_sampleics_randf(size_t featureidx, Node& rootnode, vector<size_t>& sampleics, map<Node*,vector<size_t> >& trainics)
@@ -409,7 +424,8 @@ void Randomforest::percolate_sampleidx(size_t sampleidx, Node** nodep)
   while((*nodep)->has_children())
     {
       size_t featureidx_new((*nodep)->get_splitter());
-      num_t value(treedata_->at(featureidx_new,sampleidx));
+      num_t value;
+      treedata_->getFeatureData(featureidx_new,sampleidx,value);
       *nodep = (*nodep)->percolate(value);
     }
 }
@@ -422,11 +438,11 @@ void Randomforest::percolate_sampleidx_randf(size_t featureidx, size_t sampleidx
       num_t value;
       if(featureidx == featureidx_new)
 	{
-	  value = treedata_->randf(featureidx_new);
+	  value = treedata_->sampleAtRandom(featureidx_new);
 	}
       else
 	{
-	  value = treedata_->at(featureidx_new,sampleidx);
+	  treedata_->getFeatureData(featureidx_new,sampleidx,value);
 	}
       *nodep = (*nodep)->percolate(value);
     }
@@ -512,16 +528,21 @@ void Randomforest::tree_impurity(map<Node*,vector<size_t> >& trainics, num_t& im
   impurity = 0.0;
   size_t n_tot = 0;
   
-  size_t targetidx(treedata_->get_target());
+  size_t targetIdx = treedata_->getTarget();
+  bool isTargetNumerical = treedata_->isFeatureNumerical(targetIdx);
 
   for(map<Node*,vector<size_t> >::iterator it(trainics.begin()); it != trainics.end(); ++it)
     {
+
+      vector<num_t> targetData;
+      treedata_->getFeatureData(targetIdx,it->second,targetData);
+
       num_t impurity_leaf;
-      size_t nreal;
-      treedata_->impurity(targetidx,it->second,impurity_leaf,nreal);
+      size_t nRealSamples;
+      treedata_->impurity(targetData,isTargetNumerical,impurity_leaf,nRealSamples);
       //size_t n(it->second.size());
-      n_tot += nreal;
-      impurity += nreal * impurity_leaf;
+      n_tot += nRealSamples;
+      impurity += nRealSamples * impurity_leaf;
     }
 
   if(n_tot > 0)

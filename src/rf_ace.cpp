@@ -183,7 +183,7 @@ int main(int argc, char* argv[])
   assert(treedata.nsamples() > 2*nodeSize);
 
   Randomforest RF(&treedata,nTrees,mTry,nodeSize);
-  RF.select_target(targetIdx);
+  RF.selectTarget(targetIdx);
   //treedata.print();
   //RF.blacklist_and_kill(0.8,blistheaders,blistcorrelations);
 
@@ -194,13 +194,13 @@ int main(int argc, char* argv[])
   //vector<num_t> ivalues(treedata.nfeatures());
   
   cout << "Growing " << nPerms << " Random Forests (RFs), please wait..." << endl;
-  RF.grow_forest(nPerms,pValues,importanceValues);
+  RF.growForestEnsemble(nPerms,pValues,importanceValues);
   //cout << "Time elapsed: " << float(clock() - time_start)/CLOCKS_PER_SEC << " seconds" << endl;
   
   vector<size_t> refIcs(treedata.nfeatures());
   //vector<string> fnames = treedata.featureheaders();
-  datadefs::sort_and_make_ref<num_t>(pValues,refIcs);
-  datadefs::sort_from_ref<num_t>(importanceValues,refIcs);
+  datadefs::sortDataAndMakeRef(pValues,refIcs);
+  datadefs::sortFromRef<num_t>(importanceValues,refIcs);
   //targetIdx = refIcs[targetIdx];
   
   string targetHeader = treedata.get_featureheader(targetIdx);
