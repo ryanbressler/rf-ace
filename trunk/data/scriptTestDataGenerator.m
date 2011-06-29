@@ -17,7 +17,7 @@ par.testFraction = 0; % fraction of each set written to test file
 par.L = 10;     % number of functions added together to construct the target
 
 % used for linear dependency generation, if not specified, will generate randomly 
-par.P = 1:0.1:0.1;
+par.P = 1:(-0.1):0.1;
 %par.P = [1 0.5 0.25 0.125 0.0625];
 
 % post dependency generation
