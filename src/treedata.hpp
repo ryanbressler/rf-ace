@@ -24,19 +24,19 @@ public:
   ~Treedata();
 
   //Returns the number of features
-  size_t nfeatures();
+  size_t nFeatures();
 
-  num_t corr(size_t featureidx1, size_t featureidx2);
+  num_t pearsonCorrelation(size_t featureidx1, size_t featureidx2);
 
-  string get_featureheader(size_t featureidx);
-  string get_targetheader();
+  string getFeatureName(const size_t featureIdx);
+  //string get_targetheader();
 
   //Returns the number of samples
-  size_t nsamples();
+  size_t nSamples();
 
   //Returns the number of real samples the target (resp. any feature) has
-  size_t nrealsamples();
-  size_t nrealsamples(size_t featureidx);
+  //size_t nrealsamples();
+  size_t nRealSamples(const size_t featureIdx);
 
   //Prints the treedata matrix in its internal form
   void print();
@@ -50,8 +50,10 @@ public:
   void getContrastData(const size_t featureIdx, const size_t sampleIdx, num_t& data);
   void getContrastData(const size_t featureIdx, const vector<size_t>& sampleIcs, vector<num_t>& data);
 
-  inline size_t sampleRandomIdx(const size_t n) { return(irand_() % n); }
-  num_t sampleAtRandom(size_t featureIdx);
+  //PUT BACK TO .CPP
+  inline void getRandomIndex(const size_t n, size_t& idx) { idx = irand_() % n; }
+  
+  void getRandomData(const size_t targetIdx, const size_t featureIdx, num_t& data);
 
 protected: 
 
@@ -70,13 +72,13 @@ protected:
   //Generates a bootstrap sample. Samples not in the bootstrap sample will be stored in oob_ics, 
   //and the number of oob samples is stored in noob.
   //NOTE: ics.size() will depend on the number of non-NaN values the current target has
-  void bootstrap(vector<size_t>& ics, vector<size_t>& oob_ics);
+  void bootstrap(const size_t featureIdx, vector<size_t>& ics, vector<size_t>& oob_ics);
 
   //Selects target feature. 
   //NOTE: data will be sorted with respect to the target.
-  void selectTarget(size_t targetidx);
+  //void selectTarget(size_t targetidx);
 
-  size_t getTarget();
+  //size_t getTarget();
   
   void permuteContrasts();
 
@@ -167,7 +169,7 @@ private:
   */    
 
 
-  size_t targetidx_;
+  //size_t targetidx_;
 
   struct Feature {
     vector<num_t> data;
@@ -178,7 +180,7 @@ private:
 
   vector<Feature> features_;
   //vector<bool> isfeaturenum_;
-  size_t nrealsamples_; //WILL BE DEPRECATED
+  //size_t nrealsamples_; //WILL BE DEPRECATED
 
   size_t nsamples_;
   size_t nfeatures_;
