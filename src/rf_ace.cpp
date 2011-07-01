@@ -45,7 +45,7 @@ void printHelp()
   cout << endl;
   cout << "REQUIRED ARGUMENTS:" << endl;
   cout << " -I / --input        input feature file (AFM or ARFF)" << endl;
-  cout << " -i / --targetidx    target index, ref. to feature matrix" << endl;
+  cout << " -i / --targetidx    target index, reference to order of appearance in the input file" << endl;
   cout << " -O / --output       output association file" << endl;
   cout << endl;
   cout << "OPTIONAL ARGUMENTS:" << endl;
