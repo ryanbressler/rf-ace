@@ -40,16 +40,6 @@ bin/rf_ace -h
 }}}
 to bring up help:
 {{{
- ---------------------------------------------------------------
-| RF-ACE -- efficient feature selection with heterogeneous data |
-|                                                               |
-|  Version:      RF-ACE v0.4.0, July 1st, 2011                  |
-|  Project page: http://code.google.com/p/rf-ace                |
-|  Contact:      timo.p.erkkila@tut.fi                          |
-|                                                               |
-|              DEVELOPMENT VERSION, BUGS EXIST!                 |
- ---------------------------------------------------------------
-
 REQUIRED ARGUMENTS:
  -I / --input        input feature file (AFM or ARFF)
  -i / --targetidx    target index, reference to order of appearance in the input file
@@ -72,6 +62,60 @@ or with the short-hand notation equivalently as
 bin/rf_ace -I featurematrix.afm -i 123 -O associations.tsv 
 }}}
 which will execute RF-ACE with the default parameters; as the help documentation points out, most of the parameters are estimated dynamically based on the data dimensions and content, so running RF-ACE with no information about the algorithm itself is possible.
+
+= Output = 
+
+{{{
+ ---------------------------------------------------------------
+| RF-ACE -- efficient feature selection with heterogeneous data |
+|                                                               |
+|  Version:      RF-ACE v0.4.0, July 1st, 2011                  |
+|  Project page: http://code.google.com/p/rf-ace                |
+|  Contact:      timo.p.erkkila@tut.fi                          |
+|                                                               |
+|              DEVELOPMENT VERSION, BUGS EXIST!                 |
+ ---------------------------------------------------------------
+
+Reading file 'data/tr-n10-N200-Kn20000-cl0-mixed0.10-miss0.10-set1.txt'
+File type is unknown -- defaulting to Annotated Feature Matrix (AFM)
+AFM orientation: features as rows
+
+RF-ACE parameter configuration:
+  --input      = data/tr-n10-N200-Kn20000-cl0-mixed0.10-miss0.10-set1.txt
+  --nsamples   = 200 / 200 (0% missing)
+  --nfeatures  = 20011
+  --targetidx  = 20010, header 'N:O1'
+  --ntrees     = 200
+  --mtry       = 141
+  --nodesize   = 10
+  --nperms     = 50
+  --pthresold  = 0.1
+  --output     = foo.bar
+
+Growing 50 Random Forests (RFs), please wait...
+  RF 1: 3766 nodes (avg. 18.83 nodes / tree)
+  RF 2: 3762 nodes (avg. 18.81 nodes / tree)
+  RF 3: 3826 nodes (avg. 19.13 nodes / tree)
+  RF 4: 3792 nodes (avg. 18.96 nodes / tree)
+  RF 5: 3792 nodes (avg. 18.96 nodes / tree)
+  RF 6: 3742 nodes (avg. 18.71 nodes / tree)
+...
+  RF 47: 3728 nodes (avg. 18.64 nodes / tree)
+  RF 48: 3822 nodes (avg. 19.11 nodes / tree)
+  RF 49: 3816 nodes (avg. 19.08 nodes / tree)
+  RF 50: 3740 nodes (avg. 18.7 nodes / tree)
+50 RFs, 10000 trees, and 188202 nodes generated in 61.33 seconds (3068.68 nodes per second)
+
+Association file created. Format:
+TARGET   PREDICTOR   P-VALUE   IMPORTANCE   CORRELATION
+
+Done.
+}}}
+
+If there are no associations found, the program ends as follows:
+{{{
+No significant associations found, quitting...
+}}}
 
 = RF-ACE configuration =
 
