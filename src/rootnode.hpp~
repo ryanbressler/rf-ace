@@ -1,0 +1,11 @@
+#ifndef ROOTNODE_HPP
+#define ROOTNODE_HPP
+
+class RootNode : public Node 
+{
+
+
+
+};
+
+#endif
