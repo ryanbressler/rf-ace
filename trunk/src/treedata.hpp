@@ -53,40 +53,52 @@ public:
   inline void getRandomData(const size_t featureIdx, num_t& data) {data = features_[featureIdx].data[randomInteger_() % nSamples_]; }
   inline void getRandomIndex(const size_t n, size_t& idx) { idx = randomInteger_() % n; }
   
-  //void getRandomData(const size_t featureIdx, num_t& data);
-
-protected: 
-
-  friend class Randomforest;
-  friend class GBT;
+  //Generates a bootstrap sample from the real samples of featureIdx. Samples not in the bootstrap sample will be stored in oob_ics,
+  //and the number of oob samples is stored in noob.
+  void bootstrapFromRealSamples(const size_t featureIdx, vector<size_t>& ics, vector<size_t>& oobIcs);
 
   void killFeature(const size_t featureIdx);
 
-  //Permutes integers in range 0,1,...,(ics.size()-1). 
-  //NOTE: original contents in ics will be replaced.  
+  //Permutes integers in range 0,1,...,(ics.size()-1).
+  //NOTE: original contents in ics will be replaced.
   void permute(vector<size_t>& ics);
 
-  //Permutes data in x.
-  void permute(vector<num_t>& x);
+  //Permutes data.
+  void permute(vector<num_t>& data);
 
-  //Generates a bootstrap sample from the real samples of featureIdx. Samples not in the bootstrap sample will be stored in oob_ics, 
-  //and the number of oob samples is stored in noob.
-  void bootstrapFromRealSamples(const size_t featureIdx, vector<size_t>& ics, vector<size_t>& oobIcs);
-  
   void permuteContrasts();
 
   bool isFeatureNumerical(size_t featureIdx);
-    
+
+  //Finds the best split for target with respect to selected feature splitter, which needs to be numerical.
+  void numericalFeatureSplit(vector<num_t>& tv,
+                             const bool isTargetNumerical,
+                             vector<num_t>& fv,
+                             const size_t min_split,
+                             vector<size_t>& sampleIcs_left,
+                             vector<size_t>& sampleIcs_right,
+                             num_t& splitValue);
+
+  void categoricalFeatureSplit(vector<num_t>& tv,
+                               const bool isTargetNumerical,
+                               vector<num_t>& fv,
+                               vector<size_t>& sampleIcs_left,
+                               vector<size_t>& sampleIcs_right,
+                               set<num_t>& categories_left);
+
   num_t splitFitness(vector<num_t> const& data,
-		     bool const& isFeatureNumerical,
-		     size_t const& minSplit,
-		     vector<size_t> const& sampleIcs_left,
-		     vector<size_t> const& sampleIcs_right);
-  
+                     bool const& isFeatureNumerical,
+                     size_t const& minSplit,
+                     vector<size_t> const& sampleIcs_left,
+                     vector<size_t> const& sampleIcs_right);
+
   void impurity(vector<num_t>& data, bool isFeatureNumerical, num_t& impurity, size_t& nreal);
-  
 
+  //WILL DECOME DEPRECATED
+protected: 
 
+  //WILL BECOME DEPRECATED
+  friend class GBT;
 
 private:
 
@@ -104,24 +116,7 @@ private:
   bool isValidFeatureHeader(const string& str);
   
   template <typename T> void transpose(vector<vector<T> >& mat);
-  
-  //Finds the best split for target with respect to selected feature splitter, which needs to be numerical.
-  void numericalFeatureSplit(vector<num_t>& tv,
-			     const bool isTargetNumerical,
-			     vector<num_t>& fv,
-			     const size_t min_split,
-			     vector<size_t>& sampleIcs_left,
-			     vector<size_t>& sampleIcs_right,
-			     num_t& splitValue);
     
-  void categoricalFeatureSplit(vector<num_t>& tv,
-			       const bool isTargetNumerical,
-			       vector<num_t>& fv,
-			       vector<size_t>& sampleIcs_left,
-			       vector<size_t>& sampleIcs_right,
-			       set<num_t>& categories_left);
-  
-
   struct Feature {
     vector<num_t> data;
     vector<num_t> contrast;
