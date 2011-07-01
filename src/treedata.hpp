@@ -40,15 +40,17 @@ public:
 
   //Prints the treedata matrix in its internal form
   void print();
-  void print(const size_t featureidx);
+  void print(const size_t featureIdx);
 
   void getFeatureData(const size_t featureIdx, vector<num_t>& data);
   void getFeatureData(const size_t featureIdx, const size_t sampleIdx, num_t& data);
   void getFeatureData(const size_t featureIdx, const vector<size_t>& sampleIcs, vector<num_t>& data);
 
-  void getContrastData(const size_t featureIdx, vector<num_t>& data);
-  void getContrastData(const size_t featureIdx, const size_t sampleIdx, num_t& data);
-  void getContrastData(const size_t featureIdx, const vector<size_t>& sampleIcs, vector<num_t>& data);
+  /*
+    void getContrastData(const size_t featureIdx, vector<num_t>& data);
+    void getContrastData(const size_t featureIdx, const size_t sampleIdx, num_t& data);
+    void getContrastData(const size_t featureIdx, const vector<size_t>& sampleIcs, vector<num_t>& data);
+  */
 
   inline void getRandomData(const size_t featureIdx, num_t& data) {data = features_[featureIdx].data[randomInteger_() % nSamples_]; }
   inline void getRandomIndex(const size_t n, size_t& idx) { idx = randomInteger_() % n; }
@@ -57,7 +59,7 @@ public:
   //and the number of oob samples is stored in noob.
   void bootstrapFromRealSamples(const size_t featureIdx, vector<size_t>& ics, vector<size_t>& oobIcs);
 
-  void killFeature(const size_t featureIdx);
+  //void killFeature(const size_t featureIdx);
 
   //Permutes integers in range 0,1,...,(ics.size()-1).
   //NOTE: original contents in ics will be replaced.
@@ -119,7 +121,7 @@ private:
     
   struct Feature {
     vector<num_t> data;
-    vector<num_t> contrast;
+    //vector<num_t> contrast;
     bool isNumerical;
     string name;
   };

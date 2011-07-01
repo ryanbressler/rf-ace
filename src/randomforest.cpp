@@ -191,7 +191,7 @@ void Randomforest::recursiveNodeSplit(const size_t treeIdx, const size_t nodeIdx
 
   for(size_t i = 0; i < mTry_; ++i)
     {
-      treedata_->getRandomIndex(nFeatures,mTrySample[i]);
+      treedata_->getRandomIndex(2*nFeatures,mTrySample[i]);
     }
 
   //const size_t targetIdx = treedata_->getTarget();
@@ -219,7 +219,7 @@ void Randomforest::recursiveNodeSplit(const size_t treeIdx, const size_t nodeIdx
   num_t bestFitness = 0.0;
   size_t bestFeatureIdx = mTry_;
 
-  const size_t halfWay = mTry_ / 2;
+  //const size_t halfWay = mTry_ / 2;
 
   vector<num_t> featureData;
   for(size_t i = 0; i < mTry_; ++i)
@@ -234,14 +234,14 @@ void Randomforest::recursiveNodeSplit(const size_t treeIdx, const size_t nodeIdx
         }
 
       //First half of mtry are real features, the other half contrast features
-      if(i < halfWay)
-	{
-	  treedata_->getFeatureData(featureIdx,sampleIcs,featureData);
-	}
-      else
-	{
-	  treedata_->getContrastData(featureIdx,sampleIcs,featureData);
-	}
+      //if(i < halfWay)
+      //	{
+      treedata_->getFeatureData(featureIdx,sampleIcs,featureData);
+      //	}
+      //else
+      //	{
+      //treedata_->getContrastData(featureIdx,sampleIcs,featureData);
+      //	}
 
       num_t fitness = treedata_->splitFitness(featureData,isFeatureNumerical,nodeSize_,sampleIcs_left,sampleIcs_right);
 
