@@ -5,13 +5,12 @@
 #ifndef NODE_HPP
 #define NODE_HPP
 
-#include<cstdlib>
-#include<vector>
-#include<set>
+#include <cstdlib>
+#include <vector>
+#include <set>
 #include "datadefs.hpp"
 
 using namespace std;
-//using datadefs::cat_t;
 using datadefs::num_t;
 
 class Node {

@@ -77,7 +77,7 @@ Treedata::Treedata(string fileName):
 
   nSamples_ = rawMatrix[0].size();
   nFeatures_ = featureHeaders.size();
-  features_.resize(nFeatures_);
+  features_.resize(2*nFeatures_);
 
   for(size_t i = 0; i < nFeatures_; ++i)
     {
@@ -93,10 +93,20 @@ Treedata::Treedata(string fileName):
           datadefs::strv2catv(rawMatrix[i],featureData);
         }
       features_[i].data = featureData;
-      Treedata::permute(featureData);
-      features_[i].contrast = featureData;
+      //Treedata::permute(featureData);
+      //features_[i].contrast = featureData;
     } 
   
+  for(size_t i = nFeatures_; i < 2*nFeatures_; ++i)
+    {
+      //vector<num_t> contrastData(nSamples_);
+      features_[i].name = "CONTRAST";
+      features_[i].isNumerical = features_[ i-nFeatures_ ].isNumerical;
+      features_[i].data = features_[ i-nFeatures_ ].data;
+    }
+
+  Treedata::permuteContrasts();
+
   //targetidx_ = 0;
   //Treedata::selectTarget(targetidx_);
 
@@ -420,15 +430,17 @@ num_t Treedata::pearsonCorrelation(size_t featureidx1, size_t featureidx2)
   return(r);
 }
 
-void Treedata::killFeature(const size_t featureIdx)
-{
+/*
+  void Treedata::killFeature(const size_t featureIdx)
+  {
   assert(featureIdx < nFeatures_);
-
+  
   features_.erase(features_.begin() + featureIdx);
-    
+  
   --nFeatures_;
   
-}
+  }
+*/
 
 string Treedata::getFeatureName(const size_t featureIdx)
 {
@@ -469,9 +481,9 @@ void Treedata::print(const size_t featureIdx)
 
 void Treedata::permuteContrasts()
 {
-  for(size_t i = 0; i < nFeatures_; ++i)
+  for(size_t i = nFeatures_; i < 2*nFeatures_; ++i)
     {
-      Treedata::permute(features_[i].contrast);
+      Treedata::permute(features_[i].data);
     }
 }
 
@@ -908,29 +920,34 @@ void Treedata::getFeatureData(size_t featureIdx, const vector<size_t>& sampleIcs
 
 }
 
-void Treedata::getContrastData(size_t featureIdx, vector<num_t>& data)
-{
+
+/*
+  void Treedata::getContrastData(size_t featureIdx, vector<num_t>& data)
+  {
   data.resize(nSamples_);
   for(size_t i = 0; i < nSamples_; ++i)
-    {
-      data[i] = features_[featureIdx].contrast[i];
-    }
-}
-
-void Treedata::getContrastData(size_t featureIdx, const size_t sampleIdx, num_t& data)
-{
+  {
+  data[i] = features_[featureIdx].contrast[i];
+  }
+  }
+  
+  void Treedata::getContrastData(size_t featureIdx, const size_t sampleIdx, num_t& data)
+  {
   data = features_[featureIdx].contrast[sampleIdx];
-}
-
-void Treedata::getContrastData(size_t featureIdx, const vector<size_t>& sampleIcs, vector<num_t>& data)
-{
+  }
+  
+  void Treedata::getContrastData(size_t featureIdx, const vector<size_t>& sampleIcs, vector<num_t>& data)
+  {
   data.resize(sampleIcs.size());
   for(size_t i = 0; i < sampleIcs.size(); ++i)
-    {
-      data[i] = features_[featureIdx].contrast[sampleIcs[i]];
-    }
+  {
+  data[i] = features_[featureIdx].contrast[sampleIcs[i]];
+  }
+  
+  }
+*/
 
-}
+
 
 /*
   void Treedata::getRandomData(const size_t featureIdx, num_t& data)
