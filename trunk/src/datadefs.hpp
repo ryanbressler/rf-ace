@@ -38,6 +38,7 @@ namespace datadefs
   bool isNAN(const num_t value);
   bool isNAN(const vector<num_t>& data);
   
+  //DEPRECATED
   void findNANs(vector<num_t>& data, vector<size_t>& NANIcs);
 
   void mean(vector<num_t> const& data, num_t& mu, size_t& nreal);
@@ -144,26 +145,6 @@ namespace datadefs
     }
   }; 
   
-  /*
-    template <typename T> struct ordering {
-    bool operator ()(pair<datadefs::num_t,T> const& a, pair<datadefs::num_t,T> const& b)
-    {
-    //cout << a.first << " < " << b.first << "(" << a.second << "," << b.second << ")" ;
-    if(a.first < b.first || (a.first == a.first && b.first != b.first))
-    {
-    //cout << "=> true" << endl;
-    return(true);
-    }
-    else
-    {
-    //cout << "=> false" << endl;
-    return(false);
-    }
-    }
-    };
-  */
-  
-
   template <typename T1,typename T2> void make_pairedv(vector<T1> const& v1,
                                                        vector<T2> const& v2,
                                                        vector<pair<T1,T2> >& p)

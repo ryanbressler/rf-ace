@@ -11,12 +11,8 @@ class Randomforest
 {
 public:
 
-  //Initializes Random Forest with ntrees, mtry, and nodesize
-  //NOTE: target feature will be set to 0. Change with Randomforest::select_target()
   Randomforest(Treedata* treedata, size_t targetIdx, size_t nTrees, size_t mTry, size_t nodeSize);
   ~Randomforest();
-
-  void initialize();
 
   //Selects the target feature that is to be predicted
   void setTarget(size_t targetIdx);
@@ -24,50 +20,58 @@ public:
   //Gets the selected target feature
   size_t getTarget();
 
-  //Grow the Random Forest with respect to selected target feature
+  //Grow the Random Forest ensemble with (targetIdx, nTrees, mTry, nodeSize, nPerms)
   void learn(const size_t nPerms, vector<num_t>& pValues, vector<num_t>& importanceValues);
-  //void calculate_importance(const num_t alpha, vector<num_t>& importance, num_t& contrast_prc);
-
-  //blacklist_and_kill
 
 private:
+
+  //Resets all internal variables in the forest
+  void initialize();
 
   //Grows one tree with respect to selected target feature
   void growTree(size_t treeIdx);
 
   //Recursive tree-generating node splitter algorithm
-  //NOTE: there will be at least two alternative node splitter algorithms in the future
   void recursiveNodeSplit(const size_t treeIdx, const size_t nodeIdx, const vector<size_t>& sampleIcs);
 
+  //Percolates samples along the trees, starting from the rootNode. Spits out a map<> that ties the percolated train samples to the leaf nodes
+  //NOTE: currently, since there's no implementation for a RootNode class, there's no good way to store the percolated samples in the tree, but a map<> is generated instead
   void percolateSampleIcs(Node& rootNode, vector<size_t>& sampleIcs, map<Node*,vector<size_t> >& trainIcs);
   void percolateSampleIcsAtRandom(size_t featureIdx, Node& rootNode, vector<size_t>& sampleIcs, map<Node*,vector<size_t> >& trainIcs);
   
   void percolateSampleIdx(size_t sampleIdx, Node** nodep);
   void percolateSampleIdxAtRandom(size_t featureIdx, size_t sampleIdx, Node** nodep);
 
+  //A check if a feature exists in the tree
   bool isFeatureInTree(size_t featureIdx, size_t treeIdx);
 
+  //Given the map<>, generated with the percolation functions, a tree impurity score is outputted
   void treeImpurity(map<Node*,vector<size_t> >& trainIcs, num_t& impurity);
 
-  //void calculate_importance(const num_t alpha, vector<num_t>& importance, num_t& contrast_prc);
-  void calculateImportance(vector<num_t>& importance);
+  //Calculates the feature importance scores for real and contrast features
+  void calculateFeatureImportance(vector<num_t>& importance);
 
+  //Chosen target to regress on
   size_t targetIdx_;
 
-  //Pointer to treedata_ object, stores all the feature information
+  //Pointer to treedata_ object, stores all the feature data
   Treedata* treedata_;
   
-  //Size of the forest
+  //Size of the forests
   size_t nTrees_;
   size_t mTry_;
   size_t nodeSize_;
 
-  vector<vector<Node> > forest_; //forest_[i][j] is the j'th node of i'th tree. forest_[i][0] is the rootnode.
-  vector<size_t> nNodes_; //Number of used nodes in each tree.
+  //Stores the forest. forest_[i][j] is the j'th node of i'th tree. forest_[i][0] is the rootnode
+  //NOTE: will be reduced to just RootNodes in the future
+  vector<vector<Node> > forest_;
+  
+  //Number of used nodes in each tree
+  vector<size_t> nNodes_;
+
+  //Out-of-box samples for each tree
   vector<vector<size_t> > oobMatrix_;
   
-  //vector<map<Node*,vector<size_t> > > trainics_;
-
 };
 
 #endif
