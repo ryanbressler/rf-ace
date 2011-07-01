@@ -50,10 +50,10 @@ public:
   void getContrastData(const size_t featureIdx, const size_t sampleIdx, num_t& data);
   void getContrastData(const size_t featureIdx, const vector<size_t>& sampleIcs, vector<num_t>& data);
 
-  //PUT BACK TO .CPP
-  inline void getRandomIndex(const size_t n, size_t& idx) { idx = irand_() % n; }
+  inline void getRandomData(const size_t featureIdx, num_t& data) {data = features_[featureIdx].data[randomInteger_() % nSamples_]; }
+  inline void getRandomIndex(const size_t n, size_t& idx) { idx = randomInteger_() % n; }
   
-  void getRandomData(const size_t targetIdx, const size_t featureIdx, num_t& data);
+  //void getRandomData(const size_t featureIdx, num_t& data);
 
 protected: 
 
@@ -69,38 +69,13 @@ protected:
   //Permutes data in x.
   void permute(vector<num_t>& x);
 
-  //Generates a bootstrap sample. Samples not in the bootstrap sample will be stored in oob_ics, 
+  //Generates a bootstrap sample from the real samples of featureIdx. Samples not in the bootstrap sample will be stored in oob_ics, 
   //and the number of oob samples is stored in noob.
-  //NOTE: ics.size() will depend on the number of non-NaN values the current target has
-  void bootstrap(const size_t featureIdx, vector<size_t>& ics, vector<size_t>& oob_ics);
-
-  //Selects target feature. 
-  //NOTE: data will be sorted with respect to the target.
-  //void selectTarget(size_t targetidx);
-
-  //size_t getTarget();
+  void bootstrapFromRealSamples(const size_t featureIdx, vector<size_t>& ics, vector<size_t>& oobIcs);
   
   void permuteContrasts();
 
   bool isFeatureNumerical(size_t featureIdx);
-
-  //size_t nrealvalues();
-  //size_t nrealvalues(size_t featureidx);
-
-  //void remove_nans(size_t featureidx, vector<size_t>& sampleics, size_t& nreal);
-  
-
-  //Given feature, finds and returns the optimal split point wrt. sampleics. 
-  //Samples branching left and right will be stored in sampleics_left (resp. right)
-  /*
-    void split_target(size_t featureidx,
-    const size_t min_split,
-    vector<size_t>& sampleics,
-    vector<size_t>& sampleics_left,
-    vector<size_t>& sampleics_right,
-    num_t& splitvalue,
-    set<num_t>& values_left);
-  */
     
   num_t splitFitness(vector<num_t> const& data,
 		     bool const& isFeatureNumerical,
@@ -127,19 +102,6 @@ private:
   bool isValidNumericalHeader(const string& str);
   bool isValidCategoricalHeader(const string& str);
   bool isValidFeatureHeader(const string& str);
-
-  /*
-    void getFeatureData(size_t featureIdx, num_t& data);
-    void getFeatureData(size_t featureIdx, size_t sampleIdx, num_t& data);
-    void getFeatureData(size_t featureIdx, vector<size_t>& sampleIcs, vector<num_t>& data);
-    
-    void getContrastData(size_t featureIdx, num_t& data);
-    void getContrastData(size_t featureIdx, size_t sampleIdx, num_t& data);
-    void getContrastData(size_t featureIdx, vector<size_t>& sampleIcs, vector<num_t>& data);
-    
-    inline size_t sampleRandomIdx(const size_t n) { return(irand_() % n); }
-    num_t sampleAtRandom(size_t featureIdx);
-  */
   
   template <typename T> void transpose(vector<vector<T> >& mat);
   
@@ -159,17 +121,6 @@ private:
 			       vector<size_t>& sampleIcs_right,
 			       set<num_t>& categories_left);
   
-  
-  //Splits a set of samples to "left" and "right", given a splitidx
-  /*
-    void split_samples(vector<size_t>& sampleics,
-    size_t splitidx,
-    vector<size_t>& sampleics_left,
-    vector<size_t>& sampleics_right);  
-  */    
-
-
-  //size_t targetidx_;
 
   struct Feature {
     vector<num_t> data;
@@ -179,16 +130,11 @@ private:
   };
 
   vector<Feature> features_;
-  //vector<bool> isfeaturenum_;
-  //size_t nrealsamples_; //WILL BE DEPRECATED
+  
+  size_t nSamples_;
+  size_t nFeatures_;
 
-  size_t nsamples_;
-  size_t nfeatures_;
-
-  //vector<string> featureheaders_;
-  //vector<string> sampleheaders_;
-
-  MTRand_int32 irand_;
+  MTRand_int32 randomInteger_;
 };
 
 #endif

@@ -4,10 +4,10 @@
 clear par;
 
 % basic parameters
-%par.dependency = 'linear'; % or 'nonlinear'
-par.dependency = 'nonlinear'; 
+par.dependency = 'linear'; % or 'nonlinear'
+%par.dependency = 'nonlinear'; 
 par.O = 1;      % number of target variables 
-par.N = 1000;   % number of samples generated
+par.N = 200;   % number of samples generated
 par.n = 10;     % number of relevant variables from which target is generated
 par.seed = 1;   % random number generator seed, if not given, generated from time
 par.sets = 1;   % how many data sets to generate
@@ -21,10 +21,10 @@ par.P = 1:(-0.1):0.1;
 %par.P = [1 0.5 0.25 0.125 0.0625];
 
 % post dependency generation
-par.Kn = 100;    % number of additional noise variables concatenated to data
+par.Kn = 20000;    % number of additional noise variables concatenated to data
 par.maxClasses = 0;       % discretize target, 0=regression
-par.mixedType  = 0.5;     % discretize this fraction of the input variables
-par.maxLevels = 32;       % max num discrete levels
+par.mixedType  = 0.1;     % discretize this fraction of the input variables
+par.maxLevels = 6;       % max num discrete levels
 par.randomizeTarget=0.02; % add noise to target with var 'randomizeTarget'
 par.missing = 0.1;        % fraction of missing values
 

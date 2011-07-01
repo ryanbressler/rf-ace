@@ -12,8 +12,8 @@ using namespace std;
 
 Treedata::Treedata(string fileName):
   features_(0),
-  nsamples_(0),
-  nfeatures_(0)
+  nSamples_(0),
+  nFeatures_(0)
 {
 
   //Initialize random number rgenerator
@@ -22,7 +22,7 @@ Treedata::Treedata(string fileName):
   //srand((unsigned int)now);
   
   //MTRand_int32 irand((unsigned int)now);
-  irand_.seed((unsigned int)now);
+  randomInteger_.seed((unsigned int)now);
   //datadefs::seedMT((size_t)now);
 
   //cout << "Treedata: reading matrix from file '" << filename << "'" << endl;
@@ -75,13 +75,13 @@ Treedata::Treedata(string fileName):
 	}
     }      
 
-  nsamples_ = rawMatrix[0].size();
-  nfeatures_ = featureHeaders.size();
-  features_.resize(nfeatures_);
+  nSamples_ = rawMatrix[0].size();
+  nFeatures_ = featureHeaders.size();
+  features_.resize(nFeatures_);
 
-  for(size_t i = 0; i < nfeatures_; ++i)
+  for(size_t i = 0; i < nFeatures_; ++i)
     {
-      vector<num_t> featureData(nsamples_);
+      vector<num_t> featureData(nSamples_);
       features_[i].name = featureHeaders[i];
       features_[i].isNumerical = isFeatureNumerical[i];
       if(features_[i].isNumerical)
@@ -143,25 +143,25 @@ void Treedata::readAFM(ifstream& featurestream, vector<vector<string> >& rawMatr
   //Remove upper left element from the matrix as useless
   getline(featurestream,field,'\t');
 
-  //Count the number of columns
+  //Count the number of columns (NEEDS REWORKING)
   getline(featurestream,row);
   stringstream ss(row);
-  size_t ncols = 0;
-  bool is_rowformatted = true;
+  size_t nColumns = 0;
+  bool isFeaturesAsRows = true;
   while(getline(ss,field,'\t'))
     {
-      if(is_rowformatted && isValidFeatureHeader(field))
+      if(isFeaturesAsRows && isValidFeatureHeader(field))
 	{
-	  is_rowformatted = false;
+	  isFeaturesAsRows = false;
 	}
-      ++ncols;
+      ++nColumns;
     }
 
   //Count the number of rows
-  size_t nrows = 0;
+  size_t nRows = 0;
   while(getline(featurestream,row))
     {
-      ++nrows;
+      ++nRows;
     }
 
   //Reset streams and remove upper left element from the matrix as useless
@@ -172,13 +172,13 @@ void Treedata::readAFM(ifstream& featurestream, vector<vector<string> >& rawMatr
   ss.str("");
 
   //These are temporary containers
-  vector<string> colheaders(ncols);
-  vector<string> rowheaders(nrows);
+  vector<string> columnHeaders(nColumns);
+  vector<string> rowHeaders(nRows);
   //vector<vector<string> > rawmatrix(nrows);
-  rawMatrix.resize(nrows);
-  for(size_t i = 0; i < nrows; ++i)
+  rawMatrix.resize(nRows);
+  for(size_t i = 0; i < nRows; ++i)
     {
-      rawMatrix[i] = colheaders;
+      rawMatrix[i] = columnHeaders;
     }
 
   //cout << "read " << rawmatrix.size() << " rows and " << rawmatrix[0].size() << " columns." << endl;
@@ -188,15 +188,15 @@ void Treedata::readAFM(ifstream& featurestream, vector<vector<string> >& rawMatr
   ss << row;
 
   //Read column headers from the stream
-  for(size_t i = 0; i < ncols; ++i)
+  for(size_t i = 0; i < nColumns; ++i)
     {
-      getline(ss,colheaders[i],'\t');
+      getline(ss,columnHeaders[i],'\t');
       //cout << '\t' << colheaders[i];
     }
   //cout << endl;
 
   //Go through the rest of the rows
-  for(size_t i = 0; i < nrows; ++i)
+  for(size_t i = 0; i < nRows; ++i)
     {
       //Read row from the stream
       getline(featurestream,row);
@@ -207,9 +207,9 @@ void Treedata::readAFM(ifstream& featurestream, vector<vector<string> >& rawMatr
       ss << row;
 
       //Read one element from the row stream
-      getline(ss,rowheaders[i],'\t');
+      getline(ss,rowHeaders[i],'\t');
       //cout << rowheaders[i];
-      for(size_t j = 0; j < ncols; ++j)
+      for(size_t j = 0; j < nColumns; ++j)
         {
           getline(ss,rawMatrix[i][j],'\t');
           //cout << '\t' << rawmatrix[i][j];
@@ -219,12 +219,12 @@ void Treedata::readAFM(ifstream& featurestream, vector<vector<string> >& rawMatr
   //cout << endl;
 
   //If the data is row-formatted...
-  if(is_rowformatted)
+  if(isFeaturesAsRows)
     {
       cout << "AFM orientation: features as rows" << endl;
 
       //... and feature headers are row headers
-      featureHeaders = rowheaders;
+      featureHeaders = rowHeaders;
 
     }
   else
@@ -235,7 +235,7 @@ void Treedata::readAFM(ifstream& featurestream, vector<vector<string> >& rawMatr
       Treedata::transpose<string>(rawMatrix);
       
       //... and feature headers are row headers
-      featureHeaders = colheaders;
+      featureHeaders = columnHeaders;
       
     }
 
@@ -404,12 +404,12 @@ bool Treedata::isValidFeatureHeader(const string& str)
 
 size_t Treedata::nFeatures()
 {
-  return(nfeatures_);
+  return(nFeatures_);
 }
 
 size_t Treedata::nSamples()
 {
-  return(nsamples_);
+  return(nSamples_);
 }
 
 //WILL BECOME DEPRECATED
@@ -422,16 +422,12 @@ num_t Treedata::pearsonCorrelation(size_t featureidx1, size_t featureidx2)
 
 void Treedata::killFeature(const size_t featureIdx)
 {
-  //assert(featureIdx != targetidx_);
-  assert(featureIdx < nfeatures_);
+  assert(featureIdx < nFeatures_);
 
   features_.erase(features_.begin() + featureIdx);
     
-  --nfeatures_;
-  //if(featureIdx < targetidx_)
-  //  {
-  //    --targetidx_;
-  //  }
+  --nFeatures_;
+  
 }
 
 string Treedata::getFeatureName(const size_t featureIdx)
@@ -439,25 +435,19 @@ string Treedata::getFeatureName(const size_t featureIdx)
   return(features_[featureIdx].name);
 }
 
-/*
-  string Treedata::get_targetheader()
-  {
-  return(features_[targetidx_].name);
-  }
-*/
 
 void Treedata::print()
 {
   cout << "Printing feature matrix (missing values encoded to " << datadefs::NUM_NAN << "):" << endl;
-  for(size_t j = 0; j < nsamples_; ++j)
+  for(size_t j = 0; j < nSamples_; ++j)
     {
       cout << '\t' << "foo";
     }
   cout << endl;
-  for(size_t i = 0; i < nfeatures_; ++i)
+  for(size_t i = 0; i < nFeatures_; ++i)
     {
       cout << i << ':' << features_[i].name << ':';
-      for(size_t j = 0; j < nsamples_; ++j)
+      for(size_t j = 0; j < nSamples_; ++j)
         {
           cout << '\t' << features_[i].data[j];
         }
@@ -466,12 +456,12 @@ void Treedata::print()
 }
 
 
-void Treedata::print(const size_t featureidx)
+void Treedata::print(const size_t featureIdx)
 {
-  cout << "Print " << features_[featureidx].name << ":";
-  for(size_t i = 0; i < nsamples_; ++i)
+  cout << "Print " << features_[featureIdx].name << ":";
+  for(size_t i = 0; i < nSamples_; ++i)
     {
-      cout << " " << features_[featureidx].data[i];
+      cout << " " << features_[featureIdx].data[i];
     }
   cout << endl;
 }
@@ -479,44 +469,16 @@ void Treedata::print(const size_t featureidx)
 
 void Treedata::permuteContrasts()
 {
-  for(size_t i = 0; i < nfeatures_; ++i)
+  for(size_t i = 0; i < nFeatures_; ++i)
     {
       Treedata::permute(features_[i].contrast);
     }
 }
 
-
-/*
-  void Treedata::selectTarget(size_t targetidx)
-  {
-  targetidx_ = targetidx; 
-  //Treedata::sort_all_wrt_target();
-  datadefs::countRealValues(features_[targetidx_].data,nrealsamples_); //WILL BECOME DEPRECATED
-  Treedata::permuteContrasts();
-  }
-
-  
-  
-  size_t Treedata::getTarget()
-  {
-  return(targetidx_);
-  }
-*/
-
 bool Treedata::isFeatureNumerical(size_t featureIdx)
 {
   return(features_[featureIdx].isNumerical);
 }
-
-/*
-  size_t Treedata::nrealsamples()
-  {
-  size_t nRealSamples;
-  //datadefs::count_real_values(featurematrix_[targetidx_],nreal);
-  datadefs::countRealValues(features_[targetidx_].data,nRealSamples);
-  return(nRealSamples);
-  }
-*/
 
 
 size_t Treedata::nRealSamples(const size_t featureIdx)
@@ -527,7 +489,7 @@ size_t Treedata::nRealSamples(const size_t featureIdx)
 }
 
 
-
+//WILL BE DEPRECATED
 template <typename T> void Treedata::transpose(vector<vector<T> >& mat)
 {
 
@@ -556,32 +518,33 @@ void Treedata::permute(vector<size_t>& ics)
 {
   for (size_t i = 0; i < ics.size(); ++i)
     {
-      size_t j = irand_() % (i + 1);
+      size_t j = randomInteger_() % (i + 1);
       ics[i] = ics[j];
       ics[j] = i;
     }
 }
 
-void Treedata::permute(vector<num_t>& x)
+void Treedata::permute(vector<num_t>& data)
 {
-  size_t n(x.size());
+  size_t n = data.size();
   vector<size_t> ics(n);
-  //vector<num_t> foo = x;
+
   Treedata::permute(ics);
+
   for(size_t i = 0; i < n; ++i)
     {
-      num_t temp(x[i]);
-      x[i] = x[ics[i]];
-      x[ics[i]] = temp;
+      num_t temp = data[i];
+      data[i] = data[ics[i]];
+      data[ics[i]] = temp;
     }
 }
 
 
-void Treedata::bootstrap(const size_t featureIdx, vector<size_t>& ics, vector<size_t>& oob_ics)
+void Treedata::bootstrapFromRealSamples(const size_t featureIdx, vector<size_t>& ics, vector<size_t>& oobIcs)
 {
     
   ics.clear();
-  for(size_t i = 0; i < nsamples_; ++i)
+  for(size_t i = 0; i < nSamples_; ++i)
     {
       if(!datadefs::isNAN(features_[featureIdx].data[i]))
 	{
@@ -593,15 +556,15 @@ void Treedata::bootstrap(const size_t featureIdx, vector<size_t>& ics, vector<si
   vector<size_t> allIcs = ics;
   for(size_t i = 0; i < n; ++i)
     {
-      ics[i] = allIcs[irand_() % n];
+      ics[i] = allIcs[randomInteger_() % n];
     }
 
   vector<size_t> foo(n);
   vector<size_t>::iterator it = set_difference(allIcs.begin(),allIcs.end(),ics.begin(),ics.end(),foo.begin());
-  size_t noob = distance(foo.begin(),it);
+  size_t nOob = distance(foo.begin(),it);
 
-  foo.resize(noob);
-  oob_ics = foo;
+  foo.resize(nOob);
+  oobIcs = foo;
 }
 
 
@@ -842,14 +805,14 @@ void Treedata::categoricalFeatureSplit(vector<num_t>& tv,
 	      map<num_t,size_t> freq_right_c = freq_right;
 
               //Take samples from right and put them left
-	      cout << "Moving " << it->second.size() << " samples corresponding to feature category " << it->first << " from right to left" << endl;
+	      //cout << "Moving " << it->second.size() << " samples corresponding to feature category " << it->first << " from right to left" << endl;
               for(size_t i = 0; i < it->second.size(); ++i)
                 {
-		  cout << " " << tv[it->second[i]];
+		  //cout << " " << tv[it->second[i]];
 		  datadefs::forward_backward_sqfreq(tv[it->second[i]],n_left,freq_left,sf_left,n_right,freq_right,sf_right);
-		  cout << n_left << "\t" << n_right << "\t" << sf_left << "\t" << sf_right << endl;
+		  //cout << n_left << "\t" << n_right << "\t" << sf_left << "\t" << sf_right << endl;
                 }
-	      cout << endl;
+	      //cout << endl;
 
               if(1.0*n_right*sf_left + n_left*sf_right > n_left*n_right*nsf_best)
                 {
@@ -857,15 +820,15 @@ void Treedata::categoricalFeatureSplit(vector<num_t>& tv,
                   nsf_best = 1.0*sf_left/n_left + 1.0*sf_right/n_right;
                 }
 
-	      cout << "Moving " << it->second.size() << " samples corresponding to feature category " << it->first << " from left to right" << endl;
+	      //cout << "Moving " << it->second.size() << " samples corresponding to feature category " << it->first << " from left to right" << endl;
               //Take samples from left back to right
               for(size_t i = 0; i < it->second.size(); ++i)
                 {
-		  cout << " " << tv[it->second[i]];
+		  //cout << " " << tv[it->second[i]];
 		  datadefs::forward_backward_sqfreq(tv[it->second[i]],n_right,freq_right,sf_right,n_left,freq_left,sf_left);
-		  cout << n_left << "\t" << n_right << "\t" << sf_left << "\t" << sf_right << endl;
+		  //cout << n_left << "\t" << n_right << "\t" << sf_left << "\t" << sf_right << endl;
                 }
-	      cout << endl;
+	      //cout << endl;
 
 	      assert(n_left_c == n_left);
 	      assert(n_right_c == n_right);
@@ -885,10 +848,10 @@ void Treedata::categoricalFeatureSplit(vector<num_t>& tv,
           for(size_t i = 0; i < it_best->second.size(); ++i)
             {
 	      categories_left.insert(it_best->first);
-	      cout << "removing index " << it_best->second[i] << " (value " << tv[it_best->second[i]] << ") from right: ";
+	      //cout << "removing index " << it_best->second[i] << " (value " << tv[it_best->second[i]] << ") from right: ";
 	      datadefs::forward_backward_sqfreq(tv[it_best->second[i]],n_left,freq_left,sf_left,n_right,freq_right,sf_right);
               sampleIcs_left.push_back(it_best->second[i]);
-	      cout << n_left << "\t" << n_right << "\t" << sf_left << "\t" << sf_right << endl;
+	      //cout << n_left << "\t" << n_right << "\t" << sf_left << "\t" << sf_right << endl;
             }
           fmap_right.erase(it_best->first);
 
@@ -923,8 +886,8 @@ void Treedata::categoricalFeatureSplit(vector<num_t>& tv,
 
 void Treedata::getFeatureData(size_t featureIdx, vector<num_t>& data)
 {
-  data.resize(nsamples_);
-  for(size_t i = 0; i < nsamples_; ++i)
+  data.resize(nSamples_);
+  for(size_t i = 0; i < nSamples_; ++i)
     {
       data[i] = features_[featureIdx].data[i];
     }
@@ -947,8 +910,8 @@ void Treedata::getFeatureData(size_t featureIdx, const vector<size_t>& sampleIcs
 
 void Treedata::getContrastData(size_t featureIdx, vector<num_t>& data)
 {
-  data.resize(nsamples_);
-  for(size_t i = 0; i < nsamples_; ++i)
+  data.resize(nSamples_);
+  for(size_t i = 0; i < nSamples_; ++i)
     {
       data[i] = features_[featureIdx].contrast[i];
     }
@@ -969,19 +932,28 @@ void Treedata::getContrastData(size_t featureIdx, const vector<size_t>& sampleIc
 
 }
 
-void Treedata::getRandomData(const size_t targetIdx, const size_t featureIdx, num_t& data)
-{
+/*
+  void Treedata::getRandomData(const size_t featureIdx, num_t& data)
+  {
+  data = features_[featureIdx].data[irand_() % nSamples_];
+  }
+*/
+
+/*
+  void Treedata::getRandomData(const size_t featureIdx, num_t& data)
+  {
   
   num_t featureSample = datadefs::NUM_NAN;
   num_t targetSample = datadefs::NUM_NAN;
   while(datadefs::isNAN(featureSample) || datadefs::isNAN(targetSample))
-    {
-      size_t randomIdx = irand_() % nsamples_;
-      featureSample = features_[featureIdx].data[randomIdx];
-      targetSample = features_[targetIdx].data[randomIdx];
-    }
+  {
+  size_t randomIdx = irand_() % nsamples_;
+  featureSample = features_[featureIdx].data[randomIdx];
+  targetSample = features_[targetIdx].data[randomIdx];
+  }
   data = featureSample;
-}
+  }
+*/
 
 /*
   This is slow if the feature has lots of missing values. Consider re-implementing for speed-up
