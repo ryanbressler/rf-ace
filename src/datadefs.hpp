@@ -189,22 +189,6 @@ namespace datadefs
   }
 
   void sortDataAndMakeRef(vector<num_t>& data, vector<size_t>& refIcs);
-  
-  /*
-    {
-    //cout << "sort_and_make_ref: in the beginning" << endl;
-    //assert(v.size() == ref_ics.size());
-    vector<pair<num_t,size_t> > pairedv(data.size());
-    refIcs.resize(data.size());
-    datadefs::range(refIcs);
-    //cout << "sort_and_make_ref: used range()" << endl;
-    datadefs::make_pairedv<num_t,size_t>(data,refIcs,pairedv);
-    //cout << "sort_and_make_ref: made pairedv" << endl;
-    sort(pairedv.begin(),pairedv.end(),datadefs::ordering<num_t>());
-    //cout << "sort_and_make_ref: pairedv sorted" << endl;
-    datadefs::separate_pairedv<num_t,size_t>(pairedv,data,refIcs);
-    }
-  */
 
   //Sorts a given input data vector of type T based on a given reference ordering of type vector<int>
   template <typename T> void sortFromRef(vector<T>& data, vector<size_t> const& refIcs)

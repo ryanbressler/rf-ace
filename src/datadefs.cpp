@@ -593,8 +593,7 @@ void datadefs::utest(vector<datadefs::num_t> const& x,
   
 	}
     }
-  //uvalue /= m*n;
-  //uvalue = 1.0 - uvalue;
+  
 
   num_t mu = 1.0*m*n/2.0;
   num_t s = sqrt(1.0*m*n*(n+m+1)/12.0);
@@ -608,13 +607,7 @@ void datadefs::utest(vector<datadefs::num_t> const& x,
 
 datadefs::num_t datadefs::erf(datadefs::num_t x)
 {  
-  /* erf(z) = 2/sqrt(pi) * Integral(0..x) exp( -t^2) dt
-     erf(0.01) = 0.0112834772 erf(3.7) = 0.9999998325
-     Abramowitz/Stegun: p299, |erf(z)-erf| <= 1.5*10^(-7) 
-  */
-  //double y = 1.0 / ( 1.0 + 0.3275911 * x );   
-  //return( 1 - ((((( + 1.061405429  * y - 1.453152027) * y + 1.421413741) * y - 0.284496736) * y + 0.254829592) * y) * exp (-x * x) );      
-
+  
   num_t x2 = x*x;
 
   num_t sgn;

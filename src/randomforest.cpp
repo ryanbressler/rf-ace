@@ -126,12 +126,9 @@ void Randomforest::growTree(size_t treeIdx)
 {
   //Generate the vector for bootstrap indices
   vector<size_t> bootstrapIcs;
-  
-  //TODO: Redo generation of bootstrap indices
-  //**************************************
 
   //Generate bootstrap indices and oob-indices
-  treedata_->bootstrap(targetIdx_,bootstrapIcs,oobMatrix_[treeIdx]);
+  treedata_->bootstrapFromRealSamples(targetIdx_,bootstrapIcs,oobMatrix_[treeIdx]);
 
   //This is to check that the bootstrap sample doesn't contain any missing values (it shouldn't!)
   if(false)
@@ -178,9 +175,9 @@ void Randomforest::growTree(size_t treeIdx)
 void Randomforest::recursiveNodeSplit(const size_t treeIdx, const size_t nodeIdx, const vector<size_t>& sampleIcs)
 {
 
-  size_t n_tot = sampleIcs.size();
+  size_t nSamples = sampleIcs.size();
 
-  if(n_tot < 2*nodeSize_)
+  if(nSamples < 2*nodeSize_)
     {
       //cout << "Too few samples to start with, quitting" << endl;
       return;
@@ -271,24 +268,40 @@ void Randomforest::recursiveNodeSplit(const size_t treeIdx, const size_t nodeIdx
   treedata_->getFeatureData(bestFeatureIdx,sampleIcs,featureData);
   
   vector<size_t> NANIcs;
-  datadefs::findNANs(featureData,NANIcs);
+  //datadefs::findNANs(featureData,NANIcs);
+
+  size_t nRealSamples = 0;
+  for(size_t i = 0; i < nSamples; ++i)
+    {
+      if(!datadefs::isNAN(featureData[i]))
+	{
+	  featureData[nRealSamples] = featureData[i];
+	  targetData[nRealSamples] = targetData[i];
+	  //sampleIcs[nRealSamples] = sampleIcs[i];
+	  ++nRealSamples;
+	}
+    }
+  featureData.resize(nRealSamples);
+  targetData.resize(nRealSamples);
 
   //cout << "Splitter " << bestFeatureIdx << " has " << NANIcs.size() << " missing values, which will be omitted in splitting" << endl;
 
-  for(int i = NANIcs.size()-1; i >= 0; --i)
+  /*
+    for(int i = NANIcs.size()-1; i >= 0; --i)
     {
-      size_t removeIdx = NANIcs[i];
-      //cout << "removing sample " << removeIdx << ": " << targetData[removeIdx] << " and " << featureData[removeIdx] << endl;
-      targetData.erase(targetData.begin() + removeIdx);
-      featureData.erase(featureData.begin() + removeIdx);
-      //sampleIcs.erase(sampleIcs.begin() + i);
+    size_t removeIdx = NANIcs[i];
+    //cout << "removing sample " << removeIdx << ": " << targetData[removeIdx] << " and " << featureData[removeIdx] << endl;
+    targetData.erase(targetData.begin() + removeIdx);
+    featureData.erase(featureData.begin() + removeIdx);
+    //sampleIcs.erase(sampleIcs.begin() + i);
     }
-  n_tot = targetData.size();
+  */
+  //n_tot = targetData.size();
 
   //assert(!datadefs::isNAN(featureData));
   //assert(!datadefs::isNAN(targetData));
 
-  if(n_tot < 2*nodeSize_)
+  if(nRealSamples < 2*nodeSize_)
     {
       //cout << "Splitter has too few non-missing values, quitting" << endl;
       //This needs to be fixed such that one of the surrogates will determine the split instead
@@ -309,8 +322,7 @@ void Randomforest::recursiveNodeSplit(const size_t treeIdx, const size_t nodeIdx
     }
 
   //assert(sampleIcs.size() == n_tot);
-  assert(sampleIcs_left.size() + sampleIcs_right.size() == featureData.size());
-  assert(sampleIcs_left.size() + sampleIcs_right.size() == targetData.size());
+  assert(sampleIcs_left.size() + sampleIcs_right.size() == nRealSamples);
 
   if(sampleIcs_left.size() < nodeSize_ || sampleIcs_right.size() < nodeSize_)
     {
@@ -323,11 +335,11 @@ void Randomforest::recursiveNodeSplit(const size_t treeIdx, const size_t nodeIdx
   
   if(isBestFeatureNumerical)
     {
-      forest_[treeIdx][nodeIdx].set_splitter(bestFeatureIdx,splitValue,forest_[treeIdx][nodeIdx_left],forest_[treeIdx][nodeIdx_right]);
+      forest_[treeIdx][nodeIdx].setSplitter(bestFeatureIdx,splitValue,forest_[treeIdx][nodeIdx_left],forest_[treeIdx][nodeIdx_right]);
     }
   else
     {
-      forest_[treeIdx][nodeIdx].set_splitter(bestFeatureIdx,values_left,forest_[treeIdx][nodeIdx_left],forest_[treeIdx][nodeIdx_right]);
+      forest_[treeIdx][nodeIdx].setSplitter(bestFeatureIdx,values_left,forest_[treeIdx][nodeIdx_left],forest_[treeIdx][nodeIdx_right]);
     }
   
   if(sampleIcs_left.size() > 2*nodeSize_)
@@ -406,7 +418,7 @@ void Randomforest::percolateSampleIcsAtRandom(size_t featureIdx, Node& rootNode,
   for(size_t i = 0; i < sampleIcs.size(); ++i)
     {
       Node* nodep(&rootNode);
-      size_t sampleIdx(sampleIcs[i]);
+      size_t sampleIdx = sampleIcs[i];
       Randomforest::percolateSampleIdxAtRandom(featureIdx,sampleIdx,&nodep);
       map<Node*,vector<size_t> >::iterator it(trainIcs.find(nodep));
       if(it == trainIcs.end())
@@ -426,34 +438,37 @@ void Randomforest::percolateSampleIcsAtRandom(size_t featureIdx, Node& rootNode,
 
 void Randomforest::percolateSampleIdx(size_t sampleIdx, Node** nodep)
 {
-  while((*nodep)->has_children())
+  while((*nodep)->hasChildren())
     {
-      size_t featureIdxNew((*nodep)->get_splitter());
+      int featureIdxNew((*nodep)->getSplitter());
       num_t value;
       treedata_->getFeatureData(featureIdxNew,sampleIdx,value);
-      *nodep = (*nodep)->percolate(value);
+      *nodep = (*nodep)->percolateData(value);
     }
 }
 
 void Randomforest::percolateSampleIdxAtRandom(size_t featureIdx, size_t sampleIdx, Node** nodep)
 {
-  while((*nodep)->has_children())
+  while((*nodep)->hasChildren())
     {
-      size_t featureIdxNew((*nodep)->get_splitter());
-      num_t value;
+      size_t featureIdxNew = (*nodep)->getSplitter();
+      num_t value = datadefs::NUM_NAN;
       if(featureIdx == featureIdxNew)
 	{
-	  treedata_->getRandomData(targetIdx_,featureIdxNew,value); // REWORK!
+	  while(datadefs::isNAN(value))
+	    {
+	      treedata_->getRandomData(featureIdxNew,value);
+	    }
 	}
       else
 	{
 	  treedata_->getFeatureData(featureIdxNew,sampleIdx,value);
 	}
-      *nodep = (*nodep)->percolate(value);
+      *nodep = (*nodep)->percolateData(value);
     }
 }
 
-
+//NEEDS REWORKING
 void Randomforest::calculateImportance(vector<num_t>& importance)
 {
 
@@ -503,7 +518,7 @@ void Randomforest::calculateImportance(vector<num_t>& importance)
     {
       nNodesInForest += nNodes_[i];
     }
-  
+
   for(size_t featureIdx = 0; featureIdx < nAllFeatures; ++featureIdx)
     {
       importance[featureIdx] *= 1.0*nNodesInForest/nTrees_; //nContrastsInForest
@@ -516,12 +531,12 @@ bool Randomforest::isFeatureInTree(size_t featureIdx, size_t treeIdx)
 {
   for(size_t nodeIdx = 0; nodeIdx < nNodes_[treeIdx]; ++nodeIdx)
     {
-      if(forest_[treeIdx][nodeIdx].has_children())
+      if(forest_[treeIdx][nodeIdx].hasChildren())
+      	{
+      if(featureIdx == forest_[treeIdx][nodeIdx].getSplitter())
 	{
-	  if(featureIdx == forest_[treeIdx][nodeIdx].get_splitter())
-	    {
-	      return(true);
-	    }
+	  return(true);
+	}
 	}
     }
   return(false);
