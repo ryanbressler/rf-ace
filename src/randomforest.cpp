@@ -89,7 +89,7 @@ void Randomforest::learn(const size_t nPerms, vector<num_t>& pValues, vector<num
       
       nNodesInAllForests += nNodesInForest;
       
-      Randomforest::calculateImportance(importanceMat[permIdx]); //REWORK!
+      Randomforest::calculateFeatureImportance(importanceMat[permIdx]); //REWORK!
       
       cout << nNodesInForest << " nodes (avg. " << 1.0*nNodesInForest / nTrees_ << " nodes / tree)" << endl;
     }
@@ -268,8 +268,7 @@ void Randomforest::recursiveNodeSplit(const size_t treeIdx, const size_t nodeIdx
   treedata_->getFeatureData(bestFeatureIdx,sampleIcs,featureData);
   
   vector<size_t> NANIcs;
-  //datadefs::findNANs(featureData,NANIcs);
-
+  
   size_t nRealSamples = 0;
   for(size_t i = 0; i < nSamples; ++i)
     {
@@ -277,7 +276,6 @@ void Randomforest::recursiveNodeSplit(const size_t treeIdx, const size_t nodeIdx
 	{
 	  featureData[nRealSamples] = featureData[i];
 	  targetData[nRealSamples] = targetData[i];
-	  //sampleIcs[nRealSamples] = sampleIcs[i];
 	  ++nRealSamples;
 	}
     }
@@ -469,7 +467,7 @@ void Randomforest::percolateSampleIdxAtRandom(size_t featureIdx, size_t sampleId
 }
 
 //NEEDS REWORKING
-void Randomforest::calculateImportance(vector<num_t>& importance)
+void Randomforest::calculateFeatureImportance(vector<num_t>& importance)
 {
 
   size_t nRealFeatures = treedata_->nFeatures() ;
