@@ -65,10 +65,10 @@ OPTIONAL ARGUMENTS:
 
 RF-ACE can simply be run by calling
 {{{
-bin/rf_ace --input featurematrix.afm --targetidx 0 --output associations.tsv 
+bin/rf_ace --input featurematrix.afm --targetidx 123 --output associations.tsv 
 }}}
 or with the short-hand notation equivalently as
 {{{
-bin/rf_ace -I featurematrix.afm -i 0 -O associations.tsv 
+bin/rf_ace -I featurematrix.afm -i 123 -O associations.tsv 
 }}}
 which will execute RF-ACE with the default parameters; as the help documentation points out, most of the parameters are estimated dynamically based on the data dimensions and content, so running RF-ACE with no information about the algorithm itself is possible.
