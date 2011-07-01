@@ -19,7 +19,7 @@ using namespace GetOpt;
 
 enum MatrixFormat { FEATURE_ROWS, FEATURE_COLUMNS };
 
-const size_t DEFAULT_TARGETIDX = 0;
+const int TARGETIDX_NOT_SET = -1;
 const size_t DEFAULT_NTREES = 0;
 const size_t DEFAULT_MTRY = 0;
 const size_t DEFAULT_NODESIZE = 0;
@@ -45,10 +45,10 @@ void printHelp()
   cout << endl;
   cout << "REQUIRED ARGUMENTS:" << endl;
   cout << " -I / --input        input feature file (AFM or ARFF)" << endl;
+  cout << " -i / --targetidx    target index, ref. to feature matrix" << endl;
   cout << " -O / --output       output association file" << endl;
   cout << endl;
   cout << "OPTIONAL ARGUMENTS:" << endl;
-  cout << " -i / --targetidx    target index, ref. to feature matrix (default " << DEFAULT_TARGETIDX << ")" << endl;
   cout << " -n / --ntrees       number of trees per RF (default nsamples/nrealsamples)" << endl;
   cout << " -m / --mtry         number of randomly drawn features per node split (default sqrt(nfeatures))" << endl;
   cout << " -s / --nodesize     minimum number of train samples per node, affects tree depth (default max{5,nsamples/20})" << endl;
@@ -90,7 +90,7 @@ int main(int argc, char* argv[])
     }
 
   string input = "";
-  size_t targetIdx = DEFAULT_TARGETIDX;
+  int targetIdx = TARGETIDX_NOT_SET;
   size_t nTrees = DEFAULT_NTREES;
   size_t mTry = DEFAULT_MTRY;
   size_t nodeSize = DEFAULT_NODESIZE;
@@ -116,6 +116,11 @@ int main(int argc, char* argv[])
       return EXIT_FAILURE;
     }
 
+  if(targetIdx == TARGETIDX_NOT_SET)
+    {
+      cerr << "targetidx (-i/--targetidx) must be set" << endl;
+    }
+
   if(output == "")
     {
       cerr << "Output file not specified" << endl;
@@ -127,8 +132,7 @@ int main(int argc, char* argv[])
   cout << endl << "Reading file '" << input << "'" << endl;
   Treedata treedata(input);
 
- 
-  if(targetIdx >= treedata.nFeatures())
+  if(targetIdx < 0 || targetIdx >= static_cast<int>(treedata.nFeatures()))
     {
       cerr << "targetidx must point to a valid feature (0.." << treedata.nFeatures()-1 << ")" << endl;
       printHelpHint();
@@ -220,7 +224,7 @@ int main(int argc, char* argv[])
 	      break;
 	    }
 
-	  if(refIcs[featureIdx] == targetIdx)
+	  if(refIcs[featureIdx] == static_cast<size_t>(targetIdx))
 	    {
 	      //cout << refIcs[featureIdx] << " == " << targetIdx << " (" << targetHeader << ")" << endl;
 	      continue;
