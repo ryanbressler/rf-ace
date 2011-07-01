@@ -52,7 +52,7 @@ to bring up help (v0.4.0):
 
 REQUIRED ARGUMENTS:
  -I / --input        input feature file (AFM or ARFF)
- -i / --targetidx    target index, ref. to feature matrix
+ -i / --targetidx    target index, reference to order of appearance in the input file
  -O / --output       output association file
 
 OPTIONAL ARGUMENTS:
@@ -61,7 +61,6 @@ OPTIONAL ARGUMENTS:
  -s / --nodesize     minimum number of train samples per node, affects tree depth (default max{5,nsamples/20})
  -p / --nperms       number of Random Forests (default 50)
  -t / --pthreshold   p-value threshold below which associations are listed (default 0.1)
-
 }}} 
 
 RF-ACE can simply be run by calling
