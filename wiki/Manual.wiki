@@ -6,13 +6,13 @@ RF-ACE is an efficient C++ implementation of a robust machine learning algorithm
 
 = Installation =
 
-Download the latest stable release from the [http://code.google.com/p/rf-ace/downloads/list download page], or checkout the latest development version (to directory rf-ace/) by calling
+Download the latest stable release from the [http://code.google.com/p/rf-ace/downloads/list download page], or checkout the latest development version (to directory rf-ace/) by typing
 
 {{{
 svn checkout http://rf-ace.googlecode.com/svn/trunk/ rf-ace
 }}}
 
-In Linux, you can compile the program by calling 
+In Linux, you can compile the program by typing 
 
 {{{
 make
@@ -30,7 +30,7 @@ RF-ACE currently supports two file formats, Annotated Feature Matrix (AFM) and A
 
 = Usage =
 
-Call 
+Type 
 {{{
 bin/rf_ace --help
 }}}
@@ -38,7 +38,7 @@ or
 {{{
 bin/rf_ace -h
 }}}
-to bring up help (v0.4.0):
+to bring up help:
 {{{
  ---------------------------------------------------------------
 | RF-ACE -- efficient feature selection with heterogeneous data |
