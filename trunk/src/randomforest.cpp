@@ -10,22 +10,9 @@ Randomforest::Randomforest(Treedata* treedata, size_t targetIdx, size_t nTrees, 
   nTrees_(nTrees),
   mTry_(mTry),
   nodeSize_(nodeSize),
+  rootNodes_(nTrees),
+  featuresInForest_(nTrees),
   oobMatrix_(nTrees)
-{
-
-  //CHECK THE PURPOSE OF THIS FUNCTION
-  Randomforest::setTarget(targetIdx_);
-
-  //cout << forest_.size() << " trees and " << forest_[0].size() << " max nodes per tree initialized." << endl;
-
-}
-
-Randomforest::~Randomforest()
-{
-
-} 
-
-void Randomforest::initialize()
 {
 
   size_t nRealSamples = treedata_->nRealSamples(targetIdx_);
@@ -35,91 +22,58 @@ void Randomforest::initialize()
 
   //First we count the theoretical maximum number of nodes per tree.
   //Because each leaf must contain at least nodesize amount of data points, nmaxleaves is
-  int nMaxLeaves = int(ceil(float(nRealSamples)/nodeSize_));
+  //int nMaxLeaves = int(ceil(float(nRealSamples)/nodeSize_));
   //The upper bound for depth of the tree is log2(nmaxleaves)=log10(nmaxleaves)/log10(2.0):
-  int maxDepth = int(ceil(log10(float(nMaxLeaves))/log10(2.0)));
+  //int maxDepth = int(ceil(log10(float(nMaxLeaves))/log10(2.0)));
   //Thus, the number of nodes in a complete binary tree of depth maxdepth, there are
-  int nMaxNodes = int(pow(2.0,maxDepth+1)); //In reality it's nmaxnodes-1 but this way we'll get a power of two which is supposed to be faster :)
-
-  nNodes_.clear();
-  forest_.clear();
-
-  nNodes_.resize(nTrees_);
-  forest_.resize(nTrees_);
+  //int nMaxNodes = int(pow(2.0,maxDepth+1)); //In reality it's nmaxnodes-1 but this way we'll get a power of two which is supposed to be faster :)
+  
   for(size_t treeIdx = 0; treeIdx < nTrees_; ++treeIdx)
     {
-      forest_[treeIdx].resize(nMaxNodes);
-      nNodes_[treeIdx] = 1;
+      //rootNodes_[treeIdx] = new Node;
+
+      rootNodes_[treeIdx] = new Node;
+      assert(rootNodes_[treeIdx]->nNodes() == 1);
+      
       oobMatrix_[treeIdx].clear();
     }
 
   treedata_->permuteContrasts();
+
+  Randomforest::growForest();
+
 }
-  
-void Randomforest::setTarget(size_t targetIdx)
+
+Randomforest::~Randomforest()
 {
-  targetIdx_ = targetIdx;
-  Randomforest::initialize();
-}
+
+  //cout << "Destructor invoked" << endl;
+
+  //Delete the rootnodes, which will initiate a cascade destroying all the child nodes, thus, the whole trees
+  for(size_t treeIdx = 0; treeIdx < nTrees_; ++treeIdx)
+    {
+      //cout << "deleting rootnode of tree " << treeIdx << endl;
+      //cout << " " << forest_[treeIdx].size();
+      delete rootNodes_[treeIdx];
+      //forest_[treeIdx][0] = NULL;
+    }
+
+  //cout << "done" << endl;
+} 
 
 size_t Randomforest::getTarget()
 {
   return(targetIdx_);
 }
 
-void Randomforest::learn(const size_t nPerms, vector<num_t>& pValues, vector<num_t>& importanceValues)
+void Randomforest::growForest()
 {
-  assert(nPerms > 5);
-  vector<vector<num_t> > importanceMat(nPerms);
   
-  clock_t time_start(clock());
-  size_t nNodesInAllForests = 0;
-  for(size_t permIdx = 0; permIdx < nPerms; ++permIdx)
+  for(size_t treeIdx = 0; treeIdx < nTrees_; ++treeIdx)
     {
-      cout << "  RF " << permIdx + 1 << ": ";
-      Randomforest::initialize();
-      treedata_->permuteContrasts();
-      size_t nNodesInForest = 0;
-      
-      for(size_t treeIdx = 0; treeIdx < nTrees_; ++treeIdx)
-	{
-	  Randomforest::growTree(treeIdx);
-	  nNodesInForest += nNodes_[treeIdx];
-	}
-      
-      nNodesInAllForests += nNodesInForest;
-      
-      Randomforest::calculateFeatureImportance(importanceMat[permIdx]); //REWORK!
-      
-      cout << nNodesInForest << " nodes (avg. " << 1.0*nNodesInForest / nTrees_ << " nodes / tree)" << endl;
+      Randomforest::growTree(treeIdx);
     }
-
-  num_t time_diff = 1.0*(clock() - time_start) / CLOCKS_PER_SEC;
-  cout << nPerms << " RFs, " << nPerms*nTrees_ << " trees, and " << nNodesInAllForests 
-       << " nodes generated in " << time_diff << " seconds (" << 1.0*nNodesInAllForests / time_diff 
-       << " nodes per second)" << endl;
-
-  size_t nFeatures = treedata_->nFeatures();
-  pValues.resize(nFeatures);
-  
-  for(size_t featureIdx = 0; featureIdx < nFeatures; ++featureIdx)
-    {
-
-      size_t nRealSamples;
-      vector<num_t> fSample(nPerms);
-      vector<num_t> cSample(nPerms);
-      for(size_t permIdx = 0; permIdx < nPerms; ++permIdx)
-	{
-	  fSample[permIdx] = importanceMat[permIdx][featureIdx];
-	  cSample[permIdx] = importanceMat[permIdx][featureIdx + nFeatures];
-	}
-      datadefs::utest(fSample,cSample,pValues[featureIdx]);
-      datadefs::mean(fSample,importanceValues[featureIdx],nRealSamples);
-    }
-  
-
-  //cout << "done" << endl;
-  
+    
 }
 
 void Randomforest::growTree(size_t treeIdx)
@@ -165,14 +119,13 @@ void Randomforest::growTree(size_t treeIdx)
       cout << " ]" << endl << endl;
     }
 
-  size_t rootNode = 0;
   
   //Start the recursive node splitting from the root node. This will generate the tree.
-  Randomforest::recursiveNodeSplit(treeIdx,rootNode,bootstrapIcs);
+  Randomforest::recursiveNodeSplit(treeIdx,rootNodes_[treeIdx],bootstrapIcs);
 
 }
 
-void Randomforest::recursiveNodeSplit(const size_t treeIdx, const size_t nodeIdx, const vector<size_t>& sampleIcs)
+void Randomforest::recursiveNodeSplit(const size_t treeIdx, Node* node, const vector<size_t>& sampleIcs)
 {
 
   size_t nSamples = sampleIcs.size();
@@ -233,15 +186,7 @@ void Randomforest::recursiveNodeSplit(const size_t treeIdx, const size_t nodeIdx
           continue;
         }
 
-      //First half of mtry are real features, the other half contrast features
-      //if(i < halfWay)
-      //	{
       treedata_->getFeatureData(featureIdx,sampleIcs,featureData);
-      //	}
-      //else
-      //	{
-      //treedata_->getContrastData(featureIdx,sampleIcs,featureData);
-      //	}
 
       num_t fitness = treedata_->splitFitness(featureData,isFeatureNumerical,nodeSize_,sampleIcs_left,sampleIcs_right);
 
@@ -284,21 +229,6 @@ void Randomforest::recursiveNodeSplit(const size_t treeIdx, const size_t nodeIdx
 
   //cout << "Splitter " << bestFeatureIdx << " has " << NANIcs.size() << " missing values, which will be omitted in splitting" << endl;
 
-  /*
-    for(int i = NANIcs.size()-1; i >= 0; --i)
-    {
-    size_t removeIdx = NANIcs[i];
-    //cout << "removing sample " << removeIdx << ": " << targetData[removeIdx] << " and " << featureData[removeIdx] << endl;
-    targetData.erase(targetData.begin() + removeIdx);
-    featureData.erase(featureData.begin() + removeIdx);
-    //sampleIcs.erase(sampleIcs.begin() + i);
-    }
-  */
-  //n_tot = targetData.size();
-
-  //assert(!datadefs::isNAN(featureData));
-  //assert(!datadefs::isNAN(targetData));
-
   if(nRealSamples < 2*nodeSize_)
     {
       //cout << "Splitter has too few non-missing values, quitting" << endl;
@@ -306,8 +236,8 @@ void Randomforest::recursiveNodeSplit(const size_t treeIdx, const size_t nodeIdx
       return;
     }
 
-  size_t nodeIdx_left; 
-  size_t nodeIdx_right;
+  //size_t nodeIdx_left; 
+  //size_t nodeIdx_right;
   bool isBestFeatureNumerical = treedata_->isFeatureNumerical(bestFeatureIdx);
 
   if(isBestFeatureNumerical)
@@ -328,18 +258,27 @@ void Randomforest::recursiveNodeSplit(const size_t treeIdx, const size_t nodeIdx
       return;
     }
   
-  nodeIdx_left = nNodes_[treeIdx]++;
-  nodeIdx_right = nNodes_[treeIdx]++;
-  
+  //cout << "setting splitter" << endl;
+
   if(isBestFeatureNumerical)
     {
-      forest_[treeIdx][nodeIdx].setSplitter(bestFeatureIdx,splitValue,forest_[treeIdx][nodeIdx_left],forest_[treeIdx][nodeIdx_right]);
+      node->setSplitter(bestFeatureIdx,splitValue);
     }
   else
     {
-      forest_[treeIdx][nodeIdx].setSplitter(bestFeatureIdx,values_left,forest_[treeIdx][nodeIdx_left],forest_[treeIdx][nodeIdx_right]);
+      node->setSplitter(bestFeatureIdx,values_left);
     }
+
+  featuresInForest_[treeIdx].insert(bestFeatureIdx);
   
+  //cout << "setting pointers to new nodes" << endl;
+
+  //assert(nNodes_[treeIdx] == forest_[treeIdx].size());
+
+  
+
+  //cout << nodeIdx_left << " " << nodeIdx_right << endl;
+
   if(sampleIcs_left.size() > 2*nodeSize_)
     {
       //WILL BECOME DEPRECATED
@@ -348,7 +287,7 @@ void Randomforest::recursiveNodeSplit(const size_t treeIdx, const size_t nodeIdx
 	  sampleIcs_left[i] = sampleIcs[sampleIcs_left[i]];
 	}
 
-      Randomforest::recursiveNodeSplit(treeIdx,nodeIdx_left,sampleIcs_left);
+      Randomforest::recursiveNodeSplit(treeIdx,node->leftChild(),sampleIcs_left);
     }
 
   if(sampleIcs_right.size() > 2*nodeSize_)
@@ -359,13 +298,13 @@ void Randomforest::recursiveNodeSplit(const size_t treeIdx, const size_t nodeIdx
           sampleIcs_right[i] = sampleIcs[sampleIcs_right[i]];
         }
 
-      Randomforest::recursiveNodeSplit(treeIdx,nodeIdx_right,sampleIcs_right);
+      Randomforest::recursiveNodeSplit(treeIdx,node->rightChild(),sampleIcs_right);
     }
   
 }
 
 
-void Randomforest::percolateSampleIcs(Node& rootNode, vector<size_t>& sampleIcs, map<Node*,vector<size_t> >& trainIcs)
+void Randomforest::percolateSampleIcs(Node* rootNode, vector<size_t>& sampleIcs, map<Node*,vector<size_t> >& trainIcs)
 {
   
   trainIcs.clear();
@@ -373,7 +312,7 @@ void Randomforest::percolateSampleIcs(Node& rootNode, vector<size_t>& sampleIcs,
   
   for(size_t i = 0; i < sampleIcs.size(); ++i)
     {
-      Node* nodep(&rootNode);
+      Node* nodep(rootNode);
       size_t sampleIdx = sampleIcs[i];
       Randomforest::percolateSampleIdx(sampleIdx,&nodep);
       map<Node*,vector<size_t> >::iterator it(trainIcs.find(nodep));
@@ -408,14 +347,14 @@ void Randomforest::percolateSampleIcs(Node& rootNode, vector<size_t>& sampleIcs,
     }
 }
 
-void Randomforest::percolateSampleIcsAtRandom(size_t featureIdx, Node& rootNode, vector<size_t>& sampleIcs, map<Node*,vector<size_t> >& trainIcs)
+void Randomforest::percolateSampleIcsAtRandom(size_t featureIdx, Node* rootNode, vector<size_t>& sampleIcs, map<Node*,vector<size_t> >& trainIcs)
 {
 
   trainIcs.clear();
 
   for(size_t i = 0; i < sampleIcs.size(); ++i)
     {
-      Node* nodep(&rootNode);
+      Node* nodep(rootNode);
       size_t sampleIdx = sampleIcs[i];
       Randomforest::percolateSampleIdxAtRandom(featureIdx,sampleIdx,&nodep);
       map<Node*,vector<size_t> >::iterator it(trainIcs.find(nodep));
@@ -466,15 +405,13 @@ void Randomforest::percolateSampleIdxAtRandom(size_t featureIdx, size_t sampleId
     }
 }
 
-//NEEDS REWORKING
-void Randomforest::calculateFeatureImportance(vector<num_t>& importance)
+vector<num_t> Randomforest::featureImportance()
 {
 
   size_t nRealFeatures = treedata_->nFeatures() ;
   size_t nAllFeatures = 2*nRealFeatures ;
-  importance.resize(nAllFeatures);
+  vector<num_t> importance(nAllFeatures);
   size_t nOobSamples = 0;
-
   size_t nContrastsInForest = 0;
 
   for(size_t i = 0; i < nAllFeatures; ++i)
@@ -486,9 +423,9 @@ void Randomforest::calculateFeatureImportance(vector<num_t>& importance)
     {
       size_t nNewOobSamples = oobMatrix_[treeIdx].size();
       nOobSamples += nNewOobSamples;
-      Node rootNode(forest_[treeIdx][0]);
+      //Node* rootNode(forest_[treeIdx][0]);
       map<Node*,vector<size_t> > trainIcs;
-      Randomforest::percolateSampleIcs(rootNode,oobMatrix_[treeIdx],trainIcs);
+      Randomforest::percolateSampleIcs(rootNodes_[treeIdx],oobMatrix_[treeIdx],trainIcs);
       num_t treeImpurity;
       Randomforest::treeImpurity(trainIcs,treeImpurity);
       //cout << "#nodes_with_train_samples=" << trainics.size() << endl;  
@@ -500,7 +437,7 @@ void Randomforest::calculateFeatureImportance(vector<num_t>& importance)
 		{
 		  ++nContrastsInForest;
 		}
-	      Randomforest::percolateSampleIcsAtRandom(featureIdx,rootNode,oobMatrix_[treeIdx],trainIcs);
+	      Randomforest::percolateSampleIcsAtRandom(featureIdx,rootNodes_[treeIdx],oobMatrix_[treeIdx],trainIcs);
 	      num_t permutedTreeImpurity;
 	      Randomforest::treeImpurity(trainIcs,permutedTreeImpurity);
 	      if(fabs(treeImpurity) > datadefs::EPS)
@@ -511,34 +448,56 @@ void Randomforest::calculateFeatureImportance(vector<num_t>& importance)
 	}
     }
 
-  size_t nNodesInForest = 0;
-  for(size_t i = 0; i < nNodes_.size(); ++i)
-    {
-      nNodesInForest += nNodes_[i];
-    }
-
+  size_t nNodesInForest = Randomforest::nNodes();
+  
   for(size_t featureIdx = 0; featureIdx < nAllFeatures; ++featureIdx)
     {
       importance[featureIdx] *= 1.0*nNodesInForest/nTrees_; //nContrastsInForest
       importance[featureIdx] /= nOobSamples; //nRealFeatures
     }
 
+  return(importance);
+
 }
+
+size_t Randomforest::nNodes()
+{
+  size_t nNodes = 0;
+  for(size_t treeIdx = 0; treeIdx < nTrees_; ++treeIdx)
+    {
+      nNodes += rootNodes_[treeIdx]->nNodes();
+    }
+  
+  return(nNodes);
+}
+
+vector<size_t> Randomforest::featureFrequency()
+{
+  assert(false);
+  vector<size_t> frequency(0);
+  return(frequency);
+}
+
+
+
 
 bool Randomforest::isFeatureInTree(size_t featureIdx, size_t treeIdx)
 {
-  for(size_t nodeIdx = 0; nodeIdx < nNodes_[treeIdx]; ++nodeIdx)
+  set<size_t>::const_iterator it;
+  it = featuresInForest_[treeIdx].find(featureIdx);
+  if(it == featuresInForest_[treeIdx].end())
     {
-      if(forest_[treeIdx][nodeIdx].hasChildren())
-      	{
-      if(featureIdx == forest_[treeIdx][nodeIdx].getSplitter())
-	{
-	  return(true);
-	}
-	}
+      return(false);
     }
-  return(false);
+  else
+    {
+      return(true);
+    }
 }
+
+
+
+
 
 void Randomforest::treeImpurity(map<Node*,vector<size_t> >& trainIcs, num_t& impurity)
 {
