@@ -31,7 +31,7 @@ public:
 	void predictForest(Treedata* treeData, vector<num_t>& prediction);
 
 	//Selects the target feature that is to be predicted
-	void selectTarget(size_t targetidx);
+	void setTarget(size_t targetidx);
 	//Gets the selected target feature
 	size_t getTarget();
 
@@ -46,14 +46,16 @@ private:
 	num_t predictSampleByTree(size_t sampleidx, size_t treeidx, Treedata* treeData);
 	void predictDatasetByTree(size_t treeidx, vector<num_t>& prediction);
 	
-	void recursiveNodesplit(size_t treeidx, size_t nodeidx, vector<size_t>& sampleics);
+	void recursiveNodeSplit(size_t treeidx, size_t nodeidx, vector<size_t>& sampleics);
 	void SetNodePrediction( size_t treeidx, size_t nodeidx, vector<size_t>& sampleics);
 	void transformLogistic(vector<num_t>& prediction, vector<num_t>& probability);
 
 	Treedata* treeData_;
+	size_t targetIdx_;      // The index of the true target in treeData_
 	size_t nTrees_;
 	size_t nMaxLeaves_;
 	size_t nMaxNodes_;
+	size_t nodeSize_;		// smallest node size
 	float shrinkage_;
 	float subSampleSize_;
 	size_t numClasses_;
