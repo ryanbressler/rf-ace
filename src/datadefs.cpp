@@ -6,15 +6,13 @@
 #include<iostream>
 #include<limits>
 
-//#include <boost/math/distributions/students_t.hpp>
-
 using namespace std;
 
-//const datadefs::cat_t datadefs::cat_nan = -1;
 const datadefs::num_t datadefs::NUM_NAN = numeric_limits<float>::infinity();
 const datadefs::num_t datadefs::EPS = 1e-12;
 const datadefs::num_t datadefs::PI = 3.1415926535;
 const datadefs::num_t datadefs::A = 0.140012;
+const datadefs::num_t datadefs::LOG_OF_MAX_NUM = 70.0;
 
 const string initNANs[] = {"NA","NAN"};
 const set<datadefs::NAN_t> datadefs::NANs(initNANs,initNANs+2);

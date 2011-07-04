@@ -9,7 +9,7 @@
 
 #include "getopt_pp.h"
 #include "randomforest.hpp"
-//#include "GBT.hpp"
+#include "GBT.hpp"
 #include "treedata.hpp"
 #include "datadefs.hpp"
 
@@ -25,6 +25,7 @@ const size_t DEFAULT_MTRY = 0;
 const size_t DEFAULT_NODESIZE = 0;
 const size_t DEFAULT_NPERMS = 50;
 const num_t DEFAULT_PVALUETHRESHOLD = 0.10;
+const int DEFAULT_IS_GBT_ENABLED = 0;
 
 void printHeader()
 {
@@ -54,6 +55,7 @@ void printHelp()
   cout << " -s / --nodesize     minimum number of train samples per node, affects tree depth (default max{5,nsamples/20})" << endl;
   cout << " -p / --nperms       number of Random Forests (default " << DEFAULT_NPERMS << ")" << endl;
   cout << " -t / --pthreshold   p-value threshold below which associations are listed (default " << DEFAULT_PVALUETHRESHOLD << ")" << endl;
+  cout << " -g / --gbt          Enable (1 == YES) Gradient Boosting Trees, a subsequent filtering procedure (default 0 == NO)" << endl;
   cout << endl;
 }
 
@@ -66,14 +68,17 @@ void printHelpHint()
 int main(int argc, char* argv[])
 {
 
+  //Print the intro tab
   printHeader();
 
+  //With no input arguments the help is printed
   if(argc == 1)
     {
       printHelp();
       return(EXIT_SUCCESS);
     }
 
+  //If there are only one input argument, it must be a help handle
   if(argc == 2)
     {
       string unaryHandle(argv[1]);
@@ -89,6 +94,7 @@ int main(int argc, char* argv[])
 	}
     }
 
+  //Set user parameters to default values
   string input = "";
   int targetIdx = TARGETIDX_NOT_SET;
   size_t nTrees = DEFAULT_NTREES;
@@ -96,10 +102,11 @@ int main(int argc, char* argv[])
   size_t nodeSize = DEFAULT_NODESIZE;
   size_t nPerms = DEFAULT_NPERMS;
   num_t pValueThreshold = DEFAULT_PVALUETHRESHOLD;
+  int isGBTEnabled = DEFAULT_IS_GBT_ENABLED;
   string output = "";
 
-  GetOpt_pp ops(argc, argv);
-        
+  //Read the user parameters 
+  GetOpt_pp ops(argc, argv);        
   ops >> Option('I',"input",input);
   ops >> Option('i',"targetidx",targetIdx);
   ops >> Option('n',"ntrees",nTrees);
@@ -107,8 +114,10 @@ int main(int argc, char* argv[])
   ops >> Option('s',"nodesize",nodeSize);
   ops >> Option('p',"nperms",nPerms);
   ops >> Option('t',"pthreshold",pValueThreshold);
+  ops >> Option('g',"gbt",isGBTEnabled);
   ops >> Option('O',"output",output);
 
+  //Print help and exit if input file is not specified
   if(input == "")
     {
       cerr << "Input file not specified" << endl;
@@ -116,11 +125,15 @@ int main(int argc, char* argv[])
       return EXIT_FAILURE;
     }
 
+  //Print help and exit if target index is not specified
   if(targetIdx == TARGETIDX_NOT_SET)
     {
       cerr << "targetidx (-i/--targetidx) must be set" << endl;
+      printHelpHint();
+      return EXIT_FAILURE;
     }
 
+  //Print help and exit if output file is not specified
   if(output == "")
     {
       cerr << "Output file not specified" << endl;
@@ -132,6 +145,7 @@ int main(int argc, char* argv[])
   cout << endl << "Reading file '" << input << "'" << endl;
   Treedata treedata(input);
 
+  //If the specified target index exceeds the dimensions of the treedata object, print help and exit
   if(targetIdx < 0 || targetIdx >= static_cast<int>(treedata.nFeatures()))
     {
       cerr << "targetidx must point to a valid feature (0.." << treedata.nFeatures()-1 << ")" << endl;
@@ -141,6 +155,7 @@ int main(int argc, char* argv[])
 
   size_t nRealSamples = treedata.nRealSamples(targetIdx);
 
+  //If the target has no real samples, the program will just exit
   if(nRealSamples == 0)
     {
       cout << "Target has no real samples, quitting..." << endl;
@@ -149,16 +164,19 @@ int main(int argc, char* argv[])
 
   num_t realFraction = 1.0*nRealSamples / treedata.nSamples();
 
+  //If default nTrees is to be used...
   if(nTrees == DEFAULT_NTREES)
     {
       nTrees = static_cast<size_t>( 1.0*treedata.nSamples() / realFraction );
     }
   
+  //If default mTry is to be used...
   if(mTry == DEFAULT_MTRY)
     {
       mTry = static_cast<size_t>( floor( sqrt( 1.0*treedata.nFeatures() ) ) );   
     }
 
+  //If default nodeSize is to be used...
   if(nodeSize == DEFAULT_NODESIZE)
     {
       nodeSize = 5;
@@ -169,6 +187,7 @@ int main(int argc, char* argv[])
 	}
     }
   
+  //Print values of parameters of RF-ACE
   cout << endl;
   cout << "RF-ACE parameter configuration:" << endl;
   cout << "  --input      = " << input << endl;
@@ -180,13 +199,17 @@ int main(int argc, char* argv[])
   cout << "  --nodesize   = " << nodeSize << endl;
   cout << "  --nperms     = " << nPerms << endl;
   cout << "  --pthresold  = " << pValueThreshold << endl;
-  //cout << "  --alpha      = " << alpha << endl;
   cout << "  --output     = " << output << endl << endl;
 
+  //Some assertions to check whether the parameter values and data dimensions allow construction of decision trees in the first place
+  //NOTE: consider writing a more sophisticated test and provide better print-outs than just assertion failures
   assert(treedata.nFeatures() >= mTry);
   assert(treedata.nSamples() > 2*nodeSize);
 
-  //size_t nFeatures = treedata.nFeatures();
+  //////////////////////////////////////////////////////////////////////
+  //  ANALYSIS 1 -- Random Forest ensemble with artificial contrasts  //
+  //////////////////////////////////////////////////////////////////////
+
   vector<num_t> pValues(treedata.nFeatures());
   vector<num_t> importanceValues(treedata.nFeatures());
   vector<vector<num_t> > importanceMat(nPerms);
@@ -226,7 +249,39 @@ int main(int argc, char* argv[])
     }
 
 
+
+  /////////////////////////////////////////////
+  //  ANALYSIS 2 -- Gradient Boosting Trees  //
+  /////////////////////////////////////////////
+  //bool isGBTEnabled = false; //TODO: EXTEND THE USER PARAMETERS TO INCLUDE THIS
+  if(isGBTEnabled)
+    {
+      cout << "Gradient Boosting Trees *ENABLED*" << endl;
+      
+      if(!treedata.isFeatureNumerical(targetIdx))
+	{
+	  nTrees *= treedata.nCategories(targetIdx);
+	}
+
+      num_t shrinkage = 0.5;
+      num_t subSampleSize = 0.5;
+      GBT gbt(&treedata, targetIdx, nTrees, shrinkage, subSampleSize);
+      
+      
+      cout <<endl<< "PREDICTION:" << endl;
+      vector<num_t> prediction(treedata.nSamples());
+      gbt.predictForest(&treedata, prediction);
+    }
+  else
+    {
+      cout << "Gradient Boosting Trees *DISABLED*" << endl;
+    }
   
+
+
+  ///////////////////////
+  //  GENERATE OUTPUT  //
+  ///////////////////////  
   vector<size_t> refIcs(treedata.nFeatures());
   //vector<string> fnames = treedata.featureheaders();
   datadefs::sortDataAndMakeRef(pValues,refIcs);

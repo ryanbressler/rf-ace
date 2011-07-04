@@ -87,10 +87,15 @@ Treedata::Treedata(string fileName):
       if(features_[i].isNumerical)
 	{
           datadefs::strv2numv(rawMatrix[i],featureData);
+	  features_[i].nCategories = 0;
         }
       else
         {
           datadefs::strv2catv(rawMatrix[i],featureData);
+	  map<num_t,size_t> freq;
+	  size_t nReal;
+	  datadefs::count_freq(featureData,freq,nReal);
+	  features_[i].nCategories = freq.size();
         }
       features_[i].data = featureData;
       //Treedata::permute(featureData);
@@ -498,6 +503,11 @@ size_t Treedata::nRealSamples(const size_t featureIdx)
   size_t nRealSamples;
   datadefs::countRealValues(features_[featureIdx].data,nRealSamples);
   return(nRealSamples);
+}
+
+size_t Treedata::nCategories(const size_t featureIdx)
+{
+  return(features_[featureIdx].nCategories);
 }
 
 
