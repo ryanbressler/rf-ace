@@ -186,20 +186,46 @@ int main(int argc, char* argv[])
   assert(treedata.nFeatures() >= mTry);
   assert(treedata.nSamples() > 2*nodeSize);
 
-  Randomforest RF(&treedata,targetIdx,nTrees,mTry,nodeSize);
-  //RF.setTarget(targetIdx);
-  //treedata.print();
-  //RF.blacklist_and_kill(0.8,blistheaders,blistcorrelations);
-
-  //size_t nperms = 9;
-  //num_t alpha = 0.50;
+  //size_t nFeatures = treedata.nFeatures();
   vector<num_t> pValues(treedata.nFeatures());
   vector<num_t> importanceValues(treedata.nFeatures());
-  //vector<num_t> ivalues(treedata.nfeatures());
-  
+  vector<vector<num_t> > importanceMat(nPerms);
+  size_t nNodesInAllForests = 0;
+
+  clock_t time_start(clock());
+
   cout << "Growing " << nPerms << " Random Forests (RFs), please wait..." << endl;
-  RF.learn(nPerms,pValues,importanceValues);
-  //cout << "Time elapsed: " << float(clock() - time_start)/CLOCKS_PER_SEC << " seconds" << endl;
+  for(size_t permIdx = 0; permIdx < nPerms; ++permIdx)
+    {
+      cout << "  RF " << permIdx + 1 << ": ";
+      Randomforest RF(&treedata,targetIdx,nTrees,mTry,nodeSize);
+      size_t nNodesInForest = RF.nNodes();
+      nNodesInAllForests += nNodesInForest;
+      importanceMat[permIdx] = RF.featureImportance();
+      cout << nNodesInForest << " nodes (avg. " << 1.0*nNodesInForest / nTrees << " nodes / tree)" << endl;
+    }
+
+  num_t time_diff = 1.0*(clock() - time_start) / CLOCKS_PER_SEC;
+  cout << nPerms << " RFs, " << nPerms*nTrees << " trees, and " << nNodesInAllForests
+       << " nodes generated in " << time_diff << " seconds (" << 1.0*nNodesInAllForests / time_diff
+       << " nodes per second)" << endl;
+
+  for(size_t featureIdx = 0; featureIdx < treedata.nFeatures(); ++featureIdx)
+    {
+
+      size_t nRealSamples;
+      vector<num_t> fSample(nPerms);
+      vector<num_t> cSample(nPerms);
+      for(size_t permIdx = 0; permIdx < nPerms; ++permIdx)
+        {
+          fSample[permIdx] = importanceMat[permIdx][featureIdx];
+          cSample[permIdx] = importanceMat[permIdx][featureIdx + treedata.nFeatures()];
+        }
+      datadefs::utest(fSample,cSample,pValues[featureIdx]);
+      datadefs::mean(fSample,importanceValues[featureIdx],nRealSamples);
+    }
+
+
   
   vector<size_t> refIcs(treedata.nFeatures());
   //vector<string> fnames = treedata.featureheaders();

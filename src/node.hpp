@@ -21,20 +21,14 @@ public:
 
   //Sets a splitter feature for the node.
   //NOTE: splitter can be assigned only once! Subsequent setter calls will raise an assertion failure.
-  void setSplitter(size_t splitter, set<num_t> classSet, Node& leftChild, Node& rightChild);
-  void setSplitter(size_t splitter, num_t threshold, Node& leftChild, Node& rightChild);
+  void setSplitter(size_t splitterIdx, set<num_t> classSet);
+  void setSplitter(size_t splitterIdx, num_t threshold);
 
   //Gets the splitter for the node
   inline size_t getSplitter() { return(splitter_); }
 
-  //Given value, descends to either one of the child nodes if existent and returns true, otherwise false.
-  //NOTE: childp is a ref-to-ptr that will be modified to point to the child node if descend is successful. 
+  //Given a value, descends to either one of the child nodes, if existing, otherwise returns a pointer to the current node
   Node* percolateData(num_t value);
-
-  //THESE WILL POSSIBLY BECOME DEPRECATED
-  //void set_impurity(num_t value);
-  //num_t get_impurity();
-  //void reset_impurity();
 
   void setPrediction(num_t value);
   num_t getPrediction();
@@ -46,11 +40,20 @@ public:
   //Logic test whether the node has children or not
   inline bool hasChildren() { return(hasChildren_); }
 
+  Node* leftChild();
+  Node* rightChild();
+
+  size_t nNodes();
+
   //Helper functions
-  void print();
-  void print_compact();
+  //void print();
+  //void print_compact();
 
 private:
+
+  //A recursive function that will accumulate the number of descendant nodes the current nodes has
+  void recursiveNDescendantNodes(size_t& n);
+
   bool isSplitterNumerical_;
 
   size_t splitter_;
@@ -64,7 +67,6 @@ private:
   Node* leftChild_;
   Node* rightChild_;
 
-  //vector<size_t> trainIcs_;
 };
 
 #endif

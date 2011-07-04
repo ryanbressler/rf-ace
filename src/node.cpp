@@ -12,11 +12,14 @@ Node::Node():
 
 Node::~Node()
 {
-  leftChild_ = NULL;
-  rightChild_ = NULL;
+  if(hasChildren_)
+    {
+      delete leftChild_;
+      delete rightChild_;
+    }
 }
 
-void Node::setSplitter(size_t splitter, set<num_t> classSet, Node& leftChild, Node& rightChild)
+void Node::setSplitter(size_t splitter, set<num_t> classSet)
 {
   assert(!hasChildren_);
   
@@ -25,22 +28,21 @@ void Node::setSplitter(size_t splitter, set<num_t> classSet, Node& leftChild, No
   splitter_ = splitter;
   classSet_ = classSet;
 
-  leftChild_ = &leftChild;
-  rightChild_ = &rightChild;
+  leftChild_ = new Node;
+  rightChild_ = new Node;
   hasChildren_ = true;
 }
 
-void Node::setSplitter(size_t splitter, num_t threshold, Node& leftChild, Node& rightChild)
+void Node::setSplitter(size_t splitter, num_t threshold)
 {
   assert(!hasChildren_);
-
   isSplitterNumerical_ = true;
 
   splitter_ = splitter;
   threshold_ = threshold;
 
-  leftChild_ = &leftChild;
-  rightChild_ = &rightChild;
+  leftChild_ = new Node;
+  rightChild_ = new Node;
   hasChildren_ = true;
 }
 
@@ -67,93 +69,84 @@ Node* Node::percolateData(num_t value)
     }
 }
 
-/*
-  void Node::set_impurity(num_t impurity)
-  {
-  impurity_ = impurity;
-  }
-  
-  num_t Node::get_impurity()
-  {
-  return(impurity_);
-  }
-  
-  void Node::reset_impurity()
-  {
-  impurity_ = 0.0;
-  }
-*/  
-  void Node::setPrediction(num_t value)
-  {
+Node* Node::leftChild()
+{
+  if(hasChildren_)
+    {
+      return(leftChild_);
+    }
+  else
+    {
+      return(NULL);
+    }
+}
+
+Node* Node::rightChild()
+{
+  if(hasChildren_)
+    {
+      return(rightChild_);
+    }
+  else
+    {
+      return(NULL);
+    }
+}
+
+size_t Node::nNodes()
+{
+  size_t n = 1;
+  this->recursiveNDescendantNodes(n);
+  return(n);
+}
+
+void Node::recursiveNDescendantNodes(size_t& n)
+{
+  if(!hasChildren_)
+    {
+      return;
+    }
+  else
+    {
+      n += 2;
+      leftChild_->recursiveNDescendantNodes(n);
+      rightChild_->recursiveNDescendantNodes(n);
+    }
+
+}
+
+void Node::setPrediction(num_t value)
+{
   prediction_ = value;
-  }
-  
-  num_t Node::getPrediction()
-  {
+}
+
+num_t Node::getPrediction()
+{
   return(prediction_);
-  }
+}
+
 /*  
   void Node::set_trainidx(size_t trainidx)
   {
-  trainics_.push_back(trainidx);
+  cout << "-Feature value x in {" << *classSet_.begin();
+  for(set<num_t>::const_iterator it = ++classSet_.begin(); it != classSet_.end(); ++it)
+  {
+  cout << "," << *it;
+  }
+  cout << "} sends left (node " << &leftChild_ << ") and otherwise right (node " << &rightChild_ << ")" << endl;
   }
   
-  vector<size_t>* Node::get_trainics()
-  {
-  return(&trainics_);
-  }
-  
-  void Node::clear_trainics()
-  {
-  trainics_.clear();
-  }
-*/
-
-/*
-  bool Node::has_children()
-  {
-  return(haschildren_);
-  }
-*/
-
-void Node::print()
-{
-  if(isSplitterNumerical_) 
-    {
-      cout << "***NODE (numerical splitter)***" << endl;
-    } 
+  } 
   else 
-    {
-      cout << "***NODE (categorical splitter)***" << endl;
-    }
-  if(hasChildren_) 
-    {
-      cout << "-Splitter feature is " << splitter_ << endl;
-      if(isSplitterNumerical_)
-	{
-	  cout << "-Feature value x<=" << threshold_ << " sends left (node " << &leftChild_ 
-	       << ") and " << threshold_ << "<x right (node " << &rightChild_ << ")" << endl;
-	}
-      else
-	{
-	  cout << "-Feature value x in {" << *classSet_.begin();
-	  for(set<num_t>::const_iterator it = ++classSet_.begin(); it != classSet_.end(); ++it)
-	    {
-	      cout << "," << *it;
-	    }
-	  cout << "} sends left (node " << &leftChild_ << ") and otherwise right (node " << &rightChild_ << ")" << endl;
-	}
-
-    } 
-  else 
-    {
-      cout << "-Leaf node" << endl;
-    }
+  {
+  cout << "-Leaf node" << endl;
+  }
   //cout << "-" << impurity_ << " impurity" << endl << endl;
-}
-
-void Node::print_compact()
-{
+  }
+  
+  void Node::print_compact()
+  {
   cout << "***NODE PRINT IMPLEMENTATION MISSING***" << endl;
-}
+  }
+*/
 
