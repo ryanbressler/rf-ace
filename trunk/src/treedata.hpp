@@ -37,6 +37,7 @@ public:
   //Returns the number of real samples the target (resp. any feature) has
   //size_t nrealsamples();
   size_t nRealSamples(const size_t featureIdx);
+  size_t nCategories(const size_t featureIdx);
 
   //Prints the treedata matrix in its internal form
   void print();
@@ -45,12 +46,6 @@ public:
   void getFeatureData(const size_t featureIdx, vector<num_t>& data);
   void getFeatureData(const size_t featureIdx, const size_t sampleIdx, num_t& data);
   void getFeatureData(const size_t featureIdx, const vector<size_t>& sampleIcs, vector<num_t>& data);
-
-  /*
-    void getContrastData(const size_t featureIdx, vector<num_t>& data);
-    void getContrastData(const size_t featureIdx, const size_t sampleIdx, num_t& data);
-    void getContrastData(const size_t featureIdx, const vector<size_t>& sampleIcs, vector<num_t>& data);
-  */
 
   inline void getRandomData(const size_t featureIdx, num_t& data) {data = features_[featureIdx].data[randomInteger_() % nSamples_]; }
   inline void getRandomIndex(const size_t n, size_t& idx) { idx = randomInteger_() % n; }
@@ -121,8 +116,8 @@ private:
     
   struct Feature {
     vector<num_t> data;
-    //vector<num_t> contrast;
     bool isNumerical;
+    size_t nCategories;
     string name;
   };
 

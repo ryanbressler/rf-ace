@@ -24,6 +24,7 @@ namespace datadefs
   extern const num_t EPS;
   extern const num_t A;
   extern const num_t PI;
+  extern const num_t LOG_OF_MAX_NUM;
 
   //NaNs supported in the delimited file 
   typedef string NAN_t;

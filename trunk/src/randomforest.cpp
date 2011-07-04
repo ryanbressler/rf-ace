@@ -15,31 +15,17 @@ Randomforest::Randomforest(Treedata* treedata, size_t targetIdx, size_t nTrees, 
   oobMatrix_(nTrees)
 {
 
-  size_t nRealSamples = treedata_->nRealSamples(targetIdx_);
-  vector<num_t> targetData;
-  treedata_->getFeatureData(targetIdx_,targetData);
-  datadefs::countRealValues(targetData,nRealSamples);
-
-  //First we count the theoretical maximum number of nodes per tree.
-  //Because each leaf must contain at least nodesize amount of data points, nmaxleaves is
-  //int nMaxLeaves = int(ceil(float(nRealSamples)/nodeSize_));
-  //The upper bound for depth of the tree is log2(nmaxleaves)=log10(nmaxleaves)/log10(2.0):
-  //int maxDepth = int(ceil(log10(float(nMaxLeaves))/log10(2.0)));
-  //Thus, the number of nodes in a complete binary tree of depth maxdepth, there are
-  //int nMaxNodes = int(pow(2.0,maxDepth+1)); //In reality it's nmaxnodes-1 but this way we'll get a power of two which is supposed to be faster :)
-  
+  //Allocates memory for the root nodes
   for(size_t treeIdx = 0; treeIdx < nTrees_; ++treeIdx)
     {
-      //rootNodes_[treeIdx] = new Node;
-
       rootNodes_[treeIdx] = new Node;
-      assert(rootNodes_[treeIdx]->nNodes() == 1);
-      
-      oobMatrix_[treeIdx].clear();
+      //oobMatrix_[treeIdx].clear();
     }
 
+  //Before analysis, we'll permute the contrast features
   treedata_->permuteContrasts();
 
+  //Let's grow the forest
   Randomforest::growForest();
 
 }
@@ -212,7 +198,7 @@ void Randomforest::recursiveNodeSplit(const size_t treeIdx, Node* node, const ve
 
   treedata_->getFeatureData(bestFeatureIdx,sampleIcs,featureData);
   
-  vector<size_t> NANIcs;
+  //vector<size_t> NANIcs;
   
   size_t nRealSamples = 0;
   for(size_t i = 0; i < nSamples; ++i)
