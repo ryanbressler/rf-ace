@@ -94,8 +94,6 @@ int main(int argc, char* argv[])
 	//------------------------------------------------------------------------
 	// 1: read data into Treedata class (features are rows)
 	cout <<endl<< "READ:" << endl;
-//	bool is_featurerows = true;
-//	string fname = "data/6_num_features_X_10_cases.tsv";
 	Treedata treeData(input);
 
 
@@ -104,21 +102,21 @@ int main(int argc, char* argv[])
 	cout <<endl<< "CONSTRUCT:" << endl;
 	size_t nTrees(ntrees);
 	size_t nMaxLeaves(nodesize);
-	float shrinkage(1.0);
+	float shrinkage(0.5);
 	float subSampleSize(0.5);
 	GBT gbt(&treeData, nTrees, nMaxLeaves, shrinkage, subSampleSize);
 
 	//------------------------------------------------------------------------
 	// 3: select target and grow the forest
 	cout <<endl<< "GROWING:" << endl;
-	gbt.selectTarget(targetidx);
+	gbt.setTarget(targetidx);
 	gbt.allocateForest();
 	gbt.growForest();
 
 	//------------------------------------------------------------------------
 	// 4: predict using the forest
 	cout <<endl<< "PREDICTION:" << endl;
-	vector<num_t> prediction(treeData.nsamples());
+	vector<num_t> prediction(treeData.nSamples());
 	gbt.predictForest(&treeData, prediction);
 
 	return(EXIT_SUCCESS);
