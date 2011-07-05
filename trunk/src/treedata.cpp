@@ -562,31 +562,61 @@ void Treedata::permute(vector<num_t>& data)
 }
 
 
-void Treedata::bootstrapFromRealSamples(const size_t featureIdx, vector<size_t>& ics, vector<size_t>& oobIcs)
+void Treedata::bootstrapFromRealSamples(const bool withReplacement, 
+					const num_t sampleSize, 
+					const size_t featureIdx, 
+					vector<size_t>& ics, 
+					vector<size_t>& oobIcs)
 {
     
-  ics.clear();
+  //Check that the sampling parameters are appropriate
+  assert(sampleSize > 0.0);
+  if(!withReplacement && sampleSize > 1.0)
+    {
+      cerr << "when sampling without replacement, sample size must be less or equal to 100% (sampleSize <= 1.0)" << endl;
+      assert(false);
+    }
+
+  //First we collect all indices that correspond to real samples
+  vector<size_t> allIcs;
   for(size_t i = 0; i < nSamples_; ++i)
     {
       if(!datadefs::isNAN(features_[featureIdx].data[i]))
 	{
-	  ics.push_back(i);
+	  allIcs.push_back(i);
 	}
     }
   
-  size_t n = ics.size();
-  vector<size_t> allIcs = ics;
-  for(size_t i = 0; i < n; ++i)
+  //Extract the number of real samples, and see how many samples do we have to collect
+  size_t nRealSamples = allIcs.size();
+  size_t nSamples = static_cast<size_t>( floor( sampleSize * nRealSamples ) );
+  ics.resize(nSamples);
+  
+  //If sampled with replacement...
+  if(withReplacement)
     {
-      ics[i] = allIcs[randomInteger_() % n];
+      //Draw nSamples random integers from range of allIcs
+      for(size_t sampleIdx = 0; sampleIdx < nSamples; ++sampleIdx)
+        {
+          ics[sampleIdx] = allIcs[randomInteger_() % nRealSamples];
+        }
+    }
+  //If sampled without replacement...
+  else
+    {
+      vector<size_t> foo(nRealSamples);
+      Treedata::permute(foo);
+      for(size_t i = 0; i < nSamples; ++i)
+        {
+          ics[i] = allIcs[foo[i]];
+        }
     }
 
-  vector<size_t> foo(n);
-  vector<size_t>::iterator it = set_difference(allIcs.begin(),allIcs.end(),ics.begin(),ics.end(),foo.begin());
-  size_t nOob = distance(foo.begin(),it);
-
-  foo.resize(nOob);
-  oobIcs = foo;
+  //Then, as we now have the sample stored in ics, we'll check which of the samples, from allIcs, are not contained in ics and store them in oobIcs instead
+  oobIcs.resize(nSamples);
+  vector<size_t>::iterator it = set_difference(allIcs.begin(),allIcs.end(),ics.begin(),ics.end(),oobIcs.begin());
+  size_t nOob = distance(oobIcs.begin(),it);
+  oobIcs.resize(nOob);
 }
 
 

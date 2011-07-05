@@ -52,7 +52,11 @@ public:
   
   //Generates a bootstrap sample from the real samples of featureIdx. Samples not in the bootstrap sample will be stored in oob_ics,
   //and the number of oob samples is stored in noob.
-  void bootstrapFromRealSamples(const size_t featureIdx, vector<size_t>& ics, vector<size_t>& oobIcs);
+  void bootstrapFromRealSamples(const bool withReplacement, 
+				const num_t sampleSize, 
+				const size_t featureIdx, 
+				vector<size_t>& ics, 
+				vector<size_t>& oobIcs);
 
   //void killFeature(const size_t featureIdx);
 

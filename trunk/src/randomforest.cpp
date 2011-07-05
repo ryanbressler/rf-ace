@@ -66,9 +66,11 @@ void Randomforest::growTree(size_t treeIdx)
 {
   //Generate the vector for bootstrap indices
   vector<size_t> bootstrapIcs;
+  bool withReplacement = true;
+  num_t sampleSize = 1.0;
 
   //Generate bootstrap indices and oob-indices
-  treedata_->bootstrapFromRealSamples(targetIdx_,bootstrapIcs,oobMatrix_[treeIdx]);
+  treedata_->bootstrapFromRealSamples(withReplacement, sampleSize, targetIdx_, bootstrapIcs, oobMatrix_[treeIdx]);
 
   //This is to check that the bootstrap sample doesn't contain any missing values (it shouldn't!)
   if(false)
@@ -405,6 +407,8 @@ vector<num_t> Randomforest::featureImportance()
       importance[i] = 0;
     }
 
+  //This implementation is inefficient, since most of the time Randomforest::isFeatureInTree(...) will return false. 
+  //I will optomize this by taking the features that exist in the trees as the outermost elements.  
   for(size_t treeIdx = 0; treeIdx < nTrees_; ++treeIdx)
     {
       size_t nNewOobSamples = oobMatrix_[treeIdx].size();
@@ -469,8 +473,7 @@ vector<size_t> Randomforest::featureFrequency()
 
 bool Randomforest::isFeatureInTree(size_t featureIdx, size_t treeIdx)
 {
-  set<size_t>::const_iterator it;
-  it = featuresInForest_[treeIdx].find(featureIdx);
+  set<size_t>::const_iterator it(featuresInForest_[treeIdx].find(featureIdx));
   if(it == featuresInForest_[treeIdx].end())
     {
       return(false);
