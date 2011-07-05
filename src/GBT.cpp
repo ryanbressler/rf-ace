@@ -34,7 +34,8 @@ GBT::GBT(Treedata* treeData, size_t targetIdx, size_t nTrees, size_t nMaxLeaves,
   //  }
 
   // Check the type of the target.
-  numClasses_ = treeData_->features_[targetIdx].nCategories;
+  //numClasses_ = treeData_->features_[targetIdx].nCategories;
+  numClasses_ = treeData_->nCategories(targetIdx);
   if (numClasses_ > 0) 
 	{
 	  nTrees_*= numClasses_;
@@ -404,17 +405,21 @@ void GBT::growTree(size_t treeIdx)
   nLeavesCounter_ = 0; // Counts the number of leaves in the growing tree
   size_t nSamples = treeData_->nSamples();
 
-  /////////////////////////////////////////////////////////////////////
-  // ADDED A BOOTSTRAP FUNCTION HERE -- MAYBE IT'S OF USE
-  // NOTE: bootstrapFromRealSamples() generates sample with no NaN's!
+  //////////////////////////////////////////////////////////////////////////////////////////////////
   //
-  //Generate the vector for bootstrap indices
-  vector<size_t> bootstrapIcs;
-  vector<size_t> oobIcs;
+  // // ADDED A BOOTSTRAP FUNCTION HERE -- MAYBE IT'S OF USE
+  // // NOTE: bootstrapFromRealSamples() generates sample with no NaN's!
   //
-  //Generate bootstrap indices and oob-indices
-  treeData_->bootstrapFromRealSamples(targetIdx_,bootstrapIcs,oobIcs);
-  ////////////////////////////////////////////////////////////////////
+  // vector<size_t> bootstrapIcs;
+  // vector<size_t> oobIcs;
+  // bool withReplacement = false;
+  // num_t sampleSize = 0.5; 
+  //
+  // // 50% of the real samples the target has will be resampled without replacement
+  // // Samples left out from bootstrapIcs will be stored in oobIcs
+  // treeData_->bootstrapFromRealSamples(withReplacement,sampleSize,targetIdx_,bootstrapIcs,oobIcs);
+  //
+  //////////////////////////////////////////////////////////////////////////////////////////////////
 
   //Generate a new random  vector for sample indices
   vector<size_t> sampleIcs(nSamples);

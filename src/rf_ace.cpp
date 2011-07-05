@@ -258,14 +258,15 @@ int main(int argc, char* argv[])
     {
       cout << "Gradient Boosting Trees *ENABLED*" << endl;
       
-      if(!treedata.isFeatureNumerical(targetIdx))
-	{
-	  nTrees *= treedata.nCategories(targetIdx);
-	}
+      //if(!treedata.isFeatureNumerical(targetIdx))
+      //	{
+      //	  nTrees *= treedata.nCategories(targetIdx);
+      //	}
 
+      size_t nMaxLeaves = 6;
       num_t shrinkage = 0.5;
       num_t subSampleSize = 0.5;
-      GBT gbt(&treedata, targetIdx, nTrees, shrinkage, subSampleSize);
+      GBT gbt(&treedata, targetIdx, nTrees, nMaxLeaves, shrinkage, subSampleSize);
       
       
       cout <<endl<< "PREDICTION:" << endl;
