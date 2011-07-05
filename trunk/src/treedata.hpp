@@ -35,7 +35,6 @@ public:
   size_t nSamples();
 
   //Returns the number of real samples the target (resp. any feature) has
-  //size_t nrealsamples();
   size_t nRealSamples(const size_t featureIdx);
   size_t nCategories(const size_t featureIdx);
 
