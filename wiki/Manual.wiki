@@ -83,41 +83,49 @@ bin/rf_ace -I featurematrix.afm -i 123 -O associations.tsv
 which will execute RF-ACE with the default parameters; as the help documentation points out, most of the parameters are estimated dynamically based on the data dimensions and content, so running RF-ACE with no information about the algorithm itself is possible.
 
 = Output = 
-
+The following call
 {{{
+bin/rf_ace -I data/big_messy_matrix.tsv -i PRAC -O foo.bar
+}}}
+produces the output
+{{{
+
+
  ---------------------------------------------------------------
 | RF-ACE -- efficient feature selection with heterogeneous data |
 |                                                               |
-|  Version:      RF-ACE v0.4.0, July 1st, 2011                  |
+|  Version:      RF-ACE v0.5.5, July 4th, 2011                  |
 |  Project page: http://code.google.com/p/rf-ace                |
 |  Contact:      timo.p.erkkila@tut.fi                          |
+|                kari.torkkola@gmail.com                        |
 |                                                               |
 |              DEVELOPMENT VERSION, BUGS EXIST!                 |
  ---------------------------------------------------------------
 
-Reading file 'data/tr-n10-N200-Kn20000-cl0-mixed0.10-miss0.10-set1.txt'
+Reading file 'data/big_messy_matrix.tsv'
 File type is unknown -- defaulting to Annotated Feature Matrix (AFM)
 AFM orientation: features as rows
 
 RF-ACE parameter configuration:
-  --input      = data/tr-n10-N200-Kn20000-cl0-mixed0.10-miss0.10-set1.txt
-  --nsamples   = 200 / 200 (0% missing)
-  --nfeatures  = 20011
-  --targetidx  = 20010, header 'N:O1'
-  --ntrees     = 200
-  --mtry       = 141
-  --nodesize   = 10
+  --input      = data/big_messy_matrix.tsv
+  --nsamples   = 223 / 282 (20.922% missing)
+  --nfeatures  = 48912
+  --targetidx  = 35361, header 'N:GEXP:PRAC::::'
+  --ntrees     = 356
+  --mtry       = 221
+  --nodesize   = 12
   --nperms     = 50
   --pthresold  = 0.1
   --output     = foo.bar
 
 Growing 50 Random Forests (RFs), please wait...
-  RF 1: 3766 nodes (avg. 18.83 nodes / tree)
-  RF 2: 3762 nodes (avg. 18.81 nodes / tree)
-  RF 3: 3826 nodes (avg. 19.13 nodes / tree)
-  RF 4: 3792 nodes (avg. 18.96 nodes / tree)
-  RF 5: 3792 nodes (avg. 18.96 nodes / tree)
-  RF 6: 3742 nodes (avg. 18.71 nodes / tree)
+  RF 1: 4880 nodes (avg. 13.7079 nodes / tree)
+  RF 2: 4810 nodes (avg. 13.5112 nodes / tree)
+  RF 3: 4856 nodes (avg. 13.6404 nodes / tree)
+  RF 4: 4994 nodes (avg. 14.0281 nodes / tree)
+  RF 5: 5036 nodes (avg. 14.1461 nodes / tree)
+  RF 6: 5016 nodes (avg. 14.0899 nodes / tree)
+  RF 7: 5132 nodes (avg. 14.4157 nodes / tree)
 ...
   RF 47: 3728 nodes (avg. 18.64 nodes / tree)
   RF 48: 3822 nodes (avg. 19.11 nodes / tree)
