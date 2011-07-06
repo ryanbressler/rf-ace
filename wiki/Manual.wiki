@@ -38,7 +38,7 @@ Annotated Feature Matrix represents the data as a tab-delimited table, where bot
 
 == Attribute-Relation File Format (ARFF) ==
 
- AFM is a matrix representation of the data, rows (resp. columns) being feature vectors and columns (resp. rows) being samples. For further information, check file input specifications [http://foo.bar here].     
+[http://www.cs.waikato.ac.nz/~ml/weka/arff.html ARFF specification].      
 
 = Usage =
 
