@@ -29,12 +29,18 @@ RF-ACE currently supports two file formats, Annotated Feature Matrix (AFM) and A
 
 == Annotated Feature Matrix (AFM) ==
 
-Annotated Feature Matrix represents the data as a tab-delimited table, where both columns and rows contain annotations. The AFM reader is able to discern the right orientation (features as rows or columns in the matrix) of the matrix based on the content of the headers, which in the case of features, must obey a specific syntax. Namely AFM feature headers must encode whether the feature is (N)umerical, (C)ategorical, (O)rdinal, or (B)inary, followed by colon and the actual name of the feature as follows:
+Annotated Feature Matrix represents the data as a tab-delimited table, where both columns and rows contain headers describing the samples and features. Based on the headers, the AFM reader is able to discern the right orientation (features as rows or columns in the matrix) of the matrix. Namely AFM feature headers must encode whether the feature is (N)umerical, (C)ategorical, (O)rdinal, or (B)inary, followed by colon and the actual name of the feature as follows:
 
  * B:is_alive
  * N:age
  * C:tumor_grage 
  * O:anatomic_organ_subdivision
+
+In fact any string, even including colons, spaces, and other special characters, encodes a valid feature name as long as it starts with the preamble "[N/C/O/B]:". Thus, the following is a valid feature header:
+
+ * N:GEXP:TP53:chr17:123:456
+
+Sample headers are not constrained, except that they must not contain preambles "[N/C/O/B]:" existing solely in the feature headers. 
 
 == Attribute-Relation File Format (ARFF) ==
 
