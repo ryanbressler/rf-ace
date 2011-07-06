@@ -49,9 +49,7 @@ Sample headers are not constrained, except that they must not contain preambles 
 [http://www.cs.waikato.ac.nz/~ml/weka/arff.html ARFF specification].      
 
 = Usage =
-[The following examples follow Linux syntax]
-
-Type 
+The following examples follow Linux syntax. Type 
 {{{
 bin/rf_ace --help
 }}}
