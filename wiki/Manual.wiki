@@ -42,7 +42,7 @@ In fact any string, even including colons, spaces, and other special characters,
 
  * N:GEXP:TP53:chr17:123:456
 
-Sample headers are not constrained, except that they must not contain preambles "N/C/O/B:", which exist solely in the feature headers. 
+Sample headers are not constrained, except that they must not contain preambles "N/C/O/B:", being reserved for the feature headers. 
 
 == Attribute-Relation File Format (ARFF) ==
 
