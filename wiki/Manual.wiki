@@ -36,11 +36,11 @@ Annotated Feature Matrix represents the data as a tab-delimited table, where bot
  * C:tumor_grage 
  * O:anatomic_organ_subdivision
 
-In fact any string, even including colons, spaces, and other special characters, encodes a valid feature name as long as it starts with the preamble "[N/C/O/B]:". Thus, the following is a valid feature header:
+In fact any string, even including colons, spaces, and other special characters, encodes a valid feature name as long as it starts with the preamble "N/C/O/B:". Thus, the following is a valid feature header:
 
  * N:GEXP:TP53:chr17:123:456
 
-Sample headers are not constrained, except that they must not contain preambles "[N/C/O/B]:" existing solely in the feature headers. 
+Sample headers are not constrained, except that they must not contain preambles "N/C/O/B:" existing solely in the feature headers. 
 
 == Attribute-Relation File Format (ARFF) ==
 
