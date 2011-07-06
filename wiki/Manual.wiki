@@ -127,11 +127,12 @@ Growing 50 Random Forests (RFs), please wait...
   RF 6: 5016 nodes (avg. 14.0899 nodes / tree)
   RF 7: 5132 nodes (avg. 14.4157 nodes / tree)
 ...
-  RF 47: 3728 nodes (avg. 18.64 nodes / tree)
-  RF 48: 3822 nodes (avg. 19.11 nodes / tree)
-  RF 49: 3816 nodes (avg. 19.08 nodes / tree)
-  RF 50: 3740 nodes (avg. 18.7 nodes / tree)
-50 RFs, 10000 trees, and 188202 nodes generated in 61.33 seconds (3068.68 nodes per second)
+  RF 47: 4736 nodes (avg. 13.3034 nodes / tree)
+  RF 48: 5234 nodes (avg. 14.7022 nodes / tree)
+  RF 49: 4582 nodes (avg. 12.8708 nodes / tree)
+  RF 50: 5210 nodes (avg. 14.6348 nodes / tree)
+50 RFs, 17800 trees, and 247516 nodes generated in 102.91 seconds (2405.17 nodes per second)
+Gradient Boosting Trees *DISABLED*
 
 Association file created. Format:
 TARGET   PREDICTOR   P-VALUE   IMPORTANCE   CORRELATION
