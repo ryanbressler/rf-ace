@@ -42,7 +42,7 @@ to bring up help:
 {{{
 REQUIRED ARGUMENTS:
  -I / --input        input feature file (AFM or ARFF)
- -i / --targetidx    target index, reference to order of appearance in the input file
+ -i / --target       target, specified as integer or string that is to be matched with the content of input
  -O / --output       output association file
 
 OPTIONAL ARGUMENTS:
@@ -51,6 +51,7 @@ OPTIONAL ARGUMENTS:
  -s / --nodesize     minimum number of train samples per node, affects tree depth (default max{5,nsamples/20})
  -p / --nperms       number of Random Forests (default 50)
  -t / --pthreshold   p-value threshold below which associations are listed (default 0.1)
+ -g / --gbt          Enable (1 == YES) Gradient Boosting Trees, a subsequent filtering procedure (default 0 == NO)
 }}} 
 
 RF-ACE can simply be run by typing
@@ -62,6 +63,11 @@ or with the short-hand notation equivalently as
 bin/rf_ace -I featurematrix.afm -i 123 -O associations.tsv 
 }}}
 which will execute RF-ACE with the default parameters; as the help documentation points out, most of the parameters are estimated dynamically based on the data dimensions and content, so running RF-ACE with no information about the algorithm itself is possible.
+
+= Supported data formats =
+== Annotated Feature Matrix (AFM) ==
+
+== Attribute-Relation File Format (ARFF) ==
 
 = Output = 
 
