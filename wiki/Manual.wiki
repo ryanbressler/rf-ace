@@ -24,9 +24,21 @@ make rf_ace
 
 Check compiled binaries at the [http://code.google.com/p/rf-ace/downloads/list download page]. (A compiler script for Visual Studio will soon be provided.)
 
-= Input file support =
+= Supported data formats =
+RF-ACE currently supports two file formats, Annotated Feature Matrix (AFM) and Attribute-Relation File Format (ARFF).
 
-RF-ACE currently supports two file formats, Annotated Feature Matrix (AFM) and Attribute-Relation File Format (ARFF). AFM is a matrix representation of the data, rows (resp. columns) being feature vectors and columns (resp. rows) being samples. For further information, check file input specifications [http://foo.bar here].     
+== Annotated Feature Matrix (AFM) ==
+
+Annotated Feature Matrix represents the data as a tab-delimited table, where both columns and rows contain annotations. The AFM reader is able to discern the right orientation (features as rows or columns in the matrix) of the matrix based on the content of the headers, which in the case of features, must obey a specific syntax. Namely AFM feature headers must encode whether the feature is (N)umerical, (C)ategorical, (O)rdinal, or (B)inary, followed by colon and the actual name of the feature as follows:
+
+B:is_alive
+N:age
+C:tumor_grage 
+O:anatomic_organ_subdivision
+
+== Attribute-Relation File Format (ARFF) ==
+
+ AFM is a matrix representation of the data, rows (resp. columns) being feature vectors and columns (resp. rows) being samples. For further information, check file input specifications [http://foo.bar here].     
 
 = Usage =
 
@@ -63,11 +75,6 @@ or with the short-hand notation equivalently as
 bin/rf_ace -I featurematrix.afm -i 123 -O associations.tsv 
 }}}
 which will execute RF-ACE with the default parameters; as the help documentation points out, most of the parameters are estimated dynamically based on the data dimensions and content, so running RF-ACE with no information about the algorithm itself is possible.
-
-= Supported data formats =
-== Annotated Feature Matrix (AFM) ==
-
-== Attribute-Relation File Format (ARFF) ==
 
 = Output = 
 
