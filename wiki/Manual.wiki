@@ -33,14 +33,14 @@ RF-ACE currently supports two file formats, Annotated Feature Matrix (AFM) and A
 
 Annotated Feature Matrix represents the data as a tab-delimited table, where both columns and rows contain headers describing the samples and features. Based on the headers, the AFM reader is able to discern the right orientation (features as rows or columns in the matrix) of the matrix. Namely AFM feature headers must encode whether the feature is (N)umerical, (C)ategorical, (O)rdinal, or (B)inary, followed by colon and the actual name of the feature as follows:
 
- * B:is_alive
- * N:age
- * C:tumor_grage 
- * O:anatomic_organ_subdivision
+ * `B:is_alive`
+ * `N:age`
+ * `C:tumor_grage` 
+ * `O:anatomic_organ_subdivision`
 
 In fact any string, even including colons, spaces, and other special characters, encodes a valid feature name as long as it starts with the preamble "N/C/O/B:". Thus, the following is a valid feature header:
 
- * N:GEXP:TP53:chr17:123:456
+ * `N:GEXP:TP53:chr17:123:456`
 
 Sample headers are not constrained, except that they must not contain preambles "N/C/O/B:", being reserved for the feature headers. 
 
@@ -73,7 +73,7 @@ OPTIONAL ARGUMENTS:
  -g / --gbt          Enable (1 == YES) Gradient Boosting Trees, a subsequent filtering procedure (default 0 == NO)
 }}} 
 
-So all that is required is an input file (-I/--input), either of type .arff or .afm, and a target (-i/--target) to build the RF-ACE model upon. Target in this case corresponds to a feature in the input file, and it can be identified with an index corresponding to it's order of appearance in the file, or with it's name. Thus, if the target is "N:age" (we would be looking for features associated with age) existing on row 123 (0-base and omitting the header row), one execute RF-ACE by typing
+So all that is required is an input file (`-I/--input`), either of type .arff or .afm, and a target (`-i/--target`) to build the RF-ACE model upon. Target in this case corresponds to a feature in the input file, and it can be identified with an index corresponding to it's order of appearance in the file, or with it's name. Thus, if the target is "N:age" (we would be looking for features associated with age) existing on row 123 (0-base and omitting the header row), one execute RF-ACE by typing
 {{{
 bin/rf_ace --input featurematrix.afm --target 123 --output associations.tsv 
 }}}
