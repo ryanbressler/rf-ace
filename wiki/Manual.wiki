@@ -11,7 +11,7 @@ Download the latest stable release from the [http://code.google.com/p/rf-ace/dow
 svn checkout http://rf-ace.googlecode.com/svn/trunk/ rf-ace
 }}}
 
-Compiler makefiles for Linux (Makefile) and Visual Studio for Windows (make.bat) are provided in the package. In Linux, you can compile the program by typing 
+Compiler makefiles for Linux (`Makefile`) and Visual Studio for Windows (`make.bat`) are provided in the package. In Linux, you can compile the program by typing 
 {{{
 make
 }}}
@@ -20,7 +20,7 @@ or
 make rf_ace
 }}}
 
-In Windows and using Visual Studio, first open up the Visual Studio terminal and execute "make.bat" by typing
+In Windows and using Visual Studio, first open up the Visual Studio terminal and execute `make.bat` by typing
 {{{
 make
 }}}
@@ -38,7 +38,7 @@ Annotated Feature Matrix represents the data as a tab-delimited table, where bot
  * `C:tumor_grage` 
  * `O:anatomic_organ_subdivision`
 
-In fact any string, even including colons, spaces, and other special characters, encodes a valid feature name as long as it starts with the preamble "N/C/O/B:". Thus, the following is a valid feature header:
+In fact any string, even including colons, spaces, and other special characters, encodes a valid feature name as long as it starts with the preamble `N:`/`C:`/`O:`/`B:`. Thus, the following is a valid feature header:
 
  * `N:GEXP:TP53:chr17:123:456`
 
