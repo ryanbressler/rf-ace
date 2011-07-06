@@ -22,7 +22,7 @@ or
 make rf_ace
 }}}
 
-Check compiled binaries at the [http://code.google.com/p/rf-ace/downloads/list download page]. (A compiler script for Visual Studio will soon be provided.)
+Check compiled binaries at the [http://code.google.com/p/rf-ace/downloads/list download page]. Compiler makefiles for Linux (Makefile) and Visual Studio for Windows (make.bat) are provided in the package.
 
 = Supported data formats =
 RF-ACE currently supports two file formats, Annotated Feature Matrix (AFM) and Attribute-Relation File Format (ARFF).
@@ -40,13 +40,14 @@ In fact any string, even including colons, spaces, and other special characters,
 
  * N:GEXP:TP53:chr17:123:456
 
-Sample headers are not constrained, except that they must not contain preambles "N/C/O/B:" existing solely in the feature headers. 
+Sample headers are not constrained, except that they must not contain preambles "N/C/O/B:", which exist solely in the feature headers. 
 
 == Attribute-Relation File Format (ARFF) ==
 
 [http://www.cs.waikato.ac.nz/~ml/weka/arff.html ARFF specification].      
 
 = Usage =
+[The following examples follow Linux syntax]
 
 Type 
 {{{
@@ -72,20 +73,26 @@ OPTIONAL ARGUMENTS:
  -g / --gbt          Enable (1 == YES) Gradient Boosting Trees, a subsequent filtering procedure (default 0 == NO)
 }}} 
 
-RF-ACE can simply be run by typing
+So all that is required is an input file (-I/--input), either of type .arff or .afm, and a target (-i/--target) to build the RF-ACE model upon. Target in this case corresponds to a feature in the input file, and it can be identified with an index corresponding to it's order of appearance in the file, or with it's name. Thus, if the target is "N:age" (we would be looking for features associated with age) existing on row 123 (0-base and omitting the header row), one execute RF-ACE by typing
 {{{
-bin/rf_ace --input featurematrix.afm --targetidx 123 --output associations.tsv 
+bin/rf_ace --input featurematrix.afm --target 123 --output associations.tsv 
 }}}
 or with the short-hand notation equivalently as
 {{{
 bin/rf_ace -I featurematrix.afm -i 123 -O associations.tsv 
 }}}
-which will execute RF-ACE with the default parameters; as the help documentation points out, most of the parameters are estimated dynamically based on the data dimensions and content, so running RF-ACE with no information about the algorithm itself is possible.
+or by using the header "N:age" instead of the index by typing
+{{{
+bin/rf_ace -I featurematrix.afm -i N:age -O associations.tsv
+}}}
+In case a provided (sub)string identifies multiple target candidates, RF-ACE will be executed serially for all target candidates, results catenated in the specified output file.
+
+The above will execute RF-ACE with the default parameters; as the help documentation points out, most of the parameters are estimated dynamically based on the data dimensions and content, so running RF-ACE with no information about the algorithm itself is possible.
 
 = Output = 
-The following call
+The following call (assuming now the substring "age" uniquely identifies just one feature, "N:age")
 {{{
-bin/rf_ace -I data/big_messy_matrix.tsv -i PRAC -O foo.bar
+bin/rf_ace -I featurematrix.afm -i age -O associations.tsv
 }}}
 produces the output
 {{{
@@ -102,21 +109,21 @@ produces the output
 |              DEVELOPMENT VERSION, BUGS EXIST!                 |
  ---------------------------------------------------------------
 
-Reading file 'data/big_messy_matrix.tsv'
+Reading file 'featurematrix.afm'
 File type is unknown -- defaulting to Annotated Feature Matrix (AFM)
 AFM orientation: features as rows
 
 RF-ACE parameter configuration:
-  --input      = data/big_messy_matrix.tsv
+  --input      = featurematrix.afm
   --nsamples   = 223 / 282 (20.922% missing)
   --nfeatures  = 48912
-  --targetidx  = 35361, header 'N:GEXP:PRAC::::'
+  --targetidx  = 123, header 'N:age'
   --ntrees     = 356
   --mtry       = 221
   --nodesize   = 12
   --nperms     = 50
   --pthresold  = 0.1
-  --output     = foo.bar
+  --output     = associations.tsv
 
 Growing 50 Random Forests (RFs), please wait...
   RF 1: 4880 nodes (avg. 13.7079 nodes / tree)
@@ -140,11 +147,11 @@ TARGET   PREDICTOR   P-VALUE   IMPORTANCE   CORRELATION
 Done.
 }}}
 
-If there are no associations found, the program ends as follows:
+If there are no associations found, the program would end as follows:
 {{{
 No significant associations found, quitting...
 }}}
 
 = RF-ACE configuration =
 
-foo bar
+Information will be added in the future
