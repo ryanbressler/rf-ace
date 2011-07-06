@@ -7,13 +7,11 @@ RF-ACE is an efficient C++ implementation of a robust machine learning algorithm
 = Installation =
 
 Download the latest stable release from the [http://code.google.com/p/rf-ace/downloads/list download page], or checkout the latest development version (to directory rf-ace/) by typing
-
 {{{
 svn checkout http://rf-ace.googlecode.com/svn/trunk/ rf-ace
 }}}
 
-In Linux, you can compile the program by typing 
-
+Compiler makefiles for Linux (Makefile) and Visual Studio for Windows (make.bat) are provided in the package. In Linux, you can compile the program by typing 
 {{{
 make
 }}}
@@ -22,7 +20,11 @@ or
 make rf_ace
 }}}
 
-Check compiled binaries at the [http://code.google.com/p/rf-ace/downloads/list download page]. Compiler makefiles for Linux (Makefile) and Visual Studio for Windows (make.bat) are provided in the package.
+In Windows and using Visual Studio, first open up the Visual Studio terminal and execute "make.bat" by typing
+{{{
+make
+}}}
+Simple as that! If you feel lucky, check for compiled binaries at the [http://code.google.com/p/rf-ace/downloads/list download page]. 
 
 = Supported data formats =
 RF-ACE currently supports two file formats, Annotated Feature Matrix (AFM) and Attribute-Relation File Format (ARFF).
