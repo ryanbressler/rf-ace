@@ -28,6 +28,7 @@ const size_t DEFAULT_NPERMS = 50;
 const num_t DEFAULT_PVALUETHRESHOLD = 0.10;
 const int DEFAULT_IS_GBT_ENABLED = 0;
 
+//WILL BE MOVED INTO PRIVATE PARTS OF TREEDATA
 bool isPositiveInteger(const string& str, size_t& positiveInteger)
 {
   stringstream ss(str);
@@ -45,6 +46,7 @@ bool isPositiveInteger(const string& str, size_t& positiveInteger)
     }
 }
 
+//WILL BE MOVED INTO PUBLIC PARTS OF TREEDATA
 void getMatchingTargetIcs(Treedata& treedata, const string& targetStr, set<size_t>& targetIcs)
 {
   targetIcs.clear();
@@ -97,6 +99,15 @@ void printHelpHint()
   cout << endl;
   cout << "To get started, type \"-h\" or \"--help\"" << endl;
 }
+
+void executeRandomForestFilter(Treedata& treedata,
+			       size_t targetIdx,
+			       size_t nTrees,
+			       size_t mTry,
+			       size_t nodeSize,
+			       size_t nPerms,
+			       vector<num_t>& pValues,
+			       vector<num_t>& importanceValues);
 
 int main(int argc, char* argv[])
 {
@@ -196,16 +207,7 @@ int main(int argc, char* argv[])
       getMatchingTargetIcs(treedata,targetStr,targetIcs);
     }
 
-  //If the specified target index exceeds the dimensions of the treedata object, print help and exit
-  /*
-    if(targetIdx < 0 || targetIdx >= static_cast<int>(treedata.nFeatures()))
-    {
-    cerr << "targetidx must point to a valid feature (0.." << treedata.nFeatures()-1 << ")" << endl;
-    printHelpHint();
-    return EXIT_FAILURE;
-    }
-  */
-
+  //The program starts a loop in which an RF-ACE model will be built for each spcified target feature
   size_t iter = 1;
   for(set<size_t>::const_iterator it(targetIcs.begin()); it != targetIcs.end(); ++it, ++iter)
     {
@@ -268,86 +270,71 @@ int main(int argc, char* argv[])
       //  ANALYSIS 1 -- Random Forest ensemble with artificial contrasts  //
       //////////////////////////////////////////////////////////////////////
       
-      vector<num_t> pValues(treedata.nFeatures());
-      vector<num_t> importanceValues(treedata.nFeatures());
+      vector<num_t> pValues; //(treedata.nFeatures());
+      vector<num_t> importanceValues; //(treedata.nFeatures());
       vector<vector<num_t> > importanceMat(nPerms);
-      size_t nNodesInAllForests = 0;
       
-      clock_t time_start(clock());
-      
-      cout << "Growing " << nPerms << " Random Forests (RFs), please wait..." << endl;
-      for(size_t permIdx = 0; permIdx < nPerms; ++permIdx)
+      executeRandomForestFilter(treedata,targetIdx,nTrees,mTry,nodeSize,nPerms,pValues,importanceValues);
+
+      size_t nFeatures = treedata.nFeatures();
+      vector<size_t> keepFeatureIcs(1);
+      keepFeatureIcs[0] = targetIdx;
+      for(size_t featureIdx = 0; featureIdx < nFeatures; ++featureIdx)
 	{
-	  cout << "  RF " << permIdx + 1 << ": ";
-	  Randomforest RF(&treedata,targetIdx,nTrees,mTry,nodeSize);
-	  size_t nNodesInForest = RF.nNodes();
-	  nNodesInAllForests += nNodesInForest;
-	  importanceMat[permIdx] = RF.featureImportance();
-	  cout << nNodesInForest << " nodes (avg. " << 1.0*nNodesInForest / nTrees << " nodes / tree)" << endl;
-	}
-      
-      num_t time_diff = 1.0*(clock() - time_start) / CLOCKS_PER_SEC;
-      cout << nPerms << " RFs, " << nPerms*nTrees << " trees, and " << nNodesInAllForests
-	   << " nodes generated in " << time_diff << " seconds (" << 1.0*nNodesInAllForests / time_diff
-	   << " nodes per second)" << endl;
-      
-      for(size_t featureIdx = 0; featureIdx < treedata.nFeatures(); ++featureIdx)
-	{
-	  
-	  size_t nRealSamples;
-	  vector<num_t> fSample(nPerms);
-	  vector<num_t> cSample(nPerms);
-	  for(size_t permIdx = 0; permIdx < nPerms; ++permIdx)
+	  if(featureIdx != targetIdx && importanceValues[featureIdx] > datadefs::EPS)
 	    {
-	      fSample[permIdx] = importanceMat[permIdx][featureIdx];
-	      cSample[permIdx] = importanceMat[permIdx][featureIdx + treedata.nFeatures()];
+	      keepFeatureIcs.push_back(featureIdx);
 	    }
-	  datadefs::utest(fSample,cSample,pValues[featureIdx]);
-	  datadefs::mean(fSample,importanceValues[featureIdx],nRealSamples);
 	}
       
+      Treedata treedataFiltered(treedata,keepFeatureIcs);
+      targetIdx = 0;
+
+      cout << endl;
+      cout << "Features filtered: " << nFeatures - treedataFiltered.nFeatures() << " (" << treedataFiltered.nFeatures() << " left)" << endl;
+      cout << "TEST: target is '" << treedataFiltered.getFeatureName(targetIdx) << "'" << endl;
       
-      
+
+      // THIS WILL BE REPLACED BY GBT
+      executeRandomForestFilter(treedataFiltered,targetIdx,nTrees,mTry,nodeSize,nPerms,pValues,importanceValues);
+
       /////////////////////////////////////////////
       //  ANALYSIS 2 -- Gradient Boosting Trees  //
       /////////////////////////////////////////////
-      //bool isGBTEnabled = false; //TODO: EXTEND THE USER PARAMETERS TO INCLUDE THIS
-      if(isGBTEnabled)
+      /*
+	if(isGBTEnabled)
 	{
-	  cout << "Gradient Boosting Trees *ENABLED*" << endl;
-	  
-	  //if(!treedata.isFeatureNumerical(targetIdx))
-	  //	{
-	  //	  nTrees *= treedata.nCategories(targetIdx);
-	  //	}
-	  
-	  size_t nMaxLeaves = 6;
-	  num_t shrinkage = 0.5;
-	  num_t subSampleSize = 0.5;
-	  GBT gbt(&treedata, targetIdx, nTrees, nMaxLeaves, shrinkage, subSampleSize);
-	  
-	  
-	  cout <<endl<< "PREDICTION:" << endl;
-	  vector<num_t> prediction(treedata.nSamples());
-	  gbt.predictForest(&treedata, prediction);
+	cout << "Gradient Boosting Trees *ENABLED*" << endl;
+	
+	size_t nMaxLeaves = 6;
+	num_t shrinkage = 0.5;
+	num_t subSampleSize = 0.5;
+	GBT gbt(&treedataFiltered, targetIdx, nTrees, nMaxLeaves, shrinkage, subSampleSize);
+	
+	
+	cout <<endl<< "PREDICTION:" << endl;
+	vector<num_t> prediction(treedataFiltered.nSamples());
+	gbt.predictForest(&treedataFiltered, prediction);
 	}
-      else
+	else
 	{
-	  cout << "Gradient Boosting Trees *DISABLED*" << endl;
+	cout << "Gradient Boosting Trees *DISABLED*" << endl;
 	}
-      
-      
+      */
+
+      ///////////////////
+      // TEMPORARY -- 
       
       ///////////////////////
       //  GENERATE OUTPUT  //
       ///////////////////////  
-      vector<size_t> refIcs(treedata.nFeatures());
+      vector<size_t> refIcs(treedataFiltered.nFeatures());
       //vector<string> fnames = treedata.featureheaders();
       datadefs::sortDataAndMakeRef(pValues,refIcs);
       datadefs::sortFromRef<num_t>(importanceValues,refIcs);
       //targetIdx = refIcs[targetIdx];
       
-      string targetName = treedata.getFeatureName(targetIdx);
+      string targetName = treedataFiltered.getFeatureName(targetIdx);
       
       if(pValues[0] <= pValueThreshold)
 	{
@@ -363,7 +350,7 @@ int main(int argc, char* argv[])
 	      po = fopen(output.c_str(),"a");
 	    }
 	  
-	  for(size_t featureIdx = 0; featureIdx < treedata.nFeatures(); ++featureIdx)
+	  for(size_t featureIdx = 0; featureIdx < treedataFiltered.nFeatures(); ++featureIdx)
 	    {
 	      
 	      if(pValues[featureIdx] > pValueThreshold)
@@ -371,14 +358,14 @@ int main(int argc, char* argv[])
 		  break;
 		}
 	      
-	      if(refIcs[featureIdx] == static_cast<size_t>(targetIdx))
+	      if(refIcs[featureIdx] == targetIdx)
 		{
 		  //cout << refIcs[featureIdx] << " == " << targetIdx << " (" << targetHeader << ")" << endl;
 		  continue;
 		}
 	      
 	      
-	      fprintf(po,"%s\t%s\t%9.8f\t%9.8f\t%9.8f\n",targetName.c_str(),treedata.getFeatureName(refIcs[featureIdx]).c_str(),pValues[featureIdx],importanceValues[featureIdx],treedata.pearsonCorrelation(targetIdx,refIcs[featureIdx]));
+	      fprintf(po,"%s\t%s\t%9.8f\t%9.8f\t%9.8f\n",targetName.c_str(),treedataFiltered.getFeatureName(refIcs[featureIdx]).c_str(),pValues[featureIdx],importanceValues[featureIdx],treedataFiltered.pearsonCorrelation(targetIdx,refIcs[featureIdx]));
 	      
 	      //os << target_str << "\t" << treedata.get_featureheader(ref_ics[i]) << "\t" 
 	      //   << pvalues[i] << "\t" << ivalues[i] << "\t" << treedata.corr(targetidx,ref_ics[i]) << endl;
@@ -397,4 +384,55 @@ int main(int argc, char* argv[])
       
       
   return(EXIT_SUCCESS);
+}
+
+
+void executeRandomForestFilter(Treedata& treedata,
+                               size_t targetIdx,
+                               size_t nTrees,
+                               size_t mTry,
+                               size_t nodeSize,
+			       size_t nPerms,
+                               vector<num_t>& pValues,
+                               vector<num_t>& importanceValues)
+{
+
+  vector<vector<num_t> > importanceMat(nPerms);
+  pValues.resize(treedata.nFeatures());
+  importanceValues.resize(treedata.nFeatures());
+  size_t nNodesInAllForests = 0;
+
+  clock_t time_start(clock());
+
+  cout << "Growing " << nPerms << " Random Forests (RFs), please wait..." << endl;
+  for(size_t permIdx = 0; permIdx < nPerms; ++permIdx)
+    {
+      cout << "  RF " << permIdx + 1 << ": ";
+      Randomforest RF(&treedata,targetIdx,nTrees,mTry,nodeSize);
+      size_t nNodesInForest = RF.nNodes();
+      nNodesInAllForests += nNodesInForest;
+      importanceMat[permIdx] = RF.featureImportance();
+      cout << nNodesInForest << " nodes (avg. " << 1.0*nNodesInForest / nTrees << " nodes / tree)" << endl;
+    }
+  
+  num_t time_diff = 1.0*(clock() - time_start) / CLOCKS_PER_SEC;
+  cout << nPerms << " RFs, " << nPerms*nTrees << " trees, and " << nNodesInAllForests
+       << " nodes generated in " << time_diff << " seconds (" << 1.0*nNodesInAllForests / time_diff
+       << " nodes per second)" << endl;
+  
+  for(size_t featureIdx = 0; featureIdx < treedata.nFeatures(); ++featureIdx)
+    {
+      
+      size_t nRealSamples;
+      vector<num_t> fSample(nPerms);
+      vector<num_t> cSample(nPerms);
+      for(size_t permIdx = 0; permIdx < nPerms; ++permIdx)
+	{
+	  fSample[permIdx] = importanceMat[permIdx][featureIdx];
+	  cSample[permIdx] = importanceMat[permIdx][featureIdx + treedata.nFeatures()];
+	}
+      datadefs::utest(fSample,cSample,pValues[featureIdx]);
+      datadefs::mean(fSample,importanceValues[featureIdx],nRealSamples);
+    }
+  
 }

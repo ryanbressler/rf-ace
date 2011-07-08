@@ -21,6 +21,7 @@ class Treedata
 public:
   //Initializes the object and reads in a data matrix
   Treedata(string fileName);
+  Treedata(Treedata& treedata, const vector<size_t>& featureIcs);
   ~Treedata();
 
   //Returns the number of features
@@ -58,6 +59,8 @@ public:
 				vector<size_t>& oobIcs);
 
   //void killFeature(const size_t featureIdx);
+
+  //Treedata copy(const vector<size_t>& featureIcs);
 
   //Permutes integers in range 0,1,...,(ics.size()-1).
   //NOTE: original contents in ics will be replaced.
@@ -102,6 +105,13 @@ protected:
 
 private:
 
+  struct Feature {
+    vector<num_t> data;
+    bool isNumerical;
+    size_t nCategories;
+    string name;
+  };
+
   enum FileType {UNKNOWN, AFM, ARFF};
 
   void readFileType(string& fileName, FileType& fileType);
@@ -117,12 +127,6 @@ private:
   
   template <typename T> void transpose(vector<vector<T> >& mat);
     
-  struct Feature {
-    vector<num_t> data;
-    bool isNumerical;
-    size_t nCategories;
-    string name;
-  };
 
   vector<Feature> features_;
   
