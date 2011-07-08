@@ -7,6 +7,7 @@
 #include <ctime>
 #include <cmath>
 #include <stdio.h>
+//#include <omp.h>
 
 #include "getopt_pp.h"
 #include "randomforest.hpp"
@@ -54,7 +55,7 @@ void printHelp()
   cout << "OPTIONAL ARGUMENTS:" << endl;
   cout << " -n / --ntrees       number of trees per RF (default nsamples/nrealsamples)" << endl;
   cout << " -m / --mtry         number of randomly drawn features per node split (default sqrt(nfeatures))" << endl;
-  cout << " -s / --nodesize     minimum number of train samples per node, affects tree depth (default max{5,nsamples/20})" << endl;
+  cout << " -s / --nodesize     minimum number of train samples per node, affects tree depth (default max{5,nsamples/100})" << endl;
   cout << " -p / --nperms       number of Random Forests (default " << DEFAULT_NPERMS << ")" << endl;
   cout << " -t / --pthreshold   p-value threshold below which associations are listed (default " << DEFAULT_PVALUETHRESHOLD << ")" << endl;
   cout << " -g / --gbt          Enable (1 == YES) Gradient Boosting Trees, a subsequent filtering procedure (default 0 == NO)" << endl;
@@ -198,7 +199,7 @@ int main(int argc, char* argv[])
       if(nodeSize == DEFAULT_NODESIZE)
 	{
 	  nodeSize = 5;
-	  size_t altNodeSize = static_cast<size_t>( ceil( 1.0*nRealSamples/20 ) );
+	  size_t altNodeSize = static_cast<size_t>( ceil( 1.0*nRealSamples/100 ) );
 	  if(altNodeSize > nodeSize)
 	    {
 	      nodeSize = altNodeSize;
@@ -237,12 +238,12 @@ int main(int argc, char* argv[])
       size_t nFeatures = treedata.nFeatures();
       vector<size_t> keepFeatureIcs(1);
       keepFeatureIcs[0] = targetIdx;
-      num_t meanImportanceValue;
-      datadefs::mean(importanceValues,meanImportanceValue,nRealSamples);
-      cout << meanImportanceValue << endl;
+      //num_t meanImportanceValue;
+      //datadefs::mean(importanceValues,meanImportanceValue,nRealSamples);
+      //cout << meanImportanceValue << endl;
       for(size_t featureIdx = 0; featureIdx < nFeatures; ++featureIdx)
 	{
-	  if(featureIdx != targetIdx && importanceValues[featureIdx] > meanImportanceValue)
+	  if(featureIdx != targetIdx && importanceValues[featureIdx] > datadefs::EPS)
 	    {
 	      keepFeatureIcs.push_back(featureIdx);
 	    }
@@ -366,16 +367,18 @@ void executeRandomForestFilter(Treedata& treedata,
   clock_t time_start(clock());
 
   cout << "Growing " << nPerms << " Random Forests (RFs), please wait..." << endl;
-  for(size_t permIdx = 0; permIdx < nPerms; ++permIdx)
+  //#pragma omp parallel for
+  for(int permIdx = 0; permIdx < static_cast<int>(nPerms); ++permIdx)
     {
-      cout << "  RF " << permIdx + 1 << ": ";
+      //cout << "  RF " << permIdx + 1 << ": ";
+      //Treedata td_thread = treedata;
       Randomforest RF(&treedata,targetIdx,nTrees,mTry,nodeSize);
       size_t nNodesInForest = RF.nNodes();
       nNodesInAllForests += nNodesInForest;
       importanceMat[permIdx] = RF.featureImportance();
-      cout << nNodesInForest << " nodes (avg. " << 1.0*nNodesInForest / nTrees << " nodes / tree)" << endl;
+      printf("  RF %i: %i nodes (avg. %6.3f nodes/tree)\n",permIdx+1,static_cast<int>(nNodesInForest),1.0*nNodesInForest/nTrees);
     }
-  
+
   num_t time_diff = 1.0*(clock() - time_start) / CLOCKS_PER_SEC;
   cout << nPerms << " RFs, " << nPerms*nTrees << " trees, and " << nNodesInAllForests
        << " nodes generated in " << time_diff << " seconds (" << 1.0*nNodesInAllForests / time_diff
