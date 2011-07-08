@@ -55,7 +55,7 @@ private:
   void percolateSampleIdxAtRandom(size_t featureIdx, size_t sampleIdx, Node** nodep);
 
   //A check if a feature exists in the tree
-  bool isFeatureInTree(size_t featureIdx, size_t treeIdx);
+  //bool isFeatureInTree(size_t featureIdx, size_t treeIdx);
 
   //Given the map<>, generated with the percolation functions, a tree impurity score is outputted
   void treeImpurity(map<Node*,vector<size_t> >& trainIcs, num_t& impurity);
@@ -78,7 +78,7 @@ private:
   vector<Node*> rootNodes_;
 
   //A helper variable that stores all splitter features. This will make impurity calculation faster
-  vector<set<size_t> > featuresInForest_;
+  map<size_t, set<size_t> > featuresInForest_;
 
   //Stores the forest. forest_[i][j] is the j'th node of i'th tree. forest_[i][0] is the rootnode
   //NOTE: will be reduced to just RootNodes in the future

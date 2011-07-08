@@ -500,6 +500,48 @@ num_t Treedata::pearsonCorrelation(size_t featureidx1, size_t featureidx2)
   }
 */
 
+bool Treedata::isPositiveInteger(const string& str, size_t& positiveInteger)
+{
+  stringstream ss(str);
+  int testInt;
+  if(ss >> testInt && ss.eof() && testInt >= 0)
+    {
+      ss.clear();
+      ss.str("");
+      ss >> positiveInteger;
+      return(true);
+    }
+  else
+    {
+      return(false);
+    }
+}
+
+void Treedata::getMatchingTargetIcs(const string& targetStr, set<size_t>& targetIcs)
+{
+  targetIcs.clear();
+  size_t positiveInteger;
+  if(Treedata::isPositiveInteger(targetStr,positiveInteger))
+    {
+      if(positiveInteger < nFeatures_)
+	{
+	  targetIcs.insert(positiveInteger);
+	}
+    }
+  else
+    { 
+      for(size_t featureIdx = 0; featureIdx < nFeatures_; ++featureIdx)
+	{
+	  string featureName(features_[featureIdx].name);
+	  if( featureName.find(targetStr) != string::npos)
+	    {
+	      targetIcs.insert(featureIdx);
+	    }
+	}
+    }
+}
+
+
 
 string Treedata::getFeatureName(const size_t featureIdx)
 {
