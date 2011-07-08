@@ -117,6 +117,33 @@ Treedata::Treedata(string fileName):
 
 }
 
+Treedata::Treedata(Treedata& treedata, const vector<size_t>& featureIcs):
+  features_(0),
+  nSamples_(0),
+  nFeatures_(0)
+{
+
+  time_t now;
+  time(&now);
+  randomInteger_.seed((unsigned int)now);
+
+  size_t nFeaturesNew = featureIcs.size();
+
+  //We'll leave room for the contrasts
+  features_.resize(2*nFeaturesNew);
+  for(size_t i = 0; i < nFeaturesNew; ++i)
+    {
+      features_[i] = treedata.features_[ featureIcs[i] ];
+      features_[i + nFeaturesNew] = treedata.features_[ featureIcs[i] + treedata.nFeatures() ];
+    }
+  
+  nSamples_ = treedata.nSamples();
+  nFeatures_ = nFeaturesNew;
+
+  //cout << nSamples_ << " " << nFeatures_ << endl;
+  
+}
+
 Treedata::~Treedata()
 {
 }
@@ -435,17 +462,44 @@ num_t Treedata::pearsonCorrelation(size_t featureidx1, size_t featureidx2)
   return(r);
 }
 
+
 /*
   void Treedata::killFeature(const size_t featureIdx)
   {
   assert(featureIdx < nFeatures_);
   
+  features_.erase(features_.begin() + nFeatures_ + featureIdx);
   features_.erase(features_.begin() + featureIdx);
   
   --nFeatures_;
   
   }
 */
+
+/*
+  Treedata Treedata::copy(const vector<size_t>& featureIcs)
+  {
+  
+  vector<Feature> features(featureIcs.size());
+  for(size_t featureIdx = 0; featureIdx < featureIcs.size(); ++featureIdx)
+  {
+  features[featureIdx] = features_[featureIcs[featureIdx]];
+  }
+  
+  Treedata td(features);
+  return(td);
+  }
+*/
+
+/*
+  Treedata::Treedata(vector<Feature>& features)
+  {
+  features_ = features;
+  nSamples_ = features[0].data.size();
+  nFeatures_ = features.size();
+  }
+*/
+
 
 string Treedata::getFeatureName(const size_t featureIdx)
 {

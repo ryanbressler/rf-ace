@@ -22,8 +22,12 @@ Randomforest::Randomforest(Treedata* treedata, size_t targetIdx, size_t nTrees, 
       //oobMatrix_[treeIdx].clear();
     }
 
+  //cout << "foo1" << endl;
+
   //Before analysis, we'll permute the contrast features
   treedata_->permuteContrasts();
+
+  //cout << "foo2" << endl;
 
   //Let's grow the forest
   Randomforest::growForest();
