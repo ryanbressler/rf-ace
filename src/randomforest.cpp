@@ -402,7 +402,7 @@ vector<num_t> Randomforest::featureImportance()
 {
 
   size_t nRealFeatures = treedata_->nFeatures();
-  size_t nAllFeatures = 2*nRealFeatures ;
+  size_t nAllFeatures = 2*nRealFeatures;
   vector<num_t> importance(nAllFeatures);
   size_t nOobSamples = 0;
   size_t nContrastsInForest = 0;
@@ -477,7 +477,7 @@ vector<num_t> Randomforest::featureImportance()
     }
   */
 
-  //size_t nNodesInForest = Randomforest::nNodes();
+  size_t nNodesInForest = Randomforest::nNodes();
   
   for(size_t featureIdx = 0; featureIdx < nAllFeatures; ++featureIdx)
     {

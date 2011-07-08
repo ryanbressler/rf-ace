@@ -14,7 +14,7 @@ const datadefs::num_t datadefs::PI = 3.1415926535;
 const datadefs::num_t datadefs::A = 0.140012;
 const datadefs::num_t datadefs::LOG_OF_MAX_NUM = 70.0;
 
-const string initNANs[] = {"NA","NAN"};
+const string initNANs[] = {"NA","NAN","?"};
 const set<datadefs::NAN_t> datadefs::NANs(initNANs,initNANs+2);
 
 
