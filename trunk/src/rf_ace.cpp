@@ -237,9 +237,12 @@ int main(int argc, char* argv[])
       size_t nFeatures = treedata.nFeatures();
       vector<size_t> keepFeatureIcs(1);
       keepFeatureIcs[0] = targetIdx;
+      num_t meanImportanceValue;
+      datadefs::mean(importanceValues,meanImportanceValue,nRealSamples);
+      cout << meanImportanceValue << endl;
       for(size_t featureIdx = 0; featureIdx < nFeatures; ++featureIdx)
 	{
-	  if(featureIdx != targetIdx && importanceValues[featureIdx] > datadefs::EPS)
+	  if(featureIdx != targetIdx && importanceValues[featureIdx] > meanImportanceValue)
 	    {
 	      keepFeatureIcs.push_back(featureIdx);
 	    }
