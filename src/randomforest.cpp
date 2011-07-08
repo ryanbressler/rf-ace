@@ -11,9 +11,10 @@ Randomforest::Randomforest(Treedata* treedata, size_t targetIdx, size_t nTrees, 
   mTry_(mTry),
   nodeSize_(nodeSize),
   rootNodes_(nTrees),
-  featuresInForest_(nTrees),
   oobMatrix_(nTrees)
 {
+
+  featuresInForest_.clear();
 
   //Allocates memory for the root nodes
   for(size_t treeIdx = 0; treeIdx < nTrees_; ++treeIdx)
@@ -400,7 +401,7 @@ void Randomforest::percolateSampleIdxAtRandom(size_t featureIdx, size_t sampleId
 vector<num_t> Randomforest::featureImportance()
 {
 
-  size_t nRealFeatures = treedata_->nFeatures() ;
+  size_t nRealFeatures = treedata_->nFeatures();
   size_t nAllFeatures = 2*nRealFeatures ;
   vector<num_t> importance(nAllFeatures);
   size_t nOobSamples = 0;
@@ -411,10 +412,10 @@ vector<num_t> Randomforest::featureImportance()
       importance[i] = 0;
     }
 
-  //This implementation is inefficient, since most of the time Randomforest::isFeatureInTree(...) will return false. 
-  //I will optomize this by taking the features that exist in the trees as the outermost elements.  
-  for(size_t treeIdx = 0; treeIdx < nTrees_; ++treeIdx)
+  for(map<size_t, set<size_t> >::const_iterator tit(featuresInForest_.begin()); tit != featuresInForest_.end(); ++tit)
     {
+      size_t treeIdx = tit->first;
+      
       size_t nNewOobSamples = oobMatrix_[treeIdx].size();
       nOobSamples += nNewOobSamples;
       //Node* rootNode(forest_[treeIdx][0]);
@@ -422,31 +423,65 @@ vector<num_t> Randomforest::featureImportance()
       Randomforest::percolateSampleIcs(rootNodes_[treeIdx],oobMatrix_[treeIdx],trainIcs);
       num_t treeImpurity;
       Randomforest::treeImpurity(trainIcs,treeImpurity);
-      //cout << "#nodes_with_train_samples=" << trainics.size() << endl;  
-      for(size_t featureIdx = 0; featureIdx < nAllFeatures; ++featureIdx)
+      //cout << "#nodes_with_train_samples=" << trainics.size() << endl;
+
+      for(set<size_t>::const_iterator fit(tit->second.begin()); fit != tit->second.end(); ++fit)
 	{
-	  if(Randomforest::isFeatureInTree(featureIdx,treeIdx))
+	  size_t featureIdx = *fit;
+	  
+	  if(featureIdx >= nRealFeatures)
 	    {
-	      if(featureIdx >= nRealFeatures)
-		{
-		  ++nContrastsInForest;
-		}
-	      Randomforest::percolateSampleIcsAtRandom(featureIdx,rootNodes_[treeIdx],oobMatrix_[treeIdx],trainIcs);
-	      num_t permutedTreeImpurity;
-	      Randomforest::treeImpurity(trainIcs,permutedTreeImpurity);
-	      if(fabs(treeImpurity) > datadefs::EPS)
-		{
-		  importance[featureIdx] += nNewOobSamples * (permutedTreeImpurity - treeImpurity) / treeImpurity;
-		} 
+	      ++nContrastsInForest;
 	    }
+
+	  Randomforest::percolateSampleIcsAtRandom(featureIdx,rootNodes_[treeIdx],oobMatrix_[treeIdx],trainIcs);
+	  num_t permutedTreeImpurity;
+	  Randomforest::treeImpurity(trainIcs,permutedTreeImpurity);
+	  if(fabs(treeImpurity) > datadefs::EPS)
+	    {
+	      importance[featureIdx] += nNewOobSamples * (permutedTreeImpurity - treeImpurity) / treeImpurity;
+	    }
+	    
 	}
+      
     }
 
-  size_t nNodesInForest = Randomforest::nNodes();
+  /*
+    for(size_t treeIdx = 0; treeIdx < nTrees_; ++treeIdx)
+    {
+    size_t nNewOobSamples = oobMatrix_[treeIdx].size();
+    nOobSamples += nNewOobSamples;
+    //Node* rootNode(forest_[treeIdx][0]);
+    map<Node*,vector<size_t> > trainIcs;
+    Randomforest::percolateSampleIcs(rootNodes_[treeIdx],oobMatrix_[treeIdx],trainIcs);
+    num_t treeImpurity;
+    Randomforest::treeImpurity(trainIcs,treeImpurity);
+    //cout << "#nodes_with_train_samples=" << trainics.size() << endl;  
+    for(size_t featureIdx = 0; featureIdx < nAllFeatures; ++featureIdx)
+    {
+    if(Randomforest::isFeatureInTree(featureIdx,treeIdx))
+    {
+    if(featureIdx >= nRealFeatures)
+    {
+    ++nContrastsInForest;
+    }
+    Randomforest::percolateSampleIcsAtRandom(featureIdx,rootNodes_[treeIdx],oobMatrix_[treeIdx],trainIcs);
+    num_t permutedTreeImpurity;
+    Randomforest::treeImpurity(trainIcs,permutedTreeImpurity);
+    if(fabs(treeImpurity) > datadefs::EPS)
+    {
+    importance[featureIdx] += nNewOobSamples * (permutedTreeImpurity - treeImpurity) / treeImpurity;
+    } 
+    }
+    }
+    }
+  */
+
+  //size_t nNodesInForest = Randomforest::nNodes();
   
   for(size_t featureIdx = 0; featureIdx < nAllFeatures; ++featureIdx)
     {
-      importance[featureIdx] *= 1.0*nNodesInForest/nTrees_; //nContrastsInForest
+      importance[featureIdx] *= 100.0*nTrees_/nNodesInForest;//1.0*nNodesInForest/nTrees_; //nContrastsInForest
       importance[featureIdx] /= nOobSamples; //nRealFeatures
     }
 
@@ -475,18 +510,20 @@ vector<size_t> Randomforest::featureFrequency()
 
 
 
-bool Randomforest::isFeatureInTree(size_t featureIdx, size_t treeIdx)
-{
-  set<size_t>::const_iterator it(featuresInForest_[treeIdx].find(featureIdx));
+/*
+  bool Randomforest::isFeatureInTree(size_t featureIdx, size_t treeIdx)
+  {
+  set<size_t>::const_iterator it(featuresInForest_[featureIdx].find(featureIdx));
   if(it == featuresInForest_[treeIdx].end())
-    {
-      return(false);
-    }
+  {
+  return(false);
+  }
   else
-    {
-      return(true);
-    }
-}
+  {
+  return(true);
+  }
+  }
+*/
 
 
 

@@ -29,6 +29,8 @@ public:
 
   num_t pearsonCorrelation(size_t featureidx1, size_t featureidx2);
 
+  void getMatchingTargetIcs(const string& targetStr, set<size_t>& targetIcs);
+
   string getFeatureName(const size_t featureIdx);
   //string get_targetheader();
 
@@ -124,6 +126,8 @@ private:
   bool isValidNumericalHeader(const string& str);
   bool isValidCategoricalHeader(const string& str);
   bool isValidFeatureHeader(const string& str);
+
+  bool isPositiveInteger(const string& str, size_t& positiveInteger);
   
   template <typename T> void transpose(vector<vector<T> >& mat);
     

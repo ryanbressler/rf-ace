@@ -28,39 +28,6 @@ const size_t DEFAULT_NPERMS = 50;
 const num_t DEFAULT_PVALUETHRESHOLD = 0.10;
 const int DEFAULT_IS_GBT_ENABLED = 0;
 
-//WILL BE MOVED INTO PRIVATE PARTS OF TREEDATA
-bool isPositiveInteger(const string& str, size_t& positiveInteger)
-{
-  stringstream ss(str);
-  int testInt;
-  if(ss >> testInt && ss.eof() && testInt >= 0)
-    {
-      ss.clear();
-      ss.str("");
-      ss >> positiveInteger;
-      return(true);
-    }
-  else
-    {
-      return(false);
-    }
-}
-
-//WILL BE MOVED INTO PUBLIC PARTS OF TREEDATA
-void getMatchingTargetIcs(Treedata& treedata, const string& targetStr, set<size_t>& targetIcs)
-{
-  targetIcs.clear();
-  for(size_t featureIdx = 0; featureIdx < treedata.nFeatures(); ++featureIdx)
-    {
-      string featureName(treedata.getFeatureName(featureIdx));
-      if( featureName.find(targetStr) != string::npos)
-	{
-	  targetIcs.insert(featureIdx);
-	}
-    }
-  
-}
-
 void printHeader()
 {
   cout << endl;
@@ -189,30 +156,21 @@ int main(int argc, char* argv[])
   cout << endl << "Reading file '" << input << "'" << endl;
   Treedata treedata(input);
 
-  size_t targetIdx = 0;
+  //Check which feature names match with the specified target identifier
   set<size_t> targetIcs;
-  if( isPositiveInteger(targetStr,targetIdx) )
+  treedata.getMatchingTargetIcs(targetStr,targetIcs);
+  if(targetIcs.size() == 0)
     {
-      if( targetIdx >= treedata.nFeatures() )
-	{
-	  cerr << "target must point to a valid feature (0.." << treedata.nFeatures()-1 << ")" << endl;
-	  printHelpHint();
-	  return EXIT_FAILURE;
-	}
-
-      targetIcs.insert(targetIdx);
-    }
-  else
-    {
-      getMatchingTargetIcs(treedata,targetStr,targetIcs);
+      cerr << "No features match the specified target identifier '" << targetStr << "'" << endl;
+      return EXIT_FAILURE;
     }
 
   //The program starts a loop in which an RF-ACE model will be built for each spcified target feature
   size_t iter = 1;
   for(set<size_t>::const_iterator it(targetIcs.begin()); it != targetIcs.end(); ++it, ++iter)
     {
-      targetIdx = *it;
-      
+      //Extract the target index from the pointer and the number of real samples from the treedata object
+      size_t targetIdx = *it;
       size_t nRealSamples = treedata.nRealSamples(targetIdx);
       
       //If the target has no real samples, the program will just exit
