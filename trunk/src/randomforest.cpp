@@ -3,6 +3,7 @@
 #include <cmath>
 #include <ctime>
 #include <iostream>
+//#include <omp.h>
 
 Randomforest::Randomforest(Treedata* treedata, size_t targetIdx, size_t nTrees, size_t mTry, size_t nodeSize):
   targetIdx_(targetIdx),
@@ -59,7 +60,8 @@ size_t Randomforest::getTarget()
 
 void Randomforest::growForest()
 {
-  
+
+  //#pragma omp parallel for
   for(size_t treeIdx = 0; treeIdx < nTrees_; ++treeIdx)
     {
       Randomforest::growTree(treeIdx);
@@ -162,14 +164,20 @@ void Randomforest::recursiveNodeSplit(const size_t treeIdx, Node* node, const ve
 
   //cout << "Target splitted with itself." << endl;
 
+  vector<num_t> fitness(mTry_, 0.0);
   num_t bestFitness = 0.0;
   size_t bestFeatureIdx = mTry_;
 
   //const size_t halfWay = mTry_ / 2;
 
-  vector<num_t> featureData;
-  for(size_t i = 0; i < mTry_; ++i)
+  //vector<num_t> featureData;
+  //omp_lock_t lock;
+  //omp_init_lock(&lock);
+  //#pragma omp parallel for
+  for(int i = 0; i < static_cast<int>(mTry_); ++i)
     {
+      //printf("%i\n",i);
+      vector<num_t> featureData;
       size_t featureIdx = mTrySample[i];
       bool isFeatureNumerical = treedata_->isFeatureNumerical(featureIdx);
 
@@ -179,22 +187,41 @@ void Randomforest::recursiveNodeSplit(const size_t treeIdx, Node* node, const ve
           continue;
         }
 
+      //omp_set_lock(&lock);
       treedata_->getFeatureData(featureIdx,sampleIcs,featureData);
+      //omp_unset_lock(&lock);
 
-      num_t fitness = treedata_->splitFitness(featureData,isFeatureNumerical,nodeSize_,sampleIcs_left,sampleIcs_right);
+      //omp_set_lock(&lock);
+      fitness[i] = treedata_->splitFitness(featureData,isFeatureNumerical,nodeSize_,sampleIcs_left,sampleIcs_right);
+      //omp_unset_lock(&lock);
 
-      if(fitness > bestFitness)
+      //omp_set_lock(&lock);
+      
+      //if(fitness > bestFitness)
+      //	{
+      //	  bestFitness = fitness;
+      //	  bestFeatureIdx = featureIdx;
+	  //if(fabs(bestFitness - 1.0) < datadefs::EPS)
+	  //  {
+	  //cout << "Maximum fitness reached for splitter " << bestfeatureidx << ", stopped searching" << endl;
+	  //	break;
+	  // }
+      //	}
+      //omp_unset_lock(&lock);
+       
+    }
+  //omp_destroy_lock(&lock);
+
+  for(size_t i = 0; i < mTry_; ++i)
+    {
+      if(fitness[i] > bestFitness)
 	{
-	  bestFitness = fitness;
-	  bestFeatureIdx = featureIdx;
-	  if(fabs(bestFitness - 1.0) < datadefs::EPS)
-	    {
-	      //cout << "Maximum fitness reached for splitter " << bestfeatureidx << ", stopped searching" << endl;
-	      break;
-	    }
+	  bestFitness = fitness[i];
+	  bestFeatureIdx = mTrySample[i];
 	}
     }
-  
+
+
   if(bestFeatureIdx == mTry_)
     {
       //cout << "No splitter found, quitting" << endl << endl;
@@ -203,6 +230,7 @@ void Randomforest::recursiveNodeSplit(const size_t treeIdx, Node* node, const ve
   
   //cout << "Best splitter feature is " << bestFeatureIdx << " with fitness of " << bestFitness << endl; 
 
+  vector<num_t> featureData;
   treedata_->getFeatureData(bestFeatureIdx,sampleIcs,featureData);
   
   //vector<size_t> NANIcs;

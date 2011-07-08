@@ -117,6 +117,25 @@ Treedata::Treedata(string fileName):
 
 }
 
+
+
+Treedata::Treedata(Treedata& treedata):
+  features_(0),
+  nSamples_(0),
+  nFeatures_(0)
+{
+
+  time_t now;
+  time(&now);
+  randomInteger_.seed((unsigned int)now);
+
+  features_ = treedata.features_;
+  nFeatures_ = treedata.nFeatures_;
+  nSamples_ = treedata.nSamples_;
+
+}
+
+
 Treedata::Treedata(Treedata& treedata, const vector<size_t>& featureIcs):
   features_(0),
   nSamples_(0),
