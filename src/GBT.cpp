@@ -1,56 +1,34 @@
 #include "GBT.hpp"
 #include <cmath>
 #include <iostream>
+#include <iomanip>
 
 GBT::GBT(Treedata* treeData, size_t targetIdx, size_t nTrees, size_t nMaxLeaves, num_t shrinkage, num_t subSampleSize):
   treeData_(treeData),
   targetIdx_(targetIdx),
-  nTrees_(nTrees), // NOTE: The computation of the true number of trees in the forest is calculated in the main program, outside of GBT
+  nTrees_(nTrees),
   nMaxLeaves_(nMaxLeaves),
   shrinkage_(shrinkage),
-  subSampleSize_(subSampleSize),
-  rootNodes_(nTrees)
+  subSampleSize_(subSampleSize)
 {
-  // numClasses_ = 0; // Denotes regression forest by default
   nodeSize_ = 1;   // Allow split down to individual example
-  // Currently, we allocate and grow the forest outside of the constructor
-  //
-  // !!! WILL BE MOVED TO THE MAIN FUNCTION !!!
-  // for classification, we need the number of classes,
-  // because it will multiply the number of trees
-  //size_t iTarget = GBT::getTarget();
-  //if ( !treeData_->isFeatureNumerical( iTarget ) )
-  //  {
-  //    map<num_t,size_t> cat2freq;
-  //    size_t nReal;
-  //    //THE TARGET DATA IS NOW EXTRACTED "PROPERLY" BY USING THE INTERFACE FUNCTION getFeatureData()
-  //    vector<num_t> targetData;
-  //    treeData_->getFeatureData(iTarget,targetData);
-  //    datadefs::count_freq( targetData, cat2freq, nReal);
-  //    numClasses_ = cat2freq.size(); // set numClasses_ to denote a classification forest
-  //    cout << "Target "<<iTarget<<" has "<<numClasses_<<" classes, "<<nReal<<" non-missing."<<endl;
-  //    nTrees_ = nTrees_ * numClasses_;
-  //    cout << "Target "<<iTarget<<" has "<<numClasses_<<" classes, "<<nReal<<" non-missing."<<endl;
-  //  }
-
   // Check the type of the target.
-  //numClasses_ = treeData_->features_[targetIdx].nCategories;
   numClasses_ = treeData_->nCategories(targetIdx);
   if (numClasses_ > 0) 
-	{
-	  nTrees_*= numClasses_;
-	}
+  {
+    nTrees_*= numClasses_;
+  }
   
-  //Allocates memory for the root nodes
+  // Allocate memory for the root nodes
+  rootNodes_ = vector<Node *>( nTrees_ );
   for(size_t treeIdx = 0; treeIdx < nTrees_; ++treeIdx)
     {
       rootNodes_[treeIdx] = new Node;
     }
 
   //Let's grow the forest
+  cout << "Target is "<< treeData_->getFeatureName(targetIdx_) <<" ["<<targetIdx_<<"]. It has "<<numClasses_<<" classes."<<endl;
   GBT::growForest();
-
-
 }
 
 
@@ -63,61 +41,6 @@ GBT::~GBT()
       delete rootNodes_[treeIdx];
     }
 }
-
-
-//////////////////
-//  DEPRECATED  //
-//////////////////
-
-// reserve memory
-
-//void GBT::allocateForest_deprecated()
-//{
-// Determine the number of nodes we need for the GBT-forest.
-//
-// nMaxLeaves determines the max number of leaf nodes
-// The depth of the last complete level of the tree:
-
-//int depthComplete = int(floor(log10(float(nMaxLeaves_))/log10(2.0)));
-// Number of nodes of the last complete level of the tree:
-
-//int nTerminalNodesComplete = int(pow(2.0, depthComplete));
-
-//
-// The number of nodes in a complete binary tree of depth depthComplete
-// plus the last incomplete level
-
-//nMaxNodes_ = 2*nTerminalNodesComplete-1  + 2*( nMaxLeaves_-nTerminalNodesComplete );
-
-// for classification, we need the number of classes,
-// because it will multiply the number of trees
-//size_t iTarget = GBT::getTarget();
-//	if ( !treeData_->isFeatureNumerical( iTarget ) )
-//	{
-//		map<num_t,size_t> cat2freq;
-//		size_t nReal;
-//		datadefs::count_freq( treeData_->features_[iTarget].data, cat2freq, nReal);
-//		numClasses_ = cat2freq.size(); // set numClasses_ to denote a classification forest
-//		cout << "Target "<<iTarget<<" has "<<numClasses_<<" classes, "<<nReal<<" non-missing."<<endl;
-//		nTrees_ = nTrees_ * numClasses_;
-//		cout << "Target "<<iTarget<<" has "<<numClasses_<<" classes, "<<nReal<<" non-missing."<<endl;
-//	}
-
-// Reserve memory for vector of node counts in each tree
-//nNodes_ = vector<size_t>(nTrees_, 0);
-// Reserve memory for the forest as a vector of vector of nodes
-//forest_ = vector< vector<Node> >(nTrees_, vector<Node>( nMaxNodes_ ));
-
-//Allocates memory for the root nodes
-//	for(size_t treeIdx = 0; treeIdx < nTrees_; ++treeIdx)
-//	  {
-//	    rootNodes_[treeIdx] = new Node;
-//	  }
-
-//cout << "Forest initialized. " << forest_.size() << " trees and "
-//	<< nMaxNodes_ << " max nodes per tree generated." << endl;
-//}
-
 
 
 
@@ -135,29 +58,21 @@ void GBT::growForest()
 // Grow a GBT "forest" for a numerical target variable
 void GBT::growForestNumerical()
 {
-  //---------------------------------------------------------------------------
-  // The target attribute in GBT should have been set beforehand
-  size_t iTarget  = targetIdx_; // OLD: getTarget();
   size_t nSamples = treeData_->nSamples();
   // save a copy of the target column because it will be overwritten
   vector<num_t> trueTargetData;
-  treeData_->getFeatureData(iTarget,trueTargetData); // OLD: vector<num_t> trueTarget = treeData_->features_[iTarget].data;
+  treeData_->getFeatureData(targetIdx_,trueTargetData);
 
   // Target for GBT is different for each tree
   // reference to the target column, will overwrite it
-  vector<num_t>& curTargetData = treeData_->features_[iTarget].data; //// THIS WILL BECOME INVALID UPON REMOVAL OF FRIENDSHIP ASSIGNMENT IN TREEDATA ////
+  vector<num_t>& curTargetData = treeData_->features_[targetIdx_].data; //// THIS WILL BECOME INVALID UPON REMOVAL OF FRIENDSHIP ASSIGNMENT IN TREEDATA ////
 
-
-  //---------------------------------------------------------------------------
   // Set the initial prediction to zero.
   vector<num_t> prediction(nSamples, 0.0);
   vector<num_t> curPrediction(nSamples);
 
-  //---------------------------------------------------------------------------
   for(size_t t = 0; t < nTrees_; ++t)
     {
-      cout << endl;
-
       // current target is the negative gradient of the loss function
       // for square loss, it is target minus current prediction
       for (size_t i=0; i<nSamples; i++)
@@ -171,16 +86,28 @@ void GBT::growForestNumerical()
       // What kind of a prediction does the new tree produce?
       GBT::predictDatasetByTree(t, curPrediction);
 
-      // Calculate current total prediction adding the newly generated tree
+      // Calculate the current total prediction adding the newly generated tree
+      cout <<endl<<"Tree "<<t<<": Predictions:"<<endl;
+      num_t sqErrorSum = 0.0;
       for (size_t i=0; i<nSamples; i++)
         {
           prediction[i] = prediction[i] + shrinkage_ * curPrediction[i];
+
+          // diagnostics
+          num_t iError = trueTargetData[i]-prediction[i];
+          sqErrorSum += iError*iError;
+          cout << setiosflags(ios::fixed) << setprecision(4);
+          cout <<"i="<<setw(4)<<i;
+          cout <<" cp="<<setw(8)<<curPrediction[i]<<" ct="<<setw(8)<< curTargetData[i]<<" ce="<<setw(8)<< curTargetData[i]-curPrediction[i];
+          cout << " p="<<setw(8)<<   prediction[i]<< " t="<<setw(8)<<trueTargetData[i]<< " e="<<setw(8)<< iError;
+          cout << endl;
         }
+      cout << "rmserror="<<sqrt(sqErrorSum/nSamples)<<endl;
     }
   // GBT-forest is now done!
 
   // restore true target column
-  treeData_->features_[iTarget].data = trueTargetData; //// THIS WILL BECOME INVALID UPON REMOVAL OF FRIENDSHIP ASSIGNMENT IN TREEDATA ////
+  treeData_->features_[targetIdx_].data = trueTargetData; //// THIS WILL BECOME INVALID UPON REMOVAL OF FRIENDSHIP ASSIGNMENT IN TREEDATA ////
 }
 
 
@@ -188,26 +115,21 @@ void GBT::growForestNumerical()
 // Grow a GBT "forest" for a categorical target variable
 void GBT::growForestCategorical()
 {
-  //---------------------------------------------------------------------------
-  // The target attribute in GBT should have been set beforehand
-  size_t iTarget  = targetIdx_; // OLD: size_t iTarget  = getTarget();
-  size_t nSamples = treeData_->nSamples();
-
   // Save a copy of the target column because it will be overwritten later.
   // We also know that it must be categorical.
+  size_t nSamples = treeData_->nSamples();
   vector<num_t> trueTargetData;
-  treeData_->getFeatureData(iTarget,trueTargetData); // OLD: vector<num_t> trueTarget = treeData_->features_[iTarget].data;
+  treeData_->getFeatureData(targetIdx_,trueTargetData);
 
   // Target for GBT is different for each tree.
   // We use the original target column to save each temporary target.
   // Reference to the target column, will overwrite it:
-  vector<num_t>& curTargetData = treeData_->features_[iTarget].data; //// THIS WILL BECOME INVALID UPON REMOVAL OF FRIENDSHIP ASSIGNMENT IN TREEDATA ////
+  vector<num_t>& curTargetData = treeData_->features_[targetIdx_].data; //// THIS WILL BECOME INVALID UPON REMOVAL OF FRIENDSHIP ASSIGNMENT IN TREEDATA ////
 
   // For categorical target variables, we predict each category probability separately.
   // This target is numerical, thus we need to change the target variable type to
   // numerical from categorical.
-
-  treeData_->features_[iTarget].isNumerical = true; //// THIS WILL BECOME INVALID UPON REMOVAL OF FRIENDSHIP ASSIGNMENT IN TREEDATA ////
+  treeData_->features_[targetIdx_].isNumerical = true; //// THIS WILL BECOME INVALID UPON REMOVAL OF FRIENDSHIP ASSIGNMENT IN TREEDATA ////
 
 
   // Initialize class probability estimates and the predictions.
@@ -243,24 +165,27 @@ void GBT::growForestCategorical()
             }
 
           // Grow a tree to predict the current target
-          size_t t = m*numClasses_ + k; // tree index
+          size_t t = m * numClasses_ + k; // tree index
           GBT::growTree(t);
 
-          // What kind of a prediction does the new tree produce?
+          // What kind of a prediction does the new tree produce
+          // out of the whole training data set?
           GBT::predictDatasetByTree(t, curPrediction[k] );
 
           // Calculate the current total prediction adding the newly generated tree
+          cout <<"Iter="<<m<<" Class="<<k<<": Predictions:"<<endl;
           for (size_t i=0; i<nSamples; i++)
             {
               prediction[i][k] = prediction[i][k] + shrinkage_ * curPrediction[k][i];
+              // cout <<"i="<<i<<" CurPrediction="<<curPrediction[k][i]<<" prediction="<<prediction[i][k]<<endl;
             }
         }
     }
 
   // GBT-forest is now done!
   // restore the true target column and its true type
-  treeData_->features_[iTarget].data = trueTargetData; //// THIS WILL BECOME INVALID UPON REMOVAL OF FRIENDSHIP ASSIGNMENT IN TREEDATA ////
-  treeData_->features_[iTarget].isNumerical = false; //// THIS WILL BECOME INVALID UPON REMOVAL OF FRIENDSHIP ASSIGNMENT IN TREEDATA ////
+  treeData_->features_[targetIdx_].data = trueTargetData; //// THIS WILL BECOME INVALID UPON REMOVAL OF FRIENDSHIP ASSIGNMENT IN TREEDATA ////
+  treeData_->features_[targetIdx_].isNumerical = false; //// THIS WILL BECOME INVALID UPON REMOVAL OF FRIENDSHIP ASSIGNMENT IN TREEDATA ////
 }
 
 
@@ -274,7 +199,6 @@ void GBT::transformLogistic(vector<num_t>& prediction, vector<num_t>& probabilit
   // find maximum prediction
   vector<num_t>::iterator maxPrediction = max_element( prediction.begin(), prediction.end() );
   // scale by maximum to prevent numerical errors
-
 
   num_t expSum = 0.0;
   size_t k;
@@ -308,7 +232,7 @@ void GBT::predictForestCategorical(Treedata* treeData, vector<num_t>& categoryPr
   size_t nSamples = treeData->nSamples();
   cout << "Predicting "<<nSamples<<" samples. Target="<<targetIdx_<<". Classes="<<numClasses_<<endl;
 
-  // for classification, each "tree" is actually numClasses_ trees in a row
+  // For classification, each "tree" is actually numClasses_ trees in a row
   // each predicting the probability of its own class.
   size_t numIterations = nTrees_ / numClasses_;
   size_t errorCnt = 0;
@@ -329,7 +253,6 @@ void GBT::predictForestCategorical(Treedata* treeData, vector<num_t>& categoryPr
       // ... find index of maximum prediction, this is the predicted cateory
       vector<num_t>::iterator maxProb = max_element( prediction.begin(), prediction.end() );
       categoryPrediction[i] = maxProb - prediction.begin() ; // classes are 0,1,2,...
-
 
       // diagnostic print out the true and the prediction
       errorCnt += (treeData->features_[targetIdx_].data[i] != categoryPrediction[i]); //// THIS WILL BECOME INVALID UPON REMOVAL OF FRIENDSHIP ASSIGNMENT IN TREEDATA ////
@@ -390,11 +313,10 @@ void GBT::predictDatasetByTree(size_t treeIdx, vector<num_t>& curPrediction)
 {
   size_t nSamples = treeData_->nSamples();
   // predict for all samples
-  for(size_t sampleIdx = 0; sampleIdx < nSamples; ++sampleIdx)
+  for(size_t i = 0; i < nSamples; ++i)
     {
-      curPrediction[sampleIdx] = GBT::predictSampleByTree(sampleIdx, treeIdx);
-
-      cout << "Sample " << sampleIdx << ", prediction " << curPrediction[sampleIdx]  << endl;
+      curPrediction[i] = GBT::predictSampleByTree(i, treeIdx);
+      // cout << "Sample " << i << ", prediction " << curPrediction[i]  << endl;
     }
 }
 
@@ -475,9 +397,8 @@ void GBT::SetNodePrediction( size_t treeIdx, Node* node, vector<size_t>& sampleI
         }
     }
 
-  // REPLACED THE OLD MATRIX SYNTAX WITH THE POINTER SYNTAX, CONFORMING TO THE NEW DYNAMIC NODE CLASS
   node->setPrediction(nodePred);
-  cout << "setting pred=" << nodePred << ", tree="<<treeIdx<<" &node="<<&node<<endl;
+  cout << "setting pred=" << nodePred << ", tree="<<treeIdx<<" &node="<< node<<endl;
   
   ++nLeavesCounter_; // finally, indicate that we have added a leaf
 }
@@ -507,7 +428,7 @@ void GBT::recursiveNodeSplit(size_t treeIdx, Node* node, vector<size_t>& sampleI
       GBT::SetNodePrediction(treeIdx, node, sampleIcs);
       return;
     }
-  cout << "tree=" << treeIdx << "  &node=" << &node << endl;
+  cout << "tree=" << treeIdx << "  &node=" << &node << " finding split:"<< endl;
 
 
 
@@ -520,18 +441,11 @@ void GBT::recursiveNodeSplit(size_t treeIdx, Node* node, vector<size_t>& sampleI
   num_t splitValue;
   set<num_t> values_left;
 
-  //if(isTargetNumerical)
-  //  {
-      // Target is ALWAYS numerical with GBT!
-      assert( isTargetNumerical == true );
-      treeData_->numericalFeatureSplit(targetData,isTargetNumerical,targetData,nodeSize_,sampleIcs_left,sampleIcs_right,splitValue);
-  //  }
-  //else
-  //  {
-  //    treeData_->categoricalFeatureSplit(targetData,isTargetNumerical,targetData,sampleIcs_left,sampleIcs_right,values_left);
-  //  }
-  cout << "Target split with itself." << endl;
 
+  // Target is ALWAYS numerical with GBT!
+  assert( isTargetNumerical == true );
+  treeData_->numericalFeatureSplit(targetData,isTargetNumerical,targetData,nodeSize_,sampleIcs_left,sampleIcs_right,splitValue);
+  cout << "Target split with itself." << endl;
 
 
   // Find the best feature split corresponding to the target split
@@ -576,8 +490,6 @@ void GBT::recursiveNodeSplit(size_t treeIdx, Node* node, vector<size_t>& sampleI
 
   treeData_->getFeatureData(bestFeatureIdx,sampleIcs,featureData);
 
-  //vector<size_t> NANIcs;
-
   size_t nRealSamples = 0;
   for(size_t i = 0; i < nSamples; ++i)
     {
@@ -600,10 +512,7 @@ void GBT::recursiveNodeSplit(size_t treeIdx, Node* node, vector<size_t>& sampleI
     }
 
 
-  //size_t nodeIdx_left;
-  //size_t nodeIdx_right;
   bool isBestFeatureNumerical = treeData_->isFeatureNumerical(bestFeatureIdx);
-
   if (isBestFeatureNumerical)
     {
       treeData_->numericalFeatureSplit(targetData,isTargetNumerical,featureData,nodeSize_,sampleIcs_left,sampleIcs_right,splitValue);
@@ -622,11 +531,7 @@ void GBT::recursiveNodeSplit(size_t treeIdx, Node* node, vector<size_t>& sampleI
       return;
     }
 
-  //OBSOLETE
-  //nodeIdx_left  = ++nNodes_[treeIdx]; // we start numbering from zero
-  //nodeIdx_right = ++nNodes_[treeIdx];
 
-  //REPLACED THE OLD SYNTAX WITH THE NEW ONE, CONFORMING TO THE DYNAMIC NODE CLASS
   if (isBestFeatureNumerical)
     {
       node->setSplitter(bestFeatureIdx,splitValue);
@@ -636,47 +541,18 @@ void GBT::recursiveNodeSplit(size_t treeIdx, Node* node, vector<size_t>& sampleI
       node->setSplitter(bestFeatureIdx,values_left);
     }
 
-  //REPLACED THE OLD SYNTAX WITH THE NEW ONE, CONFORMING TO THE DYNAMIC NODE CLASS
-  GBT::recursiveNodeSplit(treeIdx,node->leftChild(),sampleIcs_left);
-  GBT::recursiveNodeSplit(treeIdx,node->rightChild(),sampleIcs_right);
 
-  /*
-  	if (sampleIcs_left.size() >= 2*nodeSize_)
-  	{
-  		//WILL BECOME DEPRECATED
-  		for (size_t i = 0; i < sampleIcs_left.size(); ++i)
-  		{
-  			sampleIcs_left[i] = sampleIcs[sampleIcs_left[i]];
-  		}
-
-  		GBT::recursiveNodeSplit(treeIdx,nodeIdx_left,sampleIcs_left);
-  	}
-
-  	if (sampleIcs_right.size() >= 2*nodeSize_)
-  	{
-  		//WILL BECOME DEPRECATED
-  		for (size_t i = 0; i < sampleIcs_right.size(); ++i)
-  		{
-  			sampleIcs_right[i] = sampleIcs[sampleIcs_right[i]];
-  		}
-
-  		GBT::recursiveNodeSplit(treeIdx,nodeIdx_right,sampleIcs_right);
-  	}
-  */
-}
-
-
-
-
-/*
-  void GBT::setTarget(size_t targetIdx)
+  //WILL BECOME DEPRECATED
+  for (size_t i = 0; i < sampleIcs_left.size(); ++i)
   {
-  targetIdx_ = targetIdx;
+    sampleIcs_left[i] = sampleIcs[sampleIcs_left[i]];
   }
-*/
+  GBT::recursiveNodeSplit(treeIdx,node->leftChild(),sampleIcs_left);
 
-
-size_t GBT::getTarget()
-{
-  return(targetIdx_);
+  //WILL BECOME DEPRECATED
+  for (size_t i = 0; i < sampleIcs_right.size(); ++i)
+  {
+    sampleIcs_right[i] = sampleIcs[sampleIcs_right[i]];
+  }
+  GBT::recursiveNodeSplit(treeIdx,node->rightChild(),sampleIcs_right);
 }
