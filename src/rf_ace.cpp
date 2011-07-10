@@ -263,29 +263,28 @@ int main(int argc, char* argv[])
       /////////////////////////////////////////////
       //  ANALYSIS 2 -- Gradient Boosting Trees  //
       /////////////////////////////////////////////
-      /*
-	if(isGBTEnabled)
+      
+      if(isGBTEnabled)
 	{
-	cout << "Gradient Boosting Trees *ENABLED*" << endl;
-	
-	size_t nMaxLeaves = 6;
-	num_t shrinkage = 0.5;
-	num_t subSampleSize = 0.5;
-	GBT gbt(&treedataFiltered, targetIdx, nTrees, nMaxLeaves, shrinkage, subSampleSize);
-	
-	
-	cout <<endl<< "PREDICTION:" << endl;
-	vector<num_t> prediction(treedataFiltered.nSamples());
-	gbt.predictForest(&treedataFiltered, prediction);
+	  cout << "Gradient Boosting Trees *ENABLED*" << endl;
+	  
+	  size_t nMaxLeaves = 6;
+	  num_t shrinkage = 0.5;
+	  num_t subSampleSize = 0.5;
+	  GBT gbt(&treedataFiltered, targetIdx, nTrees, nMaxLeaves, shrinkage, subSampleSize);
+	  
+	  
+	  cout <<endl<< "PREDICTION:" << endl;
+	  vector<num_t> prediction(treedataFiltered.nSamples());
+	  gbt.predictForest(&treedataFiltered, prediction);
 	}
-	else
-	{
-	cout << "Gradient Boosting Trees *DISABLED*" << endl;
+      else
+      	{
+	  cout << "Gradient Boosting Trees *DISABLED*" << endl;
 	}
-      */
-
-      ///////////////////
-      // TEMPORARY -- 
+      
+      
+      
       
       ///////////////////////
       //  GENERATE OUTPUT  //
