@@ -727,11 +727,22 @@ void Treedata::bootstrapFromRealSamples(const bool withReplacement,
         }
     }
 
+  sort(ics.begin(),ics.end());
+
+  if(nSamples < nRealSamples)
+    {
+      oobIcs.resize(nRealSamples);
+    }
+  else
+    {
+      oobIcs.resize(nSamples);
+    }
+
   //Then, as we now have the sample stored in ics, we'll check which of the samples, from allIcs, are not contained in ics and store them in oobIcs instead
-  oobIcs.resize(nSamples);
   vector<size_t>::iterator it = set_difference(allIcs.begin(),allIcs.end(),ics.begin(),ics.end(),oobIcs.begin());
   size_t nOob = distance(oobIcs.begin(),it);
   oobIcs.resize(nOob);
+  //cout << "nOob=" << nOob << endl;
 }
 
 

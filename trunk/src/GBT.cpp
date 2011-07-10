@@ -325,30 +325,65 @@ void GBT::predictDatasetByTree(size_t treeIdx, vector<num_t>& curPrediction)
 void GBT::growTree(size_t treeIdx)
 {
   nLeavesCounter_ = 0; // Counts the number of leaves in the growing tree
-  size_t nSamples = treeData_->nSamples();
+  //size_t nSamples = treeData_->nSamples();
 
   //////////////////////////////////////////////////////////////////////////////////////////////////
   //
   // // ADDED A BOOTSTRAP FUNCTION HERE -- MAYBE IT'S OF USE
   // // NOTE: bootstrapFromRealSamples() generates sample with no NaN's!
   //
-  // vector<size_t> bootstrapIcs;
-  // vector<size_t> oobIcs;
-  // bool withReplacement = false;
-  // num_t sampleSize = 0.5; 
+  vector<size_t> bootstrapIcs;
+  vector<size_t> oobIcs;
+  bool withReplacement = false;
+  //num_t sampleSize = 0.5; 
   //
   // // 50% of the real samples the target has will be resampled without replacement
   // // Samples left out from bootstrapIcs will be stored in oobIcs
-  // treeData_->bootstrapFromRealSamples(withReplacement,sampleSize,targetIdx_,bootstrapIcs,oobIcs);
-  //
+  treeData_->bootstrapFromRealSamples(withReplacement,subSampleSize_,targetIdx_,bootstrapIcs,oobIcs);
+  
+  if(false)
+    {
+      vector<num_t> targetData;
+      treeData_->getFeatureData(targetIdx_,bootstrapIcs,targetData);
+      for(size_t i = 0; i < targetData.size(); ++i)
+        {
+          assert(!datadefs::isNAN(targetData[i]));
+        }
+
+      treeData_->getFeatureData(targetIdx_,oobIcs,targetData);
+      for(size_t i = 0; i < targetData.size(); ++i)
+        {
+          assert(!datadefs::isNAN(targetData[i]));
+        }
+      cout << "the generated bootstrap sample for tree " << treeIdx << " looks ok" << endl;
+    }
+
+
+
+  if(false)
+    {
+      cout << "tree " << treeIdx << "  bootstrap indices [";
+      for(size_t i = 0; i < bootstrapIcs.size(); ++i)
+        {
+          cout << " " << bootstrapIcs[i];
+        }
+      cout << " ]  oob [";
+      for(size_t i = 0; i < oobIcs.size(); ++i)
+        {
+          cout << " " << oobIcs[i];
+        }
+      cout << " ]" << endl << endl;
+    }
+
+
   //////////////////////////////////////////////////////////////////////////////////////////////////
 
   //Generate a new random  vector for sample indices
-  vector<size_t> sampleIcs(nSamples);
-  for(size_t i = 0; i < nSamples; ++i)
-    {
-      sampleIcs[i] = i;
-    }
+  //vector<size_t> sampleIcs(nSamples);
+  //for(size_t i = 0; i < nSamples; ++i)
+  //  {
+  //    sampleIcs[i] = i;
+  //  }
 
   // treeData_->permute(sampleIcs);
   // TODO implement training using only subSampleSize_ samples.
@@ -359,7 +394,7 @@ void GBT::growTree(size_t treeIdx)
 
   //Start the recursive node splitting from the root node. This will generate the tree.
   // NOTE: COULD sampleIcs BE REPLACED WITH bootstrapIcs?
-  GBT::recursiveNodeSplit(treeIdx, rootNodes_[treeIdx], sampleIcs);
+  GBT::recursiveNodeSplit(treeIdx, rootNodes_[treeIdx], bootstrapIcs);
 }
 
 
