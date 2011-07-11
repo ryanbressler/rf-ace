@@ -73,8 +73,8 @@ void GBT::growForestNumerical()
 
   bool sampleWithReplacement = false;
   num_t sampleSize = subSampleSize_;
-  size_t nMaxNodes = 2*nMaxLeaves_ - 1;
-  size_t minNodeSize = 1;
+  size_t maxNodesToStop = 2*nMaxLeaves_ - 1;
+  size_t minNodeSizeToStop = 1;
   bool isRandomSplit = false;
   size_t nFeaturesInSample = treeData_->nFeatures();
   size_t nNodes;
@@ -95,8 +95,8 @@ void GBT::growForestNumerical()
 			      targetIdx_,
 			      sampleWithReplacement,
 			      sampleSize,
-			      nMaxNodes,
-			      minNodeSize,
+			      maxNodesToStop,
+			      minNodeSizeToStop,
 			      isRandomSplit,
 			      nFeaturesInSample,
 			      oobIcs,
@@ -163,8 +163,8 @@ void GBT::growForestCategorical()
 
   bool sampleWithReplacement = false;
   num_t sampleSize = subSampleSize_;
-  size_t nMaxNodes = 2*nMaxLeaves_ - 1;
-  size_t minNodeSize = 1;
+  size_t maxNodesToStop = 2*nMaxLeaves_ - 1;
+  size_t minNodeSizeToStop = 1;
   bool isRandomSplit = false;
   size_t nFeaturesInSample = treeData_->nFeatures();
   size_t nNodes;
@@ -200,8 +200,8 @@ void GBT::growForestCategorical()
 				  targetIdx_,
 				  sampleWithReplacement,
 				  sampleSize,
-				  nMaxNodes,
-				  minNodeSize,
+				  maxNodesToStop,
+				  minNodeSizeToStop,
 				  isRandomSplit,
 				  nFeaturesInSample,
 				  oobIcs,

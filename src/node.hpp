@@ -55,12 +55,12 @@ protected:
   void recursiveNodeSplit(Treedata* treeData,
 			  const size_t targetIdx,
 			  const vector<size_t>& sampleIcs,
-			  const size_t nMaxNodes,
-			  const size_t minNodeSize,
+			  const size_t maxNodesToStop,
+			  const size_t minNodeSizeToStop,
 			  const bool isRandomSplit,
 			  const size_t nFeaturesInSample,
-			  size_t& nNodes,
-			  set<size_t>& featuresInTree);
+			  set<size_t>& featuresInTree,
+			  size_t& nNodes);
     
 
 private:

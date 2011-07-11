@@ -238,14 +238,16 @@ int main(int argc, char* argv[])
       size_t nFeatures = treedata.nFeatures();
       vector<size_t> keepFeatureIcs(1);
       keepFeatureIcs[0] = targetIdx;
-      //num_t meanImportanceValue;
-      //datadefs::mean(importanceValues,meanImportanceValue,nRealSamples);
-      //cout << meanImportanceValue << endl;
+      vector<string> removedFeatures;
       for(size_t featureIdx = 0; featureIdx < nFeatures; ++featureIdx)
 	{
 	  if(featureIdx != targetIdx && importanceValues[featureIdx] > datadefs::EPS)
 	    {
 	      keepFeatureIcs.push_back(featureIdx);
+	    }
+	  else
+	    {
+	      removedFeatures.push_back(treedata.getFeatureName(featureIdx));
 	    }
 	}
       
@@ -331,7 +333,13 @@ int main(int argc, char* argv[])
 	      //os << target_str << "\t" << treedata.get_featureheader(ref_ics[i]) << "\t" 
 	      //   << pvalues[i] << "\t" << ivalues[i] << "\t" << treedata.corr(targetidx,ref_ics[i]) << endl;
 	    }
-	  //os.close();
+	  
+	  for(size_t featureIdx = 0; featureIdx < removedFeatures.size(); ++featureIdx)
+	    {
+	      fprintf(po,"%s\t%s\tNaN\tNaN\tNaN\n",targetName.c_str(),removedFeatures[featureIdx].c_str());
+	    }
+
+
 	  fclose(po);
 	  cout << endl << "Association file created. Format:" << endl;
 	  cout << "TARGET   PREDICTOR   P-VALUE   IMPORTANCE   CORRELATION" << endl << endl;
