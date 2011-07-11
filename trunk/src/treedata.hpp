@@ -9,7 +9,7 @@
 #include <map>
 #include <fstream>
 #include "datadefs.hpp"
-#include "node.hpp"
+//#include "node.hpp"
 #include "mtrand.h"
 
 using namespace std;
@@ -77,26 +77,26 @@ public:
   bool isFeatureNumerical(size_t featureIdx);
 
   //Finds the best split for target with respect to selected feature splitter, which needs to be numerical.
-  void numericalFeatureSplit(vector<num_t>& tv,
-                             const bool isTargetNumerical,
-                             vector<num_t>& fv,
-                             const size_t min_split,
-                             vector<size_t>& sampleIcs_left,
-                             vector<size_t>& sampleIcs_right,
-                             num_t& splitValue);
+  //void numericalFeatureSplit(vector<num_t>& tv,
+  //                         const bool isTargetNumerical,
+  //                         vector<num_t>& fv,
+  //                         const size_t min_split,
+  //                         vector<size_t>& sampleIcs_left,
+  //                         vector<size_t>& sampleIcs_right,
+  //                         num_t& splitValue);
 
-  void categoricalFeatureSplit(vector<num_t>& tv,
-                               const bool isTargetNumerical,
-                               vector<num_t>& fv,
-                               vector<size_t>& sampleIcs_left,
-                               vector<size_t>& sampleIcs_right,
-                               set<num_t>& categories_left);
+  //void categoricalFeatureSplit(vector<num_t>& tv,
+  //                           const bool isTargetNumerical,
+  //                           vector<num_t>& fv,
+  //                           vector<size_t>& sampleIcs_left,
+  //                           vector<size_t>& sampleIcs_right,
+  //                           set<num_t>& categories_left);
 
-  num_t splitFitness(vector<num_t> const& data,
-                     bool const& isFeatureNumerical,
-                     size_t const& minSplit,
-                     vector<size_t> const& sampleIcs_left,
-                     vector<size_t> const& sampleIcs_right);
+  //num_t splitFitness(vector<num_t> const& data,
+  //                 bool const& isFeatureNumerical,
+  //                 size_t const& minSplit,
+  //                 vector<size_t> const& sampleIcs_left,
+  //                 vector<size_t> const& sampleIcs_right);
 
   void impurity(vector<num_t>& data, bool isFeatureNumerical, num_t& impurity, size_t& nreal);
 
