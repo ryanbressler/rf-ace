@@ -2,7 +2,7 @@
 #define RANDOMFOREST_HPP
 
 #include<cstdlib>
-#include "node.hpp"
+#include "rootnode.hpp"
 #include "treedata.hpp"
 
 using namespace std;
@@ -41,10 +41,10 @@ private:
   void growForest();
 
   //Grows one tree with respect to selected target feature
-  void growTree(size_t treeIdx);
+  //void growTree(size_t treeIdx);
 
   //Recursive tree-generating node splitter algorithm
-  void recursiveNodeSplit(const size_t treeIdx, Node* node, const vector<size_t>& sampleIcs);
+  //void recursiveNodeSplit(const size_t treeIdx, Node* node, const vector<size_t>& sampleIcs);
 
   //Percolates samples along the trees, starting from the rootNode. Spits out a map<> that ties the percolated train samples to the leaf nodes
   //NOTE: currently, since there's no implementation for a RootNode class, there's no good way to store the percolated samples in the tree, but a map<> is generated instead
@@ -75,7 +75,7 @@ private:
   size_t nodeSize_;
 
   //Root nodes for every tree
-  vector<Node*> rootNodes_;
+  vector<RootNode*> rootNodes_;
 
   //A helper variable that stores all splitter features. This will make impurity calculation faster
   map<size_t, set<size_t> > featuresInForest_;

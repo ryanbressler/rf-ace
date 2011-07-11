@@ -4,6 +4,7 @@
 #include <cstdlib>
 #include <algorithm>
 #include "node.hpp"
+#include "rootnode.hpp"
 #include "treedata.hpp"
 #include "datadefs.hpp"
 
@@ -32,14 +33,14 @@ private:
   void growForest();
   void growForestNumerical();
   void growForestCategorical();
-  void growTree(size_t treeidx);
+  //void growTree(size_t treeidx);
 
   void predictForestNumerical(  Treedata* treeData, vector<num_t>& prediction);
   void predictForestCategorical(Treedata* treeData, vector<num_t>& categoryPrediction);
   num_t predictSampleByTree(size_t sampleidx, size_t treeidx); // REMOVED Treedata* treeData as it's readily stored in treeData_
   void predictDatasetByTree(size_t treeidx, vector<num_t>& prediction);
 
-  void recursiveNodeSplit(size_t treeidx, Node* node, vector<size_t>& sampleics);
+  //void recursiveNodeSplit(size_t treeidx, Node* node, vector<size_t>& sampleics);
   void SetNodePrediction( size_t treeidx, Node* node, vector<size_t>& sampleics);
   void transformLogistic(vector<num_t>& prediction, vector<num_t>& probability);
 
@@ -56,7 +57,7 @@ private:
 
   //Stores the rootnodes for the forest. Access the child nodes by calling rootNodes_[treeIdx]->leftChild() etc.
   //rootNodes_[treeIdx]->hasChildren() returns true if the node has children
-  vector<Node*> rootNodes_;
+  vector<RootNode*> rootNodes_;
 };
 
 #endif

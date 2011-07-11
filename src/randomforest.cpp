@@ -20,7 +20,7 @@ Randomforest::Randomforest(Treedata* treedata, size_t targetIdx, size_t nTrees, 
   //Allocates memory for the root nodes
   for(size_t treeIdx = 0; treeIdx < nTrees_; ++treeIdx)
     {
-      rootNodes_[treeIdx] = new Node;
+      rootNodes_[treeIdx] = new RootNode;
       //oobMatrix_[treeIdx].clear();
     }
 
@@ -61,269 +61,31 @@ size_t Randomforest::getTarget()
 void Randomforest::growForest()
 {
 
+  bool sampleWithReplacement = true;
+  num_t sampleSize = 1.0;
+  bool isRandomSplit = true;
+  size_t nMaxNodes = treedata_->nSamples();
+  size_t minNodeSize = nodeSize_;
+  size_t nFeaturesInSample = mTry_;
+  size_t nNodes;
+
   //#pragma omp parallel for
   for(size_t treeIdx = 0; treeIdx < nTrees_; ++treeIdx)
     {
-      Randomforest::growTree(treeIdx);
+      rootNodes_[treeIdx]->growTree(treedata_,
+				    targetIdx_,
+				    sampleWithReplacement,
+				    sampleSize,
+				    nMaxNodes,
+				    minNodeSize,
+				    isRandomSplit,
+				    nFeaturesInSample,
+				    oobMatrix_[treeIdx],
+				    featuresInForest_[treeIdx],
+				    nNodes);
     }
     
 }
-
-void Randomforest::growTree(size_t treeIdx)
-{
-  //Generate the vector for bootstrap indices
-  vector<size_t> bootstrapIcs;
-  bool withReplacement = true;
-  num_t sampleSize = 1.0;
-
-  //Generate bootstrap indices and oob-indices
-  treedata_->bootstrapFromRealSamples(withReplacement, sampleSize, targetIdx_, bootstrapIcs, oobMatrix_[treeIdx]);
-
-  //This is to check that the bootstrap sample doesn't contain any missing values (it shouldn't!)
-  if(false)
-    {
-      vector<num_t> targetData;
-      treedata_->getFeatureData(targetIdx_,bootstrapIcs,targetData);
-      for(size_t i = 0; i < targetData.size(); ++i)
-	{
-	  assert(!datadefs::isNAN(targetData[i]));
-	}
-      
-      treedata_->getFeatureData(targetIdx_,oobMatrix_[treeIdx],targetData);
-      for(size_t i = 0; i < targetData.size(); ++i)
-        {
-          assert(!datadefs::isNAN(targetData[i]));
-        }
-      cout << "the generated bootstrap sample for tree " << treeIdx << " looks ok" << endl;
-    }
-
-  
-  
-  if(false)
-    {
-      cout << "tree " << treeIdx << "  bootstrap indices [";
-      for(size_t i = 0; i < bootstrapIcs.size(); ++i)
-	{
-	  cout << " " << bootstrapIcs[i];
-	}
-      cout << " ]  oob [";
-      for(size_t i = 0; i < oobMatrix_[treeIdx].size(); ++i)
-	{
-	  cout << " " << oobMatrix_[treeIdx][i];
-	}
-      cout << " ]" << endl << endl;
-    }
-
-  
-  //Start the recursive node splitting from the root node. This will generate the tree.
-  Randomforest::recursiveNodeSplit(treeIdx,rootNodes_[treeIdx],bootstrapIcs);
-
-}
-
-void Randomforest::recursiveNodeSplit(const size_t treeIdx, Node* node, const vector<size_t>& sampleIcs)
-{
-
-  size_t nSamples = sampleIcs.size();
-
-  if(nSamples < 2*nodeSize_)
-    {
-      //cout << "Too few samples to start with, quitting" << endl;
-      return;
-    }
-
-  //size_t nfeatures = treedata_->nfeatures();
-  //Create mtry randomly selected feature indices to determine the split
-  vector<size_t> mTrySample(mTry_);
-  
-  const size_t nFeatures = treedata_->nFeatures();
-
-  for(size_t i = 0; i < mTry_; ++i)
-    {
-      treedata_->getRandomIndex(2*nFeatures,mTrySample[i]);
-    }
-
-  //const size_t targetIdx = treedata_->getTarget();
-  vector<num_t> targetData;
-  const bool isTargetNumerical = treedata_->isFeatureNumerical(targetIdx_);
-  treedata_->getFeatureData(targetIdx_,sampleIcs,targetData);
-
-  //assert(!datadefs::isNAN(targetData));
-
-  vector<size_t> sampleIcs_left,sampleIcs_right;
-  num_t splitValue;
-  set<num_t> values_left;
-
-  if(isTargetNumerical)
-    {
-      treedata_->numericalFeatureSplit(targetData,isTargetNumerical,targetData,nodeSize_,sampleIcs_left,sampleIcs_right,splitValue);
-    }
-  else
-    {
-      treedata_->categoricalFeatureSplit(targetData,isTargetNumerical,targetData,sampleIcs_left,sampleIcs_right,values_left);
-    }
-
-  //cout << "Target splitted with itself." << endl;
-
-  vector<num_t> fitness(mTry_, 0.0);
-  num_t bestFitness = 0.0;
-  size_t bestFeatureIdx = mTry_;
-
-  //const size_t halfWay = mTry_ / 2;
-
-  //vector<num_t> featureData;
-  //omp_lock_t lock;
-  //omp_init_lock(&lock);
-  //#pragma omp parallel for
-  for(int i = 0; i < static_cast<int>(mTry_); ++i)
-    {
-      //printf("%i\n",i);
-      vector<num_t> featureData;
-      size_t featureIdx = mTrySample[i];
-      bool isFeatureNumerical = treedata_->isFeatureNumerical(featureIdx);
-
-      //Neither the real nor the contrast feature can appear in the tree as splitter
-      if(featureIdx == targetIdx_)
-        {
-          continue;
-        }
-
-      //omp_set_lock(&lock);
-      treedata_->getFeatureData(featureIdx,sampleIcs,featureData);
-      //omp_unset_lock(&lock);
-
-      //omp_set_lock(&lock);
-      fitness[i] = treedata_->splitFitness(featureData,isFeatureNumerical,nodeSize_,sampleIcs_left,sampleIcs_right);
-      //omp_unset_lock(&lock);
-
-      //omp_set_lock(&lock);
-      
-      //if(fitness > bestFitness)
-      //	{
-      //	  bestFitness = fitness;
-      //	  bestFeatureIdx = featureIdx;
-	  //if(fabs(bestFitness - 1.0) < datadefs::EPS)
-	  //  {
-	  //cout << "Maximum fitness reached for splitter " << bestfeatureidx << ", stopped searching" << endl;
-	  //	break;
-	  // }
-      //	}
-      //omp_unset_lock(&lock);
-       
-    }
-  //omp_destroy_lock(&lock);
-
-  for(size_t i = 0; i < mTry_; ++i)
-    {
-      if(fitness[i] > bestFitness)
-	{
-	  bestFitness = fitness[i];
-	  bestFeatureIdx = mTrySample[i];
-	}
-    }
-
-
-  if(bestFeatureIdx == mTry_)
-    {
-      //cout << "No splitter found, quitting" << endl << endl;
-      return;
-    }
-  
-  //cout << "Best splitter feature is " << bestFeatureIdx << " with fitness of " << bestFitness << endl; 
-
-  vector<num_t> featureData;
-  treedata_->getFeatureData(bestFeatureIdx,sampleIcs,featureData);
-  
-  //vector<size_t> NANIcs;
-  
-  size_t nRealSamples = 0;
-  for(size_t i = 0; i < nSamples; ++i)
-    {
-      if(!datadefs::isNAN(featureData[i]))
-	{
-	  featureData[nRealSamples] = featureData[i];
-	  targetData[nRealSamples] = targetData[i];
-	  ++nRealSamples;
-	}
-    }
-  featureData.resize(nRealSamples);
-  targetData.resize(nRealSamples);
-
-  //cout << "Splitter " << bestFeatureIdx << " has " << NANIcs.size() << " missing values, which will be omitted in splitting" << endl;
-
-  if(nRealSamples < 2*nodeSize_)
-    {
-      //cout << "Splitter has too few non-missing values, quitting" << endl;
-      //This needs to be fixed such that one of the surrogates will determine the split instead
-      return;
-    }
-
-  //size_t nodeIdx_left; 
-  //size_t nodeIdx_right;
-  bool isBestFeatureNumerical = treedata_->isFeatureNumerical(bestFeatureIdx);
-
-  if(isBestFeatureNumerical)
-    {
-      treedata_->numericalFeatureSplit(targetData,isTargetNumerical,featureData,nodeSize_,sampleIcs_left,sampleIcs_right,splitValue);
-    }
-  else
-    {
-      treedata_->categoricalFeatureSplit(targetData,isTargetNumerical,featureData,sampleIcs_left,sampleIcs_right,values_left);
-    }
-
-  //assert(sampleIcs.size() == n_tot);
-  assert(sampleIcs_left.size() + sampleIcs_right.size() == nRealSamples);
-
-  if(sampleIcs_left.size() < nodeSize_ || sampleIcs_right.size() < nodeSize_)
-    {
-      //cout << "Split was unsuccessful, quitting" << endl;
-      return;
-    }
-  
-  //cout << "setting splitter" << endl;
-
-  if(isBestFeatureNumerical)
-    {
-      node->setSplitter(bestFeatureIdx,splitValue);
-    }
-  else
-    {
-      node->setSplitter(bestFeatureIdx,values_left);
-    }
-
-  featuresInForest_[treeIdx].insert(bestFeatureIdx);
-  
-  //cout << "setting pointers to new nodes" << endl;
-
-  //assert(nNodes_[treeIdx] == forest_[treeIdx].size());
-
-  
-
-  //cout << nodeIdx_left << " " << nodeIdx_right << endl;
-
-  if(sampleIcs_left.size() > 2*nodeSize_)
-    {
-      //WILL BECOME DEPRECATED
-      for(size_t i = 0; i < sampleIcs_left.size(); ++i)
-	{
-	  sampleIcs_left[i] = sampleIcs[sampleIcs_left[i]];
-	}
-
-      Randomforest::recursiveNodeSplit(treeIdx,node->leftChild(),sampleIcs_left);
-    }
-
-  if(sampleIcs_right.size() > 2*nodeSize_)
-    {
-      //WILL BECOME DEPRECATED
-      for(size_t i = 0; i < sampleIcs_right.size(); ++i)
-        {
-          sampleIcs_right[i] = sampleIcs[sampleIcs_right[i]];
-        }
-
-      Randomforest::recursiveNodeSplit(treeIdx,node->rightChild(),sampleIcs_right);
-    }
-  
-}
-
 
 void Randomforest::percolateSampleIcs(Node* rootNode, vector<size_t>& sampleIcs, map<Node*,vector<size_t> >& trainIcs)
 {

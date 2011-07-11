@@ -9,6 +9,7 @@
 #include <vector>
 #include <set>
 #include "datadefs.hpp"
+#include "treedata.hpp"
 
 using namespace std;
 using datadefs::num_t;
@@ -49,7 +50,43 @@ public:
   //void print();
   //void print_compact();
 
+protected:
+
+  void recursiveNodeSplit(Treedata* treeData,
+			  const size_t targetIdx,
+			  const vector<size_t>& sampleIcs,
+			  const size_t nMaxNodes,
+			  const size_t minNodeSize,
+			  const bool isRandomSplit,
+			  const size_t nFeaturesInSample,
+			  size_t& nNodes,
+			  set<size_t>& featuresInTree);
+    
+
 private:
+
+  void numericalFeatureSplit(vector<num_t>& tv,
+			     const bool isTargetNumerical,
+			     vector<num_t>& fv,
+			     const size_t min_split,
+			     vector<size_t>& sampleIcs_left,
+			     vector<size_t>& sampleIcs_right,
+			     num_t& splitValue);
+
+  void categoricalFeatureSplit(vector<num_t>& tv,
+			       const bool isTargetNumerical,
+			       vector<num_t>& fv,
+			       vector<size_t>& sampleIcs_left,
+			       vector<size_t>& sampleIcs_right,
+			       set<num_t>& categories_left);
+
+  num_t splitFitness(vector<num_t> const& data,
+                     bool const& isFeatureNumerical,
+                     size_t const& minSplit,
+                     vector<size_t> const& sampleIcs_left,
+                     vector<size_t> const& sampleIcs_right);
+
+
 
   //A recursive function that will accumulate the number of descendant nodes the current nodes has
   void recursiveNDescendantNodes(size_t& n);
