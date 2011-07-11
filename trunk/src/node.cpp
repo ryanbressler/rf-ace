@@ -128,19 +128,19 @@ num_t Node::getPrediction()
 void Node::recursiveNodeSplit(Treedata* treeData,
 			      const size_t targetIdx,
 			      const vector<size_t>& sampleIcs,
-			      const size_t nMaxNodes,
-			      const size_t minNodeSize,
+			      const size_t maxNodesToStop,
+			      const size_t minNodeSizeToStop,
 			      const bool isRandomSplit,
 			      const size_t nFeaturesInSample,
-			      size_t& nNodes,
-			      set<size_t>& featuresInTree)
+			      set<size_t>& featuresInTree,
+			      size_t& nNodes)
 {
 
 
 
   size_t nSamples = sampleIcs.size();
 
-  if(nSamples < 2 * minNodeSize || nNodes + 1 > nMaxNodes)
+  if(nSamples < 2 * minNodeSizeToStop || nNodes + 1 > maxNodesToStop)
     {
       //cout << "Too few samples to start with, quitting" << endl;
       return;
@@ -170,15 +170,13 @@ void Node::recursiveNodeSplit(Treedata* treeData,
   const bool isTargetNumerical = treeData->isFeatureNumerical(targetIdx);
   treeData->getFeatureData(targetIdx,sampleIcs,targetData);
 
-  //assert(!datadefs::isNAN(targetData));
-
   vector<size_t> sampleIcs_left,sampleIcs_right;
   num_t splitValue;
   set<num_t> values_left;
 
   if(isTargetNumerical)
     {
-      Node::numericalFeatureSplit(targetData,isTargetNumerical,targetData,minNodeSize,sampleIcs_left,sampleIcs_right,splitValue);
+      Node::numericalFeatureSplit(targetData,isTargetNumerical,targetData,minNodeSizeToStop,sampleIcs_left,sampleIcs_right,splitValue);
     }
   else
     {
@@ -204,7 +202,7 @@ void Node::recursiveNodeSplit(Treedata* treeData,
 
       treeData->getFeatureData(featureIdx,sampleIcs,featureData);
 
-      fitnessVector[i] = Node::splitFitness(featureData,isFeatureNumerical,minNodeSize,sampleIcs_left,sampleIcs_right);
+      fitnessVector[i] = Node::splitFitness(featureData,isFeatureNumerical,minNodeSizeToStop,sampleIcs_left,sampleIcs_right);
 
     }
 
@@ -240,7 +238,7 @@ void Node::recursiveNodeSplit(Treedata* treeData,
   featureData.resize(nRealSamples);
   targetData.resize(nRealSamples);
 
-  if(nRealSamples < 2*minNodeSize)
+  if(nRealSamples < 2*minNodeSizeToStop)
     {
       //cout << "Splitter has too few non-missing values, quitting" << endl;
       //This needs to be fixed such that one of the surrogates will determine the split instead
@@ -251,7 +249,7 @@ void Node::recursiveNodeSplit(Treedata* treeData,
 
   if(isBestFeatureNumerical)
     {
-      Node::numericalFeatureSplit(targetData,isTargetNumerical,featureData,minNodeSize,sampleIcs_left,sampleIcs_right,splitValue);
+      Node::numericalFeatureSplit(targetData,isTargetNumerical,featureData,minNodeSizeToStop,sampleIcs_left,sampleIcs_right,splitValue);
     }
   else
     {
@@ -260,7 +258,7 @@ void Node::recursiveNodeSplit(Treedata* treeData,
 
   assert(sampleIcs_left.size() + sampleIcs_right.size() == nRealSamples);
 
-  if(sampleIcs_left.size() < minNodeSize || sampleIcs_right.size() < minNodeSize)
+  if(sampleIcs_left.size() < minNodeSizeToStop || sampleIcs_right.size() < minNodeSizeToStop)
     {
       return;
     }
@@ -285,7 +283,7 @@ void Node::recursiveNodeSplit(Treedata* treeData,
     }
 
   //cout << "split left..." << endl;
-  leftChild_->recursiveNodeSplit(treeData,targetIdx,sampleIcs_left,nMaxNodes,minNodeSize,isRandomSplit,nFeaturesInSample,nNodes,featuresInTree);
+  leftChild_->recursiveNodeSplit(treeData,targetIdx,sampleIcs_left,maxNodesToStop,minNodeSizeToStop,isRandomSplit,nFeaturesInSample,featuresInTree,nNodes);
 
   for(size_t i = 0; i < sampleIcs_right.size(); ++i)
     {
@@ -293,7 +291,7 @@ void Node::recursiveNodeSplit(Treedata* treeData,
     }
 
   //cout << "split right..." << endl;
-  rightChild_->recursiveNodeSplit(treeData,targetIdx,sampleIcs_right,nMaxNodes,minNodeSize,isRandomSplit,nFeaturesInSample,nNodes,featuresInTree);
+  rightChild_->recursiveNodeSplit(treeData,targetIdx,sampleIcs_right,maxNodesToStop,minNodeSizeToStop,isRandomSplit,nFeaturesInSample,featuresInTree,nNodes);
   
 }
 

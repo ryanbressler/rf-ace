@@ -64,8 +64,8 @@ void Randomforest::growForest()
   bool sampleWithReplacement = true;
   num_t sampleSize = 1.0;
   bool isRandomSplit = true;
-  size_t nMaxNodes = treedata_->nSamples();
-  size_t minNodeSize = nodeSize_;
+  size_t maxNodesToStop = treedata_->nSamples();
+  size_t minNodeSizeToStop = nodeSize_;
   size_t nFeaturesInSample = mTry_;
   size_t nNodes;
 
@@ -76,8 +76,8 @@ void Randomforest::growForest()
 				    targetIdx_,
 				    sampleWithReplacement,
 				    sampleSize,
-				    nMaxNodes,
-				    minNodeSize,
+				    maxNodesToStop,
+				    minNodeSizeToStop,
 				    isRandomSplit,
 				    nFeaturesInSample,
 				    oobMatrix_[treeIdx],
@@ -236,37 +236,6 @@ vector<num_t> Randomforest::featureImportance()
       
     }
 
-  /*
-    for(size_t treeIdx = 0; treeIdx < nTrees_; ++treeIdx)
-    {
-    size_t nNewOobSamples = oobMatrix_[treeIdx].size();
-    nOobSamples += nNewOobSamples;
-    //Node* rootNode(forest_[treeIdx][0]);
-    map<Node*,vector<size_t> > trainIcs;
-    Randomforest::percolateSampleIcs(rootNodes_[treeIdx],oobMatrix_[treeIdx],trainIcs);
-    num_t treeImpurity;
-    Randomforest::treeImpurity(trainIcs,treeImpurity);
-    //cout << "#nodes_with_train_samples=" << trainics.size() << endl;  
-    for(size_t featureIdx = 0; featureIdx < nAllFeatures; ++featureIdx)
-    {
-    if(Randomforest::isFeatureInTree(featureIdx,treeIdx))
-    {
-    if(featureIdx >= nRealFeatures)
-    {
-    ++nContrastsInForest;
-    }
-    Randomforest::percolateSampleIcsAtRandom(featureIdx,rootNodes_[treeIdx],oobMatrix_[treeIdx],trainIcs);
-    num_t permutedTreeImpurity;
-    Randomforest::treeImpurity(trainIcs,permutedTreeImpurity);
-    if(fabs(treeImpurity) > datadefs::EPS)
-    {
-    importance[featureIdx] += nNewOobSamples * (permutedTreeImpurity - treeImpurity) / treeImpurity;
-    } 
-    }
-    }
-    }
-  */
-
   size_t nNodesInForest = Randomforest::nNodes();
   
   for(size_t featureIdx = 0; featureIdx < nAllFeatures; ++featureIdx)
@@ -296,27 +265,6 @@ vector<size_t> Randomforest::featureFrequency()
   vector<size_t> frequency(0);
   return(frequency);
 }
-
-
-
-
-/*
-  bool Randomforest::isFeatureInTree(size_t featureIdx, size_t treeIdx)
-  {
-  set<size_t>::const_iterator it(featuresInForest_[featureIdx].find(featureIdx));
-  if(it == featuresInForest_[treeIdx].end())
-  {
-  return(false);
-  }
-  else
-  {
-  return(true);
-  }
-  }
-*/
-
-
-
 
 
 void Randomforest::treeImpurity(map<Node*,vector<size_t> >& trainIcs, num_t& impurity)

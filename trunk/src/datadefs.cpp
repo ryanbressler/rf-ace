@@ -8,7 +8,7 @@
 
 using namespace std;
 
-const datadefs::num_t datadefs::NUM_NAN = numeric_limits<float>::infinity();
+const datadefs::num_t datadefs::NUM_NAN = numeric_limits<float>::quiet_NaN();//numeric_limits<float>::infinity();
 const datadefs::num_t datadefs::EPS = 1e-12;
 const datadefs::num_t datadefs::PI = 3.1415926535;
 const datadefs::num_t datadefs::A = 0.140012;
@@ -92,44 +92,48 @@ datadefs::num_t datadefs::str2num(string& str)
 }
 
 
-bool datadefs::isNAN(const string& str)
-{
+/*
+  inline bool datadefs::isNAN(const string& str)
+  {
   set<string>::const_iterator it(NANs.find(str));
   if(it == NANs.end())
-    {
-      return(false);
-    }
-  else
-    {
-      return(true);
-    }
-}
-
-
-
-bool datadefs::isNAN(const datadefs::num_t value)
-{
-  if(value == datadefs::NUM_NAN)
-    {
-      return(true);
-    }
-  else
-    {
-      return(false);
-    }
-}
-
-bool datadefs::isNAN(const vector<num_t>& data)
-{
-  for(size_t i = 0; i < data.size(); ++i)
-    {
-      if(datadefs::isNAN(data[i]))
-	{
-	  return(true);
-	}
-    }
+  {
   return(false);
-}
+  }
+  else
+  {
+  return(true);
+  }
+  }
+*/
+
+/*
+  inline bool datadefs::isNAN(const datadefs::num_t value)
+  {
+  if(value != value) //== datadefs::NUM_NAN)
+  {
+  return(true);
+  }
+  else
+  {
+  return(false);
+  }
+  }
+*/
+
+/*
+  inline bool datadefs::isNAN(const vector<num_t>& data)
+  {
+  for(size_t i = 0; i < data.size(); ++i)
+  {
+  if( data[i] != data[i]) //datadefs::isNAN(data[i]))
+  {
+  return(true);
+  }
+  }
+  return(false);
+  }
+*/
 
 //This is a very poorly designed function
 void datadefs::findNANs(vector<num_t>& data, vector<size_t>& NANIcs)
@@ -227,58 +231,60 @@ void datadefs::sortDataAndMakeRef(vector<num_t>& data, vector<size_t>& refIcs)
 }
 
 
-//Assuming x_n is a current member of the "right" branch, subtract it from "right" and add it to "left", and update the branch data counts, means, and squared errors. NOTE: NaN checks not implemented
-void datadefs::forward_backward_sqerr(const datadefs::num_t x_n,
-				      size_t& n_left,
-				      datadefs::num_t& mu_left,
-				      datadefs::num_t& se_left,
-				      size_t& n_right,
-				      datadefs::num_t& mu_right,
-				      datadefs::num_t& se_right)
-{
 
+/*
+  void datadefs::forward_backward_sqerr(const datadefs::num_t x_n,
+  size_t& n_left,
+  datadefs::num_t& mu_left,
+  datadefs::num_t& se_left,
+  size_t& n_right,
+  datadefs::num_t& mu_right,
+  datadefs::num_t& se_right)
+  {
+  
   if(datadefs::isNAN(x_n))
-    {
-      return;
-    }
+  {
+  return;
+  }
   
   assert(n_right > 0);
-
+  
   ++n_left;
   --n_right;
-
+  
   //As long as there are at least two data points on the "right" branch, squared error can be calculated, otherwise assign se_right := 0.0
   if(n_right > 1)
-    {
-      datadefs::num_t mu_old(mu_right);
-      mu_right -= (x_n - mu_right) / n_right;
-      se_right -= (x_n - mu_right) * (x_n - mu_old);
-    }
+  {
+  datadefs::num_t mu_old(mu_right);
+  mu_right -= (x_n - mu_right) / n_right;
+  se_right -= (x_n - mu_right) * (x_n - mu_old);
+  }
   else if(n_right == 1)
-    {
-      mu_right -= (x_n - mu_right) / n_right;
-      se_right = 0.0;
-    }
+  {
+  mu_right -= (x_n - mu_right) / n_right;
+  se_right = 0.0;
+  }
   else
-    {
-      mu_right = 0.0;
-      se_right = 0.0;
-    }
-
+  {
+  mu_right = 0.0;
+  se_right = 0.0;
+  }
+  
   //Add x_n to "left" and update mean and squared error
   datadefs::num_t mu_old = mu_left;
   mu_left += (x_n - mu_left) / n_left;
-
+  
   //If there are already at least two data points on the "left" branch, squared error can be calculated, otherwise assign se_left := 0.0
   if(n_left > 1)
-    {
-      se_left += (x_n - mu_left) * (x_n - mu_old);
-    }
+  {
+  se_left += (x_n - mu_left) * (x_n - mu_old);
+  }
   else
-    {
-      se_left = 0.0;
-    }
-}
+  {
+  se_left = 0.0;
+  }
+  }
+*/
 
 void datadefs::gini(vector<datadefs::num_t>& data,
 		    datadefs::num_t& giniIndex,

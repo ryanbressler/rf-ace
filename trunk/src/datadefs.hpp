@@ -35,9 +35,29 @@ namespace datadefs
 
   num_t str2num(string& str);
 
-  bool isNAN(const string& str);
-  bool isNAN(const num_t value);
-  bool isNAN(const vector<num_t>& data);
+  inline bool isNAN(const string& str)
+  {
+    set<string>::const_iterator it(NANs.find(str));
+    if(it == NANs.end()) { return(false); } else { return(true); } 
+  }
+
+  inline bool isNAN(const num_t value)
+  {
+    if(value != value) //== datadefs::NUM_NAN) 
+      { return(true); } else { return(false); }
+  }
+
+ 
+  inline bool isNAN(const vector<num_t>& data)
+  {
+    for(size_t i = 0; i < data.size(); ++i)
+      {
+	if( data[i] != data[i]) //datadefs::isNAN(data[i]))
+	  { return(true); }
+      }
+    return(false);
+  }
+
   
   //DEPRECATED
   void findNANs(vector<num_t>& data, vector<size_t>& NANIcs);
@@ -68,13 +88,33 @@ namespace datadefs
     if(n > 1) { se += (x_n - mu) * (x_n - mu_old);} else { se = 0.0; }
   } 
     
-  void forward_backward_sqerr(const num_t x_n,
+  inline void forward_backward_sqerr(const num_t x_n,
 			      size_t& n_left,
 			      num_t& mu_left,
 			      num_t& se_left,
 			      size_t& n_right,
 			      num_t& mu_right,
-			      num_t& se_right);
+			      num_t& se_right)
+  {
+    if( x_n != x_n ) { return; }
+    assert(n_right > 0); ++n_left; --n_right;
+    //As long as there are at least two data points on the "right" branch, squared error can be calculated, otherwise assign se_right := 0.0
+    if(n_right > 1) {
+	  datadefs::num_t mu_old(mu_right);
+	  mu_right -= (x_n - mu_right) / n_right;
+	  se_right -= (x_n - mu_right) * (x_n - mu_old); }
+      else if(n_right == 1) {
+	  mu_right -= (x_n - mu_right) / n_right;
+	  se_right = 0.0; }
+      else {
+	  mu_right = 0.0;
+	  se_right = 0.0; }
+      //Add x_n to "left" and update mean and squared error
+      datadefs::num_t mu_old = mu_left;
+      mu_left += (x_n - mu_left) / n_left;
+      //If there are already at least two data points on the "left" branch, squared error can be calculated, otherwise assign se_left := 0.0
+      if(n_left > 1) { se_left += (x_n - mu_left) * (x_n - mu_old); } else { se_left = 0.0; }
+  }
   
   void count_freq(vector<num_t> const& data, map<num_t,size_t>& cat2freq, size_t& nRealValues);
 

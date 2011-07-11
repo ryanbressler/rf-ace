@@ -10,7 +10,6 @@ RootNode::RootNode(): Node()
   
 RootNode::~RootNode()
 { 
-  //Node::~Node();
 }
 
 
@@ -18,19 +17,24 @@ void RootNode::growTree(Treedata* treeData,
 			const size_t targetIdx, 
 			const bool sampleWithReplacement, 
 			const num_t sampleSize, 
-			const size_t nMaxNodes, 
-			const size_t minNodeSize, 
+			const size_t maxNodesToStop, 
+			const size_t minNodeSizeToStop, 
 			const bool isRandomSplit, 
 			const size_t nFeaturesInSample, 
 			vector<size_t>& oobIcs,
 			set<size_t>& featuresInTree,
 			size_t& nNodes)
 {
+
+  if(false)
+    {
+      cout << "Growing a tree: samplewithReplacement=" << sampleWithReplacement << " sampleSize=" << sampleSize << " maxNodesToStop=" << maxNodesToStop
+	   << " minNodeSizeToStop=" << minNodeSizeToStop << " isRandomSplit=" << isRandomSplit << " nFeaturesInSample=" << nFeaturesInSample << endl; 
+    }
+
   //Generate the vector for bootstrap indices
   vector<size_t> bootstrapIcs;
-  //bool withReplacement = true;
-  //num_t sampleSize = 1.0;
-
+  
   //Generate bootstrap indices and oob-indices
   treeData->bootstrapFromRealSamples(sampleWithReplacement, sampleSize, targetIdx, bootstrapIcs, oobIcs);
 
@@ -49,7 +53,7 @@ void RootNode::growTree(Treedata* treeData,
         {
           assert(!datadefs::isNAN(targetData[i]));
         }
-      cout << "the generated bootstrap sample for tree looks ok" << endl;
+      cout << "bootstrap samples look ok, no missing values detected" << endl;
     }
 
 
@@ -73,7 +77,7 @@ void RootNode::growTree(Treedata* treeData,
   featuresInTree.clear();
 
   //Start the recursive node splitting from the root node. This will generate the tree.
-  Node::recursiveNodeSplit(treeData,targetIdx,bootstrapIcs,nMaxNodes,minNodeSize,isRandomSplit,nFeaturesInSample,nNodes,featuresInTree);
+  Node::recursiveNodeSplit(treeData,targetIdx,bootstrapIcs,maxNodesToStop,minNodeSizeToStop,isRandomSplit,nFeaturesInSample,featuresInTree,nNodes);
 
 }
 
