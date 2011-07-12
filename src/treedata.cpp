@@ -522,12 +522,8 @@ num_t Treedata::pearsonCorrelation(size_t featureidx1, size_t featureidx2)
 bool Treedata::isPositiveInteger(const string& str, size_t& positiveInteger)
 {
   stringstream ss(str);
-  int testInt;
-  if(ss >> testInt && ss.eof() && testInt >= 0)
+  if(ss >> positiveInteger && ss.eof())
     {
-      ss.clear();
-      ss.str("");
-      ss >> positiveInteger;
       return(true);
     }
   else
