@@ -27,7 +27,8 @@ const size_t DEFAULT_MTRY = 0;
 const size_t DEFAULT_NODESIZE = 0;
 const size_t DEFAULT_NPERMS = 50;
 const num_t DEFAULT_PVALUETHRESHOLD = 0.10;
-const int DEFAULT_IS_GBT_ENABLED = 0;
+const size_t DEFAULT_IS_GBT_ENABLED = 0;
+const size_t DEFAULT_REPORT_FILTERED = 0;
 
 void printHeader()
 {
@@ -35,7 +36,7 @@ void printHeader()
   cout << " --------------------------------------------------------------- " << endl;
   cout << "| RF-ACE -- efficient feature selection with heterogeneous data |" << endl;
   cout << "|                                                               |" << endl;
-  cout << "|  Version:      RF-ACE v0.5.8, July 8th, 2011                  |" << endl;
+  cout << "|  Version:      RF-ACE v0.6.0, July 12th, 2011                 |" << endl;
   cout << "|  Project page: http://code.google.com/p/rf-ace                |" << endl;
   cout << "|  Contact:      timo.p.erkkila@tut.fi                          |" << endl;
   cout << "|                kari.torkkola@gmail.com                        |" << endl;
@@ -114,7 +115,8 @@ int main(int argc, char* argv[])
   size_t nodeSize = DEFAULT_NODESIZE;
   size_t nPerms = DEFAULT_NPERMS;
   num_t pValueThreshold = DEFAULT_PVALUETHRESHOLD;
-  int isGBTEnabled = DEFAULT_IS_GBT_ENABLED;
+  size_t isGBTEnabled = DEFAULT_IS_GBT_ENABLED;
+  size_t reportFiltered = DEFAULT_REPORT_FILTERED;
   string output = "";
 
   //Read the user parameters 
@@ -127,6 +129,7 @@ int main(int argc, char* argv[])
   ops >> Option('p',"nperms",nPerms);
   ops >> Option('t',"pthreshold",pValueThreshold);
   ops >> Option('g',"gbt",isGBTEnabled);
+  ops >> Option('f',"fullreport",reportFiltered);
   ops >> Option('O',"output",output);
 
   //Print help and exit if input file is not specified
@@ -239,6 +242,7 @@ int main(int argc, char* argv[])
       vector<size_t> keepFeatureIcs(1);
       keepFeatureIcs[0] = targetIdx;
       vector<string> removedFeatures;
+      vector<size_t> removedFeatureIcs;
       for(size_t featureIdx = 0; featureIdx < nFeatures; ++featureIdx)
 	{
 	  if(featureIdx != targetIdx && importanceValues[featureIdx] > datadefs::EPS)
@@ -247,11 +251,13 @@ int main(int argc, char* argv[])
 	    }
 	  else
 	    {
+	      removedFeatureIcs.push_back(featureIdx);
 	      removedFeatures.push_back(treedata.getFeatureName(featureIdx));
 	    }
 	}
       
       Treedata treedataFiltered(treedata,keepFeatureIcs);
+      size_t oldTargetIdx = targetIdx;
       targetIdx = 0;
 
       cout << endl;
@@ -334,9 +340,12 @@ int main(int argc, char* argv[])
 	      //   << pvalues[i] << "\t" << ivalues[i] << "\t" << treedata.corr(targetidx,ref_ics[i]) << endl;
 	    }
 	  
-	  for(size_t featureIdx = 0; featureIdx < removedFeatures.size(); ++featureIdx)
+	  if(reportFiltered)
 	    {
-	      fprintf(po,"%s\t%s\tNaN\tNaN\tNaN\n",targetName.c_str(),removedFeatures[featureIdx].c_str());
+	      for(size_t featureIdx = 0; featureIdx < removedFeatureIcs.size(); ++featureIdx)
+		{
+		  fprintf(po,"%s\t%s\tNaN\tNaN\t%9.8f\n",targetName.c_str(),removedFeatures[featureIdx].c_str(),treedata.pearsonCorrelation(oldTargetIdx,removedFeatureIcs[featureIdx]));
+		}
 	    }
 
 
