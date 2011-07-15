@@ -215,7 +215,7 @@ void datadefs::zerotrim(vector<datadefs::num_t>& data)
     }
 }
 
-void datadefs::sortDataAndMakeRef(vector<num_t>& data, vector<size_t>& refIcs)
+void datadefs::sortDataAndMakeRef(const bool isIncreasingOrder, vector<num_t>& data, vector<size_t>& refIcs)
 {
   //cout << "sort_and_make_ref: in the beginning" << endl;
   //assert(v.size() == ref_ics.size());
@@ -225,7 +225,14 @@ void datadefs::sortDataAndMakeRef(vector<num_t>& data, vector<size_t>& refIcs)
   //cout << "sort_and_make_ref: used range()" << endl;
   datadefs::make_pairedv<num_t,size_t>(data,refIcs,pairedv);
   //cout << "sort_and_make_ref: made pairedv" << endl;
-  sort(pairedv.begin(),pairedv.end(),datadefs::ordering<num_t>());
+  if(isIncreasingOrder)
+    {
+      sort(pairedv.begin(),pairedv.end(),datadefs::increasingOrder<num_t>());
+    }
+  else
+    {
+      sort(pairedv.begin(),pairedv.end(),datadefs::decreasingOrder<num_t>());
+    }
   //cout << "sort_and_make_ref: pairedv sorted" << endl;
   datadefs::separate_pairedv<num_t,size_t>(pairedv,data,refIcs);
 }

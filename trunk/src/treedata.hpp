@@ -24,6 +24,8 @@ public:
   Treedata(Treedata& treedata);
   Treedata(Treedata& treedata, const vector<size_t>& featureIcs);
   ~Treedata();
+  
+  void keepFeatures(const vector<size_t>& featureIcs);
 
   //Returns the number of features
   size_t nFeatures();
@@ -61,10 +63,6 @@ public:
 				vector<size_t>& ics, 
 				vector<size_t>& oobIcs);
 
-  //void killFeature(const size_t featureIdx);
-
-  //Treedata copy(const vector<size_t>& featureIcs);
-
   //Permutes integers in range 0,1,...,(ics.size()-1).
   //NOTE: original contents in ics will be replaced.
   void permute(vector<size_t>& ics);
@@ -75,28 +73,6 @@ public:
   void permuteContrasts();
 
   bool isFeatureNumerical(size_t featureIdx);
-
-  //Finds the best split for target with respect to selected feature splitter, which needs to be numerical.
-  //void numericalFeatureSplit(vector<num_t>& tv,
-  //                         const bool isTargetNumerical,
-  //                         vector<num_t>& fv,
-  //                         const size_t min_split,
-  //                         vector<size_t>& sampleIcs_left,
-  //                         vector<size_t>& sampleIcs_right,
-  //                         num_t& splitValue);
-
-  //void categoricalFeatureSplit(vector<num_t>& tv,
-  //                           const bool isTargetNumerical,
-  //                           vector<num_t>& fv,
-  //                           vector<size_t>& sampleIcs_left,
-  //                           vector<size_t>& sampleIcs_right,
-  //                           set<num_t>& categories_left);
-
-  //num_t splitFitness(vector<num_t> const& data,
-  //                 bool const& isFeatureNumerical,
-  //                 size_t const& minSplit,
-  //                 vector<size_t> const& sampleIcs_left,
-  //                 vector<size_t> const& sampleIcs_right);
 
   void impurity(vector<num_t>& data, bool isFeatureNumerical, num_t& impurity, size_t& nreal);
 

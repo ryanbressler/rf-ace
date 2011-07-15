@@ -132,6 +132,7 @@ void Node::recursiveNodeSplit(Treedata* treeData,
 			      const size_t minNodeSizeToStop,
 			      const bool isRandomSplit,
 			      const size_t nFeaturesInSample,
+			      const bool useContrasts,
 			      set<size_t>& featuresInTree,
 			      size_t& nNodes)
 {
@@ -153,10 +154,20 @@ void Node::recursiveNodeSplit(Treedata* treeData,
 
   if(isRandomSplit)
     {
-      for(size_t i = 0; i < nFeaturesInSample; ++i)
-        {
-          treeData->getRandomIndex(2*nFeatures,featureSample[i]);
-        }
+      if(useContrasts)
+	{
+	  for(size_t i = 0; i < nFeaturesInSample; ++i)
+	    {
+	      treeData->getRandomIndex(2*nFeatures,featureSample[i]);
+	    }
+	}
+      else
+	{
+	  for(size_t i = 0; i < nFeaturesInSample; ++i)
+	    {
+	      treeData->getRandomIndex(nFeatures,featureSample[i]);
+	    }
+	}
     }
   else
     {
@@ -283,7 +294,16 @@ void Node::recursiveNodeSplit(Treedata* treeData,
     }
 
   //cout << "split left..." << endl;
-  leftChild_->recursiveNodeSplit(treeData,targetIdx,sampleIcs_left,maxNodesToStop,minNodeSizeToStop,isRandomSplit,nFeaturesInSample,featuresInTree,nNodes);
+  leftChild_->recursiveNodeSplit(treeData,
+				 targetIdx,
+				 sampleIcs_left,
+				 maxNodesToStop,
+				 minNodeSizeToStop,
+				 isRandomSplit,
+				 nFeaturesInSample,
+				 useContrasts,
+				 featuresInTree,
+				 nNodes);
 
   for(size_t i = 0; i < sampleIcs_right.size(); ++i)
     {
@@ -291,13 +311,22 @@ void Node::recursiveNodeSplit(Treedata* treeData,
     }
 
   //cout << "split right..." << endl;
-  rightChild_->recursiveNodeSplit(treeData,targetIdx,sampleIcs_right,maxNodesToStop,minNodeSizeToStop,isRandomSplit,nFeaturesInSample,featuresInTree,nNodes);
+  rightChild_->recursiveNodeSplit(treeData,
+				  targetIdx,
+				  sampleIcs_right,
+				  maxNodesToStop,
+				  minNodeSizeToStop,
+				  isRandomSplit,
+				  nFeaturesInSample,
+				  useContrasts,
+				  featuresInTree,
+				  nNodes);
   
 }
 
-void Node::numericalFeatureSplit(vector<num_t>& tv,
+void Node::numericalFeatureSplit(vector<num_t> tv,
 				 const bool isTargetNumerical,
-				 vector<num_t>& fv,
+				 vector<num_t> fv,
 				 const size_t min_split,
 				 vector<size_t>& sampleIcs_left,
 				 vector<size_t>& sampleIcs_right,
@@ -320,7 +349,7 @@ void Node::numericalFeatureSplit(vector<num_t>& tv,
   vector<size_t> refIcs;
 
   //Sort feature vector and collect reference indices
-  datadefs::sortDataAndMakeRef(fv,sampleIcs_right);
+  datadefs::sortDataAndMakeRef(1,fv,sampleIcs_right);
 
   //Use the reference indices to sort sample indices
   //datadefs::sortFromRef<size_t>(sampleics,refIcs);
@@ -415,9 +444,9 @@ void Node::numericalFeatureSplit(vector<num_t>& tv,
     }
 }
 
-void Node::categoricalFeatureSplit(vector<num_t>& tv,
+void Node::categoricalFeatureSplit(vector<num_t> tv,
 				   const bool isTargetNumerical,
-				   vector<num_t>& fv,
+				   vector<num_t> fv,
 				   vector<size_t>& sampleIcs_left,
 				   vector<size_t>& sampleIcs_right,
 				   set<num_t>& categories_left)

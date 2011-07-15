@@ -11,7 +11,12 @@ class Randomforest
 {
 public:
 
-  Randomforest(Treedata* treedata, size_t targetIdx, size_t nTrees, size_t mTry, size_t nodeSize);
+  Randomforest(Treedata* treedata, 
+	       size_t targetIdx, 
+	       size_t nTrees, 
+	       size_t mTry, 
+	       size_t nodeSize, 
+	       bool useContrasts);
   ~Randomforest();
 
   //Selects the target feature that is to be predicted
@@ -90,6 +95,8 @@ private:
 
   //Out-of-box samples for each tree
   vector<vector<size_t> > oobMatrix_;
+
+  bool useContrasts_;
   
 };
 
