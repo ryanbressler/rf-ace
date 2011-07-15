@@ -31,12 +31,10 @@ const int DEFAULT_IS_GBT_ENABLED = 0;
 bool isPositiveInteger(const string& str, size_t& positiveInteger)
 {
   stringstream ss(str);
-  int testInt;
-  if(ss >> testInt && ss.eof() && testInt >= 0)
+  int foo;
+  if(ss >> foo && ss.eof() && foo >= 0)
     {
-      ss.clear();
-      ss.str("");
-      ss >> positiveInteger;
+      positiveInteger = static_cast<size_t>(foo);
       return(true);
     }
   else
