@@ -5,14 +5,20 @@
 #include <iostream>
 //#include <omp.h>
 
-Randomforest::Randomforest(Treedata* treedata, size_t targetIdx, size_t nTrees, size_t mTry, size_t nodeSize):
+Randomforest::Randomforest(Treedata* treedata, 
+			   size_t targetIdx, 
+			   size_t nTrees, 
+			   size_t mTry, 
+			   size_t nodeSize,
+			   bool useContrasts):
   targetIdx_(targetIdx),
   treedata_(treedata),
   nTrees_(nTrees),
   mTry_(mTry),
   nodeSize_(nodeSize),
   rootNodes_(nTrees),
-  oobMatrix_(nTrees)
+  oobMatrix_(nTrees),
+  useContrasts_(useContrasts)
 {
 
   featuresInForest_.clear();
@@ -68,6 +74,7 @@ void Randomforest::growForest()
   size_t minNodeSizeToStop = nodeSize_;
   size_t nFeaturesInSample = mTry_;
   size_t nNodes;
+  bool useContrasts = useContrasts_;
 
   //#pragma omp parallel for
   for(size_t treeIdx = 0; treeIdx < nTrees_; ++treeIdx)
@@ -80,6 +87,7 @@ void Randomforest::growForest()
 				    minNodeSizeToStop,
 				    isRandomSplit,
 				    nFeaturesInSample,
+				    useContrasts,
 				    oobMatrix_[treeIdx],
 				    featuresInForest_[treeIdx],
 				    nNodes);

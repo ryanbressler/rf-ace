@@ -9,7 +9,7 @@
 #include <stdio.h>
 //#include <omp.h>
 
-#include "getopt_pp.h"
+#include "argparse.hpp"
 #include "randomforest.hpp"
 #include "GBT.hpp"
 #include "treedata.hpp"
@@ -17,18 +17,14 @@
 
 using namespace std;
 using datadefs::num_t;
-using namespace GetOpt;
 
-enum MatrixFormat { FEATURE_ROWS, FEATURE_COLUMNS };
-
-//const int TARGETSTR_NOT_SET = -1;
+const bool DEFAULT_PRINT_HELP = false;
 const size_t DEFAULT_NTREES = 0;
 const size_t DEFAULT_MTRY = 0;
 const size_t DEFAULT_NODESIZE = 0;
-const size_t DEFAULT_NPERMS = 50;
+const size_t DEFAULT_NPERMS = 1;
 const num_t DEFAULT_PVALUETHRESHOLD = 0.10;
-const size_t DEFAULT_IS_GBT_ENABLED = 0;
-const size_t DEFAULT_REPORT_FILTERED = 0;
+const bool DEFAULT_APPLY_FILTER = false;
 
 void printHeader()
 {
@@ -36,7 +32,7 @@ void printHeader()
   cout << " --------------------------------------------------------------- " << endl;
   cout << "| RF-ACE -- efficient feature selection with heterogeneous data |" << endl;
   cout << "|                                                               |" << endl;
-  cout << "|  Version:      RF-ACE v0.6.0, July 12th, 2011                 |" << endl;
+  cout << "|  Version:      RF-ACE v0.6.2, July 15th, 2011                 |" << endl;
   cout << "|  Project page: http://code.google.com/p/rf-ace                |" << endl;
   cout << "|  Contact:      timo.p.erkkila@tut.fi                          |" << endl;
   cout << "|                kari.torkkola@gmail.com                        |" << endl;
@@ -54,13 +50,14 @@ void printHelp()
   cout << " -O / --output       output association file" << endl;
   cout << endl;
   cout << "OPTIONAL ARGUMENTS:" << endl;
-  cout << " -n / --ntrees       number of trees per RF (default nsamples/nrealsamples)" << endl;
+  cout << " -n / --ntrees       number of trees per RF (default 10*nsamples/nrealsamples)" << endl;
   cout << " -m / --mtry         number of randomly drawn features per node split (default sqrt(nfeatures))" << endl;
   cout << " -s / --nodesize     minimum number of train samples per node, affects tree depth (default max{5,nsamples/100})" << endl;
   cout << " -p / --nperms       number of Random Forests (default " << DEFAULT_NPERMS << ")" << endl;
   cout << " -t / --pthreshold   p-value threshold below which associations are listed (default " << DEFAULT_PVALUETHRESHOLD << ")" << endl;
-  cout << " -g / --gbt          Enable (1 == YES) Gradient Boosting Trees, a subsequent filtering procedure (default 0 == NO)" << endl;
   cout << endl;
+  cout << "OPTIONAL HANDLES:" << endl;
+  cout << " -f / --filter       Apply feature filtering with Random Forests" << endl;
 }
 
 void printHelpHint()
@@ -91,23 +88,8 @@ int main(int argc, char* argv[])
       return(EXIT_SUCCESS);
     }
 
-  //If there are only one input argument, it must be a help handle
-  if(argc == 2)
-    {
-      string unaryHandle(argv[1]);
-      if(unaryHandle == "-h" || unaryHandle == "--help")
-	{
-	  printHelp();
-	  return(EXIT_SUCCESS);
-	}
-      else
-	{
-	  printHelpHint();
-	  return(EXIT_FAILURE);
-	}
-    }
-
   //Set user parameters to default values
+  bool printHelpHandle = DEFAULT_PRINT_HELP;
   string input = "";
   string targetStr = "";
   size_t nTrees = DEFAULT_NTREES;
@@ -115,22 +97,27 @@ int main(int argc, char* argv[])
   size_t nodeSize = DEFAULT_NODESIZE;
   size_t nPerms = DEFAULT_NPERMS;
   num_t pValueThreshold = DEFAULT_PVALUETHRESHOLD;
-  size_t isGBTEnabled = DEFAULT_IS_GBT_ENABLED;
-  size_t reportFiltered = DEFAULT_REPORT_FILTERED;
+  bool applyFilter = DEFAULT_APPLY_FILTER;
   string output = "";
 
   //Read the user parameters 
-  GetOpt_pp ops(argc, argv);        
-  ops >> Option('I',"input",input);
-  ops >> Option('i',"target",targetStr);
-  ops >> Option('n',"ntrees",nTrees);
-  ops >> Option('m',"mtry",mTry);
-  ops >> Option('s',"nodesize",nodeSize);
-  ops >> Option('p',"nperms",nPerms);
-  ops >> Option('t',"pthreshold",pValueThreshold);
-  ops >> Option('g',"gbt",isGBTEnabled);
-  ops >> Option('f',"fullreport",reportFiltered);
-  ops >> Option('O',"output",output);
+  ArgParse parser(argc,argv);
+  parser.getArgument<bool>("h","help",printHelpHandle);
+  parser.getArgument<string>("I","input",input); 
+  parser.getArgument<string>("i","target",targetStr); 
+  parser.getArgument<size_t>("n","ntrees",nTrees); 
+  parser.getArgument<size_t>("m","mtry",mTry); 
+  parser.getArgument<size_t>("s","nodesize",nodeSize); 
+  parser.getArgument<size_t>("p","nperms",nPerms); 
+  parser.getArgument<num_t>("t","pthreshold",pValueThreshold); 
+  parser.getArgument<bool>("f","filter",applyFilter); 
+  parser.getArgument<string>("O","output",output); 
+
+  if(printHelpHandle)
+    {
+      printHelp();
+      return(EXIT_SUCCESS);
+    }
 
   //Print help and exit if input file is not specified
   if(input == "")
@@ -189,7 +176,7 @@ int main(int argc, char* argv[])
       //If default nTrees is to be used...
       if(nTrees == DEFAULT_NTREES)
 	{
-	  nTrees = static_cast<size_t>( 1.0*treedata.nSamples() / realFraction );
+	  nTrees = static_cast<size_t>( 10.0*treedata.nSamples() / realFraction );
 	}
       
       //If default mTry is to be used...
@@ -234,57 +221,58 @@ int main(int argc, char* argv[])
       
       vector<num_t> pValues; //(treedata.nFeatures());
       vector<num_t> importanceValues; //(treedata.nFeatures());
-      vector<vector<num_t> > importanceMat(nPerms);
       
-      executeRandomForestFilter(treedata,targetIdx,nTrees,mTry,nodeSize,nPerms,pValues,importanceValues);
-
-      size_t nFeatures = treedata.nFeatures();
-      vector<size_t> keepFeatureIcs(1);
-      keepFeatureIcs[0] = targetIdx;
-      vector<string> removedFeatures;
-      vector<size_t> removedFeatureIcs;
-      for(size_t featureIdx = 0; featureIdx < nFeatures; ++featureIdx)
+      if(applyFilter)
 	{
-	  if(featureIdx != targetIdx && importanceValues[featureIdx] > datadefs::EPS)
+	  cout << "Applying Random Forest filter..." << endl; 
+	  executeRandomForestFilter(treedata,targetIdx,nTrees,mTry,nodeSize,nPerms,pValues,importanceValues);
+	   
+	  size_t nFeatures = treedata.nFeatures();
+	  vector<size_t> keepFeatureIcs(1);
+	  keepFeatureIcs[0] = targetIdx;
+	  vector<string> removedFeatures;
+	  vector<size_t> removedFeatureIcs;
+	  for(size_t featureIdx = 0; featureIdx < nFeatures; ++featureIdx)
 	    {
-	      keepFeatureIcs.push_back(featureIdx);
+	      if(featureIdx != targetIdx && importanceValues[featureIdx] > datadefs::EPS)
+		{
+		  keepFeatureIcs.push_back(featureIdx);
+		}
+	      else
+		{
+		  removedFeatureIcs.push_back(featureIdx);
+		  removedFeatures.push_back(treedata.getFeatureName(featureIdx));
+		}
 	    }
-	  else
-	    {
-	      removedFeatureIcs.push_back(featureIdx);
-	      removedFeatures.push_back(treedata.getFeatureName(featureIdx));
-	    }
+	  
+	  treedata.keepFeatures(keepFeatureIcs);
+	  targetIdx = 0;
+	  cout << endl;
+	  cout << "Features filtered: " << removedFeatures.size() << " (" << treedata.nFeatures() << " left)" << endl;
+	  cout << "TEST: target is '" << treedata.getFeatureName(targetIdx) << "'" << endl;
 	}
       
-      Treedata treedataFiltered(treedata,keepFeatureIcs);
-      size_t oldTargetIdx = targetIdx;
-      targetIdx = 0;
-
-      cout << endl;
-      cout << "Features filtered: " << nFeatures - treedataFiltered.nFeatures() << " (" << treedataFiltered.nFeatures() << " left)" << endl;
-      cout << "TEST: target is '" << treedataFiltered.getFeatureName(targetIdx) << "'" << endl;
-      
-
       // THIS WILL BE REPLACED BY GBT
-      executeRandomForestFilter(treedataFiltered,targetIdx,nTrees,mTry,nodeSize,nPerms,pValues,importanceValues);
-
+      executeRandomForestFilter(treedata,targetIdx,nTrees,mTry,nodeSize,nPerms,pValues,importanceValues);
+    	  
+      
       /////////////////////////////////////////////
       //  ANALYSIS 2 -- Gradient Boosting Trees  //
       /////////////////////////////////////////////
       
-      if(isGBTEnabled)
+      if(false)
 	{
 	  cout << "Gradient Boosting Trees *ENABLED*" << endl;
 	  
 	  size_t nMaxLeaves = 6;
 	  num_t shrinkage = 0.5;
 	  num_t subSampleSize = 0.5;
-	  GBT gbt(&treedataFiltered, targetIdx, nTrees, nMaxLeaves, shrinkage, subSampleSize);
+	  GBT gbt(&treedata, targetIdx, nTrees, nMaxLeaves, shrinkage, subSampleSize);
 	  
 	  
 	  cout <<endl<< "PREDICTION:" << endl;
-	  vector<num_t> prediction(treedataFiltered.nSamples());
-	  gbt.predictForest(&treedataFiltered, prediction);
+	  vector<num_t> prediction(treedata.nSamples());
+	  gbt.predictForest(&treedata, prediction);
 	}
       else
       	{
@@ -297,15 +285,17 @@ int main(int argc, char* argv[])
       ///////////////////////
       //  GENERATE OUTPUT  //
       ///////////////////////  
-      vector<size_t> refIcs(treedataFiltered.nFeatures());
+      vector<size_t> refIcs(treedata.nFeatures());
       //vector<string> fnames = treedata.featureheaders();
-      datadefs::sortDataAndMakeRef(pValues,refIcs);
-      datadefs::sortFromRef<num_t>(importanceValues,refIcs);
+      bool isIncreasingOrder = false;
+      datadefs::sortDataAndMakeRef(isIncreasingOrder,importanceValues,refIcs); // BUG
+      datadefs::sortFromRef<num_t>(pValues,refIcs);
       //targetIdx = refIcs[targetIdx];
       
-      string targetName = treedataFiltered.getFeatureName(targetIdx);
+      string targetName = treedata.getFeatureName(targetIdx);
       
-      if(pValues[0] <= pValueThreshold)
+      //MODIFICATION: ALL ASSOCIATIONS WILL BE PRINTED
+      if(true)
 	{
 	  //cout << "Writing associations to file '" << output << "'" << endl;
 	  //ofstream os(output.c_str());
@@ -319,13 +309,16 @@ int main(int argc, char* argv[])
 	      po = fopen(output.c_str(),"a");
 	    }
 	  
-	  for(size_t featureIdx = 0; featureIdx < treedataFiltered.nFeatures(); ++featureIdx)
+	  for(size_t featureIdx = 0; featureIdx < treedata.nFeatures(); ++featureIdx)
 	    {
 	      
-	      if(pValues[featureIdx] > pValueThreshold)
+	      //MODIFICATION: ALL ASSOCIATIONS WILL BE PRINTED
+	      /*
+		if(importanceValues[featureIdx] < datadefs::EPS)
 		{
-		  break;
+		break;
 		}
+	      */
 	      
 	      if(refIcs[featureIdx] == targetIdx)
 		{
@@ -333,20 +326,28 @@ int main(int argc, char* argv[])
 		  continue;
 		}
 	      
-	      
-	      fprintf(po,"%s\t%s\t%9.8f\t%9.8f\t%9.8f\n",targetName.c_str(),treedataFiltered.getFeatureName(refIcs[featureIdx]).c_str(),pValues[featureIdx],importanceValues[featureIdx],treedataFiltered.pearsonCorrelation(targetIdx,refIcs[featureIdx]));
-	      
+	      if(nPerms > 1)
+		{
+		  fprintf(po,"%s\t%s\t%9.8f\t%9.8f\t%9.8f\n",targetName.c_str(),treedata.getFeatureName(refIcs[featureIdx]).c_str(),pValues[featureIdx],importanceValues[featureIdx],treedata.pearsonCorrelation(targetIdx,refIcs[featureIdx]));
+		}
+	      else
+		{
+		  fprintf(po,"%s\t%s\tNaN\t%9.8f\t%9.8f\n",targetName.c_str(),treedata.getFeatureName(refIcs[featureIdx]).c_str(),importanceValues[featureIdx],treedata.pearsonCorrelation(targetIdx,refIcs[featureIdx]));
+		}
 	      //os << target_str << "\t" << treedata.get_featureheader(ref_ics[i]) << "\t" 
 	      //   << pvalues[i] << "\t" << ivalues[i] << "\t" << treedata.corr(targetidx,ref_ics[i]) << endl;
 	    }
 	  
-	  if(reportFiltered)
+	  //CURRENTLY NOT POSSIBLE TO REPORT FILTERED FEATURES
+	  /*
+	    if(reportFiltered)
 	    {
-	      for(size_t featureIdx = 0; featureIdx < removedFeatureIcs.size(); ++featureIdx)
-		{
-		  fprintf(po,"%s\t%s\tNaN\tNaN\t%9.8f\n",targetName.c_str(),removedFeatures[featureIdx].c_str(),treedata.pearsonCorrelation(oldTargetIdx,removedFeatureIcs[featureIdx]));
-		}
+	    for(size_t featureIdx = 0; featureIdx < removedFeatureIcs.size(); ++featureIdx)
+	    {
+	    fprintf(po,"%s\t%s\tNaN\tNaN\t%9.8f\n",targetName.c_str(),removedFeatures[featureIdx].c_str(),treedata.pearsonCorrelation(oldTargetIdx,removedFeatureIcs[featureIdx]));
 	    }
+	    }
+	  */
 
 
 	  fclose(po);
@@ -388,7 +389,8 @@ void executeRandomForestFilter(Treedata& treedata,
     {
       //cout << "  RF " << permIdx + 1 << ": ";
       //Treedata td_thread = treedata;
-      Randomforest RF(&treedata,targetIdx,nTrees,mTry,nodeSize);
+      bool useContrasts = false;
+      Randomforest RF(&treedata,targetIdx,nTrees,mTry,nodeSize,useContrasts);
       size_t nNodesInForest = RF.nNodes();
       nNodesInAllForests += nNodesInForest;
       importanceMat[permIdx] = RF.featureImportance();
@@ -400,19 +402,28 @@ void executeRandomForestFilter(Treedata& treedata,
        << " nodes generated in " << time_diff << " seconds (" << 1.0*nNodesInAllForests / time_diff
        << " nodes per second)" << endl;
   
-  for(size_t featureIdx = 0; featureIdx < treedata.nFeatures(); ++featureIdx)
+  if(nPerms > 1)
     {
-      
-      size_t nRealSamples;
-      vector<num_t> fSample(nPerms);
-      vector<num_t> cSample(nPerms);
-      for(size_t permIdx = 0; permIdx < nPerms; ++permIdx)
+      for(size_t featureIdx = 0; featureIdx < treedata.nFeatures(); ++featureIdx)
 	{
-	  fSample[permIdx] = importanceMat[permIdx][featureIdx];
-	  cSample[permIdx] = importanceMat[permIdx][featureIdx + treedata.nFeatures()];
+	  
+	  size_t nRealSamples;
+	  vector<num_t> fSample(nPerms);
+	  vector<num_t> cSample(nPerms);
+	  for(size_t permIdx = 0; permIdx < nPerms; ++permIdx)
+	    {
+	      fSample[permIdx] = importanceMat[permIdx][featureIdx];
+	      cSample[permIdx] = importanceMat[permIdx][featureIdx + treedata.nFeatures()];
+	    }
+	  datadefs::utest(fSample,cSample,pValues[featureIdx]);
+	  datadefs::mean(fSample,importanceValues[featureIdx],nRealSamples);
 	}
-      datadefs::utest(fSample,cSample,pValues[featureIdx]);
-      datadefs::mean(fSample,importanceValues[featureIdx],nRealSamples);
     }
+  else
+    {
+      importanceValues = importanceMat[0];
+    }
+
+  importanceValues.resize(treedata.nFeatures());
   
 }

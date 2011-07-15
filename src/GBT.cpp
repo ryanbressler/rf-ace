@@ -80,6 +80,7 @@ void GBT::growForestNumerical()
   size_t nNodes;
   vector<size_t> oobIcs;
   set<size_t> featuresInTree;
+  bool useContrasts = false;
 
   for(size_t t = 0; t < nTrees_; ++t)
     {
@@ -99,6 +100,7 @@ void GBT::growForestNumerical()
 			      minNodeSizeToStop,
 			      isRandomSplit,
 			      nFeaturesInSample,
+			      useContrasts,
 			      oobIcs,
 			      featuresInTree,
 			      nNodes);
@@ -170,6 +172,7 @@ void GBT::growForestCategorical()
   size_t nNodes;
   vector<size_t> oobIcs;
   set<size_t> featuresInTree;
+  bool useContrasts = false;
 
   // Each iteration consists of numClasses_ trees,
   // each of those predicting the probability residual for each class.
@@ -204,6 +207,7 @@ void GBT::growForestCategorical()
 				  minNodeSizeToStop,
 				  isRandomSplit,
 				  nFeaturesInSample,
+				  useContrasts,
 				  oobIcs,
 				  featuresInTree,
 				  nNodes);

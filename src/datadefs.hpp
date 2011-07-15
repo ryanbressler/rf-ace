@@ -179,12 +179,20 @@ namespace datadefs
 
   
   //A comparator functor that can be passed to STL::sort. Assumes that one is comparing first elements of pairs, first type being num_t and second T
-  template <typename T> struct ordering {
+  template <typename T> struct increasingOrder {
     bool operator ()(pair<datadefs::num_t,T> const& a, pair<datadefs::num_t,T> const& b)
     {
       return(a.first < b.first);
     }
   }; 
+
+  //A comparator functor that can be passed to STL::sort. Assumes that one is comparing first elements of pairs, first type being num_t and second T
+  template <typename T> struct decreasingOrder {
+    bool operator ()(pair<datadefs::num_t,T> const& a, pair<datadefs::num_t,T> const& b)
+    {
+      return(a.first > b.first);
+    }
+  };
   
   template <typename T1,typename T2> void make_pairedv(vector<T1> const& v1,
                                                        vector<T2> const& v2,
@@ -210,7 +218,7 @@ namespace datadefs
       }
   }
 
-  void sortDataAndMakeRef(vector<num_t>& data, vector<size_t>& refIcs);
+  void sortDataAndMakeRef(const bool isIncreasingOrder, vector<num_t>& data, vector<size_t>& refIcs);
 
   //Sorts a given input data vector of type T based on a given reference ordering of type vector<int>
   template <typename T> void sortFromRef(vector<T>& data, vector<size_t> const& refIcs)

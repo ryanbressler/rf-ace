@@ -14,13 +14,14 @@ RootNode::~RootNode()
 
 
 void RootNode::growTree(Treedata* treeData, 
-			const size_t targetIdx, 
-			const bool sampleWithReplacement, 
-			const num_t sampleSize, 
-			const size_t maxNodesToStop, 
-			const size_t minNodeSizeToStop, 
-			const bool isRandomSplit, 
-			const size_t nFeaturesInSample, 
+			size_t targetIdx, 
+			bool sampleWithReplacement, 
+			num_t sampleSize, 
+			size_t maxNodesToStop, 
+			size_t minNodeSizeToStop, 
+			bool isRandomSplit, 
+			size_t nFeaturesInSample, 
+			bool useContrasts,
 			vector<size_t>& oobIcs,
 			set<size_t>& featuresInTree,
 			size_t& nNodes)
@@ -77,7 +78,16 @@ void RootNode::growTree(Treedata* treeData,
   featuresInTree.clear();
 
   //Start the recursive node splitting from the root node. This will generate the tree.
-  Node::recursiveNodeSplit(treeData,targetIdx,bootstrapIcs,maxNodesToStop,minNodeSizeToStop,isRandomSplit,nFeaturesInSample,featuresInTree,nNodes);
+  Node::recursiveNodeSplit(treeData,
+			   targetIdx,
+			   bootstrapIcs,
+			   maxNodesToStop,
+			   minNodeSizeToStop,
+			   isRandomSplit,
+			   nFeaturesInSample,
+			   useContrasts,
+			   featuresInTree,
+			   nNodes);
 
 }
 

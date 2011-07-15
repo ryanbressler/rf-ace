@@ -4,8 +4,8 @@ MPFLAG = -fopenmp
 
 all: rf_ace
 
-rf_ace: src/rf_ace.cpp src/getopt_pp.cpp src/randomforest.cpp src/GBT.cpp src/rootnode.cpp src/node.cpp src/treedata.cpp src/mtrand.cpp src/datadefs.cpp
-	$(COMPILER) $(CFLAGS) src/rf_ace.cpp src/getopt_pp.cpp src/randomforest.cpp src/GBT.cpp src/rootnode.cpp src/node.cpp src/treedata.cpp src/mtrand.cpp src/datadefs.cpp -o bin/rf_ace
+rf_ace: src/rf_ace.cpp src/argparse.cpp src/randomforest.cpp src/GBT.cpp src/rootnode.cpp src/node.cpp src/treedata.cpp src/mtrand.cpp src/datadefs.cpp
+	$(COMPILER) $(CFLAGS) src/rf_ace.cpp src/argparse.cpp src/randomforest.cpp src/GBT.cpp src/rootnode.cpp src/node.cpp src/treedata.cpp src/mtrand.cpp src/datadefs.cpp -o bin/rf_ace
 
 
 

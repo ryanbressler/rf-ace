@@ -59,23 +59,24 @@ protected:
 			  const size_t minNodeSizeToStop,
 			  const bool isRandomSplit,
 			  const size_t nFeaturesInSample,
+			  const bool useContrasts,
 			  set<size_t>& featuresInTree,
 			  size_t& nNodes);
     
 
 private:
 
-  void numericalFeatureSplit(vector<num_t>& tv,
+  void numericalFeatureSplit(vector<num_t> tv,
 			     const bool isTargetNumerical,
-			     vector<num_t>& fv,
+			     vector<num_t> fv,
 			     const size_t min_split,
 			     vector<size_t>& sampleIcs_left,
 			     vector<size_t>& sampleIcs_right,
 			     num_t& splitValue);
 
-  void categoricalFeatureSplit(vector<num_t>& tv,
+  void categoricalFeatureSplit(vector<num_t> tv,
 			       const bool isTargetNumerical,
-			       vector<num_t>& fv,
+			       vector<num_t> fv,
 			       vector<size_t>& sampleIcs_left,
 			       vector<size_t>& sampleIcs_right,
 			       set<num_t>& categories_left);

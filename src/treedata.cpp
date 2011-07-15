@@ -167,6 +167,21 @@ Treedata::~Treedata()
 {
 }
 
+void Treedata::keepFeatures(const vector<size_t>& featureIcs)
+{
+  
+  size_t nFeaturesNew = featureIcs.size();
+  
+  vector<Treedata::Feature> featureCopy = features_;
+  features_.resize(2*nFeaturesNew);
+  for(size_t i = 0; i < nFeaturesNew; ++i)
+    {
+      features_[i] = featureCopy[featureIcs[i]];
+      features_[ nFeaturesNew + i ] = featureCopy[ nFeatures_ + featureIcs[i] ];
+    }
+  nFeatures_ = nFeaturesNew;
+}
+
 void Treedata::readFileType(string& fileName, FileType& fileType)
 {
 
