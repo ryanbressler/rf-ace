@@ -9,8 +9,10 @@ class RootNode : public Node
 {
 public:
 
-  RootNode();
-  ~RootNode();
+  /*
+    RootNode();
+    ~RootNode();
+  */
 
   void growTree(Treedata* treeData,
 		size_t targetIdx,

@@ -4,13 +4,20 @@
 #include "datadefs.hpp"
 
 
-RootNode::RootNode(): Node()
-{
-}
+/*
+  RootNode::RootNode(): Node()
+  {
+  }
+*/
   
-RootNode::~RootNode()
-{ 
-}
+/*
+  RootNode::~RootNode()
+  { 
+  
+  ~Node();
+  
+  }
+*/
 
 
 void RootNode::growTree(Treedata* treeData, 
