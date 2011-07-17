@@ -23,7 +23,7 @@ public:
   //void setTarget(size_t targetIdx);
 
   //Gets the selected target feature
-  size_t getTarget();
+  //size_t getTarget();
 
   //void learn();
 
@@ -76,8 +76,8 @@ private:
   
   //Size of the forests
   size_t nTrees_;
-  size_t mTry_;
-  size_t nodeSize_;
+  //size_t mTry_;
+  //size_t nodeSize_;
 
   //Root nodes for every tree
   vector<RootNode*> rootNodes_;
@@ -96,7 +96,7 @@ private:
   //Out-of-box samples for each tree
   vector<vector<size_t> > oobMatrix_;
 
-  bool useContrasts_;
+  //bool useContrasts_;
   
 };
 

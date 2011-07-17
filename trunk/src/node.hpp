@@ -34,9 +34,8 @@ public:
   void setPrediction(num_t value);
   num_t getPrediction();
 
-  //void set_trainidx(size_t trainidx);
-  //vector<size_t>* get_trainics();
-  //void clearTrainIcs();
+  void accumulateLeafTestPredictionError(const num_t newTestData);
+  void eraseLeafTestPredictionError();
 
   //Logic test whether the node has children or not
   inline bool hasChildren() { return(hasChildren_); }
@@ -55,10 +54,12 @@ protected:
   void recursiveNodeSplit(Treedata* treeData,
 			  const size_t targetIdx,
 			  const vector<size_t>& sampleIcs,
+			  const bool sampleWithReplacement,
+			  const num_t sampleSizeFraction,
 			  const size_t maxNodesToStop,
 			  const size_t minNodeSizeToStop,
 			  const bool isRandomSplit,
-			  const size_t nFeaturesInSample,
+			  const size_t nFeaturesForSplit,
 			  const bool useContrasts,
 			  set<size_t>& featuresInTree,
 			  size_t& nNodes);
@@ -87,7 +88,10 @@ private:
                      vector<size_t> const& sampleIcs_left,
                      vector<size_t> const& sampleIcs_right);
 
-
+  
+  void setLeafTrainPrediction(const bool isTargetNumerical, const vector<num_t>& trainData);
+  //void accumulateLeafTestPredictionError(const num_t newTestData);
+  //void eraseLeafTestPredictionError();
 
   //A recursive function that will accumulate the number of descendant nodes the current nodes has
   void recursiveNDescendantNodes(size_t& n);
@@ -98,7 +102,12 @@ private:
   num_t threshold_;
   set<num_t> classSet_;
 
-  //num_t impurity_;
+  bool isTrainPredictionSet_;
+  num_t trainPrediction_;
+  size_t nTestSamples_;
+  num_t testPredictionError_;
+
+  // WILL BECOME DEPRECATED
   num_t prediction_; // saves the prediction of the node
     
   bool hasChildren_;

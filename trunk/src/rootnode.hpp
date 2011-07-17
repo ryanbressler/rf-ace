@@ -9,26 +9,47 @@ class RootNode : public Node
 {
 public:
 
-  /*
-    RootNode();
-    ~RootNode();
-  */
+  
+  RootNode(bool sampleWithReplacement,
+	   num_t sampleSizeFraction,
+	   size_t maxNodesToStop,
+	   size_t minNodeSizeToStop,
+	   bool isRandomSplit,
+	   size_t nFeaturesForSplit,
+	   bool useContrasts);
+  
+  //~RootNode();
+  
 
   void growTree(Treedata* treeData,
-		size_t targetIdx,
-		bool sampleWithReplacement,
-		num_t sampleSize,
-		size_t maxNodesToStop,
-		size_t minNodeSizeToStop,
-		bool isRandomSplit,
-		size_t nFeaturesInSample,
-		bool useContrasts,
+		const size_t targetIdx,
 		vector<size_t>& oobIcs,
 		set<size_t>& featuresInTree,
 		size_t& nNodes);
+
+  /*
+    size_t targetIdx();
+    bool isTargetNumerical();
+    bool sampleWithReplacement();
+    size_t maxNodesToStop();
+    size_t minNodeSizeToStop();
+    bool isRandomSplit();
+    size_t featureSampleSize();
+    bool useContrasts();
+  */
   
 private:
 
+  //Treedata* treeData_;
+  //size_t targetIdx_;
+  //bool isTargetNumerical_;
+  bool sampleWithReplacement_;
+  num_t sampleSizeFraction_;
+  size_t maxNodesToStop_;
+  size_t minNodeSizeToStop_;
+  bool isRandomSplit_;
+  size_t nFeaturesForSplit_;
+  bool useContrasts_;
 
 };
 
