@@ -348,7 +348,7 @@ num_t GBT::predictSampleByTree(size_t sampleIdx, size_t treeIdx)
       currentNode = currentNode->percolateData(value);
     }
   // now currentNode points to a leaf node: get the prediction
-  return currentNode->getPrediction();
+  return currentNode->getLeafTrainPrediction();
 }
 
 
@@ -479,7 +479,8 @@ void GBT::SetNodePrediction( size_t treeIdx, Node* node, vector<size_t>& sampleI
         }
     }
 
-  node->setPrediction(nodePred);
+  cout << "warning: setting node prediction here will override the prediction set by the tree-generating in Node class!" << endl;
+  node->setLeafTrainPrediction(nodePred); // !!!!! WARNING : !!!!! 
   cout << "setting pred=" << nodePred << ", tree="<<treeIdx<<" &node="<< node<<endl;
   
   ++nLeavesCounter_; // finally, indicate that we have added a leaf

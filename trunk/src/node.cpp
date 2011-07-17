@@ -120,15 +120,19 @@ void Node::recursiveNDescendantNodes(size_t& n)
 }
 
 
-void Node::setPrediction(num_t value)
+//WILL BE REMOVED FROM THE PUBLIC PARTS
+void Node::setLeafTrainPrediction(const num_t trainPrediction)
 {
-  prediction_ = value;
+  assert(!hasChildren_ && !isTrainPredictionSet_);
+  trainPrediction_ = trainPrediction;
+  isTrainPredictionSet_ = true;
 }
 
 
-num_t Node::getPrediction()
+num_t Node::getLeafTrainPrediction()
 {
-  return(prediction_);
+  assert(!hasChildren_ && isTrainPredictionSet_);
+  return(trainPrediction_);
 }
 
 void Node::recursiveNodeSplit(Treedata* treeData,
@@ -824,7 +828,7 @@ void Node::setLeafTrainPrediction(const bool isTargetNumerical, const vector<num
 void Node::accumulateLeafTestPredictionError(const num_t newTestData)
 {
   assert(!hasChildren_);
-
+  assert(false);
   
   
 }

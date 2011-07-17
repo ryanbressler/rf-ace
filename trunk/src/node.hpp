@@ -31,8 +31,8 @@ public:
   //Given a value, descends to either one of the child nodes, if existing, otherwise returns a pointer to the current node
   Node* percolateData(num_t value);
 
-  void setPrediction(num_t value);
-  num_t getPrediction();
+  void setLeafTrainPrediction(const num_t trainPrediction);
+  num_t getLeafTrainPrediction();
 
   void accumulateLeafTestPredictionError(const num_t newTestData);
   void eraseLeafTestPredictionError();
@@ -108,7 +108,7 @@ private:
   num_t testPredictionError_;
 
   // WILL BECOME DEPRECATED
-  num_t prediction_; // saves the prediction of the node
+  //num_t prediction_; // saves the prediction of the node
     
   bool hasChildren_;
   Node* leftChild_;
