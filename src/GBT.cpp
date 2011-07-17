@@ -19,12 +19,27 @@ GBT::GBT(Treedata* treeData, size_t targetIdx, size_t nTrees, size_t nMaxLeaves,
     nTrees_*= numClasses_;
   }
   
-  // Allocate memory for the root nodes
-  rootNodes_.resize(nTrees_); // = vector<Node *>( nTrees_ );
+  bool sampleWithReplacement = false;
+  num_t sampleSizeFraction = subSampleSize_;
+  size_t maxNodesToStop = 2 * nMaxLeaves_ - 1;
+  size_t minNodeSizeToStop = nodeSize_;
+  bool isRandomSplit = false;
+  size_t nFeaturesForSplit = treeData_->nFeatures();
+  bool useContrasts = false;
+
+  //Allocates memory for the root nodes. With all these parameters, the RootNode is now able to take full control of the splitting process 
+  rootNodes_.resize(nTrees_);
   for(size_t treeIdx = 0; treeIdx < nTrees_; ++treeIdx)
     {
-      rootNodes_[treeIdx] = new RootNode;
+      rootNodes_[treeIdx] = new RootNode(sampleWithReplacement,
+                                         sampleSizeFraction,
+                                         maxNodesToStop,
+                                         minNodeSizeToStop,
+                                         isRandomSplit,
+                                         nFeaturesForSplit,
+                                         useContrasts);
     }
+
 
   //Let's grow the forest
   cout << "Target is "<< treeData_->getFeatureName(targetIdx_) <<" ["<<targetIdx_<<"]. It has "<<numClasses_<<" classes."<<endl;
@@ -71,16 +86,16 @@ void GBT::growForestNumerical()
   vector<num_t> prediction(nSamples, 0.0);
   vector<num_t> curPrediction(nSamples);
 
-  bool sampleWithReplacement = false;
-  num_t sampleSize = subSampleSize_;
-  size_t maxNodesToStop = 2*nMaxLeaves_ - 1;
-  size_t minNodeSizeToStop = 1;
-  bool isRandomSplit = false;
-  size_t nFeaturesInSample = treeData_->nFeatures();
+  //bool sampleWithReplacement = false;
+  //num_t sampleSize = subSampleSize_;
+  //size_t maxNodesToStop = 2*nMaxLeaves_ - 1;
+  //size_t minNodeSizeToStop = 1;
+  //bool isRandomSplit = false;
+  //size_t nFeaturesInSample = treeData_->nFeatures();
   size_t nNodes;
   vector<size_t> oobIcs;
   set<size_t> featuresInTree;
-  bool useContrasts = false;
+  //bool useContrasts = false;
 
   for(size_t t = 0; t < nTrees_; ++t)
     {
@@ -94,13 +109,6 @@ void GBT::growForestNumerical()
       // Grow a tree to predict the current target
       rootNodes_[t]->growTree(treeData_,
 			      targetIdx_,
-			      sampleWithReplacement,
-			      sampleSize,
-			      maxNodesToStop,
-			      minNodeSizeToStop,
-			      isRandomSplit,
-			      nFeaturesInSample,
-			      useContrasts,
 			      oobIcs,
 			      featuresInTree,
 			      nNodes);
@@ -163,16 +171,16 @@ void GBT::growForestCategorical()
   vector< vector<num_t> > curProbability( nSamples, vector<num_t>( numClasses_)  );
   // TODO don't really need all this space allocated
 
-  bool sampleWithReplacement = false;
-  num_t sampleSize = subSampleSize_;
-  size_t maxNodesToStop = 2*nMaxLeaves_ - 1;
-  size_t minNodeSizeToStop = 1;
-  bool isRandomSplit = false;
-  size_t nFeaturesInSample = treeData_->nFeatures();
+  //bool sampleWithReplacement = false;
+  //num_t sampleSize = subSampleSize_;
+  //size_t maxNodesToStop = 2*nMaxLeaves_ - 1;
+  //size_t minNodeSizeToStop = 1;
+  //bool isRandomSplit = false;
+  //size_t nFeaturesInSample = treeData_->nFeatures();
   size_t nNodes;
   vector<size_t> oobIcs;
   set<size_t> featuresInTree;
-  bool useContrasts = false;
+  //bool useContrasts = false;
 
   // Each iteration consists of numClasses_ trees,
   // each of those predicting the probability residual for each class.
@@ -201,13 +209,6 @@ void GBT::growForestCategorical()
           size_t t = m * numClasses_ + k; // tree index
           rootNodes_[t]->growTree(treeData_,
 				  targetIdx_,
-				  sampleWithReplacement,
-				  sampleSize,
-				  maxNodesToStop,
-				  minNodeSizeToStop,
-				  isRandomSplit,
-				  nFeaturesInSample,
-				  useContrasts,
 				  oobIcs,
 				  featuresInTree,
 				  nNodes);

@@ -4,6 +4,10 @@
 
 Node::Node():
   isSplitterNumerical_(true),
+  isTrainPredictionSet_(false),
+  trainPrediction_(0.0),
+  nTestSamples_(0),
+  testPredictionError_(0.0),
   hasChildren_(false),
   leftChild_(NULL),
   rightChild_(NULL)
@@ -115,10 +119,12 @@ void Node::recursiveNDescendantNodes(size_t& n)
 
 }
 
+
 void Node::setPrediction(num_t value)
 {
   prediction_ = value;
 }
+
 
 num_t Node::getPrediction()
 {
@@ -128,57 +134,66 @@ num_t Node::getPrediction()
 void Node::recursiveNodeSplit(Treedata* treeData,
 			      const size_t targetIdx,
 			      const vector<size_t>& sampleIcs,
+			      const bool sampleWithReplacement,
+			      const num_t sampleSizeFraction,
 			      const size_t maxNodesToStop,
 			      const size_t minNodeSizeToStop,
 			      const bool isRandomSplit,
-			      const size_t nFeaturesInSample,
+			      const size_t nFeaturesForSplit,
 			      const bool useContrasts,
 			      set<size_t>& featuresInTree,
 			      size_t& nNodes)
 {
 
 
-
+  //const size_t targetIdx = rootNode->targetIdx();
+  const bool isTargetNumerical = treeData->isFeatureNumerical(targetIdx);
+  //const size_t minNodeSizeToStop = rootNode->minNodeSizeToStop();
+  //const size_t maxNodesToStop = rootNode->maxNodesToStop();
   size_t nSamples = sampleIcs.size();
 
   if(nSamples < 2 * minNodeSizeToStop || nNodes + 1 > maxNodesToStop)
     {
       //cout << "Too few samples to start with, quitting" << endl;
+      vector<num_t> leafTrainData;
+      treeData->getFeatureData(targetIdx,sampleIcs,leafTrainData);
+      Node::setLeafTrainPrediction(isTargetNumerical,leafTrainData);
       return;
     }
 
 
-  vector<size_t> featureSample(nFeaturesInSample);
+  vector<size_t> featureSample(nFeaturesForSplit);
 
-  const size_t nFeatures = treeData->nFeatures();
+  //const size_t nFeatures = treeData->nFeatures();
+  //const size_t nFeaturesForSplit = rootNode->nFeaturesForSplit();
 
   if(isRandomSplit)
     {
       if(useContrasts)
 	{
-	  for(size_t i = 0; i < nFeaturesInSample; ++i)
+	  for(size_t i = 0; i < nFeaturesForSplit; ++i)
 	    {
-	      treeData->getRandomIndex(2*nFeatures,featureSample[i]);
+	      treeData->getRandomIndex(2*treeData->nFeatures(),featureSample[i]);
 	    }
 	}
       else
 	{
-	  for(size_t i = 0; i < nFeaturesInSample; ++i)
+	  for(size_t i = 0; i < nFeaturesForSplit; ++i)
 	    {
-	      treeData->getRandomIndex(nFeatures,featureSample[i]);
+	      treeData->getRandomIndex(treeData->nFeatures(),featureSample[i]);
 	    }
 	}
     }
   else
     {
-      for(size_t i = 0; i < nFeaturesInSample; ++i)
+      for(size_t i = 0; i < nFeaturesForSplit; ++i)
 	{
 	  featureSample[i] = i;
 	}
     }
 
   vector<num_t> targetData;
-  const bool isTargetNumerical = treeData->isFeatureNumerical(targetIdx);
+  //const bool isTargetNumerical = rootNode->isTargetNumerical();
   treeData->getFeatureData(targetIdx,sampleIcs,targetData);
 
   vector<size_t> sampleIcs_left,sampleIcs_right;
@@ -187,18 +202,29 @@ void Node::recursiveNodeSplit(Treedata* treeData,
 
   if(isTargetNumerical)
     {
-      Node::numericalFeatureSplit(targetData,isTargetNumerical,targetData,minNodeSizeToStop,sampleIcs_left,sampleIcs_right,splitValue);
+      Node::numericalFeatureSplit(targetData,
+				  isTargetNumerical,
+				  targetData,
+				  minNodeSizeToStop,
+				  sampleIcs_left,
+				  sampleIcs_right,
+				  splitValue);
     }
   else
     {
-      Node::categoricalFeatureSplit(targetData,isTargetNumerical,targetData,sampleIcs_left,sampleIcs_right,values_left);
+      Node::categoricalFeatureSplit(targetData,
+				    isTargetNumerical,
+				    targetData,
+				    sampleIcs_left,
+				    sampleIcs_right,
+				    values_left);
     }
 
-  vector<num_t> fitnessVector(nFeaturesInSample, 0.0);
+  vector<num_t> fitnessVector(nFeaturesForSplit, 0.0);
   num_t bestFitness = 0.0;
-  size_t bestFeatureIdx = nFeaturesInSample;
+  size_t bestFeatureIdx = nFeaturesForSplit;
 
-  for(size_t i = 0; i < nFeaturesInSample; ++i)
+  for(size_t i = 0; i < nFeaturesForSplit; ++i)
     {
 
       vector<num_t> featureData;
@@ -213,11 +239,15 @@ void Node::recursiveNodeSplit(Treedata* treeData,
 
       treeData->getFeatureData(featureIdx,sampleIcs,featureData);
 
-      fitnessVector[i] = Node::splitFitness(featureData,isFeatureNumerical,minNodeSizeToStop,sampleIcs_left,sampleIcs_right);
+      fitnessVector[i] = Node::splitFitness(featureData,
+					    isFeatureNumerical,
+					    minNodeSizeToStop,
+					    sampleIcs_left,
+					    sampleIcs_right);
 
     }
 
-  for(size_t i = 0; i < nFeaturesInSample; ++i)
+  for(size_t i = 0; i < nFeaturesForSplit; ++i)
     {
       if(fitnessVector[i] > bestFitness)
         {
@@ -227,9 +257,12 @@ void Node::recursiveNodeSplit(Treedata* treeData,
     }
 
 
-  if(bestFeatureIdx == nFeaturesInSample)
+  if(bestFeatureIdx == nFeaturesForSplit)
     {
       //cout << "No splitter found, quitting" << endl << endl;
+      vector<num_t> leafTrainData;
+      treeData->getFeatureData(targetIdx,sampleIcs,leafTrainData);
+      Node::setLeafTrainPrediction(isTargetNumerical,leafTrainData);
       return;
     }
 
@@ -253,6 +286,9 @@ void Node::recursiveNodeSplit(Treedata* treeData,
     {
       //cout << "Splitter has too few non-missing values, quitting" << endl;
       //This needs to be fixed such that one of the surrogates will determine the split instead
+      vector<num_t> leafTrainData;
+      treeData->getFeatureData(targetIdx,sampleIcs,leafTrainData);
+      Node::setLeafTrainPrediction(isTargetNumerical,leafTrainData);
       return;
     }
 
@@ -260,17 +296,31 @@ void Node::recursiveNodeSplit(Treedata* treeData,
 
   if(isBestFeatureNumerical)
     {
-      Node::numericalFeatureSplit(targetData,isTargetNumerical,featureData,minNodeSizeToStop,sampleIcs_left,sampleIcs_right,splitValue);
+      Node::numericalFeatureSplit(targetData,
+				  isTargetNumerical,
+				  featureData,
+				  minNodeSizeToStop,
+				  sampleIcs_left,
+				  sampleIcs_right,
+				  splitValue);
     }
   else
     {
-      Node::categoricalFeatureSplit(targetData,isTargetNumerical,featureData,sampleIcs_left,sampleIcs_right,values_left);
+      Node::categoricalFeatureSplit(targetData,
+				    isTargetNumerical,
+				    featureData,
+				    sampleIcs_left,
+				    sampleIcs_right,
+				    values_left);
     }
 
   assert(sampleIcs_left.size() + sampleIcs_right.size() == nRealSamples);
 
   if(sampleIcs_left.size() < minNodeSizeToStop || sampleIcs_right.size() < minNodeSizeToStop)
     {
+      vector<num_t> leafTrainData;
+      treeData->getFeatureData(targetIdx,sampleIcs,leafTrainData);
+      Node::setLeafTrainPrediction(isTargetNumerical,leafTrainData);
       return;
     }
 
@@ -297,10 +347,12 @@ void Node::recursiveNodeSplit(Treedata* treeData,
   leftChild_->recursiveNodeSplit(treeData,
 				 targetIdx,
 				 sampleIcs_left,
+				 sampleWithReplacement,
+				 sampleSizeFraction,
 				 maxNodesToStop,
 				 minNodeSizeToStop,
 				 isRandomSplit,
-				 nFeaturesInSample,
+				 nFeaturesForSplit,
 				 useContrasts,
 				 featuresInTree,
 				 nNodes);
@@ -314,10 +366,12 @@ void Node::recursiveNodeSplit(Treedata* treeData,
   rightChild_->recursiveNodeSplit(treeData,
 				  targetIdx,
 				  sampleIcs_right,
+				  sampleWithReplacement,
+				  sampleSizeFraction,
 				  maxNodesToStop,
 				  minNodeSizeToStop,
 				  isRandomSplit,
-				  nFeaturesInSample,
+				  nFeaturesForSplit,
 				  useContrasts,
 				  featuresInTree,
 				  nNodes);
@@ -737,4 +791,48 @@ num_t Node::splitFitness(vector<num_t> const& data,
 
     }
 
+}
+
+/*
+  void Node::accumulateLeafTrainData(const num_t newTrainData)
+  {
+  assert(!hasChildren_);
+  trainData_.push_back(newTrainData);
+  }
+*/
+
+void Node::setLeafTrainPrediction(const bool isTargetNumerical, const vector<num_t>& trainData)
+{
+  assert(!hasChildren_ && !isTrainPredictionSet_);
+
+  if(isTargetNumerical)
+    {
+      num_t trainPredictionSE = 0.0;
+      size_t nTrainSamples = 0;
+      datadefs::sqerr(trainData,trainPrediction_,trainPredictionSE,nTrainSamples);
+
+      assert(nTrainSamples > 0);
+    }
+  else
+    {
+      assert(false);
+    }
+
+  isTrainPredictionSet_ = true;
+}
+
+void Node::accumulateLeafTestPredictionError(const num_t newTestData)
+{
+  assert(!hasChildren_);
+
+  
+  
+}
+
+void Node::eraseLeafTestPredictionError()
+{
+  assert(!hasChildren_);
+
+  testPredictionError_ = 0.0;
+  nTestSamples_ = 0;
 }

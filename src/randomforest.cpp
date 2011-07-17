@@ -14,28 +14,35 @@ Randomforest::Randomforest(Treedata* treedata,
   targetIdx_(targetIdx),
   treedata_(treedata),
   nTrees_(nTrees),
-  mTry_(mTry),
-  nodeSize_(nodeSize),
   rootNodes_(nTrees),
-  oobMatrix_(nTrees),
-  useContrasts_(useContrasts)
+  oobMatrix_(nTrees)
 {
+
+  if(useContrasts)
+    {
+      treedata_->permuteContrasts();
+    }
 
   featuresInForest_.clear();
 
+  bool sampleWithReplacement = true;
+  num_t sampleSizeFraction = 1.0;
+  size_t maxNodesToStop = treedata->nSamples();
+  size_t minNodeSizeToStop = nodeSize;
+  bool isRandomSplit = true;
+  size_t nFeaturesForSplit = mTry;
+  
   //Allocates memory for the root nodes
   for(size_t treeIdx = 0; treeIdx < nTrees_; ++treeIdx)
     {
-      rootNodes_[treeIdx] = new RootNode;
-      //oobMatrix_[treeIdx].clear();
+      rootNodes_[treeIdx] = new RootNode(sampleWithReplacement,
+					 sampleSizeFraction,
+					 maxNodesToStop,
+					 minNodeSizeToStop,
+					 isRandomSplit,
+					 nFeaturesForSplit,
+					 useContrasts);
     }
-
-  //cout << "foo1" << endl;
-
-  //Before analysis, we'll permute the contrast features
-  treedata_->permuteContrasts();
-
-  //cout << "foo2" << endl;
 
   //Let's grow the forest
   Randomforest::growForest();
@@ -59,35 +66,23 @@ Randomforest::~Randomforest()
   //cout << "done" << endl;
 } 
 
-size_t Randomforest::getTarget()
-{
+/*
+  size_t Randomforest::getTarget()
+  {
   return(targetIdx_);
-}
+  }
+*/
 
 void Randomforest::growForest()
 {
 
-  bool sampleWithReplacement = true;
-  num_t sampleSize = 1.0;
-  bool isRandomSplit = true;
-  size_t maxNodesToStop = treedata_->nSamples();
-  size_t minNodeSizeToStop = nodeSize_;
-  size_t nFeaturesInSample = mTry_;
   size_t nNodes;
-  bool useContrasts = useContrasts_;
 
   //#pragma omp parallel for
   for(size_t treeIdx = 0; treeIdx < nTrees_; ++treeIdx)
     {
       rootNodes_[treeIdx]->growTree(treedata_,
 				    targetIdx_,
-				    sampleWithReplacement,
-				    sampleSize,
-				    maxNodesToStop,
-				    minNodeSizeToStop,
-				    isRandomSplit,
-				    nFeaturesInSample,
-				    useContrasts,
 				    oobMatrix_[treeIdx],
 				    featuresInForest_[treeIdx],
 				    nNodes);
