@@ -65,10 +65,10 @@ public:
 
   //Permutes integers in range 0,1,...,(ics.size()-1).
   //NOTE: original contents in ics will be replaced.
-  void permute(vector<size_t>& ics);
+  //void permute(vector<size_t>& ics);
 
   //Permutes data.
-  void permute(vector<num_t>& data);
+  //void permute(vector<num_t>& data);
 
   void permuteContrasts();
 
@@ -105,6 +105,12 @@ private:
   bool isValidFeatureHeader(const string& str);
 
   bool isPositiveInteger(const string& str, size_t& positiveInteger);
+
+  //NOTE: original contents in ics will be replaced.
+  void permute(vector<size_t>& ics);
+
+  //Permutes data.
+  void permute(vector<num_t>& data);
   
   template <typename T> void transpose(vector<vector<T> >& mat);
     

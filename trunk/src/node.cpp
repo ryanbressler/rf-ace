@@ -819,7 +819,13 @@ void Node::setLeafTrainPrediction(const bool isTargetNumerical, const vector<num
     }
   else
     {
-      assert(false);
+      map<num_t,size_t> freq;
+      size_t nTrainSamples = 0;
+      datadefs::count_freq(trainData,freq,nTrainSamples);
+      map<num_t,size_t>::iterator it(max_element(freq.begin(),freq.end(),datadefs::freqIncreasingOrder()));
+      trainPrediction_ = it->first;
+
+      assert(nTrainSamples > 0);
     }
 
   isTrainPredictionSet_ = true;

@@ -65,6 +65,8 @@ private:
   //Given the map<>, generated with the percolation functions, a tree impurity score is outputted
   void treeImpurity(map<Node*,vector<size_t> >& trainIcs, num_t& impurity);
 
+  //void forestImpurity(map<Node*,vector<size_t> >& trainIcs, num_t& impurity);
+
   //Calculates the feature importance scores for real and contrast features
   //vector<num_t> featureImportance();
 

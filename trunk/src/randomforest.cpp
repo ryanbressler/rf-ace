@@ -269,13 +269,43 @@ vector<size_t> Randomforest::featureFrequency()
   return(frequency);
 }
 
+/*
+  void Randomforest::treeImpurity(map<Node*,vector<size_t> >& trainIcs, num_t& impurity)
+  {
+  
+  impurity = 0.0;
+  size_t n_tot = 0;
+  
+  //size_t targetIdx = treedata_->getTarget();
+  bool isTargetNumerical = treedata_->isFeatureNumerical(targetIdx_);
+  
+  for(map<Node*,vector<size_t> >::iterator it(trainIcs.begin()); it != trainIcs.end(); ++it)
+  {
+  
+  vector<num_t> targetData;
+  treedata_->getFeatureData(targetIdx_,it->second,targetData);
+  
+  num_t impurity_leaf;
+  size_t nRealSamples;
+  treedata_->impurity(targetData,isTargetNumerical,impurity_leaf,nRealSamples);
+  //size_t n(it->second.size());
+  n_tot += nRealSamples;
+  impurity += nRealSamples * impurity_leaf;
+  }
+  
+  if(n_tot > 0)
+  {
+  impurity /= n_tot;
+  }
+  }
+*/
 
 void Randomforest::treeImpurity(map<Node*,vector<size_t> >& trainIcs, num_t& impurity)
 {
 
   impurity = 0.0;
   size_t n_tot = 0;
-  
+
   //size_t targetIdx = treedata_->getTarget();
   bool isTargetNumerical = treedata_->isFeatureNumerical(targetIdx_);
 
@@ -284,13 +314,37 @@ void Randomforest::treeImpurity(map<Node*,vector<size_t> >& trainIcs, num_t& imp
 
       vector<num_t> targetData;
       treedata_->getFeatureData(targetIdx_,it->second,targetData);
+      num_t leafPrediction = it->first->getLeafTrainPrediction();
+      num_t leafImpurity = 0;
+      size_t nSamplesInLeaf = targetData.size();
+      
 
-      num_t impurity_leaf;
-      size_t nRealSamples;
-      treedata_->impurity(targetData,isTargetNumerical,impurity_leaf,nRealSamples);
+      if(isTargetNumerical)
+	{
+	  for(size_t i = 0; i < nSamplesInLeaf; ++i)
+	    {
+	      leafImpurity += pow(leafPrediction - targetData[i],2);
+	    }
+	  //leafImpurity /= nSamplesInLeaf;
+	}
+      else
+	{
+	  for(size_t i = 0; i < nSamplesInLeaf; ++i)
+	    {
+	      if(leafPrediction != targetData[i])
+		{
+		  ++leafImpurity;
+		}
+	    }
+	  leafImpurity *= leafImpurity;
+	}
+
+      //num_t impurity_leaf;
+      //size_t nRealSamples;
+      //treedata_->impurity(targetData,isTargetNumerical,impurity_leaf,nRealSamples);
       //size_t n(it->second.size());
-      n_tot += nRealSamples;
-      impurity += nRealSamples * impurity_leaf;
+      n_tot += nSamplesInLeaf;
+      impurity += nSamplesInLeaf * leafImpurity;
     }
 
   if(n_tot > 0)
