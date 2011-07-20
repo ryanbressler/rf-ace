@@ -336,7 +336,7 @@ void Randomforest::treeImpurity(map<Node*,vector<size_t> >& trainIcs, num_t& imp
 		  ++leafImpurity;
 		}
 	    }
-	  leafImpurity *= leafImpurity;
+	  //leafImpurity *= leafImpurity;
 	}
 
       //num_t impurity_leaf;
