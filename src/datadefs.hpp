@@ -194,6 +194,13 @@ namespace datadefs
     }
   };
   
+  struct freqIncreasingOrder {
+    bool operator ()(const map<datadefs::num_t,size_t>::value_type& a, const map<datadefs::num_t,size_t>::value_type& b)
+    {
+      return(a.second < b.second);
+    }
+  };
+  
   template <typename T1,typename T2> void make_pairedv(vector<T1> const& v1,
                                                        vector<T2> const& v2,
                                                        vector<pair<T1,T2> >& p)
