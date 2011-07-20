@@ -67,20 +67,22 @@ protected:
 
 private:
 
-  void numericalFeatureSplit(vector<num_t> tv,
+  void numericalFeatureSplit(const vector<num_t>& tv_copy,
 			     const bool isTargetNumerical,
-			     vector<num_t> fv,
+			     const vector<num_t>& fv_copy,
 			     const size_t min_split,
 			     vector<size_t>& sampleIcs_left,
 			     vector<size_t>& sampleIcs_right,
-			     num_t& splitValue);
+			     num_t& splitValue,
+			     num_t& splitFitness);
 
-  void categoricalFeatureSplit(vector<num_t> tv,
+  void categoricalFeatureSplit(const vector<num_t>& tv_copy,
 			       const bool isTargetNumerical,
-			       vector<num_t> fv,
+			       const vector<num_t>& fv_copy, /* MIN SPLIT MISSING (CHECK numericalFeatureSplit()) */
 			       vector<size_t>& sampleIcs_left,
 			       vector<size_t>& sampleIcs_right,
-			       set<num_t>& categories_left);
+			       set<num_t>& categories_left,
+			       num_t& splitFitness);
 
   num_t splitFitness(vector<num_t> const& data,
                      bool const& isFeatureNumerical,

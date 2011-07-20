@@ -204,6 +204,7 @@ void Node::recursiveNodeSplit(Treedata* treeData,
   num_t splitValue;
   set<num_t> values_left;
 
+  num_t splitFitness;
   if(isTargetNumerical)
     {
       Node::numericalFeatureSplit(targetData,
@@ -212,7 +213,8 @@ void Node::recursiveNodeSplit(Treedata* treeData,
 				  minNodeSizeToStop,
 				  sampleIcs_left,
 				  sampleIcs_right,
-				  splitValue);
+				  splitValue,
+				  splitFitness);
     }
   else
     {
@@ -221,7 +223,8 @@ void Node::recursiveNodeSplit(Treedata* treeData,
 				    targetData,
 				    sampleIcs_left,
 				    sampleIcs_right,
-				    values_left);
+				    values_left,
+				    splitFitness);
     }
 
   vector<num_t> fitnessVector(nFeaturesForSplit, 0.0);
@@ -306,7 +309,8 @@ void Node::recursiveNodeSplit(Treedata* treeData,
 				  minNodeSizeToStop,
 				  sampleIcs_left,
 				  sampleIcs_right,
-				  splitValue);
+				  splitValue,
+				  splitFitness);
     }
   else
     {
@@ -315,7 +319,8 @@ void Node::recursiveNodeSplit(Treedata* treeData,
 				    featureData,
 				    sampleIcs_left,
 				    sampleIcs_right,
-				    values_left);
+				    values_left,
+				    splitFitness);
     }
 
   assert(sampleIcs_left.size() + sampleIcs_right.size() == nRealSamples);
@@ -382,16 +387,29 @@ void Node::recursiveNodeSplit(Treedata* treeData,
   
 }
 
-void Node::numericalFeatureSplit(vector<num_t> tv,
+void Node::numericalFeatureSplit(const vector<num_t>& tv_copy,
 				 const bool isTargetNumerical,
-				 vector<num_t> fv,
+				 const vector<num_t>& fv_copy,
 				 const size_t min_split,
 				 vector<size_t>& sampleIcs_left,
 				 vector<size_t>& sampleIcs_right,
-				 num_t& splitValue)
+				 num_t& splitValue,
+				 num_t& splitFitness)
 {
 
-  assert(tv.size() == fv.size());
+  assert(tv_copy.size() == fv_copy.size());
+
+  vector<num_t> tv,fv;
+ 
+  //Removing NANs. This will make all the subsequent calculations NAN-free
+  for(size_t i = 0; i < tv_copy.size(); ++i)
+    {
+      if(!datadefs::isNAN(tv_copy[i]) && !datadefs::isNAN(fv_copy[i]))
+	{
+	  tv.push_back(tv_copy[i]);
+	  fv.push_back(fv_copy[i]);
+	}
+    }
 
   size_t n_tot = tv.size();
   size_t n_right = n_tot;
@@ -421,6 +439,7 @@ void Node::numericalFeatureSplit(vector<num_t> tv,
   assert(nreal_t == n_tot && nreal_f == n_tot);
 
   int bestSplitIdx = -1;
+  
 
   //If the target is numerical, we use the iterative squared error formula to update impurity scores while we traverse "right"
   if(isTargetNumerical)
@@ -430,11 +449,13 @@ void Node::numericalFeatureSplit(vector<num_t> tv,
       num_t mu_left = 0.0;
       num_t se_left = 0.0;
       num_t se_best = 0.0;
+      num_t se_tot = 0.0;
       size_t nreal_right = 0;
 
       datadefs::sqerr(tv,mu_right,se_right,nreal_right);
       assert(n_tot == nreal_right);
       se_best = se_right;
+      se_tot = se_right;
 
       size_t idx = 0;
       while(n_left < n_tot - min_split)
@@ -447,6 +468,7 @@ void Node::numericalFeatureSplit(vector<num_t> tv,
             }
           ++idx;
         }
+      splitFitness = (se_tot - se_best) / se_tot;
     }
   else //Otherwise we use the iterative gini index formula to update impurity scores while we traverse "right"
     {
@@ -457,6 +479,7 @@ void Node::numericalFeatureSplit(vector<num_t> tv,
       size_t nreal_right = 0;
 
       datadefs::sqfreq(tv,freq_right,sf_right,nreal_right);
+      num_t sf_tot = sf_right;
       num_t nsf_best = 1.0 * sf_right / nreal_right;
       assert(n_tot == nreal_right);
 
@@ -471,6 +494,7 @@ void Node::numericalFeatureSplit(vector<num_t> tv,
             }
           ++idx;
         }
+      splitFitness = ( -1.0 * n_left*n_right*sf_tot + n_tot*n_right*sf_left + n_tot*n_left*sf_right ) / ( n_left*n_right * (1.0*n_tot*n_tot - sf_tot) );
     }
 
   splitValue = fv[bestSplitIdx];
@@ -502,15 +526,28 @@ void Node::numericalFeatureSplit(vector<num_t> tv,
     }
 }
 
-void Node::categoricalFeatureSplit(vector<num_t> tv,
+void Node::categoricalFeatureSplit(const vector<num_t>& tv_copy,
 				   const bool isTargetNumerical,
-				   vector<num_t> fv,
+				   const vector<num_t>& fv_copy,
 				   vector<size_t>& sampleIcs_left,
 				   vector<size_t>& sampleIcs_right,
-				   set<num_t>& categories_left)
+				   set<num_t>& categories_left,
+				   num_t& splitFitness)
 {
 
-  assert(tv.size() == fv.size());
+  assert(tv_copy.size() == fv_copy.size());
+
+  vector<num_t> tv,fv;
+
+  //Removing NANs. This will make all the subsequent calculations NAN-free
+  for(size_t i = 0; i < tv_copy.size(); ++i)
+    {
+      if(!datadefs::isNAN(tv_copy[i]) && !datadefs::isNAN(fv_copy[i]))
+        {
+          tv.push_back(tv_copy[i]);
+          fv.push_back(fv_copy[i]);
+        }
+    }
 
   size_t n_tot = tv.size();
   size_t n_right = n_tot;
@@ -544,6 +581,7 @@ void Node::categoricalFeatureSplit(vector<num_t> tv,
       datadefs::sqerr(tv,mu_right,se_right,n_right);
       assert(n_tot == n_right);
       num_t se_best = se_right;
+      num_t se_tot = se_right;
 
       while(fmap_right.size() > 0)
         {
@@ -594,6 +632,7 @@ void Node::categoricalFeatureSplit(vector<num_t> tv,
           fmap_right.erase(it_best->first);
 
         }
+      splitFitness = (se_tot - se_best) / se_tot;
     }
   else
     {
@@ -603,6 +642,7 @@ void Node::categoricalFeatureSplit(vector<num_t> tv,
       datadefs::sqfreq(tv,freq_right,sf_right,n_right);
       assert(n_tot == n_right);
 
+      num_t sf_tot = sf_right;
       num_t nsf_best = 1.0 * sf_right / n_right;
 
       while(fmap_right.size() > 1)
@@ -669,6 +709,7 @@ void Node::categoricalFeatureSplit(vector<num_t> tv,
           fmap_right.erase(it_best->first);
 
         }
+      splitFitness = ( -1.0 * n_left*n_right*sf_tot + n_tot*n_right*sf_left + n_tot*n_left*sf_right ) / ( n_left*n_right * (1.0*n_tot*n_tot - sf_tot) );
     }
 
   //Next we assign samples remaining on right
