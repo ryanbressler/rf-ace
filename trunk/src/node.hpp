@@ -34,8 +34,8 @@ public:
   void setLeafTrainPrediction(const num_t trainPrediction);
   num_t getLeafTrainPrediction();
 
-  void accumulateLeafTestPredictionError(const num_t newTestData);
-  void eraseLeafTestPredictionError();
+  //void accumulateLeafTestPredictionError(const num_t newTestData);
+  //void eraseLeafTestPredictionError();
 
   //Logic test whether the node has children or not
   inline bool hasChildren() { return(hasChildren_); }
@@ -51,21 +51,31 @@ public:
 
 protected:
 
+  struct GrowInstructions {
+    bool sampleWithReplacement;
+    num_t sampleSizeFraction;
+    size_t maxNodesToStop;
+    size_t minNodeSizeToStop;
+    bool isRandomSplit;
+    size_t nFeaturesForSplit;
+    bool useContrasts;
+  };
+
   void recursiveNodeSplit(Treedata* treeData,
 			  const size_t targetIdx,
 			  const vector<size_t>& sampleIcs,
-			  const bool sampleWithReplacement,
-			  const num_t sampleSizeFraction,
-			  const size_t maxNodesToStop,
-			  const size_t minNodeSizeToStop,
-			  const bool isRandomSplit,
-			  const size_t nFeaturesForSplit,
-			  const bool useContrasts,
+			  const GrowInstructions& GI,
 			  set<size_t>& featuresInTree,
 			  size_t& nNodes);
     
 
 private:
+
+  inline void cleanPairVectorFromNANs(const vector<num_t>& v1_copy,
+			       const vector<num_t>& v2_copy,
+			       vector<num_t>& v1,
+			       vector<num_t>& v2,
+			       vector<size_t>& mapIcs);
 
   void numericalFeatureSplit(const vector<num_t>& tv_copy,
 			     const bool isTargetNumerical,

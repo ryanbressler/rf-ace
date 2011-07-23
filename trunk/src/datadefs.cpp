@@ -92,63 +92,23 @@ datadefs::num_t datadefs::str2num(string& str)
 }
 
 
-/*
-  inline bool datadefs::isNAN(const string& str)
-  {
-  set<string>::const_iterator it(NANs.find(str));
-  if(it == NANs.end())
-  {
-  return(false);
-  }
-  else
-  {
-  return(true);
-  }
-  }
-*/
 
 /*
-  inline bool datadefs::isNAN(const datadefs::num_t value)
+  //This is a very poorly designed function
+  void datadefs::findNANs(vector<num_t>& data, vector<size_t>& NANIcs)
   {
-  if(value != value) //== datadefs::NUM_NAN)
-  {
-  return(true);
-  }
-  else
-  {
-  return(false);
-  }
-  }
-*/
-
-/*
-  inline bool datadefs::isNAN(const vector<num_t>& data)
-  {
-  for(size_t i = 0; i < data.size(); ++i)
-  {
-  if( data[i] != data[i]) //datadefs::isNAN(data[i]))
-  {
-  return(true);
-  }
-  }
-  return(false);
-  }
-*/
-
-//This is a very poorly designed function
-void datadefs::findNANs(vector<num_t>& data, vector<size_t>& NANIcs)
-{
   NANIcs.clear();
   size_t n = data.size();
   for(size_t i = 0; i < n; ++i)
-    {
-      if(datadefs::isNAN(data[i]))
-        {
-          //data.erase(data.begin() + i);
-	  NANIcs.push_back(i);
-        }
-    }
-}
+  {
+  if(datadefs::isNAN(data[i]))
+  {
+  //data.erase(data.begin() + i);
+  NANIcs.push_back(i);
+  }
+  }
+  }
+*/
 
 void datadefs::mean(vector<datadefs::num_t> const& data, datadefs::num_t& mu, size_t& nRealValues)
 {
@@ -391,7 +351,7 @@ void datadefs::forward_sqfreq(const datadefs::num_t x_n,
 			      size_t& sqFreq)
 {
 
-  if(datadefs::isNAN(x_n))
+  if(x_n != x_n)
     {
       return;
     }
@@ -429,7 +389,7 @@ void datadefs::forward_backward_sqfreq(const datadefs::num_t x_n,
 				       size_t& sf_right)
 {
  
-  if(datadefs::isNAN(x_n))
+  if(x_n != x_n)
     {
       return;
     }

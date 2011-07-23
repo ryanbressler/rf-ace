@@ -12,16 +12,15 @@ RootNode::RootNode(bool sampleWithReplacement,
 		   bool isRandomSplit,
 		   size_t nFeaturesForSplit,
 		   bool useContrasts): 
-  Node(),
-  sampleWithReplacement_(sampleWithReplacement),
-  sampleSizeFraction_(sampleSizeFraction),
-  maxNodesToStop_(maxNodesToStop),
-  minNodeSizeToStop_(minNodeSizeToStop),
-  isRandomSplit_(isRandomSplit),
-  nFeaturesForSplit_(nFeaturesForSplit),
-  useContrasts_(useContrasts)
+  Node()
 {
-  // EMPTY
+  GI_.sampleWithReplacement = sampleWithReplacement;
+  GI_.sampleSizeFraction = sampleSizeFraction;
+  GI_.maxNodesToStop = maxNodesToStop;
+  GI_.minNodeSizeToStop = minNodeSizeToStop;
+  GI_.isRandomSplit = isRandomSplit;
+  GI_.nFeaturesForSplit = nFeaturesForSplit;
+  GI_.useContrasts = useContrasts;
 }
 
   
@@ -44,16 +43,16 @@ void RootNode::growTree(Treedata* treeData,
 
   if(false)
     {
-      cout << "Growing a tree: samplewithReplacement=" << sampleWithReplacement_ 
-	   << " sampleSizeFraction=" << sampleSizeFraction_ << " maxNodesToStop=" << maxNodesToStop_
-	   << " minNodeSizeToStop=" << minNodeSizeToStop_ << " isRandomSplit=" << isRandomSplit_ << " nFeaturesForSplit=" << nFeaturesForSplit_ << endl; 
+      cout << "Growing a tree: samplewithReplacement=" << GI_.sampleWithReplacement 
+	   << " sampleSizeFraction=" << GI_.sampleSizeFraction << " maxNodesToStop=" << GI_.maxNodesToStop
+	   << " minNodeSizeToStop=" << GI_.minNodeSizeToStop << " isRandomSplit=" << GI_.isRandomSplit << " nFeaturesForSplit=" << GI_.nFeaturesForSplit << endl; 
     }
 
   //Generate the vector for bootstrap indices
   vector<size_t> bootstrapIcs;
   
   //Generate bootstrap indices and oob-indices
-  treeData->bootstrapFromRealSamples(sampleWithReplacement_, sampleSizeFraction_, targetIdx, bootstrapIcs, oobIcs);
+  treeData->bootstrapFromRealSamples(GI_.sampleWithReplacement, GI_.sampleSizeFraction, targetIdx, bootstrapIcs, oobIcs);
 
   //This is to check that the bootstrap sample doesn't contain any missing values (it shouldn't!)
   if(false)
@@ -94,61 +93,9 @@ void RootNode::growTree(Treedata* treeData,
   featuresInTree.clear();
 
   //Start the recursive node splitting from the root node. This will generate the tree.
-  Node::recursiveNodeSplit(treeData,
-			   targetIdx,
-			   bootstrapIcs,
-			   sampleWithReplacement_,
-			   sampleSizeFraction_,
-			   maxNodesToStop_,
-			   minNodeSizeToStop_,
-			   isRandomSplit_,
-			   nFeaturesForSplit_,
-			   useContrasts_,
-			   featuresInTree,
-			   nNodes);
+  Node::recursiveNodeSplit(treeData,targetIdx,bootstrapIcs,GI_,featuresInTree,nNodes);
 
 }
 
-/*
-  num_t RootNode::targetIdx()
-  {
-  return(targetIdx_);
-  }
-  
-  bool RootNode::isTargetNumerical()
-  {
-  return(isTargetNumerical_);
-  }
-  
-  bool RootNode::sampleWithReplacement()
-  {
-  return(sampleWithReplacement_);
-  }
-  
-  size_t RootNode::maxNodesToStop()
-  {
-  return(maxNodesToStop_);
-  }
-  
-  size_t RootNode::minNodeSizeToStop()
-  {
-  return(monNodeSizeToStop_);
-  }
-  
-  bool RootNode::isRandomSplit()
-  {
-  return(isRandomSplit_);
-  }
-  
-  size_t RootNode::featureSampleSize()
-  {
-  return(featureSampleSize_);
-  }
-  
-  bool RootNode::useContrasts()
-  {
-  return(useContrasts_);
-  }
-*/
 
 
