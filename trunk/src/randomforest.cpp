@@ -10,7 +10,8 @@ Randomforest::Randomforest(Treedata* treedata,
 			   size_t nTrees, 
 			   size_t mTry, 
 			   size_t nodeSize,
-			   bool useContrasts):
+			   bool useContrasts,
+			   bool isOptimizedNodeSplit):
   targetIdx_(targetIdx),
   treedata_(treedata),
   nTrees_(nTrees),
@@ -25,12 +26,14 @@ Randomforest::Randomforest(Treedata* treedata,
 
   featuresInForest_.clear();
 
+  //These parameters, and those specified in the Random Forest initiatialization, define the type of the forest generated (an RF) 
   bool sampleWithReplacement = true;
   num_t sampleSizeFraction = 1.0;
   size_t maxNodesToStop = treedata->nSamples();
   size_t minNodeSizeToStop = nodeSize;
   bool isRandomSplit = true;
   size_t nFeaturesForSplit = mTry;
+  bool isSaveLeafTrainPredictions = true;
   
   //Allocates memory for the root nodes
   for(size_t treeIdx = 0; treeIdx < nTrees_; ++treeIdx)
@@ -41,7 +44,9 @@ Randomforest::Randomforest(Treedata* treedata,
 					 minNodeSizeToStop,
 					 isRandomSplit,
 					 nFeaturesForSplit,
-					 useContrasts);
+					 useContrasts,
+					 isOptimizedNodeSplit,
+					 isSaveLeafTrainPredictions);
     }
 
   //Let's grow the forest

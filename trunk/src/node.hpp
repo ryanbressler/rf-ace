@@ -59,6 +59,8 @@ protected:
     bool isRandomSplit;
     size_t nFeaturesForSplit;
     bool useContrasts;
+    bool isOptimizedNodeSplit;
+    bool isSaveLeafTrainPrediction;
   };
 
   void recursiveNodeSplit(Treedata* treeData,

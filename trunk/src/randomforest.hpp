@@ -16,7 +16,8 @@ public:
 	       size_t nTrees, 
 	       size_t mTry, 
 	       size_t nodeSize, 
-	       bool useContrasts);
+	       bool useContrasts,
+	       bool isOptimizedNodeSplit);
   ~Randomforest();
 
   //Selects the target feature that is to be predicted

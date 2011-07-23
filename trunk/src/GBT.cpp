@@ -26,6 +26,8 @@ GBT::GBT(Treedata* treeData, size_t targetIdx, size_t nTrees, size_t nMaxLeaves,
   bool isRandomSplit = false;
   size_t nFeaturesForSplit = treeData_->nFeatures();
   bool useContrasts = false;
+  bool isOptimizedNodeSplit = true; // WILL BE AN OPTION, AT THE MOMENT REGULAR SPLITTING ISN'T WORKING
+  bool isSaveLeafTrainPrediction = false;
 
   //Allocates memory for the root nodes. With all these parameters, the RootNode is now able to take full control of the splitting process 
   rootNodes_.resize(nTrees_);
@@ -37,7 +39,9 @@ GBT::GBT(Treedata* treeData, size_t targetIdx, size_t nTrees, size_t nMaxLeaves,
                                          minNodeSizeToStop,
                                          isRandomSplit,
                                          nFeaturesForSplit,
-                                         useContrasts);
+                                         useContrasts,
+					 isOptimizedNodeSplit,
+					 isSaveLeafTrainPrediction);
     }
 
 
