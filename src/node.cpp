@@ -138,13 +138,7 @@ num_t Node::getLeafTrainPrediction()
 void Node::recursiveNodeSplit(Treedata* treeData,
 			      const size_t targetIdx,
 			      const vector<size_t>& sampleIcs,
-			      const bool sampleWithReplacement,
-			      const num_t sampleSizeFraction,
-			      const size_t maxNodesToStop,
-			      const size_t minNodeSizeToStop,
-			      const bool isRandomSplit,
-			      const size_t nFeaturesForSplit,
-			      const bool useContrasts,
+			      const GrowInstructions& GI,
 			      set<size_t>& featuresInTree,
 			      size_t& nNodes)
 {
@@ -156,7 +150,7 @@ void Node::recursiveNodeSplit(Treedata* treeData,
   //const size_t maxNodesToStop = rootNode->maxNodesToStop();
   size_t nSamples = sampleIcs.size();
 
-  if(nSamples < 2 * minNodeSizeToStop || nNodes + 1 > maxNodesToStop)
+  if(nSamples < 2 * GI.minNodeSizeToStop || nNodes >= GI.maxNodesToStop)
     {
       //cout << "Too few samples to start with, quitting" << endl;
       vector<num_t> leafTrainData;
@@ -166,33 +160,33 @@ void Node::recursiveNodeSplit(Treedata* treeData,
     }
 
 
-  vector<size_t> featureSample(nFeaturesForSplit);
+  vector<size_t> featureSampleIcs(GI.nFeaturesForSplit);
 
   //const size_t nFeatures = treeData->nFeatures();
   //const size_t nFeaturesForSplit = rootNode->nFeaturesForSplit();
 
-  if(isRandomSplit)
+  if(GI.isRandomSplit)
     {
-      if(useContrasts)
+      if(GI.useContrasts)
 	{
-	  for(size_t i = 0; i < nFeaturesForSplit; ++i)
+	  for(size_t i = 0; i < GI.nFeaturesForSplit; ++i)
 	    {
-	      treeData->getRandomIndex(2*treeData->nFeatures(),featureSample[i]);
+	      treeData->getRandomIndex(2*treeData->nFeatures(),featureSampleIcs[i]);
 	    }
 	}
       else
 	{
-	  for(size_t i = 0; i < nFeaturesForSplit; ++i)
+	  for(size_t i = 0; i < GI.nFeaturesForSplit; ++i)
 	    {
-	      treeData->getRandomIndex(treeData->nFeatures(),featureSample[i]);
+	      treeData->getRandomIndex(treeData->nFeatures(),featureSampleIcs[i]);
 	    }
 	}
     }
   else
     {
-      for(size_t i = 0; i < nFeaturesForSplit; ++i)
+      for(size_t i = 0; i < GI.nFeaturesForSplit; ++i)
 	{
-	  featureSample[i] = i;
+	  featureSampleIcs[i] = i;
 	}
     }
 
@@ -210,7 +204,7 @@ void Node::recursiveNodeSplit(Treedata* treeData,
       Node::numericalFeatureSplit(targetData,
 				  isTargetNumerical,
 				  targetData,
-				  minNodeSizeToStop,
+				  GI.minNodeSizeToStop,
 				  sampleIcs_left,
 				  sampleIcs_right,
 				  splitValue,
@@ -227,44 +221,42 @@ void Node::recursiveNodeSplit(Treedata* treeData,
 				    splitFitness);
     }
 
-  vector<num_t> fitnessVector(nFeaturesForSplit, 0.0);
-  num_t bestFitness = 0.0;
-  size_t bestFeatureIdx = nFeaturesForSplit;
 
-  for(size_t i = 0; i < nFeaturesForSplit; ++i)
+  size_t splitFeatureIdx = GI.nFeaturesForSplit;
+  splitFitness = 0.0;
+
+  for(size_t i = 0; i < GI.nFeaturesForSplit; ++i)
     {
 
-      vector<num_t> featureData;
-      size_t featureIdx = featureSample[i];
-      bool isFeatureNumerical = treeData->isFeatureNumerical(featureIdx);
+      vector<num_t> newSplitFeatureData;
+      size_t newSplitFeatureIdx = featureSampleIcs[i];
+      bool isFeatureNumerical = treeData->isFeatureNumerical(newSplitFeatureIdx);
 
       //Neither the real nor the contrast feature can appear in the tree as splitter
-      if(featureIdx == targetIdx)
+      if(newSplitFeatureIdx == targetIdx)
         {
           continue;
         }
 
-      treeData->getFeatureData(featureIdx,sampleIcs,featureData);
+      treeData->getFeatureData(newSplitFeatureIdx,sampleIcs,newSplitFeatureData);
 
-      fitnessVector[i] = Node::splitFitness(featureData,
-					    isFeatureNumerical,
-					    minNodeSizeToStop,
-					    sampleIcs_left,
-					    sampleIcs_right);
+      num_t newSplitFitness = Node::splitFitness(newSplitFeatureData,
+						 isFeatureNumerical,
+						 GI.minNodeSizeToStop,
+						 sampleIcs_left,
+						 sampleIcs_right);
+
+      if(newSplitFitness > splitFitness && 
+	 sampleIcs_left.size() >= GI.minNodeSizeToStop && 
+	 sampleIcs_right.size() >= GI.minNodeSizeToStop)
+	{
+	  splitFitness = newSplitFitness;
+	  splitFeatureIdx = newSplitFeatureIdx;
+	}
 
     }
 
-  for(size_t i = 0; i < nFeaturesForSplit; ++i)
-    {
-      if(fitnessVector[i] > bestFitness)
-        {
-          bestFitness = fitnessVector[i];
-          bestFeatureIdx = featureSample[i];
-        }
-    }
-
-
-  if(bestFeatureIdx == nFeaturesForSplit)
+  if(splitFeatureIdx == GI.nFeaturesForSplit)
     {
       //cout << "No splitter found, quitting" << endl << endl;
       vector<num_t> leafTrainData;
@@ -274,7 +266,7 @@ void Node::recursiveNodeSplit(Treedata* treeData,
     }
 
   vector<num_t> featureData;
-  treeData->getFeatureData(bestFeatureIdx,sampleIcs,featureData);
+  treeData->getFeatureData(splitFeatureIdx,sampleIcs,featureData);
 
   size_t nRealSamples = 0;
   for(size_t i = 0; i < nSamples; ++i)
@@ -289,7 +281,7 @@ void Node::recursiveNodeSplit(Treedata* treeData,
   featureData.resize(nRealSamples);
   targetData.resize(nRealSamples);
 
-  if(nRealSamples < 2*minNodeSizeToStop)
+  if(nRealSamples < 2 * GI.minNodeSizeToStop)
     {
       //cout << "Splitter has too few non-missing values, quitting" << endl;
       //This needs to be fixed such that one of the surrogates will determine the split instead
@@ -299,14 +291,14 @@ void Node::recursiveNodeSplit(Treedata* treeData,
       return;
     }
 
-  bool isBestFeatureNumerical = treeData->isFeatureNumerical(bestFeatureIdx);
+  bool isSplitFeatureNumerical = treeData->isFeatureNumerical(splitFeatureIdx);
 
-  if(isBestFeatureNumerical)
+  if(isSplitFeatureNumerical)
     {
       Node::numericalFeatureSplit(targetData,
 				  isTargetNumerical,
 				  featureData,
-				  minNodeSizeToStop,
+				  GI.minNodeSizeToStop,
 				  sampleIcs_left,
 				  sampleIcs_right,
 				  splitValue,
@@ -323,28 +315,30 @@ void Node::recursiveNodeSplit(Treedata* treeData,
 				    splitFitness);
     }
 
+  //cout << "asserting " << sampleIcs_left.size() << " + " << sampleIcs_right.size() << " == " << nRealSamples << endl;
   assert(sampleIcs_left.size() + sampleIcs_right.size() == nRealSamples);
 
-  if(sampleIcs_left.size() < minNodeSizeToStop || sampleIcs_right.size() < minNodeSizeToStop)
+  if(sampleIcs_left.size() < GI.minNodeSizeToStop || sampleIcs_right.size() < GI.minNodeSizeToStop)
     {
+      //cout << "Too few values after splitting and removal of missing values" << endl;
       vector<num_t> leafTrainData;
       treeData->getFeatureData(targetIdx,sampleIcs,leafTrainData);
       Node::setLeafTrainPrediction(isTargetNumerical,leafTrainData);
       return;
     }
 
-  if(isBestFeatureNumerical)
+  if(isSplitFeatureNumerical)
     {
       //cout << "num splitter" << endl;
-      Node::setSplitter(bestFeatureIdx,splitValue);
+      Node::setSplitter(splitFeatureIdx,splitValue);
     }
   else
     {
       //cout << "cat splitter" << endl;
-      Node::setSplitter(bestFeatureIdx,values_left);
+      Node::setSplitter(splitFeatureIdx,values_left);
     }
 
-  featuresInTree.insert(bestFeatureIdx);
+  featuresInTree.insert(splitFeatureIdx);
   nNodes += 2;
 
   for(size_t i = 0; i < sampleIcs_left.size(); ++i)
@@ -352,39 +346,37 @@ void Node::recursiveNodeSplit(Treedata* treeData,
       sampleIcs_left[i] = sampleIcs[sampleIcs_left[i]];
     }
 
-  //cout << "split left..." << endl;
-  leftChild_->recursiveNodeSplit(treeData,
-				 targetIdx,
-				 sampleIcs_left,
-				 sampleWithReplacement,
-				 sampleSizeFraction,
-				 maxNodesToStop,
-				 minNodeSizeToStop,
-				 isRandomSplit,
-				 nFeaturesForSplit,
-				 useContrasts,
-				 featuresInTree,
-				 nNodes);
-
   for(size_t i = 0; i < sampleIcs_right.size(); ++i)
     {
       sampleIcs_right[i] = sampleIcs[sampleIcs_right[i]];
     }
 
-  //cout << "split right..." << endl;
-  rightChild_->recursiveNodeSplit(treeData,
-				  targetIdx,
-				  sampleIcs_right,
-				  sampleWithReplacement,
-				  sampleSizeFraction,
-				  maxNodesToStop,
-				  minNodeSizeToStop,
-				  isRandomSplit,
-				  nFeaturesForSplit,
-				  useContrasts,
-				  featuresInTree,
-				  nNodes);
+
+  //cout << "split left..." << endl;
+  leftChild_->recursiveNodeSplit(treeData,targetIdx,sampleIcs_left,GI,featuresInTree,nNodes);
+  rightChild_->recursiveNodeSplit(treeData,targetIdx,sampleIcs_right,GI,featuresInTree,nNodes);
   
+}
+
+inline void Node::cleanPairVectorFromNANs(const vector<num_t>& v1_copy, 
+					  const vector<num_t>& v2_copy, 
+					  vector<num_t>& v1, 
+					  vector<num_t>& v2, 
+					  vector<size_t>& mapIcs)
+{
+  v1.clear();
+  v2.clear();
+  mapIcs.clear();
+  for(size_t i = 0; i < v1_copy.size(); ++i)
+    {
+      if(!datadefs::isNAN(v1_copy[i]) && !datadefs::isNAN(v2_copy[i]))
+        {
+          mapIcs.push_back(i);
+          v1.push_back(v1_copy[i]);
+          v2.push_back(v2_copy[i]);
+        }
+    }
+
 }
 
 void Node::numericalFeatureSplit(const vector<num_t>& tv_copy,
@@ -400,43 +392,42 @@ void Node::numericalFeatureSplit(const vector<num_t>& tv_copy,
   assert(tv_copy.size() == fv_copy.size());
 
   vector<num_t> tv,fv;
+  vector<size_t> mapIcs;
  
-  //Removing NANs. This will make all the subsequent calculations NAN-free
-  for(size_t i = 0; i < tv_copy.size(); ++i)
-    {
-      if(!datadefs::isNAN(tv_copy[i]) && !datadefs::isNAN(fv_copy[i]))
-	{
-	  tv.push_back(tv_copy[i]);
-	  fv.push_back(fv_copy[i]);
-	}
-    }
+  Node::cleanPairVectorFromNANs(tv_copy,fv_copy,tv,fv,mapIcs);
 
   size_t n_tot = tv.size();
   size_t n_right = n_tot;
   size_t n_left = 0;
 
+  if(n_tot < 2 * min_split)
+    {
+      splitFitness = datadefs::NUM_NAN;
+      return;
+    }
+
   sampleIcs_left.clear();
   sampleIcs_right.clear();
 
   //Check that there are enough samples to make the split in the first place
-  assert(n_tot >= 2*min_split);
+  //assert(n_tot >= 2*min_split);
 
   //Make reference indices that define the sorting wrt. feature
-  vector<size_t> refIcs;
+  bool isIncreasingOrder = true;//vector<size_t> refIcs;
 
   //Sort feature vector and collect reference indices
-  datadefs::sortDataAndMakeRef(1,fv,sampleIcs_right);
+  datadefs::sortDataAndMakeRef(isIncreasingOrder,fv,sampleIcs_right);
 
   //Use the reference indices to sort sample indices
   //datadefs::sortFromRef<size_t>(sampleics,refIcs);
   datadefs::sortFromRef<num_t>(tv,sampleIcs_right);
 
   //Count how many real values the feature and target has
-  size_t nreal_f,nreal_t;
-  datadefs::countRealValues(fv,nreal_f);
-  datadefs::countRealValues(tv,nreal_t);
+  //size_t nreal_f,nreal_t;
+  //datadefs::countRealValues(fv,nreal_f);
+  //datadefs::countRealValues(tv,nreal_t);
   //cout << nreal_f << " " << nreal_t << " " << n_tot << endl;
-  assert(nreal_t == n_tot && nreal_f == n_tot);
+  //assert(nreal_t == n_tot && nreal_f == n_tot);
 
   int bestSplitIdx = -1;
   
@@ -450,10 +441,10 @@ void Node::numericalFeatureSplit(const vector<num_t>& tv_copy,
       num_t se_left = 0.0;
       num_t se_best = 0.0;
       num_t se_tot = 0.0;
-      size_t nreal_right = 0;
+      //size_t nreal_right = 0;
 
-      datadefs::sqerr(tv,mu_right,se_right,nreal_right);
-      assert(n_tot == nreal_right);
+      datadefs::sqerr(tv,mu_right,se_right,n_right);
+      assert(n_tot == n_right);
       se_best = se_right;
       se_tot = se_right;
 
@@ -476,12 +467,12 @@ void Node::numericalFeatureSplit(const vector<num_t>& tv_copy,
       map<num_t,size_t> freq_right;
       size_t sf_left = 0;
       size_t sf_right = 0;
-      size_t nreal_right = 0;
+      //size_t nreal_right = 0;
 
-      datadefs::sqfreq(tv,freq_right,sf_right,nreal_right);
+      datadefs::sqfreq(tv,freq_right,sf_right,n_right);
       num_t sf_tot = sf_right;
-      num_t nsf_best = 1.0 * sf_right / nreal_right;
-      assert(n_tot == nreal_right);
+      num_t nsf_best = 1.0 * sf_right / n_right;
+      assert(n_tot == n_right);
 
       size_t idx = 0;
       while(n_left < n_tot - min_split)
@@ -503,24 +494,29 @@ void Node::numericalFeatureSplit(const vector<num_t>& tv_copy,
 
   for(size_t i = 0; i < n_left; ++i)
     {
-      sampleIcs_left[i] = sampleIcs_right[i];
+      sampleIcs_left[i] = mapIcs[sampleIcs_right[i]];
     }
   sampleIcs_right.erase(sampleIcs_right.begin(),sampleIcs_right.begin() + n_left);
+  n_right = sampleIcs_right.size();
+  for(size_t i = 0; i < n_right; ++i)
+    {
+      sampleIcs_right[i] = mapIcs[sampleIcs_right[i]];
+    }
 
   //cout << sampleIcs_left.size() << " " << sampleIcs_right.size() << " == " << n_tot << endl;
-  assert(sampleIcs_left.size() + sampleIcs_right.size() == n_tot);
+  assert(n_left + n_right == n_tot);
 
   if(false)
     {
-      cout << "Feature splits target [";
+      cout << "Numerical feature splits target [";
       for(size_t i = 0; i < sampleIcs_left.size(); ++i)
         {
-          cout << " " << tv[sampleIcs_left[i]];
+          cout << " " << tv_copy[sampleIcs_left[i]];
         }
       cout << " ] <==> [";
       for(size_t i = 0; i < sampleIcs_right.size(); ++i)
         {
-          cout << " " << tv[sampleIcs_right[i]];
+          cout << " " << tv_copy[sampleIcs_right[i]];
         }
       cout << " ]" << endl;
     }
@@ -538,38 +534,38 @@ void Node::categoricalFeatureSplit(const vector<num_t>& tv_copy,
   assert(tv_copy.size() == fv_copy.size());
 
   vector<num_t> tv,fv;
+  vector<size_t> mapIcs;
 
-  //Removing NANs. This will make all the subsequent calculations NAN-free
-  for(size_t i = 0; i < tv_copy.size(); ++i)
-    {
-      if(!datadefs::isNAN(tv_copy[i]) && !datadefs::isNAN(fv_copy[i]))
-        {
-          tv.push_back(tv_copy[i]);
-          fv.push_back(fv_copy[i]);
-        }
-    }
+  Node::cleanPairVectorFromNANs(tv_copy,fv_copy,tv,fv,mapIcs);
 
   size_t n_tot = tv.size();
   size_t n_right = n_tot;
   size_t n_left = 0;
+
+  if(n_tot < 2)
+    {
+      splitFitness = datadefs::NUM_NAN;
+      return;
+    }
 
   sampleIcs_left.clear();
   sampleIcs_right.clear();
   categories_left.clear();
 
   //Check that sample size is positive
-  assert(n_tot > 0);
+  //assert(n_tot > 0);
 
   //Count how many real values the feature and target has (this is just to make sure there are no missing values thrown in)
-  size_t nreal_f,nreal_t;
-  datadefs::countRealValues(fv,nreal_f);
-  datadefs::countRealValues(tv,nreal_t);
-  assert(nreal_t == n_tot && nreal_f == n_tot);
+  //size_t nreal_f,nreal_t;
+  //datadefs::countRealValues(fv,nreal_f);
+  //datadefs::countRealValues(tv,nreal_t);
+  //assert(nreal_t == n_tot && nreal_f == n_tot);
 
   //Map all feature categories to the corresponding samples and represent it as map. The map is used to assign samples to left and right branches
   map<num_t,vector<size_t> > fmap_right;
-  datadefs::map_data(fv,fmap_right,nreal_f);
-  assert(n_tot == nreal_f);
+  size_t n_f;
+  datadefs::map_data(fv,fmap_right,n_f);
+  assert(n_tot == n_f);
 
   if(isTargetNumerical)
     {
@@ -718,21 +714,26 @@ void Node::categoricalFeatureSplit(const vector<num_t>& tv_copy,
     {
       for(size_t i = 0; i < it->second.size(); ++i)
         {
-          sampleIcs_right.push_back(it->second[i]);
+          sampleIcs_right.push_back(mapIcs[it->second[i]]);
         }
+    }
+
+  for(size_t i = 0; i < sampleIcs_left.size(); ++i)
+    {
+      sampleIcs_left[i] = mapIcs[sampleIcs_left[i]];
     }
 
   if(false)
     {
-      cout << "Feature splits target [";
+      cout << "Categorical feature splits target [";
       for(size_t i = 0; i < sampleIcs_left.size(); ++i)
         {
-          cout << " " << tv[sampleIcs_left[i]];
+          cout << " " << tv_copy[sampleIcs_left[i]];
         }
       cout << " ] <==> [";
       for(size_t i = 0; i < sampleIcs_right.size(); ++i)
         {
-          cout << " " << tv[sampleIcs_right[i]];
+          cout << " " << tv_copy[sampleIcs_right[i]];
         }
       cout << " ]" << endl;
     }
@@ -745,7 +746,7 @@ num_t Node::splitFitness(vector<num_t> const& data,
 			 vector<size_t> const& sampleIcs_right)
 {
 
-  assert(data.size() == sampleIcs_left.size() + sampleIcs_right.size());
+  //assert(data.size() == sampleIcs_left.size() + sampleIcs_right.size());
 
   size_t n_left = 0;
   size_t n_right = 0;
@@ -872,18 +873,21 @@ void Node::setLeafTrainPrediction(const bool isTargetNumerical, const vector<num
   isTrainPredictionSet_ = true;
 }
 
-void Node::accumulateLeafTestPredictionError(const num_t newTestData)
-{
+/*
+  void Node::accumulateLeafTestPredictionError(const num_t newTestData)
+  {
   assert(!hasChildren_);
   assert(false);
   
   
-}
-
-void Node::eraseLeafTestPredictionError()
-{
+  }
+  
+  void Node::eraseLeafTestPredictionError()
+  {
   assert(!hasChildren_);
-
+  
   testPredictionError_ = 0.0;
   nTestSamples_ = 0;
-}
+  }
+  
+*/

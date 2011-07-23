@@ -60,7 +60,7 @@ namespace datadefs
 
   
   //DEPRECATED
-  void findNANs(vector<num_t>& data, vector<size_t>& NANIcs);
+  //void findNANs(vector<num_t>& data, vector<size_t>& NANIcs);
 
   void mean(vector<num_t> const& data, num_t& mu, size_t& nreal);
 
@@ -80,9 +80,9 @@ namespace datadefs
 			    num_t& mu,
 			    num_t& se)
   {  
-    if(isNAN(x_n)) { return; } 
+    if(x_n != x_n) { return; } 
     ++n;
-    num_t mu_old(mu);
+    num_t mu_old = mu;
     mu += (x_n - mu) / n;
     //If there are already at least two data points, squared error can be calculated, otherwise assign se_left := 0.0
     if(n > 1) { se += (x_n - mu) * (x_n - mu_old);} else { se = 0.0; }
@@ -100,7 +100,7 @@ namespace datadefs
     assert(n_right > 0); ++n_left; --n_right;
     //As long as there are at least two data points on the "right" branch, squared error can be calculated, otherwise assign se_right := 0.0
     if(n_right > 1) {
-	  datadefs::num_t mu_old(mu_right);
+	  datadefs::num_t mu_old = mu_right;
 	  mu_right -= (x_n - mu_right) / n_right;
 	  se_right -= (x_n - mu_right) * (x_n - mu_old); }
       else if(n_right == 1) {

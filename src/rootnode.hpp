@@ -40,16 +40,17 @@ public:
   
 private:
 
-  //Treedata* treeData_;
-  //size_t targetIdx_;
-  //bool isTargetNumerical_;
-  bool sampleWithReplacement_;
-  num_t sampleSizeFraction_;
-  size_t maxNodesToStop_;
-  size_t minNodeSizeToStop_;
-  bool isRandomSplit_;
-  size_t nFeaturesForSplit_;
-  bool useContrasts_;
+  GrowInstructions GI_;
+  
+  /*
+    bool sampleWithReplacement_;
+    num_t sampleSizeFraction_;
+    size_t maxNodesToStop_;
+    size_t minNodeSizeToStop_;
+    bool isRandomSplit_;
+    size_t nFeaturesForSplit_;
+    bool useContrasts_;
+  */
 
 };
 
