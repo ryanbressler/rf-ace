@@ -16,7 +16,9 @@ public:
 	   size_t minNodeSizeToStop,
 	   bool isRandomSplit,
 	   size_t nFeaturesForSplit,
-	   bool useContrasts);
+	   bool useContrasts,
+	   bool isOptimizedNodeSplit,
+	   bool isSaveLeafTrainPrediction);
   
   //~RootNode();
   

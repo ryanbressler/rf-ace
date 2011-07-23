@@ -153,9 +153,12 @@ void Node::recursiveNodeSplit(Treedata* treeData,
   if(nSamples < 2 * GI.minNodeSizeToStop || nNodes >= GI.maxNodesToStop)
     {
       //cout << "Too few samples to start with, quitting" << endl;
-      vector<num_t> leafTrainData;
-      treeData->getFeatureData(targetIdx,sampleIcs,leafTrainData);
-      Node::setLeafTrainPrediction(isTargetNumerical,leafTrainData);
+      if(GI.isSaveLeafTrainPrediction)
+	{
+	  vector<num_t> leafTrainData;
+	  treeData->getFeatureData(targetIdx,sampleIcs,leafTrainData);
+	  Node::setLeafTrainPrediction(isTargetNumerical,leafTrainData);
+	}
       return;
     }
 
@@ -190,109 +193,127 @@ void Node::recursiveNodeSplit(Treedata* treeData,
 	}
     }
 
-  vector<num_t> targetData;
+  vector<num_t> targetData,featureData;
   //const bool isTargetNumerical = rootNode->isTargetNumerical();
   treeData->getFeatureData(targetIdx,sampleIcs,targetData);
 
   vector<size_t> sampleIcs_left,sampleIcs_right;
   num_t splitValue;
-  set<num_t> values_left;
+  set<num_t> splitValues_left;
 
   num_t splitFitness;
-  if(isTargetNumerical)
+  size_t splitFeatureIdx;
+
+  if(GI.isOptimizedNodeSplit)
     {
-      Node::numericalFeatureSplit(targetData,
-				  isTargetNumerical,
-				  targetData,
-				  GI.minNodeSizeToStop,
-				  sampleIcs_left,
-				  sampleIcs_right,
-				  splitValue,
-				  splitFitness);
-    }
-  else
-    {
-      Node::categoricalFeatureSplit(targetData,
-				    isTargetNumerical,
-				    targetData,
-				    sampleIcs_left,
-				    sampleIcs_right,
-				    values_left,
-				    splitFitness);
-    }
-
-
-  size_t splitFeatureIdx = GI.nFeaturesForSplit;
-  splitFitness = 0.0;
-
-  for(size_t i = 0; i < GI.nFeaturesForSplit; ++i)
-    {
-
-      vector<num_t> newSplitFeatureData;
-      size_t newSplitFeatureIdx = featureSampleIcs[i];
-      bool isFeatureNumerical = treeData->isFeatureNumerical(newSplitFeatureIdx);
-
-      //Neither the real nor the contrast feature can appear in the tree as splitter
-      if(newSplitFeatureIdx == targetIdx)
-        {
-          continue;
-        }
-
-      treeData->getFeatureData(newSplitFeatureIdx,sampleIcs,newSplitFeatureData);
-
-      num_t newSplitFitness = Node::splitFitness(newSplitFeatureData,
-						 isFeatureNumerical,
-						 GI.minNodeSizeToStop,
-						 sampleIcs_left,
-						 sampleIcs_right);
-
-      if(newSplitFitness > splitFitness && 
-	 sampleIcs_left.size() >= GI.minNodeSizeToStop && 
-	 sampleIcs_right.size() >= GI.minNodeSizeToStop)
+      if(isTargetNumerical)
 	{
-	  splitFitness = newSplitFitness;
-	  splitFeatureIdx = newSplitFeatureIdx;
+	  Node::numericalFeatureSplit(targetData,
+				      isTargetNumerical,
+				      targetData,
+				      GI.minNodeSizeToStop,
+				      sampleIcs_left,
+				      sampleIcs_right,
+				      splitValue,
+				      splitFitness);
+	}
+      else
+	{
+	  Node::categoricalFeatureSplit(targetData,
+					isTargetNumerical,
+					targetData,
+					sampleIcs_left,
+					sampleIcs_right,
+					splitValues_left,
+					splitFitness);
+	}
+      
+      
+      splitFeatureIdx = GI.nFeaturesForSplit;
+      splitFitness = 0.0;
+      
+      for(size_t i = 0; i < GI.nFeaturesForSplit; ++i)
+	{
+	  
+	  vector<num_t> newSplitFeatureData;
+	  size_t newSplitFeatureIdx = featureSampleIcs[i];
+	  bool isFeatureNumerical = treeData->isFeatureNumerical(newSplitFeatureIdx);
+	  
+	  //Neither the real nor the contrast feature can appear in the tree as splitter
+	  if(newSplitFeatureIdx == targetIdx)
+	    {
+	      continue;
+	    }
+	  
+	  treeData->getFeatureData(newSplitFeatureIdx,sampleIcs,newSplitFeatureData);
+	  
+	  num_t newSplitFitness = Node::splitFitness(newSplitFeatureData,
+						     isFeatureNumerical,
+						     GI.minNodeSizeToStop,
+						     sampleIcs_left,
+						     sampleIcs_right);
+	  
+	  if(newSplitFitness > splitFitness && 
+	     sampleIcs_left.size() >= GI.minNodeSizeToStop && 
+	     sampleIcs_right.size() >= GI.minNodeSizeToStop)
+	    {
+	      splitFitness = newSplitFitness;
+	      splitFeatureIdx = newSplitFeatureIdx;
+	    }
+	  
+	}
+      
+      if(splitFeatureIdx == GI.nFeaturesForSplit)
+	{
+	  //cout << "No splitter found, quitting" << endl << endl;
+	  if(GI.isSaveLeafTrainPrediction)
+	    {
+	      vector<num_t> leafTrainData;
+	      treeData->getFeatureData(targetIdx,sampleIcs,leafTrainData);
+	      Node::setLeafTrainPrediction(isTargetNumerical,leafTrainData);
+	    }
+	  return;
+	}
+      
+      //vector<num_t> featureData;
+      treeData->getFeatureData(splitFeatureIdx,sampleIcs,featureData);
+      
+      size_t nRealSamples = 0;
+      for(size_t i = 0; i < nSamples; ++i)
+	{
+	  if(!datadefs::isNAN(featureData[i]))
+	    {
+	      featureData[nRealSamples] = featureData[i];
+	      targetData[nRealSamples] = targetData[i];
+	      ++nRealSamples;
+	    }
+	}
+      featureData.resize(nRealSamples);
+      targetData.resize(nRealSamples);
+
+      // This is the flaw in the optimized splitting: if the splitting fails due to insiffucient sample size, no other splitters will be dedicated 
+      if(targetData.size() < 2 * GI.minNodeSizeToStop)
+	{
+	  //cout << "Splitter has too few non-missing values, quitting" << endl;
+	  //This needs to be fixed such that one of the surrogates will determine the split instead
+	  if(GI.isSaveLeafTrainPrediction)
+	    {
+	      vector<num_t> leafTrainData;
+	      treeData->getFeatureData(targetIdx,sampleIcs,leafTrainData);
+	      Node::setLeafTrainPrediction(isTargetNumerical,leafTrainData);
+	    }
+	  return;
 	}
 
     }
-
-  if(splitFeatureIdx == GI.nFeaturesForSplit)
+  else
     {
-      //cout << "No splitter found, quitting" << endl << endl;
-      vector<num_t> leafTrainData;
-      treeData->getFeatureData(targetIdx,sampleIcs,leafTrainData);
-      Node::setLeafTrainPrediction(isTargetNumerical,leafTrainData);
-      return;
+      cerr << "Regular node split is not yet ready. For now, issue -o / --optimizedRF to avoid the problem" << endl;
+      assert(false);
     }
-
-  vector<num_t> featureData;
-  treeData->getFeatureData(splitFeatureIdx,sampleIcs,featureData);
-
-  size_t nRealSamples = 0;
-  for(size_t i = 0; i < nSamples; ++i)
-    {
-      if(!datadefs::isNAN(featureData[i]))
-        {
-          featureData[nRealSamples] = featureData[i];
-          targetData[nRealSamples] = targetData[i];
-          ++nRealSamples;
-        }
-    }
-  featureData.resize(nRealSamples);
-  targetData.resize(nRealSamples);
-
-  if(nRealSamples < 2 * GI.minNodeSizeToStop)
-    {
-      //cout << "Splitter has too few non-missing values, quitting" << endl;
-      //This needs to be fixed such that one of the surrogates will determine the split instead
-      vector<num_t> leafTrainData;
-      treeData->getFeatureData(targetIdx,sampleIcs,leafTrainData);
-      Node::setLeafTrainPrediction(isTargetNumerical,leafTrainData);
-      return;
-    }
-
+   
   bool isSplitFeatureNumerical = treeData->isFeatureNumerical(splitFeatureIdx);
-
+   
   if(isSplitFeatureNumerical)
     {
       Node::numericalFeatureSplit(targetData,
@@ -311,21 +332,28 @@ void Node::recursiveNodeSplit(Treedata* treeData,
 				    featureData,
 				    sampleIcs_left,
 				    sampleIcs_right,
-				    values_left,
+				    splitValues_left,
 				    splitFitness);
     }
-
+  
+  
   //cout << "asserting " << sampleIcs_left.size() << " + " << sampleIcs_right.size() << " == " << nRealSamples << endl;
-  assert(sampleIcs_left.size() + sampleIcs_right.size() == nRealSamples);
+  assert(sampleIcs_left.size() + sampleIcs_right.size() == targetData.size());
 
+  // NOTE: here's a flaw in design: as categorical data splitter does not utilize minimum node size as the boundary condition,
+  // there may be splits yielding smaller node sizes than initially specified; thus the following check, which really shouldn't be there
   if(sampleIcs_left.size() < GI.minNodeSizeToStop || sampleIcs_right.size() < GI.minNodeSizeToStop)
     {
       //cout << "Too few values after splitting and removal of missing values" << endl;
-      vector<num_t> leafTrainData;
-      treeData->getFeatureData(targetIdx,sampleIcs,leafTrainData);
-      Node::setLeafTrainPrediction(isTargetNumerical,leafTrainData);
+      if(GI.isSaveLeafTrainPrediction)
+	{
+	  vector<num_t> leafTrainData;
+	  treeData->getFeatureData(targetIdx,sampleIcs,leafTrainData);
+	  Node::setLeafTrainPrediction(isTargetNumerical,leafTrainData);
+	}
       return;
     }
+  
 
   if(isSplitFeatureNumerical)
     {
@@ -335,7 +363,7 @@ void Node::recursiveNodeSplit(Treedata* treeData,
   else
     {
       //cout << "cat splitter" << endl;
-      Node::setSplitter(splitFeatureIdx,values_left);
+      Node::setSplitter(splitFeatureIdx,splitValues_left);
     }
 
   featuresInTree.insert(splitFeatureIdx);

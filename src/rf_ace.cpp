@@ -25,6 +25,7 @@ const size_t DEFAULT_NODESIZE = 0;
 const size_t DEFAULT_NPERMS = 1;
 const num_t DEFAULT_PVALUETHRESHOLD = 0.10;
 const bool DEFAULT_APPLY_FILTER = false;
+const bool DEFAULT_OPTIMIZED_NODE_SPLIT = false;
 
 void printHeader()
 {
@@ -32,7 +33,7 @@ void printHeader()
   cout << " --------------------------------------------------------------- " << endl;
   cout << "| RF-ACE -- efficient feature selection with heterogeneous data |" << endl;
   cout << "|                                                               |" << endl;
-  cout << "|  Version:      RF-ACE v0.6.5, July 23rd, 2011                 |" << endl;
+  cout << "|  Version:      RF-ACE v0.6.6, July 23rd, 2011                 |" << endl;
   cout << "|  Project page: http://code.google.com/p/rf-ace                |" << endl;
   cout << "|  Contact:      timo.p.erkkila@tut.fi                          |" << endl;
   cout << "|                kari.torkkola@gmail.com                        |" << endl;
@@ -56,8 +57,10 @@ void printHelp()
   cout << " -p / --nperms       number of Random Forests (default " << DEFAULT_NPERMS << ")" << endl;
   cout << " -t / --pthreshold   p-value threshold below which associations are listed (default " << DEFAULT_PVALUETHRESHOLD << ")" << endl;
   cout << endl;
-  cout << "OPTIONAL HANDLES:" << endl;
-  cout << " -f / --filter       Apply feature filtering with Random Forests" << endl;
+  cout << "OPTIONAL HANDLES, SET TO *FALSE* BY DEFAULT:" << endl;
+  cout << " -f / --filterRF     Apply feature filtering with Random Forests" << endl;
+  cout << " -o / --optimizedRF  Perform optimized node splitting with Random Forests" << endl;
+  cout << endl;
 }
 
 void printHelpHint()
@@ -67,11 +70,12 @@ void printHelpHint()
 }
 
 void executeRandomForestFilter(Treedata& treedata,
-			       size_t targetIdx,
-			       size_t nTrees,
-			       size_t mTry,
-			       size_t nodeSize,
-			       size_t nPerms,
+			       const size_t targetIdx,
+			       const size_t nTrees,
+			       const size_t mTry,
+			       const size_t nodeSize,
+			       const size_t nPerms,
+			       const bool isOptimizedNodeSplit,
 			       vector<num_t>& pValues,
 			       vector<num_t>& importanceValues);
 
@@ -98,6 +102,7 @@ int main(int argc, char* argv[])
   size_t nPerms = DEFAULT_NPERMS;
   num_t pValueThreshold = DEFAULT_PVALUETHRESHOLD;
   bool applyFilter = DEFAULT_APPLY_FILTER;
+  bool isOptimizedNodeSplit = DEFAULT_OPTIMIZED_NODE_SPLIT;
   string output = "";
 
   //Read the user parameters 
@@ -110,7 +115,8 @@ int main(int argc, char* argv[])
   parser.getArgument<size_t>("s","nodesize",nodeSize); 
   parser.getArgument<size_t>("p","nperms",nPerms); 
   parser.getArgument<num_t>("t","pthreshold",pValueThreshold); 
-  parser.getArgument<bool>("f","filter",applyFilter); 
+  parser.getArgument<bool>("f","filterRF",applyFilter); 
+  parser.getArgument<bool>("o","optimizedRF",isOptimizedNodeSplit);
   parser.getArgument<string>("O","output",output); 
 
   if(printHelpHandle)
@@ -199,21 +205,40 @@ int main(int argc, char* argv[])
       //Print values of parameters of RF-ACE
       cout << endl;
       cout << "RF-ACE parameter configuration:" << endl;
-      cout << "  --input      = " << input << endl;
-      cout << "  --nsamples   = " << nRealSamples << " / " << treedata.nSamples() << " (" << 100 * ( 1 - realFraction )<< "% missing)" << endl;
-      cout << "  --nfeatures  = " << treedata.nFeatures() << endl;
-      cout << "  --targetidx  = " << targetIdx << ", header '" << treedata.getFeatureName(targetIdx) << "'" << endl;
-      cout << "  --ntrees     = " << nTrees << endl;
-      cout << "  --mtry       = " << mTry << endl;
-      cout << "  --nodesize   = " << nodeSize << endl;
-      cout << "  --nperms     = " << nPerms << endl;
-      cout << "  --pthresold  = " << pValueThreshold << endl;
-      cout << "  --output     = " << output << endl << endl;
+      cout << "  --input       = " << input << endl;
+      cout << "  --nsamples    = " << nRealSamples << " / " << treedata.nSamples() << " (" << 100 * ( 1 - realFraction )<< "% missing)" << endl;
+      cout << "  --nfeatures   = " << treedata.nFeatures() << endl;
+      cout << "  --targetidx   = " << targetIdx << ", header '" << treedata.getFeatureName(targetIdx) << "'" << endl;
+      cout << "  --ntrees      = " << nTrees << endl;
+      cout << "  --mtry        = " << mTry << endl;
+      cout << "  --nodesize    = " << nodeSize << endl;
+      cout << "  --nperms      = " << nPerms << endl;
+      cout << "  --pthresold   = " << pValueThreshold << endl;
+      cout << "  --filterRF    = "; if(applyFilter) { cout << "YES" << endl; } else { cout << "NO" << endl; }
+      cout << "  --optimizedRF = "; if(isOptimizedNodeSplit) { cout << "YES" << endl; } else { cout << "NO" << endl; }
+      cout << "  --output      = " << output << endl << endl;
       
-      //Some assertions to check whether the parameter values and data dimensions allow construction of decision trees in the first place
-      //NOTE: consider writing a more sophisticated test and provide better print-outs than just assertion failures
-      assert(treedata.nFeatures() >= mTry);
-      assert(treedata.nSamples() > 2*nodeSize);
+      if(!applyFilter)
+	{
+	  // NOTE: THIS WILL TAKE EFFECT AFTER GBT IS IN PLACE
+	  //if(optimizedRF)
+	  //  {
+	  //    cout << "NOTE: setting filter optimizations ON does not help when the filter is OFF" << endl;
+	  //  }
+	}
+      
+      if(treedata.nFeatures() < mTry)
+	{
+	  cerr << "Not enough features (" << treedata.nFeatures()-1 << ") to test with mtry = " << mTry << " features per split" << endl;
+	  return EXIT_FAILURE;
+	}
+      
+      if(treedata.nSamples() < 2*nodeSize)
+	{
+	  cerr << "Not enough samples (" << treedata.nSamples() << ") to perform a single split" << endl;
+	  return EXIT_FAILURE;
+	}
+
       
       //////////////////////////////////////////////////////////////////////
       //  ANALYSIS 1 -- Random Forest ensemble with artificial contrasts  //
@@ -225,7 +250,7 @@ int main(int argc, char* argv[])
       if(applyFilter)
 	{
 	  cout << "Applying Random Forest filter..." << endl; 
-	  executeRandomForestFilter(treedata,targetIdx,nTrees,mTry,nodeSize,nPerms,pValues,importanceValues);
+	  executeRandomForestFilter(treedata,targetIdx,nTrees,mTry,nodeSize,nPerms,isOptimizedNodeSplit,pValues,importanceValues);
 	   
 	  size_t nFeatures = treedata.nFeatures();
 	  vector<size_t> keepFeatureIcs(1);
@@ -253,7 +278,7 @@ int main(int argc, char* argv[])
 	}
       
       // THIS WILL BE REPLACED BY GBT
-      executeRandomForestFilter(treedata,targetIdx,nTrees,mTry,nodeSize,nPerms,pValues,importanceValues);
+      executeRandomForestFilter(treedata,targetIdx,nTrees,mTry,nodeSize,nPerms,isOptimizedNodeSplit,pValues,importanceValues);
     	  
       
       /////////////////////////////////////////////
@@ -367,11 +392,12 @@ int main(int argc, char* argv[])
 
 
 void executeRandomForestFilter(Treedata& treedata,
-                               size_t targetIdx,
-                               size_t nTrees,
-                               size_t mTry,
-                               size_t nodeSize,
-			       size_t nPerms,
+                               const size_t targetIdx,
+                               const size_t nTrees,
+                               const size_t mTry,
+                               const size_t nodeSize,
+			       const size_t nPerms,
+			       const bool isOptimizedNodeSplit,
                                vector<num_t>& pValues,
                                vector<num_t>& importanceValues)
 {
@@ -390,7 +416,7 @@ void executeRandomForestFilter(Treedata& treedata,
       //cout << "  RF " << permIdx + 1 << ": ";
       //Treedata td_thread = treedata;
       bool useContrasts = false;
-      Randomforest RF(&treedata,targetIdx,nTrees,mTry,nodeSize,useContrasts);
+      Randomforest RF(&treedata,targetIdx,nTrees,mTry,nodeSize,useContrasts,isOptimizedNodeSplit);
       size_t nNodesInForest = RF.nNodes();
       nNodesInAllForests += nNodesInForest;
       importanceMat[permIdx] = RF.featureImportance();

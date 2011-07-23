@@ -11,7 +11,9 @@ RootNode::RootNode(bool sampleWithReplacement,
 		   size_t minNodeSizeToStop,
 		   bool isRandomSplit,
 		   size_t nFeaturesForSplit,
-		   bool useContrasts): 
+		   bool useContrasts,
+		   bool isOptimizedNodeSplit,
+		   bool isSaveLeafTrainPrediction): 
   Node()
 {
   GI_.sampleWithReplacement = sampleWithReplacement;
@@ -21,6 +23,8 @@ RootNode::RootNode(bool sampleWithReplacement,
   GI_.isRandomSplit = isRandomSplit;
   GI_.nFeaturesForSplit = nFeaturesForSplit;
   GI_.useContrasts = useContrasts;
+  GI_.isOptimizedNodeSplit = isOptimizedNodeSplit;
+  GI_.isSaveLeafTrainPrediction = isSaveLeafTrainPrediction;
 }
 
   
