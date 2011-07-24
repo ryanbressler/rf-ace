@@ -33,7 +33,6 @@ Randomforest::Randomforest(Treedata* treedata,
   size_t minNodeSizeToStop = nodeSize;
   bool isRandomSplit = true;
   size_t nFeaturesForSplit = mTry;
-  bool isSaveLeafTrainPredictions = true;
   
   //Allocates memory for the root nodes
   for(size_t treeIdx = 0; treeIdx < nTrees_; ++treeIdx)
@@ -45,8 +44,7 @@ Randomforest::Randomforest(Treedata* treedata,
 					 isRandomSplit,
 					 nFeaturesForSplit,
 					 useContrasts,
-					 isOptimizedNodeSplit,
-					 isSaveLeafTrainPredictions);
+					 isOptimizedNodeSplit);
     }
 
   //Let's grow the forest
@@ -83,11 +81,23 @@ void Randomforest::growForest()
 
   size_t nNodes;
 
+  void (*leafPredictionFunction)(const vector<num_t>&, num_t&);
+
+  if(treedata_->isFeatureNumerical(targetIdx_))
+    {
+      leafPredictionFunction = &datadefs::mean;
+    }
+  else
+    {
+      leafPredictionFunction = &datadefs::mode;
+    }
+
   //#pragma omp parallel for
   for(size_t treeIdx = 0; treeIdx < nTrees_; ++treeIdx)
     {
       rootNodes_[treeIdx]->growTree(treedata_,
 				    targetIdx_,
+				    leafPredictionFunction,
 				    oobMatrix_[treeIdx],
 				    featuresInForest_[treeIdx],
 				    nNodes);

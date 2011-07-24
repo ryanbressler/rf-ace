@@ -27,7 +27,7 @@ GBT::GBT(Treedata* treeData, size_t targetIdx, size_t nTrees, size_t nMaxLeaves,
   size_t nFeaturesForSplit = treeData_->nFeatures();
   bool useContrasts = false;
   bool isOptimizedNodeSplit = true; // WILL BE AN OPTION, AT THE MOMENT REGULAR SPLITTING ISN'T WORKING
-  bool isSaveLeafTrainPrediction = false;
+  //bool isSaveLeafTrainPrediction = false;
 
   //Allocates memory for the root nodes. With all these parameters, the RootNode is now able to take full control of the splitting process 
   rootNodes_.resize(nTrees_);
@@ -40,8 +40,7 @@ GBT::GBT(Treedata* treeData, size_t targetIdx, size_t nTrees, size_t nMaxLeaves,
                                          isRandomSplit,
                                          nFeaturesForSplit,
                                          useContrasts,
-					 isOptimizedNodeSplit,
-					 isSaveLeafTrainPrediction);
+					 isOptimizedNodeSplit);
     }
 
 
@@ -77,6 +76,10 @@ void GBT::growForest()
 // Grow a GBT "forest" for a numerical target variable
 void GBT::growForestNumerical()
 {
+
+  //A function pointer to a function "mean()" that is used to compute the node predictions with
+  void (*leafPredictionFunction)(const vector<num_t>&, num_t&) = &datadefs::mean;
+
   size_t nSamples = treeData_->nSamples();
   // save a copy of the target column because it will be overwritten
   vector<num_t> trueTargetData;
@@ -113,6 +116,7 @@ void GBT::growForestNumerical()
       // Grow a tree to predict the current target
       rootNodes_[t]->growTree(treeData_,
 			      targetIdx_,
+			      leafPredictionFunction,
 			      oobIcs,
 			      featuresInTree,
 			      nNodes);
@@ -150,6 +154,10 @@ void GBT::growForestNumerical()
 // Grow a GBT "forest" for a categorical target variable
 void GBT::growForestCategorical()
 {
+
+  //A function pointer to a function "gamma()" that is used to compute the node predictions with
+  void (*leafPredictionFunction)(const vector<num_t>&, num_t&) = &datadefs::gamma;
+
   // Save a copy of the target column because it will be overwritten later.
   // We also know that it must be categorical.
   size_t nSamples = treeData_->nSamples();
@@ -213,6 +221,7 @@ void GBT::growForestCategorical()
           size_t t = m * numClasses_ + k; // tree index
           rootNodes_[t]->growTree(treeData_,
 				  targetIdx_,
+				  leafPredictionFunction,
 				  oobIcs,
 				  featuresInTree,
 				  nNodes);

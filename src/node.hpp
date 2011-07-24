@@ -60,7 +60,6 @@ protected:
     size_t nFeaturesForSplit;
     bool useContrasts;
     bool isOptimizedNodeSplit;
-    bool isSaveLeafTrainPrediction;
     void (*leafPrediction)(const vector<num_t>& data,num_t& prediction);
   };
 
@@ -104,7 +103,7 @@ private:
                      vector<size_t> const& sampleIcs_right);
 
   
-  void setLeafTrainPrediction(const bool isTargetNumerical, const vector<num_t>& trainData);
+  void setLeafTrainPrediction(const vector<num_t>& trainData, void (*leafPredictionFunction)(const vector<num_t>&, num_t&));
   //void accumulateLeafTestPredictionError(const num_t newTestData);
   //void eraseLeafTestPredictionError();
 
