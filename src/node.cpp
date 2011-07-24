@@ -121,12 +121,14 @@ void Node::recursiveNDescendantNodes(size_t& n)
 
 
 //WILL BE REMOVED FROM THE PUBLIC PARTS
-void Node::setLeafTrainPrediction(const num_t trainPrediction)
-{
+/*
+  void Node::setLeafTrainPrediction(const num_t trainPrediction)
+  {
   assert(!hasChildren_ && !isTrainPredictionSet_);
   trainPrediction_ = trainPrediction;
   isTrainPredictionSet_ = true;
-}
+  }
+*/
 
 
 num_t Node::getLeafTrainPrediction()

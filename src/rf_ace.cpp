@@ -33,7 +33,7 @@ void printHeader()
   cout << " --------------------------------------------------------------- " << endl;
   cout << "| RF-ACE -- efficient feature selection with heterogeneous data |" << endl;
   cout << "|                                                               |" << endl;
-  cout << "|  Version:      RF-ACE v0.6.8, July 23rd, 2011                 |" << endl;
+  cout << "|  Version:      RF-ACE v0.6.8, July 24th, 2011                 |" << endl;
   cout << "|  Project page: http://code.google.com/p/rf-ace                |" << endl;
   cout << "|  Contact:      timo.p.erkkila@tut.fi                          |" << endl;
   cout << "|                kari.torkkola@gmail.com                        |" << endl;
@@ -285,9 +285,9 @@ int main(int argc, char* argv[])
       //  ANALYSIS 2 -- Gradient Boosting Trees  //
       /////////////////////////////////////////////
       
-      if(false)
+      if(true)
 	{
-	  cout << "Gradient Boosting Trees *ENABLED*" << endl;
+	  cout << "Gradient Boosting Trees *ENABLED* (NON-FUNCTIONAL, WILL NOT AFFECT OUTPUT)" << endl;
 	  
 	  size_t nMaxLeaves = 6;
 	  num_t shrinkage = 0.5;
