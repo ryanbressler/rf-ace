@@ -61,6 +61,7 @@ protected:
     bool useContrasts;
     bool isOptimizedNodeSplit;
     bool isSaveLeafTrainPrediction;
+    void (*leafPrediction)(const vector<num_t>& data,num_t& prediction);
   };
 
   void recursiveNodeSplit(Treedata* treeData,

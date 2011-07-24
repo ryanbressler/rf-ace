@@ -64,6 +64,12 @@ namespace datadefs
 
   void mean(vector<num_t> const& data, num_t& mu, size_t& nreal);
 
+  // Newly added function set which is to be used in calculating leaf node predictions
+  void mean(const vector<num_t>& data, num_t& mu);
+  void mode(const vector<num_t>& data, num_t& mode);
+  void gamma(const vector<num_t>& data, num_t& gamma);
+  void cardinality(const vector<num_t>& data, size_t& cardinality);
+
   void sqerr(vector<num_t> const& data, 
 	     num_t& mu, 
 	     num_t& se,
