@@ -153,12 +153,9 @@ void Node::recursiveNodeSplit(Treedata* treeData,
   if(nSamples < 2 * GI.minNodeSizeToStop || nNodes >= GI.maxNodesToStop)
     {
       //cout << "Too few samples to start with, quitting" << endl;
-      if(GI.isSaveLeafTrainPrediction)
-	{
-	  vector<num_t> leafTrainData;
-	  treeData->getFeatureData(targetIdx,sampleIcs,leafTrainData);
-	  Node::setLeafTrainPrediction(isTargetNumerical,leafTrainData);
-	}
+      vector<num_t> leafTrainData;
+      treeData->getFeatureData(targetIdx,sampleIcs,leafTrainData);
+      Node::setLeafTrainPrediction(leafTrainData,GI.leafPrediction);
       return;
     }
 
@@ -266,12 +263,9 @@ void Node::recursiveNodeSplit(Treedata* treeData,
       if(splitFeatureIdx == GI.nFeaturesForSplit)
 	{
 	  //cout << "No splitter found, quitting" << endl << endl;
-	  if(GI.isSaveLeafTrainPrediction)
-	    {
-	      vector<num_t> leafTrainData;
-	      treeData->getFeatureData(targetIdx,sampleIcs,leafTrainData);
-	      Node::setLeafTrainPrediction(isTargetNumerical,leafTrainData);
-	    }
+	  vector<num_t> leafTrainData;
+	  treeData->getFeatureData(targetIdx,sampleIcs,leafTrainData);
+	  Node::setLeafTrainPrediction(leafTrainData,GI.leafPrediction);
 	  return;
 	}
       
@@ -296,12 +290,9 @@ void Node::recursiveNodeSplit(Treedata* treeData,
 	{
 	  //cout << "Splitter has too few non-missing values, quitting" << endl;
 	  //This needs to be fixed such that one of the surrogates will determine the split instead
-	  if(GI.isSaveLeafTrainPrediction)
-	    {
-	      vector<num_t> leafTrainData;
-	      treeData->getFeatureData(targetIdx,sampleIcs,leafTrainData);
-	      Node::setLeafTrainPrediction(isTargetNumerical,leafTrainData);
-	    }
+	  vector<num_t> leafTrainData;
+	  treeData->getFeatureData(targetIdx,sampleIcs,leafTrainData);
+	  Node::setLeafTrainPrediction(leafTrainData,GI.leafPrediction);
 	  return;
 	}
 
@@ -345,12 +336,9 @@ void Node::recursiveNodeSplit(Treedata* treeData,
   if(sampleIcs_left.size() < GI.minNodeSizeToStop || sampleIcs_right.size() < GI.minNodeSizeToStop)
     {
       //cout << "Too few values after splitting and removal of missing values" << endl;
-      if(GI.isSaveLeafTrainPrediction)
-	{
-	  vector<num_t> leafTrainData;
-	  treeData->getFeatureData(targetIdx,sampleIcs,leafTrainData);
-	  Node::setLeafTrainPrediction(isTargetNumerical,leafTrainData);
-	}
+      vector<num_t> leafTrainData;
+      treeData->getFeatureData(targetIdx,sampleIcs,leafTrainData);
+      Node::setLeafTrainPrediction(leafTrainData,GI.leafPrediction);
       return;
     }
   
@@ -875,31 +863,35 @@ num_t Node::splitFitness(vector<num_t> const& data,
   }
 */
 
-void Node::setLeafTrainPrediction(const bool isTargetNumerical, const vector<num_t>& trainData)
+void Node::setLeafTrainPrediction(const vector<num_t>& trainData, void (*leafPredictionFunction)(const vector<num_t>&, num_t&))
 {
   assert(!hasChildren_ && !isTrainPredictionSet_);
-
-  if(isTargetNumerical)
-    {
-      num_t trainPredictionSE = 0.0;
-      size_t nTrainSamples = 0;
-      datadefs::sqerr(trainData,trainPrediction_,trainPredictionSE,nTrainSamples);
-
-      assert(nTrainSamples > 0);
-    }
-  else
-    {
-      map<num_t,size_t> freq;
-      size_t nTrainSamples = 0;
-      datadefs::count_freq(trainData,freq,nTrainSamples);
-      map<num_t,size_t>::iterator it(max_element(freq.begin(),freq.end(),datadefs::freqIncreasingOrder()));
-      trainPrediction_ = it->first;
-
-      assert(nTrainSamples > 0);
-    }
-
+  (*leafPredictionFunction)(trainData,trainPrediction_);
   isTrainPredictionSet_ = true;
 }
+/*
+  if(isTargetNumerical)
+  {
+  num_t trainPredictionSE = 0.0;
+  size_t nTrainSamples = 0;
+  datadefs::sqerr(trainData,trainPrediction_,trainPredictionSE,nTrainSamples);
+  
+  assert(nTrainSamples > 0);
+  }
+  else
+  {
+  map<num_t,size_t> freq;
+  size_t nTrainSamples = 0;
+  datadefs::count_freq(trainData,freq,nTrainSamples);
+  map<num_t,size_t>::iterator it(max_element(freq.begin(),freq.end(),datadefs::freqIncreasingOrder()));
+  trainPrediction_ = it->first;
+  
+  assert(nTrainSamples > 0);
+  }
+  
+  isTrainPredictionSet_ = true;
+  }
+*/
 
 /*
   void Node::accumulateLeafTestPredictionError(const num_t newTestData)
