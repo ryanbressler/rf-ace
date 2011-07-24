@@ -254,11 +254,11 @@ vector<num_t> Randomforest::featureImportance()
       
     }
 
-  size_t nNodesInForest = Randomforest::nNodes();
+  //size_t nNodesInForest = Randomforest::nNodes();
   
   for(size_t featureIdx = 0; featureIdx < nAllFeatures; ++featureIdx)
     {
-      importance[featureIdx] *= 100.0*nTrees_/nNodesInForest;//1.0*nNodesInForest/nTrees_; //nContrastsInForest
+      //importance[featureIdx] *= 100.0*nTrees_/nNodesInForest;//1.0*nNodesInForest/nTrees_; //nContrastsInForest
       importance[featureIdx] /= nOobSamples; //nRealFeatures
     }
 

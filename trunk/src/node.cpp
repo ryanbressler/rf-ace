@@ -868,7 +868,7 @@ num_t Node::splitFitness(vector<num_t> const& data,
 void Node::setLeafTrainPrediction(const vector<num_t>& trainData, void (*leafPredictionFunction)(const vector<num_t>&, num_t&))
 {
   assert(!hasChildren_ && !isTrainPredictionSet_);
-  (*leafPredictionFunction)(trainData,trainPrediction_);
+  leafPredictionFunction(trainData,trainPrediction_);
   isTrainPredictionSet_ = true;
 }
 /*
