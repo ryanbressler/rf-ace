@@ -116,7 +116,6 @@ private:
     
 
   vector<Feature> features_;
-  
   size_t nSamples_;
   size_t nFeatures_;
 
