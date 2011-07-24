@@ -41,7 +41,7 @@ private:
   void predictDatasetByTree(size_t treeidx, vector<num_t>& prediction);
 
   //void recursiveNodeSplit(size_t treeidx, Node* node, vector<size_t>& sampleics);
-  void SetNodePrediction( size_t treeidx, Node* node, vector<size_t>& sampleics);
+  //void SetNodePrediction( size_t treeidx, Node* node, vector<size_t>& sampleics);
   void transformLogistic(vector<num_t>& prediction, vector<num_t>& probability);
 
   Treedata* treeData_;

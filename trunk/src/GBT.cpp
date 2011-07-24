@@ -458,47 +458,48 @@ void GBT::predictDatasetByTree(size_t treeIdx, vector<num_t>& curPrediction)
 */
 
 
-
-void GBT::SetNodePrediction( size_t treeIdx, Node* node, vector<size_t>& sampleIcs)
-{
+/*
+  void GBT::SetNodePrediction( size_t treeIdx, Node* node, vector<size_t>& sampleIcs)
+  {
   // calculate the prediction from leaf node training set
   vector<num_t> data(sampleIcs.size());
   treeData_->getFeatureData(targetIdx_, sampleIcs, data);
-
+  
   num_t nodePred;
   if (0==numClasses_)
-    {
-      // numerical target
-      size_t nreal;
-      datadefs::mean( data, nodePred, nreal); 
-    }
+  {
+  // numerical target
+  size_t nreal;
+  datadefs::mean( data, nodePred, nreal); 
+  }
   else
-    {
-      // categorical target, we are predicting one class probability, calculate gamma
-      num_t numerator=0.0, denominator=0.0;
-      for (size_t i = 0; i < data.size(); ++i)
-        {
-          num_t abs_data_i = fabs( data[i] );
-          denominator += abs_data_i * (1.0 - abs_data_i);
-          numerator   += data[i];
-        }
-      if ( fabs(denominator) <= datadefs::EPS )
-        {
-          nodePred = datadefs::LOG_OF_MAX_NUM * numerator;
-        }
-      else
-        {
-          nodePred = (numClasses_ - 1)*numerator / (numClasses_ * denominator);
-        }
-    }
-
+  {
+  // categorical target, we are predicting one class probability, calculate gamma
+  num_t numerator=0.0, denominator=0.0;
+  for (size_t i = 0; i < data.size(); ++i)
+  {
+  num_t abs_data_i = fabs( data[i] );
+  denominator += abs_data_i * (1.0 - abs_data_i);
+  numerator   += data[i];
+  }
+  if ( fabs(denominator) <= datadefs::EPS )
+  {
+  nodePred = datadefs::LOG_OF_MAX_NUM * numerator;
+  }
+  else
+  {
+  nodePred = (numClasses_ - 1)*numerator / (numClasses_ * denominator);
+  }
+  }
+  
   cout << "warning: setting node prediction here will override the prediction set by the tree-generating in Node class!" << endl;
   node->setLeafTrainPrediction(nodePred); // !!!!! WARNING : !!!!! 
   cout << "setting pred=" << nodePred << ", tree="<<treeIdx<<" &node="<< node<<endl;
   
   ++nLeavesCounter_; // finally, indicate that we have added a leaf
-}
-
+  }
+*/
+  
 
 /*
   void GBT::recursiveNodeSplit(size_t treeIdx, Node* node, vector<size_t>& sampleIcs)
