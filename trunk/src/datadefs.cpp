@@ -110,7 +110,7 @@ datadefs::num_t datadefs::str2num(string& str)
   }
 */
 
-void datadefs::mean(vector<datadefs::num_t> const& data, datadefs::num_t& mu, size_t& nRealValues)
+void datadefs::meanVals(vector<datadefs::num_t> const& data, datadefs::num_t& mu, size_t& nRealValues)
 {
  
   nRealValues = 0;
@@ -132,7 +132,7 @@ void datadefs::mean(vector<datadefs::num_t> const& data, datadefs::num_t& mu, si
 
 }
 
-void datadefs::mean(const vector<datadefs::num_t>& data, datadefs::num_t& mu)
+void datadefs::mean(const vector<datadefs::num_t>& data, datadefs::num_t& mu, const size_t numClasses)
 {
   mu = 0.0;
   size_t n = data.size();
@@ -150,7 +150,7 @@ void datadefs::mean(const vector<datadefs::num_t>& data, datadefs::num_t& mu)
   mu /= n;
 }
 
-void datadefs::mode(const vector<datadefs::num_t>& data, datadefs::num_t& mode)
+void datadefs::mode(const vector<datadefs::num_t>& data, datadefs::num_t& mode, const size_t numClasses)
 {
   
   map<datadefs::num_t,size_t> freq;
@@ -160,11 +160,11 @@ void datadefs::mode(const vector<datadefs::num_t>& data, datadefs::num_t& mode)
   mode = it->first;
 }
 
-void datadefs::gamma(const vector<datadefs::num_t>& data, datadefs::num_t& gamma)
+void datadefs::gamma(const vector<datadefs::num_t>& data, datadefs::num_t& gamma, const size_t numClasses)
 { 
 
-  size_t numClasses;
-  datadefs::cardinality(data,numClasses);
+  //size_t numClasses;
+  //datadefs::cardinality(data,numClasses);
   num_t numerator = 0.0;
   num_t denominator = 0.0;
   
@@ -202,7 +202,7 @@ void datadefs::sqerr(vector<datadefs::num_t> const& data,
 		     size_t& nRealValues)
 {
     
-  datadefs::mean(data,mu,nRealValues);
+  datadefs::meanVals(data,mu,nRealValues);
   
   se = 0.0;
   for(size_t i = 0; i < data.size(); ++i)

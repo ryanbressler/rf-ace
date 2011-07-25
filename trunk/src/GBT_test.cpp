@@ -1,12 +1,12 @@
 
-#include<cstdlib>
-#include "getopt_pp.h"
+#include <cstdlib>
+#include <iostream>
+#include "argparse.hpp"
 #include "GBT.hpp"
 //#include "datadefs.hpp"
 #include "treedata.hpp"
 
 using namespace std;
-using namespace GetOpt;
 
 
 const size_t DEFAULT_TARGETIDX = 0;
@@ -68,15 +68,16 @@ int main(int argc, char* argv[])
 //	num_t alpha = DEFAULT_ALPHA;
   string output = "";
 
-  GetOpt_pp ops(argc, argv);
+  ArgParse parser(argc,argv);
+  parser.getArgument<string>("I","input",input);
+  parser.getArgument<size_t>("i","target",targetidx);
+  parser.getArgument<size_t>("n","ntrees",ntrees);
+//  parser.getArgument<size_t>("m","mtry",mTry);
+//  parser.getArgument<size_t>("s","nodesize",nodeSize);
+//  parser.getArgument<size_t>("p","nperms",nPerms);
+//  parser.getArgument<num_t>("t","pthreshold",pValueThreshold);
+  parser.getArgument<string>("O","output",output);
 
-  ops >> Option('I',"input",input);
-  ops >> Option('i',"targetidx",targetidx);
-  ops >> Option('n',"ntrees",ntrees);
-//	ops >> Option('m',"mtry",mtry);
-//	ops >> Option('p',"nperms",nperms);
-//	ops >> Option('t',"pthreshold",pthreshold);
-  ops >> Option('O',"output",output);
 
   if(input == "")
     {
@@ -102,8 +103,8 @@ int main(int argc, char* argv[])
   cout <<endl<< "CONSTRUCT:" << endl;
   size_t nTrees(ntrees);
   size_t nMaxLeaves(nodesize);
-  float shrinkage(0.5);
-  float subSampleSize(0.5);
+  num_t shrinkage(0.5);
+  num_t subSampleSize(0.5);
   GBT gbt(&treeData, targetidx, nTrees, nMaxLeaves, shrinkage, subSampleSize);
 
   //------------------------------------------------------------------------

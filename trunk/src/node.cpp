@@ -157,7 +157,7 @@ void Node::recursiveNodeSplit(Treedata* treeData,
       //cout << "Too few samples to start with, quitting" << endl;
       vector<num_t> leafTrainData;
       treeData->getFeatureData(targetIdx,sampleIcs,leafTrainData);
-      Node::setLeafTrainPrediction(leafTrainData,GI.leafPrediction);
+      Node::setLeafTrainPrediction(leafTrainData,GI.leafPrediction,GI.numClasses);
       return;
     }
 
@@ -267,7 +267,7 @@ void Node::recursiveNodeSplit(Treedata* treeData,
 	  //cout << "No splitter found, quitting" << endl << endl;
 	  vector<num_t> leafTrainData;
 	  treeData->getFeatureData(targetIdx,sampleIcs,leafTrainData);
-	  Node::setLeafTrainPrediction(leafTrainData,GI.leafPrediction);
+	  Node::setLeafTrainPrediction(leafTrainData,GI.leafPrediction,GI.numClasses);
 	  return;
 	}
       
@@ -294,7 +294,7 @@ void Node::recursiveNodeSplit(Treedata* treeData,
 	  //This needs to be fixed such that one of the surrogates will determine the split instead
 	  vector<num_t> leafTrainData;
 	  treeData->getFeatureData(targetIdx,sampleIcs,leafTrainData);
-	  Node::setLeafTrainPrediction(leafTrainData,GI.leafPrediction);
+	  Node::setLeafTrainPrediction(leafTrainData,GI.leafPrediction,GI.numClasses);
 	  return;
 	}
 
@@ -340,7 +340,7 @@ void Node::recursiveNodeSplit(Treedata* treeData,
       //cout << "Too few values after splitting and removal of missing values" << endl;
       vector<num_t> leafTrainData;
       treeData->getFeatureData(targetIdx,sampleIcs,leafTrainData);
-      Node::setLeafTrainPrediction(leafTrainData,GI.leafPrediction);
+      Node::setLeafTrainPrediction(leafTrainData,GI.leafPrediction,GI.numClasses);
       return;
     }
   
@@ -865,10 +865,10 @@ num_t Node::splitFitness(vector<num_t> const& data,
   }
 */
 
-void Node::setLeafTrainPrediction(const vector<num_t>& trainData, void (*leafPredictionFunction)(const vector<num_t>&, num_t&))
+void Node::setLeafTrainPrediction(const vector<num_t>& trainData, void (*leafPredictionFunction)(const vector<num_t>&, num_t&, const size_t), const size_t numClasses)
 {
   assert(!hasChildren_ && !isTrainPredictionSet_);
-  leafPredictionFunction(trainData,trainPrediction_);
+  leafPredictionFunction(trainData,trainPrediction_, numClasses);
   isTrainPredictionSet_ = true;
 }
 /*

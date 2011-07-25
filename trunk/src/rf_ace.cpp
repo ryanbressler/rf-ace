@@ -501,7 +501,7 @@ void executeRandomForestFilter(Treedata& treedata,
 	      cSample[permIdx] = importanceMat[permIdx][featureIdx + treedata.nFeatures()];
 	    }
 	  datadefs::utest(fSample,cSample,pValues[featureIdx]);
-	  datadefs::mean(fSample,importanceValues[featureIdx],nRealSamples);
+	  datadefs::meanVals(fSample,importanceValues[featureIdx],nRealSamples);
 	}
     }
   else
