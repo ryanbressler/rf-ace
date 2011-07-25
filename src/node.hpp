@@ -60,7 +60,8 @@ protected:
     size_t nFeaturesForSplit;
     bool useContrasts;
     bool isOptimizedNodeSplit;
-    void (*leafPrediction)(const vector<num_t>& data,num_t& prediction);
+    void (*leafPrediction)(const vector<num_t>& data,num_t& prediction, const size_t);
+    size_t numClasses;
   };
 
   void recursiveNodeSplit(Treedata* treeData,
@@ -103,7 +104,7 @@ private:
                      vector<size_t> const& sampleIcs_right);
 
   
-  void setLeafTrainPrediction(const vector<num_t>& trainData, void (*leafPredictionFunction)(const vector<num_t>&, num_t&));
+  void setLeafTrainPrediction(const vector<num_t>& trainData, void (*leafPredictionFunction)(const vector<num_t>&, num_t&, const size_t), const size_t);
   //void accumulateLeafTestPredictionError(const num_t newTestData);
   //void eraseLeafTestPredictionError();
 

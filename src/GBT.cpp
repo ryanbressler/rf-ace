@@ -40,7 +40,8 @@ GBT::GBT(Treedata* treeData, size_t targetIdx, size_t nTrees, size_t nMaxLeaves,
                                          isRandomSplit,
                                          nFeaturesForSplit,
                                          useContrasts,
-					 isOptimizedNodeSplit);
+					 isOptimizedNodeSplit,
+					 numClasses_);
     }
 
 
@@ -78,7 +79,7 @@ void GBT::growForestNumerical()
 {
 
   //A function pointer to a function "mean()" that is used to compute the node predictions with
-  void (*leafPredictionFunction)(const vector<num_t>&, num_t&) = &datadefs::mean;
+  void (*leafPredictionFunction)(const vector<num_t>&, num_t&, const size_t) = &datadefs::mean;
 
   size_t nSamples = treeData_->nSamples();
   // save a copy of the target column because it will be overwritten
@@ -156,7 +157,7 @@ void GBT::growForestCategorical()
 {
 
   //A function pointer to a function "gamma()" that is used to compute the node predictions with
-  void (*leafPredictionFunction)(const vector<num_t>&, num_t&) = &datadefs::gamma;
+  void (*leafPredictionFunction)(const vector<num_t>&, num_t&, const size_t) = &datadefs::gamma;
 
   // Save a copy of the target column because it will be overwritten later.
   // We also know that it must be categorical.

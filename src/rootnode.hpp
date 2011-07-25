@@ -17,14 +17,15 @@ public:
 	   bool isRandomSplit,
 	   size_t nFeaturesForSplit,
 	   bool useContrasts,
-	   bool isOptimizedNodeSplit);
+	   bool isOptimizedNodeSplit,
+	   size_t numClasses);
   
   //~RootNode();
   
 
   void growTree(Treedata* treeData,
 		const size_t targetIdx,
-		void (*leafPrediction)(const vector<num_t>&,num_t&),
+		void (*leafPrediction)(const vector<num_t>&,num_t&,const size_t),
 		vector<size_t>& oobIcs,
 		set<size_t>& featuresInTree,
 		size_t& nNodes);

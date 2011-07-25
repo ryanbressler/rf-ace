@@ -34,6 +34,10 @@ Randomforest::Randomforest(Treedata* treedata,
   bool isRandomSplit = true;
   size_t nFeaturesForSplit = mTry;
   
+  // this is unnecessary for RF, but GBT needs it in the root node.
+  // Let's put the correct value in there instead of faking something!
+  size_t numClasses = treedata->nCategories(targetIdx);
+
   //Allocates memory for the root nodes
   for(size_t treeIdx = 0; treeIdx < nTrees_; ++treeIdx)
     {
@@ -44,7 +48,8 @@ Randomforest::Randomforest(Treedata* treedata,
 					 isRandomSplit,
 					 nFeaturesForSplit,
 					 useContrasts,
-					 isOptimizedNodeSplit);
+					 isOptimizedNodeSplit,
+					 numClasses);
     }
 
   //Let's grow the forest
@@ -81,7 +86,7 @@ void Randomforest::growForest()
 
   size_t nNodes;
 
-  void (*leafPredictionFunction)(const vector<num_t>&, num_t&);
+  void (*leafPredictionFunction)(const vector<num_t>&, num_t&, const size_t);
 
   if(treedata_->isFeatureNumerical(targetIdx_))
     {

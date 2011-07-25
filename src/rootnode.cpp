@@ -12,7 +12,8 @@ RootNode::RootNode(bool sampleWithReplacement,
 		   bool isRandomSplit,
 		   size_t nFeaturesForSplit,
 		   bool useContrasts,
-		   bool isOptimizedNodeSplit): 
+		   bool isOptimizedNodeSplit,
+		   size_t numClasses):
   Node()
 {
   GI_.sampleWithReplacement = sampleWithReplacement;
@@ -23,6 +24,7 @@ RootNode::RootNode(bool sampleWithReplacement,
   GI_.nFeaturesForSplit = nFeaturesForSplit;
   GI_.useContrasts = useContrasts;
   GI_.isOptimizedNodeSplit = isOptimizedNodeSplit;
+  GI_.numClasses = numClasses;
 }
 
   
@@ -38,7 +40,7 @@ RootNode::RootNode(bool sampleWithReplacement,
 
 void RootNode::growTree(Treedata* treeData,
 			const size_t targetIdx,
-			void (*leafPrediction)(const vector<num_t>&,num_t&),
+			void (*leafPrediction)(const vector<num_t>&,num_t&, const size_t),
 			vector<size_t>& oobIcs,
 			set<size_t>& featuresInTree,
 			size_t& nNodes)
