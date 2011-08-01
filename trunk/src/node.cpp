@@ -16,11 +16,11 @@ Node::Node():
 
 Node::~Node()
 {
-  if(hasChildren_)
+  if(hasChildren_) 
     {
       delete leftChild_;
       delete rightChild_;
-    }
+  }
 }
 
 void Node::setSplitter(size_t splitter, set<num_t> classSet)

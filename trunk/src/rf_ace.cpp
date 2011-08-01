@@ -7,6 +7,7 @@
 #include <ctime>
 #include <cmath>
 #include <stdio.h>
+#include <iomanip>
 //#include <omp.h>
 
 #include "argparse.hpp"
@@ -18,18 +19,22 @@
 using namespace std;
 using datadefs::num_t;
 
-const bool DEFAULT_PRINT_HELP = false;
-const size_t DEFAULT_NTREES = 0;
-const size_t DEFAULT_RF_MTRY = 0;
-const size_t DEFAULT_RF_NODESIZE = 0;
-const size_t DEFAULT_RF_NPERMS = 1;
-const num_t DEFAULT_RF_PVALUETHRESHOLD = 0.10;
-const bool DEFAULT_APPLY_RF_FILTER = false;
-const bool DEFAULT_OPTIMIZED_NODE_SPLIT = false;
-const bool DEFAULT_ENABLE_GBT = false; // TEMPORARY VARIABLE
-const size_t DEFAULT_GBT_N_MAX_LEAVES = 6;
-const num_t DEFAULT_GBT_SHRINKAGE = 0.5;
-const num_t DEFAULT_GBT_SUB_SAMPLE_SIZE = 0.5;
+const bool GENERAL_DEFAULT_PRINT_HELP = false;
+const bool GENERAL_DEFAULT_NO_RF = false;
+const bool GENERAL_DEFAULT_NO_GBT = false; // TEMPORARY VARIABLE
+
+const bool   RF_IS_OPTIMIZED_NODE_SPLIT = false;
+const size_t RF_DEFAULT_N_TREES = 0; // zero means it will be estimated from the data by default
+const size_t RF_DEFAULT_M_TRY = 0; // same here ...
+const size_t RF_DEFAULT_NODE_SIZE = 0; // ... and here
+const size_t RF_DEFAULT_N_PERMS = 1;
+const num_t  RF_DEFAULT_P_VALUE_THRESHOLD = 0.10;
+
+const bool   GBT_IS_OPTIMIZED_NODE_SPLIT = false;
+const size_t GBT_DEFAULT_N_TREES = 100;
+const size_t GBT_DEFAULT_N_MAX_LEAVES = 6;
+const num_t  GBT_DEFAULT_SHRINKAGE = 0.5;
+const num_t  GBT_DEFAULT_SUB_SAMPLE_SIZE = 0.5;
 
 
 void printHeader()
@@ -38,7 +43,7 @@ void printHeader()
   cout << " --------------------------------------------------------------- " << endl;
   cout << "| RF-ACE -- efficient feature selection with heterogeneous data |" << endl;
   cout << "|                                                               |" << endl;
-  cout << "|  Version:      RF-ACE v0.7.0, July 24th, 2011                 |" << endl;
+  cout << "|  Version:      RF-ACE v0.7.2, July 25th, 2011                 |" << endl;
   cout << "|  Project page: http://code.google.com/p/rf-ace                |" << endl;
   cout << "|  Contact:      timo.p.erkkila@tut.fi                          |" << endl;
   cout << "|                kari.torkkola@gmail.com                        |" << endl;
@@ -55,20 +60,22 @@ void printHelp()
   cout << " -i / --target        Target, specified as integer or string that is to be matched with the content of input" << endl;
   cout << " -O / --output        Output association file" << endl;
   cout << endl;
-  cout << "OPTIONAL ARGUMENTS:" << endl;
-  cout << " -n / --ntrees        (RF+GBT) Number of trees per RF (default 10*nsamples/nrealsamples)" << endl;
-  cout << " -m / --mtry          (RF) Number of randomly drawn features per node split (default sqrt(nfeatures))" << endl;
-  cout << " -s / --nodesize      (RF) Minimum number of train samples per node, affects tree depth (default max{5,nsamples/100})" << endl;
-  cout << " -p / --nperms        (RF) Number of Random Forests (default " << DEFAULT_RF_NPERMS << ")" << endl;
-  cout << " -t / --pthreshold    (RF) p-value threshold below which associations are listed (default " << DEFAULT_RF_PVALUETHRESHOLD << ")" << endl;
-  cout << " -l / --maxleaves     (GBT) Maximum number of leaves per tree (default " << DEFAULT_GBT_N_MAX_LEAVES << ")" << endl;
-  cout << " -z / --shrinkage     (GBT) Shrinkage applied to evolving the residual (default " << DEFAULT_GBT_SHRINKAGE << ")" << endl;
-  cout << " -u / --subsamplesize (GBT) Sample size fraction for training the trees (default " << DEFAULT_GBT_SUB_SAMPLE_SIZE << ")" << endl;
+  cout << "OPTIONAL ARGUMENTS -- RF FILTER:" << endl;
+  cout << " -f / --noRF          Set this flag to turn RF filtering OFF (default ON)" << endl; 
+  cout << " -o / --RF_optimize   Perform optimized node splitting with Random Forests (default NO)" << endl;
+  cout << " -n / --RF_ntrees     Number of trees per RF (default 10*nsamples/nrealsamples)" << endl;
+  cout << " -m / --RF_mtry       Number of randomly drawn features per node split (default sqrt(nfeatures))" << endl;
+  cout << " -s / --RF_nodesize   Minimum number of train samples per node, affects tree depth (default max{5,nsamples/100})" << endl;
+  cout << " -p / --RF_nperms     Number of Random Forests (default " << RF_DEFAULT_N_PERMS << ")" << endl;
+  cout << " -t / --RF_pthreshold p-value threshold below which associations are listed (default " << RF_DEFAULT_P_VALUE_THRESHOLD << ")" << endl;
   cout << endl;
-  cout << "OPTIONAL HANDLES, SET TO *FALSE* BY DEFAULT:" << endl;
-  cout << " -f / --filterRF      Apply feature filtering with Random Forests" << endl;
-  cout << " -o / --optimizedRF   Perform optimized node splitting with Random Forests" << endl;
-  cout << " -g / --enableGBT     Enable Gradient Boosting Trees" << endl;
+  cout << "OPTIONAL ARGUMENTS -- GBT:" << endl;
+  cout << " -g / --noGBT          Enable Gradient Boosting Trees (default ON)" << endl;
+  cout << " -b / --GBT_optimize   Perform optimized node splitting with Gradient Boosting Trees (default NO)" << endl;
+  cout << " -r / --GBT_ntrees     Number of trees in the GBT (default " << GBT_DEFAULT_N_TREES << ")" << endl; 
+  cout << " -l / --GBT_maxleaves  Maximum number of leaves per tree (default " << GBT_DEFAULT_N_MAX_LEAVES << ")" << endl;
+  cout << " -z / --GBT_shrinkage  Shrinkage applied to evolving the residual (default " << GBT_DEFAULT_SHRINKAGE << ")" << endl;
+  cout << " -u / --GBT_samplesize Sample size fraction for training the trees (default " << GBT_DEFAULT_SUB_SAMPLE_SIZE << ")" << endl;
   cout << endl;
 }
 
@@ -78,50 +85,61 @@ void printHelpHint()
   cout << "To get started, type \"-h\" or \"--help\"" << endl;
 }
 
-struct Options {
+struct General_options {
 
-  // IO
   bool printHelpHandle;
   string input;
   string output;
-  
-  // GENERAL
   string targetStr;
-  size_t nTrees;
-  bool applyFilter;
-  bool isOptimizedNodeSplit;
+  bool noRF;
+  bool noGBT;
   
-  // RF
+  General_options():
+    printHelpHandle(GENERAL_DEFAULT_PRINT_HELP),
+    input(""),
+    output(""),
+    targetStr(""),
+    noRF(GENERAL_DEFAULT_NO_RF),
+    noGBT(GENERAL_DEFAULT_NO_GBT) {}
+};
+
+struct RF_options {
+  
+  bool isOptimizedNodeSplit;
+  size_t nTrees;
   size_t mTry;
   size_t nodeSize;
   size_t nPerms;
   num_t pValueThreshold;
-  
-  // GBT
+
+  RF_options():
+    isOptimizedNodeSplit(RF_IS_OPTIMIZED_NODE_SPLIT),
+    nTrees(RF_DEFAULT_N_TREES),
+    mTry(RF_DEFAULT_M_TRY),
+    nodeSize(RF_DEFAULT_NODE_SIZE),
+    nPerms(RF_DEFAULT_N_PERMS),
+    pValueThreshold(RF_DEFAULT_P_VALUE_THRESHOLD) {}
+};
+
+struct GBT_options {
+
+  bool isOptimizedNodeSplit;
+  size_t nTrees;
   size_t nMaxLeaves;
   num_t shrinkage;
   num_t subSampleSize;
 
-  Options():   
-    printHelpHandle(DEFAULT_PRINT_HELP),
-    input(""),
-    output(""),
-    targetStr(""),
-    nTrees(DEFAULT_NTREES),
-    applyFilter(DEFAULT_APPLY_RF_FILTER),
-    isOptimizedNodeSplit(DEFAULT_OPTIMIZED_NODE_SPLIT), 
-    mTry(DEFAULT_RF_MTRY),
-    nodeSize(DEFAULT_RF_NODESIZE),
-    nPerms(DEFAULT_RF_NPERMS),
-    pValueThreshold(DEFAULT_RF_PVALUETHRESHOLD),
-    nMaxLeaves(DEFAULT_GBT_N_MAX_LEAVES),
-    shrinkage(DEFAULT_GBT_SHRINKAGE),
-    subSampleSize(DEFAULT_GBT_SUB_SAMPLE_SIZE) { /* EMPTY CONSTRUCTOR */ }
+  GBT_options():
+    isOptimizedNodeSplit(GBT_IS_OPTIMIZED_NODE_SPLIT),
+    nTrees(GBT_DEFAULT_N_TREES),
+    nMaxLeaves(GBT_DEFAULT_N_MAX_LEAVES),
+    shrinkage(GBT_DEFAULT_SHRINKAGE),
+    subSampleSize(GBT_DEFAULT_SUB_SAMPLE_SIZE) {}
 };
 
 void executeRandomForestFilter(Treedata& treedata,
                                const size_t targetIdx,
-                               const Options& op,
+                               const RF_options& op,
                                vector<num_t>& pValues,
                                vector<num_t>& importanceValues);
 
@@ -129,9 +147,11 @@ void executeRandomForestFilter(Treedata& treedata,
 int main(int argc, char* argv[])
 {
 
-  Options op_copy;
+  General_options gen_op;
+  RF_options RF_op_copy; // We need a copy (backup) since the options will differ between RF permutations, if enabled ...
+  GBT_options GBT_op;
 
-  //Print the intro tab
+  //Print the intro header
   printHeader();
 
   //With no input arguments the help is printed
@@ -141,49 +161,38 @@ int main(int argc, char* argv[])
       return(EXIT_SUCCESS);
     }
 
-  //Set user parameters to default values
-  op_copy.printHelpHandle = DEFAULT_PRINT_HELP;
-  op_copy.input = "";
-  op_copy.targetStr = "";
-  op_copy.nTrees = DEFAULT_NTREES;
-  op_copy.mTry = DEFAULT_RF_MTRY;
-  op_copy.nodeSize = DEFAULT_RF_NODESIZE;
-  op_copy.nPerms = DEFAULT_RF_NPERMS;
-  op_copy.pValueThreshold = DEFAULT_RF_PVALUETHRESHOLD;
-  op_copy.applyFilter = DEFAULT_APPLY_RF_FILTER;
-  op_copy.isOptimizedNodeSplit = DEFAULT_OPTIMIZED_NODE_SPLIT;
-  op_copy.output = "";
-  bool enableGBT = DEFAULT_ENABLE_GBT;
-  op_copy.nMaxLeaves = DEFAULT_GBT_N_MAX_LEAVES;
-  op_copy.shrinkage = DEFAULT_GBT_SHRINKAGE;
-  op_copy.subSampleSize = DEFAULT_GBT_SUB_SAMPLE_SIZE;
-
-  //Read the user parameters 
+  //Read the user parameters ... 
   ArgParse parser(argc,argv);
-  parser.getArgument<bool>("h","help",op_copy.printHelpHandle);
-  parser.getArgument<string>("I","input",op_copy.input); 
-  parser.getArgument<string>("i","target",op_copy.targetStr); 
-  parser.getArgument<size_t>("n","ntrees",op_copy.nTrees); 
-  parser.getArgument<size_t>("m","mtry",op_copy.mTry); 
-  parser.getArgument<size_t>("s","nodesize",op_copy.nodeSize); 
-  parser.getArgument<size_t>("p","nperms",op_copy.nPerms); 
-  parser.getArgument<num_t>("t","pthreshold",op_copy.pValueThreshold); 
-  parser.getArgument<bool>("f","filterRF",op_copy.applyFilter); 
-  parser.getArgument<bool>("o","optimizedRF",op_copy.isOptimizedNodeSplit);
-  parser.getArgument<string>("O","output",op_copy.output);
-  parser.getArgument<bool>("g","enableGBT",enableGBT);
-  parser.getArgument<size_t>("l","maxleaves",op_copy.nMaxLeaves);
-  parser.getArgument<num_t>("z","shrinkage",op_copy.shrinkage);
-  parser.getArgument<num_t>("u","subsamplesize",op_copy.subSampleSize);
 
-  if(op_copy.printHelpHandle)
+  // first General Options
+  parser.getArgument<bool>("h","help",gen_op.printHelpHandle);
+  parser.getArgument<string>("I","input",gen_op.input); 
+  parser.getArgument<string>("i","target",gen_op.targetStr); 
+  parser.getArgument<string>("O","output",gen_op.output);
+  parser.getArgument<bool>("f","noRF",gen_op.noRF);
+  parser.getArgument<bool>("g","noGBT",gen_op.noGBT);
+
+  parser.getArgument<bool>("o","RF_optimize",RF_op_copy.isOptimizedNodeSplit);
+  parser.getArgument<size_t>("n","RF_ntrees",RF_op_copy.nTrees);
+  parser.getArgument<size_t>("m","RF_mtry",RF_op_copy.mTry); 
+  parser.getArgument<size_t>("s","RF_nodesize",RF_op_copy.nodeSize); 
+  parser.getArgument<size_t>("p","RF_nperms",RF_op_copy.nPerms); 
+  parser.getArgument<num_t>("t","RF_pthreshold",RF_op_copy.pValueThreshold); 
+
+  parser.getArgument<bool>("b","GBT_optimize",GBT_op.isOptimizedNodeSplit);
+  parser.getArgument<size_t>("r","GBT_ntrees",GBT_op.nTrees);
+  parser.getArgument<size_t>("l","GBT_maxleaves",GBT_op.nMaxLeaves);
+  parser.getArgument<num_t>("z","GBT_shrinkage",GBT_op.shrinkage);
+  parser.getArgument<num_t>("u","GBT_subsamplesize",GBT_op.subSampleSize);
+
+  if(gen_op.printHelpHandle)
     {
       printHelp();
       return(EXIT_SUCCESS);
     }
 
   //Print help and exit if input file is not specified
-  if(op_copy.input == "")
+  if(gen_op.input == "")
     {
       cerr << "Input file not specified" << endl;
       printHelpHint();
@@ -191,7 +200,7 @@ int main(int argc, char* argv[])
     }
 
   //Print help and exit if target index is not specified
-  if(op_copy.targetStr == "")
+  if(gen_op.targetStr == "")
     {
       cerr << "target(s) (-i/--target) not specified" << endl;
       printHelpHint();
@@ -199,7 +208,7 @@ int main(int argc, char* argv[])
     }
 
   //Print help and exit if output file is not specified
-  if(op_copy.output == "")
+  if(gen_op.output == "")
     {
       cerr << "Output file not specified" << endl;
       printHelpHint();
@@ -207,15 +216,15 @@ int main(int argc, char* argv[])
     }
 
   //Read data into Treedata object
-  cout << endl << "Reading file '" << op_copy.input << "'" << endl;
-  Treedata treedata_copy(op_copy.input);
+  cout << endl << "Reading file '" << gen_op.input << "' please wait..." << endl;
+  Treedata treedata_copy(gen_op.input);
 
   //Check which feature names match with the specified target identifier
   set<size_t> targetIcs;
-  treedata_copy.getMatchingTargetIcs(op_copy.targetStr,targetIcs);
+  treedata_copy.getMatchingTargetIcs(gen_op.targetStr,targetIcs);
   if(targetIcs.size() == 0)
     {
-      cerr << "No features match the specified target identifier '" << op_copy.targetStr << "'" << endl;
+      cerr << "No features match the specified target identifier '" << gen_op.targetStr << "'" << endl;
       return EXIT_FAILURE;
     }
 
@@ -225,80 +234,72 @@ int main(int argc, char* argv[])
     {
       //Copy the data and options into new objects, which allows the program to alter the other copy without losing data
       Treedata treedata = treedata_copy;
-      Options op = op_copy;
+      RF_options RF_op = RF_op_copy;
 
       //Extract the target index from the pointer and the number of real samples from the treedata object
       size_t targetIdx = *it;
       size_t nRealSamples = treedata.nRealSamples(targetIdx);
-      
+      num_t realFraction = 1.0*nRealSamples / treedata.nSamples();
+
       //If the target has no real samples, the program will just exit
       if(nRealSamples == 0)
 	{
 	  cout << "Omitting target '" <<  treedata.getFeatureName(targetIdx) << "', for it has no real samples..." << endl;
 	  continue;
 	}
-      
-      num_t realFraction = 1.0*nRealSamples / treedata.nSamples();
+
+      int maxwidth = 1 + static_cast<int>(targetIcs.size()) / 10;
+      cout << endl;
+      cout << "** " << setw(maxwidth) << iter << "/" << setw(maxwidth) << targetIcs.size() << " -- Building ";
+      if(treedata.isFeatureNumerical(targetIdx))
+        {
+          cout << "regression ";
+        }
+      else
+        {
+          cout << treedata.nCategories(targetIdx) << "-class ";
+        }
+      cout << "model for '" << treedata.getFeatureName(targetIdx) << "'. " << nRealSamples << " / " << treedata.nSamples() << " (" << 100 * ( 1 - realFraction )<< "% missing) samples **" << endl;
       
       //If default nTrees is to be used...
-      if(op.nTrees == DEFAULT_NTREES)
+      if(RF_op.nTrees == RF_DEFAULT_N_TREES)
 	{
-	  op.nTrees = static_cast<size_t>( 10.0*treedata.nSamples() / realFraction );
+	  RF_op.nTrees = static_cast<size_t>( 10.0*treedata.nSamples() / realFraction );
 	}
       
       //If default mTry is to be used...
-      if(op.mTry == DEFAULT_RF_MTRY)
+      if(RF_op.mTry == RF_DEFAULT_M_TRY)
 	{
-	  op.mTry = static_cast<size_t>( floor( sqrt( 1.0*treedata.nFeatures() ) ) );   
+	  RF_op.mTry = static_cast<size_t>( floor( sqrt( 1.0*treedata.nFeatures() ) ) );   
 	}
       
       //If default nodeSize is to be used...
-      if(op.nodeSize == DEFAULT_RF_NODESIZE)
+      if(RF_op.nodeSize == RF_DEFAULT_NODE_SIZE)
 	{
-	  op.nodeSize = 5;
+	  RF_op.nodeSize = 5;
 	  size_t altNodeSize = static_cast<size_t>( ceil( 1.0*nRealSamples/100 ) );
-	  if(altNodeSize > op.nodeSize)
+	  if(altNodeSize > RF_op.nodeSize)
 	    {
-	      op.nodeSize = altNodeSize;
+	      RF_op.nodeSize = altNodeSize;
 	    }
 	}
-      
-      //Print values of parameters of RF-ACE
-      cout << endl;
-      cout << "RF-ACE parameter configuration:" << endl;
-      cout << "  --input              = " << op.input << endl;
-      cout << "  --nsamples           = " << nRealSamples << " / " << treedata.nSamples() << " (" << 100 * ( 1 - realFraction )<< "% missing)" << endl;
-      cout << "  --nfeatures          = " << treedata.nFeatures() << endl;
-      cout << "  --targetidx          = " << targetIdx << ", header '" << treedata.getFeatureName(targetIdx) << "'" << endl;
-      cout << "  --ntrees             = " << op.nTrees << endl;
-      cout << "  --(RF)mtry           = " << op.mTry << endl;
-      cout << "  --(RF)nodesize       = " << op.nodeSize << endl;
-      cout << "  --(RF)nperms         = " << op.nPerms << endl;
-      cout << "  --(RF)pthresold      = " << op.pValueThreshold << endl;
-      cout << "  --filterRF           = "; if(op.applyFilter) { cout << "YES" << endl; } else { cout << "NO" << endl; }
-      cout << "  --optimizedRF        = "; if(op.isOptimizedNodeSplit) { cout << "YES" << endl; } else { cout << "NO" << endl; }
-      cout << "  --enableGBT          = "; if(enableGBT) { cout << "YES" << endl;} else { cout << "NO" << endl; }
-      cout << "  --(GBT)maxleaves     = " << op.nMaxLeaves << endl;
-      cout << "  --(GBT)shrinkage     = " << op.shrinkage << endl;
-      cout << "  --(GBT)subsamplesize = " << op.subSampleSize << endl;
-      cout << "  --output             = " << op.output << endl << endl;
-      
-      if(!op.applyFilter)
-	{
+            
+      //if(!op.applyFilter)
+      //	{
 	  // NOTE: THIS WILL TAKE EFFECT AFTER GBT IS IN PLACE
 	  //if(optimizedRF)
 	  //  {
 	  //    cout << "NOTE: setting filter optimizations ON does not help when the filter is OFF" << endl;
 	  //  }
-	}
+      //	}
       
-      if(treedata.nFeatures() < op.mTry)
+      if(treedata.nFeatures() < RF_op.mTry)
 	{
-	  cerr << "Not enough features (" << treedata.nFeatures()-1 << ") to test with mtry = " << op.mTry << " features per split" << endl;
+	  cerr << "Not enough features (" << treedata.nFeatures()-1 << ") to test with mtry = " << RF_op.mTry << " features per split" << endl;
 	  return EXIT_FAILURE;
 	}
       
-      if(treedata.nSamples() < 2 * op.nodeSize)
+      if(treedata.nSamples() < 2 * RF_op.nodeSize)
 	{
 	  cerr << "Not enough samples (" << treedata.nSamples() << ") to perform a single split" << endl;
 	  return EXIT_FAILURE;
@@ -312,10 +313,18 @@ int main(int argc, char* argv[])
       vector<num_t> pValues; //(treedata.nFeatures());
       vector<num_t> importanceValues; //(treedata.nFeatures());
       
-      if(op.applyFilter)
+      if(!gen_op.noRF)
 	{
-	  cout << "Applying Random Forest filter..." << endl; 
-	  executeRandomForestFilter(treedata,targetIdx,op,pValues,importanceValues);
+	  cout << "1/3 Random Forest filter *ENABLED*. Options:" << endl;
+	  cout << "  --optimize       = "; if(RF_op.isOptimizedNodeSplit) { cout << "YES" << endl; } else { cout << "NO" << endl; }
+	  cout << "  --ntrees         = " << RF_op.nTrees << endl;
+	  cout << "  --mtry           = " << RF_op.mTry << endl;
+	  cout << "  --nodesize       = " << RF_op.nodeSize << endl;
+	  cout << "  --nperms         = " << RF_op.nPerms << endl;
+	  cout << "  --pthresold      = " << RF_op.pValueThreshold << endl;
+	  cout << endl;
+
+	  executeRandomForestFilter(treedata,targetIdx,RF_op,pValues,importanceValues);
 	   
 	  size_t nFeatures = treedata.nFeatures();
 	  vector<size_t> keepFeatureIcs(1);
@@ -339,23 +348,35 @@ int main(int argc, char* argv[])
 	  targetIdx = 0;
 	  cout << endl;
 	  cout << "Features filtered: " << removedFeatures.size() << " (" << treedata.nFeatures() << " left)" << endl;
-	  cout << "TEST: target is '" << treedata.getFeatureName(targetIdx) << "'" << endl;
+	  //cout << "TEST: target is '" << treedata.getFeatureName(targetIdx) << "'" << endl;
+	}
+      else
+	{
+	  cout << "1/3 Random Forest filter *DISABLED*" << endl << endl;
 	}
       
+      cout << "2/3 Random Forest feature selection *ENABLED* (will become obsolete). Options:" << endl;
+      
       // THIS WILL BE REPLACED BY GBT
-      executeRandomForestFilter(treedata,targetIdx,op,pValues,importanceValues);
+      executeRandomForestFilter(treedata,targetIdx,RF_op,pValues,importanceValues);
     	  
       
       /////////////////////////////////////////////
       //  ANALYSIS 2 -- Gradient Boosting Trees  //
       /////////////////////////////////////////////
       
-      if(enableGBT)
+      if(!gen_op.noGBT)
 	{
-	  cout << "Gradient Boosting Trees *ENABLED* (NON-FUNCTIONAL, WILL NOT AFFECT OUTPUT)" << endl;
-	  
-	  
-	  GBT gbt(&treedata, targetIdx, op.nTrees, op.nMaxLeaves, op.shrinkage, op.subSampleSize);
+	  cout << "3/3 Gradient Boosting Trees *ENABLED* (NON-FUNCTIONAL, WILL NOT AFFECT OUTPUT). Options:" << endl;
+	  //cout << "GBT ";if(gen_op.noGBT) { cout << "DISABLED:" << endl; } else { cout << "ENABLED:" << endl; }
+	  cout << "  --optimize        = "; if(GBT_op.isOptimizedNodeSplit) { cout << "YES" << endl; } else { cout << "NO" << endl; }
+	  cout << "  --ntrees          = " << GBT_op.nTrees << endl;
+	  cout << "  --maxleaves       = " << GBT_op.nMaxLeaves << endl;
+	  cout << "  --shrinkage       = " << GBT_op.shrinkage << endl;
+	  cout << "  --samplesize      = " << GBT_op.subSampleSize << endl;
+
+	 	  
+	  GBT gbt(&treedata, targetIdx, GBT_op.nTrees, GBT_op.nMaxLeaves, GBT_op.shrinkage, GBT_op.subSampleSize);
 	  
 	  
 	  cout <<endl<< "PREDICTION:" << endl;
@@ -364,7 +385,7 @@ int main(int argc, char* argv[])
 	}
       else
       	{
-	  cout << "Gradient Boosting Trees *DISABLED*" << endl;
+	  cout << "3/3 Gradient Boosting Trees *DISABLED*" << endl << endl;
 	}
       
       
@@ -390,11 +411,11 @@ int main(int argc, char* argv[])
 	  FILE* file;
 	  if(iter == 1)
 	    {
-	      file = fopen(op.output.c_str(),"w");
+	      file = fopen(gen_op.output.c_str(),"w");
 	    }
 	  else
 	    {
-	      file = fopen(op.output.c_str(),"a");
+	      file = fopen(gen_op.output.c_str(),"a");
 	    }
 	  
 	  for(size_t featureIdx = 0; featureIdx < treedata.nFeatures(); ++featureIdx)
@@ -414,7 +435,7 @@ int main(int argc, char* argv[])
 		  continue;
 		}
 	      
-	      if(op.nPerms > 1)
+	      if(RF_op.nPerms > 1)
 		{
 		  fprintf(file,"%s\t%s\t%9.8f\t%9.8f\t%9.8f\n",targetName.c_str(),treedata.getFeatureName(refIcs[featureIdx]).c_str(),pValues[featureIdx],importanceValues[featureIdx],treedata.pearsonCorrelation(targetIdx,refIcs[featureIdx]));
 		}
@@ -456,7 +477,7 @@ int main(int argc, char* argv[])
 
 void executeRandomForestFilter(Treedata& treedata,
                                const size_t targetIdx,
-                               const Options& op,
+                               const RF_options& op,
                                vector<num_t>& pValues,
                                vector<num_t>& importanceValues)
 {
@@ -474,7 +495,17 @@ void executeRandomForestFilter(Treedata& treedata,
     {
       //cout << "  RF " << permIdx + 1 << ": ";
       //Treedata td_thread = treedata;
-      bool useContrasts = false;
+      
+      bool useContrasts;
+      if(op.nPerms > 1)
+	{
+	  useContrasts = true;
+	}
+      else
+	{
+	  useContrasts = false;
+	}
+
       Randomforest RF(&treedata,targetIdx,op.nTrees,op.mTry,op.nodeSize,useContrasts,op.isOptimizedNodeSplit);
       size_t nNodesInForest = RF.nNodes();
       nNodesInAllForests += nNodesInForest;
