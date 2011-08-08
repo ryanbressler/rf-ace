@@ -132,57 +132,59 @@ void datadefs::meanVals(vector<datadefs::num_t> const& data, datadefs::num_t& mu
 
 }
 
-void datadefs::mean(const vector<datadefs::num_t>& data, datadefs::num_t& mu, const size_t numClasses)
-{
+/*
+  void datadefs::mean(const vector<datadefs::num_t>& data, datadefs::num_t& mu, const size_t numClasses)
+  {
   mu = 0.0;
   size_t n = data.size();
-
+  
   if(n == 0)
-    {
-      return;
-    }
-
+  {
+  return;
+  }
+  
   for(size_t i = 0; i < data.size(); ++i)
-    {
-      mu += data[i];
-    }
+  {
+  mu += data[i];
+  }
   
   mu /= n;
-}
-
-void datadefs::mode(const vector<datadefs::num_t>& data, datadefs::num_t& mode, const size_t numClasses)
-{
+  }
+  
+  void datadefs::mode(const vector<datadefs::num_t>& data, datadefs::num_t& mode, const size_t numClasses)
+  {
   
   map<datadefs::num_t,size_t> freq;
   size_t n = 0;
   datadefs::count_freq(data,freq,n);
   map<datadefs::num_t,size_t>::iterator it(max_element(freq.begin(),freq.end(),datadefs::freqIncreasingOrder()));
   mode = it->first;
-}
-
-void datadefs::gamma(const vector<datadefs::num_t>& data, datadefs::num_t& gamma, const size_t numClasses)
-{ 
-
+  }
+  
+  void datadefs::gamma(const vector<datadefs::num_t>& data, datadefs::num_t& gamma, const size_t numClasses)
+  { 
+  
   //size_t numClasses;
   //datadefs::cardinality(data,numClasses);
   num_t numerator = 0.0;
   num_t denominator = 0.0;
   
   for (size_t i = 0; i < data.size(); ++i)
-    {
-      num_t abs_data_i = fabs( data[i] );
-      denominator += abs_data_i * (1.0 - abs_data_i);
-      numerator   += data[i];
-    }
+  {
+  num_t abs_data_i = fabs( data[i] );
+  denominator += abs_data_i * (1.0 - abs_data_i);
+  numerator   += data[i];
+  }
   if ( fabs(denominator) <= datadefs::EPS )
-    {
-      gamma = datadefs::LOG_OF_MAX_NUM * numerator;
-    }
+  {
+  gamma = datadefs::LOG_OF_MAX_NUM * numerator;
+  }
   else
-    {
-      gamma = (numClasses - 1)*numerator / (numClasses * denominator);
-    }
-}
+  {
+  gamma = (numClasses - 1)*numerator / (numClasses * denominator);
+  }
+  }
+*/
 
 void datadefs::cardinality(const vector<datadefs::num_t>& data, size_t& cardinality)
 {

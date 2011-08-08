@@ -45,6 +45,13 @@ public:
 
   size_t nNodes();
 
+  //Leaf prediction functions
+  //void leafMean(const vector<num_t>& data, const size_t numClasses);
+  //void leafMode(const vector<num_t>& data, const size_t numClasses);
+  //void leafGamma(const vector<num_t>& data, const size_t numClasses);
+
+  enum LeafPredictionFunctionType { LEAF_MEAN, LEAF_MODE, LEAF_GAMMA };
+
   //Helper functions
   //void print();
   //void print_compact();
@@ -60,7 +67,7 @@ protected:
     size_t nFeaturesForSplit;
     bool useContrasts;
     bool isOptimizedNodeSplit;
-    void (*leafPrediction)(const vector<num_t>& data,num_t& prediction, const size_t);
+    LeafPredictionFunctionType leafPredictionFunctionType; //void (*leafPredictionFunction)(const vector<num_t>& data, const size_t numClasses);
     size_t numClasses;
   };
 
@@ -104,12 +111,16 @@ private:
                      vector<size_t> const& sampleIcs_right);
 
   
-  void setLeafTrainPrediction(const vector<num_t>& trainData, void (*leafPredictionFunction)(const vector<num_t>&, num_t&, const size_t), const size_t);
-  //void accumulateLeafTestPredictionError(const num_t newTestData);
-  //void eraseLeafTestPredictionError();
+  void setLeafTrainPrediction(const vector<num_t>& trainData, const GrowInstructions& GI);
+  
 
   //A recursive function that will accumulate the number of descendant nodes the current nodes has
   void recursiveNDescendantNodes(size_t& n);
+
+  //Leaf prediction functions
+  void leafMean(const vector<num_t>& data);
+  void leafMode(const vector<num_t>& data);
+  void leafGamma(const vector<num_t>& data, const size_t numClasses);
 
   bool isSplitterNumerical_;
 
