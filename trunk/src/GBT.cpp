@@ -79,7 +79,8 @@ void GBT::growForestNumerical()
 {
 
   //A function pointer to a function "mean()" that is used to compute the node predictions with
-  void (*leafPredictionFunction)(const vector<num_t>&, num_t&, const size_t) = &datadefs::mean;
+  //void (*leafPredictionFunction)(const vector<num_t>&, const size_t) = Node::leafMean;
+  RootNode::LeafPredictionFunctionType leafPredictionFunctionType = RootNode::LEAF_MEAN;
 
   size_t nSamples = treeData_->nSamples();
   // save a copy of the target column because it will be overwritten
@@ -117,7 +118,7 @@ void GBT::growForestNumerical()
       // Grow a tree to predict the current target
       rootNodes_[t]->growTree(treeData_,
 			      targetIdx_,
-			      leafPredictionFunction,
+			      leafPredictionFunctionType,
 			      oobIcs,
 			      featuresInTree,
 			      nNodes);
@@ -157,7 +158,8 @@ void GBT::growForestCategorical()
 {
 
   //A function pointer to a function "gamma()" that is used to compute the node predictions with
-  void (*leafPredictionFunction)(const vector<num_t>&, num_t&, const size_t) = &datadefs::gamma;
+  //void (*leafPredictionFunction)(const vector<num_t>&, const size_t) = Node::leafGamma;
+  RootNode::LeafPredictionFunctionType leafPredictionFunctionType = RootNode::LEAF_GAMMA;
 
   // Save a copy of the target column because it will be overwritten later.
   // We also know that it must be categorical.
@@ -222,7 +224,7 @@ void GBT::growForestCategorical()
           size_t t = m * numClasses_ + k; // tree index
           rootNodes_[t]->growTree(treeData_,
 				  targetIdx_,
-				  leafPredictionFunction,
+				  leafPredictionFunctionType,
 				  oobIcs,
 				  featuresInTree,
 				  nNodes);

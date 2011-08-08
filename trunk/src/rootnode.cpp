@@ -40,13 +40,14 @@ RootNode::RootNode(bool sampleWithReplacement,
 
 void RootNode::growTree(Treedata* treeData,
 			const size_t targetIdx,
-			void (*leafPrediction)(const vector<num_t>&,num_t&, const size_t),
+			//void (*leafPredictionFunction)(const vector<num_t>&, const size_t),
+			const LeafPredictionFunctionType leafPredictionFunctionType,
 			vector<size_t>& oobIcs,
 			set<size_t>& featuresInTree,
 			size_t& nNodes)
 {
 
-  GI_.leafPrediction = leafPrediction;
+  GI_.leafPredictionFunctionType = leafPredictionFunctionType;
 
   if(false)
     {

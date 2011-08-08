@@ -86,15 +86,16 @@ void Randomforest::growForest()
 
   size_t nNodes;
 
-  void (*leafPredictionFunction)(const vector<num_t>&, num_t&, const size_t);
+  //void (*leafPredictionFunction)(const vector<num_t>&, const size_t);
+  RootNode::LeafPredictionFunctionType leafPredictionFunctionType;
 
   if(treedata_->isFeatureNumerical(targetIdx_))
     {
-      leafPredictionFunction = &datadefs::mean;
+      leafPredictionFunctionType = RootNode::LEAF_MEAN;
     }
   else
     {
-      leafPredictionFunction = &datadefs::mode;
+      leafPredictionFunctionType = RootNode::LEAF_MODE;
     }
 
   //#pragma omp parallel for
@@ -102,7 +103,7 @@ void Randomforest::growForest()
     {
       rootNodes_[treeIdx]->growTree(treedata_,
 				    targetIdx_,
-				    leafPredictionFunction,
+				    leafPredictionFunctionType,
 				    oobMatrix_[treeIdx],
 				    featuresInForest_[treeIdx],
 				    nNodes);
