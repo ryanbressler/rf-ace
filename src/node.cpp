@@ -895,14 +895,10 @@ num_t Node::splitFitness(vector<num_t> const& data,
 void Node::leafMean(const vector<datadefs::num_t>& data, const size_t numClasses)
 {
   
-  assert(!hasChildren_ && !isTrainPredictionSet_);
+  assert(!hasChildren_);
+  assert(!isTrainPredictionSet_);
   size_t n = data.size();
-
-  if(n == 0)
-    {
-      return;
-    }
-
+  assert(n > 0);
   trainPrediction_ = 0.0;
 
   for(size_t i = 0; i < data.size(); ++i)
@@ -918,15 +914,14 @@ void Node::leafMean(const vector<datadefs::num_t>& data, const size_t numClasses
 void Node::leafMode(const vector<datadefs::num_t>& data, const size_t numClasses)
 {
 
-  assert(!hasChildren_ && !isTrainPredictionSet_);
-  map<num_t,size_t> freq;
-  size_t n = 0;
-  
-  if(n == 0)
-    {
-      return;
-    }
+  assert(!hasChildren_);
+  assert(!isTrainPredictionSet_);
+  size_t n = data.size();
+  assert(n > 0);
+  trainPrediction_ = 0.0;
 
+  map<num_t,size_t> freq;
+  
   datadefs::count_freq(data,freq,n);
   map<num_t,size_t>::iterator it(max_element(freq.begin(),freq.end(),datadefs::freqIncreasingOrder()));
   trainPrediction_ = it->first;
@@ -937,13 +932,11 @@ void Node::leafMode(const vector<datadefs::num_t>& data, const size_t numClasses
 void Node::leafGamma(const vector<datadefs::num_t>& data, const size_t numClasses)
 {
 
-  assert(!hasChildren_ && !isTrainPredictionSet_);
+  assert(!hasChildren_);
+  assert(!isTrainPredictionSet_);
   size_t n = data.size();
-
-  if(n == 0)
-    {
-      return;
-    }
+  assert(n > 0);
+  trainPrediction_ = 0.0;
 
   num_t numerator = 0.0;
   num_t denominator = 0.0;
