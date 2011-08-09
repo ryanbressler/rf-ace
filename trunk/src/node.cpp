@@ -157,7 +157,8 @@ void Node::recursiveNodeSplit(Treedata* treeData,
       //cout << "Too few samples to start with, quitting" << endl;
       vector<num_t> leafTrainData;
       treeData->getFeatureData(targetIdx,sampleIcs,leafTrainData);
-      Node::setLeafTrainPrediction(leafTrainData,GI);
+      //Node::setLeafTrainPrediction(leafTrainData,GI);
+      (this->*GI.leafPredictionFunction)(leafTrainData,GI.numClasses);
       return;
     }
 
@@ -267,7 +268,8 @@ void Node::recursiveNodeSplit(Treedata* treeData,
 	  //cout << "No splitter found, quitting" << endl << endl;
 	  vector<num_t> leafTrainData;
 	  treeData->getFeatureData(targetIdx,sampleIcs,leafTrainData);
-	  Node::setLeafTrainPrediction(leafTrainData,GI);
+	  //Node::setLeafTrainPrediction(leafTrainData,GI);
+	  (this->*GI.leafPredictionFunction)(leafTrainData,GI.numClasses);
 	  return;
 	}
       
@@ -294,7 +296,8 @@ void Node::recursiveNodeSplit(Treedata* treeData,
 	  //This needs to be fixed such that one of the surrogates will determine the split instead
 	  vector<num_t> leafTrainData;
 	  treeData->getFeatureData(targetIdx,sampleIcs,leafTrainData);
-	  Node::setLeafTrainPrediction(leafTrainData,GI);
+	  //Node::setLeafTrainPrediction(leafTrainData,GI);
+	  (this->*GI.leafPredictionFunction)(leafTrainData,GI.numClasses);
 	  return;
 	}
 
@@ -340,7 +343,8 @@ void Node::recursiveNodeSplit(Treedata* treeData,
       //cout << "Too few values after splitting and removal of missing values" << endl;
       vector<num_t> leafTrainData;
       treeData->getFeatureData(targetIdx,sampleIcs,leafTrainData);
-      Node::setLeafTrainPrediction(leafTrainData,GI);
+      //Node::setLeafTrainPrediction(leafTrainData,GI);
+      (this->*GI.leafPredictionFunction)(leafTrainData,GI.numClasses);
       return;
     }
   
@@ -865,30 +869,33 @@ num_t Node::splitFitness(vector<num_t> const& data,
   }
 */
 
-void Node::setLeafTrainPrediction(const vector<num_t>& trainData, const GrowInstructions& GI)
-{
+/*
+  void Node::setLeafTrainPrediction(const vector<num_t>& trainData, const GrowInstructions& GI)
+  {
   assert(!hasChildren_ && !isTrainPredictionSet_);
   if(GI.leafPredictionFunctionType == LEAF_MEAN)
-    {
-      Node::leafMean(trainData);
-    }
+  {
+  Node::leafMean(trainData);
+  }
   else if(GI.leafPredictionFunctionType == LEAF_MODE)
-    {
-      Node::leafMode(trainData);
-    }
+  {
+  Node::leafMode(trainData);
+  }
   else
-    {
-      Node::leafGamma(trainData, GI.numClasses);
-    }
-
-
+  {
+  Node::leafGamma(trainData, GI.numClasses);
+  }
+  
+  
   //GI.leafPredictionFunction(trainData,GI.numClasses);
   isTrainPredictionSet_ = true;
-}
+  }
+*/
 
-void Node::leafMean(const vector<datadefs::num_t>& data)
+void Node::leafMean(const vector<datadefs::num_t>& data, const size_t numClasses)
 {
-  //leafPrediction_ = 0.0;
+  
+  assert(!hasChildren_ && !isTrainPredictionSet_);
   size_t n = data.size();
 
   if(n == 0)
@@ -904,11 +911,14 @@ void Node::leafMean(const vector<datadefs::num_t>& data)
     }
 
   trainPrediction_ /= n;
+  isTrainPredictionSet_ = true;
+
 }
 
-void Node::leafMode(const vector<datadefs::num_t>& data)
+void Node::leafMode(const vector<datadefs::num_t>& data, const size_t numClasses)
 {
 
+  assert(!hasChildren_ && !isTrainPredictionSet_);
   map<num_t,size_t> freq;
   size_t n = 0;
   
@@ -920,11 +930,14 @@ void Node::leafMode(const vector<datadefs::num_t>& data)
   datadefs::count_freq(data,freq,n);
   map<num_t,size_t>::iterator it(max_element(freq.begin(),freq.end(),datadefs::freqIncreasingOrder()));
   trainPrediction_ = it->first;
+  isTrainPredictionSet_ = true;
+
 }
 
 void Node::leafGamma(const vector<datadefs::num_t>& data, const size_t numClasses)
 {
 
+  assert(!hasChildren_ && !isTrainPredictionSet_);
   size_t n = data.size();
 
   if(n == 0)
@@ -949,6 +962,8 @@ void Node::leafGamma(const vector<datadefs::num_t>& data, const size_t numClasse
     {
       trainPrediction_ = (numClasses - 1)*numerator / (numClasses * denominator);
     }
+  isTrainPredictionSet_ = true;
+
 }
 
 

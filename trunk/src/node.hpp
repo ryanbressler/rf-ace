@@ -14,6 +14,10 @@
 using namespace std;
 using datadefs::num_t;
 
+class Node;
+
+typedef void (Node::*LeafPredictionFunction)(const vector<num_t>&, const size_t);
+
 class Node {
 public:
   //Initializes node.
@@ -67,9 +71,15 @@ protected:
     size_t nFeaturesForSplit;
     bool useContrasts;
     bool isOptimizedNodeSplit;
-    LeafPredictionFunctionType leafPredictionFunctionType; //void (*leafPredictionFunction)(const vector<num_t>& data, const size_t numClasses);
+    //LeafPredictionFunctionType leafPredictionFunctionType; //void (*leafPredictionFunction)(const vector<num_t>& data, const size_t numClasses);
+    LeafPredictionFunction leafPredictionFunction;//void (*leafPredictionFunction)(const vector<num_t>&, const size_t);
     size_t numClasses;
   };
+
+  //Leaf prediction functions
+  void leafMean(const vector<num_t>& data, const size_t numClasses);
+  void leafMode(const vector<num_t>& data, const size_t numClasses);
+  void leafGamma(const vector<num_t>& data, const size_t numClasses);
 
   void recursiveNodeSplit(Treedata* treeData,
 			  const size_t targetIdx,
@@ -111,16 +121,16 @@ private:
                      vector<size_t> const& sampleIcs_right);
 
   
-  void setLeafTrainPrediction(const vector<num_t>& trainData, const GrowInstructions& GI);
+  //void setLeafTrainPrediction(const vector<num_t>& trainData, const GrowInstructions& GI);
   
 
   //A recursive function that will accumulate the number of descendant nodes the current nodes has
   void recursiveNDescendantNodes(size_t& n);
 
   //Leaf prediction functions
-  void leafMean(const vector<num_t>& data);
-  void leafMode(const vector<num_t>& data);
-  void leafGamma(const vector<num_t>& data, const size_t numClasses);
+  //void leafMean(const vector<num_t>& data);
+  //void leafMode(const vector<num_t>& data);
+  //void leafGamma(const vector<num_t>& data, const size_t numClasses);
 
   bool isSplitterNumerical_;
 

@@ -47,7 +47,20 @@ void RootNode::growTree(Treedata* treeData,
 			size_t& nNodes)
 {
 
-  GI_.leafPredictionFunctionType = leafPredictionFunctionType;
+  if(leafPredictionFunctionType == LEAF_MEAN)
+    {
+      GI_.leafPredictionFunction = &RootNode::leafMean;
+    }
+  else if(leafPredictionFunctionType == LEAF_MODE)
+    {
+      GI_.leafPredictionFunction = &RootNode::leafMode;
+    }
+  else
+    {
+      GI_.leafPredictionFunction = &RootNode::leafGamma;
+    }
+
+  //GI_.leafPredictionFunctionType = leafPredictionFunctionType;
 
   if(false)
     {
