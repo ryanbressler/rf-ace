@@ -345,6 +345,9 @@ int main(int argc, char* argv[])
 
   cout << endl << "[list of parameter values will be added here soon]" << endl << endl;
 
+  cout << endl << "[Optimized node splitting enforced]" << endl << endl;
+  RF_op_copy.isOptimizedNodeSplit = true;
+  GBT_op.isOptimizedNodeSplit = true;
 
   //The program starts a loop in which an RF-ACE model will be built for each spcified target feature
   size_t iter = 1;
