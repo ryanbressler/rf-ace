@@ -343,8 +343,7 @@ int main(int argc, char* argv[])
       return EXIT_FAILURE;
     }
 
-  cout << endl << "[list of parameter values will be added here soon]" << endl << endl;
-
+  cout << endl << "[list of parameter values will be added here soon]" << endl;
   cout << endl << "[Optimized node splitting enforced]" << endl << endl;
   RF_op_copy.isOptimizedNodeSplit = true;
   GBT_op.isOptimizedNodeSplit = true;
@@ -364,7 +363,7 @@ int main(int argc, char* argv[])
       num_t realFraction = 1.0*nRealSamples / treedata.nSamples();
 
       size_t maxwidth = 1 + static_cast<int>(targetIcs.size()) / 10;
-      cout << setw(maxwidth) << iter << "/" << setw(maxwidth) << targetIcs.size() << " target " << treedata.getFeatureName(targetIdx) << ", " << flush;
+      cout << "== " << setw(maxwidth) << iter << "/" << setw(maxwidth) << targetIcs.size() << " target " << treedata.getFeatureName(targetIdx) << ", " << flush;
 
       //If the target has no real samples, the program will just exit
       if(nRealSamples == 0)
@@ -381,7 +380,7 @@ int main(int argc, char* argv[])
         {
           cout << treedata.nCategories(targetIdx) << "-class ";
         }
-      cout << "CART. " << flush;
+      cout << "CARTs. " << nRealSamples << " / " << treedata.nSamples() << " samples (" << 100 * ( 1 - realFraction ) << "% missing)" << endl;
       
       //If default nTrees is to be used...
       if(RF_op.nTrees == RF_DEFAULT_N_TREES)
@@ -446,7 +445,7 @@ int main(int argc, char* argv[])
 	  //cout << "  --pthresold      = " << RF_op.pValueThreshold << endl;
 	  //cout << endl;
 
-	  cout << "Filtering " << flush;
+	  cout << "    => filtering " << flush;
 
 	  executeRandomForestFilter(treedata,targetIdx,RF_op,pValues,importanceValues);
 	   
@@ -471,7 +470,7 @@ int main(int argc, char* argv[])
 	  treedata.keepFeatures(keepFeatureIcs);
 	  targetIdx = 0;
 	  //cout << endl;
-	  cout << "done, " << treedata.nFeatures() << " / " << treedata.nFeatures() + removedFeatureIcs.size() << " features left. " << flush;
+	  cout << "DONE, " << treedata.nFeatures() << " / " << treedata_copy.nFeatures() << " features (" << 100.0 * treedata.nFeatures() / treedata_copy.nFeatures() << "%) left. " << endl;
 	  //cout << "TEST: target is '" << treedata.getFeatureName(targetIdx) << "'" << endl;
 	}
       else
@@ -481,12 +480,12 @@ int main(int argc, char* argv[])
       
       //cout << "2/3 Random Forest feature selection *ENABLED* (will become obsolete). Options:" << endl;
       
-      cout << "Analyzing with RF " << flush;
+      cout << "    => analyzing with RF ensembles " << flush;
 
       // THIS WILL BE REPLACED BY GBT
       executeRandomForestFilter(treedata,targetIdx,RF_op,pValues,importanceValues);
     	  
-      cout << "done. " << flush;
+      cout << "DONE" << endl;
       
       /////////////////////////////////////////////
       //  ANALYSIS 2 -- Gradient Boosting Trees  //
@@ -502,7 +501,7 @@ int main(int argc, char* argv[])
 	  //cout << "  --shrinkage       = " << GBT_op.shrinkage << endl;
 	  //cout << "  --samplesize      = " << GBT_op.subSampleSize << endl;
 
-	  cout << "Analyzing with GBT ";
+	  cout << "    => analyzing with GBT " << flush;
 	 	  
 	  GBT gbt(&treedata, targetIdx, GBT_op.nTrees, GBT_op.nMaxLeaves, GBT_op.shrinkage, GBT_op.subSampleSize);
 	  
@@ -510,20 +509,11 @@ int main(int argc, char* argv[])
 	  cout <<endl<< "PREDICTION:" << endl;
 	  vector<num_t> prediction(treedata.nSamples());
 	  gbt.predictForest(&treedata, prediction);
-	  cout << "done." << endl;
+	  cout << "DONE" << endl;
 	}
-      else
-	{
-	  cout << endl;
-	}
-      //else
-      //	{
-      //cout << "3/3 Gradient Boosting Trees *DISABLED*" << endl << endl;
-      //}
-      
-      //cout << "done." << endl;
-      
-      
+
+      cout << endl;
+            
       ///////////////////////
       //  GENERATE OUTPUT  //
       ///////////////////////  
