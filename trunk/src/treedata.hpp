@@ -16,8 +16,7 @@ using namespace std;
 //using datadefs::cat_t;
 using datadefs::num_t;
 
-class Treedata 
-{
+class Treedata  {
 public:
   //Initializes the object and reads in a data matrix
   Treedata(string fileName);
@@ -58,10 +57,10 @@ public:
   //Generates a bootstrap sample from the real samples of featureIdx. Samples not in the bootstrap sample will be stored in oob_ics,
   //and the number of oob samples is stored in noob.
   void bootstrapFromRealSamples(const bool withReplacement, 
-				const num_t sampleSize, 
-				const size_t featureIdx, 
-				vector<size_t>& ics, 
-				vector<size_t>& oobIcs);
+                                const num_t sampleSize, 
+                                const size_t featureIdx, 
+                                vector<size_t>& ics, 
+                                vector<size_t>& oobIcs);
 
   //Permutes integers in range 0,1,...,(ics.size()-1).
   //NOTE: original contents in ics will be replaced.

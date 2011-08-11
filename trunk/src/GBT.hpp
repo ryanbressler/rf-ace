@@ -45,15 +45,15 @@ private:
   void transformLogistic(vector<num_t>& prediction, vector<num_t>& probability);
 
   Treedata* treeData_;
-  size_t targetIdx_;      // The index of the true target in treeData_
+  size_t targetIdx_;        // The index of the true target in treeData_
   size_t nTrees_;
   size_t nMaxLeaves_;
   //size_t nMaxNodes_;
-  size_t nodeSize_;		// smallest node size
-  float shrinkage_;
-  float subSampleSize_;
+  size_t nodeSize_;         // smallest node size
+  double shrinkage_;
+  double subSampleSize_;
   size_t numClasses_;
-  size_t nLeavesCounter_; 	// counter for constructing each tree
+  size_t nLeavesCounter_;   // counter for constructing each tree
 
   //Stores the rootnodes for the forest. Access the child nodes by calling rootNodes_[treeIdx]->leftChild() etc.
   //rootNodes_[treeIdx]->hasChildren() returns true if the node has children
