@@ -8,25 +8,44 @@
 
 using namespace std;
 
-const datadefs::num_t datadefs::NUM_NAN = numeric_limits<float>::quiet_NaN();//numeric_limits<float>::infinity();
-const datadefs::num_t datadefs::EPS = 1e-12;
+////////////////////////////////////////////////////////////
+// CONSTANTS
+////////////////////////////////////////////////////////////
+const datadefs::num_t datadefs::NUM_NAN = numeric_limits<double>::quiet_NaN();//numeric_limits<double>::infinity();
+const datadefs::num_t datadefs::EPS = 1e-18; //1e-12;
 const datadefs::num_t datadefs::PI = 3.1415926535;
 const datadefs::num_t datadefs::A = 0.140012;
 const datadefs::num_t datadefs::LOG_OF_MAX_NUM = 70.0;
 
-const string initNANs[] = {"NA","NAN","?"};
+const string initNANs[] = {"NA","NAN","?"}; /** !! Incomplete definition:
+                                             * consider including:
+                                             *  http://en.wikipedia.org/wiki/NaN#Display */
 const set<datadefs::NAN_t> datadefs::NANs(initNANs,initNANs+2);
 
 
+////////////////////////////////////////////////////////////
+// HELPER FUNCTIONS
+////////////////////////////////////////////////////////////
 
-void toupper(string& str)
-{
+/**
+ * Promote each character in a sequence to uppercase. Effectively, a wrapper
+ * around std::transform.
+ */
+void toupper(string& str) {
   int (*pf)(int) = toupper;
   transform(str.begin(), str.end(), str.begin(), pf);
 }
 
-void datadefs::strv2catv(vector<string>& strvec, vector<datadefs::num_t>& catvec)
-{
+
+////////////////////////////////////////////////////////////
+// METHOD IMPLEMENTATIONS
+////////////////////////////////////////////////////////////
+
+/**
+ * Convert a string vector into a category vector
+ */
+void datadefs::strv2catv(vector<string>& strvec,
+                         vector<datadefs::num_t>& catvec) {
   assert(strvec.size() == catvec.size());
 
   map<string,size_t> str2valmap;
@@ -36,429 +55,396 @@ void datadefs::strv2catv(vector<string>& strvec, vector<datadefs::num_t>& catvec
   str2valmap = foo;
   size_t val = 0;
 
-  //Map unique strings to values and store values in catvec as floats 
-  for(size_t strIdx = 0; strIdx < strvec.size(); ++strIdx)
-    {
-      //Transform string to uppercase
-      toupper(strvec[strIdx]);
+  //Map unique strings to values and store values in catvec as doubles 
+  for(size_t strIdx = 0; strIdx < strvec.size(); ++strIdx) {
+    //Transform string to uppercase
+    toupper(strvec[strIdx]);
 
-      //If the string is not defined to NaN
-      if(!datadefs::isNAN(strvec[strIdx]))
-	{
-	  map<string,size_t>::iterator it;
+    //If the string is not defined to NaN
+    if(!datadefs::isNAN(strvec[strIdx])) {
+      map<string,size_t>::iterator it;
 
-	  //Try to find the string in the map. If it's not found, add the map...
-	  it = str2valmap.find(strvec[strIdx]);
-	  if(it == str2valmap.end())
-	    {
-	      str2valmap.insert(pair<string,size_t>(strvec[strIdx],val));
-	      ++val;
-	    }
-	  //...and use the map to set the value for the output vector
-	  catvec[strIdx] = float(str2valmap[strvec[strIdx]]);
-	}
-      //If the string is defined to NaN, however...
-      else
-	{
-	  catvec[strIdx] = datadefs::NUM_NAN;
-	}
-    }  
+      //Try to find the string in the map. If it's not found, add the map...
+      it = str2valmap.find(strvec[strIdx]);
+      if(it == str2valmap.end()) {
+        str2valmap.insert(pair<string,size_t>(strvec[strIdx],val));
+        ++val;
+      }
+      //...and use the map to set the value for the output vector
+      catvec[strIdx] = double(str2valmap[strvec[strIdx]]);
+    } else {    //If the string is defined to NaN, however...
+      catvec[strIdx] = datadefs::NUM_NAN;
+    }
+  }  
 }
 
-void datadefs::strv2numv(vector<string>& strvec, vector<datadefs::num_t>& numvec)
-{
+/**
+ * Convert a string vector into a number vector
+ */
+void datadefs::strv2numv(vector<string>& strvec,
+                         vector<datadefs::num_t>& numvec) {
   assert(strvec.size() == numvec.size());
   
-  for(size_t strIdx = 0; strIdx < strvec.size(); ++strIdx)
-    {
-      toupper(strvec[strIdx]);
-      if(!datadefs::isNAN(strvec[strIdx]))
-	{
-	  numvec[strIdx] = str2num(strvec[strIdx]);
-	}
-      else
-	{
-	  numvec[strIdx] = datadefs::NUM_NAN;
-	}
+  for(size_t strIdx = 0; strIdx < strvec.size(); ++strIdx) {
+    toupper(strvec[strIdx]);
+    if(!datadefs::isNAN(strvec[strIdx])) {
+      numvec[strIdx] = str2num(strvec[strIdx]);
+    } else {
+      numvec[strIdx] = datadefs::NUM_NAN;
     }
+  }
 }
 
-datadefs::num_t datadefs::str2num(string& str)
-{
-  stringstream ss(str);
+/**
+ * Convert a string to a number using the intuitive solution, in base 10.
+
+ !! Correctness: see the considerations raised here:
+ http://stackoverflow.com/questions/194465/how-to-parse-a-string-to-an-int-in-c/6154614#6154614
+
+ Refactor this method to conform to a more correct model for error handling.
+*/
+datadefs::num_t datadefs::str2num(string& str) {
+
+  // Chop at the first newline character, if it exists
+  int crIdx = str.find("\r");
+  int lfIdx = str.find("\n");
+  int terminatorIdx = crIdx;
+  if (lfIdx != -1 && lfIdx < crIdx) {
+    terminatorIdx = lfIdx;
+  }
+
+  // Initialize and use the stringstream
+  stringstream ss(terminatorIdx != -1 ? str.substr(0,terminatorIdx) : str);
   datadefs::num_t ret;
   ss >> ret;
+  
+  if (ss.fail()) {  // Ensure reading didn't fail
+    cerr << "WARNING: parameter '" << str
+         << "' could not be read properly. *THIS MAY CAUSE SPURIOUS RESULTS!*"
+         << endl;
+    
+  } else if (!ss.eof()) {   // Ensure eofbit is set
+    cerr << "WARNING: parameter '" << str
+         << "' was only partially read. *THIS MAY CAUSE SPURIOUS RESULTS!*"
+         << endl;
+    
+  }
   return(ret);
 }
 
+/**
+ * Takes the arithmetic mean of a vector of input values
+ !! Side effects: mutates nRealValues and mu regardless of the final
+ result. This applies to most methods defined in RF-ACE, actually.
 
-
-/*
-  //This is a very poorly designed function
-  void datadefs::findNANs(vector<num_t>& data, vector<size_t>& NANIcs)
-  {
-  NANIcs.clear();
-  size_t n = data.size();
-  for(size_t i = 0; i < n; ++i)
-  {
-  if(datadefs::isNAN(data[i]))
-  {
-  //data.erase(data.begin() + i);
-  NANIcs.push_back(i);
-  }
-  }
-  }
+ !! Error sieve: silently ignores NaN
 */
-
-void datadefs::meanVals(vector<datadefs::num_t> const& data, datadefs::num_t& mu, size_t& nRealValues)
-{
+void datadefs::meanVals(vector<datadefs::num_t> const& data, datadefs::num_t& mu, size_t& nRealValues) {
  
   nRealValues = 0;
   mu = 0.0;
  
-  for(size_t i = 0; i < data.size(); ++i)
-    {
-      if(!datadefs::isNAN(data[i]))
-        {
-          ++nRealValues;
-          mu += data[i];
-        }
+  for(size_t i = 0; i < data.size(); ++i) {
+    if(!datadefs::isNAN(data[i])) {
+      ++nRealValues;
+      mu += data[i];
     }
+  }
 
-  if(nRealValues > 0)
-    {
-      mu /= nRealValues;
-    }
-
+  if(nRealValues > 0) {
+    mu /= nRealValues;
+  }
 }
+/**
+ * Takes the arithmetic mean of a vector of input values, given a fixed number
+ of real values
+ !! Spurious argument: const size_t numClasses is never used
+ 
+ !! Side effects: mutates nRealValues and mu regardless of the final
+ result. This applies to most methods defined in RF-ACE, actually.
 
-/*
-  void datadefs::mean(const vector<datadefs::num_t>& data, datadefs::num_t& mu, const size_t numClasses)
-  {
-  mu = 0.0;
-  size_t n = data.size();
+ void datadefs::mean(const vector<datadefs::num_t>& data, datadefs::num_t& mu, const size_t numClasses) {
+ mu = 0.0;
+ size_t n = data.size();
+
+ if(n == 0) {
+ return;
+ }
+
+ for(size_t i = 0; i < data.size(); ++i) {
+ mu += data[i];
+ }
   
-  if(n == 0)
-  {
-  return;
-  }
-  
-  for(size_t i = 0; i < data.size(); ++i)
-  {
-  mu += data[i];
-  }
-  
-  mu /= n;
-  }
-  
-  void datadefs::mode(const vector<datadefs::num_t>& data, datadefs::num_t& mode, const size_t numClasses)
-  {
+ mu /= n;
+ }
+*/
+
+/**
+ * Determines the mode of a given input data set
+ !! Spurious argument: const size_t numClasses is never used
+
+ !! Inefficient: linear running time. Consider a data pointer to the last
+ element if the size of the list is known.
+*/
+void datadefs::mode(const vector<datadefs::num_t>& data, datadefs::num_t& mode, const size_t numClasses) {
   
   map<datadefs::num_t,size_t> freq;
   size_t n = 0;
   datadefs::count_freq(data,freq,n);
   map<datadefs::num_t,size_t>::iterator it(max_element(freq.begin(),freq.end(),datadefs::freqIncreasingOrder()));
   mode = it->first;
-  }
-  
-  void datadefs::gamma(const vector<datadefs::num_t>& data, datadefs::num_t& gamma, const size_t numClasses)
-  { 
-  
+}
+
+/**
+ * Determines the gamma of a given input data set
+ !! Potential div by zero: if numClasses or denominator == 0.0, and many more
+ possible errors
+
+ !! Input sanitization: contains no checks for NaN.
+*/
+void datadefs::gamma(const vector<datadefs::num_t>& data, datadefs::num_t& gamma, const size_t numClasses) { 
+
   //size_t numClasses;
   //datadefs::cardinality(data,numClasses);
   num_t numerator = 0.0;
   num_t denominator = 0.0;
   
-  for (size_t i = 0; i < data.size(); ++i)
-  {
-  num_t abs_data_i = fabs( data[i] );
-  denominator += abs_data_i * (1.0 - abs_data_i);
-  numerator   += data[i];
+  for (size_t i = 0; i < data.size(); ++i) {
+    num_t abs_data_i = fabs( data[i] );
+    denominator += abs_data_i * (1.0 - abs_data_i);
+    numerator   += data[i];
   }
-  if ( fabs(denominator) <= datadefs::EPS )
-  {
-  gamma = datadefs::LOG_OF_MAX_NUM * numerator;
+  if ( fabs(denominator) <= datadefs::EPS ) {
+    gamma = datadefs::LOG_OF_MAX_NUM * numerator;
+  } else {
+    gamma = (numClasses - 1)*numerator / (numClasses * denominator);
   }
-  else
-  {
-  gamma = (numClasses - 1)*numerator / (numClasses * denominator);
-  }
-  }
-*/
+}
 
-void datadefs::cardinality(const vector<datadefs::num_t>& data, size_t& cardinality)
-{
+/**
+ * Determines the cardinality of a given input data set
+ !! Input sanitization: contains no checks for NaN.
+*/
+void datadefs::cardinality(const vector<datadefs::num_t>& data, size_t& cardinality) {
   set<datadefs::num_t> categories;
-  for(size_t i = 0; i < data.size(); ++i)
-    {
-      categories.insert(data[i]);
-    }
+  for(size_t i = 0; i < data.size(); ++i) {
+    categories.insert(data[i]);
+  }
   cardinality = categories.size();
 
 }
 
-  
+/**
+ * Calculates the squared error
+ !! Possible duplication: how does this differ with similar inline methods in datadefs.hpp?
+*/
 void datadefs::sqerr(vector<datadefs::num_t> const& data, 
-		     datadefs::num_t& mu, 
-		     datadefs::num_t& se,
-		     size_t& nRealValues)
-{
+                     datadefs::num_t& mu, 
+                     datadefs::num_t& se,
+                     size_t& nRealValues) {
     
   datadefs::meanVals(data,mu,nRealValues);
   
   se = 0.0;
-  for(size_t i = 0; i < data.size(); ++i)
-    {
-      if(!datadefs::isNAN(data[i]))
-	{
-	  se += pow(data[i] - mu,2);
-	}
+  for(size_t i = 0; i < data.size(); ++i) {
+    if(!datadefs::isNAN(data[i])) {
+      se += pow(data[i] - mu,2);
     }
+  }
 }
 
-void datadefs::countRealValues(vector<num_t> const& data, size_t& nRealValues)
-{
+/**
+ * Count all values that aren't transfinite
+ !! Correctness: what about representations of infinity? And to be entirely
+ pedantic: signaling NaN, post-trap? These should have specific non-guarantees.
+*/
+void datadefs::countRealValues(vector<num_t> const& data, size_t& nRealValues) {
   nRealValues = 0;
-  for(size_t i = 0; i < data.size(); ++i)
-    {
-      if(!datadefs::isNAN(data[i]))
-	{
-	  ++nRealValues;
-	}
-    }  
-}
-
-//DEPRECATED
-void datadefs::zerotrim(vector<datadefs::num_t>& data)
-{
-  int n = data.size();
-  for(int i = n-1; i >= 0; --i)
-    {
-      if(fabs(data[i]) < datadefs::EPS)
-	{
-	  data.erase(data.begin() + i);
-	}
+  for(size_t i = 0; i < data.size(); ++i) {
+    if(!datadefs::isNAN(data[i])) {
+      ++nRealValues;
     }
+  }  
 }
 
-void datadefs::sortDataAndMakeRef(const bool isIncreasingOrder, vector<num_t>& data, vector<size_t>& refIcs)
-{
+/**
+ * Perform in-place sorting of the data, splitting the paired vector into
+ * separate representations.
+ !! Correctness: consider validations or more complete contracts for the
+ methods invoked here
+*/
+void datadefs::sortDataAndMakeRef(const bool isIncreasingOrder, vector<num_t>& data, vector<size_t>& refIcs) {
   //cout << "sort_and_make_ref: in the beginning" << endl;
   //assert(v.size() == ref_ics.size());
-  vector<pair<num_t,size_t> > pairedv(data.size());
+  vector<pair<num_t,size_t> > pairedv(data.size()); // !! Understandibility:
+                                                    // !! consider a typedef
+                                                    // !! pairedv, leaving the
+                                                    // !! actual variable name
+                                                    // !! as something more
+                                                    // !! descriptive.
   refIcs.resize(data.size());
   datadefs::range(refIcs);
   //cout << "sort_and_make_ref: used range()" << endl;
   datadefs::make_pairedv<num_t,size_t>(data,refIcs,pairedv);
   //cout << "sort_and_make_ref: made pairedv" << endl;
-  if(isIncreasingOrder)
-    {
-      sort(pairedv.begin(),pairedv.end(),datadefs::increasingOrder<num_t>());
-    }
-  else
-    {
-      sort(pairedv.begin(),pairedv.end(),datadefs::decreasingOrder<num_t>());
-    }
+  if(isIncreasingOrder) {
+    sort(pairedv.begin(),pairedv.end(),datadefs::increasingOrder<num_t>());
+  } else {
+    sort(pairedv.begin(),pairedv.end(),datadefs::decreasingOrder<num_t>());
+  }
   //cout << "sort_and_make_ref: pairedv sorted" << endl;
   datadefs::separate_pairedv<num_t,size_t>(pairedv,data,refIcs);
 }
 
-
-
-/*
-  void datadefs::forward_backward_sqerr(const datadefs::num_t x_n,
-  size_t& n_left,
-  datadefs::num_t& mu_left,
-  datadefs::num_t& se_left,
-  size_t& n_right,
-  datadefs::num_t& mu_right,
-  datadefs::num_t& se_right)
-  {
-  
-  if(datadefs::isNAN(x_n))
-  {
-  return;
-  }
-  
-  assert(n_right > 0);
-  
-  ++n_left;
-  --n_right;
-  
-  //As long as there are at least two data points on the "right" branch, squared error can be calculated, otherwise assign se_right := 0.0
-  if(n_right > 1)
-  {
-  datadefs::num_t mu_old(mu_right);
-  mu_right -= (x_n - mu_right) / n_right;
-  se_right -= (x_n - mu_right) * (x_n - mu_old);
-  }
-  else if(n_right == 1)
-  {
-  mu_right -= (x_n - mu_right) / n_right;
-  se_right = 0.0;
-  }
-  else
-  {
-  mu_right = 0.0;
-  se_right = 0.0;
-  }
-  
-  //Add x_n to "left" and update mean and squared error
-  datadefs::num_t mu_old = mu_left;
-  mu_left += (x_n - mu_left) / n_left;
-  
-  //If there are already at least two data points on the "left" branch, squared error can be calculated, otherwise assign se_left := 0.0
-  if(n_left > 1)
-  {
-  se_left += (x_n - mu_left) * (x_n - mu_old);
-  }
-  else
-  {
-  se_left = 0.0;
-  }
-  }
+/**
+ * Gini coefficient (see: http://en.wikipedia.org/wiki/Gini_coefficient)
+ !! Documentation
 */
-
 void datadefs::gini(vector<datadefs::num_t>& data,
-		    datadefs::num_t& giniIndex,
-		    size_t& nRealValues)
-{
+                    datadefs::num_t& giniIndex,
+                    size_t& nRealValues) {
   map<datadefs::num_t,size_t> freq;
   datadefs::count_freq(data,freq,nRealValues);
   datadefs::gini(freq,giniIndex);
 }
 
+/**
+ * Gini coefficient (see: http://en.wikipedia.org/wiki/Gini_coefficient)
+ !! Documentation
+*/
 void datadefs::gini(map<datadefs::num_t,size_t>& cat2freq, 
-		    datadefs::num_t& giniIndex)
-{
+                    datadefs::num_t& giniIndex) {
   giniIndex = 0.0;
   size_t n = 0;
   map<datadefs::num_t,size_t>::const_iterator it;
-  for(it = cat2freq.begin(); it != cat2freq.end(); ++it)
-    {
-      size_t freq_new = it->second;
-      giniIndex += freq_new * freq_new;
-      n += freq_new;
-    }
-  if(n)
-    {
-      giniIndex = 1 - giniIndex / ( n*n );
-    }
+  for(it = cat2freq.begin(); it != cat2freq.end(); ++it) {
+    size_t freq_new = it->second;
+    giniIndex += freq_new * freq_new;
+    n += freq_new;
+  }
+  if(n) {
+    giniIndex = 1 - giniIndex / ( n*n );
+  }
 }
 
-void datadefs::count_freq(vector<datadefs::num_t> const& data, map<datadefs::num_t,size_t>& cat2freq, size_t& nRealValues)
-{
+
+/**
+   !! Documentation
+   !! Critical mutator of the cat2freq map. This should be renamed; count_freq
+   !! sounds like an innocuous accessor that counts the elements in a given
+   !! collection of descriptive type "freq".
+*/
+void datadefs::count_freq(vector<datadefs::num_t> const& data, map<datadefs::num_t,size_t>& cat2freq, size_t& nRealValues) {
   cat2freq.clear();
   map<datadefs::num_t,size_t>::const_iterator it;
   nRealValues = 0;
-  for(size_t i = 0; i < data.size(); ++i)
-    {
-      if(!datadefs::isNAN(data[i]))
-	{
-	  ++nRealValues;
-	  it = cat2freq.find(data[i]);
-	  if(it == cat2freq.end())
-	    {
-	      cat2freq.insert(pair<datadefs::num_t,size_t>(data[i],1));
-	    }
-	  else
-	    {
-	      ++cat2freq[data[i]];
-	    }
-	}
+  for(size_t i = 0; i < data.size(); ++i) {
+    if(!datadefs::isNAN(data[i])) {
+      ++nRealValues;
+      it = cat2freq.find(data[i]);
+      if(it == cat2freq.end()) {
+        cat2freq.insert(pair<datadefs::num_t,size_t>(data[i],1));
+      } else {
+        ++cat2freq[data[i]];
+      }
     }
+  }
 }
 
-
+/**
+   !! Documentation
+*/
 void datadefs::map_data(vector<datadefs::num_t>& data, 
-			map<datadefs::num_t,vector<size_t> >& datamap, 
-			size_t& nRealValues)
-{
+                        map<datadefs::num_t,vector<size_t> >& datamap, 
+                        size_t& nRealValues) {
   datamap.clear();
   map<datadefs::num_t,vector<size_t> >::iterator it;
   nRealValues = 0;
-  for(size_t i = 0; i < data.size(); ++i)
-    {
-      if(!datadefs::isNAN(data[i]))
-	{
-	  ++nRealValues;
-	  it = datamap.find(data[i]);
-	  if(it == datamap.end())
-	    {
-	      vector<size_t> foo;
-	      foo.push_back(i);
-	      datamap.insert(pair<datadefs::num_t,vector<size_t> >(data[i],foo));
-	    }
-	  else
-	    {
-	      it->second.push_back(i);
-	    }
-	}
+  for(size_t i = 0; i < data.size(); ++i) {
+    if(!datadefs::isNAN(data[i])) {
+      ++nRealValues;
+      it = datamap.find(data[i]);
+      if(it == datamap.end()) {
+        vector<size_t> foo;
+        foo.push_back(i);
+        datamap.insert(pair<datadefs::num_t,vector<size_t> >(data[i],foo));
+      } else {
+        it->second.push_back(i);
+      }
     }
+  }
 }
 
+// !! Documentation: summation function featuring the squared representation of
+// !! each frequency. This should be documented.
 void datadefs::sqfreq(vector<datadefs::num_t> const& data, 
-		      map<datadefs::num_t,size_t>& freq, 
-		      size_t& sqFreq, 
-		      size_t& nRealValues)
-{
+                      map<datadefs::num_t,size_t>& freq, 
+                      size_t& sqFreq, 
+                      size_t& nRealValues) {
   sqFreq = 0;
   datadefs::count_freq(data,freq,nRealValues);
-  for(map<datadefs::num_t,size_t>::const_iterator it(freq.begin()); it != freq.end(); ++it)
-    {
-      size_t freq_new = it->second;
-      sqFreq += freq_new * freq_new;
-    }
+  for(map<datadefs::num_t,size_t>::const_iterator it(freq.begin()); it != freq.end(); ++it) {
+    size_t freq_new = it->second;
+    sqFreq += freq_new * freq_new;
+  }
+  // !! Correctness: this doesn't actually return anything. Instead, it mutates
+  // !! sqFreq by reference, without returning any additional information.
 }
 
-void datadefs::forward_sqfreq(const datadefs::num_t x_n,
-			      size_t& n,
-			      map<datadefs::num_t,size_t>& freq,
-			      size_t& sqFreq)
-{
+// !! Correctness: mutates freq and sqFreq, does not supply an explicit
+// !! contract for these values.
 
-  if(x_n != x_n)
-    {
-      return;
-    }
+// !! Correctness: this isn't actually a squaring of the frequencies! This
+// !! should probably be named better.
+
+// !! Documentation: I have no idea what this is supposedly doing.
+void datadefs::forward_sqfreq(const datadefs::num_t x_n,
+                              size_t& n,
+                              map<datadefs::num_t,size_t>& freq,
+                              size_t& sqFreq) {
+
+  if(x_n != x_n) { // !! Correctness: implicit check for NAN
+    return;
+  }
 
   ++n;
   //cout << "sf_old=" << sf;
   //Check if the value already exists
   map<datadefs::num_t,size_t>::const_iterator it(freq.find(x_n));
-  if(it == freq.end())
-    {
-      //cout << "sf_old=" << sf;
-      sqFreq += 1;
-      //cout << "  sf_new=" << sf << endl;
+  if(it == freq.end()) {
+    //cout << "sf_old=" << sf;
+    sqFreq += 1;
+    //cout << "  sf_new=" << sf << endl;
 
-      //If not, add a new category and set its frequency to 1...
-      freq.insert(pair<datadefs::num_t,size_t>(x_n,1));
+    //If not, add a new category and set its frequency to 1...
+    freq.insert(pair<datadefs::num_t,size_t>(x_n,1));
 
-    }
-  else
-    {
-      sqFreq += 2*freq[x_n] + 1;
-      ++freq[x_n];
-    }
+  } else {
+    sqFreq += 2*freq[x_n] + 1;
+    ++freq[x_n];
+  }
   //cout << "  sf_new=" << sf << endl;
 
 }
 
+// !! Correctness: mutates a whole lot of its inputs, does not supply any
+// !! explicit contract for this behavior.
 
+// !! Correctness: this isn't actually a squaring of the frequencies! This
+// !! should probably be named better.
+
+// !! Documentation: I have no idea what this is supposedly doing.
 void datadefs::forward_backward_sqfreq(const datadefs::num_t x_n,
-				       size_t& n_left,
-				       map<datadefs::num_t,size_t>& freq_left, 
-				       size_t& sf_left,
-				       size_t& n_right,
-				       map<datadefs::num_t,size_t>& freq_right,
-				       size_t& sf_right)
-{
+                                       size_t& n_left,
+                                       map<datadefs::num_t,size_t>& freq_left, 
+                                       size_t& sf_left,
+                                       size_t& n_right,
+                                       map<datadefs::num_t,size_t>& freq_right,
+                                       size_t& sf_right) {
  
-  if(x_n != x_n)
-    {
-      return;
-    }
+  if(x_n != x_n) {
+    return;
+  }
 
   assert(n_right > 0);
 
@@ -467,19 +453,16 @@ void datadefs::forward_backward_sqfreq(const datadefs::num_t x_n,
 
   //Check if the value already exists on left
   map<datadefs::num_t,size_t>::const_iterator it(freq_left.find(x_n));
-  if(it == freq_left.end())
-    {
-      sf_left += 1;
+  if(it == freq_left.end()) {
+    sf_left += 1;
 
-      //If not, add a new category and set its frequency to 1...
-      freq_left.insert(pair<datadefs::num_t,size_t>(x_n,1));
+    //If not, add a new category and set its frequency to 1...
+    freq_left.insert(pair<datadefs::num_t,size_t>(x_n,1));
       
-    }
-  else
-    {
-      sf_left += 2*freq_left[x_n] + 1;
-      ++freq_left[x_n];
-    }
+  } else {
+    sf_left += 2*freq_left[x_n] + 1;
+    ++freq_left[x_n];
+  }
 
   it = freq_right.find(x_n);
   assert(it != freq_right.end());
@@ -488,148 +471,154 @@ void datadefs::forward_backward_sqfreq(const datadefs::num_t x_n,
   sf_right -= 2*freq_right[x_n] - 1;
   --freq_right[x_n];
 
-  if(freq_right[x_n] == 0)
-    {
-      freq_right.erase(x_n);
-    }  
+  if(freq_right[x_n] == 0) {
+    freq_right.erase(x_n);
+  }  
 }
 
-
-void datadefs::range(vector<size_t>& ics)
-{
-  for(size_t i = 0; i < ics.size(); ++i)
-    {
-      ics[i] = i;
-    }
+// !! Documentation: this is just a drop-in replacement for Python's range()
+// !! function, hinted by the size of the input vector. It mutates ics,
+// !! specifying a 0-based range in all cases, and could be made more robust if
+// !! the starting value could be given.
+void datadefs::range(vector<size_t>& ics) {
+  for(size_t i = 0; i < ics.size(); ++i) {
+    ics[i] = i;
+  }
 }
 
 //DEPRECATED
+
+// !! Documentation: performs a T-test on the input. It should be readily
+// !! apparent why this exists,
+
+// !! Spurious deprecation: this isn't used in the existing codebase, but it
+// !! has value within the API. Can we consider it "deprecated?"
+
 void datadefs::ttest(vector<datadefs::num_t> const& x, 
-		     vector<datadefs::num_t> const& y, 
-		     datadefs::num_t& pvalue)
-{
-    // Sample mean and variance of x
-    datadefs::num_t mean_x = 0;
-    datadefs::num_t var_x = 0;
-    size_t nreal_x = 0;
+                     vector<datadefs::num_t> const& y, 
+                     datadefs::num_t& pvalue) {
+  // Sample mean and variance of x
+  datadefs::num_t mean_x = 0;
+  datadefs::num_t var_x = 0;
+  size_t nreal_x = 0;
 
-    datadefs::sqerr(x, mean_x, var_x, nreal_x);
+  datadefs::sqerr(x, mean_x, var_x, nreal_x);
 
-    assert(nreal_x > 1);
+  assert(nreal_x > 1);
 
-    var_x /= (nreal_x - 1);
+  var_x /= (nreal_x - 1);
 
-    // Sample mean and variance of y
-    datadefs::num_t mean_y = 0;
-    datadefs::num_t var_y = 0;
-    size_t nreal_y = 0;
+  // Sample mean and variance of y
+  datadefs::num_t mean_y = 0;
+  datadefs::num_t var_y = 0;
+  size_t nreal_y = 0;
 
-    datadefs::sqerr(y, mean_y, var_y, nreal_y);
+  datadefs::sqerr(y, mean_y, var_y, nreal_y);
     
-    assert(nreal_y > 1);
+  assert(nreal_y > 1);
 
-    var_y /= (nreal_y - 1);
+  var_y /= (nreal_y - 1);
     
-    assert(nreal_x == nreal_y);
+  assert(nreal_x == nreal_y);
 
-    if(var_x < datadefs::EPS && var_y < datadefs::EPS)
-      {
-	if(fabs(mean_x - mean_y) < datadefs::EPS)
-	  {
-	    pvalue = 0.5;
-	  }
-	else if(mean_x > mean_y)
-	  {
-	    pvalue = 0.0;
-	  }
-	else
-	  {
-	    pvalue = 1.0;
-	  }
-	return;
-      }
+  if(var_x < datadefs::EPS && var_y < datadefs::EPS) {
+    if(fabs(mean_x - mean_y) < datadefs::EPS) {
+      pvalue = 0.5;
+    } else if(mean_x > mean_y) {
+      pvalue = 0.0;
+    } else {
+      pvalue = 1.0;
+    }
+    return;
+  }
 
-    size_t v;
-    datadefs::num_t sp,tvalue,ttrans;
+  size_t v;
+  datadefs::num_t sp,tvalue,ttrans;
     
-    v = nreal_x + nreal_y - 2;
-    sp = sqrt(((nreal_x-1) * var_x + (nreal_y-1) * var_y) / v);
-    tvalue = (mean_x - mean_y) / (sp * sqrt(1.0 / nreal_x + 1.0 / nreal_y));
+  v = nreal_x + nreal_y - 2;
+  sp = sqrt(((nreal_x-1) * var_x + (nreal_y-1) * var_y) / v);
+  tvalue = (mean_x - mean_y) / (sp * sqrt(1.0 / nreal_x + 1.0 / nreal_y));
     
-    ttrans = (tvalue+sqrt(pow(tvalue,2) + v)) / (2 * sqrt(pow(tvalue,2) + v));
+  ttrans = (tvalue+sqrt(pow(tvalue,2) + v)) / (2 * sqrt(pow(tvalue,2) + v));
 
-    datadefs::regularized_betainc(ttrans,nreal_x - 1,pvalue);	
-    pvalue = 1-pvalue;
+  datadefs::regularized_betainc(ttrans,nreal_x - 1,pvalue);  
+  pvalue = 1-pvalue;
     
 }
 
 //DEPRECATED
+
+// !! Documentation: regularized beta function; not sure what the "inc" means
+// !! in context, though. Is this part of an implementation of regularized beta
+// !! functions, but lacking in additional functionality that exists outside of
+// !! this method.
+
+// !! Spurious deprecation: this isn't used in the existing codebase, but it
+// !! has value within the API. Can we consider it "deprecated?"
 void datadefs::regularized_betainc(const datadefs::num_t x,
                                    const size_t a,
-                                   datadefs::num_t& ibval)
-{
+                                   datadefs::num_t& ibval) {
 
   ibval = 0.0;
   
   datadefs::num_t jfac = 1;
-  for(size_t i = 1; i < a; ++i)
-    {
-      jfac += log(static_cast<datadefs::num_t>(i));
-    }
+  for(size_t i = 1; i < a; ++i) {
+    jfac += log(static_cast<datadefs::num_t>(i));
+  }
   
   datadefs::num_t kfac = 1;
-  for(size_t i = a+1; i < 2*a; ++i)
-    {
-      kfac += log(static_cast<datadefs::num_t>(i));
-    }
+  for(size_t i = a+1; i < 2*a; ++i) {
+    kfac += log(static_cast<datadefs::num_t>(i));
+  }
   
-  for(size_t i = a; i < 2*a; ++i)
-    {
-      jfac += log(static_cast<datadefs::num_t>(i));
-      kfac += log(static_cast<datadefs::num_t>(2*a - i));
-      datadefs::num_t temp = kfac - jfac + i*log(x) + (2*a-1-i)*log(1-x);
-      ibval += exp(temp);
+  for(size_t i = a; i < 2*a; ++i) {
+    jfac += log(static_cast<datadefs::num_t>(i));
+    kfac += log(static_cast<datadefs::num_t>(2*a - i));
+    datadefs::num_t temp = kfac - jfac + i*log(x) + (2*a-1-i)*log(1-x);
+    ibval += exp(temp);
       
-      //cout << jfac << "\t" << kfac << "\t" << ibval << endl;
-    }
+    //cout << jfac << "\t" << kfac << "\t" << ibval << endl;
+  }
 
-  if(ibval > 1.0)
-    {
-      ibval = 1.0;
-    }
+  if(ibval > 1.0) {
+    ibval = 1.0;
+  }
   
 }
 
+// !! Documentation: performs a U-test across the input.
+
+// !! Correctness: contains checks for "NAN" that alter the control flow of
+// !! this function. Consider a more meaningful sentinel and tests for
+// !! branching control flow.
+
+// !! Legibility: this function contains nested control flow that isn't immediately
+// !! obvious to the reader. Consider refactoring.
+
 void datadefs::utest(vector<datadefs::num_t> const& x,
-		     vector<datadefs::num_t> const& y,
-		     datadefs::num_t& pvalue)
-{
+                     vector<datadefs::num_t> const& y,
+                     datadefs::num_t& pvalue) {
   
   num_t uvalue = 0.0;
   size_t m = x.size();
   size_t n = y.size();
 
-  for(size_t i = 0; i < m; ++i)
-    {
+  for(size_t i = 0; i < m; ++i) {
 
-      bool xnan = datadefs::isNAN(x[i]);
+    bool xnan = datadefs::isNAN(x[i]);
 
-      for(size_t j = 0; j < n; ++j)
-	{
-	 
-	  bool ynan = datadefs::isNAN(y[j]);
+    for(size_t j = 0; j < n; ++j) {
+   
+      bool ynan = datadefs::isNAN(y[j]);
 
-	  if(!xnan && ynan)
-	    {
-	      uvalue += 1;
-	    }
-	  else if(!xnan && !ynan && x[i] > y[j])
-	    {
-	      uvalue += 1;
-	    }
+      if(!xnan && ynan) {
+        uvalue += 1;
+      } else if(!xnan && !ynan && x[i] > y[j]) {
+        uvalue += 1;
+      }
   
-	}
     }
+  }
   
 
   num_t mu = 1.0*m*n/2.0;
@@ -642,37 +631,40 @@ void datadefs::utest(vector<datadefs::num_t> const& x,
 
 }
 
-datadefs::num_t datadefs::erf(datadefs::num_t x)
-{  
+// !! Documentation: computes the error function for the given value
+datadefs::num_t datadefs::erf(datadefs::num_t x) {  
   
   num_t x2 = x*x;
 
   num_t sgn;
-  if(x < 0.0)
-    {
-      sgn = -1.0;
-    }
-  else
-    {
-      sgn = 1.0;
-    }
+  if(x < 0.0) {
+    sgn = -1.0;
+  } else {
+    sgn = 1.0;
+  }
 
   return( sgn*sqrt(1.0 - exp(-x2*(4.0/datadefs::PI+datadefs::A*x2) / (1+datadefs::A*x2))) ); 
 
 }
 
+// !! Documentation: Spearman's rank correlation coefficient
+// !! (http://en.wikipedia.org/wiki/Spearman's_rank_correlation_coefficient)
 
+// !! Correctness: this method isn't currently implemented. Consider a more
+// !! meaningful exception than an assertion error, which will be silently
+// !! compiled out if debugging is not enabled.
 void datadefs::spearman_correlation(vector<datadefs::num_t> const& x,
-				    vector<datadefs::num_t> const& y,
-				    datadefs::num_t& corr)
-{
+                                    vector<datadefs::num_t> const& y,
+                                    datadefs::num_t& corr) {
   assert(false);
 }
 
+// !! Documentation: Pearson product-moment correlation coefficient
+// !! (http://en.wikipedia.org/wiki/Pearson_product-moment_correlation_coefficient)
+
 void datadefs::pearson_correlation(vector<datadefs::num_t> const& x,
-				   vector<datadefs::num_t> const& y,
-				   datadefs::num_t& corr)
-{
+                                   vector<datadefs::num_t> const& y,
+                                   datadefs::num_t& corr) {
 
   corr = 0.0;
 
@@ -685,23 +677,20 @@ void datadefs::pearson_correlation(vector<datadefs::num_t> const& x,
   size_t n = x.size();
   assert(n == y.size());
   
-  for(size_t i = 0; i < n; ++i)
-    {
-      if(!datadefs::isNAN(x[i]) && !datadefs::isNAN(y[i]))
-	{
-	  x_real.push_back(x[i]);
-	  y_real.push_back(y[i]);
-	}
+  for(size_t i = 0; i < n; ++i) {
+    if(!datadefs::isNAN(x[i]) && !datadefs::isNAN(y[i])) {
+      x_real.push_back(x[i]);
+      y_real.push_back(y[i]);
     }
+  }
 
   datadefs::sqerr(x_real,mu_x,se_x,nreal_x);
   datadefs::sqerr(y_real,mu_y,se_y,nreal_y);
   assert(nreal_x == nreal_y);
   
-  for(size_t i = 0; i < nreal_x; ++i)
-    {
-      corr += ( x_real[i] - mu_x ) * ( y_real[i] - mu_y ); 
-    }
+  for(size_t i = 0; i < nreal_x; ++i) {
+    corr += ( x_real[i] - mu_x ) * ( y_real[i] - mu_y ); 
+  }
 
   corr /= sqrt(se_x*se_y);
 
@@ -710,27 +699,27 @@ void datadefs::pearson_correlation(vector<datadefs::num_t> const& x,
 
 
 //DEPRECATED
+
+// !! Documentation: computes the percentile for the value x, given an alpha
+// !! score and "prc." I have no idea what "prc" means, here.
+
+// !! Spurious deprecation: this isn't used in the existing codebase, but it
+// !! has value within the API. Can we consider it "deprecated?"
 void datadefs::percentile(vector<datadefs::num_t> x, 
-			  const datadefs::num_t alpha, 
-			  datadefs::num_t& prc)
-{
+                          const datadefs::num_t alpha, 
+                          datadefs::num_t& prc) {
 
   sort(x.begin(),x.end());
   
   datadefs::num_t k((x.size()-1) * alpha);
   num_t f = floor(k);
   num_t c = ceil(k);
-	  
-  if(fabs(f - c) < datadefs::EPS)
-    {
-      prc = x[static_cast<size_t>(k)];
-    }
-  else
-    {
-      num_t d0 = x[static_cast<size_t>(f)] * (c - k);
-      num_t d1 = x[static_cast<size_t>(c)] * (k - f);
-      prc = d0+d1;
-    }
+    
+  if(fabs(f - c) < datadefs::EPS) {
+    prc = x[static_cast<size_t>(k)];
+  } else {
+    num_t d0 = x[static_cast<size_t>(f)] * (c - k);
+    num_t d1 = x[static_cast<size_t>(c)] * (k - f);
+    prc = d0+d1;
+  }
 }
-
-

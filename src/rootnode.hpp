@@ -5,32 +5,32 @@
 #include "node.hpp"
 #include "treedata.hpp"
 
-class RootNode : public Node 
-{
+class RootNode : public Node {
 public:
 
   
   RootNode(bool sampleWithReplacement,
-	   num_t sampleSizeFraction,
-	   size_t maxNodesToStop,
-	   size_t minNodeSizeToStop,
-	   bool isRandomSplit,
-	   size_t nFeaturesForSplit,
-	   bool useContrasts,
-	   bool isOptimizedNodeSplit,
-	   size_t numClasses);
+           num_t sampleSizeFraction,
+           size_t maxNodesToStop,
+           size_t minNodeSizeToStop,
+           bool isRandomSplit,
+           size_t nFeaturesForSplit,
+           bool useContrasts,
+           bool isOptimizedNodeSplit,
+           size_t numClasses);
   
   //~RootNode();
   
 
   void growTree(Treedata* treeData,
-		const size_t targetIdx,
-		//void (*leafPredictionFunction)(const vector<num_t>&, const size_t),
-		const LeafPredictionFunctionType leafPredictionFunctionType,
-		vector<size_t>& oobIcs,
-		set<size_t>& featuresInTree,
-		size_t& nNodes);
+                const size_t targetIdx,
+                //void (*leafPredictionFunction)(const vector<num_t>&, const size_t),
+                const LeafPredictionFunctionType leafPredictionFunctionType,
+                vector<size_t>& oobIcs,
+                set<size_t>& featuresInTree,
+                size_t& nNodes);
 
+  // !! Cruft: Remove everything that's fallen into node.cpp.
   /*
     size_t targetIdx();
     bool isTargetNumerical();

@@ -82,37 +82,37 @@ protected:
   void leafGamma(const vector<num_t>& data, const size_t numClasses);
 
   void recursiveNodeSplit(Treedata* treeData,
-			  const size_t targetIdx,
-			  const vector<size_t>& sampleIcs,
-			  const GrowInstructions& GI,
-			  set<size_t>& featuresInTree,
-			  size_t& nNodes);
+                          const size_t targetIdx,
+                          const vector<size_t>& sampleIcs,
+                          const GrowInstructions& GI,
+                          set<size_t>& featuresInTree,
+                          size_t& nNodes);
     
 
 private:
 
   inline void cleanPairVectorFromNANs(const vector<num_t>& v1_copy,
-			       const vector<num_t>& v2_copy,
-			       vector<num_t>& v1,
-			       vector<num_t>& v2,
-			       vector<size_t>& mapIcs);
+                                      const vector<num_t>& v2_copy,
+                                      vector<num_t>& v1,
+                                      vector<num_t>& v2,
+                                      vector<size_t>& mapIcs);
 
   void numericalFeatureSplit(const vector<num_t>& tv_copy,
-			     const bool isTargetNumerical,
-			     const vector<num_t>& fv_copy,
-			     const size_t min_split,
-			     vector<size_t>& sampleIcs_left,
-			     vector<size_t>& sampleIcs_right,
-			     num_t& splitValue,
-			     num_t& splitFitness);
+                             const bool isTargetNumerical,
+                             const vector<num_t>& fv_copy,
+                             const size_t min_split,
+                             vector<size_t>& sampleIcs_left,
+                             vector<size_t>& sampleIcs_right,
+                             num_t& splitValue,
+                             num_t& splitFitness);
 
   void categoricalFeatureSplit(const vector<num_t>& tv_copy,
-			       const bool isTargetNumerical,
-			       const vector<num_t>& fv_copy, /* MIN SPLIT MISSING (CHECK numericalFeatureSplit()) */
-			       vector<size_t>& sampleIcs_left,
-			       vector<size_t>& sampleIcs_right,
-			       set<num_t>& categories_left,
-			       num_t& splitFitness);
+                               const bool isTargetNumerical,
+                               const vector<num_t>& fv_copy, /* MIN SPLIT MISSING (CHECK numericalFeatureSplit()) */
+                               vector<size_t>& sampleIcs_left,
+                               vector<size_t>& sampleIcs_right,
+                               set<num_t>& categories_left,
+                               num_t& splitFitness);
 
   num_t splitFitness(vector<num_t> const& data,
                      bool const& isFeatureNumerical,
@@ -143,7 +143,7 @@ private:
   size_t nTestSamples_;
   num_t testPredictionError_;
 
-  // WILL BECOME DEPRECATED
+  // WILL BECOME DEPRECATED !! Yes, it did. Can we remove it from the code-base?
   //num_t prediction_; // saves the prediction of the node
     
   bool hasChildren_;
