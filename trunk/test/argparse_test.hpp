@@ -125,9 +125,9 @@ void ArgParseTest::test_spuriousArgv() {
 
   try {
     ArgParse ap(argc, argv);
-    CPPUNIT_FAIL("ArgParse::ArgParse didn't throw the expected exception: ERRNO_INVALID_MEMORY_ACCESS");
+    CPPUNIT_FAIL("ArgParse::ArgParse didn't throw the expected exception: ERRNO_ILLEGAL_MEMORY_ACCESS");
   } catch (int e) {
-    CPPUNIT_ASSERT(e == ERRNO_INVALID_MEMORY_ACCESS);
+    CPPUNIT_ASSERT(e == ERRNO_ILLEGAL_MEMORY_ACCESS);
   }
 
   char* const argv2[] = {
@@ -139,9 +139,9 @@ void ArgParseTest::test_spuriousArgv() {
   
   try {
     ArgParse ap(argc, argv2); 
-    CPPUNIT_FAIL("ArgParse::ArgParse didn't throw the expected exception: ERRNO_INVALID_MEMORY_ACCESS");
+    CPPUNIT_FAIL("ArgParse::ArgParse didn't throw the expected exception: ERRNO_ILLEGAL_MEMORY_ACCESS");
   } catch (int e) {
-    CPPUNIT_ASSERT(e == ERRNO_INVALID_MEMORY_ACCESS);
+    CPPUNIT_ASSERT(e == ERRNO_ILLEGAL_MEMORY_ACCESS);
   }
 }
 
