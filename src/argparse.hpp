@@ -19,7 +19,6 @@ class ArgParse {
 
 public:
   ArgParse(const int argc, char* const argv[]) {
-
     if (argc < 1) {
       throw ERRNO_INVALID_ARGUMENT;
     }
@@ -91,20 +90,28 @@ public:
     const struct option long_options[] = {
       {longName, 1, NULL, cShortName}
     };
+    const char opts[] = {cShortName, ':', '\0'};
+
+    // Copy the contents of argv into a temporary, rearrangeable variable
+    char** targv = new char* [argc_];
+    for (int i = 0; i < argc_; ++i) {
+      targv[i] = argv_[i];
+    }
     
     int option_index = 0;
     int c = 0;
     bool rst = false;
     while (c != -1) {
-      c = getopt_long (argc_, argv_, ALLOWED_ARGS, long_options, &option_index);
+      c = getopt_long (argc_, targv, opts, long_options, &option_index);
       if (c == cShortName) {
         stringstream sOptarg(optarg); // Streamify the arg received from getopt
         sOptarg >> returnVal;
         rst = true;
         break;
-      }
+      } 
     }
     optind = 0; // Reset the getopt parsing index to 0
+    delete[] targv; // Free our temporary argv
     return rst;
   }
 
@@ -138,12 +145,19 @@ public:
     const struct option long_options[] = {
       {longName, 0, NULL, cShortName}
     };
+
+    // Copy the contents of argv into a temporary, rearrangeable variable
+    char** targv = new char* [argc_];
+    for (int i = 0; i < argc_; ++i) {
+      targv[i] = argv_[i];
+    }
+
     int option_index = 0;
     int c = 0;
     bool rst = false;
     returnVal = false;
     while (c != -1) {
-      c = getopt_long (argc_, argv_, ALLOWED_FLAGS, long_options, &option_index);
+      c = getopt_long (argc_, targv, shortName, long_options, &option_index);
       if (c == cShortName) {
         returnVal = true;
         rst = true;
@@ -157,6 +171,7 @@ public:
     }
 
     optind = 0; // Reset the getopt parsing index to 0
+    delete[] targv; // Free our temporary argv
     return rst;
   }
 
@@ -168,18 +183,6 @@ public:
 private:
   int argc_;
   char* const* argv_;
-  static const char* ALLOWED_FLAGS;
-  static const char* ALLOWED_ARGS;
 };
-
-const char* ArgParse::ALLOWED_FLAGS =
-"ABCDEFGHIJKLMNOPQRSTUVWXYZ\
-abcdefghijklmnopqrstuvwxyz\
-0123456789";
-
-const char* ArgParse::ALLOWED_ARGS =
-"A:B:C:D:E:F:G:H:I:J:K:L:M:N:O:P:Q:R:S:T:U:V:W:X:Y:Z:\
-a:b:c:d:e:f:g:h:i:j:k:l:m:n:o:p:q:r:s:t:u:v:w:x:y:z:\
-0:1:2:3:4:5:6:7:8:9:";
 
 #endif
