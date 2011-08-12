@@ -6,6 +6,7 @@
 #include <iostream>
 #include <sstream>
 #include <string.h>
+#include "errno.hpp"
 
 using namespace std;
 
@@ -18,6 +19,31 @@ class ArgParse {
 
 public:
   ArgParse(const int argc, char* const argv[]) {
+
+    //assert(argc > 0);
+    if (argc < 1) {
+      throw ERRNO_INVALID_ARGUMENT;
+    }
+    for (int i = 0; i < argc; ++i) {
+      
+      try {
+        // !! Correctness Note: this strategy may attempt to dereference
+        // !!  corrupt memory. Thus, these runtime checks, while better than an
+        // !!  outright crash, may imply security vulnerabilities in dependent
+        // !!  code. Beware!
+        if (argv[i] == NULL) {
+          throw ERRNO_INVALID_ARGUMENT;
+        }
+      } catch (...) {
+        //assert(false); // Check if argv was corrupt or overstepped. Implies a
+                         //  major FIXME if this is hit. (Disabled in lieu of
+                         //  runtime checks during testing)
+        
+        throw ERRNO_INVALID_MEMORY_ACCESS;  // Perform a safer runtime check
+                                            //  that should never be hit by
+                                            //  correct code.
+      }
+    }
     argc_ = argc;
     argv_ = argv;
     opterr = 0; // Suppress invalid print messages from getopt, which trigger
@@ -60,7 +86,7 @@ public:
     assert(longName != NULL);
     assert(strlen(shortName) == 1);
     assert(*longName != 0);
-
+    
     const char cShortName = *shortName;
     const struct option long_options[] = {
       {longName, 1, NULL, cShortName}
