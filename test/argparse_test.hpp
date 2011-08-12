@@ -1,5 +1,5 @@
-#ifndef ARGPARSETEST_H
-#define ARGPARSETEST_H
+#ifndef ARGPARSETEST_HPP
+#define ARGPARSETEST_HPP
 
 #include "argparse.hpp"
 #include "errno.hpp"
@@ -148,4 +148,4 @@ void ArgParseTest::test_spuriousArgv() {
 // Registers the fixture into the test 'registry'
 CPPUNIT_TEST_SUITE_REGISTRATION( ArgParseTest );
 
-#endif // ARGPARSETEST_H
+#endif // ARGPARSETEST_HPP
