@@ -2,7 +2,7 @@ COMPILER = g++
 CFLAGS = -O3 -Wall -pedantic -I/usr/lib64/glib-2.12/include -I/usr/include/glib-2.12 -I/usr/ -Isrc/
 SOURCEFILES = src/randomforest.cpp src/GBT.cpp src/rootnode.cpp src/node.cpp src/treedata.cpp src/mtrand.cpp src/datadefs.cpp
 STATICFLAGS = -static-libgcc -static
-TESTFILES = test/argparse_test.hpp
+TESTFILES = test/argparse_test.hpp test/datadefs_test.hpp
 TESTFLAGS = -lcppunit
 MPFLAG = -fopenmp
 .PHONY: all test clean  # Squash directory checks for the usual suspects
