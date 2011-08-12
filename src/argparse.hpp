@@ -20,10 +20,10 @@ class ArgParse {
 public:
   ArgParse(const int argc, char* const argv[]) {
 
-    //assert(argc > 0);
     if (argc < 1) {
       throw ERRNO_INVALID_ARGUMENT;
     }
+    
     for (int i = 0; i < argc; ++i) {
       
       try {
@@ -39,7 +39,7 @@ public:
                          //  major FIXME if this is hit. (Disabled in lieu of
                          //  runtime checks during testing)
         
-        throw ERRNO_INVALID_MEMORY_ACCESS;  // Perform a safer runtime check
+        throw ERRNO_ILLEGAL_MEMORY_ACCESS;  // Perform a safer runtime check
                                             //  that should never be hit by
                                             //  correct code.
       }
