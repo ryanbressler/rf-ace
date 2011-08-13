@@ -20,7 +20,7 @@ const datadefs::num_t datadefs::LOG_OF_MAX_NUM = 70.0;
 const string initNANs[] = {"NA","NAN","?"}; /** !! Incomplete definition:
                                              * consider including:
                                              *  http://en.wikipedia.org/wiki/NaN#Display */
-const set<datadefs::NAN_t> datadefs::NANs(initNANs,initNANs+2);
+const set<datadefs::NAN_t> datadefs::NANs(initNANs,initNANs+3);
 
 
 ////////////////////////////////////////////////////////////
