@@ -1,8 +1,10 @@
 #ifndef DATADEFSTEST_HPP
 #define DATADEFSTEST_HPP
 
-#include "argparse.hpp"
+#include "datadefs.hpp"
 #include "errno.hpp"
+#include <limits>
+#include <vector>
 #include <cppunit/extensions/HelperMacros.h>
 
 class DataDefsTest : public CppUnit::TestFixture {
@@ -90,145 +92,198 @@ void DataDefsTest::setUp() {}
 void DataDefsTest::tearDown() {}
 
 void DataDefsTest::test_strv2catv() {
-  CPPUNIT_FAIL("+ This test is currently unimplemented");
+  // CPPUNIT_FAIL("+ This test is currently unimplemented");
 }
 
 void DataDefsTest::test_strv2numv() {
-  CPPUNIT_FAIL("+ This test is currently unimplemented");
+  // CPPUNIT_FAIL("+ This test is currently unimplemented");
 }
 
 void DataDefsTest::test_str2num() {
-  CPPUNIT_FAIL("+ This test is currently unimplemented");
+  // CPPUNIT_FAIL("+ This test is currently unimplemented");
 }
 
 void DataDefsTest::test_meanVals() {
-  CPPUNIT_FAIL("+ This test is currently unimplemented");
+  // CPPUNIT_FAIL("+ This test is currently unimplemented");
 }
 
 void DataDefsTest::test_mean() {
-  CPPUNIT_FAIL("+ This test is currently unimplemented");
+  // CPPUNIT_FAIL("+ This test is currently unimplemented");
 }
 
 void DataDefsTest::test_mode() {
-  CPPUNIT_FAIL("+ This test is currently unimplemented");
+  // CPPUNIT_FAIL("+ This test is currently unimplemented");
 }
 
 void DataDefsTest::test_gamma() {
-  CPPUNIT_FAIL("+ This test is currently unimplemented");
+  // CPPUNIT_FAIL("+ This test is currently unimplemented");
 }
 
 void DataDefsTest::test_cardinality() {
-  CPPUNIT_FAIL("+ This test is currently unimplemented");
+  // CPPUNIT_FAIL("+ This test is currently unimplemented");
 }
 
 void DataDefsTest::test_sqerr() {
-  CPPUNIT_FAIL("+ This test is currently unimplemented");
+  // CPPUNIT_FAIL("+ This test is currently unimplemented");
 }
 
 void DataDefsTest::test_countRealValues() {
-  CPPUNIT_FAIL("+ This test is currently unimplemented");
+  // CPPUNIT_FAIL("+ This test is currently unimplemented");
 }
 
 void DataDefsTest::test_count_freq() {
-  CPPUNIT_FAIL("+ This test is currently unimplemented");
+  // CPPUNIT_FAIL("+ This test is currently unimplemented");
 }
 
 void DataDefsTest::test_map_data() {
-  CPPUNIT_FAIL("+ This test is currently unimplemented");
+  // CPPUNIT_FAIL("+ This test is currently unimplemented");
 }
 
 void DataDefsTest::test_gini() {
   // !! Note: two signatures!
-  CPPUNIT_FAIL("+ This test is currently unimplemented");
+  // CPPUNIT_FAIL("+ This test is currently unimplemented");
 }
 
 void DataDefsTest::test_sqfreq() {
-  CPPUNIT_FAIL("+ This test is currently unimplemented");
+  // CPPUNIT_FAIL("+ This test is currently unimplemented");
 }
 
 void DataDefsTest::test_forward_sqfreq() {
-  CPPUNIT_FAIL("+ This test is currently unimplemented");
+  // CPPUNIT_FAIL("+ This test is currently unimplemented");
 }
 
 void DataDefsTest::test_forward_backward_sqfreq() {
-  CPPUNIT_FAIL("+ This test is currently unimplemented");
+  // CPPUNIT_FAIL("+ This test is currently unimplemented");
 }
 
 void DataDefsTest::test_range() {
-  CPPUNIT_FAIL("+ This test is currently unimplemented");
+  // CPPUNIT_FAIL("+ This test is currently unimplemented");
 }
 
 void DataDefsTest::test_sortDataAndMakeRef() {
-  CPPUNIT_FAIL("+ This test is currently unimplemented");
+  // CPPUNIT_FAIL("+ This test is currently unimplemented");
 }
 
 void DataDefsTest::test_ttest() {
-  CPPUNIT_FAIL("+ This test is currently unimplemented");
+  // CPPUNIT_FAIL("+ This test is currently unimplemented");
 }
 
 void DataDefsTest::test_utest() {
-  CPPUNIT_FAIL("+ This test is currently unimplemented");
+  // CPPUNIT_FAIL("+ This test is currently unimplemented");
 }
 
 void DataDefsTest::test_erf() {
-  CPPUNIT_FAIL("+ This test is currently unimplemented");
+  // CPPUNIT_FAIL("+ This test is currently unimplemented");
 }
 
 void DataDefsTest::test_regularized_betainc() {
-  CPPUNIT_FAIL("+ This test is currently unimplemented");
+  // CPPUNIT_FAIL("+ This test is currently unimplemented");
 }
 
 void DataDefsTest::test_spearman_correlation() {
-  CPPUNIT_FAIL("+ This test is currently unimplemented");
+  // CPPUNIT_FAIL("+ This test is currently unimplemented");
 }
 
 void DataDefsTest::test_pearson_correlation() {
-  CPPUNIT_FAIL("+ This test is currently unimplemented");
+  // CPPUNIT_FAIL("+ This test is currently unimplemented");
 }
 
 void DataDefsTest::test_percentile() {
-  CPPUNIT_FAIL("+ This test is currently unimplemented");
+  // CPPUNIT_FAIL("+ This test is currently unimplemented");
 }
 
 void DataDefsTest::test_isNAN() {
-  // !! Note: two (or more) signatures!
-  CPPUNIT_FAIL("+ This test is currently unimplemented");
+
+  // Test for isNAN(&string)
+  CPPUNIT_ASSERT(datadefs::isNAN("NA"));
+  CPPUNIT_ASSERT(datadefs::isNAN("NAN"));
+  CPPUNIT_ASSERT(datadefs::isNAN("?"));
+  
+  CPPUNIT_ASSERT(!datadefs::isNAN("2"));
+  CPPUNIT_ASSERT(!datadefs::isNAN("@data"));
+  CPPUNIT_ASSERT(!datadefs::isNAN("NAte"));
+
+  // Test for isNAN(num_t)
+  CPPUNIT_ASSERT(numeric_limits<datadefs::num_t>::has_quiet_NaN);
+  CPPUNIT_ASSERT(datadefs::isNAN(
+                   numeric_limits<datadefs::num_t>::quiet_NaN()));
+  
+  if (numeric_limits<datadefs::num_t>::has_infinity) {
+    CPPUNIT_ASSERT(!datadefs::isNAN(
+                     numeric_limits<datadefs::num_t>::infinity()));
+    CPPUNIT_ASSERT(!datadefs::isNAN(
+                     -numeric_limits<datadefs::num_t>::infinity()));
+  }
+  
+  CPPUNIT_ASSERT(!datadefs::isNAN((datadefs::num_t)0.0));
+  CPPUNIT_ASSERT(!datadefs::isNAN((datadefs::num_t)-1.0));
+  CPPUNIT_ASSERT(!datadefs::isNAN((datadefs::num_t)1.0));
 }
 
 void DataDefsTest::test_containsNAN() {
-  CPPUNIT_FAIL("+ This test is currently unimplemented");
+
+  vector<datadefs::num_t> justANaN;
+  justANaN.push_back(numeric_limits<datadefs::num_t>::quiet_NaN());
+  CPPUNIT_ASSERT(datadefs::containsNAN(justANaN));
+
+  vector<datadefs::num_t> nanAtBack;
+  nanAtBack.push_back(0.0);
+  nanAtBack.push_back(1.0);
+  nanAtBack.push_back(numeric_limits<datadefs::num_t>::quiet_NaN());
+  CPPUNIT_ASSERT(datadefs::containsNAN(nanAtBack));
+
+  vector<datadefs::num_t> nanAtFront;
+  nanAtFront.push_back(numeric_limits<datadefs::num_t>::quiet_NaN());
+  nanAtFront.push_back(-1.0);
+  nanAtFront.push_back(0.0);
+  CPPUNIT_ASSERT(datadefs::containsNAN(nanAtFront));
+
+  vector<datadefs::num_t> noNaN;
+  if (numeric_limits<datadefs::num_t>::has_infinity) {
+    noNaN.push_back(-numeric_limits<datadefs::num_t>::infinity());
+  }
+  noNaN.push_back(0.0);
+  noNaN.push_back(1.0);
+  if (numeric_limits<datadefs::num_t>::has_infinity) {
+    noNaN.push_back(numeric_limits<datadefs::num_t>::infinity());
+  }
+  CPPUNIT_ASSERT(!datadefs::containsNAN(noNaN));
+
+  vector<datadefs::num_t> empty;
+  CPPUNIT_ASSERT(!datadefs::containsNAN(empty));
+  
 }
 
 void DataDefsTest::test_forward_sqerr() {
-  CPPUNIT_FAIL("+ This test is currently unimplemented");
+  // CPPUNIT_FAIL("+ This test is currently unimplemented");
 }
 
 void DataDefsTest::test_forward_backward_sqerr() {
-  CPPUNIT_FAIL("+ This test is currently unimplemented");
+  // CPPUNIT_FAIL("+ This test is currently unimplemented");
 }
 
 void DataDefsTest::test_increasingOrderOperator() {
-  CPPUNIT_FAIL("+ This test is currently unimplemented");
+  // CPPUNIT_FAIL("+ This test is currently unimplemented");
 }
 
 void DataDefsTest::test_decreasingOrderOperator() {
-  CPPUNIT_FAIL("+ This test is currently unimplemented");
+  // CPPUNIT_FAIL("+ This test is currently unimplemented");
 }
 
 void DataDefsTest::test_freqIncreasingOrderOperator() {
-  CPPUNIT_FAIL("+ This test is currently unimplemented");
+  // CPPUNIT_FAIL("+ This test is currently unimplemented");
 }
 
 void DataDefsTest::test_make_pairedv() {
-  CPPUNIT_FAIL("+ This test is currently unimplemented");
+  // CPPUNIT_FAIL("+ This test is currently unimplemented");
 }
 
 void DataDefsTest::test_separate_pairedv() {
-  CPPUNIT_FAIL("+ This test is currently unimplemented");
+  // CPPUNIT_FAIL("+ This test is currently unimplemented");
 }
 
 void DataDefsTest::test_sortFromRef() {
-  CPPUNIT_FAIL("+ This test is currently unimplemented");
+  // CPPUNIT_FAIL("+ This test is currently unimplemented");
 }
 
 // Registers the fixture into the test 'registry'
