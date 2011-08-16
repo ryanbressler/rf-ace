@@ -6,5 +6,7 @@
 #define ERRNO_INVALID_ARGUMENT          -2
 #define ERRNO_NULL_POINTER_DEREFENCE    -3
 #define ERRNO_ILLEGAL_MEMORY_ACCESS     -4
+#define ERRNO_NUMERIC_OVERFLOW          -5
+#define ERRNO_NUMERIC_UNDERFLOW         -6
 
 #endif // ERRNO_HPP
