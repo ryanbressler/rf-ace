@@ -10,6 +10,7 @@
 #include<cassert>
 #include<iostream>
 #include<algorithm>
+#include "errno.hpp"
 
 using namespace std;
 
@@ -175,17 +176,25 @@ namespace datadefs {
      !! Document
      * Calculates the squared error, given x, n, mu, and standard error
      */
-  inline void forward_sqerr(const num_t x_n,
+  inline void forward_sqerr(const num_t& x_n,
                             size_t& n,
                             num_t& mu,
                             num_t& se
     ) {  
     if(x_n != x_n) { return; }  // Check for NAN
-    ++n;
+    ++n; if (n == 0) { throw ERRNO_NUMERIC_OVERFLOW; }
     num_t mu_old = mu;
     mu += (x_n - mu) / n;
+    
     //If there are already at least two data points, squared error can be calculated, otherwise assign se_left := 0.0
-    if(n > 1) { se += (x_n - mu) * (x_n - mu_old);} else { se = 0.0; }
+    if(n > 1) {
+      se += (x_n - mu) * (x_n - mu_old);
+    } else {
+      
+      se = 0.0; /** Implementation note: this may spuriously invoke on
+                     overflow. size_t is assumed to always be unsigned in
+                     accordance with the 1999 ISO C standard (C99). */
+    }
   } 
 
   /**
@@ -193,7 +202,7 @@ namespace datadefs {
      * Calculates the squared error from both supplied branches, x and each
      *  branch's respective n, mu, and standard error.
      */
-  inline void forward_backward_sqerr(const num_t x_n,
+  inline void forward_backward_sqerr(const num_t& x_n,
                                      size_t& n_left,
                                      num_t& mu_left,
                                      num_t& se_left,
@@ -201,7 +210,9 @@ namespace datadefs {
                                      num_t& mu_right,
                                      num_t& se_right) {
     if( x_n != x_n ) { return; }  // Check for NAN
-    assert(n_right > 0); ++n_left; --n_right;
+    //assert(n_right > 0);
+    ++n_left;   if (n_left == 0)                        { throw ERRNO_NUMERIC_OVERFLOW; }
+    --n_right;  if (n_right == static_cast<size_t>(-1)) { throw ERRNO_NUMERIC_UNDERFLOW; }
     
     // As long as there are at least two data points on the "right" branch,
     //  squared error can be calculated, otherwise assign se_right := 0.0
@@ -267,14 +278,16 @@ namespace datadefs {
 
   /**
      !! Document
-     * Union and splitting operations for vectors. Consider documenting.
+     * Union and splitting operations for vectors. Consider fully documenting.
+     !! Correctness: This may cause problems if T1 or T2 are declared as unsafe
+         for assignment. 
      */
   template <typename T1,typename T2> void make_pairedv(vector<T1> const& v1,
                                                        vector<T2> const& v2,
                                                        vector<pair<T1,T2> >& p) {
     assert(v1.size() == v2.size() && v2.size() == p.size());
     for(size_t i = 0; i < p.size(); ++i) {
-      p[i] = make_pair(v1[i],v2[i]);
+      p[i].first = v1[i]; p[i].second = v2[i];
     }
   }
 
@@ -296,6 +309,8 @@ namespace datadefs {
   /**
    * Sorts a given input data vector of type T based on a given reference
    * ordering of type vector<int>.
+   !! Correctness: this will fail if any of the contents of refIcs fall outside
+       of the normal scope of vector<T>& data.
    */
   template <typename T> void sortFromRef(
     vector<T>& data,

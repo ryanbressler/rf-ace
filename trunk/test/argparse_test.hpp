@@ -159,7 +159,7 @@ void ArgParseTest::test_spuriousArgc() {
   
   try {
     ArgParse ap(argc, argv);
-    CPPUNIT_FAIL("ArgParse::ArgParse didn't throw the expected exception: ERRNO_INVALID_ARGUMENT");
+    CPPUNIT_FAIL("ArgParse::ArgParse didn't throw any exception: expected 'ERRNO_INVALID_ARGUMENT'");
   } catch (int e) {
     CPPUNIT_ASSERT(e == ERRNO_INVALID_ARGUMENT);
   }
@@ -177,7 +177,7 @@ void ArgParseTest::test_spuriousArgv() {
 
   try {
     ArgParse ap(argc, argv);
-    CPPUNIT_FAIL("ArgParse::ArgParse didn't throw the expected exception: ERRNO_ILLEGAL_MEMORY_ACCESS");
+    CPPUNIT_FAIL("ArgParse::ArgParse didn't throw any exception; expected 'ERRNO_ILLEGAL_MEMORY_ACCESS'");
   } catch (int e) {
     CPPUNIT_ASSERT(e == ERRNO_ILLEGAL_MEMORY_ACCESS);
   }
@@ -191,7 +191,7 @@ void ArgParseTest::test_spuriousArgv() {
   
   try {
     ArgParse ap(argc, argv2); 
-    CPPUNIT_FAIL("ArgParse::ArgParse didn't throw the expected exception: ERRNO_ILLEGAL_MEMORY_ACCESS");
+    CPPUNIT_FAIL("ArgParse::ArgParse didn't throw any exception; expected 'ERRNO_ILLEGAL_MEMORY_ACCESS'");
   } catch (int e) {
     CPPUNIT_ASSERT(e == ERRNO_ILLEGAL_MEMORY_ACCESS);
   }
