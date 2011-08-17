@@ -17,7 +17,6 @@ class DataDefsTest : public CppUnit::TestFixture {
   CPPUNIT_TEST( test_strv2numv );
   CPPUNIT_TEST( test_str2num );
   CPPUNIT_TEST( test_meanVals );
-  CPPUNIT_TEST( test_mean );
   CPPUNIT_TEST( test_mode );
   CPPUNIT_TEST( test_gamma );
   CPPUNIT_TEST( test_cardinality );
@@ -211,23 +210,121 @@ void DataDefsTest::test_meanVals() {
   datadefs::meanVals(data, mu, nRealValues);
   CPPUNIT_ASSERT(mu == 0.0);
   CPPUNIT_ASSERT(nRealValues == 0);
-  
-}
-
-void DataDefsTest::test_mean() {
-  // CPPUNIT_FAIL("+ This test is currently unimplemented");
 }
 
 void DataDefsTest::test_mode() {
-  // CPPUNIT_FAIL("+ This test is currently unimplemented");
+  vector<datadefs::num_t> data;
+  datadefs::num_t mode = -1.0;
+  size_t numClasses = static_cast<size_t>(-1);
+
+  data.push_back(static_cast<datadefs::num_t>(10));
+  for (int i = 0; i < 50; ++i) {
+    data.push_back(static_cast<datadefs::num_t>(i));
+  }
+  
+  datadefs::mode(data, mode, numClasses);
+  CPPUNIT_ASSERT(mode == 10.0);
+
+  // numClasses is defined as const in our signature. Since we're not testing
+  //  edge cases of non-trivial memory corruption, we ignore it here. 
+
+  // Interleave the original input with NaNs; verify we get the same results
+  for (int i = 0; i < 50; ++i) {
+    data.insert(data.begin() + (i*2), numeric_limits<datadefs::num_t>::quiet_NaN());
+  }
+
+  mode = -1.0; 
+  numClasses = static_cast<size_t>(-1);
+
+  datadefs::mode(data, mode, numClasses);
+  CPPUNIT_ASSERT(mode == 10.0); 
+  
+  // Ensure a vector containing only NaNs is handled as expected
+  data.clear();
+  for (int i = 0; i < 50; ++i) {
+    data.push_back(numeric_limits<datadefs::num_t>::quiet_NaN());
+  }
+
+  mode = -1.0; 
+  numClasses = static_cast<size_t>(-1);
+
+  datadefs::mode(data, mode, numClasses);
+  CPPUNIT_ASSERT(mode == 0.0);
 }
 
 void DataDefsTest::test_gamma() {
-  // CPPUNIT_FAIL("+ This test is currently unimplemented");
+  vector<datadefs::num_t> data;
+  datadefs::num_t gamma = -1.0;
+  size_t numClasses = 5;
+
+  for (int i = 0; i < 50; ++i) {
+    data.push_back(static_cast<datadefs::num_t>(i));
+  }
+  
+  datadefs::gamma(data, gamma, numClasses);
+  CPPUNIT_ASSERT(gamma == -0.025);
+
+  // numClasses is defined as const in our signature. Since we're not testing
+  //  edge cases of non-trivial memory corruption, we ignore it here. 
+
+  // Interleave the original input with NaNs; verify we get the same results
+  for (int i = 0; i < 50; ++i) {
+    data.insert(data.begin() + (i*2), numeric_limits<datadefs::num_t>::quiet_NaN());
+  }
+
+  gamma = -1.0; 
+  numClasses = 5;
+
+  datadefs::gamma(data, gamma, numClasses);
+  CPPUNIT_ASSERT(gamma == -0.025); 
+  
+  // Ensure a vector containing only NaNs is handled as expected
+  data.clear();
+  for (int i = 0; i < 50; ++i) {
+    data.push_back(numeric_limits<datadefs::num_t>::quiet_NaN());
+  }
+
+  gamma = -1.0; 
+  numClasses = 5;
+
+  datadefs::gamma(data, gamma, numClasses);
+  CPPUNIT_ASSERT(gamma == 0.0);
 }
 
 void DataDefsTest::test_cardinality() {
-  // CPPUNIT_FAIL("+ This test is currently unimplemented");
+  vector<datadefs::num_t> data;
+  size_t cardinality = static_cast<size_t>(-1);
+  for (int i = 0; i < 50; ++i) {
+    data.push_back(static_cast<datadefs::num_t>(i));
+  }
+  
+  datadefs::cardinality(data, cardinality);
+  CPPUNIT_ASSERT(cardinality == 50);
+
+  // numClasses is defined as const in our signature. Since we're not testing
+  //  edge cases of non-trivial memory corruption, we ignore it here. 
+
+  // Interleave the original input with NaNs; verify we get the same results
+  for (int i = 0; i < 50; ++i) {
+    data.insert(data.begin() + (i*2), numeric_limits<datadefs::num_t>::quiet_NaN());
+  }
+
+  cardinality = static_cast<size_t>(-1);
+
+  datadefs::cardinality(data, cardinality);
+  cout << cardinality << endl;
+  CPPUNIT_ASSERT(cardinality == 50); 
+  
+  // Ensure a vector containing only NaNs is handled as expected
+  data.clear();
+  for (int i = 0; i < 50; ++i) {
+    data.push_back(numeric_limits<datadefs::num_t>::quiet_NaN());
+  }
+
+  cardinality = static_cast<size_t>(-1); 
+
+  datadefs::cardinality(data, cardinality);
+  CPPUNIT_ASSERT(cardinality == 1);
 }
 
 void DataDefsTest::test_sqerr() {
