@@ -312,7 +312,6 @@ void DataDefsTest::test_cardinality() {
   cardinality = static_cast<size_t>(-1);
 
   datadefs::cardinality(data, cardinality);
-  cout << cardinality << endl;
   CPPUNIT_ASSERT(cardinality == 50); 
   
   // Ensure a vector containing only NaNs is handled as expected
@@ -324,7 +323,7 @@ void DataDefsTest::test_cardinality() {
   cardinality = static_cast<size_t>(-1); 
 
   datadefs::cardinality(data, cardinality);
-  CPPUNIT_ASSERT(cardinality == 1);
+  CPPUNIT_ASSERT(cardinality == 0);
 }
 
 void DataDefsTest::test_sqerr() {
