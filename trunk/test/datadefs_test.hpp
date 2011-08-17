@@ -103,19 +103,115 @@ void DataDefsTest::test_size_tIsSigned() {
 }
 
 void DataDefsTest::test_strv2catv() {
-  // CPPUNIT_FAIL("+ This test is currently unimplemented");
+  vector<string> strvec(51,"");
+  vector<datadefs::num_t> catvec(51,0.0);
+  strvec[0] = "a";
+  strvec[1] = "b";
+  strvec[2] = "c";
+  strvec[3] = "A";
+  strvec[50] = "NaN";
+  datadefs::strv2catv(strvec, catvec);
+
+  CPPUNIT_ASSERT(catvec[0] == 0.0);
+  CPPUNIT_ASSERT(catvec[1] == 1.0);
+  CPPUNIT_ASSERT(catvec[2] == 2.0);
+  CPPUNIT_ASSERT(catvec[3] == 0.0);
+  for (int i = 4; i < 50; ++i) {
+    CPPUNIT_ASSERT(catvec[i] == 3.0);
+  }
+  CPPUNIT_ASSERT(catvec[50] != catvec[50]);
 }
 
 void DataDefsTest::test_strv2numv() {
-  // CPPUNIT_FAIL("+ This test is currently unimplemented");
+  vector<string> strvec(51,"3.0");
+  vector<datadefs::num_t> catvec(51,0.0);
+  strvec[0] = "0.0";
+  strvec[1] = "1.0";
+  strvec[2] = "2.0";
+  strvec[3] = "0.00";
+  strvec[50] = "NaN";
+  datadefs::strv2numv(strvec, catvec);
+
+  CPPUNIT_ASSERT(catvec[0] == 0.0);
+  CPPUNIT_ASSERT(catvec[1] == 1.0);
+  CPPUNIT_ASSERT(catvec[2] == 2.0);
+  CPPUNIT_ASSERT(catvec[3] == 0.0);
+  for (int i = 4; i < 50; ++i) {
+    CPPUNIT_ASSERT(catvec[i] == 3.0);
+  }
+  CPPUNIT_ASSERT(catvec[50] != catvec[50]);
 }
 
 void DataDefsTest::test_str2num() {
-  // CPPUNIT_FAIL("+ This test is currently unimplemented");
+  string a("0.0");
+  string b("1.0");
+  string c("-1.0");
+  string d("-1.0e10");
+
+  CPPUNIT_ASSERT(datadefs::str2num(a) == 0.0);
+  CPPUNIT_ASSERT(datadefs::str2num(b) == 1.0);
+  CPPUNIT_ASSERT(datadefs::str2num(c) == -1.0);
+  CPPUNIT_ASSERT(datadefs::str2num(d) == -1.0e10);
+
+  // These trigger behavior that currently throws a warning, but should throw a
+  //  runtime exception. !! TODO: these should become failure cases that raise,
+  //  at best, exceptions for the system to handle.
+  // string e("-1.0AAAA");
+  // string f("");
+  // string g("ABCDE");
+  // string h("NaN");
+  // CPPUNIT_ASSERT(datadefs::str2num(e) == -1.0);
+  // CPPUNIT_ASSERT(datadefs::str2num(f) == 0.0);
+  // CPPUNIT_ASSERT(datadefs::str2num(g) == 0.0);
+  // CPPUNIT_ASSERT(datadefs::str2num(h) == 0.0);
 }
 
 void DataDefsTest::test_meanVals() {
-  // CPPUNIT_FAIL("+ This test is currently unimplemented");
+  vector<datadefs::num_t> data;
+  datadefs::num_t mu;
+  size_t nRealValues;
+
+  for (int i = 0; i < 50; ++i) {
+    data.push_back(static_cast<datadefs::num_t>(i));
+  }
+
+  // Spuriously assign the values of mu and nRealValues, since they'll be
+  //  flattened during function invocation
+  mu = -1.0; 
+  nRealValues = static_cast<size_t>(-1);
+  
+  datadefs::meanVals(data, mu, nRealValues);
+  CPPUNIT_ASSERT(mu == 24.5);
+  CPPUNIT_ASSERT(nRealValues == 50);
+
+  // Our data vector is defined as const in our signature. Since we're not
+  //  testing edge cases of non-trivial memory corruption, we ignore it here.
+
+  // Interleave the original input with NaNs; verify we get the same results
+  for (int i = 0; i < 50; ++i) {
+    data.insert(data.begin() + (i*2), numeric_limits<datadefs::num_t>::quiet_NaN());
+  }
+
+  mu = -1.0; 
+  nRealValues = static_cast<size_t>(-1);
+
+  datadefs::meanVals(data, mu, nRealValues);
+  CPPUNIT_ASSERT(mu == 24.5);
+  CPPUNIT_ASSERT(nRealValues == 50);
+  
+  // Ensure a vector containing only NaNs is handled properly
+  data.clear();
+  for (int i = 0; i < 50; ++i) {
+    data.push_back(numeric_limits<datadefs::num_t>::quiet_NaN());
+  }
+
+  mu = -1.0; 
+  nRealValues = static_cast<size_t>(-1);
+
+  datadefs::meanVals(data, mu, nRealValues);
+  CPPUNIT_ASSERT(mu == 0.0);
+  CPPUNIT_ASSERT(nRealValues == 0);
+  
 }
 
 void DataDefsTest::test_mean() {
