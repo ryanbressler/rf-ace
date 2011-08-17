@@ -71,7 +71,7 @@ void datadefs::strv2catv(vector<string>& strvec,
         ++val;
       }
       //...and use the map to set the value for the output vector
-      catvec[strIdx] = double(str2valmap[strvec[strIdx]]);
+      catvec[strIdx] = static_cast<double>(str2valmap[strvec[strIdx]]);
     } else {    //If the string is defined to NaN, however...
       catvec[strIdx] = datadefs::NUM_NAN;
     }
@@ -122,6 +122,7 @@ datadefs::num_t datadefs::str2num(string& str) {
     cerr << "WARNING: parameter '" << str
          << "' could not be read properly. *THIS MAY CAUSE SPURIOUS RESULTS!*"
          << endl;
+    ret = 0.0;
     
   } else if (!ss.eof()) {   // Ensure eofbit is set
     cerr << "WARNING: parameter '" << str
@@ -141,8 +142,8 @@ datadefs::num_t datadefs::str2num(string& str) {
 */
 void datadefs::meanVals(vector<datadefs::num_t> const& data, datadefs::num_t& mu, size_t& nRealValues) {
  
-  nRealValues = 0;
   mu = 0.0;
+  nRealValues = 0;
  
   for(size_t i = 0; i < data.size(); ++i) {
     if(!datadefs::isNAN(data[i])) {
