@@ -15,7 +15,12 @@ const datadefs::num_t datadefs::NUM_NAN = numeric_limits<double>::quiet_NaN();//
 const datadefs::num_t datadefs::EPS = 1e-18; //1e-12;
 const datadefs::num_t datadefs::PI = 3.1415926535;
 const datadefs::num_t datadefs::A = 0.140012;
-const datadefs::num_t datadefs::LOG_OF_MAX_NUM = 70.0;
+const datadefs::num_t datadefs::LOG_OF_MAX_NUM = 70.0; /** !! Potentially
+                                                        * spurious. Do you mean
+                                                        * the log of the
+                                                        * maximum number
+                                                        * expressible as a
+                                                        * num_t? */
 
 const string initNANs[] = {"NA","NAN","?"}; /** !! Incomplete definition:
                                              * consider including:
@@ -139,6 +144,17 @@ datadefs::num_t datadefs::str2num(string& str) {
  result. This applies to most methods defined in RF-ACE, actually.
 
  !! Error sieve: silently ignores NaN
+
+ !! Consistency: consider replacing "mu" with "mean" in the function signature
+     to make this consistent with the mode and gamma values. Yes, mu is the
+     common first-order notation for the mean, but explicitly calling it out
+     is more expressive.
+
+ !! Consistency: what's the meaningful difference (pun!) between this and the
+     now-since-commented-out datadefs::mean? This reads like a function derived
+     from shotgun debugging.
+
+
 */
 void datadefs::meanVals(vector<datadefs::num_t> const& data, datadefs::num_t& mu, size_t& nRealValues) {
  
@@ -156,6 +172,7 @@ void datadefs::meanVals(vector<datadefs::num_t> const& data, datadefs::num_t& mu
     mu /= nRealValues;
   }
 }
+
 /**
  * Takes the arithmetic mean of a vector of input values, given a fixed number
  of real values
@@ -182,10 +199,16 @@ void datadefs::meanVals(vector<datadefs::num_t> const& data, datadefs::num_t& mu
 
 /**
  * Determines the mode of a given input data set
- !! Spurious argument: const size_t numClasses is never used
+ !! Spurious argument: const size_t numClasses is never used. Is it supposed to
+     be updated in the lifetime of this function; that is, is the "const" signature
+     wrong?
 
  !! Inefficient: linear running time. Consider a data pointer to the last
- element if the size of the list is known.
+     element if the size of the list is known.
+
+ !! Improperly-factored interface: if the mode is ambiguous, the lowest value
+     will be returned in the natural ordering of an STL std::map. This should be
+     corrected. 
 */
 void datadefs::mode(const vector<datadefs::num_t>& data, datadefs::num_t& mode, const size_t numClasses) {
   
@@ -200,8 +223,6 @@ void datadefs::mode(const vector<datadefs::num_t>& data, datadefs::num_t& mode, 
  * Determines the gamma of a given input data set
  !! Potential div by zero: if numClasses or denominator == 0.0, and many more
  possible errors
-
- !! Input sanitization: contains no checks for NaN.
 */
 void datadefs::gamma(const vector<datadefs::num_t>& data, datadefs::num_t& gamma, const size_t numClasses) { 
 
@@ -211,9 +232,11 @@ void datadefs::gamma(const vector<datadefs::num_t>& data, datadefs::num_t& gamma
   num_t denominator = 0.0;
   
   for (size_t i = 0; i < data.size(); ++i) {
-    num_t abs_data_i = fabs( data[i] );
-    denominator += abs_data_i * (1.0 - abs_data_i);
-    numerator   += data[i];
+    if (data[i] == data[i]) { // Filter out NaN
+      num_t abs_data_i = fabs( data[i] );
+      denominator += abs_data_i * (1.0 - abs_data_i);
+      numerator   += data[i];
+    }
   }
   if ( fabs(denominator) <= datadefs::EPS ) {
     gamma = datadefs::LOG_OF_MAX_NUM * numerator;
