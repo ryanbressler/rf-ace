@@ -252,7 +252,10 @@ void datadefs::gamma(const vector<datadefs::num_t>& data, datadefs::num_t& gamma
 void datadefs::cardinality(const vector<datadefs::num_t>& data, size_t& cardinality) {
   set<datadefs::num_t> categories;
   for(size_t i = 0; i < data.size(); ++i) {
-    categories.insert(data[i]);
+    if (data[i] == data[i]) { // Filter out NaN, as it causes unintended results
+                              //  in std::set::insert.
+      categories.insert(data[i]);
+    }
   }
   cardinality = categories.size();
 
