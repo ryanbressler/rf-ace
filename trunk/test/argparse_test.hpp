@@ -191,7 +191,7 @@ void ArgParseTest::test_spuriousArgv() {
   
   try {
     ArgParse ap(argc, argv2); 
-    // !! Note: divergent behavior by platform
+    // !! Note: divergent behavior by platform, which may point to a non-trivial stack corruption
     //CPPUNIT_FAIL("ArgParse::ArgParse didn't throw any exception; expected 'ERRNO_ILLEGAL_MEMORY_ACCESS'");
   } catch (int e) {
     CPPUNIT_ASSERT(e == ERRNO_ILLEGAL_MEMORY_ACCESS);
