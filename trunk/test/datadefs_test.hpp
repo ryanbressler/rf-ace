@@ -9,7 +9,10 @@
 #include "errno.hpp"
 
 // !! TODO: Break out each individual test case instead of doing these purely
-// !!  by method. Alternately, add comments visually separating each one. 
+// !!  by method. Alternately, add comments visually separating each one.
+// !! TODO: Testing generification. This is done procedurally to be very
+// !!  explicit about what is tested for now, but this can be greatly improved
+// !!  with the correct function constructs.
 class DataDefsTest : public CppUnit::TestFixture {
   CPPUNIT_TEST_SUITE( DataDefsTest );
   CPPUNIT_TEST( test_size_tIsSigned);
@@ -25,19 +28,14 @@ class DataDefsTest : public CppUnit::TestFixture {
   CPPUNIT_TEST( test_count_freq );
   CPPUNIT_TEST( test_map_data );
   CPPUNIT_TEST( test_gini );
-  CPPUNIT_TEST( test_gini );
   CPPUNIT_TEST( test_sqfreq );
   CPPUNIT_TEST( test_forward_sqfreq );
   CPPUNIT_TEST( test_forward_backward_sqfreq );
   CPPUNIT_TEST( test_range );
   CPPUNIT_TEST( test_sortDataAndMakeRef );
-  CPPUNIT_TEST( test_ttest );
   CPPUNIT_TEST( test_utest );
   CPPUNIT_TEST( test_erf );
-  CPPUNIT_TEST( test_regularized_betainc );
-  CPPUNIT_TEST( test_spearman_correlation );
   CPPUNIT_TEST( test_pearson_correlation );
-  CPPUNIT_TEST( test_percentile );
   CPPUNIT_TEST( test_isNAN );
   CPPUNIT_TEST( test_containsNAN );
   CPPUNIT_TEST( test_forward_sqerr );
@@ -48,6 +46,14 @@ class DataDefsTest : public CppUnit::TestFixture {
   CPPUNIT_TEST( test_make_pairedv );
   CPPUNIT_TEST( test_separate_pairedv );
   CPPUNIT_TEST( test_sortFromRef );
+
+  // Tests not yet implemented
+  //CPPUNIT_TEST( test_spearman_correlation );
+
+  // Tests for deprecated methods
+  //CPPUNIT_TEST( test_ttest );
+  //CPPUNIT_TEST( test_regularized_betainc );
+  //CPPUNIT_TEST( test_percentile );
   CPPUNIT_TEST_SUITE_END();
   
 public:
@@ -118,7 +124,7 @@ void DataDefsTest::test_strv2catv() {
   for (int i = 4; i < 50; ++i) {
     CPPUNIT_ASSERT(catvec[i] == 3.0);
   }
-  CPPUNIT_ASSERT(catvec[50] != catvec[50]);
+  CPPUNIT_ASSERT(datadefs::isNAN(catvec[50]));
 }
 
 void DataDefsTest::test_strv2numv() {
@@ -138,7 +144,7 @@ void DataDefsTest::test_strv2numv() {
   for (int i = 4; i < 50; ++i) {
     CPPUNIT_ASSERT(catvec[i] == 3.0);
   }
-  CPPUNIT_ASSERT(catvec[50] != catvec[50]);
+  CPPUNIT_ASSERT(datadefs::isNAN(catvec[50]));
 }
 
 void DataDefsTest::test_str2num() {
@@ -188,7 +194,7 @@ void DataDefsTest::test_meanVals() {
 
   // Interleave the original input with NaNs; verify we get the same results
   for (int i = 0; i < 50; ++i) {
-    data.insert(data.begin() + (i*2), numeric_limits<datadefs::num_t>::quiet_NaN());
+    data.insert(data.begin() + (i*2), datadefs::NUM_NAN);
   }
 
   mu = -1.0; 
@@ -201,7 +207,7 @@ void DataDefsTest::test_meanVals() {
   // Ensure a vector containing only NaNs is handled properly
   data.clear();
   for (int i = 0; i < 50; ++i) {
-    data.push_back(numeric_limits<datadefs::num_t>::quiet_NaN());
+    data.push_back(datadefs::NUM_NAN);
   }
 
   mu = -1.0; 
@@ -230,7 +236,7 @@ void DataDefsTest::test_mode() {
 
   // Interleave the original input with NaNs; verify we get the same results
   for (int i = 0; i < 50; ++i) {
-    data.insert(data.begin() + (i*2), numeric_limits<datadefs::num_t>::quiet_NaN());
+    data.insert(data.begin() + (i*2), datadefs::NUM_NAN);
   }
 
   mode = -1.0; 
@@ -242,7 +248,7 @@ void DataDefsTest::test_mode() {
   // Ensure a vector containing only NaNs is handled as expected
   data.clear();
   for (int i = 0; i < 50; ++i) {
-    data.push_back(numeric_limits<datadefs::num_t>::quiet_NaN());
+    data.push_back(datadefs::NUM_NAN);
   }
 
   mode = -1.0; 
@@ -269,7 +275,7 @@ void DataDefsTest::test_gamma() {
 
   // Interleave the original input with NaNs; verify we get the same results
   for (int i = 0; i < 50; ++i) {
-    data.insert(data.begin() + (i*2), numeric_limits<datadefs::num_t>::quiet_NaN());
+    data.insert(data.begin() + (i*2), datadefs::NUM_NAN);
   }
 
   gamma = -1.0; 
@@ -281,7 +287,7 @@ void DataDefsTest::test_gamma() {
   // Ensure a vector containing only NaNs is handled as expected
   data.clear();
   for (int i = 0; i < 50; ++i) {
-    data.push_back(numeric_limits<datadefs::num_t>::quiet_NaN());
+    data.push_back(datadefs::NUM_NAN);
   }
 
   gamma = -1.0; 
@@ -301,12 +307,9 @@ void DataDefsTest::test_cardinality() {
   datadefs::cardinality(data, cardinality);
   CPPUNIT_ASSERT(cardinality == 50);
 
-  // numClasses is defined as const in our signature. Since we're not testing
-  //  edge cases of non-trivial memory corruption, we ignore it here. 
-
   // Interleave the original input with NaNs; verify we get the same results
   for (int i = 0; i < 50; ++i) {
-    data.insert(data.begin() + (i*2), numeric_limits<datadefs::num_t>::quiet_NaN());
+    data.insert(data.begin() + (i*2), datadefs::NUM_NAN);
   }
 
   cardinality = static_cast<size_t>(-1);
@@ -317,7 +320,7 @@ void DataDefsTest::test_cardinality() {
   // Ensure a vector containing only NaNs is handled as expected
   data.clear();
   for (int i = 0; i < 50; ++i) {
-    data.push_back(numeric_limits<datadefs::num_t>::quiet_NaN());
+    data.push_back(datadefs::NUM_NAN);
   }
 
   cardinality = static_cast<size_t>(-1); 
@@ -327,72 +330,602 @@ void DataDefsTest::test_cardinality() {
 }
 
 void DataDefsTest::test_sqerr() {
-  // CPPUNIT_FAIL("+ This test is currently unimplemented");
+  vector<datadefs::num_t> data;
+  datadefs::num_t mu = -1.0;
+  datadefs::num_t se = -1.0;
+  size_t nRealValues = static_cast<size_t>(-1);
+  for (int i = 0; i < 50; ++i) {
+    data.push_back(static_cast<datadefs::num_t>(i));
+  }
+  
+  datadefs::sqerr(data, mu, se, nRealValues);
+  CPPUNIT_ASSERT(mu == 24.5);
+  CPPUNIT_ASSERT(se == 10412.5);
+  CPPUNIT_ASSERT(nRealValues == 50);
+  
+  // Our data vector is defined as const in our signature. Since we're not
+  //  testing edge cases of non-trivial memory corruption, we ignore it here.
+  
+  // Interleave the original input with NaNs; verify we get the same results
+  for (int i = 0; i < 50; ++i) {
+    data.insert(data.begin() + (i*2), datadefs::NUM_NAN);
+  }
+
+  nRealValues = static_cast<size_t>(-1);
+  
+  datadefs::sqerr(data, mu, se, nRealValues);
+  CPPUNIT_ASSERT(mu == 24.5);
+  CPPUNIT_ASSERT(se == 10412.5);
+  CPPUNIT_ASSERT(nRealValues == 50); 
+  
+  // Ensure a vector containing only NaNs is handled as expected
+  data.clear();
+  for (int i = 0; i < 50; ++i) {
+    data.push_back(datadefs::NUM_NAN);
+  }
+
+  nRealValues = static_cast<size_t>(-1); 
+  
+  datadefs::sqerr(data, mu, se, nRealValues);
+  CPPUNIT_ASSERT(mu == 0.0);
+  CPPUNIT_ASSERT(se == 0.0);
+  CPPUNIT_ASSERT(nRealValues == 0);
 }
 
 void DataDefsTest::test_countRealValues() {
-  // CPPUNIT_FAIL("+ This test is currently unimplemented");
+  vector<datadefs::num_t> data;
+  size_t nRealValues = static_cast<size_t>(-1);
+  for (int i = 0; i < 50; ++i) {
+    data.push_back(static_cast<datadefs::num_t>(i));
+  }
+  
+  datadefs::countRealValues(data, nRealValues);
+  CPPUNIT_ASSERT(nRealValues == 50);
+  
+  // Our data vector is defined as const in our signature. Since we're not
+  //  testing edge cases of non-trivial memory corruption, we ignore it here.
+  
+  // Interleave the original input with NaNs; verify we get the same results
+  for (int i = 0; i < 50; ++i) {
+    data.insert(data.begin() + (i*2), datadefs::NUM_NAN);
+  }
+
+  nRealValues = static_cast<size_t>(-1);
+
+  datadefs::countRealValues(data, nRealValues);
+  CPPUNIT_ASSERT(nRealValues == 50); 
+  
+  // Ensure a vector containing only NaNs is handled as expected
+  data.clear();
+  for (int i = 0; i < 50; ++i) {
+    data.push_back(datadefs::NUM_NAN);
+  }
+
+  nRealValues = static_cast<size_t>(-1); 
+  
+  datadefs::countRealValues(data, nRealValues);
+  CPPUNIT_ASSERT(nRealValues == 0);
 }
 
+// !! TODO: make this test slightly more robust.
 void DataDefsTest::test_count_freq() {
-  // CPPUNIT_FAIL("+ This test is currently unimplemented");
+  vector<datadefs::num_t> data;
+  map<datadefs::num_t,size_t> cat2freq;
+  size_t nRealValues = static_cast<size_t>(-1);
+  for (int i = 0; i < 50; ++i) {
+    data.push_back(static_cast<datadefs::num_t>(i));
+  }
+  data.push_back(0.0);
+  
+  datadefs::count_freq(data, cat2freq, nRealValues);
+  CPPUNIT_ASSERT(cat2freq.size() == 50);
+  CPPUNIT_ASSERT(nRealValues == 51);
+  
+  // Our data vector is defined as const in our signature. Since we're not
+  //  testing edge cases of non-trivial memory corruption, we ignore it here.
+  
+  // Interleave the original input with NaNs; verify we get the same results
+  for (int i = 0; i < 50; ++i) {
+    data.insert(data.begin() + (i*2), datadefs::NUM_NAN);
+  }
+
+  cat2freq.clear();
+  nRealValues = static_cast<size_t>(-1);
+
+  datadefs::count_freq(data, cat2freq, nRealValues);
+  CPPUNIT_ASSERT(cat2freq.size() == 50);
+  CPPUNIT_ASSERT(nRealValues == 51);
+  
+  // Ensure a vector containing only NaNs is handled as expected
+  data.clear();
+  for (int i = 0; i < 50; ++i) {
+    data.push_back(datadefs::NUM_NAN);
+  }
+
+  cat2freq.clear();
+  nRealValues = static_cast<size_t>(-1); 
+  
+  datadefs::count_freq(data, cat2freq, nRealValues);
+  CPPUNIT_ASSERT(cat2freq.size() == 0);
+  CPPUNIT_ASSERT(nRealValues == 0);
 }
 
+// !! TODO: make this test more robust
 void DataDefsTest::test_map_data() {
-  // CPPUNIT_FAIL("+ This test is currently unimplemented");
+  vector<datadefs::num_t> data;
+  map<datadefs::num_t,vector<size_t> > datamap; 
+  size_t nRealValues;
+  for (int i = 0; i < 50; ++i) {
+    data.push_back(static_cast<datadefs::num_t>(i));
+  }
+  data.push_back(0.0);
+
+  datadefs::map_data(data, datamap, nRealValues);
+  CPPUNIT_ASSERT(datamap.size() == 50);
+  CPPUNIT_ASSERT(nRealValues == 51);
+    
+  // Our data vector is defined as const in our signature. Since we're not
+  //  testing edge cases of non-trivial memory corruption, we ignore it here.
+  
+  // Interleave the original input with NaNs; verify we get the same results
+  for (int i = 0; i < 50; ++i) {
+    data.insert(data.begin() + (i*2), datadefs::NUM_NAN);
+  }
+
+  nRealValues = static_cast<size_t>(-1);
+  datadefs::map_data(data, datamap, nRealValues);
+  CPPUNIT_ASSERT(datamap.size() == 50);
+  CPPUNIT_ASSERT(nRealValues == 51);
+  
+  // Ensure a vector containing only NaNs is handled as expected
+  data.clear();
+  for (int i = 0; i < 50; ++i) {
+    data.push_back(datadefs::NUM_NAN);
+  }
+
+  nRealValues = static_cast<size_t>(-1); 
+  datadefs::map_data(data, datamap, nRealValues);
+  CPPUNIT_ASSERT(datamap.size() == 0);
+  CPPUNIT_ASSERT(nRealValues == 0);
 }
 
 void DataDefsTest::test_gini() {
-  // !! Note: two signatures!
-  // CPPUNIT_FAIL("+ This test is currently unimplemented");
+  vector<datadefs::num_t> data;
+  datadefs::num_t giniIndex; // I dream of gini.
+                             //  </obligatoryFunnyComment>
+  size_t nRealValues;
+  map<datadefs::num_t,size_t> cat2freq;
+
+  for (int i = 0; i < 50; ++i) {
+    data.push_back(static_cast<datadefs::num_t>(i));
+  }
+  data.push_back(0.0);
+
+  datadefs::gini(data, giniIndex, nRealValues);
+  CPPUNIT_ASSERT(fabs(giniIndex - 0.9796232218377547429355445274268276989459991455078125)
+                  < datadefs::EPS);
+  CPPUNIT_ASSERT(nRealValues == 51);
+  
+  datadefs::count_freq(data, cat2freq, nRealValues);
+  CPPUNIT_ASSERT(cat2freq.size() == 50);
+  CPPUNIT_ASSERT(nRealValues == 51);
+
+  datadefs::gini(cat2freq, giniIndex);
+  CPPUNIT_ASSERT(fabs(giniIndex - 0.9796232218377547429355445274268276989459991455078125)
+                  < datadefs::EPS);
+  
+  // Our data vector is defined as const in our signature. Since we're not
+  //  testing edge cases of non-trivial memory corruption, we ignore it here.
+  
+  // Interleave the original input with NaNs; verify we get the same results
+  for (int i = 0; i < 50; ++i) {
+    data.insert(data.begin() + (i*2), datadefs::NUM_NAN);
+  }
+
+  nRealValues = static_cast<size_t>(-1);
+  datadefs::gini(data, giniIndex, nRealValues);
+  CPPUNIT_ASSERT(fabs(giniIndex - 0.9796232218377547429355445274268276989459991455078125)
+                  < datadefs::EPS);
+  CPPUNIT_ASSERT(nRealValues == 51);
+  
+  datadefs::count_freq(data, cat2freq, nRealValues);
+  CPPUNIT_ASSERT(cat2freq.size() == 50);
+  CPPUNIT_ASSERT(nRealValues == 51);
+
+  datadefs::gini(cat2freq, giniIndex);
+  CPPUNIT_ASSERT(fabs(giniIndex - 0.9796232218377547429355445274268276989459991455078125)
+                  < datadefs::EPS);
+  
+  // Ensure a vector containing only NaNs is handled as expected
+  data.clear();
+  for (int i = 0; i < 50; ++i) {
+    data.push_back(datadefs::NUM_NAN);
+  }
+
+  nRealValues = static_cast<size_t>(-1); 
+  datadefs::gini(data, giniIndex, nRealValues);
+  CPPUNIT_ASSERT(giniIndex == 0.0);
+  CPPUNIT_ASSERT(nRealValues == 0);
+  
+  datadefs::count_freq(data, cat2freq, nRealValues);
+  CPPUNIT_ASSERT(cat2freq.size() == 0);
+  CPPUNIT_ASSERT(nRealValues == 0);
+
+  datadefs::gini(cat2freq, giniIndex);
+  CPPUNIT_ASSERT(giniIndex == 0.0);
+
+  
 }
 
 void DataDefsTest::test_sqfreq() {
-  // CPPUNIT_FAIL("+ This test is currently unimplemented");
+  vector<datadefs::num_t> data; 
+  map<datadefs::num_t,size_t> freq;
+  size_t sqFreq;
+  size_t nRealValues;
+  for (int i = 0; i < 50; ++i) {
+    data.push_back(static_cast<datadefs::num_t>(i));
+  }
+  data.push_back(0.0);
+  
+  datadefs::sqfreq(data, freq, sqFreq, nRealValues);
+  CPPUNIT_ASSERT(freq.size() == 50);
+  CPPUNIT_ASSERT(sqFreq == 53);
+  CPPUNIT_ASSERT(nRealValues == 51);
+
+  // Our data vector is defined as const in our signature. Since we're not
+  //  testing edge cases of non-trivial memory corruption, we ignore it here.
+
+  // Interleave the original input with NaNs; verify we get the same results
+  for (int i = 0; i < 50; ++i) {
+    data.insert(data.begin() + (i*2), datadefs::NUM_NAN);
+  }
+
+  freq.clear();
+  sqFreq = static_cast<size_t>(-1);
+  nRealValues = static_cast<size_t>(-1);
+
+  datadefs::sqfreq(data, freq, sqFreq, nRealValues);
+  CPPUNIT_ASSERT(freq.size() == 50);
+  CPPUNIT_ASSERT(sqFreq == 53);
+  CPPUNIT_ASSERT(nRealValues == 51);
+  
+  // Ensure a vector containing only NaNs is handled properly
+  data.clear();
+  for (int i = 0; i < 50; ++i) {
+    data.push_back(datadefs::NUM_NAN);
+  }
+  
+  freq.clear();
+  sqFreq = static_cast<size_t>(-1);
+  nRealValues = static_cast<size_t>(-1);
+  
+  datadefs::sqfreq(data, freq, sqFreq, nRealValues);
+  CPPUNIT_ASSERT(freq.size() == 0);
+  CPPUNIT_ASSERT(sqFreq == 0);
+  CPPUNIT_ASSERT(nRealValues == 0);
 }
 
 void DataDefsTest::test_forward_sqfreq() {
-  // CPPUNIT_FAIL("+ This test is currently unimplemented");
+  
+  vector<datadefs::num_t> data; 
+  map<datadefs::num_t,size_t> freq;
+  size_t sqFreq;
+  size_t nRealValues;
+  datadefs::num_t x_n;
+  size_t n;
+  for (int i = 0; i < 50; ++i) {
+    data.push_back(static_cast<datadefs::num_t>(i));
+  }
+  data.push_back(0.0);
+  
+  x_n = 50; n = 50;
+  datadefs::sqfreq(data, freq, sqFreq, nRealValues);
+  datadefs::forward_sqfreq(x_n, n, freq, sqFreq);
+  CPPUNIT_ASSERT(n == 51);
+  CPPUNIT_ASSERT(freq.size() == 51);
+  CPPUNIT_ASSERT(sqFreq == 54);
+
+  // Ensure NaN repudiation
+  //  !! TODO Eventually, this should be replaced with error code validation. 
+  x_n = datadefs::NUM_NAN; n = 0;
+  datadefs::forward_sqfreq(x_n, n, freq, sqFreq);
+
+  // Nothing should have changed
+  CPPUNIT_ASSERT(n == 0);
+  CPPUNIT_ASSERT(freq.size() == 51);
+  CPPUNIT_ASSERT(sqFreq == 54);
+  
+  // Ensure standard error is zeroed in the case of an unusable value for n
+  x_n = 3.1415; n = 0; 
+  datadefs::forward_sqfreq(x_n, n, freq, sqFreq);
+  CPPUNIT_ASSERT(n == 1); // Incremented
+  CPPUNIT_ASSERT(freq.size() == 52);
+  CPPUNIT_ASSERT(sqFreq == 55);
+  
+  // Ensure standard error is zeroed in the case of an unusable value for n
+  x_n = 10; n = 0; 
+  datadefs::forward_sqfreq(x_n, n, freq, sqFreq);
+  CPPUNIT_ASSERT(n == 1); // Incremented
+  CPPUNIT_ASSERT(freq.size() == 52);
+  CPPUNIT_ASSERT(sqFreq == 58);
+
+  try {
+    x_n = 3.1415; n = static_cast<size_t>(-1); 
+    datadefs::forward_sqfreq(x_n, n, freq, sqFreq);
+    CPPUNIT_FAIL("datadefs::forward_sqfreq didn't throw any exception; expected 'ERRNO_NUMERIC_OVERFLOW'");
+  } catch (int e) {  // Ensure standard error is zeroed in the case of an
+                     // unusable value for n
+    CPPUNIT_ASSERT(e == ERRNO_NUMERIC_OVERFLOW);
+    CPPUNIT_ASSERT(n == 0);
+
+    // Nothing else should have changed
+    CPPUNIT_ASSERT(freq.size() == 52);
+    CPPUNIT_ASSERT(sqFreq == 58);
+  }
 }
 
 void DataDefsTest::test_forward_backward_sqfreq() {
-  // CPPUNIT_FAIL("+ This test is currently unimplemented");
+
+  vector<datadefs::num_t> data; 
+  map<datadefs::num_t,size_t> freq_left;
+  size_t sf_left;
+  map<datadefs::num_t,size_t> freq_right;
+  size_t sf_right; 
+  size_t nRealValues;
+  datadefs::num_t x_n;
+  size_t n_left;
+  size_t n_right;
+  for (int i = 0; i < 50; ++i) {
+    data.push_back(static_cast<datadefs::num_t>(i));
+  }
+  data.push_back(0.0);
+   
+  datadefs::sqfreq(data, freq_left, sf_left, nRealValues);
+  datadefs::sqfreq(data, freq_right, sf_right, nRealValues);
+  CPPUNIT_ASSERT(freq_left.size() == 50); 
+  CPPUNIT_ASSERT(sf_left == 53);
+  CPPUNIT_ASSERT(freq_right.size() == 50); 
+  CPPUNIT_ASSERT(sf_right == 53);
+  
+  // Ensure NaN repudiation
+  //  !! TODO Eventually, this should be replaced with error code validation. 
+  x_n = datadefs::NUM_NAN;
+   n_left = 50; n_right = 50;
+  datadefs::forward_backward_sqfreq(x_n, n_left, freq_left, sf_left, n_right, freq_right, sf_right);
+  
+  // Nothing should have changed
+  CPPUNIT_ASSERT(n_left == 50);
+  CPPUNIT_ASSERT(n_right == 50);
+  CPPUNIT_ASSERT(freq_left.size() == 50); 
+  CPPUNIT_ASSERT(sf_left == 53);
+  CPPUNIT_ASSERT(freq_right.size() == 50); 
+  CPPUNIT_ASSERT(sf_right == 53);
+
+  x_n = 10; n_left = 50; n_right = 50;
+  datadefs::forward_backward_sqfreq(x_n, n_left, freq_left, sf_left, n_right, freq_right, sf_right);
+
+  CPPUNIT_ASSERT(n_left == 51); // Incremented
+  CPPUNIT_ASSERT(freq_left.size() == 50);
+  CPPUNIT_ASSERT(sf_left == 56);
+  CPPUNIT_ASSERT(n_right == 49); // Decremented
+  CPPUNIT_ASSERT(freq_right.size() == 49);
+  CPPUNIT_ASSERT(sf_right == 52);
+  
+  try {
+   x_n = 3.1415;
+    n_left = static_cast<size_t>(-1); n_right = 0; // Note: n_right would
+                                                        // underflow if we
+                                                        // didn't bomb out on
+                                                        // the overflow first.
+    datadefs::forward_backward_sqfreq(x_n, n_left, freq_left, sf_left, n_right, freq_right, sf_right);
+    CPPUNIT_FAIL("datadefs::forward_backward_sqfreq didn't throw any exception; expected 'ERRNO_NUMERIC_OVERFLOW'");
+  } catch (int e) {  // Ensure standard error is zeroed in the case of an
+                     // unusable value for n
+    CPPUNIT_ASSERT(e == ERRNO_NUMERIC_OVERFLOW);
+    CPPUNIT_ASSERT(n_left == 0); // Overflow
+
+    // Nothing else should have changed
+    CPPUNIT_ASSERT(freq_left.size() == 50);
+    CPPUNIT_ASSERT(sf_left == 56);
+    CPPUNIT_ASSERT(n_right == 0);
+    CPPUNIT_ASSERT(freq_right.size() == 49);
+    CPPUNIT_ASSERT(sf_right == 52);
+  }
+
+  try {
+   x_n = 3.1415;
+    n_left = 1; n_right = 0; 
+    datadefs::forward_backward_sqfreq(x_n, n_left, freq_left, sf_left, n_right, freq_right, sf_right);
+    CPPUNIT_FAIL("datadefs::forward_backward_sqfreq didn't throw any exception; expected 'ERRNO_NUMERIC_UNDERFLOW'");
+  } catch (int e) {  // Ensure standard error is zeroed in the case of an
+                     // unusable value for n
+    CPPUNIT_ASSERT(e == ERRNO_NUMERIC_UNDERFLOW);
+    CPPUNIT_ASSERT(n_right == static_cast<size_t>(-1)); // Underflow
+    CPPUNIT_ASSERT(n_left == 2); // Incremented
+
+    // Nothing else should have changed
+    CPPUNIT_ASSERT(freq_left.size() == 50);
+    CPPUNIT_ASSERT(sf_left == 56);
+    CPPUNIT_ASSERT(freq_right.size() == 49);
+    CPPUNIT_ASSERT(sf_right == 52);
+  }
 }
 
 void DataDefsTest::test_range() {
-  // CPPUNIT_FAIL("+ This test is currently unimplemented");
+  vector<size_t> data(50,0);
+
+  datadefs::range(data);
+  for (size_t i = 0; i < 50; ++i) {
+    CPPUNIT_ASSERT(data[i] == i);
+  }
+
+  data.clear();
+  datadefs::range(data);
+  CPPUNIT_ASSERT(data.size() == 0);
+
+  vector<size_t> atad(50,datadefs::NUM_NAN);
+  datadefs::range(atad);
+  for (size_t i = 0; i < 50; ++i) {
+    CPPUNIT_ASSERT(atad[i] == i);
+  }
 }
 
 void DataDefsTest::test_sortDataAndMakeRef() {
-  // CPPUNIT_FAIL("+ This test is currently unimplemented");
-}
+  vector<datadefs::num_t> data;
+  vector<size_t> refIcs;
+  data.push_back(0.0);
+  for (int i = 0; i < 50; ++i) {
+    data.push_back(static_cast<datadefs::num_t>(i));
+  }
+  
+  for (int i = 49; i > -1; --i) { // Deliberately of length data.size() - 1
+    refIcs.push_back(static_cast<datadefs::num_t>(i));
+  } // This allocation should be irrelevant. We keep it here deliberately to
+    //  ensure the results are flattened in a safe manner; we expect a bounds
+    //  checker to complain violently should that not be the case. 
 
-void DataDefsTest::test_ttest() {
-  // CPPUNIT_FAIL("+ This test is currently unimplemented");
+  datadefs::sortDataAndMakeRef(true, data, refIcs);
+  CPPUNIT_ASSERT(data[0] == 0.0);
+  CPPUNIT_ASSERT(refIcs[0] == 0);
+  for (int i = 1; i < 51; ++i) {
+    CPPUNIT_ASSERT(data[i] == static_cast<datadefs::num_t>(i-1));
+    CPPUNIT_ASSERT(refIcs[i] == i);
+  }
+
+  datadefs::sortDataAndMakeRef(false, data, refIcs);
+  for (int i = 0; i < 50; ++i) {
+    CPPUNIT_ASSERT(data[i] == static_cast<datadefs::num_t>(49-i));
+    CPPUNIT_ASSERT(refIcs[i] == 50-i);
+  }
+  CPPUNIT_ASSERT(data[50] == 0.0);
+  CPPUNIT_ASSERT(refIcs[50] == 0);
+
+  // Check for correct behavior with an empty data list and arbitrary refIcs
+  data.clear();
+  datadefs::sortDataAndMakeRef(true, data, refIcs);
+  CPPUNIT_ASSERT(data.size() == 0);
+  CPPUNIT_ASSERT(refIcs.size() == 0);
+  
+  datadefs::sortDataAndMakeRef(false, data, refIcs);
+  CPPUNIT_ASSERT(data.size() == 0);
+  CPPUNIT_ASSERT(refIcs.size() == 0);
+
+  // NaNs are not checked as sorting targets, as their behavior is currently undefined
 }
 
 void DataDefsTest::test_utest() {
-  // CPPUNIT_FAIL("+ This test is currently unimplemented");
+  vector<datadefs::num_t> x;
+  vector<datadefs::num_t> y;
+  vector<datadefs::num_t> y2;
+  datadefs::num_t pvalue;
+  
+  for (int i = 0; i < 50; ++i) {
+    x.push_back(static_cast<datadefs::num_t>(i));
+    y.push_back(static_cast<datadefs::num_t>(i));
+    y2.push_back(static_cast<datadefs::num_t>(49-i));
+  }
+
+  datadefs::utest(x, y, pvalue);
+  CPPUNIT_ASSERT(fabs(pvalue - 0.5684170524500589127825378454872407019138336181640625)
+                  < datadefs::EPS);
+
+  datadefs::utest(x, y2, pvalue);
+  CPPUNIT_ASSERT(fabs(pvalue - 0.5684170524500589127825378454872407019138336181640625)
+                  < datadefs::EPS);
+
+  // Interleave the original input with NaNs; verify we get different results
+  for (int i = 0; i < 50; ++i) {
+    x.insert(x.begin() + (i*2), datadefs::NUM_NAN);
+    y.insert(y.begin() + (i*2), datadefs::NUM_NAN);
+    y2.insert(y2.begin() + (i*2), datadefs::NUM_NAN);
+  }
+  
+  datadefs::utest(x, y, pvalue);
+  CPPUNIT_ASSERT(fabs(pvalue - 0.999112880516312973355752546922303736209869384765625)
+                  < datadefs::EPS);
+
+  datadefs::utest(x, y2, pvalue);
+  CPPUNIT_ASSERT(fabs(pvalue - 0.999112880516312973355752546922303736209869384765625)
+                  < datadefs::EPS);
+
+  // Verify behavior when x and y are empty
+  x.clear();
+  y.clear();
+  y2.clear();
+  
+  datadefs::utest(x, y, pvalue);
+  CPPUNIT_ASSERT(datadefs::isNAN(pvalue));
+
+  // Verify behavior with all values as NaN
+  for (int i = 0; i < 50; ++i) {
+    x.push_back(datadefs::NUM_NAN);
+    y.push_back(datadefs::NUM_NAN);
+  }
+
+  datadefs::utest(x, y, pvalue);
+  CPPUNIT_ASSERT(pvalue == 1.0);
+
+  // Verify behavior with all values for y as NaN
+  x.clear();
+  for (int i = 0; i < 50; ++i) {
+    x.push_back(static_cast<datadefs::num_t>(i));
+  }
+
+  datadefs::utest(x, y, pvalue);
+  CPPUNIT_ASSERT(pvalue == 0.0);
 }
 
 void DataDefsTest::test_erf() {
-  // CPPUNIT_FAIL("+ This test is currently unimplemented");
-}
+  datadefs::num_t x;
 
-void DataDefsTest::test_regularized_betainc() {
-  // CPPUNIT_FAIL("+ This test is currently unimplemented");
+  x = 0.0;
+  CPPUNIT_ASSERT(datadefs::erf(x) == 0.0);
+
+  x = 1.0;
+  CPPUNIT_ASSERT(fabs(datadefs::erf(x) - 0.84292558224862812465971728670410811901092529296875)
+                  < datadefs::EPS);
+
+  x = datadefs::NUM_NAN;
+  CPPUNIT_ASSERT(datadefs::isNAN(datadefs::erf(x)));
 }
 
 void DataDefsTest::test_spearman_correlation() {
-  // CPPUNIT_FAIL("+ This test is currently unimplemented");
+  CPPUNIT_FAIL("+ This test for datadefs::spearman_correlation(...) is currently unimplemented");
 }
 
 void DataDefsTest::test_pearson_correlation() {
-  // CPPUNIT_FAIL("+ This test is currently unimplemented");
-}
+  vector<datadefs::num_t> x;
+  vector<datadefs::num_t> y;
+  vector<datadefs::num_t> y2;
+  datadefs::num_t corr;
 
-void DataDefsTest::test_percentile() {
-  // CPPUNIT_FAIL("+ This test is currently unimplemented");
+  for (int i = 0; i < 50; ++i) {
+    x.push_back(static_cast<datadefs::num_t>(i));
+    y.push_back(static_cast<datadefs::num_t>(i));
+    y2.push_back(static_cast<datadefs::num_t>(49-i));
+  }
+  datadefs::pearson_correlation(x, y, corr);
+  CPPUNIT_ASSERT(corr == 1.0);
+
+  datadefs::pearson_correlation(x, y2, corr);
+  CPPUNIT_ASSERT(corr == -1.0);
+  
+  // x and y are defined as const in our signature. Since we're not
+  //  testing edge cases of non-trivial memory corruption, we ignore it here.
+
+  x.clear();
+  y.clear();
+  y2.clear();
+  
+  datadefs::pearson_correlation(x, y, corr);
+  CPPUNIT_ASSERT(datadefs::isNAN(corr));
+
+  for (int i = 0; i < 50; ++i) {
+    x.push_back(datadefs::NUM_NAN);
+    y.push_back(datadefs::NUM_NAN);
+  }
+  datadefs::pearson_correlation(x, y, corr);
+  CPPUNIT_ASSERT(datadefs::isNAN(corr));
 }
 
 void DataDefsTest::test_isNAN() {
@@ -410,7 +943,7 @@ void DataDefsTest::test_isNAN() {
   
   CPPUNIT_ASSERT(numeric_limits<datadefs::num_t>::has_quiet_NaN);
   CPPUNIT_ASSERT(datadefs::isNAN(
-                   numeric_limits<datadefs::num_t>::quiet_NaN()));
+                   datadefs::NUM_NAN));
   
   if (numeric_limits<datadefs::num_t>::has_infinity) {
     CPPUNIT_ASSERT(!datadefs::isNAN(
@@ -427,17 +960,17 @@ void DataDefsTest::test_isNAN() {
 void DataDefsTest::test_containsNAN() {
 
   vector<datadefs::num_t> justANaN;
-  justANaN.push_back(numeric_limits<datadefs::num_t>::quiet_NaN());
+  justANaN.push_back(datadefs::NUM_NAN);
   CPPUNIT_ASSERT(datadefs::containsNAN(justANaN));
 
   vector<datadefs::num_t> nanAtBack;
   nanAtBack.push_back(0.0);
   nanAtBack.push_back(1.0);
-  nanAtBack.push_back(numeric_limits<datadefs::num_t>::quiet_NaN());
+  nanAtBack.push_back(datadefs::NUM_NAN);
   CPPUNIT_ASSERT(datadefs::containsNAN(nanAtBack));
 
   vector<datadefs::num_t> nanAtFront;
-  nanAtFront.push_back(numeric_limits<datadefs::num_t>::quiet_NaN());
+  nanAtFront.push_back(datadefs::NUM_NAN);
   nanAtFront.push_back(-1.0);
   nanAtFront.push_back(0.0);
   CPPUNIT_ASSERT(datadefs::containsNAN(nanAtFront));
@@ -466,11 +999,10 @@ void DataDefsTest::test_forward_sqerr() {
 
   // Ensure NaN repudiation
   //  !! TODO Eventually, this should be replaced with error code validation. 
-  x_n = numeric_limits<datadefs::num_t>::quiet_NaN(); n = 0; mu = 0.0; se = 0.0;
+  x_n = datadefs::NUM_NAN; n = 0; mu = 0.0; se = 0.0;
   datadefs::forward_sqerr(x_n, n, mu, se);
-  CPPUNIT_ASSERT(x_n != x_n);
 
-  // Nothing else should have changed
+  // Nothing should have changed
   CPPUNIT_ASSERT(n == 0);
   CPPUNIT_ASSERT(mu == 0.0); 
   CPPUNIT_ASSERT(se == 0.0);
@@ -478,7 +1010,7 @@ void DataDefsTest::test_forward_sqerr() {
   // Ensure standard error is zeroed in the case of an unusable value for n
   x_n = 3.1415; n = 0; mu = 0.1337; se = 0.7331;
   datadefs::forward_sqerr(x_n, n, mu, se);
-  CPPUNIT_ASSERT(x_n == 3.1415);
+
   CPPUNIT_ASSERT(n == 1); // Incremented
   CPPUNIT_ASSERT(fabs(mu - 3.1415) < datadefs::EPS); // mu += (x_n - mu) / n;
   CPPUNIT_ASSERT(se == 0.0);    // if no asserts thrown and !(n > 1), se = 0.0
@@ -490,17 +1022,17 @@ void DataDefsTest::test_forward_sqerr() {
   } catch (int e) {  // Ensure standard error is zeroed in the case of an
                      // unusable value for n
     CPPUNIT_ASSERT(e == ERRNO_NUMERIC_OVERFLOW);
-    CPPUNIT_ASSERT(n == 0);
+    CPPUNIT_ASSERT(n == 0); // Overflow
 
     // Nothing else should have changed
-    CPPUNIT_ASSERT(x_n == 3.1415);
+
     CPPUNIT_ASSERT(mu == 0.1337);
     CPPUNIT_ASSERT(se == 0.7331);
   }
 
   x_n = 3.1415; n = 2; mu = 0.1337; se = 0.7331;
   datadefs::forward_sqerr(x_n, n, mu, se);
-  CPPUNIT_ASSERT(x_n == 3.1415);
+
   CPPUNIT_ASSERT(n == 3); // Incremented
   CPPUNIT_ASSERT(fabs(mu - 1.136299999999999865707422941341064870357513427734375)
                   < datadefs::EPS); // mu += (x_n - mu) / n;
@@ -519,14 +1051,13 @@ void DataDefsTest::test_forward_backward_sqerr() {
 
   // Ensure NaN repudiation
   //  !! TODO Eventually, this should be replaced with error code validation. 
-  x_n = numeric_limits<datadefs::num_t>::quiet_NaN();
+  x_n = datadefs::NUM_NAN;
    n_left = 0; mu_left = 0.0; se_left = 0.0;
    n_right = 0; mu_right = 0.0; se_right = 0.0;
    
   datadefs::forward_backward_sqerr(x_n, n_left, mu_left, se_left, n_right, mu_right, se_right);
-  CPPUNIT_ASSERT(x_n != x_n);
 
-  // Nothing else should have changed
+  // Nothing should have changed
   CPPUNIT_ASSERT(n_left == 0);
   CPPUNIT_ASSERT(mu_left == 0.0); 
   CPPUNIT_ASSERT(se_left == 0.0);
@@ -540,7 +1071,7 @@ void DataDefsTest::test_forward_backward_sqerr() {
    n_right = 1; mu_right = 0.9773; se_right = 0.3779;
    
   datadefs::forward_backward_sqerr(x_n, n_left, mu_left, se_left, n_right, mu_right, se_right);
-  CPPUNIT_ASSERT(x_n == 3.1415);
+
   CPPUNIT_ASSERT(n_left == 1); // Incremented
   CPPUNIT_ASSERT(fabs(mu_left - 3.1415) < datadefs::EPS); // mu_left += (x_n - mu_left) / n_left;
   CPPUNIT_ASSERT(se_left == 0.0);  // if no asserts thrown and !(n > 1), se_left = 0.0
@@ -555,7 +1086,7 @@ void DataDefsTest::test_forward_backward_sqerr() {
    n_right = 2; mu_right = 0.9773; se_right = 0.3779;
 
   datadefs::forward_backward_sqerr(x_n, n_left, mu_left, se_left, n_right, mu_right, se_right);
-  CPPUNIT_ASSERT(x_n == 3.1415);
+
   CPPUNIT_ASSERT(n_left == 1); // Incremented
   CPPUNIT_ASSERT(fabs(mu_left - 3.1415) < datadefs::EPS); // mu_left += (x_n - mu_left) / n_left;
   CPPUNIT_ASSERT(se_left == 0.0);  // if no asserts thrown and !(n > 1), se_left = 0.0
@@ -577,10 +1108,9 @@ void DataDefsTest::test_forward_backward_sqerr() {
   } catch (int e) {  // Ensure standard error is zeroed in the case of an
                      // unusable value for n
     CPPUNIT_ASSERT(e == ERRNO_NUMERIC_OVERFLOW);
-    CPPUNIT_ASSERT(n_left == 0);
+    CPPUNIT_ASSERT(n_left == 0); // Overflow
 
     // Nothing else should have changed
-    CPPUNIT_ASSERT(x_n == 3.1415);
     CPPUNIT_ASSERT(mu_left == 0.1337);
     CPPUNIT_ASSERT(se_left == 0.7331);
     CPPUNIT_ASSERT(n_right == 0);
@@ -591,19 +1121,16 @@ void DataDefsTest::test_forward_backward_sqerr() {
   try {
    x_n = 3.1415;
     n_left = 1; mu_left = 0.1337; se_left = 0.7331;
-    n_right = 0; mu_right = 0.9773; se_right = 0.3779; // Note: n_right would
-                                                        // underflow if we
-                                                        // didn't bomb out on
-                                                        // the overflow first.
+    n_right = 0; mu_right = 0.9773; se_right = 0.3779;
     datadefs::forward_backward_sqerr(x_n, n_left, mu_left, se_left, n_right, mu_right, se_right);
     CPPUNIT_FAIL("datadefs::forward_backward_sqerr didn't throw any exception; expected 'ERRNO_NUMERIC_UNDERFLOW'");
   } catch (int e) {  // Ensure standard error is zeroed in the case of an
                      // unusable value for n
     CPPUNIT_ASSERT(e == ERRNO_NUMERIC_UNDERFLOW);
-    CPPUNIT_ASSERT(n_right == static_cast<size_t>(-1));
-
-    CPPUNIT_ASSERT(x_n == 3.1415);
+    CPPUNIT_ASSERT(n_right == static_cast<size_t>(-1)); // Underflow
     CPPUNIT_ASSERT(n_left == 2); // Incremented
+
+    // Nothing else should have changed
     CPPUNIT_ASSERT(mu_left == 0.1337);
     CPPUNIT_ASSERT(se_left == 0.7331);
     CPPUNIT_ASSERT(mu_right == 0.9773);
@@ -615,7 +1142,7 @@ void DataDefsTest::test_forward_backward_sqerr() {
    n_right = 4; mu_right = 0.9773; se_right = 0.3779; 
 
   datadefs::forward_backward_sqerr(x_n, n_left, mu_left, se_left, n_right, mu_right, se_right);
-  CPPUNIT_ASSERT(x_n == 3.1415);
+
   CPPUNIT_ASSERT(n_left == 3); // Incremented
   CPPUNIT_ASSERT(fabs(mu_left - 1.136299999999999865707422941341064870357513427734375)
                   < datadefs::EPS); // mu_left += (x_n - mu_left) / n_left;
@@ -645,7 +1172,7 @@ void DataDefsTest::test_increasingOrderOperator() {
   pairedTestVector.push_back(pair<datadefs::num_t, int>(0.0,1));
   pairedTestVector.push_back(pair<datadefs::num_t, int>(-1.0,10));
   pairedTestVector.push_back(pair<datadefs::num_t, int>(
-                               numeric_limits<datadefs::num_t>::quiet_NaN(),0));
+                               datadefs::NUM_NAN,0));
 
   sort(pairedTestVector.begin(), pairedTestVector.end(), incOrder);
   CPPUNIT_ASSERT(pairedTestVector[0].first == -1.0);
@@ -654,7 +1181,7 @@ void DataDefsTest::test_increasingOrderOperator() {
     CPPUNIT_ASSERT(pairedTestVector[i].first == static_cast<double>(i-1));
     CPPUNIT_ASSERT(pairedTestVector[i].second == i);
   }
-  CPPUNIT_ASSERT(pairedTestVector[7].first != pairedTestVector[7].first);
+  CPPUNIT_ASSERT(datadefs::isNAN(pairedTestVector[7].first));
   CPPUNIT_ASSERT(pairedTestVector[7].second == 0);
 }
 
@@ -675,7 +1202,7 @@ void DataDefsTest::test_decreasingOrderOperator() {
   pairedTestVector.push_back(pair<datadefs::num_t, int>(0.0,1));
   pairedTestVector.push_back(pair<datadefs::num_t, int>(-1.0,10));
   pairedTestVector.push_back(pair<datadefs::num_t, int>(
-                               numeric_limits<datadefs::num_t>::quiet_NaN(),0));
+                               datadefs::NUM_NAN,0));
 
   sort(pairedTestVector.begin(), pairedTestVector.end(), decOrder);
   for (int i = 0; i > 6; --i) {
@@ -684,7 +1211,7 @@ void DataDefsTest::test_decreasingOrderOperator() {
   }
   CPPUNIT_ASSERT(pairedTestVector[6].first == -1.0);
   CPPUNIT_ASSERT(pairedTestVector[6].second == 10);
-  CPPUNIT_ASSERT(pairedTestVector[7].first != pairedTestVector[7].first);
+  CPPUNIT_ASSERT(datadefs::isNAN(pairedTestVector[7].first));
   CPPUNIT_ASSERT(pairedTestVector[7].second == 0);
 }
 
@@ -704,11 +1231,10 @@ void DataDefsTest::test_freqIncreasingOrderOperator() {
   pairedTestVector.push_back(pair<datadefs::num_t, size_t>(1.0,2));
   pairedTestVector.push_back(pair<datadefs::num_t, size_t>(0.0,1));
   pairedTestVector.push_back(pair<datadefs::num_t, size_t>(-1.0,10));
-  pairedTestVector.push_back(pair<datadefs::num_t, size_t>(
-                               numeric_limits<datadefs::num_t>::quiet_NaN(),0));
+  pairedTestVector.push_back(pair<datadefs::num_t, size_t>(datadefs::NUM_NAN,0));
 
   sort(pairedTestVector.begin(), pairedTestVector.end(), freqIncOrder);
-  CPPUNIT_ASSERT(pairedTestVector[0].first != pairedTestVector[0].first);
+  CPPUNIT_ASSERT(datadefs::isNAN(pairedTestVector[0].first));
   CPPUNIT_ASSERT(pairedTestVector[0].second == 0);
   for (int i = 1; i < 7; ++i) {
     CPPUNIT_ASSERT(pairedTestVector[i].first == static_cast<double>(i-1));
@@ -758,6 +1284,18 @@ void DataDefsTest::test_sortFromRef() {
   for (int i = 0; i < 50; ++i) {
     CPPUNIT_ASSERT(data[i] == 49-i);
   }
+}
+
+void DataDefsTest::test_ttest() {
+  CPPUNIT_FAIL("+ This test for (deprecated) datadefs::ttest(...) is currently unimplemented");
+}
+
+void DataDefsTest::test_regularized_betainc() {
+  CPPUNIT_FAIL("+ This test for (deprecated) datadefs::regularized_betainc(...) is currently unimplemented");
+}
+
+void DataDefsTest::test_percentile() {
+  CPPUNIT_FAIL("+ This test for (deprecated) datadefs::percentile(...) is currently unimplemented");
 }
 
 // Registers the fixture into the test 'registry'
