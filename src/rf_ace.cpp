@@ -54,10 +54,6 @@ struct General_options {
   string targetStr_s;
   string targetStr_l;
 
-  string featureMask;
-  string featureMask_s;
-  string featureMask_l;
-
   bool noRF;
   string noRF_s;
   string noRF_l;
@@ -82,10 +78,6 @@ struct General_options {
     targetStr(""),
     targetStr_s("i"),
     targetStr_l("target"),
-
-    featureMask(""),
-    featureMask_s("M"),
-    featureMask_l("fmask"),
     
     noRF(GENERAL_DEFAULT_NO_RF),
     noRF_s("f"),
@@ -236,18 +228,13 @@ void printHelp(const General_options& geno, const RF_options& rfo, const GBT_opt
   cout << " -" << geno.output_s << " / --" << geno.output_l << setw( maxwidth - geno.output_l.size() )
        << " " << "Output association file" << endl;
   cout << endl;
-
-  cout << "OPTIONAL ARGUMENTS:" << endl;
-  cout << " -" << geno.featureMask_s << " / --" << geno.featureMask_l << setw( maxwidth - geno.featureMask_l.size() )
-       << " " << "Feature mask file. String of ones and zeroes, zeroes indicating removal of the feature in the matrix" << endl;
-  cout << endl;
   
   cout << "OPTIONAL ARGUMENTS -- RF FILTER:" << endl;
   cout << " -" << geno.noRF_s << " / --" << geno.noRF_l << setw( maxwidth - geno.noRF_l.size() )
        << " " << "Set this flag to turn RF filtering OFF (default ON)" << endl; 
   cout << " -" << rfo.isOptimizedNodeSplit_s << " / --" << rfo.isOptimizedNodeSplit_l
        << setw( maxwidth - rfo.isOptimizedNodeSplit_l.size() )
-       << " " << "Perform optimized node splitting with Random Forests (currently ENFORCED)" << endl;
+       << " " << "Perform optimized node splitting with Random Forests (default NO)" << endl;
   cout << " -" << rfo.nTrees_s << " / --" << rfo.nTrees_l << setw( maxwidth - rfo.nTrees_l.size() )
        << " " << "Number of trees per RF (default 10*nsamples/nrealsamples)" << endl;
   cout << " -" << rfo.mTry_s << " / --" << rfo.mTry_l << setw( maxwidth - rfo.mTry_l.size() )
@@ -266,7 +253,7 @@ void printHelp(const General_options& geno, const RF_options& rfo, const GBT_opt
        << " " << "Enable Gradient Boosting Trees (default ON)" << endl;
   cout << " -" << gbto.isOptimizedNodeSplit_s << " / --" << gbto.isOptimizedNodeSplit_l
        << setw( maxwidth - gbto.isOptimizedNodeSplit_l.size() ) 
-       << " " << "Perform optimized node splitting with Gradient Boosting Trees (currently ENFORCED)" << endl;
+       << " " << "Perform optimized node splitting with Gradient Boosting Trees (default NO)" << endl;
   cout << " -" << gbto.nTrees_s << " / --" << gbto.nTrees_l << setw( maxwidth - gbto.nTrees_l.size() ) 
        << " " << "Number of trees in the GBT (default " << GBT_DEFAULT_N_TREES << ")" << endl; 
   cout << " -" << gbto.nMaxLeaves_s << " / --" << gbto.nMaxLeaves_l << setw( maxwidth - gbto.nMaxLeaves_l.size() ) 
@@ -310,7 +297,7 @@ int main(const int argc, char* const argv[]) {
 
   
   // first General Options
-  parser.getFlag(gen_op.printHelp_s, gen_op.printHelp_l, gen_op.printHelp);
+  parser.getArgument<bool>(gen_op.printHelp_s, gen_op.printHelp_l, gen_op.printHelp);
   parser.getArgument<string>(gen_op.input_s, gen_op.input_l, gen_op.input); 
   parser.getArgument<string>(gen_op.targetStr_s, gen_op.targetStr_l, gen_op.targetStr); 
   parser.getArgument<string>(gen_op.output_s, gen_op.output_l, gen_op.output);
@@ -330,11 +317,6 @@ int main(const int argc, char* const argv[]) {
   parser.getArgument<num_t>(GBT_op.shrinkage_s, GBT_op.shrinkage_l, GBT_op.shrinkage);
   parser.getArgument<num_t>(GBT_op.subSampleSize_s, GBT_op.subSampleSize_l, GBT_op.subSampleSize);
   
-  if(gen_op.printHelp) {
-    printHelp(gen_op,RF_op_copy,GBT_op);
-    return(EXIT_SUCCESS);
-  }
-
   //Print values of parameters of RF-ACE
   cout << endl;
   cout << "RF-ACE parameter configuration:" << endl;
@@ -365,6 +347,11 @@ int main(const int argc, char* const argv[]) {
     cout << "  --(GBT)subsamplesize = " << GBT_op.subSampleSize << endl;
     cout << endl;
   }
+  
+  if(gen_op.printHelp) {
+    printHelp(gen_op,RF_op_copy,GBT_op);
+    return(EXIT_SUCCESS);
+  }
 
   //Print help and exit if input file is not specified
   if(gen_op.input == "") {
@@ -390,13 +377,8 @@ int main(const int argc, char* const argv[]) {
   // !!  directory. This should be fixed.
 
   //Read data into Treedata object
-  cout << endl << "Reading file '" << gen_op.input << "', please wait..." << endl;
+  cout << endl << "Reading file '" << gen_op.input << "' please wait..." << endl;
   Treedata treedata_copy(gen_op.input);
-
-  if(gen_op.featureMask != "") {
-    cout << endl << "Reading masking file '" << gen_op.featureMask << "', please wait..." << endl;
-    //vector<bool>
-  }
 
   //Check which feature names match with the specified target identifier
   set<size_t> targetIcs;
@@ -406,11 +388,6 @@ int main(const int argc, char* const argv[]) {
     cerr << "No features match the specified target identifier '" << gen_op.targetStr << "'" << endl;
     return EXIT_FAILURE;
   }
-
-  if(gen_op.featureMask != "" && targetIcs.size() > 1) {
-    cout << "WARNING: feature mask is specified in the presence of multiple targets. All targets will be analyzed with the same mask set." << endl;
-  }
-
 
   cout << endl << "[list of parameter values will be added here soon]" << endl;
   cout << endl << "[Optimized node splitting enforced]" << endl << endl;
@@ -475,7 +452,14 @@ int main(const int argc, char* const argv[]) {
         RF_op.nodeSize = altNodeSize;
       }
     }
-                  
+            
+    //if(!op.applyFilter) {
+    // NOTE: THIS WILL TAKE EFFECT AFTER GBT IS IN PLACE
+    //if(optimizedRF) {
+    //    cout << "NOTE: setting filter optimizations ON does not help when the filter is OFF" << endl;
+    //  }
+    //  }
+      
     if(treedata.nFeatures() < RF_op.mTry) {
       cerr << "Not enough features (" << treedata.nFeatures()-1 << ") to test with mtry = " << RF_op.mTry << " features per split" << endl;
       return EXIT_FAILURE;
@@ -495,6 +479,15 @@ int main(const int argc, char* const argv[]) {
     vector<num_t> importanceValues; //(treedata.nFeatures());
       
     if(!gen_op.noRF) {
+      //cout << "1/3 Random Forest filter *ENABLED*. Options:" << endl;
+      //cout << "  --optimize       = "; if(RF_op.isOptimizedNodeSplit) { cout << "YES" << endl; } else { cout << "NO" << endl; }
+      //cout << "  --ntrees         = " << RF_op.nTrees << endl;
+      //cout << "  --mtry           = " << RF_op.mTry << endl;
+      //cout << "  --nodesize       = " << RF_op.nodeSize << endl;
+      //cout << "  --nperms         = " << RF_op.nPerms << endl;
+      //cout << "  --pthresold      = " << RF_op.pValueThreshold << endl;
+      //cout << endl;
+
       cout << "    => filtering " << flush;
 
       executeRandomForestFilter(treedata,targetIdx,RF_op,pValues,importanceValues);
@@ -538,6 +531,14 @@ int main(const int argc, char* const argv[]) {
       
 
     if(!gen_op.noGBT) {
+      //cout << "3/3 Gradient Boosting Trees *ENABLED* (NON-FUNCTIONAL, WILL NOT AFFECT OUTPUT). Options:" << endl;
+      //cout << "GBT ";if(gen_op.noGBT) { cout << "DISABLED:" << endl; } else { cout << "ENABLED:" << endl; }
+      //cout << "  --optimize        = "; if(GBT_op.isOptimizedNodeSplit) { cout << "YES" << endl; } else { cout << "NO" << endl; }
+      //cout << "  --ntrees          = " << GBT_op.nTrees << endl;
+      //cout << "  --maxleaves       = " << GBT_op.nMaxLeaves << endl;
+      //cout << "  --shrinkage       = " << GBT_op.shrinkage << endl;
+      //cout << "  --samplesize      = " << GBT_op.subSampleSize << endl;
+
       cout << "    => analyzing with GBT " << flush;
        
       GBT gbt(&treedata, targetIdx, GBT_op.nTrees, GBT_op.nMaxLeaves, GBT_op.shrinkage, GBT_op.subSampleSize);
