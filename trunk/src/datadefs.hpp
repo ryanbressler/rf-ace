@@ -70,15 +70,15 @@ namespace datadefs {
 
   void count_freq(vector<num_t> const& data, map<num_t,size_t>& cat2freq, size_t& nRealValues);
 
-  void map_data(vector<num_t>& data, 
+  void map_data(vector<num_t> const& data, 
                 map<num_t,vector<size_t> >& datamap,
                 size_t& nRealValues);
 
-  void gini(vector<num_t>& data,
+  void gini(vector<num_t> const& data,
             num_t& giniIndex,
             size_t& nRealValues);
 
-  void gini(map<num_t,size_t>& cat2freq,
+  void gini(map<num_t,size_t> const& cat2freq,
             num_t& giniIndex);
 
   void sqfreq(vector<num_t> const& data, 
@@ -102,21 +102,11 @@ namespace datadefs {
   void range(vector<size_t>& ics);
   void sortDataAndMakeRef(const bool isIncreasingOrder, vector<num_t>& data, vector<size_t>& refIcs);
 
-  //DEPRECATED
-  void ttest(vector<num_t> const& x, 
-             vector<num_t> const& y, 
-             num_t& pvalue);
-
   void utest(vector<num_t> const& x,
              vector<num_t> const& y,
              num_t& pvalue);
 
   num_t erf(num_t x);
-
-  //DEPRECATED
-  void regularized_betainc(const num_t x, 
-                           const size_t a, 
-                           num_t& ibval);
 
   void spearman_correlation(vector<num_t> const& x, 
                             vector<num_t> const& y,
@@ -126,6 +116,18 @@ namespace datadefs {
                            vector<num_t> const& y,
                            num_t& corr);
 
+  
+  ////////////////////////////////////////////////////////////
+  // DEPRECATED METHOD DECLARATIONS
+  ////////////////////////////////////////////////////////////
+  void ttest(vector<num_t> const& x, 
+             vector<num_t> const& y, 
+             num_t& pvalue);
+
+  //DEPRECATED
+  void regularized_betainc(const num_t x, 
+                           const size_t a, 
+                           num_t& ibval);
 
   //DEPRECATED
   void percentile(vector<num_t> x, const num_t alpha, num_t& prc);
@@ -181,7 +183,9 @@ namespace datadefs {
                             num_t& mu,
                             num_t& se
     ) {  
-    if(x_n != x_n) { return; }  // Check for NAN
+
+    if(datadefs::isNAN(x_n)) { return; }  // Check for NAN
+    
     ++n; if (n == 0) { throw ERRNO_NUMERIC_OVERFLOW; }
     num_t mu_old = mu;
     mu += (x_n - mu) / n;
@@ -209,7 +213,9 @@ namespace datadefs {
                                      size_t& n_right,
                                      num_t& mu_right,
                                      num_t& se_right) {
-    if( x_n != x_n ) { return; }  // Check for NAN
+    
+    if(datadefs::isNAN(x_n)) { return; }  // Check for NAN
+    
     //assert(n_right > 0);
     ++n_left;   if (n_left == 0)                        { throw ERRNO_NUMERIC_OVERFLOW; }
     --n_right;  if (n_right == static_cast<size_t>(-1)) { throw ERRNO_NUMERIC_UNDERFLOW; }
