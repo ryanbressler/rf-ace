@@ -232,7 +232,7 @@ void datadefs::gamma(const vector<datadefs::num_t>& data, datadefs::num_t& gamma
   num_t denominator = 0.0;
   
   for (size_t i = 0; i < data.size(); ++i) {
-    if (data[i] == data[i]) { // Filter out NaN
+    if (!datadefs::isNAN(data[i])) { // Filter out NaN
       num_t abs_data_i = fabs( data[i] );
       denominator += abs_data_i * (1.0 - abs_data_i);
       numerator   += data[i];
@@ -252,7 +252,7 @@ void datadefs::gamma(const vector<datadefs::num_t>& data, datadefs::num_t& gamma
 void datadefs::cardinality(const vector<datadefs::num_t>& data, size_t& cardinality) {
   set<datadefs::num_t> categories;
   for(size_t i = 0; i < data.size(); ++i) {
-    if (data[i] == data[i]) { // Filter out NaN, as it causes unintended results
+    if (!datadefs::isNAN(data[i])) { // Filter out NaN, as it causes unintended results
                               //  in std::set::insert.
       categories.insert(data[i]);
     }
@@ -299,8 +299,12 @@ void datadefs::countRealValues(vector<num_t> const& data, size_t& nRealValues) {
  * separate representations.
  !! Correctness: consider validations or more complete contracts for the
  methods invoked here
+
+ !! TODO: Throw an explicit error when NaNs are passed for sorting
 */
-void datadefs::sortDataAndMakeRef(const bool isIncreasingOrder, vector<num_t>& data, vector<size_t>& refIcs) {
+void datadefs::sortDataAndMakeRef(const bool isIncreasingOrder,
+                                  vector<num_t>& data,
+                                  vector<size_t>& refIcs) {
   //cout << "sort_and_make_ref: in the beginning" << endl;
   //assert(v.size() == ref_ics.size());
   vector<pair<num_t,size_t> > pairedv(data.size()); // !! Understandibility:
@@ -309,7 +313,10 @@ void datadefs::sortDataAndMakeRef(const bool isIncreasingOrder, vector<num_t>& d
                                                     // !! actual variable name
                                                     // !! as something more
                                                     // !! descriptive.
-  refIcs.resize(data.size());
+  refIcs.resize(data.size()); // The actual allocation of refIcs is irrelevant;
+                              //  its contained data will be flattened and
+                              //  resized. Note that any values that are unsafe
+                              //  for equals may cause an unintended memory leak.
   datadefs::range(refIcs);
   //cout << "sort_and_make_ref: used range()" << endl;
   datadefs::make_pairedv<num_t,size_t>(data,refIcs,pairedv);
@@ -327,7 +334,7 @@ void datadefs::sortDataAndMakeRef(const bool isIncreasingOrder, vector<num_t>& d
  * Gini coefficient (see: http://en.wikipedia.org/wiki/Gini_coefficient)
  !! Documentation
 */
-void datadefs::gini(vector<datadefs::num_t>& data,
+void datadefs::gini(vector<datadefs::num_t> const& data,
                     datadefs::num_t& giniIndex,
                     size_t& nRealValues) {
   map<datadefs::num_t,size_t> freq;
@@ -339,7 +346,7 @@ void datadefs::gini(vector<datadefs::num_t>& data,
  * Gini coefficient (see: http://en.wikipedia.org/wiki/Gini_coefficient)
  !! Documentation
 */
-void datadefs::gini(map<datadefs::num_t,size_t>& cat2freq, 
+void datadefs::gini(map<datadefs::num_t,size_t> const& cat2freq, 
                     datadefs::num_t& giniIndex) {
   giniIndex = 0.0;
   size_t n = 0;
@@ -381,7 +388,7 @@ void datadefs::count_freq(vector<datadefs::num_t> const& data, map<datadefs::num
 /**
    !! Documentation
 */
-void datadefs::map_data(vector<datadefs::num_t>& data, 
+void datadefs::map_data(vector<datadefs::num_t> const& data, 
                         map<datadefs::num_t,vector<size_t> >& datamap, 
                         size_t& nRealValues) {
   datamap.clear();
@@ -430,11 +437,12 @@ void datadefs::forward_sqfreq(const datadefs::num_t x_n,
                               map<datadefs::num_t,size_t>& freq,
                               size_t& sqFreq) {
 
-  if(x_n != x_n) { // !! Correctness: implicit check for NAN
+  if(datadefs::isNAN(x_n)) { // !! Correctness: implicit check for NAN
     return;
   }
 
-  ++n;
+  ++n; if (n == 0) { throw ERRNO_NUMERIC_OVERFLOW; }
+  
   //cout << "sf_old=" << sf;
   //Check if the value already exists
   map<datadefs::num_t,size_t>::const_iterator it(freq.find(x_n));
@@ -469,14 +477,13 @@ void datadefs::forward_backward_sqfreq(const datadefs::num_t x_n,
                                        map<datadefs::num_t,size_t>& freq_right,
                                        size_t& sf_right) {
  
-  if(x_n != x_n) {
+  if(datadefs::isNAN(x_n)) {
     return;
   }
 
-  assert(n_right > 0);
-
-  ++n_left;
-  --n_right;
+  //assert(n_right > 0);
+  ++n_left;   if (n_left == 0)                        { throw ERRNO_NUMERIC_OVERFLOW; }
+  --n_right;  if (n_right == static_cast<size_t>(-1)) { throw ERRNO_NUMERIC_UNDERFLOW; }
 
   //Check if the value already exists on left
   map<datadefs::num_t,size_t>::const_iterator it(freq_left.find(x_n));
@@ -616,8 +623,8 @@ void datadefs::regularized_betainc(const datadefs::num_t x,
 // !! Documentation: performs a U-test across the input.
 
 // !! Correctness: contains checks for "NAN" that alter the control flow of
-// !! this function. Consider a more meaningful sentinel and tests for
-// !! branching control flow.
+// !!  this function. Consider a more meaningful sentinel and better handling
+// !!  for NaN, as the presence of such greatly increases the returned p-value.
 
 // !! Legibility: this function contains nested control flow that isn't immediately
 // !! obvious to the reader. Consider refactoring.
@@ -630,20 +637,20 @@ void datadefs::utest(vector<datadefs::num_t> const& x,
   size_t m = x.size();
   size_t n = y.size();
 
+  // !! Correctness: the properties of this block of code should be explored,
+  // !!  as the presence of additional NaNs will greatly alter the p-value
+  // !!  returned. As the percentage of NaN values for x and y approach 100%,
+  // !!  the p-value rapidly approaches 1; as the percentage for x approaches
+  // !!  0% and percentage for y approaches 100%, the p-value approaches 0.
   for(size_t i = 0; i < m; ++i) {
-
-    bool xnan = datadefs::isNAN(x[i]);
-
-    for(size_t j = 0; j < n; ++j) {
-   
-      bool ynan = datadefs::isNAN(y[j]);
-
-      if(!xnan && ynan) {
-        uvalue += 1;
-      } else if(!xnan && !ynan && x[i] > y[j]) {
-        uvalue += 1;
+    
+    if (!datadefs::isNAN(x[i])) {  
+      for(size_t j = 0; j < n; ++j) {
+        
+        if (datadefs::isNAN(y[j]) || x[i] > y[j]) {
+            uvalue += 1;
+        }
       }
-  
     }
   }
   
@@ -660,6 +667,13 @@ void datadefs::utest(vector<datadefs::num_t> const& x,
 
 // !! Documentation: computes the error function for the given value
 datadefs::num_t datadefs::erf(datadefs::num_t x) {  
+
+  // !! TODO: determine if raising an AssertionError or explicit exception is
+  //     appropriate here.
+  //assert(!datadefs::isNAN(x));
+  //if (datadefs::isNAN(x)) {
+  //  throw ERRNO_INVALID_ARGUMENT;
+  //}
   
   num_t x2 = x*x;
 
@@ -688,6 +702,8 @@ void datadefs::spearman_correlation(vector<datadefs::num_t> const& x,
 
 // !! Documentation: Pearson product-moment correlation coefficient
 // !! (http://en.wikipedia.org/wiki/Pearson_product-moment_correlation_coefficient)
+
+// !! Consistency: outputs NaN if x.size() == y.size() && y.size() == 0
 
 void datadefs::pearson_correlation(vector<datadefs::num_t> const& x,
                                    vector<datadefs::num_t> const& y,
