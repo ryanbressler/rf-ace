@@ -181,41 +181,25 @@ void Randomforest::percolateSampleIdxAtRandom(size_t featureIdx, size_t sampleId
   }
 }
 
-// In growForest a bootstrapper was utilized to generate in-box (IB) and out-of-box (OOB) samples.
-// IB samples were used to grow the forest, excluding OOB samples. In this function, these 
-// previously excluded OOB samples are used for testing which features in the trained trees seem
-// to contribute the most to the quality of the predictions. This is a three-fold process:
-// 
-// 0. for feature_i in features:
-// 1. Take the original forest, percolate OOB samples across the trees all the way to the leaf nodes
-//    and check how concordant the OOB and IB samples in the leafs, on average, are.
-// 2. Same as with #1, but if feature_i is to make the split, sample a random value for feature_i
-//    to make the split with.
-// 3. Quantitate relative increase of disagreement between OOB and IB data on the leaves, with and 
-//    without random sampling. Rationale: if feature_i is important, random sampling will have a 
-//    big impact, thus, relative increase of disagreement will be high.  
 vector<num_t> Randomforest::featureImportance() {
 
-  // The number of real features in the data matrix...
   size_t nRealFeatures = treedata_->nFeatures();
-
-  // But as there is an equal amount of contrast features, the total feature count is double that.
   size_t nAllFeatures = 2*nRealFeatures;
-
-  //Each feature, either real or contrast, will have a slot into which the importance value will be put.
-  vector<num_t> importance(nAllFeatures, 0.0);
-  size_t nOobSamples = 0; // !! Potentially Unintentional Humor: "Noob". That is actually intentional. :)
+  vector<num_t> importance(nAllFeatures);
+  size_t nOobSamples = 0; // !! Potentially Unintentional Humor: "Noob".
   
   size_t nContrastsInForest = 0;
 
-  // The random forest object stores the mapping from trees to features it contains, which makes
-  // the subsequent computations void of unnecessary looping
+  for(size_t i = 0; i < nAllFeatures; ++i) {
+    importance[i] = 0;
+  }
+
   for(map<size_t, set<size_t> >::const_iterator tit(featuresInForest_.begin()); tit != featuresInForest_.end(); ++tit) {
     size_t treeIdx = tit->first;
       
     size_t nNewOobSamples = oobMatrix_[treeIdx].size(); 
     nOobSamples += nNewOobSamples;
-
+    //Node* rootNode(forest_[treeIdx][0]);
     map<Node*,vector<size_t> > trainIcs;
     Randomforest::percolateSampleIcs(rootNodes_[treeIdx],oobMatrix_[treeIdx],trainIcs);
     num_t treeImpurity;
@@ -239,6 +223,8 @@ vector<num_t> Randomforest::featureImportance() {
     }
       
   }
+
+  //size_t nNodesInForest = Randomforest::nNodes();
   
   for(size_t featureIdx = 0; featureIdx < nAllFeatures; ++featureIdx) {
     //importance[featureIdx] *= 100.0*nTrees_/nNodesInForest;//1.0*nNodesInForest/nTrees_; //nContrastsInForest
