@@ -10,5 +10,6 @@
 #define ERRNO_NUMERIC_UNDERFLOW         -6
 #define ERRNO_PARTIAL_READ              -7
 #define ERRNO_INVALID_READ              -8
+#define ERRNO_NAN_GIVEN_FOR_SORTING     -9
 
 #endif // ERRNO_HPP
