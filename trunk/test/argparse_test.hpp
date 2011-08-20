@@ -28,10 +28,6 @@ public:
 void ArgParseTest::setUp() {}
 void ArgParseTest::tearDown() {}
 
-// !! BUG: getopt_long segfaults when long arguments are specified in form
-// !!  "--longoption value" and when short arguments are packed together, such
-// !!  as "-abcd valueForD". These appear to be problems in the underlying
-// !!  library, and are explicitly not supported with this version.
 void ArgParseTest::test_getArgument() {
   const int argc = 6;
   char* const argv[] = {
@@ -44,16 +40,16 @@ void ArgParseTest::test_getArgument() {
 
   string val1("");
   string val2("");
-  //int val3(0);
+  int val3(0);
   
   ArgParse ap(argc, argv);
   CPPUNIT_ASSERT(ap.getArgument<string>("f","foo",val1) == true);
   CPPUNIT_ASSERT(ap.getArgument<string>("b","bar",val2) == true);
-  //CPPUNIT_ASSERT(ap.getArgument<int>("z","boz",val3) == true);
+  CPPUNIT_ASSERT(ap.getArgument<int>("z","boz",val3) == true);
 
   CPPUNIT_ASSERT( strcmp(val1.c_str(), "oo") == 0 );
   CPPUNIT_ASSERT( strcmp(val2.c_str(), "boz") == 0 );
-  //CPPUNIT_ASSERT( val3 == 1 );
+  CPPUNIT_ASSERT( val3 == 1 );
 }
 
 void ArgParseTest::test_getFlag() {
@@ -119,32 +115,32 @@ void ArgParseTest::test_mixedArgumentsAndFlags() {
   bool b = false;
   bool c = false;
   string d("");
-  //bool e = false;
+  bool e = false;
   string f("");
-  //bool g = false;
-  //string h("");
-  //bool i = false;
+  bool g = false;
+  string h("");
+  bool i = false;
 
   ArgParse ap(argc, argv);
   CPPUNIT_ASSERT(ap.getFlag("a","aaa",a) == true);
   CPPUNIT_ASSERT(ap.getFlag("b","bbb",b) == true);
   CPPUNIT_ASSERT(ap.getFlag("c","ccc",c) == true);
   CPPUNIT_ASSERT(ap.getArgument<string>("d","ddd",d) == true);
-  //CPPUNIT_ASSERT(ap.getFlag("e","eee",e) == false);
+  CPPUNIT_ASSERT(ap.getFlag("e","eee",e) == false);
   CPPUNIT_ASSERT(ap.getArgument<string>("f","fff",f) == true);
-  //CPPUNIT_ASSERT(ap.getFlag("g","ggg",g) == false);
-  //CPPUNIT_ASSERT(ap.getArgument<string>("h","hhh",h) == true);
-  //CPPUNIT_ASSERT(ap.getFlag("i","iii",i) == false);
+  CPPUNIT_ASSERT(ap.getFlag("g","ggg",g) == false);
+  CPPUNIT_ASSERT(ap.getArgument<string>("h","hhh",h) == true);
+  CPPUNIT_ASSERT(ap.getFlag("i","iii",i) == false);
 
   CPPUNIT_ASSERT(a == true);
   CPPUNIT_ASSERT(b == true);
   CPPUNIT_ASSERT(c == true);
   CPPUNIT_ASSERT(strcmp(d.c_str(),"e") == 0);
-  //CPPUNIT_ASSERT(e == false);
+  CPPUNIT_ASSERT(e == false);
   CPPUNIT_ASSERT(strcmp(f.c_str(),"g") == 0);
-  //CPPUNIT_ASSERT(g == false);
-  //CPPUNIT_ASSERT(strcmp(h.c_str(),"i") == 0);
-  //CPPUNIT_ASSERT(i == false);
+  CPPUNIT_ASSERT(g == false);
+  CPPUNIT_ASSERT(strcmp(h.c_str(),"i") == 0);
+  CPPUNIT_ASSERT(i == false);
 }
 
 void ArgParseTest::test_spuriousArgc() {
@@ -191,8 +187,7 @@ void ArgParseTest::test_spuriousArgv() {
   
   try {
     ArgParse ap(argc, argv2); 
-    // !! Note: divergent behavior by platform, which may point to a non-trivial stack corruption
-    //CPPUNIT_FAIL("ArgParse::ArgParse didn't throw any exception; expected 'ERRNO_ILLEGAL_MEMORY_ACCESS'");
+    CPPUNIT_FAIL("ArgParse::ArgParse didn't throw any exception; expected 'ERRNO_ILLEGAL_MEMORY_ACCESS'");
   } catch (int e) {
     CPPUNIT_ASSERT(e == ERRNO_ILLEGAL_MEMORY_ACCESS);
   }
