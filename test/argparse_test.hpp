@@ -178,6 +178,14 @@ void ArgParseTest::test_spuriousArgv() {
     CPPUNIT_ASSERT(e == ERRNO_ILLEGAL_MEMORY_ACCESS);
   }
 
+  // Deprecated, since allowing this logic to crash in system-specific ways is
+  //  preferrable to the heuristic alternatives. For discussion on one such
+  //  strategy, see:
+  //   http://blogs.msdn.com/b/oldnewthing/archive/2006/09/27/773741.aspx
+  //
+  //  For a more in-depth discussion, see:
+  //   http://stackoverflow.com/questions/496034/most-efficient-replacement-for-isbadreadptr
+  /**
   char* const argv2[] = {
     (char*)"test",
     (char*)"-abcd",
@@ -190,7 +198,7 @@ void ArgParseTest::test_spuriousArgv() {
     CPPUNIT_FAIL("ArgParse::ArgParse didn't throw any exception; expected 'ERRNO_ILLEGAL_MEMORY_ACCESS'");
   } catch (int e) {
     CPPUNIT_ASSERT(e == ERRNO_ILLEGAL_MEMORY_ACCESS);
-  }
+  } */
 }
 
 // Registers the fixture into the test 'registry'
