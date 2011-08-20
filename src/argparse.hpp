@@ -1,19 +1,19 @@
 #ifndef ARGPARSE_HPP
 #define ARGPARSE_HPP
 
-#include <getopt.h>
 #include <cassert>
 #include <iostream>
+#include <map>
 #include <sstream>
 #include <string.h>
+#include <vector>
 #include "errno.hpp"
 
 using namespace std;
 
 /**
  * Generic argument parser that allows options to be checked
- *  speculatively. Currently wraps GNU getopt_long, which is completely
- *  thread-unsafe. Let the maintainer beware.
+ * speculatively. Currently uses a map representation of the argument tree. 
  */
 class ArgParse {
 
@@ -22,7 +22,8 @@ public:
     if (argc < 1) {
       throw ERRNO_INVALID_ARGUMENT;
     }
-    
+
+    string currArg;
     for (int i = 0; i < argc; ++i) {
       
       try {
@@ -30,8 +31,58 @@ public:
         // !!  corrupt memory. Thus, these runtime checks, while better than an
         // !!  outright crash, may imply security vulnerabilities in dependent
         // !!  code. Beware!
-        if (argv[i] == NULL) {
+        if (argv[i] == NULL || argv[i][0] == 0x0) {
           throw ERRNO_INVALID_ARGUMENT;
+        } else {
+          if (!currArg.empty()) {
+            mappedArgs[currArg] = string(argv[i]);
+            currArg = string("");
+            continue;
+          } 
+          switch(argv[i][0]) {
+          case '-':
+          case '+':
+            if (argv[i][1] == '\0') { break; }
+            if (argv[i][1] == '-' ||
+                argv[i][1] == '+') {
+              
+              stringstream argSS;
+              bool containsEquals = false;
+              size_t idx;
+              size_t len = strlen(argv[i]);
+              for (idx = 2; idx < len; ++idx) {
+                if (argv[i][idx] == '=') {
+                  containsEquals = true;
+                  break;
+                }
+                argSS << (char)argv[i][idx];
+              }
+              
+              currArg = argSS.str();
+              if (containsEquals) {
+                stringstream valSS;
+                for (++idx; idx < len; ++idx) {
+                  valSS << (char)argv[i][idx];
+                }
+                mappedArgs[currArg] = valSS.str();
+                currArg = string("");
+              }
+              
+              
+            } else {
+              size_t len = strlen(argv[i]);
+              for (size_t idx = 1; idx < len; ++idx) {
+                char arg[] = {argv[i][idx], '\0'};
+                mappedArgs[string(arg)] = string("");
+                currArg = string(arg);
+              }
+            }
+            
+            break;
+          default:
+            extraArgs.push_back(string(argv[i]));
+            break;
+          }
         }
       } catch (...) {
         //assert(false); // Check if argv was corrupt or overstepped. Implies a
@@ -43,21 +94,23 @@ public:
                                             //  correct code.
       }
     }
-    argc_ = argc;
-    argv_ = argv;
-    opterr = 0; // Suppress invalid print messages from getopt, which trigger
-                //  spuriously from this class when long options are issued.
+
+    /*
+    cout << "Mapped args:" << endl;
+    for (map<string,string>::iterator it = mappedArgs.begin(); it != mappedArgs.end(); ++it) {
+      cout << (*it).first << "->" << (*it).second << endl;
+    }
+
+    cout << "Extra args:" << endl;
+    for (int i = 0; i < extraArgs.size(); ++i) {
+      cout << extraArgs[i] << endl;
+    }*/
   }
   ~ArgParse() {}
 
   /**
-   * Shims the local version of ArgParse to GNU getopt_long. Changes the input
-   *  assumptions for long arguments slightly, but makes the whole system more
-   *  robust as a result.
-   *
-   *  Note that due to interface imparity, each pass of getArgument takes linear
-   *  time with respect to the original command line. It also incurs the
-   *  overhead of a stringstream should an option be found.
+   * Queries the backend map for the current argument-value pair. Extra
+   *  arguments passed positionally are not yet supported.
    *
    *  Contractual guarantees:
    *
@@ -76,6 +129,11 @@ public:
    *  + Attempting to pass a NULL pointer for any input value will not
    *     work. Don't do it.
    *
+   *  + Duplicate arguments will prefer the last long specification over the
+   *     last short specification of that same argument.
+   *
+   *  + Arguments are case-sensitive.
+   *
    *  Sets returnVal and returns true if an argument was found; false
    *  otherwise. !! TODO return a unified status code instead
    */
@@ -86,33 +144,26 @@ public:
     assert(strlen(shortName) == 1);
     assert(*longName != 0);
     
-    const char cShortName = *shortName;
-    const struct option long_options[] = {
-      {longName, 1, NULL, cShortName}
-    };
-    const char opts[] = {cShortName, ':', '\0'};
+    map<string,string>::iterator it = mappedArgs.find(longName);
+    if (it == mappedArgs.end()) {
+        it = mappedArgs.find(shortName);
+    }
 
-    // Copy the contents of argv into a temporary, rearrangeable variable
-    char** targv = new char* [argc_];
-    for (int i = 0; i < argc_; ++i) {
-      targv[i] = argv_[i];
+    if (it != mappedArgs.end()) {
+      string found = (*it).second;
+      if (found.empty()) {
+        throw ERRNO_INVALID_VALUE;
+      }
+      stringstream ss(found);
+      ss >> returnVal;
+
+      if (ss.fail() || !ss.eof()) {
+        throw ERRNO_INVALID_VALUE;
+      }
+      return true;
     }
     
-    int option_index = 0;
-    int c = 0;
-    bool rst = false;
-    while (c != -1) {
-      c = getopt_long (argc_, targv, opts, long_options, &option_index);
-      if (c == cShortName) {
-        stringstream sOptarg(optarg); // Streamify the arg received from getopt
-        sOptarg >> returnVal;
-        rst = true;
-        break;
-      } 
-    }
-    optind = 0; // Reset the getopt parsing index to 0
-    delete[] targv; // Free our temporary argv
-    return rst;
+    return false;
   }
 
   template <typename T> bool getArgument(string& shortName, string& longName, T& returnVal) {
@@ -120,59 +171,39 @@ public:
   }
 
   /**
-   * Shims the local version of ArgParse to GNU getopt_long. Changes the input
-   *  assumptions for long arguments slightly, but makes the whole system more
-   *  robust as a result.
-   *
-   *  Note that due to interface imparity, each pass of getArgument takes linear
-   *  time with respect to the original command line.
-   *
-   *  Tests for the presence of a flag. Unlike the above, returnVal must be of
-   *  type bool. !! TODO return a unified status code instead
+   * Queries the backend map for the presence of a flag. This can also be used
+   *  to check for the presence of an argument-value pair or non-presence of a
+   *  value, but abusing this functionality is not recommended.
    *
    *  Contractual guarantees:
    *
    *  + Attempting to pass a NULL pointer for any input value will not
    *     work. Don't do it.
    *
+   *  + Duplicate flags are assumed to be one instance of the set
+   *     flag. Conflicting, non-duplicate flags are your problem. 
+   *
+   *  + Flags are case-sensitive.
+   *
    */
   bool getFlag(const char* shortName, const char* longName, bool& returnVal) {
     
+    assert(shortName != NULL);
+    assert(longName != NULL);
     assert(strlen(shortName) == 1);
     assert(*longName != 0);
-
-    const char cShortName = *shortName;
-    const struct option long_options[] = {
-      {longName, 0, NULL, cShortName}
-    };
-
-    // Copy the contents of argv into a temporary, rearrangeable variable
-    char** targv = new char* [argc_];
-    for (int i = 0; i < argc_; ++i) {
-      targv[i] = argv_[i];
+    
+    map<string,string>::iterator it = mappedArgs.find(longName);
+    if (it == mappedArgs.end()) {
+        it = mappedArgs.find(shortName);
     }
 
-    int option_index = 0;
-    int c = 0;
-    bool rst = false;
-    returnVal = false;
-    while (c != -1) {
-      c = getopt_long (argc_, targv, shortName, long_options, &option_index);
-      if (c == cShortName) {
-        returnVal = true;
-        rst = true;
-        break;
-      }
+    if (it != mappedArgs.end()) {
+      returnVal = true;
+      return true;
     }
-
-    // Set returnVal to false to signal the non-presence of this flag
-    if (!rst) {
-      returnVal = false;
-    }
-
-    optind = 0; // Reset the getopt parsing index to 0
-    delete[] targv; // Free our temporary argv
-    return rst;
+    
+    return false;
   }
 
   bool getFlag(string& shortName, string& longName, bool& returnVal) {
@@ -181,8 +212,8 @@ public:
 
   
 private:
-  int argc_;
-  char* const* argv_;
+  map<string,string> mappedArgs;
+  vector<string> extraArgs;
 };
 
 #endif
