@@ -11,8 +11,9 @@
 //#include <omp.h>
 
 #include "argparse.hpp"
-#include "randomforest.hpp"
-#include "GBT.hpp"
+//#include "randomforest.hpp"
+//#include "GBT.hpp"
+#include "stochasticforest.hpp"
 #include "treedata.hpp"
 #include "datadefs.hpp"
 
@@ -54,9 +55,9 @@ struct General_options {
   string targetStr_s;
   string targetStr_l;
 
-  string featureMask;
-  string featureMask_s;
-  string featureMask_l;
+  string featureMaskFile;
+  string featureMaskFile_s;
+  string featureMaskFile_l;
 
   bool noRF;
   string noRF_s;
@@ -83,9 +84,9 @@ struct General_options {
     targetStr_s("i"),
     targetStr_l("target"),
 
-    featureMask(""),
-    featureMask_s("M"),
-    featureMask_l("fmask"),
+    featureMaskFile(""),
+    featureMaskFile_s("M"),
+    featureMaskFile_l("fmask"),
     
     noRF(GENERAL_DEFAULT_NO_RF),
     noRF_s("f"),
@@ -238,7 +239,7 @@ void printHelp(const General_options& geno, const RF_options& rfo, const GBT_opt
   cout << endl;
 
   cout << "OPTIONAL ARGUMENTS:" << endl;
-  cout << " -" << geno.featureMask_s << " / --" << geno.featureMask_l << setw( maxwidth - geno.featureMask_l.size() )
+  cout << " -" << geno.featureMaskFile_s << " / --" << geno.featureMaskFile_l << setw( maxwidth - geno.featureMaskFile_l.size() )
        << " " << "Feature mask file. String of ones and zeroes, zeroes indicating removal of the feature in the matrix" << endl;
   cout << endl;
   
@@ -289,6 +290,8 @@ void executeRandomForestFilter(Treedata& treedata,
                                vector<num_t>& pValues,
                                vector<num_t>& importanceValues);
 
+void readFeatureMask(const string& fileName, vector<bool>& fmask);
+
 
 int main(const int argc, char* const argv[]) {
 
@@ -314,6 +317,7 @@ int main(const int argc, char* const argv[]) {
   parser.getArgument<string>(gen_op.input_s, gen_op.input_l, gen_op.input); 
   parser.getArgument<string>(gen_op.targetStr_s, gen_op.targetStr_l, gen_op.targetStr); 
   parser.getArgument<string>(gen_op.output_s, gen_op.output_l, gen_op.output);
+  parser.getArgument<string>(gen_op.featureMaskFile_s, gen_op.featureMaskFile_l, gen_op.featureMaskFile);
   parser.getFlag(gen_op.noRF_s, gen_op.noRF_l, gen_op.noRF);
   parser.getFlag(gen_op.noGBT_s, gen_op.noGBT_l, gen_op.noGBT);
 
@@ -393,9 +397,10 @@ int main(const int argc, char* const argv[]) {
   cout << endl << "Reading file '" << gen_op.input << "', please wait..." << endl;
   Treedata treedata_copy(gen_op.input);
 
-  if(gen_op.featureMask != "") {
-    cout << endl << "Reading masking file '" << gen_op.featureMask << "', please wait..." << endl;
-    //vector<bool>
+  if(gen_op.featureMaskFile != "") {
+    cout << endl << "Reading masking file '" << gen_op.featureMaskFile << "', please wait..." << endl;
+    vector<bool> fmask;
+    readFeatureMask(gen_op.featureMaskFile,fmask);
   }
 
   //Check which feature names match with the specified target identifier
@@ -407,7 +412,7 @@ int main(const int argc, char* const argv[]) {
     return EXIT_FAILURE;
   }
 
-  if(gen_op.featureMask != "" && targetIcs.size() > 1) {
+  if(gen_op.featureMaskFile != "" && targetIcs.size() > 1) {
     cout << "WARNING: feature mask is specified in the presence of multiple targets. All targets will be analyzed with the same mask set." << endl;
   }
 
@@ -540,12 +545,13 @@ int main(const int argc, char* const argv[]) {
     if(!gen_op.noGBT) {
       cout << "    => analyzing with GBT " << flush;
        
-      GBT gbt(&treedata, targetIdx, GBT_op.nTrees, GBT_op.nMaxLeaves, GBT_op.shrinkage, GBT_op.subSampleSize);
-    
+      //GBT gbt(&treedata, targetIdx, GBT_op.nTrees, GBT_op.nMaxLeaves, GBT_op.shrinkage, GBT_op.subSampleSize);
+      StochasticForest SF(&treedata,targetIdx);
+      SF.learnGBT(GBT_op.nTrees, GBT_op.nMaxLeaves, GBT_op.shrinkage, GBT_op.subSampleSize);
     
       cout <<endl<< "PREDICTION:" << endl;
-      vector<num_t> prediction(treedata.nSamples());
-      gbt.predictForest(&treedata, prediction);
+      //vector<num_t> prediction(treedata.nSamples());
+      //gbt.predictForest(&treedata, prediction);
       cout << "DONE" << endl;
     }
 
@@ -657,10 +663,11 @@ void executeRandomForestFilter(Treedata& treedata,
       useContrasts = false;
     }
 
-    Randomforest RF(&treedata,targetIdx,op.nTrees,op.mTry,op.nodeSize,useContrasts,op.isOptimizedNodeSplit);
-    size_t nNodesInForest = RF.nNodes();
+    StochasticForest SF(&treedata,targetIdx);
+    SF.learnRF(op.nTrees,op.mTry,op.nodeSize,useContrasts,op.isOptimizedNodeSplit);
+    size_t nNodesInForest = SF.nNodes();
     nNodesInAllForests += nNodesInForest;
-    importanceMat[permIdx] = RF.featureImportance();
+    importanceMat[permIdx] = SF.featureImportance();
     //printf("  RF %i: %i nodes (avg. %6.3f nodes/tree)\n",permIdx+1,static_cast<int>(nNodesInForest),1.0*nNodesInForest/op.nTrees);
     progress.update( 1.0 * ( 1 + permIdx ) / op.nPerms );
   }
@@ -690,3 +697,22 @@ void executeRandomForestFilter(Treedata& treedata,
   importanceValues.resize(treedata.nFeatures());
   
 }
+
+void readFeatureMask(const string& fileName, vector<bool>& fmask) {
+
+  ifstream featurestream;
+  featurestream.open(fileName.c_str());
+  assert(featurestream.good());
+
+  fmask.clear();
+  bool b;
+
+  while(!featurestream.eof()) {
+    featurestream >> b;
+    fmask.push_back(b);
+    cout << b;
+  }
+  cout << endl;
+
+}
+
