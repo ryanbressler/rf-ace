@@ -80,6 +80,7 @@ protected:
 
   //WILL BECOME DEPRECATED
   friend class GBT;
+  friend class StochasticForest;
 
 private:
 
