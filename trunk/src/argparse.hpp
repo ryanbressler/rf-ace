@@ -37,7 +37,7 @@ public:
           if (!currArg.empty()) {
             mappedArgs[currArg] = string(argv[i]);
             currArg = string("");
-            continue;
+            //continue;
           } 
           switch(argv[i][0]) {
           case '-':
@@ -104,7 +104,7 @@ public:
     cout << "Extra args:" << endl;
     for (int i = 0; i < extraArgs.size(); ++i) {
       cout << extraArgs[i] << endl;
-    }*/
+      }*/
   }
   ~ArgParse() {}
 

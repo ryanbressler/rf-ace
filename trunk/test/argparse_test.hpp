@@ -101,14 +101,16 @@ void ArgParseTest::test_getFlag() {
 }
 
 void ArgParseTest::test_mixedArgumentsAndFlags() {
-  const int argc = 6;
+  const int argc = 7;
   char* const argv[] = {
     (char*)"test",
     (char*)"-abcd",
     (char*)"e",
     (char*)"--fff=g",
     (char*)"-h",
-    (char*)"i"};
+    (char*)"-i",
+    (char*)"j",
+  };
 
   // These options are deliberately confusable, to expose cases of misparsing
   bool a = false;
@@ -120,6 +122,7 @@ void ArgParseTest::test_mixedArgumentsAndFlags() {
   bool g = false;
   string h("");
   bool i = false;
+  bool j = false;
 
   ArgParse ap(argc, argv);
   CPPUNIT_ASSERT(ap.getFlag("a","aaa",a) == true);
@@ -130,7 +133,8 @@ void ArgParseTest::test_mixedArgumentsAndFlags() {
   CPPUNIT_ASSERT(ap.getArgument<string>("f","fff",f) == true);
   CPPUNIT_ASSERT(ap.getFlag("g","ggg",g) == false);
   CPPUNIT_ASSERT(ap.getArgument<string>("h","hhh",h) == true);
-  CPPUNIT_ASSERT(ap.getFlag("i","iii",i) == false);
+  CPPUNIT_ASSERT(ap.getFlag("i","iii",i) == true);
+  CPPUNIT_ASSERT(ap.getFlag("j","jjj",j) == false);
 
   CPPUNIT_ASSERT(a == true);
   CPPUNIT_ASSERT(b == true);
@@ -139,8 +143,9 @@ void ArgParseTest::test_mixedArgumentsAndFlags() {
   CPPUNIT_ASSERT(e == false);
   CPPUNIT_ASSERT(strcmp(f.c_str(),"g") == 0);
   CPPUNIT_ASSERT(g == false);
-  CPPUNIT_ASSERT(strcmp(h.c_str(),"i") == 0);
-  CPPUNIT_ASSERT(i == false);
+  CPPUNIT_ASSERT(strcmp(h.c_str(),"-i") == 0);
+  CPPUNIT_ASSERT(i == true);
+  CPPUNIT_ASSERT(j == false);
 }
 
 void ArgParseTest::test_spuriousArgc() {
