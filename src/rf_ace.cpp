@@ -63,6 +63,10 @@ struct General_options {
   string testFile_s;
   string testFile_l;
 
+  string predictionOutput;
+  string predictionOutput_s;
+  string predictionOutput_l;
+
   bool noRF;
   string noRF_s;
   string noRF_l;
@@ -96,6 +100,10 @@ struct General_options {
     testFile_s("T"),
     testFile_l("testdata"),
 
+    predictionOutput(""),
+    predictionOutput_s("P"),
+    predictionOutput_l("--predout"),
+  
     noRF(GENERAL_DEFAULT_NO_RF),
     noRF_s("f"),
     noRF_l("noRF"),
@@ -329,6 +337,7 @@ int main(const int argc, char* const argv[]) {
   parser.getArgument<string>(gen_op.output_s, gen_op.output_l, gen_op.output);
   parser.getArgument<string>(gen_op.featureMaskFile_s, gen_op.featureMaskFile_l, gen_op.featureMaskFile);
   parser.getArgument<string>(gen_op.testFile_s, gen_op.testFile_l, gen_op.testFile);
+  parser.getArgument<string>(gen_op.predictionOutput_s, gen_op.predictionOutput_l, gen_op.predictionOutput);
   parser.getFlag(gen_op.noRF_s, gen_op.noRF_l, gen_op.noRF);
   parser.getFlag(gen_op.noGBT_s, gen_op.noGBT_l, gen_op.noGBT);
 
@@ -354,17 +363,18 @@ int main(const int argc, char* const argv[]) {
   cout << endl;
   cout << "RF-ACE parameter configuration:" << endl;
   cout << endl;
-  cout << "General configuration:" << endl;;
+  cout << "General configuration:" << endl;
   cout << "  --input              = " << gen_op.input << endl;
   cout << "  --target             = " << gen_op.targetStr << endl;
   cout << "  --output             = " << gen_op.output << endl;
   cout << "  --testdata           = " << gen_op.testFile << endl;
+  cout << "  --predout            = " << gen_op.predictionOutput << endl;
   cout << "  (RF enabled)         = "; if(!gen_op.noRF) { cout << "YES" << endl; } else { cout << "NO" << endl; }
   cout << "  (GBT enabled)        = "; if(!gen_op.noGBT) { cout << "YES" << endl; } else { cout << "NO" << endl; }
   cout << endl;
   
   if (!gen_op.noRF) {
-    cout << "Random forest configuration:" << endl;;
+    cout << "Random forest configuration:" << endl;
     cout << "  --(RF)ntrees         = " << RF_op_copy.nTrees << endl;
     cout << "  --(RF)mtry           = " << RF_op_copy.mTry << endl;
     cout << "  --(RF)nodesize       = " << RF_op_copy.nodeSize << endl;
@@ -374,7 +384,7 @@ int main(const int argc, char* const argv[]) {
   }
   
   if (!gen_op.noGBT) {
-    cout << "Gradient boosting tree configuration:" << endl;;
+    cout << "Gradient boosting tree configuration:" << endl;
     cout << "  --(GBT)ntrees        = " << GBT_op.nTrees << endl;
     cout << "  --(GBT)maxleaves     = " << GBT_op.nMaxLeaves << endl;
     cout << "  --(GBT)shrinkage     = " << GBT_op.shrinkage << endl;
@@ -568,6 +578,14 @@ int main(const int argc, char* const argv[]) {
 	SF.predict(&treedata_test,prediction);
       } else {
 	SF.predict(prediction);
+      }
+      
+      if(gen_op.predictionOutput != "") {
+	FILE* file = fopen(gen_op.predictionOutput.c_str(),"w");
+	for(size_t i = 0; i < prediction.size(); ++i) {
+	  fprintf(file,"%9.8f\n",prediction[i]);
+	}    
+	fclose(file);
       }
       cout << "DONE" << endl;
     }
