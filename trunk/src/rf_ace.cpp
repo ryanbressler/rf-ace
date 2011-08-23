@@ -550,8 +550,8 @@ int main(const int argc, char* const argv[]) {
       SF.learnGBT(GBT_op.nMaxLeaves, GBT_op.shrinkage, GBT_op.subSampleSize);
     
       cout <<endl<< "PREDICTION:" << endl;
-      //vector<num_t> prediction(treedata.nSamples());
-      //gbt.predictForest(&treedata, prediction);
+      vector<num_t> prediction(treedata.nSamples());
+      SF.predict(prediction);
       cout << "DONE" << endl;
     }
 
