@@ -29,6 +29,8 @@ public:
   
   vector<num_t> featureImportance();
   
+  void predictForest(Treedata* treeData, vector<num_t>& prediction);
+
   //Counts the number of nodes in the forest
   size_t nNodes();
 
@@ -48,6 +50,9 @@ private:
 
   num_t predictSampleByTree(size_t sampleIdx, size_t treeIdx);
   void predictDatasetByTree(size_t treeIdx, vector<num_t>& curPrediction);
+
+  void predictForestCategorical(Treedata* treeData, vector<num_t>& categoryPrediction);
+  void predictForestNumerical(Treedata* treeData, vector<num_t>& prediction);
 
   //Percolates samples along the trees, starting from the rootNode. Spits out a map<> that ties the percolated train samples to the leaf nodes
   //NOTE: currently, since there's no implementation for a RootNode class, there's no good way to store the percolated samples in the tree, but a map<> is generated instead

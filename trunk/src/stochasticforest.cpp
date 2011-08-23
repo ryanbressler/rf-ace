@@ -340,6 +340,67 @@ void StochasticForest::predictDatasetByTree(size_t treeIdx, vector<num_t>& curPr
   }
 }
 
+// Predict using a GBT "forest" from an arbitrary data set. GBT::numClasses_ determines
+// whether the prediction is for a categorical or a numerical variable.
+void StochasticForest::predictForest(Treedata* treeData, vector<num_t>& prediction) {
+  if ( 0 == numClasses )
+    predictForestNumerical(treeData, prediction);
+  else
+    predictForestCategorical(treeData, prediction);
+}
+
+
+// Predict categorical target using a GBT "forest" from an arbitrary data set.
+void StochasticForest::predictForestCategorical(Treedata* treeData, vector<num_t>& categoryPrediction) {
+  size_t nSamples = treeData->nSamples();
+  cout << "Predicting "<<nSamples<<" samples. Target="<<targetIdx_<<". Classes="<<numClasses<<endl;
+
+  // For classification, each "tree" is actually numClasses_ trees in a row
+  // each predicting the probability of its own class.
+  size_t numIterations = nTrees / numClasses;
+  size_t errorCnt = 0;
+  vector<num_t> probPrediction( numClasses );
+  vector<num_t> prediction( numClasses );
+
+  for (size_t i=0; i<nSamples; i++) { // for each sample we need to ...
+    for (size_t k=0; k<numClasses_; ++k) { // ... produce predictions for each class, and then ...
+      prediction[k] = 0;
+      for(size_t m = 0; m < numIterations; ++m) {
+        size_t t =  m*numClasses_ + k; // tree index
+        prediction[k] = prediction[k] + shrinkage * predictSampleByTree(i, t);
+      }
+    }
+
+    // ... find index of maximum prediction, this is the predicted cateory
+    vector<num_t>::iterator maxProb = max_element( prediction.begin(), prediction.end() );
+    categoryPrediction[i] = maxProb - prediction.begin() ; // classes are 0,1,2,...
+
+    // diagnostic print out the true and the prediction
+    errorCnt += (treeData->features_[targetIdx_].data[i] != categoryPrediction[i]); //// THIS WILL BECOME INVALID UPON REMOVAL OF FRIENDSHIP ASSIGNMENT IN TREEDATA ////
+      cout << i << "\t" << treeData->features_[targetIdx_].data[i] << "\t" << categoryPrediction[i]; //// THIS WILL BECOME INVALID UPON REMOVAL OF FRIENDSHIP ASSIGNMENT IN TREEDATA ////
+      StochasticForest::transformLogistic(numClasses, prediction, probPrediction); // predictions-to-probabilities
+	for (size_t k=0; k<numClasses_; ++k) {
+	  cout <<"\t"<<probPrediction[k];
+	}
+	cout <<endl;
+  }
+  cout<<"Error "<<errorCnt<<"/"<<nSamples<<"="<<100*errorCnt/nSamples<<"%"<<endl;
+}
+
+// Predict numerical target using a GBT "forest" from an arbitrary data set
+void StochasticForest::predictForestNumerical(Treedata* treeData, vector<num_t>& prediction) {
+  size_t nSamples = treeData->nSamples();
+  cout << "Predicting "<<nSamples<<" samples. Target="<<targetIdx_<<endl;
+  for (size_t i=0; i<nSamples; i++) {
+    prediction[i] = 0;
+    for(size_t t = 0; t < nTrees_; ++t) {
+      prediction[i] = prediction[i] + shrinkage_ * predictSampleByTree(i, t);
+    }
+    // diagnostic print out the true and the prediction
+    cout << i << "\t" << treeData_->features_[targetIdx_].data[i] << "\t" << prediction[i] <<endl; //// THIS WILL BECOME INVALID UPON REMOVAL OF FRIENDSHIP ASSIGNMENT IN TREEDATA ////
+	}
+}
+
 
 void StochasticForest::percolateSampleIcs(Node* rootNode, vector<size_t>& sampleIcs, map<Node*,vector<size_t> >& trainIcs) {
   
