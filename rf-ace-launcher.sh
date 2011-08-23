@@ -7,21 +7,20 @@
 #
 #  The GenePattern command line for this is:
 #   sh <libdir>rf-ace-launcher.sh <libdir> <input> <target> <output> \
-#    <ntrees> <mtry> <nodesize> <nperms> <pthreshold> <maxleaves> \
-#    <shrinkage> <subsamplesize> <filter_rf> <optimized_rf> <enable_gbt>
-#
+#    <RF_ntrees> <RF_mtry> <RF_nodesize> <RF_nperms> <RF_pthreshold> \
+#    <GBT_ntrees> <GBT_maxleaves> <GBT_shrinkage> <GBT_samplesize> \
+#    "<RF_enable><RF_optimize><GBT_enable><GBT_optimize><fmask>"
 
 export PATH=$1:$PATH
-flags=
-if [ ${13} -eq "1" ]; then flags="--filterRF "; fi
-if [ ${14} -eq "1" ]; then flags="$flags--optimizedRF "; fi
-if [ ${15} -eq "1" ]; then flags="$flags--enableGBT "; fi
 
 chmod a+x $1/rf_ace
-echo "Running: rf_ace --input=$2 --target=$3 --output=$4 --ntrees=$5 --mtry=$6 \
---nodesize=$7 --nperms=$8 --pthreshold=$9 --maxleaves=${10} --shrinkage=${11} \
---subsamplesize=${12} $flags"
+echo "Running: \
+rf_ace --input=$2 --target=$3 --output=$4 --RF_ntrees=$5 \
+--RF_mtry=$6 --RF_nodesize=$7 --RF_nperms=$8 --RF_pthreshold=$9 \
+--GBT_ntrees=${10} --GBT_maxleaves=${11} --GBT_shrinkage=${12} \
+--GBT_samplesize=${13} ${14}"
 
-rf_ace --input=$2 --target=$3 --output=$4 --ntrees=$5 --mtry=$6 \
---nodesize=$7 --nperms=$8 --pthreshold=$9 --maxleaves=${10} --shrinkage=${11} \
---subsamplesize=${12} $flags
+rf_ace --input=$2 --target=$3 --output=$4 --RF_ntrees=$5 \
+--RF_mtry=$6 --RF_nodesize=$7 --RF_nperms=$8 --RF_pthreshold=$9 \
+--GBT_ntrees=${10} --GBT_maxleaves=${11} --GBT_shrinkage=${12} \
+--GBT_samplesize=${13} ${14}
