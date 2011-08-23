@@ -59,6 +59,10 @@ struct General_options {
   string featureMaskFile_s;
   string featureMaskFile_l;
 
+  string testFile;
+  string testFile_s;
+  string testFile_l;
+
   bool noRF;
   string noRF_s;
   string noRF_l;
@@ -88,6 +92,10 @@ struct General_options {
     featureMaskFile_s("M"),
     featureMaskFile_l("fmask"),
     
+    testFile(""),
+    testFile_s("T"),
+    testFile_l("testdata"),
+
     noRF(GENERAL_DEFAULT_NO_RF),
     noRF_s("f"),
     noRF_l("noRF"),
@@ -241,6 +249,8 @@ void printHelp(const General_options& geno, const RF_options& rfo, const GBT_opt
   cout << "OPTIONAL ARGUMENTS:" << endl;
   cout << " -" << geno.featureMaskFile_s << " / --" << geno.featureMaskFile_l << setw( maxwidth - geno.featureMaskFile_l.size() )
        << " " << "Feature mask file. String of ones and zeroes, zeroes indicating removal of the feature in the matrix" << endl;
+  cout << " -" << geno.testFile_s << " / --" << geno.testFile_l << setw( maxwidth - geno.testFile_l.size() )
+       << " " << "Test data (if none given, the same matrix will be used for both training and testing)" << endl;
   cout << endl;
   
   cout << "OPTIONAL ARGUMENTS -- RF FILTER:" << endl;
@@ -318,6 +328,7 @@ int main(const int argc, char* const argv[]) {
   parser.getArgument<string>(gen_op.targetStr_s, gen_op.targetStr_l, gen_op.targetStr); 
   parser.getArgument<string>(gen_op.output_s, gen_op.output_l, gen_op.output);
   parser.getArgument<string>(gen_op.featureMaskFile_s, gen_op.featureMaskFile_l, gen_op.featureMaskFile);
+  parser.getArgument<string>(gen_op.testFile_s, gen_op.testFile_l, gen_op.testFile);
   parser.getFlag(gen_op.noRF_s, gen_op.noRF_l, gen_op.noRF);
   parser.getFlag(gen_op.noGBT_s, gen_op.noGBT_l, gen_op.noGBT);
 
@@ -347,6 +358,7 @@ int main(const int argc, char* const argv[]) {
   cout << "  --input              = " << gen_op.input << endl;
   cout << "  --target             = " << gen_op.targetStr << endl;
   cout << "  --output             = " << gen_op.output << endl;
+  cout << "  --testdata           = " << gen_op.testFile << endl;
   cout << "  (RF enabled)         = "; if(!gen_op.noRF) { cout << "YES" << endl; } else { cout << "NO" << endl; }
   cout << "  (GBT enabled)        = "; if(!gen_op.noGBT) { cout << "YES" << endl; } else { cout << "NO" << endl; }
   cout << endl;
@@ -551,7 +563,12 @@ int main(const int argc, char* const argv[]) {
     
       cout <<endl<< "PREDICTION:" << endl;
       vector<num_t> prediction(treedata.nSamples());
-      SF.predict(prediction);
+      if(gen_op.testFile != "") {
+	Treedata treedata_test(gen_op.testFile);
+	SF.predict(&treedata_test,prediction);
+      } else {
+	SF.predict(prediction);
+      }
       cout << "DONE" << endl;
     }
 
