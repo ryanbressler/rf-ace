@@ -10,17 +10,15 @@ using namespace std;
 class StochasticForest {
 public:
 
-  StochasticForest(Treedata* treeData, const size_t targetIdx);  
+  StochasticForest(Treedata* treeData, const size_t targetIdx, const size_t nTrees);  
   ~StochasticForest();
 
-  void learnRF(const size_t nTrees,
-	       const size_t mTry,
+  void learnRF(const size_t mTry,
 	       const size_t nodeSize,
 	       const bool useContrasts,
 	       const bool isOptimizedNodeSplit);
 
-  void learnGBT(const size_t nTrees,
-		const size_t nMaxLeaves,
+  void learnGBT(const size_t nMaxLeaves,
 		const num_t shrinkage,
 		const num_t subSampleSize);
   
@@ -29,7 +27,8 @@ public:
   
   vector<num_t> featureImportance();
   
-  void predictForest(Treedata* treeData, vector<num_t>& prediction);
+  void predict(vector<num_t>& prediction);
+  void predict(Treedata* treeData, vector<num_t>& prediction);
 
   //Counts the number of nodes in the forest
   size_t nNodes();
@@ -37,12 +36,8 @@ public:
 
 private:
 
-  void growNumericalGBT(const size_t nTrees,
-                        const num_t shrinkage);
-
-  void growCategoricalGBT(const size_t nTrees,
-                          const size_t numClasses,
-                          const num_t shrinkage);
+  void growNumericalGBT();
+  void growCategoricalGBT();
 
 
   //Will be moved elsewhere!
@@ -51,8 +46,8 @@ private:
   num_t predictSampleByTree(size_t sampleIdx, size_t treeIdx);
   void predictDatasetByTree(size_t treeIdx, vector<num_t>& curPrediction);
 
-  void predictForestCategorical(Treedata* treeData, vector<num_t>& categoryPrediction);
-  void predictForestNumerical(Treedata* treeData, vector<num_t>& prediction);
+  void predictWithCategoricalGBT(Treedata* treeData, vector<num_t>& categoryPrediction);
+  void predictWithNumericalGBT(Treedata* treeData, vector<num_t>& prediction);
 
   //Percolates samples along the trees, starting from the rootNode. Spits out a map<> that ties the percolated train samples to the leaf nodes
   //NOTE: currently, since there's no implementation for a RootNode class, there's no good way to store the percolated samples in the tree, but a map<> is generated instead
@@ -71,8 +66,7 @@ private:
   //Chosen target to regress on
   size_t targetIdx_;
   
-  //Size of the forests
-  //size_t nTrees_;
+  size_t nTrees_;
 
   //Root nodes for every tree
   vector<RootNode*> rootNodes_;
@@ -82,7 +76,15 @@ private:
 
   //Out-of-box samples for each tree
   vector<vector<size_t> > oobMatrix_;
+
+  enum LearnedModel {NO_MODEL, RF_MODEL, GBT_MODEL};
   
+  LearnedModel learnedModel_;
+  size_t numClasses_;
+  num_t shrinkage_;
+
+
+
 };
 
 #endif

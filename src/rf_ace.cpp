@@ -546,8 +546,8 @@ int main(const int argc, char* const argv[]) {
       cout << "    => analyzing with GBT " << flush;
        
       //GBT gbt(&treedata, targetIdx, GBT_op.nTrees, GBT_op.nMaxLeaves, GBT_op.shrinkage, GBT_op.subSampleSize);
-      StochasticForest SF(&treedata,targetIdx);
-      SF.learnGBT(GBT_op.nTrees, GBT_op.nMaxLeaves, GBT_op.shrinkage, GBT_op.subSampleSize);
+      StochasticForest SF(&treedata,targetIdx,GBT_op.nTrees);
+      SF.learnGBT(GBT_op.nMaxLeaves, GBT_op.shrinkage, GBT_op.subSampleSize);
     
       cout <<endl<< "PREDICTION:" << endl;
       //vector<num_t> prediction(treedata.nSamples());
@@ -663,8 +663,8 @@ void executeRandomForestFilter(Treedata& treedata,
       useContrasts = false;
     }
 
-    StochasticForest SF(&treedata,targetIdx);
-    SF.learnRF(op.nTrees,op.mTry,op.nodeSize,useContrasts,op.isOptimizedNodeSplit);
+    StochasticForest SF(&treedata,targetIdx,op.nTrees);
+    SF.learnRF(op.mTry,op.nodeSize,useContrasts,op.isOptimizedNodeSplit);
     size_t nNodesInForest = SF.nNodes();
     nNodesInAllForests += nNodesInForest;
     importanceMat[permIdx] = SF.featureImportance();

@@ -6,9 +6,10 @@
 #include "stochasticforest.hpp"
 #include "datadefs.hpp"
 
-StochasticForest::StochasticForest(Treedata* treeData, const size_t targetIdx):
+StochasticForest::StochasticForest(Treedata* treeData, const size_t targetIdx, const size_t nTrees):
   treeData_(treeData),
   targetIdx_(targetIdx),
+  nTrees_(nTrees),
   rootNodes_(0),
   oobMatrix_(0) {
 
@@ -16,6 +17,9 @@ StochasticForest::StochasticForest(Treedata* treeData, const size_t targetIdx):
 
   treeData_ = treeData;
   targetIdx_ = targetIdx;
+
+  learnedModel_ = NO_MODEL;
+
 }
 
 StochasticForest::~StochasticForest() {
@@ -24,8 +28,7 @@ StochasticForest::~StochasticForest() {
   }
 }
 
-void StochasticForest::learnRF(const size_t nTrees,
-			       const size_t mTry, 
+void StochasticForest::learnRF(const size_t mTry, 
 			       const size_t nodeSize,
 			       const bool useContrasts,
 			       const bool isOptimizedNodeSplit) {
@@ -34,9 +37,10 @@ void StochasticForest::learnRF(const size_t nTrees,
     treeData_->permuteContrasts();
   }
 
+  learnedModel_ = RF_MODEL;
   featuresInForest_.clear();
-  oobMatrix_.resize(nTrees);
-  rootNodes_.resize(nTrees);
+  oobMatrix_.resize(nTrees_);
+  rootNodes_.resize(nTrees_);
 
   //These parameters, and those specified in the Random Forest initiatialization, define the type of the forest generated (an RF) 
   bool sampleWithReplacement = true;
@@ -53,7 +57,7 @@ void StochasticForest::learnRF(const size_t nTrees,
   size_t numClasses = treeData_->nCategories(targetIdx_);
 
   //Allocates memory for the root nodes
-  for(size_t treeIdx = 0; treeIdx < nTrees; ++treeIdx) {
+  for(size_t treeIdx = 0; treeIdx < nTrees_; ++treeIdx) {
     rootNodes_[treeIdx] = new RootNode(sampleWithReplacement,
                                        sampleSizeFraction,
                                        maxNodesToStop,
@@ -85,22 +89,22 @@ void StochasticForest::learnRF(const size_t nTrees,
   }
 }
 
-void StochasticForest::learnGBT(const size_t nTrees, 
-				const size_t nMaxLeaves, 
+void StochasticForest::learnGBT(const size_t nMaxLeaves, 
 				const num_t shrinkage, 
 				const num_t subSampleSize) {
   
   
-  size_t numClasses = treeData_->nCategories(targetIdx_);
-  size_t nTreesNew = nTrees;
-  if (numClasses > 0) {
-    nTreesNew *= numClasses;
+  shrinkage_ = shrinkage;
+  numClasses_ = treeData_->nCategories(targetIdx_);
+  if (numClasses_ > 0) {
+    nTrees_ *= numClasses_;
   }
 
+  learnedModel_ = GBT_MODEL;
   featuresInForest_.clear();
-  oobMatrix_.resize(nTreesNew);
-  rootNodes_.resize(nTreesNew);
-
+  oobMatrix_.resize(nTrees_);
+  rootNodes_.resize(nTrees_);
+  
   bool sampleWithReplacement = false;
   num_t sampleSizeFraction = subSampleSize;
   size_t maxNodesToStop = 2 * nMaxLeaves - 1;
@@ -112,8 +116,8 @@ void StochasticForest::learnGBT(const size_t nTrees,
   //bool isSaveLeafTrainPrediction = false;
 
   //Allocates memory for the root nodes. With all these parameters, the RootNode is now able to take full control of the splitting process
-  rootNodes_.resize(nTreesNew);
-  for(size_t treeIdx = 0; treeIdx < nTreesNew; ++treeIdx) {
+  rootNodes_.resize(nTrees_);
+  for(size_t treeIdx = 0; treeIdx < nTrees_; ++treeIdx) {
     rootNodes_[treeIdx] = new RootNode(sampleWithReplacement,
                                        sampleSizeFraction,
                                        maxNodesToStop,
@@ -122,21 +126,20 @@ void StochasticForest::learnGBT(const size_t nTrees,
                                        nFeaturesForSplit,
                                        useContrasts,
                                        isOptimizedNodeSplit,
-                                       numClasses);
+                                       numClasses_);
   }
   //Let's grow the forest
-  cout << "Target is "<< treeData_->getFeatureName(targetIdx_) <<" ["<<targetIdx_<<"]. It has "<<numClasses<<" classes."<<endl;
+  cout << "Target is "<< treeData_->getFeatureName(targetIdx_) <<" ["<<targetIdx_<<"]. It has "<<numClasses_<<" classes."<<endl;
   
-  if(numClasses == 0) {
-    StochasticForest::growNumericalGBT(nTreesNew, shrinkage);
+  if(numClasses_ == 0) {
+    StochasticForest::growNumericalGBT();
   } else {
-    StochasticForest::growCategoricalGBT(nTreesNew, numClasses, shrinkage);
+    StochasticForest::growCategoricalGBT();
   }
 }
 
 // Grow a GBT "forest" for a numerical target variable
-void StochasticForest::growNumericalGBT(const size_t nTrees,
-					const num_t shrinkage) {
+void StochasticForest::growNumericalGBT() {
   
   //A function pointer to a function "mean()" that is used to compute the node predictions with
   //void (*leafPredictionFunction)(const vector<num_t>&, const size_t) = Node::leafMean;
@@ -166,7 +169,7 @@ void StochasticForest::growNumericalGBT(const size_t nTrees,
   //set<size_t> featuresInTree;
   //bool useContrasts = false;
 
-  for(size_t t = 0; t < nTrees; ++t) {
+  for(size_t t = 0; t < nTrees_; ++t) {
     // current target is the negative gradient of the loss function
     // for square loss, it is target minus current prediction
     for (size_t i=0; i<nSamples; i++) {
@@ -189,7 +192,7 @@ void StochasticForest::growNumericalGBT(const size_t nTrees,
     cout <<endl<<"Tree "<<t<<": Predictions:"<<endl;
     num_t sqErrorSum = 0.0;
     for (size_t i=0; i<nSamples; i++) {
-      prediction[i] = prediction[i] + shrinkage * curPrediction[i];
+      prediction[i] = prediction[i] + shrinkage_ * curPrediction[i];
 
       // diagnostics
       num_t iError = trueTargetData[i]-prediction[i];
@@ -209,9 +212,7 @@ void StochasticForest::growNumericalGBT(const size_t nTrees,
 }
 
 // Grow a GBT "forest" for a categorical target variable
-void StochasticForest::growCategoricalGBT(const size_t nTrees,
-					  const size_t numClasses,
-					  const num_t shrinkage) {
+void StochasticForest::growCategoricalGBT() {
   
   //A function pointer to a function "gamma()" that is used to compute the node predictions with
   //void (*leafPredictionFunction)(const vector<num_t>&, const size_t) = Node::leafGamma;
@@ -236,10 +237,10 @@ void StochasticForest::growCategoricalGBT(const size_t nTrees,
 
   // Initialize class probability estimates and the predictions.
   // Note that dimensions in these two are reversed!
-  vector< vector<num_t> > prediction(    nSamples, vector<num_t>( numClasses, 0.0 ) );
-  vector< vector<num_t> > curPrediction( numClasses, vector<num_t>( nSamples, 0.0 ) );
+  vector< vector<num_t> > prediction(    nSamples, vector<num_t>( numClasses_, 0.0 ) );
+  vector< vector<num_t> > curPrediction( numClasses_, vector<num_t>( nSamples, 0.0 ) );
 
-  vector< vector<num_t> > curProbability( nSamples, vector<num_t>( numClasses)  );
+  vector< vector<num_t> > curProbability( nSamples, vector<num_t>( numClasses_)  );
   // TODO don't really need all this space allocated
   //vector<size_t> oobIcs;
   //set<size_t> featuresInTree;
@@ -247,17 +248,17 @@ void StochasticForest::growCategoricalGBT(const size_t nTrees,
 
   // Each iteration consists of numClasses_ trees,
   // each of those predicting the probability residual for each class.
-  size_t numIterations = nTrees / numClasses;
+  size_t numIterations = nTrees_ / numClasses_;
 
   for(size_t m=0; m < numIterations; ++m) {
     // Multiclass logistic transform of class probabilities from current probability estimates.
     for (size_t i=0; i<nSamples; i++) {
-      StochasticForest::transformLogistic( numClasses, prediction[i],  curProbability[i]);
+      StochasticForest::transformLogistic( numClasses_, prediction[i],  curProbability[i]);
       // each prediction[i] is a vector<num_t>(numClasses_)
     }
 
     // construct a tree for each class
-    for (size_t k = 0; k < numClasses; ++k) {
+    for (size_t k = 0; k < numClasses_; ++k) {
       // target for class k is ...
       for (size_t i=0; i<nSamples; i++) {
         // ... the difference between true target and current prediction
@@ -265,7 +266,7 @@ void StochasticForest::growCategoricalGBT(const size_t nTrees,
       }
 
       // Grow a tree to predict the current target
-      size_t t = m * numClasses + k; // tree index
+      size_t t = m * numClasses_ + k; // tree index
       size_t nNodes;
       rootNodes_[t]->growTree(treeData_,
                               targetIdx_,
@@ -280,7 +281,7 @@ void StochasticForest::growCategoricalGBT(const size_t nTrees,
       // Calculate the current total prediction adding the newly generated tree
       cout <<"Iter="<<m<<" Class="<<k<<": Predictions:"<<endl;
       for (size_t i=0; i<nSamples; i++) {
-        prediction[i][k] = prediction[i][k] + shrinkage * curPrediction[k][i];
+        prediction[i][k] = prediction[i][k] + shrinkage_ * curPrediction[k][i];
         // cout <<"i="<<i<<" CurPrediction="<<curPrediction[k][i]<<" prediction="<<prediction[i][k]<<endl;
       }
     }
@@ -294,7 +295,7 @@ void StochasticForest::growCategoricalGBT(const size_t nTrees,
 
 void StochasticForest::transformLogistic(const size_t numClasses, vector<num_t>& prediction, vector<num_t>& probability) {
   // Multiclass logistic transform of class probabilities from current probability estimates.
-  assert( numClasses == prediction.size() );
+  assert( numClasses_ == prediction.size() );
   vector<num_t>& expPrediction = probability; // just using the space by a different name
 
   // find maximum prediction
@@ -303,11 +304,11 @@ void StochasticForest::transformLogistic(const size_t numClasses, vector<num_t>&
 
   num_t expSum = 0.0;
   size_t k;
-  for(k=0; k < numClasses; ++k) {
+  for(k=0; k < numClasses_; ++k) {
     expPrediction[k] = exp( prediction[k] - *maxPrediction ); // scale by maximum
     expSum += expPrediction[k];
   }
-  for(k = 0; k < numClasses; ++k) {
+  for(k = 0; k < numClasses_; ++k) {
     probability[k] = expPrediction[k] / expSum;
   }
 }
@@ -340,34 +341,38 @@ void StochasticForest::predictDatasetByTree(size_t treeIdx, vector<num_t>& curPr
   }
 }
 
+void StochasticForest::predict(vector<num_t>& prediction) {
+  StochasticForest::predict(treeData_, prediction);
+}
+
 // Predict using a GBT "forest" from an arbitrary data set. GBT::numClasses_ determines
 // whether the prediction is for a categorical or a numerical variable.
-void StochasticForest::predictForest(Treedata* treeData, vector<num_t>& prediction) {
-  if ( 0 == numClasses )
-    predictForestNumerical(treeData, prediction);
+void StochasticForest::predict(Treedata* treeData, vector<num_t>& prediction) {
+  if ( 0 == numClasses_ )
+    predictWithNumericalGBT(treeData, prediction);
   else
-    predictForestCategorical(treeData, prediction);
+    predictWithCategoricalGBT(treeData, prediction);
 }
 
 
 // Predict categorical target using a GBT "forest" from an arbitrary data set.
-void StochasticForest::predictForestCategorical(Treedata* treeData, vector<num_t>& categoryPrediction) {
+void StochasticForest::predictWithCategoricalGBT(Treedata* treeData, vector<num_t>& categoryPrediction) {
   size_t nSamples = treeData->nSamples();
-  cout << "Predicting "<<nSamples<<" samples. Target="<<targetIdx_<<". Classes="<<numClasses<<endl;
+  cout << "Predicting "<<nSamples<<" samples. Target="<<targetIdx_<<". Classes="<<numClasses_<<endl;
 
   // For classification, each "tree" is actually numClasses_ trees in a row
   // each predicting the probability of its own class.
-  size_t numIterations = nTrees / numClasses;
+  size_t numIterations = nTrees_ / numClasses_;
   size_t errorCnt = 0;
-  vector<num_t> probPrediction( numClasses );
-  vector<num_t> prediction( numClasses );
+  vector<num_t> probPrediction( numClasses_ );
+  vector<num_t> prediction( numClasses_ );
 
   for (size_t i=0; i<nSamples; i++) { // for each sample we need to ...
     for (size_t k=0; k<numClasses_; ++k) { // ... produce predictions for each class, and then ...
       prediction[k] = 0;
       for(size_t m = 0; m < numIterations; ++m) {
         size_t t =  m*numClasses_ + k; // tree index
-        prediction[k] = prediction[k] + shrinkage * predictSampleByTree(i, t);
+        prediction[k] = prediction[k] + shrinkage_ * predictSampleByTree(i, t);
       }
     }
 
@@ -378,7 +383,7 @@ void StochasticForest::predictForestCategorical(Treedata* treeData, vector<num_t
     // diagnostic print out the true and the prediction
     errorCnt += (treeData->features_[targetIdx_].data[i] != categoryPrediction[i]); //// THIS WILL BECOME INVALID UPON REMOVAL OF FRIENDSHIP ASSIGNMENT IN TREEDATA ////
       cout << i << "\t" << treeData->features_[targetIdx_].data[i] << "\t" << categoryPrediction[i]; //// THIS WILL BECOME INVALID UPON REMOVAL OF FRIENDSHIP ASSIGNMENT IN TREEDATA ////
-      StochasticForest::transformLogistic(numClasses, prediction, probPrediction); // predictions-to-probabilities
+      StochasticForest::transformLogistic(numClasses_, prediction, probPrediction); // predictions-to-probabilities
 	for (size_t k=0; k<numClasses_; ++k) {
 	  cout <<"\t"<<probPrediction[k];
 	}
@@ -388,7 +393,7 @@ void StochasticForest::predictForestCategorical(Treedata* treeData, vector<num_t
 }
 
 // Predict numerical target using a GBT "forest" from an arbitrary data set
-void StochasticForest::predictForestNumerical(Treedata* treeData, vector<num_t>& prediction) {
+void StochasticForest::predictWithNumericalGBT(Treedata* treeData, vector<num_t>& prediction) {
   size_t nSamples = treeData->nSamples();
   cout << "Predicting "<<nSamples<<" samples. Target="<<targetIdx_<<endl;
   for (size_t i=0; i<nSamples; i++) {
