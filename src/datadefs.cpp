@@ -156,7 +156,7 @@ datadefs::num_t datadefs::str2num(string& str) {
 
 
 */
-void datadefs::meanVals(vector<datadefs::num_t> const& data, datadefs::num_t& mu, size_t& nRealValues) {
+void datadefs::mean(vector<datadefs::num_t> const& data, datadefs::num_t& mu, size_t& nRealValues) {
  
   mu = 0.0;
   nRealValues = 0;
@@ -170,78 +170,6 @@ void datadefs::meanVals(vector<datadefs::num_t> const& data, datadefs::num_t& mu
 
   if(nRealValues > 0) {
     mu /= nRealValues;
-  }
-}
-
-/**
- * Takes the arithmetic mean of a vector of input values, given a fixed number
- of real values
- !! Spurious argument: const size_t numClasses is never used
- 
- !! Side effects: mutates nRealValues and mu regardless of the final
- result. This applies to most methods defined in RF-ACE, actually.
-
- void datadefs::mean(const vector<datadefs::num_t>& data, datadefs::num_t& mu, const size_t numClasses) {
- mu = 0.0;
- size_t n = data.size();
-
- if(n == 0) {
- return;
- }
-
- for(size_t i = 0; i < data.size(); ++i) {
- mu += data[i];
- }
-  
- mu /= n;
- }
-*/
-
-/**
- * Determines the mode of a given input data set
- !! Spurious argument: const size_t numClasses is never used. Is it supposed to
-     be updated in the lifetime of this function; that is, is the "const" signature
-     wrong?
-
- !! Inefficient: linear running time. Consider a data pointer to the last
-     element if the size of the list is known.
-
- !! Improperly-factored interface: if the mode is ambiguous, the lowest value
-     will be returned in the natural ordering of an STL std::map. This should be
-     corrected. 
-*/
-void datadefs::mode(const vector<datadefs::num_t>& data, datadefs::num_t& mode, const size_t numClasses) {
-  
-  map<datadefs::num_t,size_t> freq;
-  size_t n = 0;
-  datadefs::count_freq(data,freq,n);
-  map<datadefs::num_t,size_t>::iterator it(max_element(freq.begin(),freq.end(),datadefs::freqIncreasingOrder()));
-  mode = it->first;
-}
-
-/**
- * Determines the gamma of a given input data set
- !! Potential div by zero: if numClasses or denominator == 0.0, and many more
- possible errors
-*/
-void datadefs::gamma(const vector<datadefs::num_t>& data, datadefs::num_t& gamma, const size_t numClasses) { 
-
-  //size_t numClasses;
-  //datadefs::cardinality(data,numClasses);
-  num_t numerator = 0.0;
-  num_t denominator = 0.0;
-  
-  for (size_t i = 0; i < data.size(); ++i) {
-    if (!datadefs::isNAN(data[i])) { // Filter out NaN
-      num_t abs_data_i = fabs( data[i] );
-      denominator += abs_data_i * (1.0 - abs_data_i);
-      numerator   += data[i];
-    }
-  }
-  if ( fabs(denominator) <= datadefs::EPS ) {
-    gamma = datadefs::LOG_OF_MAX_NUM * numerator;
-  } else {
-    gamma = (numClasses - 1)*numerator / (numClasses * denominator);
   }
 }
 
@@ -270,7 +198,7 @@ void datadefs::sqerr(vector<datadefs::num_t> const& data,
                      datadefs::num_t& se,
                      size_t& nRealValues) {
     
-  datadefs::meanVals(data,mu,nRealValues);
+  datadefs::mean(data,mu,nRealValues);
   
   se = 0.0;
   for(size_t i = 0; i < data.size(); ++i) {
@@ -634,21 +562,20 @@ void datadefs::utest(vector<datadefs::num_t> const& x,
                      datadefs::num_t& pvalue) {
   
   num_t uvalue = 0.0;
-  size_t m = x.size();
-  size_t n = y.size();
-
-  // !! Correctness: the properties of this block of code should be explored,
-  // !!  as the presence of additional NaNs will greatly alter the p-value
-  // !!  returned. As the percentage of NaN values for x and y approach 100%,
-  // !!  the p-value rapidly approaches 1; as the percentage for x approaches
-  // !!  0% and percentage for y approaches 100%, the p-value approaches 0.
-  for(size_t i = 0; i < m; ++i) {
+  size_t m = 0;
+  size_t n = 0;
+  
+  for(size_t i = 0; i < x.size(); ++i) {
     
-    if (!datadefs::isNAN(x[i])) {  
-      for(size_t j = 0; j < n; ++j) {
+    if (!datadefs::isNAN(x[i])) {
+      ++m;
+      for(size_t j = 0; j < y.size(); ++j) {
         
-        if (datadefs::isNAN(y[j]) || x[i] > y[j]) {
+        if (!datadefs::isNAN(y[j])) {
+          ++n;
+          if (x[i] > y[j]) {
             uvalue += 1;
+          }
         }
       }
     }
@@ -658,8 +585,9 @@ void datadefs::utest(vector<datadefs::num_t> const& x,
   num_t mu = 1.0*m*n/2.0;
   num_t s = sqrt(1.0*m*n*(n+m+1)/12.0);
 
-  //cout << uvalue << " " << mu << " " << s;
-
+  //cout << uvalue << " " << mu << " " << s << endl;
+  //cout << datadefs::erf( (uvalue-mu) / (s*sqrt(2.0)) )  << endl;
+  
   pvalue = 1.0 - 0.5 * ( 1 + datadefs::erf( (uvalue-mu) / (s*sqrt(2.0)) ) );
   //cout << " ==> " << pvalue << endl;
 

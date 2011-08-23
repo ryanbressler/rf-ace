@@ -52,12 +52,12 @@ namespace datadefs {
   void strv2numv(vector<string>& strvec, vector<num_t>& numvec);
   num_t str2num(string& str);
 
-  void meanVals(vector<num_t> const& data, num_t& mu, size_t& nreal);
+  //void mean(vector<num_t> const& data, num_t& mu, size_t& nreal);
 
   // Newly added function set which used in calculating leaf node predictions
-  void mean(const vector<num_t>& data, num_t& mu, const size_t numClasses);
-  void mode(const vector<num_t>& data, num_t& mode, const size_t numClasses);
-  void gamma(const vector<num_t>& data, num_t& gamma, const size_t numClasses);
+  void mean(vector<num_t> const& data, num_t& mu, size_t& numClasses);
+  //void mode(const vector<num_t>& data, num_t& mode, const size_t numClasses);
+  //void gamma(const vector<num_t>& data, num_t& gamma, const size_t numClasses);
 
   void cardinality(const vector<num_t>& data, size_t& cardinality);
 

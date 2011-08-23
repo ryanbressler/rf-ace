@@ -19,9 +19,9 @@ class DataDefsTest : public CppUnit::TestFixture {
   CPPUNIT_TEST( test_strv2catv );
   CPPUNIT_TEST( test_strv2numv );
   CPPUNIT_TEST( test_str2num );
-  CPPUNIT_TEST( test_meanVals );
-  CPPUNIT_TEST( test_mode );
-  CPPUNIT_TEST( test_gamma );
+  CPPUNIT_TEST( test_mean );
+  //CPPUNIT_TEST( test_mode );
+  //CPPUNIT_TEST( test_gamma );
   CPPUNIT_TEST( test_cardinality );
   CPPUNIT_TEST( test_sqerr );
   CPPUNIT_TEST( test_countRealValues );
@@ -64,10 +64,7 @@ public:
   void test_strv2catv();
   void test_strv2numv();
   void test_str2num();
-  void test_meanVals();
   void test_mean();
-  void test_mode();
-  void test_gamma();
   void test_cardinality();
   void test_sqerr();
   void test_countRealValues();
@@ -171,7 +168,7 @@ void DataDefsTest::test_str2num() {
   // CPPUNIT_ASSERT(datadefs::str2num(h) == 0.0);
 }
 
-void DataDefsTest::test_meanVals() {
+void DataDefsTest::test_mean() {
   vector<datadefs::num_t> data;
   datadefs::num_t mu;
   size_t nRealValues;
@@ -185,7 +182,7 @@ void DataDefsTest::test_meanVals() {
   mu = -1.0; 
   nRealValues = static_cast<size_t>(-1);
   
-  datadefs::meanVals(data, mu, nRealValues);
+  datadefs::mean(data, mu, nRealValues);
   CPPUNIT_ASSERT(mu == 24.5);
   CPPUNIT_ASSERT(nRealValues == 50);
 
@@ -200,7 +197,7 @@ void DataDefsTest::test_meanVals() {
   mu = -1.0; 
   nRealValues = static_cast<size_t>(-1);
 
-  datadefs::meanVals(data, mu, nRealValues);
+  datadefs::mean(data, mu, nRealValues);
   CPPUNIT_ASSERT(mu == 24.5);
   CPPUNIT_ASSERT(nRealValues == 50);
   
@@ -213,88 +210,9 @@ void DataDefsTest::test_meanVals() {
   mu = -1.0; 
   nRealValues = static_cast<size_t>(-1);
 
-  datadefs::meanVals(data, mu, nRealValues);
+  datadefs::mean(data, mu, nRealValues);
   CPPUNIT_ASSERT(mu == 0.0);
   CPPUNIT_ASSERT(nRealValues == 0);
-}
-
-void DataDefsTest::test_mode() {
-  vector<datadefs::num_t> data;
-  datadefs::num_t mode = -1.0;
-  size_t numClasses = static_cast<size_t>(-1);
-
-  data.push_back(static_cast<datadefs::num_t>(10));
-  for (int i = 0; i < 50; ++i) {
-    data.push_back(static_cast<datadefs::num_t>(i));
-  }
-  
-  datadefs::mode(data, mode, numClasses);
-  CPPUNIT_ASSERT(mode == 10.0);
-
-  // numClasses is defined as const in our signature. Since we're not testing
-  //  edge cases of non-trivial memory corruption, we ignore it here. 
-
-  // Interleave the original input with NaNs; verify we get the same results
-  for (int i = 0; i < 50; ++i) {
-    data.insert(data.begin() + (i*2), datadefs::NUM_NAN);
-  }
-
-  mode = -1.0; 
-  numClasses = static_cast<size_t>(-1);
-
-  datadefs::mode(data, mode, numClasses);
-  CPPUNIT_ASSERT(mode == 10.0); 
-  
-  // Ensure a vector containing only NaNs is handled as expected
-  data.clear();
-  for (int i = 0; i < 50; ++i) {
-    data.push_back(datadefs::NUM_NAN);
-  }
-
-  mode = -1.0; 
-  numClasses = static_cast<size_t>(-1);
-
-  datadefs::mode(data, mode, numClasses);
-  CPPUNIT_ASSERT(mode == 0.0);
-}
-
-void DataDefsTest::test_gamma() {
-  vector<datadefs::num_t> data;
-  datadefs::num_t gamma = -1.0;
-  size_t numClasses = 5;
-
-  for (int i = 0; i < 50; ++i) {
-    data.push_back(static_cast<datadefs::num_t>(i));
-  }
-  
-  datadefs::gamma(data, gamma, numClasses);
-  CPPUNIT_ASSERT(gamma == -0.025);
-
-  // numClasses is defined as const in our signature. Since we're not testing
-  //  edge cases of non-trivial memory corruption, we ignore it here. 
-
-  // Interleave the original input with NaNs; verify we get the same results
-  for (int i = 0; i < 50; ++i) {
-    data.insert(data.begin() + (i*2), datadefs::NUM_NAN);
-  }
-
-  gamma = -1.0; 
-  numClasses = 5;
-
-  datadefs::gamma(data, gamma, numClasses);
-  CPPUNIT_ASSERT(gamma == -0.025); 
-  
-  // Ensure a vector containing only NaNs is handled as expected
-  data.clear();
-  for (int i = 0; i < 50; ++i) {
-    data.push_back(datadefs::NUM_NAN);
-  }
-
-  gamma = -1.0; 
-  numClasses = 5;
-
-  datadefs::gamma(data, gamma, numClasses);
-  CPPUNIT_ASSERT(gamma == 0.0);
 }
 
 void DataDefsTest::test_cardinality() {
@@ -826,12 +744,10 @@ void DataDefsTest::test_utest() {
   }
 
   datadefs::utest(x, y, pvalue);
-  CPPUNIT_ASSERT(fabs(pvalue - 0.5684170524500589127825378454872407019138336181640625)
-                  < datadefs::EPS);
+  CPPUNIT_ASSERT(pvalue == 1);
 
   datadefs::utest(x, y2, pvalue);
-  CPPUNIT_ASSERT(fabs(pvalue - 0.5684170524500589127825378454872407019138336181640625)
-                  < datadefs::EPS);
+  CPPUNIT_ASSERT(pvalue == 1);
 
   // Interleave the original input with NaNs; verify we get different results
   for (int i = 0; i < 50; ++i) {
@@ -841,11 +757,11 @@ void DataDefsTest::test_utest() {
   }
   
   datadefs::utest(x, y, pvalue);
-  CPPUNIT_ASSERT(fabs(pvalue - 0.999112880516312973355752546922303736209869384765625)
+  CPPUNIT_ASSERT(fabs(pvalue - 1)
                   < datadefs::EPS);
 
   datadefs::utest(x, y2, pvalue);
-  CPPUNIT_ASSERT(fabs(pvalue - 0.999112880516312973355752546922303736209869384765625)
+  CPPUNIT_ASSERT(fabs(pvalue - 1)
                   < datadefs::EPS);
 
   // Verify behavior when x and y are empty
@@ -863,7 +779,7 @@ void DataDefsTest::test_utest() {
   }
 
   datadefs::utest(x, y, pvalue);
-  CPPUNIT_ASSERT(pvalue == 1.0);
+  CPPUNIT_ASSERT(datadefs::isNAN(pvalue));
 
   // Verify behavior with all values for y as NaN
   x.clear();
@@ -872,7 +788,7 @@ void DataDefsTest::test_utest() {
   }
 
   datadefs::utest(x, y, pvalue);
-  CPPUNIT_ASSERT(pvalue == 0.0);
+  CPPUNIT_ASSERT(datadefs::isNAN(pvalue));
 }
 
 void DataDefsTest::test_erf() {
