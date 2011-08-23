@@ -43,8 +43,10 @@ private:
   //Will be moved elsewhere!
   void transformLogistic(const size_t numClasses, vector<num_t>& prediction, vector<num_t>& probability);
 
-  num_t predictSampleByTree(size_t sampleIdx, size_t treeIdx);
-  void predictDatasetByTree(size_t treeIdx, vector<num_t>& curPrediction);
+  num_t predictSampleByTree(Treedata* treeData, size_t sampleIdx, size_t treeIdx);
+  void predictDatasetByTree(Treedata* treeData, size_t treeIdx, vector<num_t>& curPrediction);
+
+  void predictWithRF(Treedata* treeData, vector<num_t>& prediction);
 
   void predictWithCategoricalGBT(Treedata* treeData, vector<num_t>& categoryPrediction);
   void predictWithNumericalGBT(Treedata* treeData, vector<num_t>& prediction);

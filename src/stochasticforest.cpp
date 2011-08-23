@@ -186,7 +186,7 @@ void StochasticForest::growNumericalGBT() {
 
 
     // What kind of a prediction does the new tree produce?
-    StochasticForest::predictDatasetByTree(t, curPrediction);
+    StochasticForest::predictDatasetByTree(treeData_, t, curPrediction);
 
     // Calculate the current total prediction adding the newly generated tree
     cout <<endl<<"Tree "<<t<<": Predictions:"<<endl;
@@ -277,7 +277,7 @@ void StochasticForest::growCategoricalGBT() {
 
       // What kind of a prediction does the new tree produce
       // out of the whole training data set?
-      StochasticForest::predictDatasetByTree(t, curPrediction[k] );
+      StochasticForest::predictDatasetByTree(treeData_, t, curPrediction[k] );
       // Calculate the current total prediction adding the newly generated tree
       cout <<"Iter="<<m<<" Class="<<k<<": Predictions:"<<endl;
       for (size_t i=0; i<nSamples; i++) {
@@ -315,14 +315,14 @@ void StochasticForest::transformLogistic(const size_t numClasses, vector<num_t>&
 
 // Use a single GBT tree to produce a prediction from a single data sample
 // of an arbitrary data set. This wouldn't have to be the train set. // IF we use another treeData_ !!
-num_t StochasticForest::predictSampleByTree(size_t sampleIdx, size_t treeIdx) {
+num_t StochasticForest::predictSampleByTree(Treedata* treeData, size_t sampleIdx, size_t treeIdx) {
   // root of current tree
   Node *currentNode = rootNodes_[treeIdx]; // OLD: &forest_[treeIdx][0];
   num_t value;
   // traverse to the leaf of the tree
   while(currentNode->hasChildren()) {
     size_t featureIdx = currentNode->getSplitter();
-    treeData_->getFeatureData(featureIdx, sampleIdx, value);
+    treeData->getFeatureData(featureIdx, sampleIdx, value);
     currentNode = currentNode->percolateData(value);
   }
   // now currentNode points to a leaf node: get the prediction
@@ -332,11 +332,11 @@ num_t StochasticForest::predictSampleByTree(size_t sampleIdx, size_t treeIdx) {
 
 
 // Use a single GBT tree to produce predictions for a whole training data set
-void StochasticForest::predictDatasetByTree(size_t treeIdx, vector<num_t>& curPrediction) {
-  size_t nSamples = treeData_->nSamples();
+void StochasticForest::predictDatasetByTree(Treedata* treeData, size_t treeIdx, vector<num_t>& curPrediction) {
+  size_t nSamples = treeData->nSamples();
   // predict for all samples
   for(size_t i = 0; i < nSamples; ++i) {
-    curPrediction[i] = StochasticForest::predictSampleByTree(i, treeIdx);
+    curPrediction[i] = StochasticForest::predictSampleByTree(treeData, i, treeIdx);
     // cout << "Sample " << i << ", prediction " << curPrediction[i]  << endl;
   }
 }
@@ -352,6 +352,10 @@ void StochasticForest::predict(Treedata* treeData, vector<num_t>& prediction) {
     predictWithNumericalGBT(treeData, prediction);
   else
     predictWithCategoricalGBT(treeData, prediction);
+}
+
+void StochasticForest::predictWithRF(Treedata* treeData, vector<num_t>& prediction) {
+
 }
 
 
@@ -372,7 +376,7 @@ void StochasticForest::predictWithCategoricalGBT(Treedata* treeData, vector<num_
       prediction[k] = 0;
       for(size_t m = 0; m < numIterations; ++m) {
         size_t t =  m*numClasses_ + k; // tree index
-        prediction[k] = prediction[k] + shrinkage_ * predictSampleByTree(i, t);
+        prediction[k] = prediction[k] + shrinkage_ * predictSampleByTree(treeData, i, t);
       }
     }
 
@@ -399,7 +403,7 @@ void StochasticForest::predictWithNumericalGBT(Treedata* treeData, vector<num_t>
   for (size_t i=0; i<nSamples; i++) {
     prediction[i] = 0;
     for(size_t t = 0; t < nTrees_; ++t) {
-      prediction[i] = prediction[i] + shrinkage_ * predictSampleByTree(i, t);
+      prediction[i] = prediction[i] + shrinkage_ * predictSampleByTree(treeData, i, t);
     }
     // diagnostic print out the true and the prediction
     cout << i << "\t" << treeData_->features_[targetIdx_].data[i] << "\t" << prediction[i] <<endl; //// THIS WILL BECOME INVALID UPON REMOVAL OF FRIENDSHIP ASSIGNMENT IN TREEDATA ////
