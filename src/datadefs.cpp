@@ -12,6 +12,7 @@ using namespace std;
 // CONSTANTS
 ////////////////////////////////////////////////////////////
 const datadefs::num_t datadefs::NUM_NAN = numeric_limits<double>::quiet_NaN();//numeric_limits<double>::infinity();
+const string datadefs::STR_NAN = "NA";
 const datadefs::num_t datadefs::EPS = 1e-18; //1e-12;
 const datadefs::num_t datadefs::PI = 3.1415926535;
 const datadefs::num_t datadefs::A = 0.140012;
@@ -84,7 +85,7 @@ void datadefs::strv2catv(vector<string>& strvec,
       it = mapping.find(strvec[strIdx]);
       if(it == mapping.end()) {
         mapping.insert(pair<string,num_t>(strvec[strIdx],val));
-	//backMapping.insert(pair<num_t,string>(val,strvec[strIdx]));
+	backMapping.insert(pair<num_t,string>(val,strvec[strIdx]));
 	catvec[strIdx] = val;
         val += 1.0;
       } else {
@@ -97,11 +98,12 @@ void datadefs::strv2catv(vector<string>& strvec,
     }
   }  
 
+  
+
   if(false) {
     cout << "mapping:" << endl;
     //for(size_t i = 0; i < strvec.size(); ++i) {
     for(map<string,num_t>::const_iterator it(mapping.begin()); it != mapping.end(); ++it) {
-      backMapping.insert(pair<num_t,string>(it->second,it->first));
       cout << "mapping[" << it->first << "] => " << it->second << " => " << backMapping[ it->second ] << endl;  		    
     }
   }

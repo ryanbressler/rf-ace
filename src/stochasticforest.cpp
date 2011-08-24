@@ -129,7 +129,7 @@ void StochasticForest::learnGBT(const size_t nMaxLeaves,
                                        numClasses_);
   }
   //Let's grow the forest
-  cout << "Target is "<< treeData_->getFeatureName(targetIdx_) <<" ["<<targetIdx_<<"]. It has "<<numClasses_<<" classes."<<endl;
+  //cout << "Target is "<< treeData_->getFeatureName(targetIdx_) <<" ["<<targetIdx_<<"]. It has "<<numClasses_<<" classes."<<endl;
   
   if(numClasses_ == 0) {
     StochasticForest::growNumericalGBT();
@@ -189,7 +189,7 @@ void StochasticForest::growNumericalGBT() {
     StochasticForest::predictDatasetByTree(treeData_, t, curPrediction);
 
     // Calculate the current total prediction adding the newly generated tree
-    cout <<endl<<"Tree "<<t<<": Predictions:"<<endl;
+    //cout <<endl<<"Tree "<<t<<": Predictions:"<<endl;
     num_t sqErrorSum = 0.0;
     for (size_t i=0; i<nSamples; i++) {
       prediction[i] = prediction[i] + shrinkage_ * curPrediction[i];
@@ -197,13 +197,13 @@ void StochasticForest::growNumericalGBT() {
       // diagnostics
       num_t iError = trueTargetData[i]-prediction[i];
       sqErrorSum += iError*iError;
-      cout << setiosflags(ios::fixed) << setprecision(4);
-      cout <<"i="<<setw(4)<<i;
-      cout <<" cp="<<setw(8)<<curPrediction[i]<<" ct="<<setw(8)<< curTargetData[i]<<" ce="<<setw(8)<< curTargetData[i]-curPrediction[i];
-      cout << " p="<<setw(8)<<   prediction[i]<< " t="<<setw(8)<<trueTargetData[i]<< " e="<<setw(8)<< iError;
-      cout << endl;
+      //cout << setiosflags(ios::fixed) << setprecision(4);
+      ///cout <<"i="<<setw(4)<<i;
+      // cout <<" cp="<<setw(8)<<curPrediction[i]<<" ct="<<setw(8)<< curTargetData[i]<<" ce="<<setw(8)<< curTargetData[i]-curPrediction[i];
+      //cout << " p="<<setw(8)<<   prediction[i]<< " t="<<setw(8)<<trueTargetData[i]<< " e="<<setw(8)<< iError;
+      //cout << endl;
     }
-    cout << "rmserror="<<sqrt(sqErrorSum/nSamples)<<endl;
+    //cout << "rmserror="<<sqrt(sqErrorSum/nSamples)<<endl;
   }
   // GBT-forest is now done!
 
@@ -279,7 +279,7 @@ void StochasticForest::growCategoricalGBT() {
       // out of the whole training data set?
       StochasticForest::predictDatasetByTree(treeData_, t, curPrediction[k] );
       // Calculate the current total prediction adding the newly generated tree
-      cout <<"Iter="<<m<<" Class="<<k<<": Predictions:"<<endl;
+      //cout <<"Iter="<<m<<" Class="<<k<<": Predictions:"<<endl;
       for (size_t i=0; i<nSamples; i++) {
         prediction[i][k] = prediction[i][k] + shrinkage_ * curPrediction[k][i];
         // cout <<"i="<<i<<" CurPrediction="<<curPrediction[k][i]<<" prediction="<<prediction[i][k]<<endl;
@@ -389,14 +389,17 @@ void StochasticForest::predictWithCategoricalGBT(Treedata* treeData, vector<stri
       }
     }
 
-    // ... find index of maximum prediction, this is the predicted cateory
+    // ... find index of maximum prediction, this is the predicted category
     vector<num_t>::iterator maxProb = max_element( prediction.begin(), prediction.end() );
     num_t maxProbCategory = 1.0*(maxProb - prediction.begin()); 
     
     map<num_t,string> backMapping = treeData->features_[targetIdx_].backMapping;
+    //for(map<num_t,string>::const_iterator it(backMapping.begin()); it != backMapping.end(); ++it) {
+    //  cout << it->first << " => " << it->second << endl;
+    // }
     //cout << maxProbCategory << " " << backMapping.size() << endl;
     categoryPrediction[i] = backMapping[ maxProbCategory ]; // classes are 0,1,2,...
-    //cout << "foo" << endl;
+    //cout << maxProbCategory << " " << categoryPrediction[i] << endl;
     // diagnostic print out the true and the prediction
     //errorCnt += (backMapping[treeData->features_[targetIdx_].data[i]] != categoryPrediction[i]); //// THIS WILL BECOME INVALID UPON REMOVAL OF FRIENDSHIP ASSIGNMENT IN TREEDATA ////
     //cout << i << "\t" << backMapping[treeData->features_[targetIdx_].data[i]] << "\t" << categoryPrediction[i]; //// THIS WILL BECOME INVALID UPON REMOVAL OF FRIENDSHIP ASSIGNMENT IN TREEDATA ////
