@@ -49,18 +49,15 @@ public:
 
   size_t nNodes();
 
-  //Leaf prediction functions
-  //void leafMean(const vector<num_t>& data, const size_t numClasses);
-  //void leafMode(const vector<num_t>& data, const size_t numClasses);
-  //void leafGamma(const vector<num_t>& data, const size_t numClasses);
-
   enum LeafPredictionFunctionType { LEAF_MEAN, LEAF_MODE, LEAF_GAMMA };
 
   //Helper functions
   //void print();
   //void print_compact();
 
+#ifndef TEST__
 protected:
+#endif
 
   struct GrowInstructions {
     bool sampleWithReplacement;
@@ -88,8 +85,9 @@ protected:
                           set<size_t>& featuresInTree,
                           size_t& nNodes);
     
-
+#ifndef TEST__
 private:
+#endif
 
   inline void cleanPairVectorFromNANs(const vector<num_t>& v1_copy,
                                       const vector<num_t>& v2_copy,
@@ -126,11 +124,6 @@ private:
 
   //A recursive function that will accumulate the number of descendant nodes the current nodes has
   void recursiveNDescendantNodes(size_t& n);
-
-  //Leaf prediction functions
-  //void leafMean(const vector<num_t>& data);
-  //void leafMode(const vector<num_t>& data);
-  //void leafGamma(const vector<num_t>& data, const size_t numClasses);
 
   bool isSplitterNumerical_;
 
