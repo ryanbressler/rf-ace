@@ -24,6 +24,7 @@ namespace datadefs {
                          *   RF-ACE. Currently, double. */
 
   extern const num_t NUM_NAN;       /** Numeric representation of not-a-number */
+  extern const string STR_NAN;
   extern const num_t EPS;           /** Desired relative error. Literally,
                                      *   "machine EPSilon." See:
                                      *   http://en.wikipedia.org/wiki/Machine_epsilon

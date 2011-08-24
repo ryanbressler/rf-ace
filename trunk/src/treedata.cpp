@@ -93,10 +93,10 @@ Treedata::Treedata(string fileName):
   } 
   
   for(size_t i = nFeatures_; i < 2*nFeatures_; ++i) {
-    //vector<num_t> contrastData(nSamples_);
+    features_[i] = features_[ i-nFeatures_ ];
     features_[i].name = "CONTRAST";
-    features_[i].isNumerical = features_[ i-nFeatures_ ].isNumerical;
-    features_[i].data = features_[ i-nFeatures_ ].data;
+    //features_[i].isNumerical = features_[ i-nFeatures_ ].isNumerical;
+    //features_[i].data = features_[ i-nFeatures_ ].data;
   }
 
   Treedata::permuteContrasts();
@@ -629,7 +629,15 @@ void Treedata::getFeatureData(size_t featureIdx, const vector<size_t>& sampleIcs
 }
 
 string Treedata::getRawFeatureData(const size_t featureIdx, const size_t sampleIdx) {
-  return(features_[featureIdx].backMapping[ features_[featureIdx].data[sampleIdx] ]);
+
+  num_t value = features_[featureIdx].data[sampleIdx];
+
+  if(datadefs::isNAN(value)) {
+    return(datadefs::STR_NAN);
+  } else {
+    return(features_[featureIdx].backMapping[ value ]);
+  }
+    
 }
 
 // DEPRECATED ??
