@@ -119,7 +119,6 @@ void Node::recursiveNDescendantNodes(size_t& n) {
     leftChild_->recursiveNDescendantNodes(n);
     rightChild_->recursiveNDescendantNodes(n);
   }
-
 }
 
 
@@ -792,27 +791,6 @@ num_t Node::splitFitness(vector<num_t> const& data,
   }
 
 }
-
-// !! Cruft: remove me.
-/*
-  void Node::accumulateLeafTrainData(const num_t newTrainData) {
-  assert(!hasChildren_);
-  trainData_.push_back(newTrainData);}rediction(const vector<num_t>& trainData, const
-  GrowInstructions& GI) {
-  assert(!hasChildren_ && !isTrainPredictionSet_);
-  if(GI.leafPredictionFunctionType == LEAF_MEAN) {
-  Node::leafMean(trainData);
-  }
-  else if(GI.leafPredictionFunctionType == LEAF_MODE) {
-  Node::leafMode(trainData);
-  } else {
-  Node::leafGamma(trainData, GI.numClasses);
-  }
-  
-  //GI.leafPredictionFunction(trainData,GI.numClasses);
-  isTrainPredictionSet_ = true;
-  }
-*/
 
 void Node::leafMean(const vector<datadefs::num_t>& data, const size_t numClasses) {
   

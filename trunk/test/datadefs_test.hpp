@@ -107,12 +107,14 @@ void DataDefsTest::test_size_tIsSigned() {
 void DataDefsTest::test_strv2catv() {
   vector<string> strvec(51,"");
   vector<datadefs::num_t> catvec(51,0.0);
+  map<string,datadefs::num_t> mapping;
+  map<datadefs::num_t,string> backMapping;
   strvec[0] = "a";
   strvec[1] = "b";
   strvec[2] = "c";
   strvec[3] = "A";
   strvec[50] = "NaN";
-  datadefs::strv2catv(strvec, catvec);
+  datadefs::strv2catv(strvec, catvec, mapping, backMapping);
 
   CPPUNIT_ASSERT(catvec[0] == 0.0);
   CPPUNIT_ASSERT(catvec[1] == 1.0);
