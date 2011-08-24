@@ -77,14 +77,18 @@ Treedata::Treedata(string fileName):
       datadefs::strv2numv(rawMatrix[i],featureData);
       features_[i].nCategories = 0;
     } else {
-      datadefs::strv2catv(rawMatrix[i],featureData);
+      map<string,num_t> mapping;
+      map<num_t,string> backMapping;
+      datadefs::strv2catv(rawMatrix[i], featureData, mapping, backMapping);
+      features_[i].mapping = mapping;
+      features_[i].backMapping = backMapping;
       map<num_t,size_t> freq;
       size_t nReal;
-      datadefs::count_freq(featureData,freq,nReal);
+      datadefs::count_freq(featureData, freq, nReal);
       features_[i].nCategories = freq.size();
     }
     features_[i].data = featureData;
-    //Treedata::permute(featureData);
+    //features_[i].rawData = rawMatrix[i];
     //features_[i].contrast = featureData;
   } 
   
@@ -622,6 +626,10 @@ void Treedata::getFeatureData(size_t featureIdx, const vector<size_t>& sampleIcs
     data[i] = features_[featureIdx].data[sampleIcs[i]];
   }
 
+}
+
+string Treedata::getRawFeatureData(const size_t featureIdx, const size_t sampleIdx) {
+  return(features_[featureIdx].backMapping[ features_[featureIdx].data[sampleIdx] ]);
 }
 
 // DEPRECATED ??

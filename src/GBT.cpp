@@ -46,7 +46,7 @@ GBT::GBT(Treedata* treeData, size_t targetIdx, size_t nTrees, size_t nMaxLeaves,
   //Let's grow the forest
   cout << "Target is "<< treeData_->getFeatureName(targetIdx_) <<" ["<<targetIdx_<<"]. It has "<<numClasses_<<" classes."<<endl;
   GBT::growForest();
-  }
+}
 
 GBT::~GBT() {
   for(size_t treeIdx = 0; treeIdx < nTrees_; ++treeIdx) {

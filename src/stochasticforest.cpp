@@ -341,17 +341,25 @@ void StochasticForest::predictDatasetByTree(Treedata* treeData, size_t treeIdx, 
   }
 }
 
+void StochasticForest::predict(vector<string>& prediction) {
+  assert(numClasses_ != 0);
+  StochasticForest::predict(treeData_, prediction);
+}
+
 void StochasticForest::predict(vector<num_t>& prediction) {
   StochasticForest::predict(treeData_, prediction);
+}
+
+void StochasticForest::predict(Treedata* treeData, vector<string>& prediction) {
+  assert(numClasses_ != 0);
+  StochasticForest::predictWithCategoricalGBT(treeData, prediction);
 }
 
 // Predict using a GBT "forest" from an arbitrary data set. GBT::numClasses_ determines
 // whether the prediction is for a categorical or a numerical variable.
 void StochasticForest::predict(Treedata* treeData, vector<num_t>& prediction) {
-  if ( 0 == numClasses_ )
-    predictWithNumericalGBT(treeData, prediction);
-  else
-    predictWithCategoricalGBT(treeData, prediction);
+  assert(numClasses_ == 0);
+  StochasticForest::predictWithNumericalGBT(treeData, prediction);
 }
 
 void StochasticForest::predictWithRF(Treedata* treeData, vector<num_t>& prediction) {
@@ -360,16 +368,17 @@ void StochasticForest::predictWithRF(Treedata* treeData, vector<num_t>& predicti
 
 
 // Predict categorical target using a GBT "forest" from an arbitrary data set.
-void StochasticForest::predictWithCategoricalGBT(Treedata* treeData, vector<num_t>& categoryPrediction) {
+void StochasticForest::predictWithCategoricalGBT(Treedata* treeData, vector<string>& categoryPrediction) {
   size_t nSamples = treeData->nSamples();
-  cout << "Predicting "<<nSamples<<" samples. Target="<<targetIdx_<<". Classes="<<numClasses_<<endl;
+  //cout << "Predicting "<<nSamples<<" samples. Target="<<targetIdx_<<". Classes="<<numClasses_<<endl;
 
   // For classification, each "tree" is actually numClasses_ trees in a row
   // each predicting the probability of its own class.
   size_t numIterations = nTrees_ / numClasses_;
-  size_t errorCnt = 0;
+  //size_t errorCnt = 0;
   vector<num_t> probPrediction( numClasses_ );
   vector<num_t> prediction( numClasses_ );
+  categoryPrediction.resize( nSamples );
 
   for (size_t i=0; i<nSamples; i++) { // for each sample we need to ...
     for (size_t k=0; k<numClasses_; ++k) { // ... produce predictions for each class, and then ...
@@ -382,18 +391,22 @@ void StochasticForest::predictWithCategoricalGBT(Treedata* treeData, vector<num_
 
     // ... find index of maximum prediction, this is the predicted cateory
     vector<num_t>::iterator maxProb = max_element( prediction.begin(), prediction.end() );
-    categoryPrediction[i] = maxProb - prediction.begin() ; // classes are 0,1,2,...
-
+    num_t maxProbCategory = 1.0*(maxProb - prediction.begin()); 
+    
+    map<num_t,string> backMapping = treeData->features_[targetIdx_].backMapping;
+    //cout << maxProbCategory << " " << backMapping.size() << endl;
+    categoryPrediction[i] = backMapping[ maxProbCategory ]; // classes are 0,1,2,...
+    //cout << "foo" << endl;
     // diagnostic print out the true and the prediction
-    errorCnt += (treeData->features_[targetIdx_].data[i] != categoryPrediction[i]); //// THIS WILL BECOME INVALID UPON REMOVAL OF FRIENDSHIP ASSIGNMENT IN TREEDATA ////
-      cout << i << "\t" << treeData->features_[targetIdx_].data[i] << "\t" << categoryPrediction[i]; //// THIS WILL BECOME INVALID UPON REMOVAL OF FRIENDSHIP ASSIGNMENT IN TREEDATA ////
+    //errorCnt += (backMapping[treeData->features_[targetIdx_].data[i]] != categoryPrediction[i]); //// THIS WILL BECOME INVALID UPON REMOVAL OF FRIENDSHIP ASSIGNMENT IN TREEDATA ////
+    //cout << i << "\t" << backMapping[treeData->features_[targetIdx_].data[i]] << "\t" << categoryPrediction[i]; //// THIS WILL BECOME INVALID UPON REMOVAL OF FRIENDSHIP ASSIGNMENT IN TREEDATA ////
       StochasticForest::transformLogistic(numClasses_, prediction, probPrediction); // predictions-to-probabilities
-	for (size_t k=0; k<numClasses_; ++k) {
-	  cout <<"\t"<<probPrediction[k];
-	}
-	cout <<endl;
+      //for (size_t k=0; k<numClasses_; ++k) {
+	  //cout <<"\t"<<probPrediction[k];
+      //}
+	//cout <<endl;
   }
-  cout<<"Error "<<errorCnt<<"/"<<nSamples<<"="<<100*errorCnt/nSamples<<"%"<<endl;
+  //cout<<"Error "<<errorCnt<<"/"<<nSamples<<"="<<100*errorCnt/nSamples<<"%"<<endl;
 }
 
 // Predict numerical target using a GBT "forest" from an arbitrary data set

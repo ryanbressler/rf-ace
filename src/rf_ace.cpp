@@ -521,13 +521,14 @@ int main(const int argc, char* const argv[]) {
     vector<num_t> pValues; //(treedata.nFeatures());
     vector<num_t> importanceValues; //(treedata.nFeatures());
       
+    vector<size_t> keepFeatureIcs(1);
     if(!gen_op.noRF) {
       cout << "    => filtering " << flush;
 
       executeRandomForestFilter(treedata,targetIdx,RF_op,pValues,importanceValues);
      
       size_t nFeatures = treedata.nFeatures();
-      vector<size_t> keepFeatureIcs(1);
+      //vector<size_t> keepFeatureIcs(1);
       keepFeatureIcs[0] = targetIdx;
       vector<string> removedFeatures;
       vector<size_t> removedFeatureIcs;
@@ -570,24 +571,35 @@ int main(const int argc, char* const argv[]) {
       //GBT gbt(&treedata, targetIdx, GBT_op.nTrees, GBT_op.nMaxLeaves, GBT_op.shrinkage, GBT_op.subSampleSize);
       StochasticForest SF(&treedata,targetIdx,GBT_op.nTrees);
       SF.learnGBT(GBT_op.nMaxLeaves, GBT_op.shrinkage, GBT_op.subSampleSize);
-    
-      cout <<endl<< "PREDICTION:" << endl;
-      vector<num_t> prediction(treedata.nSamples());
-      if(gen_op.testFile != "") {
-	Treedata treedata_test(gen_op.testFile);
-	SF.predict(&treedata_test,prediction);
-      } else {
-	SF.predict(prediction);
-      }
       
-      if(gen_op.predictionOutput != "") {
-	FILE* file = fopen(gen_op.predictionOutput.c_str(),"w");
-	for(size_t i = 0; i < prediction.size(); ++i) {
-	  fprintf(file,"%9.8f\n",prediction[i]);
-	}    
-	fclose(file);
+      cout <<endl<< "PREDICTION:" << endl;
+      //vector<num_t> prediction(treedata.nSamples());
+      
+      if(gen_op.testFile != "" && gen_op.predictionOutput != "") {
+	Treedata treedata_test(gen_op.testFile);
+	if(!gen_op.noRF) {
+	  treedata_test.keepFeatures(keepFeatureIcs);
+	}
+	cout << treedata_test.getFeatureName(targetIdx) << endl;
+	if(treedata_test.isFeatureNumerical(targetIdx)) {
+	  vector<num_t> prediction;
+	  SF.predict(&treedata_test,prediction);
+	  FILE* file = fopen(gen_op.predictionOutput.c_str(),"w");
+	  for(size_t i = 0; i < prediction.size(); ++i) {
+	    fprintf(file,"%s\t%9.8f\n",treedata_test.getRawFeatureData(targetIdx,i).c_str(),prediction[i]);
+	  }
+	  fclose(file);
+	} else {
+	  vector<string> prediction;
+          SF.predict(&treedata_test,prediction);
+          FILE* file = fopen(gen_op.predictionOutput.c_str(),"w");
+          for(size_t i = 0; i < prediction.size(); ++i) {
+            fprintf(file,"%s\t%s\n",treedata_test.getRawFeatureData(targetIdx,i).c_str(),prediction[i].c_str());
+          }
+	}
+
+	cout << "DONE" << endl;
       }
-      cout << "DONE" << endl;
     }
 
     cout << endl;
