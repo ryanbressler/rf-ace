@@ -51,6 +51,8 @@ public:
   void getFeatureData(const size_t featureIdx, const size_t sampleIdx, num_t& data);
   void getFeatureData(const size_t featureIdx, const vector<size_t>& sampleIcs, vector<num_t>& data);
 
+  string getRawFeatureData(const size_t featureIdx, const size_t sampleIdx);
+
   inline void getRandomData(const size_t featureIdx, num_t& data) {data = features_[featureIdx].data[randomInteger_() % nSamples_]; }
   inline void getRandomIndex(const size_t n, size_t& idx) { idx = randomInteger_() % n; }
   
@@ -62,13 +64,6 @@ public:
                                 vector<size_t>& ics, 
                                 vector<size_t>& oobIcs);
 
-  //Permutes integers in range 0,1,...,(ics.size()-1).
-  //NOTE: original contents in ics will be replaced.
-  //void permute(vector<size_t>& ics);
-
-  //Permutes data.
-  //void permute(vector<num_t>& data);
-
   void permuteContrasts();
 
   bool isFeatureNumerical(size_t featureIdx);
@@ -79,14 +74,16 @@ public:
 protected: 
 
   //WILL BECOME DEPRECATED
-  friend class GBT;
   friend class StochasticForest;
 
 private:
 
   struct Feature {
     vector<num_t> data;
+    //vector<string> rawData;
     bool isNumerical;
+    map<string,num_t> mapping;
+    map<num_t,string> backMapping;
     size_t nCategories;
     string name;
   };

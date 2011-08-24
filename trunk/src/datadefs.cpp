@@ -36,9 +36,12 @@ const set<datadefs::NAN_t> datadefs::NANs(initNANs,initNANs+3);
  * Promote each character in a sequence to uppercase. Effectively, a wrapper
  * around std::transform.
  */
-void toupper(string& str) {
-  int (*pf)(int) = toupper;
-  transform(str.begin(), str.end(), str.begin(), pf);
+
+string datadefs::toUpperCase(const string& str) {
+  int (*pf)(int) = toupper;  
+  string strcopy(str);
+  transform(strcopy.begin(), strcopy.end(), strcopy.begin(), pf);
+  return(strcopy);
 }
 
 
@@ -50,37 +53,58 @@ void toupper(string& str) {
  * Convert a string vector into a category vector
  */
 void datadefs::strv2catv(vector<string>& strvec,
-                         vector<datadefs::num_t>& catvec) {
+                         vector<datadefs::num_t>& catvec, 
+			 map<string,num_t>& mapping,
+			 map<num_t,string>& backMapping) {
   assert(strvec.size() == catvec.size());
 
-  map<string,size_t> str2valmap;
+  //map<string,size_t> str2valmap;
 
   //Reset the map
-  map<string,size_t> foo;
-  str2valmap = foo;
-  size_t val = 0;
+  //map<string,size_t> foo;
+  //str2valmap = foo;
+  mapping.clear();
+  backMapping.clear();
+
+  //mapping.insert(pair<string,num_t>("NA",datadefs::NUM_NAN));
+  //backMapping.insert(pair<num_t,string>(datadefs::NUM_NAN,"NA"));
+
+  num_t val = 0.0;
 
   //Map unique strings to values and store values in catvec as doubles 
   for(size_t strIdx = 0; strIdx < strvec.size(); ++strIdx) {
     //Transform string to uppercase
-    toupper(strvec[strIdx]);
+    //toupper(strvec[strIdx]);
 
     //If the string is not defined to NaN
     if(!datadefs::isNAN(strvec[strIdx])) {
-      map<string,size_t>::iterator it;
+      map<string,num_t>::iterator it;
 
       //Try to find the string in the map. If it's not found, add the map...
-      it = str2valmap.find(strvec[strIdx]);
-      if(it == str2valmap.end()) {
-        str2valmap.insert(pair<string,size_t>(strvec[strIdx],val));
-        ++val;
+      it = mapping.find(strvec[strIdx]);
+      if(it == mapping.end()) {
+        mapping.insert(pair<string,num_t>(strvec[strIdx],val));
+	//backMapping.insert(pair<num_t,string>(val,strvec[strIdx]));
+	catvec[strIdx] = val;
+        val += 1.0;
+      } else {
+	catvec[strIdx] = it->second; //mapping[ strvec[strIdx] ];
       }
       //...and use the map to set the value for the output vector
-      catvec[strIdx] = static_cast<double>(str2valmap[strvec[strIdx]]);
+      //catvec[strIdx] = val; //backMapping[strvec[strIdx]];
     } else {    //If the string is defined to NaN, however...
       catvec[strIdx] = datadefs::NUM_NAN;
     }
   }  
+
+  if(false) {
+    cout << "mapping:" << endl;
+    //for(size_t i = 0; i < strvec.size(); ++i) {
+    for(map<string,num_t>::const_iterator it(mapping.begin()); it != mapping.end(); ++it) {
+      backMapping.insert(pair<num_t,string>(it->second,it->first));
+      cout << "mapping[" << it->first << "] => " << it->second << " => " << backMapping[ it->second ] << endl;  		    
+    }
+  }
 }
 
 /**
@@ -91,7 +115,7 @@ void datadefs::strv2numv(vector<string>& strvec,
   assert(strvec.size() == numvec.size());
   
   for(size_t strIdx = 0; strIdx < strvec.size(); ++strIdx) {
-    toupper(strvec[strIdx]);
+    //toupper(strvec[strIdx]);
     if(!datadefs::isNAN(strvec[strIdx])) {
       numvec[strIdx] = str2num(strvec[strIdx]);
     } else {

@@ -27,7 +27,11 @@ public:
   
   vector<num_t> featureImportance();
   
+
+  void predict(vector<string>& prediction);
   void predict(vector<num_t>& prediction);
+
+  void predict(Treedata* treeData, vector<string>& prediction);
   void predict(Treedata* treeData, vector<num_t>& prediction);
 
   //Counts the number of nodes in the forest
@@ -48,7 +52,7 @@ private:
 
   void predictWithRF(Treedata* treeData, vector<num_t>& prediction);
 
-  void predictWithCategoricalGBT(Treedata* treeData, vector<num_t>& categoryPrediction);
+  void predictWithCategoricalGBT(Treedata* treeData, vector<string>& categoryPrediction);
   void predictWithNumericalGBT(Treedata* treeData, vector<num_t>& prediction);
 
   //Percolates samples along the trees, starting from the rootNode. Spits out a map<> that ties the percolated train samples to the leaf nodes

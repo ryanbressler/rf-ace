@@ -48,7 +48,9 @@ namespace datadefs {
   ////////////////////////////////////////////////////////////
   // METHOD DECLARATIONS
   ////////////////////////////////////////////////////////////
-  void strv2catv(vector<string>& strvec, vector<num_t>& catvec);
+  string toUpperCase(const string& str);
+  
+  void strv2catv(vector<string>& strvec, vector<num_t>& catvec, map<string,num_t>& mapping, map<num_t,string>& backMapping);
   void strv2numv(vector<string>& strvec, vector<num_t>& numvec);
   num_t str2num(string& str);
 
@@ -145,7 +147,7 @@ namespace datadefs {
     const string& str   /** Input string for processing, passed by reference */
     ) {
     
-    set<string>::const_iterator it(NANs.find(str));
+    set<string>::const_iterator it(NANs.find(toUpperCase(str)));
     if(it == NANs.end()) { return(false); } else { return(true); } 
   }
 
