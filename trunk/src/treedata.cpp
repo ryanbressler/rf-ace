@@ -635,7 +635,13 @@ string Treedata::getRawFeatureData(const size_t featureIdx, const size_t sampleI
   if(datadefs::isNAN(value)) {
     return(datadefs::STR_NAN);
   } else {
-    return(features_[featureIdx].backMapping[ value ]);
+    if(features_[featureIdx].isNumerical) {
+      stringstream ss;
+      ss << value;
+      return(ss.str());
+    } else {
+      return(features_[featureIdx].backMapping[ value ]);
+    }
   }
     
 }
