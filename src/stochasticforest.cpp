@@ -415,14 +415,15 @@ void StochasticForest::predictWithCategoricalGBT(Treedata* treeData, vector<stri
 // Predict numerical target using a GBT "forest" from an arbitrary data set
 void StochasticForest::predictWithNumericalGBT(Treedata* treeData, vector<num_t>& prediction) {
   size_t nSamples = treeData->nSamples();
-  cout << "Predicting "<<nSamples<<" samples. Target="<<targetIdx_<<endl;
+  prediction.resize(nSamples);
+  //cout << "Predicting "<<nSamples<<" samples. Target="<<targetIdx_<<endl;
   for (size_t i=0; i<nSamples; i++) {
     prediction[i] = 0;
     for(size_t t = 0; t < nTrees_; ++t) {
       prediction[i] = prediction[i] + shrinkage_ * predictSampleByTree(treeData, i, t);
     }
     // diagnostic print out the true and the prediction
-    cout << i << "\t" << treeData_->features_[targetIdx_].data[i] << "\t" << prediction[i] <<endl; //// THIS WILL BECOME INVALID UPON REMOVAL OF FRIENDSHIP ASSIGNMENT IN TREEDATA ////
+    //cout << i << "\t" << treeData_->features_[targetIdx_].data[i] << "\t" << prediction[i] <<endl; //// THIS WILL BECOME INVALID UPON REMOVAL OF FRIENDSHIP ASSIGNMENT IN TREEDATA ////
 	}
 }
 
