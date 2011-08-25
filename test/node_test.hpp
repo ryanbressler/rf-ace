@@ -51,27 +51,54 @@ public:
 void NodeTest::setUp() {}
 void NodeTest::tearDown() {}
 
-void NodeTest::test_setSplitter();
-void NodeTest::test_setSplitter();
-void NodeTest::test_getSplitter();
-void NodeTest::test_percolateData();
-void NodeTest::test_getLeafTrainPrediction();
-void NodeTest::test_hasChildren();
+void NodeTest::test_setSplitter() {
+  // Two signatures!
+  //void Node::setSplitter(size_t splitter, num_t threshold);
+  //void Node::setSplitter(size_t splitter, set<num_t> classSet);
+}
 
-// !! Protected methods I need to friend to test directly
-void NodeTest::test_leafMean();
-void NodeTest::test_leafMode();
-void NodeTest::test_leafGamma();
-void NodeTest::test_recursiveNodeSplit();
+void NodeTest::test_getSplitter() {
+  //Node::getSplitter(...);
+}
 
-// !! Things I can only reasonably test through protected methods
-void NodeTest::test_cleanPairVectorFromNANs();
-void NodeTest::test_numericalFeatureSplit();
-void NodeTest::test_categoricalFeatureSplit();
-void NodeTest::test_splitFitness();
-void NodeTest::test_recursiveNDescendantNodes();
+void NodeTest::test_percolateData() {
+  //Node::percolateData(...);
+}
 
+void NodeTest::test_getLeafTrainPrediction() {
+}
+
+void NodeTest::test_hasChildren() {
+}
+
+void NodeTest::test_leafMean() {
+}
+
+void NodeTest::test_leafMode() { 
+}
+
+void NodeTest::test_leafGamma() { 
+}
+
+void NodeTest::test_recursiveNodeSplit() { 
+}
+
+void NodeTest::test_cleanPairVectorFromNANs() { 
+}
+
+void NodeTest::test_numericalFeatureSplit() { 
+}
+
+void NodeTest::test_categoricalFeatureSplit() { 
+}
+
+void NodeTest::test_splitFitness() { 
+}
+
+void NodeTest::test_recursiveNDescendantNodes() {
+  
+}
 // Registers the fixture into the test 'registry'
-CPPUNIT_TEST_SUITE_REGISTRATION();
+CPPUNIT_TEST_SUITE_REGISTRATION() { 
 
 #endif // NODETEST_HPP

@@ -20,8 +20,6 @@ class DataDefsTest : public CppUnit::TestFixture {
   CPPUNIT_TEST( test_strv2numv );
   CPPUNIT_TEST( test_str2num );
   CPPUNIT_TEST( test_mean );
-  //CPPUNIT_TEST( test_mode );
-  //CPPUNIT_TEST( test_gamma );
   CPPUNIT_TEST( test_cardinality );
   CPPUNIT_TEST( test_sqerr );
   CPPUNIT_TEST( test_countRealValues );
@@ -51,6 +49,8 @@ class DataDefsTest : public CppUnit::TestFixture {
   //CPPUNIT_TEST( test_spearman_correlation );
 
   // Tests for deprecated methods
+  //CPPUNIT_TEST( test_mode );
+  //CPPUNIT_TEST( test_gamma );
   //CPPUNIT_TEST( test_ttest );
   //CPPUNIT_TEST( test_regularized_betainc );
   //CPPUNIT_TEST( test_percentile );
@@ -119,9 +119,9 @@ void DataDefsTest::test_strv2catv() {
   CPPUNIT_ASSERT(catvec[0] == 0.0);
   CPPUNIT_ASSERT(catvec[1] == 1.0);
   CPPUNIT_ASSERT(catvec[2] == 2.0);
-  CPPUNIT_ASSERT(catvec[3] == 0.0);
+  CPPUNIT_ASSERT(catvec[3] == 3.0);
   for (int i = 4; i < 50; ++i) {
-    CPPUNIT_ASSERT(catvec[i] == 3.0);
+    CPPUNIT_ASSERT(4.0);
   }
   CPPUNIT_ASSERT(datadefs::isNAN(catvec[50]));
 }

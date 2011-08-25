@@ -74,6 +74,7 @@ void datadefs::strv2catv(vector<string>& strvec,
 
   //Map unique strings to values and store values in catvec as doubles 
   for(size_t strIdx = 0; strIdx < strvec.size(); ++strIdx) {
+
     //Transform string to uppercase
     //toupper(strvec[strIdx]);
 
