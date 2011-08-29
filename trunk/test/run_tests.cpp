@@ -1,8 +1,13 @@
 #include "argparse_test.hpp"
 #include "datadefs_test.hpp"
+//#include "node_test.hpp"
 #include <cppunit/CompilerOutputter.h>
 #include <cppunit/extensions/TestFactoryRegistry.h>
 #include <cppunit/ui/text/TestRunner.h>
+
+#ifndef TEST__
+#define TEST__
+#endif
 
 // Adapted code from the CppUnit documentation, intermixed with updates 
 //  by Larry Hosken, who seems to enjoy Comic Sans more than I do:
