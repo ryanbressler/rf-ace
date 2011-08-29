@@ -43,7 +43,6 @@ private:
   void growNumericalGBT();
   void growCategoricalGBT();
 
-
   //Will be moved elsewhere!
   void transformLogistic(const size_t numClasses, vector<num_t>& prediction, vector<num_t>& probability);
 

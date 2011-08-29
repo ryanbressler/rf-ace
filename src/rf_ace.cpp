@@ -34,7 +34,7 @@ const num_t  RF_DEFAULT_P_VALUE_THRESHOLD = 0.10;
 const bool   GBT_IS_OPTIMIZED_NODE_SPLIT = false;
 const size_t GBT_DEFAULT_N_TREES = 100;
 const size_t GBT_DEFAULT_N_MAX_LEAVES = 6;
-const num_t  GBT_DEFAULT_SHRINKAGE = 0.5;
+const num_t  GBT_DEFAULT_SHRINKAGE = 0.1;
 const num_t  GBT_DEFAULT_SUB_SAMPLE_SIZE = 0.5;
 
 struct General_options {
@@ -231,7 +231,7 @@ void printHeader() {
   cout << " --------------------------------------------------------------- " << endl;
   cout << "| RF-ACE -- efficient feature selection with heterogeneous data |" << endl;
   cout << "|                                                               |" << endl;
-  cout << "|  Version:      RF-ACE v0.7.5, August 9th, 2011                |" << endl;
+  cout << "|  Version:      RF-ACE v0.7.5, August 29th, 2011               |" << endl;
   cout << "|  Project page: http://code.google.com/p/rf-ace                |" << endl;
   cout << "|  Contact:      timo.p.erkkila@tut.fi                          |" << endl;
   cout << "|                kari.torkkola@gmail.com                        |" << endl;
@@ -438,9 +438,6 @@ int main(const int argc, char* const argv[]) {
     cout << "WARNING: feature mask is specified in the presence of multiple targets. All targets will be analyzed with the same mask set." << endl;
   }
 
-
-  cout << endl << "[list of parameter values will be added here soon]" << endl;
-  cout << endl << "[Optimized node splitting enforced]" << endl << endl;
   RF_op_copy.isOptimizedNodeSplit = true;
   GBT_op.isOptimizedNodeSplit = true;
 
@@ -458,16 +455,18 @@ int main(const int argc, char* const argv[]) {
     num_t realFraction = 1.0*nRealSamples / treedata.nSamples();
 
     size_t maxwidth = 1 + static_cast<int>(targetIcs.size()) / 10;
-      
-    cout << endl;
-    cout << "Began operating on target: " << gen_op.targetStr << endl;
-    cout << "Operating with these values:" << endl;
-    cout << "  + Number of Samples  = " << nRealSamples << " / " << treedata.nSamples()
-         << " (" << 100 * ( 1 - realFraction )<< "% missing)" << endl;
-    cout << "  + Number of Features = " << treedata.nFeatures() << endl;
-    cout << "  + Target Index       = " << targetIdx << ", containing header '"
-         << treedata.getFeatureName(targetIdx) << "'" << endl;
-    cout << endl;
+
+    /*
+      cout << endl;
+      cout << "Began operating on target: " << gen_op.targetStr << endl;
+      cout << "Operating with these values:" << endl;
+      cout << "  + Number of Samples  = " << nRealSamples << " / " << treedata.nSamples()
+      << " (" << 100 * ( 1 - realFraction )<< "% missing)" << endl;
+      cout << "  + Number of Features = " << treedata.nFeatures() << endl;
+      cout << "  + Target Index       = " << targetIdx << ", containing header '"
+      << treedata.getFeatureName(targetIdx) << "'" << endl;
+      cout << endl;
+    */
 
     cout << "== " << setw(maxwidth) << iter << "/" << setw(maxwidth) << targetIcs.size() << " target " << treedata.getFeatureName(targetIdx) << ", " << flush;
     
@@ -523,7 +522,7 @@ int main(const int argc, char* const argv[]) {
       
     vector<size_t> keepFeatureIcs(1);
     if(!gen_op.noRF) {
-      cout << "    => filtering " << flush;
+      cout << "    => applying RFs for feature filtering... " << flush;
 
       executeRandomForestFilter(treedata,targetIdx,RF_op,pValues,importanceValues);
      
@@ -544,16 +543,12 @@ int main(const int argc, char* const argv[]) {
 
       treedata.keepFeatures(keepFeatureIcs);
       targetIdx = 0;
-      //cout << endl;
-      cout << "DONE, " << treedata.nFeatures() << " / " << treedata_copy.nFeatures() << " features (" << 100.0 * treedata.nFeatures() / treedata_copy.nFeatures() << "%) left. " << endl;
-      //cout << "TEST: target is '" << treedata.getFeatureName(targetIdx) << "'" << endl;
-    } else {
-      //cout << "1/3 Random Forest filter *DISABLED*" << endl << endl;
+
+      cout << "DONE, " << treedata.nFeatures() << " / " << treedata_copy.nFeatures() << " features (" 
+	   << 100.0 * treedata.nFeatures() / treedata_copy.nFeatures() << "%) left. " << endl;
     }
-      
-    //cout << "2/3 Random Forest feature selection *ENABLED* (will become obsolete). Options:" << endl;
-      
-    cout << "    => analyzing with RF ensembles " << flush;
+    
+    cout << "    => analyzing with RF ensembles... " << flush;
 
     // THIS WILL BE REPLACED BY GBT
     executeRandomForestFilter(treedata,targetIdx,RF_op,pValues,importanceValues);
@@ -566,21 +561,27 @@ int main(const int argc, char* const argv[]) {
       
 
     if(!gen_op.noGBT) {
-      cout << "    => analyzing with GBT " << flush;
+      cout << "    => growing the GBT model... " << flush;
        
       //GBT gbt(&treedata, targetIdx, GBT_op.nTrees, GBT_op.nMaxLeaves, GBT_op.shrinkage, GBT_op.subSampleSize);
       StochasticForest SF(&treedata,targetIdx,GBT_op.nTrees);
       SF.learnGBT(GBT_op.nMaxLeaves, GBT_op.shrinkage, GBT_op.subSampleSize);
       
-      cout <<endl<< "PREDICTION:" << endl;
+      // NOTE: This is still failing...
+      //importanceValues = SF.featureImportance();
+  
+      cout << "DONE" << endl;
+
+      //cout <<endl<< "PREDICTION:" << endl;
       //vector<num_t> prediction(treedata.nSamples());
       
       if(gen_op.testFile != "" && gen_op.predictionOutput != "") {
+	cout << "    => predicting with the GBT model... " << flush;
 	Treedata treedata_test(gen_op.testFile);
 	if(!gen_op.noRF) {
 	  treedata_test.keepFeatures(keepFeatureIcs);
 	}
-	cout << treedata_test.getFeatureName(targetIdx) << endl;
+	//cout << treedata_test.getFeatureName(targetIdx) << endl;
 	if(treedata_test.isFeatureNumerical(targetIdx)) {
 	  vector<num_t> prediction;
 	  SF.predict(&treedata_test,prediction);
