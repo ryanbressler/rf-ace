@@ -40,7 +40,7 @@ Treedata::Treedata(string fileName):
   vector<string> featureHeaders;
   vector<bool> isFeatureNumerical;
   if(fileType == AFM) {
-    cout << "File type interpreted as Annotated Feature Matrix (AFM)" << endl;
+    //cout << "File type interpreted as Annotated Feature Matrix (AFM)" << endl;
     try {
       Treedata::readAFM(featurestream,rawMatrix,featureHeaders,isFeatureNumerical);
     }
@@ -48,7 +48,7 @@ Treedata::Treedata(string fileName):
       cerr << "The file could not be read. Is the file type really AFM? Quitting..." << endl;
     }
   } else if(fileType == ARFF) {
-    cout << "File type interpreted as Attribute-Relation File Format (ARFF)" << endl;
+    //cout << "File type interpreted as Attribute-Relation File Format (ARFF)" << endl;
     try {
       Treedata::readARFF(featurestream,rawMatrix,featureHeaders,isFeatureNumerical);
     }
@@ -56,7 +56,7 @@ Treedata::Treedata(string fileName):
       cerr << "The file could not be read. Is the file type really ARFF? Quitting..." << endl;
     }
   } else {
-    cout << "File type is unknown -- defaulting to Annotated Feature Matrix (AFM)" << endl;
+    //cout << "File type is unknown -- defaulting to Annotated Feature Matrix (AFM)" << endl;
     try {
       Treedata::readAFM(featurestream,rawMatrix,featureHeaders,isFeatureNumerical);
     }
@@ -265,14 +265,14 @@ void Treedata::readAFM(ifstream& featurestream, vector<vector<string> >& rawMatr
 
   //If the data is row-formatted...
   if(isFeaturesAsRows) {
-    cout << "AFM orientation: features as rows" << endl;
+    //cout << "AFM orientation: features as rows" << endl;
 
     //... and feature headers are row headers
     featureHeaders = rowHeaders;
 
   } else {
 
-    cout << "AFM orientation: features as columns" << endl;
+    //cout << "AFM orientation: features as columns" << endl;
       
     Treedata::transpose<string>(rawMatrix);
       
