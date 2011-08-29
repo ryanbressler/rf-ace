@@ -102,7 +102,7 @@ struct General_options {
 
     predictionOutput(""),
     predictionOutput_s("P"),
-    predictionOutput_l("--predout"),
+    predictionOutput_l("predout"),
   
     noRF(GENERAL_DEFAULT_NO_RF),
     noRF_s("f"),
@@ -258,7 +258,9 @@ void printHelp(const General_options& geno, const RF_options& rfo, const GBT_opt
   cout << " -" << geno.featureMaskFile_s << " / --" << geno.featureMaskFile_l << setw( maxwidth - geno.featureMaskFile_l.size() )
        << " " << "Feature mask file. String of ones and zeroes, zeroes indicating removal of the feature in the matrix" << endl;
   cout << " -" << geno.testFile_s << " / --" << geno.testFile_l << setw( maxwidth - geno.testFile_l.size() )
-       << " " << "Test data (if none given, the same matrix will be used for both training and testing)" << endl;
+       << " " << "Test data" << endl;
+  cout << " -" << geno.predictionOutput_s << " / --" << geno.predictionOutput_l << setw( maxwidth - geno.predictionOutput_l.size() )
+       << " " << "Prediction output file, which will be required if test data is provided" << endl;
   cout << endl;
   
   cout << "OPTIONAL ARGUMENTS -- RF FILTER:" << endl;
