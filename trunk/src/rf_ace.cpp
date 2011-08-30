@@ -636,11 +636,11 @@ int main(const int argc, char* const argv[]) {
       for(size_t featureIdx = 0; featureIdx < treedata.nFeatures(); ++featureIdx) {
         
         //MODIFICATION: ALL ASSOCIATIONS WILL BE PRINTED
-        /*
-          if(importanceValues[featureIdx] < datadefs::EPS) {
-          break;
-          }
-        */
+        
+	if(pValues[featureIdx] > RF_op.pValueThreshold) {
+          continue;
+	}
+        
         
         if(refIcs[featureIdx] == targetIdx) {
           //cout << refIcs[featureIdx] << " == " << targetIdx << " (" << targetHeader << ")" << endl;
