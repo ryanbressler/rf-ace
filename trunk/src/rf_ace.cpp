@@ -106,11 +106,11 @@ struct General_options {
   
     noRF(GENERAL_DEFAULT_NO_RF),
     noRF_s("f"),
-    noRF_l("noRF"),
+    noRF_l("noFilter"),
     
     noGBT(GENERAL_DEFAULT_NO_GBT),
     noGBT_s("g"),
-    noGBT_l("noGBT") {}
+    noGBT_l("noPrediction") {}
 };
 
 struct RF_options {
@@ -282,7 +282,7 @@ void printHelp(const General_options& geno, const RF_options& rfo, const GBT_opt
        << RF_DEFAULT_P_VALUE_THRESHOLD << ")" << endl;
   cout << endl;
   
-  cout << "OPTIONAL ARGUMENTS -- GBT:" << endl;
+  cout << "OPTIONAL ARGUMENTS -- GBT PREDICTION:" << endl;
   cout << " -" << geno.noGBT_s << " / --" << geno.noGBT_l << setw( maxwidth - geno.noGBT_l.size() ) 
        << " " << "Enable Gradient Boosting Trees (default ON)" << endl;
   cout << " -" << gbto.isOptimizedNodeSplit_s << " / --" << gbto.isOptimizedNodeSplit_l
@@ -371,8 +371,8 @@ int main(const int argc, char* const argv[]) {
   cout << "  --output             = " << gen_op.output << endl;
   cout << "  --testdata           = " << gen_op.testFile << endl;
   cout << "  --predout            = " << gen_op.predictionOutput << endl;
-  cout << "  (RF enabled)         = "; if(!gen_op.noRF) { cout << "YES" << endl; } else { cout << "NO" << endl; }
-  cout << "  (GBT enabled)        = "; if(!gen_op.noGBT) { cout << "YES" << endl; } else { cout << "NO" << endl; }
+  cout << "  (RF filter)          = "; if(!gen_op.noRF) { cout << "YES" << endl; } else { cout << "NO" << endl; }
+  cout << "  (GBT prediction)     = "; if(!gen_op.noGBT) { cout << "YES" << endl; } else { cout << "NO" << endl; }
   cout << endl;
   
   if (!gen_op.noRF) {
