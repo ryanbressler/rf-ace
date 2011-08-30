@@ -21,8 +21,8 @@ using namespace std;
 using datadefs::num_t;
 
 const bool GENERAL_DEFAULT_PRINT_HELP = false;
-const bool GENERAL_DEFAULT_NO_RF = false;
-const bool GENERAL_DEFAULT_NO_GBT = false; // TEMPORARY VARIABLE
+const bool GENERAL_DEFAULT_NO_FILTER = false;
+const bool GENERAL_DEFAULT_NO_PREDICTION = false; // TEMPORARY VARIABLE
 
 const bool   RF_IS_OPTIMIZED_NODE_SPLIT = false;
 const size_t RF_DEFAULT_N_TREES = 0; // zero means it will be estimated from the data by default
@@ -67,13 +67,13 @@ struct General_options {
   string predictionOutput_s;
   string predictionOutput_l;
 
-  bool noRF;
-  string noRF_s;
-  string noRF_l;
+  bool noFilter;
+  string noFilter_s;
+  string noFilter_l;
 
-  bool noGBT;
-  string noGBT_s;
-  string noGBT_l;
+  bool noPrediction;
+  string noPrediction_s;
+  string noPrediction_l;
 
   General_options():
     printHelp(GENERAL_DEFAULT_PRINT_HELP),
@@ -104,13 +104,13 @@ struct General_options {
     predictionOutput_s("P"),
     predictionOutput_l("predout"),
   
-    noRF(GENERAL_DEFAULT_NO_RF),
-    noRF_s("f"),
-    noRF_l("noFilter"),
+    noFilter(GENERAL_DEFAULT_NO_FILTER),
+    noFilter_s("f"),
+    noFilter_l("noFilter"),
     
-    noGBT(GENERAL_DEFAULT_NO_GBT),
-    noGBT_s("g"),
-    noGBT_l("noPrediction") {}
+    noPrediction(GENERAL_DEFAULT_NO_PREDICTION),
+    noPrediction_s("g"),
+    noPrediction_l("noPrediction") {}
 };
 
 struct RF_options {
@@ -264,7 +264,7 @@ void printHelp(const General_options& geno, const RF_options& rfo, const GBT_opt
   cout << endl;
   
   cout << "OPTIONAL ARGUMENTS -- RF FILTER:" << endl;
-  cout << " -" << geno.noRF_s << " / --" << geno.noRF_l << setw( maxwidth - geno.noRF_l.size() )
+  cout << " -" << geno.noFilter_s << " / --" << geno.noFilter_l << setw( maxwidth - geno.noFilter_l.size() )
        << " " << "Set this flag to turn RF filtering OFF (default ON)" << endl; 
   cout << " -" << rfo.isOptimizedNodeSplit_s << " / --" << rfo.isOptimizedNodeSplit_l
        << setw( maxwidth - rfo.isOptimizedNodeSplit_l.size() )
@@ -283,7 +283,7 @@ void printHelp(const General_options& geno, const RF_options& rfo, const GBT_opt
   cout << endl;
   
   cout << "OPTIONAL ARGUMENTS -- GBT PREDICTION:" << endl;
-  cout << " -" << geno.noGBT_s << " / --" << geno.noGBT_l << setw( maxwidth - geno.noGBT_l.size() ) 
+  cout << " -" << geno.noPrediction_s << " / --" << geno.noPrediction_l << setw( maxwidth - geno.noPrediction_l.size() ) 
        << " " << "Enable Gradient Boosting Trees (default ON)" << endl;
   cout << " -" << gbto.isOptimizedNodeSplit_s << " / --" << gbto.isOptimizedNodeSplit_l
        << setw( maxwidth - gbto.isOptimizedNodeSplit_l.size() ) 
@@ -340,8 +340,8 @@ int main(const int argc, char* const argv[]) {
   parser.getArgument<string>(gen_op.featureMaskFile_s, gen_op.featureMaskFile_l, gen_op.featureMaskFile);
   parser.getArgument<string>(gen_op.testFile_s, gen_op.testFile_l, gen_op.testFile);
   parser.getArgument<string>(gen_op.predictionOutput_s, gen_op.predictionOutput_l, gen_op.predictionOutput);
-  parser.getFlag(gen_op.noRF_s, gen_op.noRF_l, gen_op.noRF);
-  parser.getFlag(gen_op.noGBT_s, gen_op.noGBT_l, gen_op.noGBT);
+  parser.getFlag(gen_op.noFilter_s, gen_op.noFilter_l, gen_op.noFilter);
+  parser.getFlag(gen_op.noPrediction_s, gen_op.noPrediction_l, gen_op.noPrediction);
 
   parser.getFlag(RF_op_copy.isOptimizedNodeSplit_s, RF_op_copy.isOptimizedNodeSplit_l, RF_op_copy.isOptimizedNodeSplit);
   parser.getArgument<size_t>(RF_op_copy.nTrees_s,RF_op_copy.nTrees_l,RF_op_copy.nTrees);
@@ -371,11 +371,11 @@ int main(const int argc, char* const argv[]) {
   cout << "  --output             = " << gen_op.output << endl;
   cout << "  --testdata           = " << gen_op.testFile << endl;
   cout << "  --predout            = " << gen_op.predictionOutput << endl;
-  cout << "  (RF filter)          = "; if(!gen_op.noRF) { cout << "YES" << endl; } else { cout << "NO" << endl; }
-  cout << "  (GBT prediction)     = "; if(!gen_op.noGBT) { cout << "YES" << endl; } else { cout << "NO" << endl; }
+  cout << "  (RF filter)          = "; if(!gen_op.noFilter) { cout << "YES" << endl; } else { cout << "NO" << endl; }
+  cout << "  (GBT prediction)     = "; if(!gen_op.noPrediction) { cout << "YES" << endl; } else { cout << "NO" << endl; }
   cout << endl;
   
-  if (!gen_op.noRF) {
+  if (!gen_op.noFilter) {
     cout << "Random forest configuration:" << endl;
     cout << "  --(RF)ntrees         = "; if(RF_op_copy.nTrees == 0) { cout << "DEFAULT" << endl; } else { cout << RF_op_copy.nTrees << endl; }
     cout << "  --(RF)mtry           = "; if(RF_op_copy.mTry == 0) { cout << "DEFAULT" << endl; } else { cout << RF_op_copy.mTry << endl; }
@@ -385,7 +385,7 @@ int main(const int argc, char* const argv[]) {
     cout << endl;
   }
   
-  if (!gen_op.noGBT) {
+  if (!gen_op.noPrediction) {
     cout << "Gradient boosting tree configuration:" << endl;
     cout << "  --(GBT)ntrees        = " << GBT_op.nTrees << endl;
     cout << "  --(GBT)maxleaves     = " << GBT_op.nMaxLeaves << endl;
@@ -525,7 +525,7 @@ int main(const int argc, char* const argv[]) {
     vector<num_t> importanceValues; //(treedata.nFeatures());
       
     vector<size_t> keepFeatureIcs(1);
-    if(!gen_op.noRF) {
+    if(!gen_op.noFilter) {
       cout << "    => applying RFs for feature filtering... " << flush;
 
       executeRandomForestFilter(treedata,targetIdx,RF_op,pValues,importanceValues);
@@ -564,7 +564,7 @@ int main(const int argc, char* const argv[]) {
     /////////////////////////////////////////////
       
 
-    if(!gen_op.noGBT) {
+    if(!gen_op.noPrediction) {
       cout << "    => growing the GBT model... " << flush;
        
       //GBT gbt(&treedata, targetIdx, GBT_op.nTrees, GBT_op.nMaxLeaves, GBT_op.shrinkage, GBT_op.subSampleSize);
@@ -582,7 +582,7 @@ int main(const int argc, char* const argv[]) {
       if(gen_op.testFile != "" && gen_op.predictionOutput != "") {
 	cout << "    => predicting with the GBT model... " << flush;
 	Treedata treedata_test(gen_op.testFile);
-	if(!gen_op.noRF) {
+	if(!gen_op.noFilter) {
 	  treedata_test.keepFeatures(keepFeatureIcs);
 	}
 	//cout << treedata_test.getFeatureName(targetIdx) << endl;
