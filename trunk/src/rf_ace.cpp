@@ -28,7 +28,7 @@ const bool   RF_IS_OPTIMIZED_NODE_SPLIT = false;
 const size_t RF_DEFAULT_N_TREES = 0; // zero means it will be estimated from the data by default
 const size_t RF_DEFAULT_M_TRY = 0; // same here ...
 const size_t RF_DEFAULT_NODE_SIZE = 0; // ... and here
-const size_t RF_DEFAULT_N_PERMS = 1;
+const size_t RF_DEFAULT_N_PERMS = 20;
 const num_t  RF_DEFAULT_P_VALUE_THRESHOLD = 0.10;
 
 const bool   GBT_IS_OPTIMIZED_NODE_SPLIT = false;
@@ -270,11 +270,11 @@ void printHelp(const General_options& geno, const RF_options& rfo, const GBT_opt
        << setw( maxwidth - rfo.isOptimizedNodeSplit_l.size() )
        << " " << "Perform optimized node splitting with Random Forests (currently ENFORCED)" << endl;
   cout << " -" << rfo.nTrees_s << " / --" << rfo.nTrees_l << setw( maxwidth - rfo.nTrees_l.size() )
-       << " " << "Number of trees per RF (default 10*nsamples/nrealsamples)" << endl;
+       << " " << "Number of trees per RF (default nSamples/realSampleFraction)" << endl;
   cout << " -" << rfo.mTry_s << " / --" << rfo.mTry_l << setw( maxwidth - rfo.mTry_l.size() )
-       << " " << "Number of randomly drawn features per node split (default sqrt(nfeatures))" << endl;
+       << " " << "Number of randomly drawn features per node split (default sqrt(nFeatures))" << endl;
   cout << " -" << rfo.nodeSize_s << " / --" << rfo.nodeSize_l << setw( maxwidth - rfo.nodeSize_l.size() )
-       << " " << "Minimum number of train samples per node, affects tree depth (default max{5,nsamples/100})" << endl;
+       << " " << "Minimum number of train samples per node, affects tree depth (default max{5,nSamples/100})" << endl;
   cout << " -" << rfo.nPerms_s << " / --" << rfo.nPerms_l << setw( maxwidth - rfo.nPerms_l.size() ) 
        << " " << "Number of Random Forests (default " << RF_DEFAULT_N_PERMS << ")" << endl;
   cout << " -" << rfo.pValueThreshold_s << " / --" << rfo.pValueThreshold_l << setw( maxwidth - rfo.pValueThreshold_l.size() ) 
@@ -377,9 +377,9 @@ int main(const int argc, char* const argv[]) {
   
   if (!gen_op.noRF) {
     cout << "Random forest configuration:" << endl;
-    cout << "  --(RF)ntrees         = " << RF_op_copy.nTrees << endl;
-    cout << "  --(RF)mtry           = " << RF_op_copy.mTry << endl;
-    cout << "  --(RF)nodesize       = " << RF_op_copy.nodeSize << endl;
+    cout << "  --(RF)ntrees         = "; if(RF_op_copy.nTrees == 0) { cout << "DEFAULT" << endl; } else { cout << RF_op_copy.nTrees << endl; }
+    cout << "  --(RF)mtry           = "; if(RF_op_copy.mTry == 0) { cout << "DEFAULT" << endl; } else { cout << RF_op_copy.mTry << endl; }
+    cout << "  --(RF)nodesize       = "; if(RF_op_copy.nodeSize == 0) { cout << "DEFAULT" << endl; } else { cout << RF_op_copy.nodeSize << endl; }
     cout << "  --(RF)nperms         = " << RF_op_copy.nPerms << endl;
     cout << "  --(RF)pthresold      = " << RF_op_copy.pValueThreshold << endl;
     cout << endl;
@@ -487,7 +487,7 @@ int main(const int argc, char* const argv[]) {
       
     //If default nTrees is to be used...
     if(RF_op.nTrees == RF_DEFAULT_N_TREES) {
-      RF_op.nTrees = static_cast<size_t>( 10.0*treedata.nSamples() / realFraction );
+      RF_op.nTrees = static_cast<size_t>( 1.0*treedata.nSamples() / realFraction );
     }
       
     //If default mTry is to be used...
@@ -514,6 +514,8 @@ int main(const int argc, char* const argv[]) {
       return EXIT_FAILURE;
     }
 
+    cout << "== " << RF_op.nPerms << " RFs; " << RF_op.nTrees << " trees per RF; " << RF_op.mTry << " features tested per split; minimum node size of " << RF_op.nodeSize << endl;
+    
       
     //////////////////////////////////////////////////////////////////////
     //  ANALYSIS 1 -- Random Forest ensemble with artificial contrasts  //

@@ -608,6 +608,9 @@ void datadefs::utest(vector<datadefs::num_t> const& x,
     }
   }
   
+  n /= m;
+
+  //cout << m << "," << n << endl;
 
   num_t mu = 1.0*m*n/2.0;
   num_t s = sqrt(1.0*m*n*(n+m+1)/12.0);
