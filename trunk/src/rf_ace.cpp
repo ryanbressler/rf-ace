@@ -486,7 +486,7 @@ int main(const int argc, char* const argv[]) {
     } else {
       cout << treedata.nCategories(targetIdx) << "-class ";
     }
-    cout << "CARTs. " << nRealSamples << " / " << treedata.nSamples() << " samples (" << 100 * ( 1 - realFraction ) << "% missing)" << endl;
+    cout << "CARTs. " << nRealSamples << " / " << treedata.nSamples() << " samples ( " << 100 * ( 1 - realFraction ) << "% missing )" << endl;
       
     //If default nTrees is to be used...
     if(RF_op.nTrees == RF_DEFAULT_N_TREES) {
@@ -551,8 +551,8 @@ int main(const int argc, char* const argv[]) {
       treedata.keepFeatures(keepFeatureIcs);
       targetIdx = 0;
 
-      cout << "DONE, " << treedata.nFeatures() << " / " << treedata_copy.nFeatures() << " features (" 
-	   << 100.0 * treedata.nFeatures() / treedata_copy.nFeatures() << "%) left. " << endl;
+      cout << "DONE, " << treedata.nFeatures() << " / " << treedata_copy.nFeatures() << " features ( " 
+	   << 100.0 * treedata.nFeatures() / treedata_copy.nFeatures() << "% ) left. " << endl;
     }
     
     cout << "    => Uncovering associations... " << flush;
@@ -573,6 +573,9 @@ int main(const int argc, char* const argv[]) {
       StochasticForest SF(&treedata,targetIdx,GBT_op.nTrees);
       SF.learnGBT(GBT_op.nMaxLeaves, GBT_op.shrinkage, GBT_op.subSampleSize);
       
+      //StochasticForest SF(&treedata,targetIdx,10000);
+      //SF.learnRF(static_cast<size_t>(sqrt(1.0*treedata.nFeatures())),5,false,true);
+
       Treedata treedata_test(gen_op.testFile);
       if(!gen_op.noFilter) {
 	treedata_test.keepFeatures(keepFeatureIcs);
