@@ -34,11 +34,12 @@ void StochasticForest::learnRF(const size_t mTry,
 			       const size_t nodeSize,
 			       const bool useContrasts,
 			       const bool isOptimizedNodeSplit) {
-  
+
   if(useContrasts) {
     treeData_->permuteContrasts();
   }
 
+  numClasses_ = treeData_->nCategories(targetIdx_);
   learnedModel_ = RF_MODEL;
   featuresInForest_.clear();
   oobMatrix_.resize(nTrees_);
@@ -52,12 +53,6 @@ void StochasticForest::learnRF(const size_t mTry,
   bool isRandomSplit = true;
   size_t nFeaturesForSplit = mTry;
 
-  // !! Spurious Documentation: shouldn't RF and GBT follow an integrated
-  // !! approach here?
-  // this is unnecessary for RF, but GBT needs it in the root node.
-  // Let's put the correct value in there instead of faking something!
-  size_t numClasses = treeData_->nCategories(targetIdx_);
-
   //Allocates memory for the root nodes
   for(size_t treeIdx = 0; treeIdx < nTrees_; ++treeIdx) {
     rootNodes_[treeIdx] = new RootNode(sampleWithReplacement,
@@ -68,7 +63,7 @@ void StochasticForest::learnRF(const size_t mTry,
                                        nFeaturesForSplit,
                                        useContrasts,
                                        isOptimizedNodeSplit,
-                                       numClasses);
+                                       numClasses_);
 
     size_t nNodes;
 
@@ -388,11 +383,13 @@ void StochasticForest::predict(Treedata* treeData, vector<num_t>& prediction) {
 
 void StochasticForest::predictWithCategoricalRF(Treedata* treeData, vector<string>& categoryPrediction) {
 
-  
+  categoryPrediction.resize( treeData->nSamples() );
 
 }
 
 void StochasticForest::predictWithNumericalRF(Treedata* treeData, vector<num_t>& prediction) {
+
+  prediction.resize( treeData->nSamples() );
 
   for(size_t sampleIdx = 0; sampleIdx < treeData->nSamples(); ++sampleIdx) {
     
@@ -406,7 +403,7 @@ void StochasticForest::predictWithNumericalRF(Treedata* treeData, vector<num_t>&
     
     }
 
-    prediction[sampleIdx] /= treeData->nSamples();
+    prediction[sampleIdx] /= nTrees_;
   
   }
   
