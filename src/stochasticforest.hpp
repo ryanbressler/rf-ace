@@ -49,23 +49,24 @@ private:
   num_t predictSampleByTree(Treedata* treeData, size_t sampleIdx, size_t treeIdx);
   void predictDatasetByTree(Treedata* treeData, size_t treeIdx, vector<num_t>& curPrediction);
 
-  void predictWithRF(Treedata* treeData, vector<num_t>& prediction);
+  void predictWithCategoricalRF(Treedata* treeData, vector<string>& categoryPrediction);
+  void predictWithNumericalRF(Treedata* treeData, vector<num_t>& prediction);
 
   void predictWithCategoricalGBT(Treedata* treeData, vector<string>& categoryPrediction);
   void predictWithNumericalGBT(Treedata* treeData, vector<num_t>& prediction);
 
   //Percolates samples along the trees, starting from the rootNode. Spits out a map<> that ties the percolated train samples to the leaf nodes
   //NOTE: currently, since there's no implementation for a RootNode class, there's no good way to store the percolated samples in the tree, but a map<> is generated instead
-  void percolateSampleIcs(Node* rootNode, vector<size_t>& sampleIcs, map<Node*,vector<size_t> >& trainIcs);
-  void percolateSampleIcsAtRandom(size_t featureIdx, Node* rootNode, vector<size_t>& sampleIcs, map<Node*,vector<size_t> >& trainIcs);
+  void percolateSampleIcs(Treedata* treeData, Node* rootNode, const vector<size_t>& sampleIcs, map<Node*,vector<size_t> >& trainIcs);
+  void percolateSampleIcsAtRandom(Treedata* treeData, const size_t featureIdx, Node* rootNode, const vector<size_t>& sampleIcs, map<Node*,vector<size_t> >& trainIcs);
   
-  void percolateSampleIdx(size_t sampleIdx, Node** nodep);
-  void percolateSampleIdxAtRandom(size_t featureIdx, size_t sampleIdx, Node** nodep);
+  void percolateSampleIdx(Treedata* treeData, const size_t sampleIdx, Node** nodep);
+  void percolateSampleIdxAtRandom(Treedata* treeData, const size_t featureIdx, const size_t sampleIdx, Node** nodep);
 
   //Given the map<>, generated with the percolation functions, a tree impurity score is outputted
-  void treeImpurity(map<Node*,vector<size_t> >& trainIcs, num_t& impurity);
+  void treeImpurity(Treedata* treeData, map<Node*,vector<size_t> >& trainIcs, num_t& impurity);
 
-  //Pointer to treeData_ object, stores all the feature data
+  //Pointer to treeData_ object, stores all the feature data with which the trees are grown (i.e. training data)
   Treedata* treeData_;
 
   //Chosen target to regress on

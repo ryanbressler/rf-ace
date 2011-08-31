@@ -68,8 +68,7 @@ protected:
     size_t nFeaturesForSplit;
     bool useContrasts;
     bool isOptimizedNodeSplit;
-    //LeafPredictionFunctionType leafPredictionFunctionType; //void (*leafPredictionFunction)(const vector<num_t>& data, const size_t numClasses);
-    LeafPredictionFunction leafPredictionFunction;//void (*leafPredictionFunction)(const vector<num_t>&, const size_t);
+    LeafPredictionFunction leafPredictionFunction;
     size_t numClasses;
   };
 
@@ -118,10 +117,6 @@ private:
                      vector<size_t> const& sampleIcs_left,
                      vector<size_t> const& sampleIcs_right);
 
-  
-  //void setLeafTrainPrediction(const vector<num_t>& trainData, const GrowInstructions& GI);
-  
-
   //A recursive function that will accumulate the number of descendant nodes the current nodes has
   void recursiveNDescendantNodes(size_t& n);
 
@@ -135,9 +130,6 @@ private:
   num_t trainPrediction_;
   size_t nTestSamples_;
   num_t testPredictionError_;
-
-  // WILL BECOME DEPRECATED !! Yes, it did. Can we remove it from the code-base?
-  //num_t prediction_; // saves the prediction of the node
     
   bool hasChildren_;
   Node* leftChild_;

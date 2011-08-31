@@ -158,16 +158,8 @@ void StochasticForest::growNumericalGBT() {
   vector<num_t> prediction(nSamples, 0.0);
   vector<num_t> curPrediction(nSamples);
 
-  //bool sampleWithReplacement = false;
-  //num_t sampleSize = subSampleSize_;
-  //size_t maxNodesToStop = 2*nMaxLeaves_ - 1;
-  //size_t minNodeSizeToStop = 1;
-  //bool isRandomSplit = false;
-  //size_t nFeaturesInSample = treeData_->nFeatures();
   size_t nNodes;
-  //vector<size_t> oobIcs;
-  //set<size_t> featuresInTree;
-  //bool useContrasts = false;
+
 
   for(size_t t = 0; t < nTrees_; ++t) {
     // current target is the negative gradient of the loss function
@@ -362,7 +354,14 @@ void StochasticForest::predict(Treedata* treeData, vector<num_t>& prediction) {
   StochasticForest::predictWithNumericalGBT(treeData, prediction);
 }
 
-void StochasticForest::predictWithRF(Treedata* treeData, vector<num_t>& prediction) {
+void StochasticForest::predictWithCategoricalRF(Treedata* treeData, vector<string>& categoryPrediction) {
+
+}
+
+void StochasticForest::predictWithNumericalRF(Treedata* treeData, vector<num_t>& prediction) {
+  //StochasticForest::percolateSampleIdx();
+
+  //getLeafTrainPrediction()
 
 }
 
@@ -428,7 +427,7 @@ void StochasticForest::predictWithNumericalGBT(Treedata* treeData, vector<num_t>
 }
 
 
-void StochasticForest::percolateSampleIcs(Node* rootNode, vector<size_t>& sampleIcs, map<Node*,vector<size_t> >& trainIcs) {
+void StochasticForest::percolateSampleIcs(Treedata* treeData, Node* rootNode, const vector<size_t>& sampleIcs, map<Node*,vector<size_t> >& trainIcs) {
   
   trainIcs.clear();
   //map<Node*,vector<size_t> > trainics;
@@ -436,7 +435,7 @@ void StochasticForest::percolateSampleIcs(Node* rootNode, vector<size_t>& sample
   for(size_t i = 0; i < sampleIcs.size(); ++i) {
     Node* nodep(rootNode);
     size_t sampleIdx = sampleIcs[i];
-    StochasticForest::percolateSampleIdx(sampleIdx,&nodep);
+    StochasticForest::percolateSampleIdx(treeData,sampleIdx,&nodep);
     map<Node*,vector<size_t> >::iterator it(trainIcs.find(nodep));
     if(it == trainIcs.end()) {
       Node* foop(nodep);
@@ -463,14 +462,14 @@ void StochasticForest::percolateSampleIcs(Node* rootNode, vector<size_t>& sample
   }
 }
 
-void StochasticForest::percolateSampleIcsAtRandom(size_t featureIdx, Node* rootNode, vector<size_t>& sampleIcs, map<Node*,vector<size_t> >& trainIcs) {
+void StochasticForest::percolateSampleIcsAtRandom(Treedata* treeData, const size_t featureIdx, Node* rootNode, const vector<size_t>& sampleIcs, map<Node*,vector<size_t> >& trainIcs) {
 
   trainIcs.clear();
 
   for(size_t i = 0; i < sampleIcs.size(); ++i) {
     Node* nodep(rootNode);
     size_t sampleIdx = sampleIcs[i];
-    StochasticForest::percolateSampleIdxAtRandom(featureIdx,sampleIdx,&nodep);
+    StochasticForest::percolateSampleIdxAtRandom(treeData,featureIdx,sampleIdx,&nodep);
     map<Node*,vector<size_t> >::iterator it(trainIcs.find(nodep));
     if(it == trainIcs.end()) {
       Node* foop(nodep);
@@ -484,25 +483,25 @@ void StochasticForest::percolateSampleIcsAtRandom(size_t featureIdx, Node* rootN
   }
 }
 
-void StochasticForest::percolateSampleIdx(size_t sampleIdx, Node** nodep) {
+void StochasticForest::percolateSampleIdx(Treedata* treeData, const size_t sampleIdx, Node** nodep) {
   while((*nodep)->hasChildren()) {
     int featureIdxNew((*nodep)->getSplitter());
     num_t value;
-    treeData_->getFeatureData(featureIdxNew,sampleIdx,value);
+    treeData->getFeatureData(featureIdxNew,sampleIdx,value);
     *nodep = (*nodep)->percolateData(value);
   }
 }
 
-void StochasticForest::percolateSampleIdxAtRandom(size_t featureIdx, size_t sampleIdx, Node** nodep) {
+void StochasticForest::percolateSampleIdxAtRandom(Treedata* treeData, const size_t featureIdx, const size_t sampleIdx, Node** nodep) {
   while((*nodep)->hasChildren()) {
     size_t featureIdxNew = (*nodep)->getSplitter();
     num_t value = datadefs::NUM_NAN;
     if(featureIdx == featureIdxNew) {
       while(datadefs::isNAN(value)) {
-        treeData_->getRandomData(featureIdxNew,value);
+        treeData->getRandomData(featureIdxNew,value);
       }
     } else {
-      treeData_->getFeatureData(featureIdxNew,sampleIdx,value);
+      treeData->getFeatureData(featureIdxNew,sampleIdx,value);
     }
     *nodep = (*nodep)->percolateData(value);
   }
@@ -544,9 +543,9 @@ vector<num_t> StochasticForest::featureImportance() {
     nOobSamples += nNewOobSamples;
 
     map<Node*,vector<size_t> > trainIcs;
-    StochasticForest::percolateSampleIcs(rootNodes_[treeIdx],oobMatrix_[treeIdx],trainIcs);
+    StochasticForest::percolateSampleIcs(treeData_,rootNodes_[treeIdx],oobMatrix_[treeIdx],trainIcs);
     num_t treeImpurity;
-    StochasticForest::treeImpurity(trainIcs,treeImpurity);
+    StochasticForest::treeImpurity(treeData_,trainIcs,treeImpurity);
     //cout << "#nodes_with_train_samples=" << trainics.size() << endl;
 
     for(set<size_t>::const_iterator fit(tit->second.begin()); fit != tit->second.end(); ++fit) {
@@ -556,9 +555,9 @@ vector<num_t> StochasticForest::featureImportance() {
         ++nContrastsInForest;
       }
 
-      StochasticForest::percolateSampleIcsAtRandom(featureIdx,rootNodes_[treeIdx],oobMatrix_[treeIdx],trainIcs);
+      StochasticForest::percolateSampleIcsAtRandom(treeData_,featureIdx,rootNodes_[treeIdx],oobMatrix_[treeIdx],trainIcs);
       num_t permutedTreeImpurity;
-      StochasticForest::treeImpurity(trainIcs,permutedTreeImpurity);
+      StochasticForest::treeImpurity(treeData_,trainIcs,permutedTreeImpurity);
       if(fabs(treeImpurity) > datadefs::EPS) {
         importance[featureIdx] += nNewOobSamples * (permutedTreeImpurity - treeImpurity) / treeImpurity;
       }
@@ -592,19 +591,19 @@ vector<size_t> StochasticForest::featureFrequency() {
 }
 
 // !! Clarity: consider removing all of the commented out logic
-void StochasticForest::treeImpurity(map<Node*,vector<size_t> >& trainIcs, 
+void StochasticForest::treeImpurity(Treedata* treeData, map<Node*,vector<size_t> >& trainIcs, 
 				    num_t& impurity) {
 
   impurity = 0.0;
   size_t n_tot = 0;
 
-  //size_t targetIdx_ = treeData_->getTarget();
-  bool isTargetNumerical = treeData_->isFeatureNumerical(targetIdx_);
+  //size_t targetIdx_ = treeData->getTarget();
+  bool isTargetNumerical = treeData->isFeatureNumerical(targetIdx_);
 
   for(map<Node*,vector<size_t> >::iterator it(trainIcs.begin()); it != trainIcs.end(); ++it) {
 
     vector<num_t> targetData;
-    treeData_->getFeatureData(targetIdx_,it->second,targetData);
+    treeData->getFeatureData(targetIdx_,it->second,targetData);
     num_t leafPrediction = it->first->getLeafTrainPrediction();
     num_t leafImpurity = 0;
     size_t nSamplesInLeaf = targetData.size();
@@ -626,7 +625,7 @@ void StochasticForest::treeImpurity(map<Node*,vector<size_t> >& trainIcs,
 
     //num_t impurity_leaf;
     //size_t nRealSamples;
-    //treeData_->impurity(targetData,isTargetNumerical,impurity_leaf,nRealSamples);
+    //treeData->impurity(targetData,isTargetNumerical,impurity_leaf,nRealSamples);
     //size_t n(it->second.size());
     n_tot += nSamplesInLeaf;
     impurity += nSamplesInLeaf * leafImpurity;
