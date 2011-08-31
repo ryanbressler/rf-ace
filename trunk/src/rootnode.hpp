@@ -18,43 +18,17 @@ public:
            bool useContrasts,
            bool isOptimizedNodeSplit,
            size_t numClasses);
-  
-  //~RootNode();
-  
 
   void growTree(Treedata* treeData,
                 const size_t targetIdx,
-                //void (*leafPredictionFunction)(const vector<num_t>&, const size_t),
                 const LeafPredictionFunctionType leafPredictionFunctionType,
                 vector<size_t>& oobIcs,
                 set<size_t>& featuresInTree,
                 size_t& nNodes);
-
-  // !! Cruft: Remove everything that's fallen into node.cpp.
-  /*
-    size_t targetIdx();
-    bool isTargetNumerical();
-    bool sampleWithReplacement();
-    size_t maxNodesToStop();
-    size_t minNodeSizeToStop();
-    bool isRandomSplit();
-    size_t featureSampleSize();
-    bool useContrasts();
-  */
   
 private:
 
   GrowInstructions GI_;
-  
-  /*
-    bool sampleWithReplacement_;
-    num_t sampleSizeFraction_;
-    size_t maxNodesToStop_;
-    size_t minNodeSizeToStop_;
-    bool isRandomSplit_;
-    size_t nFeaturesForSplit_;
-    bool useContrasts_;
-  */
 
 };
 
