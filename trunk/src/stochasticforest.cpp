@@ -20,6 +20,8 @@ StochasticForest::StochasticForest(Treedata* treeData, const size_t targetIdx, c
 
   learnedModel_ = NO_MODEL;
 
+  //cout << "ctor: " << learnedModel_ << endl;
+
 }
 
 StochasticForest::~StochasticForest() {
@@ -342,27 +344,72 @@ void StochasticForest::predict(vector<num_t>& prediction) {
   StochasticForest::predict(treeData_, prediction);
 }
 
+// Predict with the trained model and using an arbitrary data set. StochasticForest::numClasses_ determines
+// whether the prediction is for a categorical or a numerical variable.
 void StochasticForest::predict(Treedata* treeData, vector<string>& prediction) {
-  assert(numClasses_ != 0);
-  StochasticForest::predictWithCategoricalGBT(treeData, prediction);
+  assert( numClasses_ != 0 );
+
+  //cout << "predictor: " << learnedModel_ << endl;
+  
+  switch ( learnedModel_ ) {
+  case GBT_MODEL:
+    StochasticForest::predictWithCategoricalGBT(treeData, prediction);
+    break;
+  case RF_MODEL:
+    StochasticForest::predictWithCategoricalRF(treeData, prediction);
+    break;
+  case NO_MODEL:
+    cerr << "Cannot predict -- no model trained" << endl;
+    assert(false);
+  }
+
 }
 
-// Predict using a GBT "forest" from an arbitrary data set. GBT::numClasses_ determines
+// Predict with the trained model and using an arbitrary data set. StochasticForest::numClasses_ determines
 // whether the prediction is for a categorical or a numerical variable.
 void StochasticForest::predict(Treedata* treeData, vector<num_t>& prediction) {
-  assert(numClasses_ == 0);
-  StochasticForest::predictWithNumericalGBT(treeData, prediction);
+  assert( numClasses_ == 0 );
+
+  //cout << "predictor: " << learnedModel_ << endl;
+  
+  switch ( learnedModel_ ) {
+  case GBT_MODEL:
+    StochasticForest::predictWithNumericalGBT(treeData, prediction);
+    break;
+  case RF_MODEL:
+    StochasticForest::predictWithNumericalRF(treeData, prediction);
+    break;
+  case NO_MODEL:
+    cerr << "Cannot predict -- no model trained" << endl;
+    assert(false);
+  }
+
 }
 
 void StochasticForest::predictWithCategoricalRF(Treedata* treeData, vector<string>& categoryPrediction) {
 
+  
+
 }
 
 void StochasticForest::predictWithNumericalRF(Treedata* treeData, vector<num_t>& prediction) {
-  //StochasticForest::percolateSampleIdx();
 
-  //getLeafTrainPrediction()
+  for(size_t sampleIdx = 0; sampleIdx < treeData->nSamples(); ++sampleIdx) {
+    
+    prediction[sampleIdx] = 0.0;
+    
+    for(size_t treeIdx = 0; treeIdx < nTrees_; ++treeIdx) {
+      
+      Node* nodep(rootNodes_[treeIdx]);
+      StochasticForest::percolateSampleIdx(treeData, sampleIdx, &nodep);
+      prediction[sampleIdx] += nodep->getLeafTrainPrediction();
+    
+    }
 
+    prediction[sampleIdx] /= treeData->nSamples();
+  
+  }
+  
 }
 
 
