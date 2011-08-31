@@ -71,9 +71,9 @@ struct General_options {
   string noFilter_s;
   string noFilter_l;
 
-  bool noPrediction;
-  string noPrediction_s;
-  string noPrediction_l;
+  //bool noPrediction;
+  //string noPrediction_s;
+  //string noPrediction_l;
 
   General_options():
     printHelp(GENERAL_DEFAULT_PRINT_HELP),
@@ -106,11 +106,11 @@ struct General_options {
   
     noFilter(GENERAL_DEFAULT_NO_FILTER),
     noFilter_s("f"),
-    noFilter_l("noFilter"),
+    noFilter_l("noFilter") {}
     
-    noPrediction(GENERAL_DEFAULT_NO_PREDICTION),
-    noPrediction_s("g"),
-    noPrediction_l("noPrediction") {}
+    //noPrediction(GENERAL_DEFAULT_NO_PREDICTION),
+    //noPrediction_s("g"),
+    //noPrediction_l("noPrediction") {}
 };
 
 struct RF_options {
@@ -263,7 +263,7 @@ void printHelp(const General_options& geno, const RF_options& rfo, const GBT_opt
        << " " << "Prediction output file, which will be required if test data is provided" << endl;
   cout << endl;
   
-  cout << "OPTIONAL ARGUMENTS -- RF FILTER:" << endl;
+  cout << "OPTIONAL ARGUMENTS -- RANDOM FOREST:" << endl;
   cout << " -" << geno.noFilter_s << " / --" << geno.noFilter_l << setw( maxwidth - geno.noFilter_l.size() )
        << " " << "Set this flag to turn RF filtering OFF (default ON)" << endl; 
   cout << " -" << rfo.isOptimizedNodeSplit_s << " / --" << rfo.isOptimizedNodeSplit_l
@@ -282,9 +282,7 @@ void printHelp(const General_options& geno, const RF_options& rfo, const GBT_opt
        << RF_DEFAULT_P_VALUE_THRESHOLD << ")" << endl;
   cout << endl;
   
-  cout << "OPTIONAL ARGUMENTS -- GBT PREDICTION:" << endl;
-  cout << " -" << geno.noPrediction_s << " / --" << geno.noPrediction_l << setw( maxwidth - geno.noPrediction_l.size() ) 
-       << " " << "Enable Gradient Boosting Trees (default ON)" << endl;
+  cout << "OPTIONAL ARGUMENTS -- GRADIENT BOOSTING TREES:" << endl;
   cout << " -" << gbto.isOptimizedNodeSplit_s << " / --" << gbto.isOptimizedNodeSplit_l
        << setw( maxwidth - gbto.isOptimizedNodeSplit_l.size() ) 
        << " " << "Perform optimized node splitting with Gradient Boosting Trees (currently ENFORCED)" << endl;
@@ -341,7 +339,7 @@ int main(const int argc, char* const argv[]) {
   parser.getArgument<string>(gen_op.testFile_s, gen_op.testFile_l, gen_op.testFile);
   parser.getArgument<string>(gen_op.predictionOutput_s, gen_op.predictionOutput_l, gen_op.predictionOutput);
   parser.getFlag(gen_op.noFilter_s, gen_op.noFilter_l, gen_op.noFilter);
-  parser.getFlag(gen_op.noPrediction_s, gen_op.noPrediction_l, gen_op.noPrediction);
+  //parser.getFlag(gen_op.noPrediction_s, gen_op.noPrediction_l, gen_op.noPrediction);
 
   parser.getFlag(RF_op_copy.isOptimizedNodeSplit_s, RF_op_copy.isOptimizedNodeSplit_l, RF_op_copy.isOptimizedNodeSplit);
   parser.getArgument<size_t>(RF_op_copy.nTrees_s,RF_op_copy.nTrees_l,RF_op_copy.nTrees);
@@ -356,6 +354,8 @@ int main(const int argc, char* const argv[]) {
   parser.getArgument<num_t>(GBT_op.shrinkage_s, GBT_op.shrinkage_l, GBT_op.shrinkage);
   parser.getArgument<num_t>(GBT_op.subSampleSize_s, GBT_op.subSampleSize_l, GBT_op.subSampleSize);
   
+  bool makePrediction = ( gen_op.testFile != "" ) && (gen_op.predictionOutput != "" );
+  
   if(gen_op.printHelp) {
     printHelp(gen_op,RF_op_copy,GBT_op);
     return(EXIT_SUCCESS);
@@ -369,10 +369,10 @@ int main(const int argc, char* const argv[]) {
   cout << "  --input              = " << gen_op.input << endl;
   cout << "  --target             = " << gen_op.targetStr << endl;
   cout << "  --output             = " << gen_op.output << endl;
-  cout << "  --testdata           = " << gen_op.testFile << endl;
-  cout << "  --predout            = " << gen_op.predictionOutput << endl;
+  cout << "  --testdata           = "; if( makePrediction ) { cout << gen_op.testFile << endl; } else { cout << "NOT SET" << endl; }
+  cout << "  --predout            = "; if( makePrediction ) { cout << gen_op.predictionOutput << endl; } else { cout << "NOT SET" << endl; }
   cout << "  (RF filter)          = "; if(!gen_op.noFilter) { cout << "YES" << endl; } else { cout << "NO" << endl; }
-  cout << "  (GBT prediction)     = "; if(!gen_op.noPrediction) { cout << "YES" << endl; } else { cout << "NO" << endl; }
+  //cout << "  (GBT prediction)     = "; if(!gen_op.noPrediction) { cout << "YES" << endl; } else { cout << "NO" << endl; }
   cout << endl;
   
   if (!gen_op.noFilter) {
@@ -385,8 +385,8 @@ int main(const int argc, char* const argv[]) {
     cout << endl;
   }
   
-  if (!gen_op.noPrediction) {
-    cout << "Gradient boosting tree configuration:" << endl;
+  if ( makePrediction ) {
+    cout << "Gradient boosting tree configuration for prediction:" << endl;
     cout << "  --(GBT)ntrees        = " << GBT_op.nTrees << endl;
     cout << "  --(GBT)maxleaves     = " << GBT_op.nMaxLeaves << endl;
     cout << "  --(GBT)shrinkage     = " << GBT_op.shrinkage << endl;
@@ -418,13 +418,15 @@ int main(const int argc, char* const argv[]) {
   // !!  directory. This should be fixed.
 
   //Read data into Treedata object
-  cout << endl << "Reading file '" << gen_op.input << "', please wait..." << endl;
+  cout << "Reading file '" << gen_op.input << "', please wait... " << flush;
   Treedata treedata_copy(gen_op.input);
+  cout << "DONE" << endl << endl;
 
   if(gen_op.featureMaskFile != "") {
-    cout << endl << "Reading masking file '" << gen_op.featureMaskFile << "', please wait..." << endl;
+    cout << endl << "Reading masking file '" << gen_op.featureMaskFile << "', please wait... " << flush;
     vector<bool> fmask;
     readFeatureMask(gen_op.featureMaskFile,fmask);
+    cout << "DONE" << endl;
   }
 
   //Check which feature names match with the specified target identifier
@@ -440,6 +442,7 @@ int main(const int argc, char* const argv[]) {
     cout << "WARNING: feature mask is specified in the presence of multiple targets. All targets will be analyzed with the same mask set." << endl;
   }
 
+  // Optimized node splitting is currently enforced. It will be made optional in the future
   RF_op_copy.isOptimizedNodeSplit = true;
   GBT_op.isOptimizedNodeSplit = true;
 
@@ -526,7 +529,7 @@ int main(const int argc, char* const argv[]) {
       
     vector<size_t> keepFeatureIcs(1);
     if(!gen_op.noFilter) {
-      cout << "    => applying RFs for feature filtering... " << flush;
+      cout << "    => Filtering features... " << flush;
 
       executeRandomForestFilter(treedata,targetIdx,RF_op,pValues,importanceValues);
      
@@ -552,7 +555,7 @@ int main(const int argc, char* const argv[]) {
 	   << 100.0 * treedata.nFeatures() / treedata_copy.nFeatures() << "%) left. " << endl;
     }
     
-    cout << "    => analyzing with RF ensembles... " << flush;
+    cout << "    => Uncovering associations... " << flush;
 
     // THIS WILL BE REPLACED BY GBT
     executeRandomForestFilter(treedata,targetIdx,RF_op,pValues,importanceValues);
@@ -564,48 +567,37 @@ int main(const int argc, char* const argv[]) {
     /////////////////////////////////////////////
       
 
-    if(!gen_op.noPrediction) {
-      cout << "    => growing the GBT model... " << flush;
+    if( makePrediction ) {
+      cout << "    => Predicting... " << flush;
        
-      //GBT gbt(&treedata, targetIdx, GBT_op.nTrees, GBT_op.nMaxLeaves, GBT_op.shrinkage, GBT_op.subSampleSize);
       StochasticForest SF(&treedata,targetIdx,GBT_op.nTrees);
       SF.learnGBT(GBT_op.nMaxLeaves, GBT_op.shrinkage, GBT_op.subSampleSize);
       
-      // NOTE: This is still failing...
-      //importanceValues = SF.featureImportance();
-  
-      cout << "DONE" << endl;
-
-      //cout <<endl<< "PREDICTION:" << endl;
-      //vector<num_t> prediction(treedata.nSamples());
-      
-      if(gen_op.testFile != "" && gen_op.predictionOutput != "") {
-	cout << "    => predicting with the GBT model... " << flush;
-	Treedata treedata_test(gen_op.testFile);
-	if(!gen_op.noFilter) {
-	  treedata_test.keepFeatures(keepFeatureIcs);
-	}
-	//cout << treedata_test.getFeatureName(targetIdx) << endl;
-	if(treedata_test.isFeatureNumerical(targetIdx)) {
-	  vector<num_t> prediction;
-	  SF.predict(&treedata_test,prediction);
-	  FILE* file = fopen(gen_op.predictionOutput.c_str(),"w");
-	  for(size_t i = 0; i < prediction.size(); ++i) {
-	    fprintf(file,"%s\t%9.8f\n",treedata_test.getRawFeatureData(targetIdx,i).c_str(),prediction[i]);
-	  }
-	  fclose(file);
-	} else {
-	  vector<string> prediction;
-          SF.predict(&treedata_test,prediction);
-          FILE* file = fopen(gen_op.predictionOutput.c_str(),"w");
-          for(size_t i = 0; i < prediction.size(); ++i) {
-            fprintf(file,"%s\t%s\n",treedata_test.getRawFeatureData(targetIdx,i).c_str(),prediction[i].c_str());
-          }
-	}
-
-	cout << "DONE" << endl;
+      Treedata treedata_test(gen_op.testFile);
+      if(!gen_op.noFilter) {
+	treedata_test.keepFeatures(keepFeatureIcs);
       }
+      //cout << treedata_test.getFeatureName(targetIdx) << endl;
+      if(treedata_test.isFeatureNumerical(targetIdx)) {
+	vector<num_t> prediction;
+	SF.predict(&treedata_test,prediction);
+	FILE* file = fopen(gen_op.predictionOutput.c_str(),"w");
+	for(size_t i = 0; i < prediction.size(); ++i) {
+	  fprintf(file,"%s\t%9.8f\n",treedata_test.getRawFeatureData(targetIdx,i).c_str(),prediction[i]);
+	}
+	fclose(file);
+      } else {
+	vector<string> prediction;
+	SF.predict(&treedata_test,prediction);
+	FILE* file = fopen(gen_op.predictionOutput.c_str(),"w");
+	for(size_t i = 0; i < prediction.size(); ++i) {
+	  fprintf(file,"%s\t%s\n",treedata_test.getRawFeatureData(targetIdx,i).c_str(),prediction[i].c_str());
+	}
+      }
+      
+      cout << "DONE" << endl;
     }
+
 
     cout << endl;
             
@@ -696,11 +688,6 @@ void executeRandomForestFilter(Treedata& treedata,
   importanceValues.resize(treedata.nFeatures());
   size_t nNodesInAllForests = 0;
 
-  //clock_t time_start(clock());
-
-  //cout << "Growing " << op.nPerms << " Random Forests (RFs), please wait..." << endl;
-  //#pragma omp parallel for
-
   Progress progress;
   for(int permIdx = 0; permIdx < static_cast<int>(op.nPerms); ++permIdx) {
     //cout << "  RF " << permIdx + 1 << ": ";
@@ -723,11 +710,6 @@ void executeRandomForestFilter(Treedata& treedata,
     //printf("  RF %i: %i nodes (avg. %6.3f nodes/tree)\n",permIdx+1,static_cast<int>(nNodesInForest),1.0*nNodesInForest/op.nTrees);
     progress.update( 1.0 * ( 1 + permIdx ) / op.nPerms );
   }
-
-  //num_t time_diff = 1.0*(clock() - time_start) / CLOCKS_PER_SEC;
-  //cout << op.nPerms << " RFs, " << op.nPerms * op.nTrees << " trees, and " << nNodesInAllForests
-  //     << " nodes generated in " << time_diff << " seconds (" << 1.0*nNodesInAllForests / time_diff
-  //     << " nodes per second)" << endl;
 
   if(op.nPerms > 1) {
     for(size_t featureIdx = 0; featureIdx < treedata.nFeatures(); ++featureIdx) {
