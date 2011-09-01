@@ -11,8 +11,6 @@
 //#include <omp.h>
 
 #include "argparse.hpp"
-//#include "randomforest.hpp"
-//#include "GBT.hpp"
 #include "stochasticforest.hpp"
 #include "treedata.hpp"
 #include "datadefs.hpp"
@@ -71,10 +69,6 @@ struct General_options {
   string noFilter_s;
   string noFilter_l;
 
-  //bool noPrediction;
-  //string noPrediction_s;
-  //string noPrediction_l;
-
   General_options():
     printHelp(GENERAL_DEFAULT_PRINT_HELP),
     printHelp_s("h"),
@@ -108,9 +102,6 @@ struct General_options {
     noFilter_s("f"),
     noFilter_l("noFilter") {}
     
-    //noPrediction(GENERAL_DEFAULT_NO_PREDICTION),
-    //noPrediction_s("g"),
-    //noPrediction_l("noPrediction") {}
 };
 
 struct RF_options {
@@ -231,7 +222,7 @@ void printHeader() {
   cout << " --------------------------------------------------------------- " << endl;
   cout << "| RF-ACE -- efficient feature selection with heterogeneous data |" << endl;
   cout << "|                                                               |" << endl;
-  cout << "|  Version:      RF-ACE v0.7.5, August 29th, 2011               |" << endl;
+  cout << "|  Version:      RF-ACE v0.7.7, September 1st, 2011             |" << endl;
   cout << "|  Project page: http://code.google.com/p/rf-ace                |" << endl;
   cout << "|  Contact:      timo.p.erkkila@tut.fi                          |" << endl;
   cout << "|                kari.torkkola@gmail.com                        |" << endl;
@@ -308,7 +299,7 @@ void executeRandomForestFilter(Treedata& treedata,
                                vector<num_t>& pValues,
                                vector<num_t>& importanceValues);
 
-void readFeatureMask(const string& fileName, vector<bool>& fmask);
+void readFeatureMask(const string& fileName, const size_t nFeatures, vector<size_t>& keepFeatureIcs);
 
 
 int main(const int argc, char* const argv[]) {
@@ -420,23 +411,40 @@ int main(const int argc, char* const argv[]) {
   //Read data into Treedata object
   cout << "Reading file '" << gen_op.input << "', please wait... " << flush;
   Treedata treedata_copy(gen_op.input);
-  cout << "DONE" << endl << endl;
+  cout << "DONE" << endl;
 
+  int integer;
+  if ( datadefs::isInteger(gen_op.targetStr,integer) ) {
+
+    if ( integer < 0 || integer >= static_cast<int>( treedata_copy.nFeatures() ) ) {
+      cerr << "Feature index (" << integer << ") must be within bounds 0 ... " << treedata_copy.nFeatures() - 1 << endl;
+      return EXIT_FAILURE;
+    }
+
+    gen_op.targetStr = treedata_copy.getFeatureName( static_cast<size_t>( integer ) );
+  }
+
+  vector<size_t> keepFeatureIcs;
   if(gen_op.featureMaskFile != "") {
-    cout << endl << "Reading masking file '" << gen_op.featureMaskFile << "', please wait... " << flush;
-    vector<bool> fmask;
-    readFeatureMask(gen_op.featureMaskFile,fmask);
+    cout << "Reading masking file '" << gen_op.featureMaskFile << "', please wait... " << flush;
+    readFeatureMask(gen_op.featureMaskFile,treedata_copy.nFeatures(),keepFeatureIcs);
+    treedata_copy.keepFeatures(keepFeatureIcs);
     cout << "DONE" << endl;
   }
 
+  cout << endl;
+
   //Check which feature names match with the specified target identifier
   set<size_t> targetIcs;
-
   treedata_copy.getMatchingTargetIcs(gen_op.targetStr,targetIcs);
   if(targetIcs.size() == 0) {
     cerr << "No features match the specified target identifier '" << gen_op.targetStr << "'" << endl;
+    if ( gen_op.featureMaskFile != "" ) {
+      cerr << "NOTE: feature mask, being set, may have caused the target(s) to be erased from the feature matrix" << endl;
+    }
     return EXIT_FAILURE;
   }
+  
 
   if(gen_op.featureMaskFile != "" && targetIcs.size() > 1) {
     cout << "WARNING: feature mask is specified in the presence of multiple targets. All targets will be analyzed with the same mask set." << endl;
@@ -717,21 +725,29 @@ void executeRandomForestFilter(Treedata& treedata,
   
 }
 
-void readFeatureMask(const string& fileName, vector<bool>& fmask) {
+void readFeatureMask(const string& fileName, const size_t nFeatures, vector<size_t>& keepFeatureIcs) {
 
   ifstream featurestream;
   featurestream.open(fileName.c_str());
   assert(featurestream.good());
+  
+  string maskAsStr;
+  getline(featurestream,maskAsStr);
+  
+  assert(maskAsStr.size() == nFeatures);
 
-  fmask.clear();
-  bool b;
+  keepFeatureIcs.clear();
 
-  while(!featurestream.eof()) {
-    featurestream >> b;
-    fmask.push_back(b);
-    cout << b;
+  for(size_t featureIdx = 0; featureIdx < nFeatures; ++featureIdx) {
+
+    if ( maskAsStr[featureIdx] == '1' ) {
+      keepFeatureIcs.push_back(featureIdx);
+    } else if ( maskAsStr[featureIdx] != '0' ) { 
+      cerr << "Mask file formatted incorrectly, must contain only 0's and 1's" << endl;
+      assert(false);
+    }
+    
   }
-  cout << endl;
 
 }
 
