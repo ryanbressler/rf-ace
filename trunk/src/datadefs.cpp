@@ -45,6 +45,15 @@ string datadefs::toUpperCase(const string& str) {
   return(strcopy);
 }
 
+bool datadefs::isInteger(const string& str, int& integer) {
+  stringstream ss(str);
+  if(ss >> integer && ss.eof()) {
+    return(true);
+  } else {
+    return(false);
+  }
+}
+
 
 ////////////////////////////////////////////////////////////
 // METHOD IMPLEMENTATIONS

@@ -100,7 +100,7 @@ private:
   bool isValidCategoricalHeader(const string& str);
   bool isValidFeatureHeader(const string& str);
 
-  bool isPositiveInteger(const string& str, size_t& positiveInteger);
+  //bool isPositiveInteger(const string& str, size_t& positiveInteger);
 
   //NOTE: original contents in ics will be replaced.
   void permute(vector<size_t>& ics);

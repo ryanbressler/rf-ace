@@ -50,6 +50,8 @@ namespace datadefs {
   // METHOD DECLARATIONS
   ////////////////////////////////////////////////////////////
   string toUpperCase(const string& str);
+
+  bool isInteger(const string& str, int& integer);
   
   void strv2catv(vector<string>& strvec, vector<num_t>& catvec, map<string,num_t>& mapping, map<num_t,string>& backMapping);
   void strv2numv(vector<string>& strvec, vector<num_t>& numvec);
