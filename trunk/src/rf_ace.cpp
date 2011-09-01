@@ -562,11 +562,9 @@ int main(const int argc, char* const argv[]) {
         
     cout << "DONE" << endl;
       
-    /////////////////////////////////////////////
-    //  ANALYSIS 2 -- Gradient Boosting Trees  //
-    /////////////////////////////////////////////
-      
-
+    /////////////////////////////////////////////////////////////
+    //  ANALYSIS 2 -- Prediction with Gradient Boosting Trees  //
+    /////////////////////////////////////////////////////////////
     if( makePrediction ) {
       cout << "    => Predicting... " << flush;
        
@@ -618,8 +616,7 @@ int main(const int argc, char* const argv[]) {
       
     //MODIFICATION: ALL ASSOCIATIONS WILL BE PRINTED
     if(true) {
-      //cout << "Writing associations to file '" << output << "'" << endl;
-      //ofstream os(output.c_str());
+      
       FILE* file;
       if(iter == 1) {
         file = fopen(gen_op.output.c_str(),"w");
@@ -629,8 +626,6 @@ int main(const int argc, char* const argv[]) {
       }
     
       for(size_t featureIdx = 0; featureIdx < treedata.nFeatures(); ++featureIdx) {
-        
-        //MODIFICATION: ALL ASSOCIATIONS WILL BE PRINTED
         
 	if(pValues[featureIdx] > RF_op.pValueThreshold) {
           continue;
@@ -648,24 +643,11 @@ int main(const int argc, char* const argv[]) {
         } else {
           fprintf(file,"%s\t%s\tNaN\t%9.8f\t%9.8f\n",targetName.c_str(),treedata.getFeatureName(refIcs[featureIdx]).c_str(),importanceValues[featureIdx],treedata.pearsonCorrelation(targetIdx,refIcs[featureIdx]));
         }
-        //os << target_str << "\t" << treedata.get_featureheader(ref_ics[i]) << "\t" 
-        //   << pvalues[i] << "\t" << ivalues[i] << "\t" << treedata.corr(targetidx,ref_ics[i]) << endl;
+        
       }
     
-      //CURRENTLY NOT POSSIBLE TO REPORT FILTERED FEATURES
-      /*
-        if(reportFiltered) {
-        for(size_t featureIdx = 0; featureIdx < removedFeatureIcs.size(); ++featureIdx) {
-        fprintf(po,"%s\t%s\tNaN\tNaN\t%9.8f\n",targetName.c_str(),removedFeatures[featureIdx].c_str(),treedata.pearsonCorrelation(oldTargetIdx,removedFeatureIcs[featureIdx]));
-        }
-        }
-      */
-
-
       fclose(file);
-      //cout << endl << "Association file created. Format:" << endl;
-      //cout << "TARGET   PREDICTOR   P-VALUE   IMPORTANCE   CORRELATION" << endl << endl;
-      //cout << "Done." << endl;
+      
     } else {
       //cout << endl << "No significant associations found..." << endl;
     }
