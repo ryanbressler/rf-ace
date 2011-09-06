@@ -121,17 +121,6 @@ void Node::recursiveNDescendantNodes(size_t& n) {
   }
 }
 
-
-// !! Spurious comment: just remove this from the codebase
-//WILL BE REMOVED FROM THE PUBLIC PARTS
-/*
-  void Node::setLeafTrainPrediction(const num_t trainPrediction) {
-  assert(!hasChildren_ && !isTrainPredictionSet_);
-  trainPrediction_ = trainPrediction;
-  isTrainPredictionSet_ = true;
-  }
-*/
-
 // !! Documentation: just your usual accessor, returning a copy of
 // !! trainPrediction_.
 num_t Node::getLeafTrainPrediction() {
@@ -146,11 +135,7 @@ void Node::recursiveNodeSplit(Treedata* treeData,
                               set<size_t>& featuresInTree,
                               size_t& nNodes) {
 
-
-  //const size_t targetIdx = rootNode->targetIdx();
   const bool isTargetNumerical = treeData->isFeatureNumerical(targetIdx);
-  //const size_t minNodeSizeToStop = rootNode->minNodeSizeToStop();
-  //const size_t maxNodesToStop = rootNode->maxNodesToStop();
   size_t nSamples = sampleIcs.size();
 
   if(nSamples < 2 * GI.minNodeSizeToStop || nNodes >= GI.maxNodesToStop) {
@@ -166,9 +151,6 @@ void Node::recursiveNodeSplit(Treedata* treeData,
   }
   
   vector<size_t> featureSampleIcs(GI.nFeaturesForSplit);
-
-  //const size_t nFeatures = treeData->nFeatures();
-  //const size_t nFeaturesForSplit = rootNode->nFeaturesForSplit();
 
   if(GI.isRandomSplit) {
     if(GI.useContrasts) {
@@ -186,9 +168,11 @@ void Node::recursiveNodeSplit(Treedata* treeData,
     }
   }
 
-  vector<num_t> targetData,featureData;
+  vector<num_t> targetData;
+  vector<num_t> featureData;
+  
   //const bool isTargetNumerical = rootNode->isTargetNumerical();
-  treeData->getFeatureData(targetIdx,sampleIcs,targetData);
+  //treeData->getFeatureData(targetIdx,sampleIcs,targetData);
 
   vector<size_t> sampleIcs_left,sampleIcs_right;
   num_t splitValue;
@@ -198,57 +182,13 @@ void Node::recursiveNodeSplit(Treedata* treeData,
   size_t splitFeatureIdx;
 
   if(GI.isOptimizedNodeSplit) {
-    if(isTargetNumerical) {
-      Node::numericalFeatureSplit(targetData,
-                                  isTargetNumerical,
-                                  targetData,
-                                  GI.minNodeSizeToStop,
-                                  sampleIcs_left,
-                                  sampleIcs_right,
-                                  splitValue,
-                                  splitFitness);
-    } else {
-      Node::categoricalFeatureSplit(targetData,
-                                    isTargetNumerical,
-                                    targetData,
-                                    sampleIcs_left,
-                                    sampleIcs_right,
-                                    splitValues_left,
-                                    splitFitness);
-    }
-      
-      
-    splitFeatureIdx = GI.nFeaturesForSplit;
-    splitFitness = 0.0;
-      
-    for(size_t i = 0; i < GI.nFeaturesForSplit; ++i) {
-    
-      vector<num_t> newSplitFeatureData;
-      size_t newSplitFeatureIdx = featureSampleIcs[i];
-      bool isFeatureNumerical = treeData->isFeatureNumerical(newSplitFeatureIdx);
-    
-      //Neither the real nor the contrast feature can appear in the tree as splitter
-      if(newSplitFeatureIdx == targetIdx) {
-        continue;
-      }
-    
-      treeData->getFeatureData(newSplitFeatureIdx,sampleIcs,newSplitFeatureData);
-    
-      num_t newSplitFitness = Node::splitFitness(newSplitFeatureData,
-                                                 isFeatureNumerical,
-                                                 GI.minNodeSizeToStop,
-                                                 sampleIcs_left,
-                                                 sampleIcs_right);
-    
-      if(newSplitFitness > splitFitness && 
-         sampleIcs_left.size() >= GI.minNodeSizeToStop && 
-         sampleIcs_right.size() >= GI.minNodeSizeToStop) {
-        splitFitness = newSplitFitness;
-        splitFeatureIdx = newSplitFeatureIdx;
-      }
-    
-    }
-      
+
+    Node::optimizedSplitterSeek(treeData,
+				targetIdx,
+				sampleIcs,
+				featureSampleIcs,
+				GI.minNodeSizeToStop,
+                                splitFeatureIdx);
 
     if(splitFeatureIdx == GI.nFeaturesForSplit) {
       //cout << "No splitter found, quitting" << endl << endl;
@@ -262,9 +202,9 @@ void Node::recursiveNodeSplit(Treedata* treeData,
       return;
     }
       
-    //vector<num_t> featureData;
     treeData->getFeatureData(splitFeatureIdx,sampleIcs,featureData);
-      
+    treeData->getFeatureData(splitFeatureIdx,sampleIcs,targetData);
+  
     size_t nRealSamples = 0;
     for(size_t i = 0; i < nSamples; ++i) {
       if(!datadefs::isNAN(featureData[i])) {
@@ -359,6 +299,90 @@ void Node::recursiveNodeSplit(Treedata* treeData,
   rightChild_->recursiveNodeSplit(treeData,targetIdx,sampleIcs_right,GI,featuresInTree,nNodes);
   
 }
+
+// !! Documentation: optimized node split utilizes the bijection idea, such that if 
+// !!
+// !! y <- f(x)
+// !!
+// !! yields a good split, so will the inverse (assuming it exists) 
+// !!
+// !! x <- f^(-1)(y) 
+// !!
+// !! yield a good split also. This is not always true, but on average it's a good approximation. 
+// !! Assuming that our goal is to perform a binary split on the target, y, we can first specify 
+// !! an optimal split of y, i.e., split y with itself, and then project that split onto the 
+// !! candidates x_1 , x_2 , ... , x_i , ... , x_n. Whichever x_i splits the best is chosen to
+// !! make the split. The true benefit with this approximation is that the data needn't be sorted 
+// !! prior to testing each of the candidate splitter.
+void Node::optimizedSplitterSeek(Treedata* treeData, 
+				 const size_t targetIdx, 
+				 const vector<size_t>& sampleIcs, 
+				 const vector<size_t>& featureSampleIcs, 
+				 const size_t minNodeSizeToStop, 
+				 size_t& splitFeatureIdx) {
+
+  bool isTargetNumerical = treeData->isFeatureNumerical(targetIdx);
+  vector<num_t> targetData;
+  treeData->getFeatureData(targetIdx,sampleIcs,targetData);
+  vector<size_t> sampleIcs_left;
+  vector<size_t> sampleIcs_right;
+  num_t splitValue;
+  set<num_t> splitValues_left;
+  num_t splitFitness;
+
+  if(isTargetNumerical) {
+    Node::numericalFeatureSplit(targetData,
+				isTargetNumerical,
+				targetData,
+				minNodeSizeToStop,
+				sampleIcs_left,
+				sampleIcs_right,
+				splitValue,
+				splitFitness);
+  } else {
+    Node::categoricalFeatureSplit(targetData,
+				  isTargetNumerical,
+				  targetData,
+				  sampleIcs_left,
+				  sampleIcs_right,
+				  splitValues_left,
+				  splitFitness);
+  }        
+  
+  size_t nFeaturesForSplit = featureSampleIcs.size();
+  splitFeatureIdx = nFeaturesForSplit;
+  splitFitness = 0.0;
+  
+  for(size_t i = 0; i < nFeaturesForSplit; ++i) {
+    
+    vector<num_t> newSplitFeatureData;
+    size_t newSplitFeatureIdx = featureSampleIcs[i];
+    bool isFeatureNumerical = treeData->isFeatureNumerical(newSplitFeatureIdx);
+    
+    //Neither the real nor the contrast feature can appear in the tree as splitter
+    if(newSplitFeatureIdx == targetIdx) {
+      continue;
+    }
+    
+    treeData->getFeatureData(newSplitFeatureIdx,sampleIcs,newSplitFeatureData);
+    
+    num_t newSplitFitness = Node::splitFitness(newSplitFeatureData,
+					       isFeatureNumerical,
+					       minNodeSizeToStop,
+					       sampleIcs_left,
+					       sampleIcs_right);
+    
+    if(newSplitFitness > splitFitness && 
+       sampleIcs_left.size() >= minNodeSizeToStop && 
+       sampleIcs_right.size() >= minNodeSizeToStop) {
+      splitFitness = newSplitFitness;
+      splitFeatureIdx = newSplitFeatureIdx;
+    }
+    
+  }
+  
+}
+
 
 // !! Documentation: hey, it's a vector NAN-fixer!
 

@@ -83,6 +83,13 @@ protected:
                           const GrowInstructions& GI,
                           set<size_t>& featuresInTree,
                           size_t& nNodes);
+
+  void optimizedSplitterSeek(Treedata* treeData,
+			     const size_t targetIdx,
+			     const vector<size_t>& sampleIcs,
+			     const vector<size_t>& featureSampleIcs,
+			     const size_t minNodeSizeToStop,
+			     size_t& splitFeatureIdx);
     
 #ifndef TEST__
 private:
