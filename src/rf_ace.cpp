@@ -588,6 +588,10 @@ int main(const int argc, char* const argv[]) {
       }
       //cout << treedata_test.getFeatureName(targetIdx) << endl;
       if(treedata_test.isFeatureNumerical(targetIdx)) {
+
+	cerr << "Prediction of numerical data isn't yet working!" << endl;
+	return EXIT_FAILURE;
+
 	vector<num_t> prediction;
 	SF.predict(&treedata_test,prediction);
 	FILE* file = fopen(gen_op.predictionOutput.c_str(),"w");
@@ -597,10 +601,11 @@ int main(const int argc, char* const argv[]) {
 	fclose(file);
       } else {
 	vector<string> prediction;
-	SF.predict(&treedata_test,prediction);
+	vector<num_t> confidence; 
+	SF.predict(&treedata_test,prediction,confidence);
 	FILE* file = fopen(gen_op.predictionOutput.c_str(),"w");
 	for(size_t i = 0; i < prediction.size(); ++i) {
-	  fprintf(file,"%s\t%s\n",treedata_test.getRawFeatureData(targetIdx,i).c_str(),prediction[i].c_str());
+	  fprintf(file,"%s\t%s\t%4.3f\n",treedata_test.getRawFeatureData(targetIdx,i).c_str(),prediction[i].c_str(),confidence[i]);
 	}
       }
       

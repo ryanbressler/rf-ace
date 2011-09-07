@@ -332,7 +332,8 @@ void StochasticForest::predictDatasetByTree(Treedata* treeData, size_t treeIdx, 
 
 void StochasticForest::predict(vector<string>& prediction) {
   assert(numClasses_ != 0);
-  StochasticForest::predict(treeData_, prediction);
+  vector<num_t> confidence;
+  StochasticForest::predict(treeData_, prediction, confidence);
 }
 
 void StochasticForest::predict(vector<num_t>& prediction) {
@@ -341,16 +342,18 @@ void StochasticForest::predict(vector<num_t>& prediction) {
 
 // Predict with the trained model and using an arbitrary data set. StochasticForest::numClasses_ determines
 // whether the prediction is for a categorical or a numerical variable.
-void StochasticForest::predict(Treedata* treeData, vector<string>& prediction) {
+void StochasticForest::predict(Treedata* treeData, vector<string>& prediction, vector<num_t>& confidence) {
   assert( numClasses_ != 0 );
-
-  //cout << "predictor: " << learnedModel_ << endl;
   
+  //cout << "Currently working on implementing confidence computations to accompany predictions" << endl;
+
   switch ( learnedModel_ ) {
   case GBT_MODEL:
-    StochasticForest::predictWithCategoricalGBT(treeData, prediction);
+    StochasticForest::predictWithCategoricalGBT(treeData, prediction, confidence);
     break;
   case RF_MODEL:
+    cerr << "Implementation of categorical prediction with RFs isn't yet working" << endl;
+    assert(false);
     StochasticForest::predictWithCategoricalRF(treeData, prediction);
     break;
   case NO_MODEL:
@@ -365,7 +368,8 @@ void StochasticForest::predict(Treedata* treeData, vector<string>& prediction) {
 void StochasticForest::predict(Treedata* treeData, vector<num_t>& prediction) {
   assert( numClasses_ == 0 );
 
-  //cout << "predictor: " << learnedModel_ << endl;
+  //cout << "Currently working on implementing confidence computations to accompany predictions" << endl;
+  cout << "Prediction of numerical data is unstable and doesn't yet yield confidence metrics" << endl;
   
   switch ( learnedModel_ ) {
   case GBT_MODEL:
@@ -411,7 +415,7 @@ void StochasticForest::predictWithNumericalRF(Treedata* treeData, vector<num_t>&
 
 
 // Predict categorical target using a GBT "forest" from an arbitrary data set.
-void StochasticForest::predictWithCategoricalGBT(Treedata* treeData, vector<string>& categoryPrediction) {
+void StochasticForest::predictWithCategoricalGBT(Treedata* treeData, vector<string>& categoryPrediction, vector<num_t>& confidence) {
   size_t nSamples = treeData->nSamples();
   //cout << "Predicting "<<nSamples<<" samples. Target="<<targetIdx_<<". Classes="<<numClasses_<<endl;
 
@@ -422,10 +426,11 @@ void StochasticForest::predictWithCategoricalGBT(Treedata* treeData, vector<stri
   vector<num_t> probPrediction( numClasses_ );
   vector<num_t> prediction( numClasses_ );
   categoryPrediction.resize( nSamples );
+  confidence.resize( nSamples );
 
   for (size_t i=0; i<nSamples; i++) { // for each sample we need to ...
     for (size_t k=0; k<numClasses_; ++k) { // ... produce predictions for each class, and then ...
-      prediction[k] = 0;
+      prediction[k] = 0.0;
       for(size_t m = 0; m < numIterations; ++m) {
         size_t t =  m*numClasses_ + k; // tree index
         prediction[k] = prediction[k] + shrinkage_ * predictSampleByTree(treeData, i, t);
@@ -437,22 +442,13 @@ void StochasticForest::predictWithCategoricalGBT(Treedata* treeData, vector<stri
     num_t maxProbCategory = 1.0*(maxProb - prediction.begin()); 
     
     map<num_t,string> backMapping = treeData->features_[targetIdx_].backMapping;
-    //for(map<num_t,string>::const_iterator it(backMapping.begin()); it != backMapping.end(); ++it) {
-    //  cout << it->first << " => " << it->second << endl;
-    // }
-    //cout << maxProbCategory << " " << backMapping.size() << endl;
     categoryPrediction[i] = backMapping[ maxProbCategory ]; // classes are 0,1,2,...
-    //cout << maxProbCategory << " " << categoryPrediction[i] << endl;
-    // diagnostic print out the true and the prediction
-    //errorCnt += (backMapping[treeData->features_[targetIdx_].data[i]] != categoryPrediction[i]); //// THIS WILL BECOME INVALID UPON REMOVAL OF FRIENDSHIP ASSIGNMENT IN TREEDATA ////
-    //cout << i << "\t" << backMapping[treeData->features_[targetIdx_].data[i]] << "\t" << categoryPrediction[i]; //// THIS WILL BECOME INVALID UPON REMOVAL OF FRIENDSHIP ASSIGNMENT IN TREEDATA ////
-      StochasticForest::transformLogistic(numClasses_, prediction, probPrediction); // predictions-to-probabilities
-      //for (size_t k=0; k<numClasses_; ++k) {
-	  //cout <<"\t"<<probPrediction[k];
-      //}
-	//cout <<endl;
+    
+    StochasticForest::transformLogistic(numClasses_, prediction, probPrediction); // predictions-to-probabilities
+    
+    vector<num_t>::iterator largestElementIt = max_element(probPrediction.begin(),probPrediction.end());
+    confidence[i] = *largestElementIt;
   }
-  //cout<<"Error "<<errorCnt<<"/"<<nSamples<<"="<<100*errorCnt/nSamples<<"%"<<endl;
 }
 
 // Predict numerical target using a GBT "forest" from an arbitrary data set
