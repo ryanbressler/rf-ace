@@ -10,9 +10,11 @@ using namespace std;
 class StochasticForest {
 public:
 
+  // !! Documentation: instruct the constructor to choose between the two forest implementations
   StochasticForest(Treedata* treeData, const size_t targetIdx, const size_t nTrees);  
   ~StochasticForest();
 
+  // !! Documentation: ... then, on the public side, learning would become collapsed into a single overloaded function learn(...)
   void learnRF(const size_t mTry,
 	       const size_t nodeSize,
 	       const bool useContrasts,
@@ -22,16 +24,16 @@ public:
 		const num_t shrinkage,
 		const num_t subSampleSize);
   
-  //Calculates the feature importance scores for real and contrast features
   vector<size_t> featureFrequency();
   
+  //Calculates the feature importance scores for real and contrast features
   vector<num_t> featureImportance();
   
-
   void predict(vector<string>& prediction);
   void predict(vector<num_t>& prediction);
 
-  void predict(Treedata* treeData, vector<string>& prediction);
+  
+  void predict(Treedata* treeData, vector<string>& prediction, vector<num_t>& confidence);
   void predict(Treedata* treeData, vector<num_t>& prediction);
 
   //Counts the number of nodes in the forest
@@ -52,11 +54,10 @@ private:
   void predictWithCategoricalRF(Treedata* treeData, vector<string>& categoryPrediction);
   void predictWithNumericalRF(Treedata* treeData, vector<num_t>& prediction);
 
-  void predictWithCategoricalGBT(Treedata* treeData, vector<string>& categoryPrediction);
+  void predictWithCategoricalGBT(Treedata* treeData, vector<string>& categoryPrediction, vector<num_t>& confidence);
   void predictWithNumericalGBT(Treedata* treeData, vector<num_t>& prediction);
 
   //Percolates samples along the trees, starting from the rootNode. Spits out a map<> that ties the percolated train samples to the leaf nodes
-  //NOTE: currently, since there's no implementation for a RootNode class, there's no good way to store the percolated samples in the tree, but a map<> is generated instead
   void percolateSampleIcs(Treedata* treeData, Node* rootNode, const vector<size_t>& sampleIcs, map<Node*,vector<size_t> >& trainIcs);
   void percolateSampleIcsAtRandom(Treedata* treeData, const size_t featureIdx, Node* rootNode, const vector<size_t>& sampleIcs, map<Node*,vector<size_t> >& trainIcs);
   
