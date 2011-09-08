@@ -135,7 +135,7 @@ void Node::recursiveNodeSplit(Treedata* treeData,
                               set<size_t>& featuresInTree,
                               size_t& nNodes) {
 
-  const bool isTargetNumerical = treeData->isFeatureNumerical(targetIdx);
+  //const bool isTargetNumerical = treeData->isFeatureNumerical(targetIdx);
   size_t nSamples = sampleIcs.size();
 
   if(nSamples < 2 * GI.minNodeSizeToStop || nNodes >= GI.maxNodesToStop) {
@@ -182,7 +182,7 @@ void Node::recursiveNodeSplit(Treedata* treeData,
   size_t splitFeatureIdx;
 
   bool isSplitSuccessful;
-  bool isSplitFeatureNumerical;
+  //bool isSplitFeatureNumerical;
   
 
   if(GI.isOptimizedNodeSplit) {
@@ -194,67 +194,22 @@ void Node::recursiveNodeSplit(Treedata* treeData,
 						    sampleIcs,
 						    featureSampleIcs,
 						    GI.minNodeSizeToStop,
-						    splitFeatureIdx);
+						    splitFeatureIdx,
+						    sampleIcs_left,
+						    sampleIcs_right,
+						    splitValue,
+						    splitValues_left,
+						    splitFitness);
 
     if(!isSplitSuccessful) {
-      //cout << "No splitter found, quitting" << endl << endl;
+
       vector<num_t> leafTrainData;
       treeData->getFeatureData(targetIdx,sampleIcs,leafTrainData);
-      //Node::setLeafTrainPrediction(leafTrainData,GI);
-          
+                
       // !! Potential Crash: This is unsafe. Add asserts or runtime checks.
       // !! Correctness: Violates the Principle of Least Knowledge. Refactor.
       (this->*GI.leafPredictionFunction)(leafTrainData,GI.numClasses);
       return;
-    }
-      
-    treeData->getFeatureData(splitFeatureIdx,sampleIcs,featureData);
-    treeData->getFeatureData(splitFeatureIdx,sampleIcs,targetData);
-  
-    size_t nRealSamples = 0;
-    for(size_t i = 0; i < nSamples; ++i) {
-      if(!datadefs::isNAN(featureData[i])) {
-        featureData[nRealSamples] = featureData[i];
-        targetData[nRealSamples] = targetData[i];
-        ++nRealSamples;
-      }
-    }
-    featureData.resize(nRealSamples);
-    targetData.resize(nRealSamples);
-
-    // This is the flaw in the optimized splitting: if the splitting fails due to insiffucient sample size, no other splitters will be dedicated 
-    if(targetData.size() < 2 * GI.minNodeSizeToStop) {
-      //cout << "Splitter has too few non-missing values, quitting" << endl;
-      //This needs to be fixed such that one of the surrogates will determine the split instead
-      vector<num_t> leafTrainData;
-      treeData->getFeatureData(targetIdx,sampleIcs,leafTrainData);
-      //Node::setLeafTrainPrediction(leafTrainData,GI);
-          
-      // !! Potential Crash: This is unsafe. Add asserts or runtime checks.
-      // !! Correctness: Violates the Principle of Least Knowledge. Refactor.
-      (this->*GI.leafPredictionFunction)(leafTrainData,GI.numClasses);
-      return;
-    }
-
-    isSplitFeatureNumerical = treeData->isFeatureNumerical(splitFeatureIdx);
-
-    if(isSplitFeatureNumerical) {
-      Node::numericalFeatureSplit(targetData,
-				  isTargetNumerical,
-				  featureData,
-				  GI.minNodeSizeToStop,
-				  sampleIcs_left,
-				  sampleIcs_right,
-				  splitValue,
-				  splitFitness);
-    } else {
-      Node::categoricalFeatureSplit(targetData,
-				    isTargetNumerical,
-				    featureData,
-				    sampleIcs_left,
-				    sampleIcs_right,
-				    splitValues_left,
-				    splitFitness);
     }
 
   } else {
@@ -262,23 +217,7 @@ void Node::recursiveNodeSplit(Treedata* treeData,
     assert(false);
   }
      
-  assert(sampleIcs_left.size() + sampleIcs_right.size() == targetData.size());
-
-  // NOTE: here's a flaw in design: as categorical data splitter does not utilize minimum node size as the boundary condition,
-  // there may be splits yielding smaller node sizes than initially specified; thus the following check, which really shouldn't be there
-  if(sampleIcs_left.size() < GI.minNodeSizeToStop || sampleIcs_right.size() < GI.minNodeSizeToStop) {
-    //cout << "Too few values after splitting and removal of missing values" << endl;
-    vector<num_t> leafTrainData;
-    treeData->getFeatureData(targetIdx,sampleIcs,leafTrainData);
-    //Node::setLeafTrainPrediction(leafTrainData,GI);
-      
-    // !! Potential Crash: This is unsafe. Add asserts or runtime checks.
-    // !! Correctness: Violates the Principle of Least Knowledge. Refactor.
-    (this->*GI.leafPredictionFunction)(leafTrainData,GI.numClasses);
-    return;
-  }
-
-  if(isSplitFeatureNumerical) {
+  if ( treeData->isFeatureNumerical(splitFeatureIdx) ) {
     //cout << "num splitter" << endl;
     Node::setSplitter(splitFeatureIdx,splitValue);
   } else {
@@ -289,16 +228,6 @@ void Node::recursiveNodeSplit(Treedata* treeData,
   featuresInTree.insert(splitFeatureIdx);
   nNodes += 2;
 
-  for(size_t i = 0; i < sampleIcs_left.size(); ++i) {
-    sampleIcs_left[i] = sampleIcs[sampleIcs_left[i]];
-  }
-
-  for(size_t i = 0; i < sampleIcs_right.size(); ++i) {
-    sampleIcs_right[i] = sampleIcs[sampleIcs_right[i]];
-  }
-
-
-  //cout << "split left..." << endl;
   leftChild_->recursiveNodeSplit(treeData,targetIdx,sampleIcs_left,GI,featuresInTree,nNodes);
   rightChild_->recursiveNodeSplit(treeData,targetIdx,sampleIcs_right,GI,featuresInTree,nNodes);
   
@@ -327,18 +256,23 @@ bool Node::optimizedSplitterSeek(Treedata* treeData,
 				 const vector<size_t>& sampleIcs, 
 				 const vector<size_t>& featureSampleIcs, 
 				 const size_t minNodeSizeToStop, 
-				 size_t& splitFeatureIdx) {
+				 size_t& splitFeatureIdx,
+				 vector<size_t>& sampleIcs_left,
+				 vector<size_t>& sampleIcs_right,
+				 num_t& splitValue,
+				 set<num_t>& splitValues_left,
+				 num_t& splitFitness) {
 
   bool isTargetNumerical = treeData->isFeatureNumerical(targetIdx);
   vector<num_t> targetData;
   treeData->getFeatureData(targetIdx,sampleIcs,targetData);
-  vector<size_t> sampleIcs_left;
-  vector<size_t> sampleIcs_right;
-  num_t splitValue;
-  set<num_t> splitValues_left;
-  num_t splitFitness;
+  //vector<size_t> sampleIcs_left;
+  //vector<size_t> sampleIcs_right;
+  //num_t splitValue;
+  //set<num_t> splitValues_left;
+  //num_t splitFitness;
 
-  if(isTargetNumerical) {
+  if ( isTargetNumerical ) {
     Node::numericalFeatureSplit(targetData,
 				isTargetNumerical,
 				targetData,
@@ -361,14 +295,14 @@ bool Node::optimizedSplitterSeek(Treedata* treeData,
   splitFeatureIdx = nFeaturesForSplit;
   splitFitness = 0.0;
   
-  for(size_t i = 0; i < nFeaturesForSplit; ++i) {
+  for ( size_t i = 0; i < nFeaturesForSplit; ++i ) {
     
     vector<num_t> newSplitFeatureData;
     size_t newSplitFeatureIdx = featureSampleIcs[i];
     bool isFeatureNumerical = treeData->isFeatureNumerical(newSplitFeatureIdx);
     
     //Neither the real nor the contrast feature can appear in the tree as splitter
-    if(newSplitFeatureIdx == targetIdx) {
+    if ( newSplitFeatureIdx == targetIdx ) {
       continue;
     }
     
@@ -380,9 +314,9 @@ bool Node::optimizedSplitterSeek(Treedata* treeData,
 					       sampleIcs_left,
 					       sampleIcs_right);
     
-    if(newSplitFitness > splitFitness && 
+    if( newSplitFitness > splitFitness && 
        sampleIcs_left.size() >= minNodeSizeToStop && 
-       sampleIcs_right.size() >= minNodeSizeToStop) {
+       sampleIcs_right.size() >= minNodeSizeToStop ) {
       splitFitness = newSplitFitness;
       splitFeatureIdx = newSplitFeatureIdx;
     }
@@ -393,7 +327,56 @@ bool Node::optimizedSplitterSeek(Treedata* treeData,
     return(false);
   } 
 
-  // ADD SOME STUFF THERE
+  vector<num_t> featureData;
+  treeData->getFeatureData(splitFeatureIdx,sampleIcs,featureData);
+  //treeData->getFeatureData(targetIdx,sampleIcs,targetData);
+
+  size_t nRealSamples = 0;
+  for ( size_t i = 0; i < targetData.size(); ++i ) {
+    if ( !datadefs::isNAN( featureData[i] ) ) {
+      featureData[nRealSamples] = featureData[i];
+      targetData[nRealSamples] = targetData[i];
+      ++nRealSamples;
+    }
+  }
+
+  featureData.resize(nRealSamples);
+  targetData.resize(nRealSamples);
+
+  if ( nRealSamples < 2 * minNodeSizeToStop ) {
+    return(false);
+  }
+
+  if ( treeData->isFeatureNumerical(splitFeatureIdx) ) {
+    Node::numericalFeatureSplit(targetData,
+				isTargetNumerical,
+				featureData,
+				minNodeSizeToStop,
+				sampleIcs_left,
+				sampleIcs_right,
+				splitValue,
+				splitFitness);
+  } else {
+    Node::categoricalFeatureSplit(targetData,
+				  isTargetNumerical,
+				  featureData,
+				  sampleIcs_left,
+				  sampleIcs_right,
+				  splitValues_left,
+				  splitFitness);
+  }
+
+  if ( sampleIcs_left.size() < minNodeSizeToStop || sampleIcs_right.size() < minNodeSizeToStop ) {
+    return false;
+  }
+
+  for(size_t i = 0; i < sampleIcs_left.size(); ++i) {
+    sampleIcs_left[i] = sampleIcs[sampleIcs_left[i]];
+  }
+
+  for(size_t i = 0; i < sampleIcs_right.size(); ++i) {
+    sampleIcs_right[i] = sampleIcs[sampleIcs_right[i]];
+  }
 
   return(true);
   

@@ -373,7 +373,7 @@ void StochasticForest::predict(Treedata* treeData, vector<string>& prediction, v
 void StochasticForest::predict(Treedata* treeData, vector<num_t>& prediction, vector<num_t>& confidence) {
   assert( numClasses_ == 0 );
 
-  cout << "Prediction of numerical data is unstable and doesn't yet yield confidence metrics" << endl;
+  //cout << "Prediction of numerical data is unstable and doesn't yet yield confidence metrics" << endl;
   
   switch ( learnedModel_ ) {
   case GBT_MODEL:
