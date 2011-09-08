@@ -89,7 +89,12 @@ protected:
 			     const vector<size_t>& sampleIcs,
 			     const vector<size_t>& featureSampleIcs,
 			     const size_t minNodeSizeToStop,
-			     size_t& splitFeatureIdx);
+			     size_t& splitFeatureIdx,
+			     vector<size_t>& sampleIcs_left,
+			     vector<size_t>& sampleIcs_right,
+			     num_t& splitValue,
+			     set<num_t>& splitValues_left,
+			     num_t& splitFitness);
     
 #ifndef TEST__
 private:
