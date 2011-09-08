@@ -302,25 +302,32 @@ void StochasticForest::transformLogistic(const size_t numClasses, vector<num_t>&
   }
 }
 
-// Use a single GBT tree to produce a prediction from a single data sample
-// of an arbitrary data set. This wouldn't have to be the train set. // IF we use another treeData_ !!
+// Use a single GBT tree to produce a prediction from a single data sample of an arbitrary data set.
 num_t StochasticForest::predictSampleByTree(Treedata* treeData, size_t sampleIdx, size_t treeIdx) {
-  // root of current tree
-  Node *currentNode = rootNodes_[treeIdx]; // OLD: &forest_[treeIdx][0];
-  num_t value;
-  // traverse to the leaf of the tree
+  
+  // Root of current tree
+  Node *currentNode = rootNodes_[treeIdx];
+  
+  // Traverse to the leaf of the tree
   while(currentNode->hasChildren()) {
+    
+    num_t value;
+    
+    // Get the splitter of the branch point
     size_t featureIdx = currentNode->getSplitter();
+
+    // Get the value of the splitter feature of the chosen sample 
     treeData->getFeatureData(featureIdx, sampleIdx, value);
+    
+    // The node then makes the branch decision. The chosen child node becomes the new currentNode 
     currentNode = currentNode->percolateData(value);
   }
-  // now currentNode points to a leaf node: get the prediction
+
+  // The loop has ended, and currentNode now points to a leaf node; get the prediction
   return currentNode->getLeafTrainPrediction();
 }
 
-
-
-// Use a single GBT tree to produce predictions for a whole training data set
+// Use a single GBT tree to produce predictions for an arbitrary data set.
 void StochasticForest::predictDatasetByTree(Treedata* treeData, size_t treeIdx, vector<num_t>& curPrediction) {
   size_t nSamples = treeData->nSamples();
   // predict for all samples
@@ -414,26 +421,41 @@ void StochasticForest::predictWithNumericalRF(Treedata* treeData, vector<num_t>&
 }
 
 
-// Predict categorical target using a GBT "forest" from an arbitrary data set.
+// Predict categorical target using a GBT "forest" from an arbitrary data set. The function also outputs a confidence score for 
+// the predictions. In this case the confidence score is the probability for the prediction.
 void StochasticForest::predictWithCategoricalGBT(Treedata* treeData, vector<string>& categoryPrediction, vector<num_t>& confidence) {
+  
   size_t nSamples = treeData->nSamples();
-  //cout << "Predicting "<<nSamples<<" samples. Target="<<targetIdx_<<". Classes="<<numClasses_<<endl;
-
-  // For classification, each "tree" is actually numClasses_ trees in a row
-  // each predicting the probability of its own class.
+  
+  // For classification, each "tree" is actually numClasses_ trees in a row, each predicting the probability of its own class.
   size_t numIterations = nTrees_ / numClasses_;
-  //size_t errorCnt = 0;
-  vector<num_t> probPrediction( numClasses_ );
+
+  // Vector storing the transformed probabilities for each class prediction
   vector<num_t> prediction( numClasses_ );
+
+  // Vector storing true probabilities for each class prediction
+  vector<num_t> probPrediction( numClasses_ );
+
   categoryPrediction.resize( nSamples );
   confidence.resize( nSamples );
 
-  for (size_t i=0; i<nSamples; i++) { // for each sample we need to ...
-    for (size_t k=0; k<numClasses_; ++k) { // ... produce predictions for each class, and then ...
+  // For each sample we need to produce predictions for each class.
+  for ( size_t i = 0; i < nSamples; i++ ) { 
+    
+    for (size_t k = 0; k < numClasses_; ++k) { 
+      
+      // Initialize the prediction
       prediction[k] = 0.0;
+      
+      // We go through 
       for(size_t m = 0; m < numIterations; ++m) {
-        size_t t =  m*numClasses_ + k; // tree index
+      
+	// Tree index
+	size_t t =  m * numClasses_ + k;
+
+	// Shrinked shift towards the new prediction
         prediction[k] = prediction[k] + shrinkage_ * predictSampleByTree(treeData, i, t);
+      
       }
     }
 
@@ -453,8 +475,10 @@ void StochasticForest::predictWithCategoricalGBT(Treedata* treeData, vector<stri
 
 // Predict numerical target using a GBT "forest" from an arbitrary data set
 void StochasticForest::predictWithNumericalGBT(Treedata* treeData, vector<num_t>& prediction) {
+
   size_t nSamples = treeData->nSamples();
   prediction.resize(nSamples);
+
   //cout << "Predicting "<<nSamples<<" samples. Target="<<targetIdx_<<endl;
   for (size_t i=0; i<nSamples; i++) {
     prediction[i] = 0;
@@ -663,10 +687,6 @@ void StochasticForest::treeImpurity(Treedata* treeData, map<Node*,vector<size_t>
       //leafImpurity *= leafImpurity;
     }
 
-    //num_t impurity_leaf;
-    //size_t nRealSamples;
-    //treeData->impurity(targetData,isTargetNumerical,impurity_leaf,nRealSamples);
-    //size_t n(it->second.size());
     n_tot += nSamplesInLeaf;
     impurity += nSamplesInLeaf * leafImpurity;
   }
