@@ -186,8 +186,6 @@ void Node::recursiveNodeSplit(Treedata* treeData,
   
 
   if(GI.isOptimizedNodeSplit) {
-
-    // !! Fix: optimized node splitter will be redesigned to consume all the code inside this block
     
     isSplitSuccessful = Node::optimizedSplitterSeek(treeData,
 						    targetIdx,
@@ -201,21 +199,32 @@ void Node::recursiveNodeSplit(Treedata* treeData,
 						    splitValues_left,
 						    splitFitness);
 
-    if(!isSplitSuccessful) {
-
-      vector<num_t> leafTrainData;
-      treeData->getFeatureData(targetIdx,sampleIcs,leafTrainData);
-                
-      // !! Potential Crash: This is unsafe. Add asserts or runtime checks.
-      // !! Correctness: Violates the Principle of Least Knowledge. Refactor.
-      (this->*GI.leafPredictionFunction)(leafTrainData,GI.numClasses);
-      return;
-    }
-
   } else {
-    cerr << "Regular node split is not yet ready. For now, issue -o / --optimizedRF to avoid the problem" << endl;
-    assert(false);
+
+    isSplitSuccessful = Node::regularSplitterSeek(treeData,
+						  targetIdx,
+						  sampleIcs,
+						  featureSampleIcs,
+						  GI.minNodeSizeToStop,
+						  splitFeatureIdx,
+						  sampleIcs_left,
+						  sampleIcs_right,
+						  splitValue,
+						  splitValues_left,
+						  splitFitness);
   }
+
+  if(!isSplitSuccessful) {
+
+    vector<num_t> leafTrainData;
+    treeData->getFeatureData(targetIdx,sampleIcs,leafTrainData);
+
+    // !! Potential Crash: This is unsafe. Add asserts or runtime checks.
+    // !! Correctness: Violates the Principle of Least Knowledge. Refactor.
+    (this->*GI.leafPredictionFunction)(leafTrainData,GI.numClasses);
+    return;
+  }
+
      
   if ( treeData->isFeatureNumerical(splitFeatureIdx) ) {
     //cout << "num splitter" << endl;
@@ -231,6 +240,90 @@ void Node::recursiveNodeSplit(Treedata* treeData,
   leftChild_->recursiveNodeSplit(treeData,targetIdx,sampleIcs_left,GI,featuresInTree,nNodes);
   rightChild_->recursiveNodeSplit(treeData,targetIdx,sampleIcs_right,GI,featuresInTree,nNodes);
   
+}
+
+bool Node::regularSplitterSeek(Treedata* treeData,
+			       const size_t targetIdx,
+			       const vector<size_t>& sampleIcs,
+			       const vector<size_t>& featureSampleIcs,
+			       const size_t minNodeSizeToStop,
+			       size_t& splitFeatureIdx,
+			       vector<size_t>& sampleIcs_left,
+			       vector<size_t>& sampleIcs_right,
+			       num_t& splitValue,
+			       set<num_t>& splitValues_left,
+			       num_t& splitFitness) {
+
+  bool isTargetNumerical = treeData->isFeatureNumerical(targetIdx);
+  vector<num_t> targetData;
+  treeData->getFeatureData(targetIdx,sampleIcs,targetData);
+
+  size_t nFeaturesForSplit = featureSampleIcs.size();
+  splitFeatureIdx = nFeaturesForSplit;
+  splitFitness = 0.0;
+  
+  for ( size_t i = 0; i < nFeaturesForSplit; ++i ) {
+    
+    //vector<num_t> newSplitFeatureData;
+    size_t newSplitFeatureIdx = featureSampleIcs[i];
+    //bool isFeatureNumerical = treeData->isFeatureNumerical(newSplitFeatureIdx);
+
+    num_t newSplitFitness;
+    vector<size_t> newSampleIcs_left, newSampleIcs_right;
+    num_t newSplitValue;
+    set<num_t> newSplitValues_left;
+
+    vector<num_t> featureData;
+    treeData->getFeatureData(newSplitFeatureIdx,sampleIcs,featureData);
+
+    if ( isTargetNumerical ) {
+      Node::numericalFeatureSplit(targetData,
+				  isTargetNumerical,
+				  featureData,
+				  minNodeSizeToStop,
+				  newSampleIcs_left,
+				  newSampleIcs_right,
+				  newSplitValue,
+				  newSplitFitness);
+    } else {
+      Node::categoricalFeatureSplit(targetData,
+				    isTargetNumerical,
+				    featureData,
+				    newSampleIcs_left,
+				    newSampleIcs_right,
+				    newSplitValues_left,
+				    newSplitFitness);
+    }
+
+    if( newSplitFitness > splitFitness &&
+	newSampleIcs_left.size() >= minNodeSizeToStop &&
+	newSampleIcs_right.size() >= minNodeSizeToStop ) {
+      
+      splitFitness = newSplitFitness;
+      splitFeatureIdx = newSplitFeatureIdx;
+      splitValue = newSplitValue;
+      splitValues_left = newSplitValues_left;
+      sampleIcs_left = newSampleIcs_left;
+      sampleIcs_right = newSampleIcs_right;
+
+    }    
+
+  }
+  
+  if ( splitFeatureIdx == nFeaturesForSplit ) {
+    return(false);
+  }
+
+  for(size_t i = 0; i < sampleIcs_left.size(); ++i) {
+    sampleIcs_left[i] = sampleIcs[sampleIcs_left[i]];
+  }
+
+  for(size_t i = 0; i < sampleIcs_right.size(); ++i) {
+    sampleIcs_right[i] = sampleIcs[sampleIcs_right[i]];
+  }
+
+  return(true);
+
 }
 
 /** Optimized node split utilizes the bijection idea, such that if 
@@ -266,12 +359,7 @@ bool Node::optimizedSplitterSeek(Treedata* treeData,
   bool isTargetNumerical = treeData->isFeatureNumerical(targetIdx);
   vector<num_t> targetData;
   treeData->getFeatureData(targetIdx,sampleIcs,targetData);
-  //vector<size_t> sampleIcs_left;
-  //vector<size_t> sampleIcs_right;
-  //num_t splitValue;
-  //set<num_t> splitValues_left;
-  //num_t splitFitness;
-
+  
   if ( isTargetNumerical ) {
     Node::numericalFeatureSplit(targetData,
 				isTargetNumerical,
@@ -317,6 +405,7 @@ bool Node::optimizedSplitterSeek(Treedata* treeData,
     if( newSplitFitness > splitFitness && 
        sampleIcs_left.size() >= minNodeSizeToStop && 
        sampleIcs_right.size() >= minNodeSizeToStop ) {
+      
       splitFitness = newSplitFitness;
       splitFeatureIdx = newSplitFeatureIdx;
     }
@@ -331,23 +420,25 @@ bool Node::optimizedSplitterSeek(Treedata* treeData,
   treeData->getFeatureData(splitFeatureIdx,sampleIcs,featureData);
   //treeData->getFeatureData(targetIdx,sampleIcs,targetData);
 
-  size_t nRealSamples = 0;
-  for ( size_t i = 0; i < targetData.size(); ++i ) {
-    if ( !datadefs::isNAN( featureData[i] ) ) {
-      featureData[nRealSamples] = featureData[i];
-      targetData[nRealSamples] = targetData[i];
-      ++nRealSamples;
-    }
-  }
+  
+  //size_t nRealSamples = 0;
+  //for ( size_t i = 0; i < targetData.size(); ++i ) {
+  //  if ( !datadefs::isNAN( featureData[i] ) ) {
+  //    featureData[nRealSamples] = featureData[i];
+  //    targetData[nRealSamples] = targetData[i];
+  //    ++nRealSamples;
+  //  }
+  //}
 
-  featureData.resize(nRealSamples);
-  targetData.resize(nRealSamples);
+  //featureData.resize(nRealSamples);
+  //targetData.resize(nRealSamples);
 
-  if ( nRealSamples < 2 * minNodeSizeToStop ) {
-    return(false);
-  }
+  //if ( nRealSamples < 2 * minNodeSizeToStop ) {
+  //  return(false);
+  //}
 
   if ( treeData->isFeatureNumerical(splitFeatureIdx) ) {
+    
     Node::numericalFeatureSplit(targetData,
 				isTargetNumerical,
 				featureData,
@@ -356,7 +447,9 @@ bool Node::optimizedSplitterSeek(Treedata* treeData,
 				sampleIcs_right,
 				splitValue,
 				splitFitness);
+  
   } else {
+  
     Node::categoricalFeatureSplit(targetData,
 				  isTargetNumerical,
 				  featureData,
@@ -364,17 +457,18 @@ bool Node::optimizedSplitterSeek(Treedata* treeData,
 				  sampleIcs_right,
 				  splitValues_left,
 				  splitFitness);
+
   }
 
   if ( sampleIcs_left.size() < minNodeSizeToStop || sampleIcs_right.size() < minNodeSizeToStop ) {
-    return false;
+    return(false);
   }
 
-  for(size_t i = 0; i < sampleIcs_left.size(); ++i) {
+  for ( size_t i = 0; i < sampleIcs_left.size(); ++i ) {
     sampleIcs_left[i] = sampleIcs[sampleIcs_left[i]];
   }
 
-  for(size_t i = 0; i < sampleIcs_right.size(); ++i) {
+  for ( size_t i = 0; i < sampleIcs_right.size(); ++i ) {
     sampleIcs_right[i] = sampleIcs[sampleIcs_right[i]];
   }
 
