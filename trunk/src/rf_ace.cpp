@@ -462,10 +462,14 @@ int main(const int argc, char* const argv[]) {
     GBT_op.isOptimizedNodeSplit = true;
   }
 
+  ofstream toAssociationFile(gen_op.output.c_str());
+  assert(toAssociationFile.is_open());
+  toAssociationFile.precision(8);
+
+  ofstream toPredictionFile(gen_op.predictionOutput.c_str());
+  assert(toPredictionFile.is_open());
+
   //The program starts a loop in which an RF-ACE model will be built for each spcified target feature
-
-  fstream toPredictionFile(gen_op.predictionOutput.c_str());
-
   size_t iter = 1;
   for(set<size_t>::const_iterator it(targetIcs.begin()); it != targetIcs.end(); ++it, ++iter) {
 
@@ -475,6 +479,7 @@ int main(const int argc, char* const argv[]) {
 
     //Extract the target index from the pointer and the number of real samples from the treedata object
     size_t targetIdx = *it;
+    string targetName = treedata.getFeatureName(targetIdx);
     size_t nRealSamples = treedata.nRealSamples(targetIdx);
     num_t realFraction = 1.0*nRealSamples / treedata.nSamples();
 
@@ -620,7 +625,8 @@ int main(const int argc, char* const argv[]) {
 	//ofstream toFile(gen_op.predictionOutput);
 
 	for(size_t i = 0; i < prediction.size(); ++i) {
-	  toPredictionFile << treedata_test.getFeatureName(targetIdx) << "\t" << "sampleID" << "\t" << treedata_test.getRawFeatureData(targetIdx,i) << "\t" << prediction[i] << "\t" << confidence[i] << endl;
+	  toPredictionFile << targetName.c_str() << "\t" << "sampleID" << "\t" << treedata_test.getRawFeatureData(targetIdx,i) 
+			   << "\t" << prediction[i] << "\t" << setprecision(3) << confidence[i] << endl;
 	  //fprintf(file,"%s\t%9.8f\t%9.8f\n",treedata_test.getRawFeatureData(targetIdx,i).c_str(),prediction[i],confidence[i]);
 	}
 	//fclose(file);
@@ -633,20 +639,14 @@ int main(const int argc, char* const argv[]) {
 	
 	//FILE* file = fopen(gen_op.predictionOutput.c_str(),"w");
 	for(size_t i = 0; i < prediction.size(); ++i) {
-	  toPredictionFile << treedata_test.getFeatureName(targetIdx) << "\t" << "sampleID" << "\t" << treedata_test.getRawFeatureData(targetIdx,i) << "\t" << prediction[i] << "\t" << confidence[i] << endl;
+	  toPredictionFile << targetName.c_str() << "\t" << "sampleID" << "\t" << treedata_test.getRawFeatureData(targetIdx,i) 
+			   << "\t" << prediction[i] << "\t" << setprecision(3) << confidence[i] << endl;
 	  //fprintf(file,"%s\t%9.8f\t%9.8f\n",treedata_test.getRawFeatureData(targetIdx,i).c_str(),prediction[i],confidence[i]);
 	}
 	//fclose(file);
 	//toFile.close();
 
       }
- 
-      //FILE* file = fopen(gen_op.predictionOutput.c_str(),"w");
-      //for(size_t i = 0; i < prediction.size(); ++i) {
-      //cout << treedata_test.getFeatureName(targetIdx) << "\t" << "sampleID" << "\t" << treedata_test.getRawFeatureData(targetIdx,i) << "\t" << prediction[i] << "\t" << confidence[i] << endl;
-	//fprintf(file,"%s\t%9.8f\t%9.8f\n",treedata_test.getRawFeatureData(targetIdx,i).c_str(),prediction[i],confidence[i]);
-      //}
-      //fclose(file);
      
       cout << "DONE" << endl;
     }
@@ -664,18 +664,18 @@ int main(const int argc, char* const argv[]) {
     datadefs::sortFromRef<num_t>(pValues,refIcs);
     //targetIdx = refIcs[targetIdx];
       
-    string targetName = treedata.getFeatureName(targetIdx);
+    //string targetName = treedata.getFeatureName(targetIdx);
       
     //MODIFICATION: ALL ASSOCIATIONS WILL BE PRINTED
     if(true) {
       
-      FILE* file;
-      if(iter == 1) {
-        file = fopen(gen_op.output.c_str(),"w");
-      }
-      else {
-        file = fopen(gen_op.output.c_str(),"a");
-      }
+      //FILE* file;
+      //if(iter == 1) {
+      //  file = fopen(gen_op.output.c_str(),"w");
+      //}
+      //else {
+      //  file = fopen(gen_op.output.c_str(),"a");
+      //}
     
       for(size_t featureIdx = 0; featureIdx < treedata.nFeatures(); ++featureIdx) {
         
@@ -683,28 +683,29 @@ int main(const int argc, char* const argv[]) {
           continue;
 	}
         
-        
         if(refIcs[featureIdx] == targetIdx) {
-          //cout << refIcs[featureIdx] << " == " << targetIdx << " (" << targetHeader << ")" << endl;
           continue;
         }
         
-
         if(RF_op.nPerms > 1) {
-          fprintf(file,"%s\t%s\t%9.8f\t%9.8f\t%9.8f\n",targetName.c_str(),treedata.getFeatureName(refIcs[featureIdx]).c_str(),pValues[featureIdx],importanceValues[featureIdx],treedata.pearsonCorrelation(targetIdx,refIcs[featureIdx]));
-        } else {
-          fprintf(file,"%s\t%s\tNaN\t%9.8f\t%9.8f\n",targetName.c_str(),treedata.getFeatureName(refIcs[featureIdx]).c_str(),importanceValues[featureIdx],treedata.pearsonCorrelation(targetIdx,refIcs[featureIdx]));
+          //fprintf(file,"%s\t%s\t%9.8f\t%9.8f\t%9.8f\n",targetName.c_str(),treedata.getFeatureName(refIcs[featureIdx]).c_str(),pValues[featureIdx],importanceValues[featureIdx],treedata.pearsonCorrelation(targetIdx,refIcs[featureIdx]));
+	  toAssociationFile << fixed << targetName.c_str() << "\t" << treedata.getFeatureName(refIcs[featureIdx]).c_str() << "\t" << pValues[featureIdx] << "\t" << importanceValues[featureIdx] << "\t"
+                            << treedata.pearsonCorrelation(targetIdx,refIcs[featureIdx]) << endl;
+	} else {
+          toAssociationFile << fixed << targetName.c_str() << "\t" << treedata.getFeatureName(refIcs[featureIdx]).c_str() << "\tNA\t" << importanceValues[featureIdx] << "\t"
+			    << treedata.pearsonCorrelation(targetIdx,refIcs[featureIdx]) << endl;
         }
         
       }
     
-      fclose(file);
+      //fclose(file);
       
     } else {
       //cout << endl << "No significant associations found..." << endl;
     }
   }
 
+  toAssociationFile.close();
   toPredictionFile.close();
       
   cout << endl << "Association file created. Format:" << endl;
