@@ -41,25 +41,25 @@ struct General_options {
   string printHelp_s;
   string printHelp_l;
 
-  string input;
-  string input_s;
-  string input_l;
+  string trainInput;
+  string trainInput_s;
+  string trainInput_l;
 
-  string output;
-  string output_s;
-  string output_l;
+  string associationOutput;
+  string associationOutput_s;
+  string associationOutput_l;
 
   string targetStr;
   string targetStr_s;
   string targetStr_l;
 
-  string featureMaskFile;
-  string featureMaskFile_s;
-  string featureMaskFile_l;
+  string featureMaskInput;
+  string featureMaskInput_s;
+  string featureMaskInput_l;
 
-  string testFile;
-  string testFile_s;
-  string testFile_l;
+  string testInput;
+  string testInput_s;
+  string testInput_l;
 
   string predictionOutput;
   string predictionOutput_s;
@@ -74,29 +74,29 @@ struct General_options {
     printHelp_s("h"),
     printHelp_l("help"),    
     
-    input(""),
-    input_s("I"),
-    input_l("input"),
+    trainInput(""),
+    trainInput_s("I"),
+    trainInput_l("traindata"),
     
-    output(""),
-    output_s("O"),
-    output_l("output"),
+    associationOutput(""),
+    associationOutput_s("O"),
+    associationOutput_l("associations"),
     
     targetStr(""),
     targetStr_s("i"),
     targetStr_l("target"),
 
-    featureMaskFile(""),
-    featureMaskFile_s("M"),
-    featureMaskFile_l("fmask"),
+    featureMaskInput(""),
+    featureMaskInput_s("M"),
+    featureMaskInput_l("fmask"),
     
-    testFile(""),
-    testFile_s("T"),
-    testFile_l("testdata"),
+    testInput(""),
+    testInput_s("T"),
+    testInput_l("testdata"),
 
     predictionOutput(""),
     predictionOutput_s("P"),
-    predictionOutput_l("predout"),
+    predictionOutput_l("predictions"),
   
     noFilter(GENERAL_DEFAULT_NO_FILTER),
     noFilter_s("f"),
@@ -219,16 +219,11 @@ private:
 
 void printHeader() {
   cout << endl;
-  cout << " --------------------------------------------------------------- " << endl;
-  cout << "| RF-ACE -- efficient feature selection with heterogeneous data |" << endl;
-  cout << "|                                                               |" << endl;
-  cout << "|  Version:      RF-ACE v0.7.7, September 1st, 2011             |" << endl;
-  cout << "|  Project page: http://code.google.com/p/rf-ace                |" << endl;
-  cout << "|  Contact:      timo.p.erkkila@tut.fi                          |" << endl;
-  cout << "|                kari.torkkola@gmail.com                        |" << endl;
-  cout << "|                                                               |" << endl;
-  cout << "|              DEVELOPMENT VERSION, BUGS EXIST!                 |" << endl;
-  cout << " --------------------------------------------------------------- " << endl;
+  cout << " ------------------------------------------------------- " << endl;
+  cout << "|         RF-ACE v0.8.0, September 8th 2011             |" << endl;
+  cout << "|                                                       |" << endl;
+  cout << "|  Project page: http://code.google.com/p/rf-ace        |" << endl;
+  cout << " ------------------------------------------------------- " << endl;
 }
 
 void printHelp(const General_options& geno, const RF_options& rfo, const GBT_options& gbto) {
@@ -237,21 +232,21 @@ void printHelp(const General_options& geno, const RF_options& rfo, const GBT_opt
   cout << endl;
   
   cout << "REQUIRED ARGUMENTS:" << endl;
-  cout << " -" << geno.input_s << " / --" << geno.input_l << setw( maxwidth - geno.input_l.size() )
-       << " " << "Input feature file (AFM or ARFF)" << endl;
+  cout << " -" << geno.trainInput_s << " / --" << geno.trainInput_l << setw( maxwidth - geno.trainInput_l.size() )
+       << " " << "Train data input file, associations will be sought from this data. Supported formats: AFM and ARFF" << endl;
   cout << " -" << geno.targetStr_s << " / --" << geno.targetStr_l << setw( maxwidth - geno.targetStr_l.size() )
        << " " << "Target, specified as integer or string that is to be matched with the content of input" << endl;
-  cout << " -" << geno.output_s << " / --" << geno.output_l << setw( maxwidth - geno.output_l.size() )
-       << " " << "Output association file" << endl;
   cout << endl;
 
   cout << "OPTIONAL ARGUMENTS:" << endl;
-  cout << " -" << geno.featureMaskFile_s << " / --" << geno.featureMaskFile_l << setw( maxwidth - geno.featureMaskFile_l.size() )
-       << " " << "Feature mask file. String of ones and zeroes, zeroes indicating removal of the feature in the matrix" << endl;
-  cout << " -" << geno.testFile_s << " / --" << geno.testFile_l << setw( maxwidth - geno.testFile_l.size() )
-       << " " << "Test data" << endl;
+  cout << " -" << geno.associationOutput_s << " / --" << geno.associationOutput_l << setw( maxwidth - geno.associationOutput_l.size() )
+       << " " << "Association output file" << endl;
+  cout << " -" << geno.testInput_s << " / --" << geno.testInput_l << setw( maxwidth - geno.testInput_l.size() )
+       << " " << "Test data input file, predictions will be made from this data" << endl;
   cout << " -" << geno.predictionOutput_s << " / --" << geno.predictionOutput_l << setw( maxwidth - geno.predictionOutput_l.size() )
-       << " " << "Prediction output file, which will be required if test data is provided" << endl;
+       << " " << "Prediction output file" << endl;  
+  cout << " -" << geno.featureMaskInput_s << " / --" << geno.featureMaskInput_l << setw( maxwidth - geno.featureMaskInput_l.size() )
+       << " " << "Feature mask input file. String of ones and zeroes, zeroes indicating removal of the feature in the matrix" << endl;
   cout << endl;
   
   cout << "OPTIONAL ARGUMENTS -- RANDOM FOREST:" << endl;
@@ -286,6 +281,15 @@ void printHelp(const General_options& geno, const RF_options& rfo, const GBT_opt
   cout << " -" << gbto.subSampleSize_s << " / --" << gbto.subSampleSize_l << setw( maxwidth - gbto.subSampleSize_l.size() ) 
        << " " << "Sample size fraction for training the trees (default " << GBT_DEFAULT_SUB_SAMPLE_SIZE << ")" << endl;
   cout << endl;
+  
+  cout << "EXAMPLES:" << endl;
+  cout << endl;
+
+  cout << "List features associated with feature called \"AFFECTION\":" << endl;
+  cout << "bin/rf_ace --traindata featurematrix.afm --target AFFECTION --associations associations.tsv" << endl << endl;
+
+  cout << "Train the model for \"AFFECTION\" with \"original.afm\", and predict new data in \"newdata.afm\":" << endl;
+  cout << "bin/rf_ace --traindata original.afm --target AFFECTION --testdata newdata.afm --predictions.tsv" << endl << endl;
 }
 
 void printHelpHint() {
@@ -323,11 +327,11 @@ int main(const int argc, char* const argv[]) {
   
   // first General Options
   parser.getFlag(gen_op.printHelp_s, gen_op.printHelp_l, gen_op.printHelp);
-  parser.getArgument<string>(gen_op.input_s, gen_op.input_l, gen_op.input); 
+  parser.getArgument<string>(gen_op.trainInput_s, gen_op.trainInput_l, gen_op.trainInput); 
   parser.getArgument<string>(gen_op.targetStr_s, gen_op.targetStr_l, gen_op.targetStr); 
-  parser.getArgument<string>(gen_op.output_s, gen_op.output_l, gen_op.output);
-  parser.getArgument<string>(gen_op.featureMaskFile_s, gen_op.featureMaskFile_l, gen_op.featureMaskFile);
-  parser.getArgument<string>(gen_op.testFile_s, gen_op.testFile_l, gen_op.testFile);
+  parser.getArgument<string>(gen_op.associationOutput_s, gen_op.associationOutput_l, gen_op.associationOutput);
+  parser.getArgument<string>(gen_op.featureMaskInput_s, gen_op.featureMaskInput_l, gen_op.featureMaskInput);
+  parser.getArgument<string>(gen_op.testInput_s, gen_op.testInput_l, gen_op.testInput);
   parser.getArgument<string>(gen_op.predictionOutput_s, gen_op.predictionOutput_l, gen_op.predictionOutput);
   parser.getFlag(gen_op.noFilter_s, gen_op.noFilter_l, gen_op.noFilter);
   //parser.getFlag(gen_op.noPrediction_s, gen_op.noPrediction_l, gen_op.noPrediction);
@@ -345,25 +349,33 @@ int main(const int argc, char* const argv[]) {
   parser.getArgument<num_t>(GBT_op.shrinkage_s, GBT_op.shrinkage_l, GBT_op.shrinkage);
   parser.getArgument<num_t>(GBT_op.subSampleSize_s, GBT_op.subSampleSize_l, GBT_op.subSampleSize);
   
-  bool makePrediction = ( gen_op.testFile != "" ) && (gen_op.predictionOutput != "" );
+  bool makePrediction = ( gen_op.testInput != "" ) && (gen_op.predictionOutput != "" );
   
   if(gen_op.printHelp) {
     printHelp(gen_op,RF_op_copy,GBT_op);
     return(EXIT_SUCCESS);
   }
 
+  bool writeAssociationsToFile = gen_op.associationOutput != "";
+  bool writePredictionsToFile = gen_op.predictionOutput != "";
+
   //Print values of parameters of RF-ACE
+  int maxwidth = 19;
   cout << endl;
   cout << "RF-ACE parameter configuration:" << endl;
   cout << endl;
   cout << "General configuration:" << endl;
-  cout << "  --input              = " << gen_op.input << endl;
-  cout << "  --target             = " << gen_op.targetStr << endl;
-  cout << "  --output             = " << gen_op.output << endl;
-  cout << "  --testdata           = "; if( makePrediction ) { cout << gen_op.testFile << endl; } else { cout << "NOT SET" << endl; }
-  cout << "  --predout            = "; if( makePrediction ) { cout << gen_op.predictionOutput << endl; } else { cout << "NOT SET" << endl; }
+  cout << "  --" << gen_op.trainInput_l << setw( maxwidth - gen_op.trainInput_l.size() ) << "" 
+       << "= " << gen_op.trainInput << endl;
+  cout << "  --" << gen_op.targetStr_l << setw( maxwidth - gen_op.targetStr_l.size() ) << "" 
+       << "= " << gen_op.targetStr << endl;
+  cout << "  --" << gen_op.associationOutput_l << setw( maxwidth - gen_op.associationOutput_l.size() ) << "" 
+       << "= "; if ( writeAssociationsToFile ) { cout << gen_op.associationOutput << endl; } else { cout << "NOT SET" << endl; } 
+  cout << "  --" << gen_op.testInput_l << setw( maxwidth - gen_op.testInput_l.size() ) << "" 
+       << "= "; if( makePrediction ) { cout << gen_op.testInput << endl; } else { cout << "NOT SET" << endl; }
+  cout << "  --" << gen_op.predictionOutput_l << setw( maxwidth - gen_op.predictionOutput_l.size() ) << "" 
+       << "= "; if( writePredictionsToFile ) { cout << gen_op.predictionOutput << endl; } else { cout << "NOT SET" << endl; }
   cout << "  (RF filter)          = "; if(!gen_op.noFilter) { cout << "YES" << endl; } else { cout << "NO" << endl; }
-  //cout << "  (GBT prediction)     = "; if(!gen_op.noPrediction) { cout << "YES" << endl; } else { cout << "NO" << endl; }
   cout << endl;
   
   if (!gen_op.noFilter) {
@@ -386,31 +398,37 @@ int main(const int argc, char* const argv[]) {
   }
 
   //Print help and exit if input file is not specified
-  if(gen_op.input == "") {
+  if ( gen_op.trainInput == "" ) {
     cerr << "Input file not specified" << endl;
     printHelpHint();
     return EXIT_FAILURE;
   }
 
   //Print help and exit if target index is not specified
-  if(gen_op.targetStr == "") {
+  if ( gen_op.targetStr == "" ) {
     cerr << "target(s) (-i/--target) not specified" << endl;
     printHelpHint();
-    return EXIT_FAILURE;
+    return(EXIT_FAILURE);
+  }
+
+  if ( gen_op.associationOutput == "" && gen_op.predictionOutput == "" ) {
+    cerr << "No output files specified" << endl;
+    printHelpHint();
+    return(EXIT_FAILURE);
   }
 
   //Print help and exit if output file is not specified
-  if(gen_op.output == "") {
-    cerr << "Output file not specified" << endl;
-    printHelpHint();
-    return EXIT_FAILURE;
-  }
+  //if(gen_op.associationOutput == "") {
+  //  cerr << "Output file not specified" << endl;
+  //  printHelpHint();
+  //  return EXIT_FAILURE;
+  //}
   // !! FIXME No current check for the presence of the input file or output
   // !!  directory. This should be fixed.
 
   //Read data into Treedata object
-  cout << "Reading file '" << gen_op.input << "', please wait... " << flush;
-  Treedata treedata_copy(gen_op.input);
+  cout << "Reading file '" << gen_op.trainInput << "', please wait... " << flush;
+  Treedata treedata_copy(gen_op.trainInput);
   cout << "DONE" << endl;
 
   int integer;
@@ -425,9 +443,9 @@ int main(const int argc, char* const argv[]) {
   }
 
   vector<size_t> keepFeatureIcs;
-  if(gen_op.featureMaskFile != "") {
-    cout << "Reading masking file '" << gen_op.featureMaskFile << "', please wait... " << flush;
-    readFeatureMask(gen_op.featureMaskFile,treedata_copy.nFeatures(),keepFeatureIcs);
+  if(gen_op.featureMaskInput != "") {
+    cout << "Reading masking file '" << gen_op.featureMaskInput << "', please wait... " << flush;
+    readFeatureMask(gen_op.featureMaskInput,treedata_copy.nFeatures(),keepFeatureIcs);
     treedata_copy.keepFeatures(keepFeatureIcs);
     cout << "DONE" << endl;
   }
@@ -439,14 +457,14 @@ int main(const int argc, char* const argv[]) {
   treedata_copy.getMatchingTargetIcs(gen_op.targetStr,targetIcs);
   if(targetIcs.size() == 0) {
     cerr << "No features match the specified target identifier '" << gen_op.targetStr << "'" << endl;
-    if ( gen_op.featureMaskFile != "" ) {
+    if ( gen_op.featureMaskInput != "" ) {
       cerr << "NOTE: feature mask, being set, may have caused the target(s) to be erased from the feature matrix" << endl;
     }
     return EXIT_FAILURE;
   }
   
 
-  if(gen_op.featureMaskFile != "" && targetIcs.size() > 1) {
+  if(gen_op.featureMaskInput != "" && targetIcs.size() > 1) {
     cout << "WARNING: feature mask is specified in the presence of multiple targets. All targets will be analyzed with the same mask set." << endl;
   }
 
@@ -462,12 +480,12 @@ int main(const int argc, char* const argv[]) {
     GBT_op.isOptimizedNodeSplit = true;
   }
 
-  ofstream toAssociationFile(gen_op.output.c_str());
-  assert(toAssociationFile.is_open());
+  ofstream toAssociationFile(gen_op.associationOutput.c_str());
+  //assert(toAssociationFile.is_open());
   toAssociationFile.precision(8);
 
   ofstream toPredictionFile(gen_op.predictionOutput.c_str());
-  assert(toPredictionFile.is_open());
+  //assert(toPredictionFile.is_open());
 
   //The program starts a loop in which an RF-ACE model will be built for each spcified target feature
   size_t iter = 1;
@@ -485,19 +503,8 @@ int main(const int argc, char* const argv[]) {
 
     size_t maxwidth = 1 + static_cast<int>(targetIcs.size()) / 10;
 
-    /*
-      cout << endl;
-      cout << "Began operating on target: " << gen_op.targetStr << endl;
-      cout << "Operating with these values:" << endl;
-      cout << "  + Number of Samples  = " << nRealSamples << " / " << treedata.nSamples()
-      << " (" << 100 * ( 1 - realFraction )<< "% missing)" << endl;
-      cout << "  + Number of Features = " << treedata.nFeatures() << endl;
-      cout << "  + Target Index       = " << targetIdx << ", containing header '"
-      << treedata.getFeatureName(targetIdx) << "'" << endl;
-      cout << endl;
-    */
-
-    cout << "== " << setw(maxwidth) << iter << "/" << setw(maxwidth) << targetIcs.size() << " target " << treedata.getFeatureName(targetIdx) << ", " << flush;
+    cout << "== " << setw(maxwidth) << iter << "/" << setw(maxwidth) << targetIcs.size() 
+	 << " target " << treedata.getFeatureName(targetIdx) << ", " << flush;
     
     //If the target has no real samples, the program will just exit
     if(nRealSamples == 0) {
@@ -510,7 +517,7 @@ int main(const int argc, char* const argv[]) {
     } else {
       cout << treedata.nCategories(targetIdx) << "-class ";
     }
-    cout << "CARTs. " << nRealSamples << " / " << treedata.nSamples() << " samples ( " << 100 * ( 1 - realFraction ) << "% missing )" << endl;
+    cout << "CARTs. " << nRealSamples << " / " << treedata.nSamples() << " samples ( " << 100 * ( 1 - realFraction ) << " % missing )" << endl;
       
     //If default nTrees is to be used...
     if(RF_op.nTrees == RF_DEFAULT_N_TREES) {
@@ -532,7 +539,8 @@ int main(const int argc, char* const argv[]) {
     }
                   
     if(treedata.nFeatures() < RF_op.mTry) {
-      cerr << "Not enough features (" << treedata.nFeatures()-1 << ") to test with mtry = " << RF_op.mTry << " features per split" << endl;
+      cerr << "Not enough features (" << treedata.nFeatures()-1 << ") to test with mtry = " 
+	   << RF_op.mTry << " features per split" << endl;
       return EXIT_FAILURE;
     }
       
@@ -541,7 +549,8 @@ int main(const int argc, char* const argv[]) {
       return EXIT_FAILURE;
     }
 
-    cout << "== " << RF_op.nPerms << " RFs; " << RF_op.nTrees << " trees per RF; " << RF_op.mTry << " features tested per split; minimum node size of " << RF_op.nodeSize << endl;
+    cout << "== " << RF_op.nPerms << " RFs; " << RF_op.nTrees << " trees per RF; " 
+	 << RF_op.mTry << " features tested per split; minimum node size of " << RF_op.nodeSize << endl;
     
       
     //////////////////////////////////////////////////////////////////////
@@ -571,12 +580,11 @@ int main(const int argc, char* const argv[]) {
         }
       }
     
-
       treedata.keepFeatures(keepFeatureIcs);
       targetIdx = 0;
 
       cout << "DONE, " << treedata.nFeatures() << " / " << treedata_copy.nFeatures() << " features ( " 
-	   << 100.0 * treedata.nFeatures() / treedata_copy.nFeatures() << "% ) left. " << endl;
+	   << 100.0 * treedata.nFeatures() / treedata_copy.nFeatures() << " % ) left " << endl;
     }
     
     cout << "    => Uncovering associations... " << flush;
@@ -586,9 +594,9 @@ int main(const int argc, char* const argv[]) {
         
     cout << "DONE" << endl;
       
-    /////////////////////////////////////////////////////////////
-    //  ANALYSIS 2 -- Prediction with Gradient Boosting Trees  //
-    /////////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////
+    //  PREDICTION WITH GRADIENT BOOSTING TREES  //
+    ///////////////////////////////////////////////
     if( makePrediction ) {
       cout << "    => Predicting... " << flush;
        
@@ -598,7 +606,7 @@ int main(const int argc, char* const argv[]) {
       //StochasticForest SF(&treedata,targetIdx,10000);
       //SF.learnRF(static_cast<size_t>(sqrt(1.0*treedata.nFeatures())),5,false,true);
 
-      Treedata treedata_test(gen_op.testFile);
+      Treedata treedata_test(gen_op.testInput);
       if(!gen_op.noFilter) {
 	treedata_test.keepFeatures(keepFeatureIcs);
       }
@@ -608,44 +616,28 @@ int main(const int argc, char* const argv[]) {
 	assert(treedata.getFeatureName(i) == treedata_test.getFeatureName(i));
       }
 
-      //We'll open the prediction output file stream. If this is the first iteration, start from the beginning of the file, otherwise append contents
-      //if ( iter == 1 ) {
-      //	ofstream toFile(gen_op.predictionOutput.c_str());
-      //} else {
-      //	ofstream toFile(gen_op.predictionOutput.c_str(), ios::app );
-      //}
-
       vector<num_t> confidence;
       if(treedata_test.isFeatureNumerical(targetIdx)) {
 
 	vector<num_t> prediction;
 	SF.predict(&treedata_test,prediction,confidence);
-	//FILE* file = fopen(gen_op.predictionOutput.c_str(),"w");
-	
-	//ofstream toFile(gen_op.predictionOutput);
 
 	for(size_t i = 0; i < prediction.size(); ++i) {
 	  toPredictionFile << targetName.c_str() << "\t" << "sampleID" << "\t" << treedata_test.getRawFeatureData(targetIdx,i) 
 			   << "\t" << prediction[i] << "\t" << setprecision(3) << confidence[i] << endl;
-	  //fprintf(file,"%s\t%9.8f\t%9.8f\n",treedata_test.getRawFeatureData(targetIdx,i).c_str(),prediction[i],confidence[i]);
+	  
 	}
-	//fclose(file);
-
+       
       } else {
 	
 	vector<string> prediction;
 	SF.predict(&treedata_test,prediction,confidence);
-	
-	
-	//FILE* file = fopen(gen_op.predictionOutput.c_str(),"w");
+		
 	for(size_t i = 0; i < prediction.size(); ++i) {
 	  toPredictionFile << targetName.c_str() << "\t" << "sampleID" << "\t" << treedata_test.getRawFeatureData(targetIdx,i) 
 			   << "\t" << prediction[i] << "\t" << setprecision(3) << confidence[i] << endl;
-	  //fprintf(file,"%s\t%9.8f\t%9.8f\n",treedata_test.getRawFeatureData(targetIdx,i).c_str(),prediction[i],confidence[i]);
 	}
-	//fclose(file);
-	//toFile.close();
-
+	
       }
      
       cout << "DONE" << endl;
@@ -654,28 +646,12 @@ int main(const int argc, char* const argv[]) {
 
     cout << endl;
             
-    ///////////////////////
-    //  GENERATE OUTPUT  //
-    ///////////////////////  
     vector<size_t> refIcs(treedata.nFeatures());
-    //vector<string> fnames = treedata.featureheaders();
     bool isIncreasingOrder = false;
     datadefs::sortDataAndMakeRef(isIncreasingOrder,importanceValues,refIcs); // BUG
     datadefs::sortFromRef<num_t>(pValues,refIcs);
-    //targetIdx = refIcs[targetIdx];
-      
-    //string targetName = treedata.getFeatureName(targetIdx);
-      
-    //MODIFICATION: ALL ASSOCIATIONS WILL BE PRINTED
-    if(true) {
-      
-      //FILE* file;
-      //if(iter == 1) {
-      //  file = fopen(gen_op.output.c_str(),"w");
-      //}
-      //else {
-      //  file = fopen(gen_op.output.c_str(),"a");
-      //}
+
+    if(gen_op.associationOutput != "") {
     
       for(size_t featureIdx = 0; featureIdx < treedata.nFeatures(); ++featureIdx) {
         
@@ -688,28 +664,33 @@ int main(const int argc, char* const argv[]) {
         }
         
         if(RF_op.nPerms > 1) {
-          //fprintf(file,"%s\t%s\t%9.8f\t%9.8f\t%9.8f\n",targetName.c_str(),treedata.getFeatureName(refIcs[featureIdx]).c_str(),pValues[featureIdx],importanceValues[featureIdx],treedata.pearsonCorrelation(targetIdx,refIcs[featureIdx]));
-	  toAssociationFile << fixed << targetName.c_str() << "\t" << treedata.getFeatureName(refIcs[featureIdx]).c_str() << "\t" << pValues[featureIdx] << "\t" << importanceValues[featureIdx] << "\t"
+	  toAssociationFile << fixed << targetName.c_str() << "\t" << treedata.getFeatureName(refIcs[featureIdx]).c_str() 
+			    << "\t" << pValues[featureIdx] << "\t" << importanceValues[featureIdx] << "\t"
                             << treedata.pearsonCorrelation(targetIdx,refIcs[featureIdx]) << endl;
 	} else {
-          toAssociationFile << fixed << targetName.c_str() << "\t" << treedata.getFeatureName(refIcs[featureIdx]).c_str() << "\tNA\t" << importanceValues[featureIdx] << "\t"
+          toAssociationFile << fixed << targetName.c_str() << "\t" << treedata.getFeatureName(refIcs[featureIdx]).c_str() 
+			    << "\tNA\t" << importanceValues[featureIdx] << "\t"
 			    << treedata.pearsonCorrelation(targetIdx,refIcs[featureIdx]) << endl;
-        }
-        
+        }    
       }
-    
-      //fclose(file);
-      
-    } else {
-      //cout << endl << "No significant associations found..." << endl;
     }
   }
-
+  
   toAssociationFile.close();
   toPredictionFile.close();
-      
-  cout << endl << "Association file created. Format:" << endl;
-  cout << "TARGET   PREDICTOR   P-VALUE   IMPORTANCE   CORRELATION" << endl << endl;
+
+  if ( gen_op.associationOutput != "" ) {
+    cout << "Association file '" << gen_op.associationOutput << "' created. Format:" << endl;
+    cout << "TARGET   PREDICTOR   P-VALUE   IMPORTANCE   CORRELATION" << endl;
+    cout << endl;
+  }
+
+  if ( gen_op.predictionOutput != "" ) {
+    cout << "Prediction file '" << gen_op.predictionOutput << "' created. Format:" << endl;
+    cout << "TARGET   SAMPLE_ID   DATA      PREDICTION   CONFIDENCE" << endl; 
+    cout << endl;
+  }
+  
   cout << "RF-ACE completed successfully." << endl;
   cout << endl;
       
