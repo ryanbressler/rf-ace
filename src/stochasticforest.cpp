@@ -337,22 +337,20 @@ void StochasticForest::predictDatasetByTree(Treedata* treeData, size_t treeIdx, 
   }
 }
 
-void StochasticForest::predict(vector<string>& prediction) {
+void StochasticForest::predict(vector<string>& prediction, vector<num_t>& confidence) {
   assert(numClasses_ != 0);
-  vector<num_t> confidence;
   StochasticForest::predict(treeData_, prediction, confidence);
 }
 
-void StochasticForest::predict(vector<num_t>& prediction) {
-  StochasticForest::predict(treeData_, prediction);
+void StochasticForest::predict(vector<num_t>& prediction, vector<num_t>& confidence) {
+  assert(numClasses_ == 0);
+  StochasticForest::predict(treeData_, prediction, confidence);
 }
 
 // Predict with the trained model and using an arbitrary data set. StochasticForest::numClasses_ determines
 // whether the prediction is for a categorical or a numerical variable.
 void StochasticForest::predict(Treedata* treeData, vector<string>& prediction, vector<num_t>& confidence) {
   assert( numClasses_ != 0 );
-  
-  //cout << "Currently working on implementing confidence computations to accompany predictions" << endl;
 
   switch ( learnedModel_ ) {
   case GBT_MODEL:
@@ -372,15 +370,14 @@ void StochasticForest::predict(Treedata* treeData, vector<string>& prediction, v
 
 // Predict with the trained model and using an arbitrary data set. StochasticForest::numClasses_ determines
 // whether the prediction is for a categorical or a numerical variable.
-void StochasticForest::predict(Treedata* treeData, vector<num_t>& prediction) {
+void StochasticForest::predict(Treedata* treeData, vector<num_t>& prediction, vector<num_t>& confidence) {
   assert( numClasses_ == 0 );
 
-  //cout << "Currently working on implementing confidence computations to accompany predictions" << endl;
   cout << "Prediction of numerical data is unstable and doesn't yet yield confidence metrics" << endl;
   
   switch ( learnedModel_ ) {
   case GBT_MODEL:
-    StochasticForest::predictWithNumericalGBT(treeData, prediction);
+    StochasticForest::predictWithNumericalGBT(treeData, prediction, confidence);
     break;
   case RF_MODEL:
     StochasticForest::predictWithNumericalRF(treeData, prediction);
@@ -394,11 +391,18 @@ void StochasticForest::predict(Treedata* treeData, vector<num_t>& prediction) {
 
 void StochasticForest::predictWithCategoricalRF(Treedata* treeData, vector<string>& categoryPrediction) {
 
+  cerr << "Prediction with RF isn't yet working" << endl;
+  assert(false);
+
   categoryPrediction.resize( treeData->nSamples() );
+  
 
 }
 
 void StochasticForest::predictWithNumericalRF(Treedata* treeData, vector<num_t>& prediction) {
+
+  cerr << "Prediction with RF isn't yet working" << endl;
+  assert(false);
 
   prediction.resize( treeData->nSamples() );
 
@@ -474,10 +478,11 @@ void StochasticForest::predictWithCategoricalGBT(Treedata* treeData, vector<stri
 }
 
 // Predict numerical target using a GBT "forest" from an arbitrary data set
-void StochasticForest::predictWithNumericalGBT(Treedata* treeData, vector<num_t>& prediction) {
+void StochasticForest::predictWithNumericalGBT(Treedata* treeData, vector<num_t>& prediction, vector<num_t>& confidence) {
 
   size_t nSamples = treeData->nSamples();
   prediction.resize(nSamples);
+  confidence.resize(nSamples);
 
   //cout << "Predicting "<<nSamples<<" samples. Target="<<targetIdx_<<endl;
   for (size_t i=0; i<nSamples; i++) {

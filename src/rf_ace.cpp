@@ -592,17 +592,15 @@ int main(const int argc, char* const argv[]) {
 	assert(treedata.getFeatureName(i) == treedata_test.getFeatureName(i));
       }
 
-      cout << treedata_test.getFeatureName(targetIdx) << endl;
+      //cout << treedata_test.getFeatureName(targetIdx) << endl;
       if(treedata_test.isFeatureNumerical(targetIdx)) {
 
-	cerr << "Prediction of numerical data isn't yet working!" << endl;
-	return EXIT_FAILURE;
-
 	vector<num_t> prediction;
-	SF.predict(&treedata_test,prediction);
+	vector<num_t> confidence;
+	SF.predict(&treedata_test,prediction,confidence);
 	FILE* file = fopen(gen_op.predictionOutput.c_str(),"w");
 	for(size_t i = 0; i < prediction.size(); ++i) {
-	  fprintf(file,"%s\t%9.8f\n",treedata_test.getRawFeatureData(targetIdx,i).c_str(),prediction[i]);
+	  fprintf(file,"%s\t%9.8f\t%9.8f\n",treedata_test.getRawFeatureData(targetIdx,i).c_str(),prediction[i],confidence[i]);
 	}
 	fclose(file);
       } else {

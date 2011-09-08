@@ -29,12 +29,12 @@ public:
   //Calculates the feature importance scores for real and contrast features
   vector<num_t> featureImportance();
   
-  void predict(vector<string>& prediction);
-  void predict(vector<num_t>& prediction);
+  void predict(vector<string>& prediction, vector<num_t>& confidence);
+  void predict(vector<num_t>& prediction, vector<num_t>& confidence);
 
   
   void predict(Treedata* treeData, vector<string>& prediction, vector<num_t>& confidence);
-  void predict(Treedata* treeData, vector<num_t>& prediction);
+  void predict(Treedata* treeData, vector<num_t>& prediction, vector<num_t>& confidence);
 
   //Counts the number of nodes in the forest
   size_t nNodes();
@@ -55,7 +55,7 @@ private:
   void predictWithNumericalRF(Treedata* treeData, vector<num_t>& prediction);
 
   void predictWithCategoricalGBT(Treedata* treeData, vector<string>& categoryPrediction, vector<num_t>& confidence);
-  void predictWithNumericalGBT(Treedata* treeData, vector<num_t>& prediction);
+  void predictWithNumericalGBT(Treedata* treeData, vector<num_t>& prediction, vector<num_t>& confidence);
 
   //Percolates samples along the trees, starting from the rootNode. Spits out a map<> that ties the percolated train samples to the leaf nodes
   void percolateSampleIcs(Treedata* treeData, Node* rootNode, const vector<size_t>& sampleIcs, map<Node*,vector<size_t> >& trainIcs);
