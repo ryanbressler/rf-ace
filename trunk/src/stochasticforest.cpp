@@ -654,14 +654,13 @@ vector<size_t> StochasticForest::featureFrequency() {
   return(frequency);
 }
 
-// !! Clarity: consider removing all of the commented out logic
+
 void StochasticForest::treeImpurity(Treedata* treeData, map<Node*,vector<size_t> >& trainIcs, 
 				    num_t& impurity) {
 
   impurity = 0.0;
   size_t n_tot = 0;
 
-  //size_t targetIdx_ = treeData->getTarget();
   bool isTargetNumerical = treeData->isFeatureNumerical(targetIdx_);
 
   for(map<Node*,vector<size_t> >::iterator it(trainIcs.begin()); it != trainIcs.end(); ++it) {
@@ -672,19 +671,17 @@ void StochasticForest::treeImpurity(Treedata* treeData, map<Node*,vector<size_t>
     num_t leafImpurity = 0;
     size_t nSamplesInLeaf = targetData.size();
       
-
     if(isTargetNumerical) {
       for(size_t i = 0; i < nSamplesInLeaf; ++i) {
         leafImpurity += pow(leafPrediction - targetData[i],2);
       }
-      //leafImpurity /= nSamplesInLeaf;
+
     } else {
       for(size_t i = 0; i < nSamplesInLeaf; ++i) {
         if(leafPrediction != targetData[i]) {
           ++leafImpurity;
         }
       }
-      //leafImpurity *= leafImpurity;
     }
 
     n_tot += nSamplesInLeaf;

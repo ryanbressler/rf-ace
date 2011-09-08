@@ -181,16 +181,22 @@ void Node::recursiveNodeSplit(Treedata* treeData,
   num_t splitFitness;
   size_t splitFeatureIdx;
 
+  bool isSplitSuccessful;
+  bool isSplitFeatureNumerical;
+  
+
   if(GI.isOptimizedNodeSplit) {
 
-    Node::optimizedSplitterSeek(treeData,
-				targetIdx,
-				sampleIcs,
-				featureSampleIcs,
-				GI.minNodeSizeToStop,
-                                splitFeatureIdx);
+    // !! Fix: optimized node splitter will be redesigned to consume all the code inside this block
+    
+    isSplitSuccessful = Node::optimizedSplitterSeek(treeData,
+						    targetIdx,
+						    sampleIcs,
+						    featureSampleIcs,
+						    GI.minNodeSizeToStop,
+						    splitFeatureIdx);
 
-    if(splitFeatureIdx == GI.nFeaturesForSplit) {
+    if(!isSplitSuccessful) {
       //cout << "No splitter found, quitting" << endl << endl;
       vector<num_t> leafTrainData;
       treeData->getFeatureData(targetIdx,sampleIcs,leafTrainData);
@@ -230,34 +236,32 @@ void Node::recursiveNodeSplit(Treedata* treeData,
       return;
     }
 
+    isSplitFeatureNumerical = treeData->isFeatureNumerical(splitFeatureIdx);
+
+    if(isSplitFeatureNumerical) {
+      Node::numericalFeatureSplit(targetData,
+				  isTargetNumerical,
+				  featureData,
+				  GI.minNodeSizeToStop,
+				  sampleIcs_left,
+				  sampleIcs_right,
+				  splitValue,
+				  splitFitness);
+    } else {
+      Node::categoricalFeatureSplit(targetData,
+				    isTargetNumerical,
+				    featureData,
+				    sampleIcs_left,
+				    sampleIcs_right,
+				    splitValues_left,
+				    splitFitness);
+    }
+
   } else {
     cerr << "Regular node split is not yet ready. For now, issue -o / --optimizedRF to avoid the problem" << endl;
     assert(false);
   }
-   
-  bool isSplitFeatureNumerical = treeData->isFeatureNumerical(splitFeatureIdx);
-   
-  if(isSplitFeatureNumerical) {
-    Node::numericalFeatureSplit(targetData,
-                                isTargetNumerical,
-                                featureData,
-                                GI.minNodeSizeToStop,
-                                sampleIcs_left,
-                                sampleIcs_right,
-                                splitValue,
-                                splitFitness);
-  } else {
-    Node::categoricalFeatureSplit(targetData,
-                                  isTargetNumerical,
-                                  featureData,
-                                  sampleIcs_left,
-                                  sampleIcs_right,
-                                  splitValues_left,
-                                  splitFitness);
-  }
-  
-  
-  //cout << "asserting " << sampleIcs_left.size() << " + " << sampleIcs_right.size() << " == " << nRealSamples << endl;
+     
   assert(sampleIcs_left.size() + sampleIcs_right.size() == targetData.size());
 
   // NOTE: here's a flaw in design: as categorical data splitter does not utilize minimum node size as the boundary condition,
@@ -300,21 +304,25 @@ void Node::recursiveNodeSplit(Treedata* treeData,
   
 }
 
-// !! Documentation: optimized node split utilizes the bijection idea, such that if 
-// !!
-// !! y <- f(x)
-// !!
-// !! yields a good split, so will the inverse (assuming it exists) 
-// !!
-// !! x <- f^(-1)(y) 
-// !!
-// !! yield a good split also. This is not always true, but on average it's a good approximation. 
-// !! Assuming that our goal is to perform a binary split on the target, y, we can first specify 
-// !! an optimal split of y, i.e., split y with itself, and then project that split onto the 
-// !! candidates x_1 , x_2 , ... , x_i , ... , x_n. Whichever x_i splits the best is chosen to
-// !! make the split. The true benefit with this approximation is that the data needn't be sorted 
-// !! prior to testing each of the candidate splitter.
-void Node::optimizedSplitterSeek(Treedata* treeData, 
+/** Optimized node split utilizes the bijection idea, such that if 
+ *
+ * y <- f(x)
+ *
+ * yields a good split, so will the inverse (assuming it exists) 
+ *
+ * x <- f^(-1)(y) 
+ *
+ * yield a good split also. This is not always true, but on average it's a good approximation. 
+ * Assuming that our goal is to perform a binary split on the target, y, we can first specify 
+ * an optimal split of y, i.e., split y with itself, and then project that split onto the 
+ * candidates x_1 , x_2 , ... , x_i , ... , x_n. Whichever x_i splits the best is chosen to
+ * make the split. The true benefit with this approximation is that the data needn't be sorted 
+ * prior to testing each of the candidate splitter.
+ *
+ * If a splitter isn't found or there's something bad with it, the function will return false,
+ * otherwise true.
+ */
+bool Node::optimizedSplitterSeek(Treedata* treeData, 
 				 const size_t targetIdx, 
 				 const vector<size_t>& sampleIcs, 
 				 const vector<size_t>& featureSampleIcs, 
@@ -379,6 +387,12 @@ void Node::optimizedSplitterSeek(Treedata* treeData,
       splitFeatureIdx = newSplitFeatureIdx;
     }
     
+  }
+
+  if ( splitFeatureIdx == nFeaturesForSplit ) {
+    return(false);
+  } else {
+    return(true);
   }
   
 }
