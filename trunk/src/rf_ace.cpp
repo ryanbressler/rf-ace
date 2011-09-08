@@ -450,11 +450,22 @@ int main(const int argc, char* const argv[]) {
     cout << "WARNING: feature mask is specified in the presence of multiple targets. All targets will be analyzed with the same mask set." << endl;
   }
 
-  // Optimized node splitting is currently enforced. It will be made optional in the future
-  RF_op_copy.isOptimizedNodeSplit = true;
-  GBT_op.isOptimizedNodeSplit = true;
+  // NOTE: this is to override node split optimization settings
+  bool noOptimization = false;
+  parser.getFlag("q","optimization_off",noOptimization);
+  if ( noOptimization) {
+    cout << "TEST MODE: optimized node split turned OFF" << endl << endl;
+    RF_op_copy.isOptimizedNodeSplit = false;
+    GBT_op.isOptimizedNodeSplit = false;
+  } else {
+    RF_op_copy.isOptimizedNodeSplit = true;
+    GBT_op.isOptimizedNodeSplit = true;
+  }
 
   //The program starts a loop in which an RF-ACE model will be built for each spcified target feature
+
+  fstream toPredictionFile(gen_op.predictionOutput.c_str());
+
   size_t iter = 1;
   for(set<size_t>::const_iterator it(targetIcs.begin()); it != targetIcs.end(); ++it, ++iter) {
 
@@ -592,27 +603,51 @@ int main(const int argc, char* const argv[]) {
 	assert(treedata.getFeatureName(i) == treedata_test.getFeatureName(i));
       }
 
-      //cout << treedata_test.getFeatureName(targetIdx) << endl;
+      //We'll open the prediction output file stream. If this is the first iteration, start from the beginning of the file, otherwise append contents
+      //if ( iter == 1 ) {
+      //	ofstream toFile(gen_op.predictionOutput.c_str());
+      //} else {
+      //	ofstream toFile(gen_op.predictionOutput.c_str(), ios::app );
+      //}
+
+      vector<num_t> confidence;
       if(treedata_test.isFeatureNumerical(targetIdx)) {
 
 	vector<num_t> prediction;
-	vector<num_t> confidence;
 	SF.predict(&treedata_test,prediction,confidence);
-	FILE* file = fopen(gen_op.predictionOutput.c_str(),"w");
+	//FILE* file = fopen(gen_op.predictionOutput.c_str(),"w");
+	
+	//ofstream toFile(gen_op.predictionOutput);
+
 	for(size_t i = 0; i < prediction.size(); ++i) {
-	  fprintf(file,"%s\t%9.8f\t%9.8f\n",treedata_test.getRawFeatureData(targetIdx,i).c_str(),prediction[i],confidence[i]);
+	  toPredictionFile << treedata_test.getFeatureName(targetIdx) << "\t" << "sampleID" << "\t" << treedata_test.getRawFeatureData(targetIdx,i) << "\t" << prediction[i] << "\t" << confidence[i] << endl;
+	  //fprintf(file,"%s\t%9.8f\t%9.8f\n",treedata_test.getRawFeatureData(targetIdx,i).c_str(),prediction[i],confidence[i]);
 	}
-	fclose(file);
+	//fclose(file);
+
       } else {
+	
 	vector<string> prediction;
-	vector<num_t> confidence; 
 	SF.predict(&treedata_test,prediction,confidence);
-	FILE* file = fopen(gen_op.predictionOutput.c_str(),"w");
+	
+	
+	//FILE* file = fopen(gen_op.predictionOutput.c_str(),"w");
 	for(size_t i = 0; i < prediction.size(); ++i) {
-	  fprintf(file,"%s\t%s\t%4.3f\n",treedata_test.getRawFeatureData(targetIdx,i).c_str(),prediction[i].c_str(),confidence[i]);
+	  toPredictionFile << treedata_test.getFeatureName(targetIdx) << "\t" << "sampleID" << "\t" << treedata_test.getRawFeatureData(targetIdx,i) << "\t" << prediction[i] << "\t" << confidence[i] << endl;
+	  //fprintf(file,"%s\t%9.8f\t%9.8f\n",treedata_test.getRawFeatureData(targetIdx,i).c_str(),prediction[i],confidence[i]);
 	}
+	//fclose(file);
+	//toFile.close();
+
       }
-      
+ 
+      //FILE* file = fopen(gen_op.predictionOutput.c_str(),"w");
+      //for(size_t i = 0; i < prediction.size(); ++i) {
+      //cout << treedata_test.getFeatureName(targetIdx) << "\t" << "sampleID" << "\t" << treedata_test.getRawFeatureData(targetIdx,i) << "\t" << prediction[i] << "\t" << confidence[i] << endl;
+	//fprintf(file,"%s\t%9.8f\t%9.8f\n",treedata_test.getRawFeatureData(targetIdx,i).c_str(),prediction[i],confidence[i]);
+      //}
+      //fclose(file);
+     
       cout << "DONE" << endl;
     }
 
@@ -669,6 +704,8 @@ int main(const int argc, char* const argv[]) {
       //cout << endl << "No significant associations found..." << endl;
     }
   }
+
+  toPredictionFile.close();
       
   cout << endl << "Association file created. Format:" << endl;
   cout << "TARGET   PREDICTOR   P-VALUE   IMPORTANCE   CORRELATION" << endl << endl;
