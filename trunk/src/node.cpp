@@ -391,9 +391,11 @@ bool Node::optimizedSplitterSeek(Treedata* treeData,
 
   if ( splitFeatureIdx == nFeaturesForSplit ) {
     return(false);
-  } else {
-    return(true);
-  }
+  } 
+
+  // ADD SOME STUFF THERE
+
+  return(true);
   
 }
 
