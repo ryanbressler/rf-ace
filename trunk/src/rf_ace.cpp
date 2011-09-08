@@ -586,7 +586,13 @@ int main(const int argc, char* const argv[]) {
       if(!gen_op.noFilter) {
 	treedata_test.keepFeatures(keepFeatureIcs);
       }
-      //cout << treedata_test.getFeatureName(targetIdx) << endl;
+
+      assert(treedata.nFeatures() == treedata_test.nFeatures());
+      for(size_t i = 0; i < treedata.nFeatures(); ++i) {
+	assert(treedata.getFeatureName(i) == treedata_test.getFeatureName(i));
+      }
+
+      cout << treedata_test.getFeatureName(targetIdx) << endl;
       if(treedata_test.isFeatureNumerical(targetIdx)) {
 
 	cerr << "Prediction of numerical data isn't yet working!" << endl;
