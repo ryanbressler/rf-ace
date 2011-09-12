@@ -1,21 +1,17 @@
 #include <cstdlib>
 #include <iostream>
 #include "argparse.hpp"
-#include "GBT.hpp"
-//#include "datadefs.hpp"
+#include "stochasticforest.hpp"
 #include "treedata.hpp"
 
 using namespace std;
 
 
 const size_t DEFAULT_TARGETIDX = 0;
-const size_t DEFAULT_NTREES = 0;
-//const size_t DEFAULT_MTRY = 0;
+const size_t DEFAULT_NTREES = 500;
 const size_t DEFAULT_NODESIZE = 5;
-//const size_t DEFAULT_NPERMS = 20;
-//const num_t DEFAULT_PTHRESHOLD = 0.10;
-//const num_t DEFAULT_ALPHA = 0.95;
-
+const num_t DEFAULT_SHRINKAGE = 0.2;
+const num_t DEFAULT_SUBSAMPLE = 0.5;
 
 int main(const int argc, char* const argv[]) {
 
@@ -37,12 +33,10 @@ int main(const int argc, char* const argv[]) {
     cout << endl;
     cout << "OPTIONAL ARGUMENTS:" << endl;
     cout << "-i / --targetidx    target index, ref. to feature matrix (default " << DEFAULT_TARGETIDX << ")" << endl;
-    cout << "-n / --ntrees       number of trees per GBT forest (default nsamples)" << endl;
-//    cout << "-m / --mtry         number of randomly drawn features per node split (default sqrt(nfeatures))" << endl;
+    cout << "-n / --ntrees       number of trees per GBT forest (default " << DEFAULT_NTREES << ")" << endl;
     cout << "-s / --nodesize     minimum number of train samples per node, affects tree depth (default " << DEFAULT_NODESIZE << ")" << endl;
-//    cout << "-p / --nperms       number of Random Forests (default " << DEFAULT_NPERMS << ")" << endl;
-//    cout << "-t / --pthreshold   p-value threshold below which associations are listed (default " << DEFAULT_PTHRESHOLD << ")" << endl;
-//    cout << "-a / --alpha        percentile of contrast importances, defines stringency of the t-test (default " << DEFAULT_ALPHA << ")" << endl;
+    cout << "-z / --shrinkage    shrinkage (default " << DEFAULT_SHRINKAGE << ")" << endl;
+    cout << "-u / --subsample    subsample size (default " << DEFAULT_SUBSAMPLE << ")" << endl;
     cout << endl;
     return EXIT_SUCCESS;
   }
@@ -54,24 +48,20 @@ int main(const int argc, char* const argv[]) {
 
   //using namespace GetOpt;
   string input = "";
-  size_t targetidx = DEFAULT_TARGETIDX;
+  size_t targetIdx = DEFAULT_TARGETIDX;
   size_t ntrees = DEFAULT_NTREES;
-//  size_t mtry = DEFAULT_MTRY;
   size_t nodesize = DEFAULT_NODESIZE;
-//  size_t nperms = DEFAULT_NPERMS;
-//  num_t pthreshold = DEFAULT_PTHRESHOLD;
-//  num_t alpha = DEFAULT_ALPHA;
+  num_t shrinkage = DEFAULT_SHRINKAGE;
+  num_t subSampleSize = DEFAULT_SUBSAMPLE;
   string output = "";
 
   ArgParse parser(argc,argv);
   parser.getArgument<string>("I","input",input);
-  parser.getArgument<size_t>("i","target",targetidx);
+  parser.getArgument<size_t>("i","target",targetIdx);
   parser.getArgument<size_t>("n","ntrees",ntrees);
-//  parser.getArgument<size_t>("m","mtry",mTry);
-//  parser.getArgument<size_t>("s","nodesize",nodeSize);
-//  parser.getArgument<size_t>("p","nperms",nPerms);
-//  parser.getArgument<num_t>("t","pthreshold",pValueThreshold);
   parser.getArgument<string>("O","output",output);
+  parser.getArgument<num_t>("z","shrinkage",shrinkage);
+  parser.getArgument<num_t>("u","subsample",subSampleSize);
 
 
   if(input == "") {
@@ -89,6 +79,7 @@ int main(const int argc, char* const argv[]) {
   // 1: read data into Treedata class (features are rows)
   cout <<endl<< "READ:" << endl;
   Treedata treeData(input);
+  size_t nSamples = treeData.nSamples();
 
 
   //------------------------------------------------------------------------
@@ -96,22 +87,44 @@ int main(const int argc, char* const argv[]) {
   cout <<endl<< "CONSTRUCT:" << endl;
   size_t nTrees(ntrees);
   size_t nMaxLeaves(nodesize);
-  num_t shrinkage(0.5);
-  num_t subSampleSize(0.5);
-  GBT gbt(&treeData, targetidx, nTrees, nMaxLeaves, shrinkage, subSampleSize);
+  StochasticForest myGbtForest( &treeData, targetIdx, nTrees);
+
 
   //------------------------------------------------------------------------
-  // 3: select target and grow the forest
-  //cout <<endl<< "GROWING:" << endl;
-  //gbt.setTarget(targetidx);
-  //gbt.allocateForest();
-  //gbt.growForest();
+  // 3: grow the forest
+  cout <<endl<< "GROWING:" << endl;
+  myGbtForest.learnGBT(nMaxLeaves, shrinkage, subSampleSize);
 
   //------------------------------------------------------------------------
   // 4: predict using the forest
-  cout <<endl<< "PREDICTION:" << endl;
-  vector<num_t> prediction(treeData.nSamples());
-  gbt.predictForest(&treeData, prediction);
+  cout << "PREDICTION: "<<nSamples<<" samples. Target="<<targetIdx<<endl;
+  vector<num_t>  confidence(nSamples);
+  vector<string> prediction(nSamples);
+  vector<num_t>  numPrediction(nSamples);
+  if ( treeData.isFeatureNumerical(targetIdx) )
+    myGbtForest.predict(numPrediction, confidence);
+  else
+    myGbtForest.predict(prediction, confidence);
+
+  vector<num_t> target(nSamples);
+  treeData.getFeatureData(targetIdx, target);
+
+  // diagnostic print out the true and the prediction (on train data)
+  if ( treeData.isFeatureNumerical(targetIdx) ) {
+    for (size_t i=0; i<nSamples; i++) {
+      cout << i << "\t" << target[i] << "\t" << numPrediction[i] <<"\t" << confidence[i]<<endl;
+    }
+
+  } else {
+
+    size_t errors = 0;
+    for (size_t i=0; i<nSamples; i++) {
+      string trueStr = treeData.getRawFeatureData(targetIdx,i);
+      if (trueStr != prediction[i]) ++errors;
+      cout << i << "\t" << trueStr << "\t" << prediction[i] <<"\t" << confidence[i]<<endl;
+    }
+    cout << "Errors " <<errors<<"/"<<nSamples<<" = " << 100.0*errors/nSamples<<"%."<<endl;
+  }
 
   return(EXIT_SUCCESS);
 }
