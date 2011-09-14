@@ -288,7 +288,7 @@ void printHelp(const General_options& geno, const RF_options& rfo, const GBT_opt
   cout << "List features associated with feature called \"AFFECTION\":" << endl;
   cout << "bin/rf_ace --traindata featurematrix.afm --target AFFECTION --associations associations.tsv" << endl << endl;
 
-  cout << "Train the model for \"AFFECTION\" with \"original.afm\", and predict new data in \"newdata.afm\":" << endl;
+  cout << "Train the model for \"AFFECTION\" with \"original.afm\", and predict new data for \"AFFECTION\" with \"newdata.afm\":" << endl;
   cout << "bin/rf_ace --traindata original.afm --target AFFECTION --testdata newdata.afm --predictions.tsv" << endl << endl;
 }
 
@@ -462,7 +462,6 @@ int main(const int argc, char* const argv[]) {
     }
     return EXIT_FAILURE;
   }
-  
 
   if(gen_op.featureMaskInput != "" && targetIcs.size() > 1) {
     cout << "WARNING: feature mask is specified in the presence of multiple targets. All targets will be analyzed with the same mask set." << endl;
@@ -502,6 +501,11 @@ int main(const int argc, char* const argv[]) {
     num_t realFraction = 1.0*nRealSamples / treedata.nSamples();
 
     size_t maxwidth = 1 + static_cast<int>(targetIcs.size()) / 10;
+
+    //for ( size_t i = 0; i < treedata.nSamples(); ++i ) {
+    //  cout << "  \"" << treedata.getRawFeatureData(targetIdx,i) << "\"  ";
+    //}
+    //cout << endl;
 
     cout << "== " << setw(maxwidth) << iter << "/" << setw(maxwidth) << targetIcs.size() 
 	 << " target " << treedata.getFeatureName(targetIdx) << ", " << flush;
@@ -553,53 +557,48 @@ int main(const int argc, char* const argv[]) {
 	 << RF_op.mTry << " features tested per split; minimum node size of " << RF_op.nodeSize << endl;
     
       
-    //////////////////////////////////////////////////////////////////////
-    //  ANALYSIS 1 -- Random Forest ensemble with artificial contrasts  //
-    //////////////////////////////////////////////////////////////////////
-      
+    ////////////////////////////////////////////////////////////////////////
+    //  STEP 1 -- MULTIVARIATE ASSOCIATIONS WITH RANDOM FOREST ENSEMBLES  //
+    ////////////////////////////////////////////////////////////////////////     
     vector<num_t> pValues; //(treedata.nFeatures());
     vector<num_t> importanceValues; //(treedata.nFeatures());
-      
+    cout << "    => Uncovering associations... " << flush;
+    executeRandomForestFilter(treedata,targetIdx,RF_op,pValues,importanceValues);
+    cout << "DONE" << endl;
+
+    //////////////////////////////////////////////////////////////
+    //  STEP 2 ( OPTIONAL ) -- FEATURE FILTERING WITH P-VALUES  //
+    //////////////////////////////////////////////////////////////
     vector<size_t> keepFeatureIcs(1);
     if(!gen_op.noFilter) {
       cout << "    => Filtering features... " << flush;
-
-      executeRandomForestFilter(treedata,targetIdx,RF_op,pValues,importanceValues);
-     
       size_t nFeatures = treedata.nFeatures();
       //vector<size_t> keepFeatureIcs(1);
       keepFeatureIcs[0] = targetIdx;
       vector<string> removedFeatures;
       vector<size_t> removedFeatureIcs;
       for(size_t featureIdx = 0; featureIdx < nFeatures; ++featureIdx) {
-        if(featureIdx != targetIdx && importanceValues[featureIdx] > datadefs::EPS) {
-          keepFeatureIcs.push_back(featureIdx);
-        } else {
-          removedFeatureIcs.push_back(featureIdx);
-          removedFeatures.push_back(treedata.getFeatureName(featureIdx));
-        }
+	if(featureIdx != targetIdx && pValues[featureIdx] < RF_op.pValueThreshold) {
+	  keepFeatureIcs.push_back(featureIdx);
+	} else {
+	  removedFeatureIcs.push_back(featureIdx);
+	  removedFeatures.push_back(treedata.getFeatureName(featureIdx));
+	}
       }
-    
+
       treedata.keepFeatures(keepFeatureIcs);
       targetIdx = 0;
 
-      cout << "DONE, " << treedata.nFeatures() << " / " << treedata_copy.nFeatures() << " features ( " 
+      cout << "DONE, " << treedata.nFeatures() << " / " << treedata_copy.nFeatures() << " features ( "
 	   << 100.0 * treedata.nFeatures() / treedata_copy.nFeatures() << " % ) left " << endl;
     }
-    
-    cout << "    => Uncovering associations... " << flush;
 
-    // THIS WILL BE REPLACED BY GBT
-    executeRandomForestFilter(treedata,targetIdx,RF_op,pValues,importanceValues);
-        
-    cout << "DONE" << endl;
-      
-    ///////////////////////////////////////////////
-    //  PREDICTION WITH GRADIENT BOOSTING TREES  //
-    ///////////////////////////////////////////////
-    if( makePrediction ) {
+    ///////////////////////////////////////////////////////////////////////////
+    //  STEP 3 ( OPTIONAL ) -- DATA PREDICTION WITH GRADIENT BOOSTING TREES  //
+    ///////////////////////////////////////////////////////////////////////////
+    if( makePrediction ) {      
       cout << "    => Predicting... " << flush;
-       
+      
       StochasticForest SF(&treedata,targetIdx,GBT_op.nTrees);
       SF.learnGBT(GBT_op.nMaxLeaves, GBT_op.shrinkage, GBT_op.subSampleSize);
       

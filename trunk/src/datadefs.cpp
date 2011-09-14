@@ -68,30 +68,19 @@ void datadefs::strv2catv(vector<string>& strvec,
 			 map<num_t,string>& backMapping) {
   assert(strvec.size() == catvec.size());
 
-  //map<string,size_t> str2valmap;
-
-  //Reset the map
-  //map<string,size_t> foo;
-  //str2valmap = foo;
   mapping.clear();
   backMapping.clear();
-
-  //mapping.insert(pair<string,num_t>("NA",datadefs::NUM_NAN));
-  //backMapping.insert(pair<num_t,string>(datadefs::NUM_NAN,"NA"));
 
   num_t val = 0.0;
 
   //Map unique strings to values and store values in catvec as doubles 
   for(size_t strIdx = 0; strIdx < strvec.size(); ++strIdx) {
 
-    //Transform string to uppercase
-    //toupper(strvec[strIdx]);
-
-    //If the string is not defined to NaN
+    //If the string is not NaN ...
     if(!datadefs::isNAN(strvec[strIdx])) {
       map<string,num_t>::iterator it;
 
-      //Try to find the string in the map. If it's not found, add the map...
+      //Try to find the string in the map. If it's not found, extend the map...
       it = mapping.find(strvec[strIdx]);
       if(it == mapping.end()) {
         mapping.insert(pair<string,num_t>(strvec[strIdx],val));
@@ -99,7 +88,7 @@ void datadefs::strv2catv(vector<string>& strvec,
 	catvec[strIdx] = val;
         val += 1.0;
       } else {
-	catvec[strIdx] = it->second; //mapping[ strvec[strIdx] ];
+	catvec[strIdx] = it->second; 
       }
       //...and use the map to set the value for the output vector
       //catvec[strIdx] = val; //backMapping[strvec[strIdx]];
@@ -161,14 +150,14 @@ datadefs::num_t datadefs::str2num(string& str) {
   
   if (ss.fail()) {  // Ensure reading didn't fail
     cerr << "WARNING: parameter '" << str
-         << "' could not be read properly. *THIS MAY CAUSE SPURIOUS RESULTS!*"
-         << endl;
+	 << "' could not be read properly. *THIS MAY CAUSE SPURIOUS RESULTS!*"
+	 << endl;
     ret = 0.0;
     
   } else if (!ss.eof()) {   // Ensure eofbit is set
     cerr << "WARNING: parameter '" << str
-         << "' was only partially read. *THIS MAY CAUSE SPURIOUS RESULTS!*"
-         << endl;
+	 << "' was only partially read. *THIS MAY CAUSE SPURIOUS RESULTS!*"
+	 << endl;
     
   }
   return(ret);
