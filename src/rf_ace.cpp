@@ -774,8 +774,8 @@ void executeRandomForestFilter(Treedata& treedata,
     for(size_t featureIdx = 0; featureIdx < treedata.nFeatures(); ++featureIdx) {
     
       size_t nRealSamples;
-      vector<num_t> fSample(op.nPerms);
-      vector<num_t> cSample(op.nPerms);
+      vector<num_t> fSample(op.nPerms, datadefs::NUM_NAN );
+      vector<num_t> cSample(op.nPerms, datadefs::NUM_NAN );
       for(size_t permIdx = 0; permIdx < op.nPerms; ++permIdx) {
         fSample[permIdx] = importanceMat[permIdx][featureIdx];
         cSample[permIdx] = importanceMat[permIdx][featureIdx + treedata.nFeatures()];

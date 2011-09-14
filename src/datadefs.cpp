@@ -588,35 +588,35 @@ void datadefs::utest(vector<datadefs::num_t> const& x,
   
   num_t uvalue = 0.0;
   size_t m = 0;
-  size_t n = 0;
+  size_t n = y.size();
   
-  for(size_t i = 0; i < x.size(); ++i) {
+  for ( size_t i = 0; i < x.size(); ++i ) {
     
-    if (!datadefs::isNAN(x[i])) {
+    if ( !datadefs::isNAN(x[i]) ) {
       ++m;
-      for(size_t j = 0; j < y.size(); ++j) {
+      for ( size_t j = 0; j < y.size(); ++j ) {
         
-        if (!datadefs::isNAN(y[j])) {
-          ++n;
-          if (x[i] > y[j]) {
-            uvalue += 1;
-          }
+        if ( datadefs::isNAN(y[j]) || x[i] > y[j] ) {
+          //++n;
+          //if ( x[i] > y[j] ) {
+	  uvalue += 1;
+	  //}
         }
       }
     }
   }
   
-  n /= m;
+  //n /= m;
 
   //cout << m << "," << n << endl;
 
-  num_t mu = 1.0*m*n/2.0;
-  num_t s = sqrt(1.0*m*n*(n+m+1)/12.0);
+  num_t mu = 1.0 * m * n / 2.0;
+  num_t s = sqrt( 1.0 * m * n * ( n + m + 1 ) / 12.0 );
 
   //cout << uvalue << " " << mu << " " << s << endl;
   //cout << datadefs::erf( (uvalue-mu) / (s*sqrt(2.0)) )  << endl;
   
-  pvalue = 1.0 - 0.5 * ( 1 + datadefs::erf( (uvalue-mu) / (s*sqrt(2.0)) ) );
+  pvalue = 1.0 - 0.5 * ( 1 + datadefs::erf( (uvalue - mu) / (s * sqrt(2.0)) ) );
   //cout << " ==> " << pvalue << endl;
 
 }
