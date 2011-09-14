@@ -583,15 +583,27 @@ int main(const int argc, char* const argv[]) {
     //////////////////////////////////////////////////////////////
     //  STEP 2 ( OPTIONAL ) -- FEATURE FILTERING WITH P-VALUES  //
     //////////////////////////////////////////////////////////////
+    
+    // We keep at least the target feature itself
     vector<size_t> keepFeatureIcs(1);
+    
+    // If filtering is to be applied ...
     if(!gen_op.noFilter) {
       cout << "    => Filtering features... " << flush;
       size_t nFeatures = treedata.nFeatures();
-      //vector<size_t> keepFeatureIcs(1);
+
+      // First kept feature is the target itself
       keepFeatureIcs[0] = targetIdx;
+
+      //Store removed features and their indices here, just in case
       vector<string> removedFeatures;
       vector<size_t> removedFeatureIcs;
+
+      // So we've already kept the target, hence start counting from 1
       size_t nKeepFeatures = 1;
+
+      // Go through each feature, and keep those having p-value higher than the threshold. 
+      // Save the kept and removed feeatures, and remember to accumulate the counter
       for(size_t featureIdx = 0; featureIdx < nFeatures; ++featureIdx) {
 	if(featureIdx != targetIdx && pValues[featureIdx] < gen_op.pValueThreshold) {
 	  keepFeatureIcs.push_back(featureIdx);
@@ -604,11 +616,19 @@ int main(const int argc, char* const argv[]) {
 	}
       }
 
+      // Resize containers
       treedata.keepFeatures( keepFeatureIcs );
       pValues.resize( nKeepFeatures );
       importanceValues.resize ( nKeepFeatures );
+      
+      // Reset these values for the target to NaNs, just in case
+      pValues[0] = datadefs::NUM_NAN;
+      importanceValues[0] = datadefs::NUM_NAN;
+
+      // Reassign target index variable point to the first kept feature, which is the target
       targetIdx = 0;
 
+      //Print some statistics
       cout << "DONE, " << treedata.nFeatures() << " / " << treedata_copy.nFeatures() << " features ( "
 	   << 100.0 * treedata.nFeatures() / treedata_copy.nFeatures() << " % ) left " << endl;
     }
