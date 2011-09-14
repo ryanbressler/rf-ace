@@ -18,16 +18,16 @@
 using namespace std;
 using datadefs::num_t;
 
-const bool GENERAL_DEFAULT_PRINT_HELP = false;
-const bool GENERAL_DEFAULT_NO_FILTER = false;
-const bool GENERAL_DEFAULT_NO_PREDICTION = false; // TEMPORARY VARIABLE
+const bool   GENERAL_DEFAULT_PRINT_HELP = false;
+const bool   GENERAL_DEFAULT_NO_FILTER = false;
+const bool   GENERAL_DEFAULT_NO_PREDICTION = false; // TEMPORARY VARIABLE
+const num_t  GENERAL_DEFAULT_P_VALUE_THRESHOLD = 0.10;
 
 const bool   RF_IS_OPTIMIZED_NODE_SPLIT = false;
 const size_t RF_DEFAULT_N_TREES = 0; // zero means it will be estimated from the data by default
 const size_t RF_DEFAULT_M_TRY = 0; // same here ...
 const size_t RF_DEFAULT_NODE_SIZE = 0; // ... and here
 const size_t RF_DEFAULT_N_PERMS = 20;
-const num_t  RF_DEFAULT_P_VALUE_THRESHOLD = 0.10;
 
 const bool   GBT_IS_OPTIMIZED_NODE_SPLIT = false;
 const size_t GBT_DEFAULT_N_TREES = 100;
@@ -37,7 +37,7 @@ const num_t  GBT_DEFAULT_SUB_SAMPLE_SIZE = 0.5;
 
 struct General_options {
 
-  bool printHelp;
+  bool   printHelp;
   string printHelp_s;
   string printHelp_l;
 
@@ -65,9 +65,13 @@ struct General_options {
   string predictionOutput_s;
   string predictionOutput_l;
 
-  bool noFilter;
+  bool   noFilter;
   string noFilter_s;
   string noFilter_l;
+
+  num_t  pValueThreshold;
+  string pValueThreshold_s;
+  string pValueThreshold_l;
 
   General_options():
     printHelp(GENERAL_DEFAULT_PRINT_HELP),
@@ -100,8 +104,11 @@ struct General_options {
   
     noFilter(GENERAL_DEFAULT_NO_FILTER),
     noFilter_s("f"),
-    noFilter_l("noFilter") {}
-    
+    noFilter_l("noFilter"),
+
+    pValueThreshold(GENERAL_DEFAULT_P_VALUE_THRESHOLD),
+    pValueThreshold_s("t"),
+    pValueThreshold_l("pthreshold") {}
 };
 
 struct RF_options {
@@ -126,10 +133,6 @@ struct RF_options {
   string nPerms_s;
   string nPerms_l;
 
-  num_t pValueThreshold;
-  string pValueThreshold_s;
-  string pValueThreshold_l;
-
   RF_options():
     isOptimizedNodeSplit(RF_IS_OPTIMIZED_NODE_SPLIT),
     isOptimizedNodeSplit_s("o"),
@@ -149,12 +152,7 @@ struct RF_options {
 
     nPerms(RF_DEFAULT_N_PERMS),
     nPerms_s("p"),
-    nPerms_l("RF_nperms"),
-
-    pValueThreshold(RF_DEFAULT_P_VALUE_THRESHOLD),
-    pValueThreshold_s("t"),
-    pValueThreshold_l("RF_pthreshold") {}
-  
+    nPerms_l("RF_nperms") {}
 };
 
 struct GBT_options {
@@ -250,8 +248,6 @@ void printHelp(const General_options& geno, const RF_options& rfo, const GBT_opt
   cout << endl;
   
   cout << "OPTIONAL ARGUMENTS -- RANDOM FOREST:" << endl;
-  cout << " -" << geno.noFilter_s << " / --" << geno.noFilter_l << setw( maxwidth - geno.noFilter_l.size() )
-       << " " << "Set this flag to turn RF filtering OFF (default ON)" << endl; 
   cout << " -" << rfo.isOptimizedNodeSplit_s << " / --" << rfo.isOptimizedNodeSplit_l
        << setw( maxwidth - rfo.isOptimizedNodeSplit_l.size() )
        << " " << "Perform optimized node splitting with Random Forests (currently ENFORCED)" << endl;
@@ -263,9 +259,14 @@ void printHelp(const General_options& geno, const RF_options& rfo, const GBT_opt
        << " " << "Minimum number of train samples per node, affects tree depth (default max{5,nSamples/100})" << endl;
   cout << " -" << rfo.nPerms_s << " / --" << rfo.nPerms_l << setw( maxwidth - rfo.nPerms_l.size() ) 
        << " " << "Number of Random Forests (default " << RF_DEFAULT_N_PERMS << ")" << endl;
-  cout << " -" << rfo.pValueThreshold_s << " / --" << rfo.pValueThreshold_l << setw( maxwidth - rfo.pValueThreshold_l.size() ) 
+  cout << endl;
+
+  cout << "OPTIONAL ARGUMENTS -- FEATURE FILTER:" << endl;
+  cout << " -" << geno.noFilter_s << " / --" << geno.noFilter_l << setw( maxwidth - geno.noFilter_l.size() )
+       << " " << "Set this flag to turn RF filtering OFF (default ON)" << endl;
+  cout << " -" << geno.pValueThreshold_s << " / --" << geno.pValueThreshold_l << setw( maxwidth - geno.pValueThreshold_l.size() )
        << " " << "p-value threshold below which associations are listed (default "
-       << RF_DEFAULT_P_VALUE_THRESHOLD << ")" << endl;
+       << GENERAL_DEFAULT_P_VALUE_THRESHOLD << ")" << endl;
   cout << endl;
   
   cout << "OPTIONAL ARGUMENTS -- GRADIENT BOOSTING TREES:" << endl;
@@ -334,14 +335,14 @@ int main(const int argc, char* const argv[]) {
   parser.getArgument<string>(gen_op.testInput_s, gen_op.testInput_l, gen_op.testInput);
   parser.getArgument<string>(gen_op.predictionOutput_s, gen_op.predictionOutput_l, gen_op.predictionOutput);
   parser.getFlag(gen_op.noFilter_s, gen_op.noFilter_l, gen_op.noFilter);
-  //parser.getFlag(gen_op.noPrediction_s, gen_op.noPrediction_l, gen_op.noPrediction);
+  parser.getArgument<num_t>(gen_op.pValueThreshold_s, gen_op.pValueThreshold_l, gen_op.pValueThreshold);
 
   parser.getFlag(RF_op_copy.isOptimizedNodeSplit_s, RF_op_copy.isOptimizedNodeSplit_l, RF_op_copy.isOptimizedNodeSplit);
   parser.getArgument<size_t>(RF_op_copy.nTrees_s,RF_op_copy.nTrees_l,RF_op_copy.nTrees);
   parser.getArgument<size_t>(RF_op_copy.mTry_s, RF_op_copy.mTry_l, RF_op_copy.mTry); 
   parser.getArgument<size_t>(RF_op_copy.nodeSize_s, RF_op_copy.nodeSize_l, RF_op_copy.nodeSize); 
   parser.getArgument<size_t>(RF_op_copy.nPerms_s, RF_op_copy.nPerms_l, RF_op_copy.nPerms); 
-  parser.getArgument<num_t>(RF_op_copy.pValueThreshold_s, RF_op_copy.pValueThreshold_l, RF_op_copy.pValueThreshold); 
+  //parser.getArgument<num_t>(RF_op_copy.pValueThreshold_s, RF_op_copy.pValueThreshold_l, RF_op_copy.pValueThreshold); 
 
   parser.getFlag(GBT_op.isOptimizedNodeSplit_s, GBT_op.isOptimizedNodeSplit_l, GBT_op.isOptimizedNodeSplit);
   parser.getArgument<size_t>(GBT_op.nTrees_s, GBT_op.nTrees_l, GBT_op.nTrees);
@@ -375,25 +376,38 @@ int main(const int argc, char* const argv[]) {
        << "= "; if( makePrediction ) { cout << gen_op.testInput << endl; } else { cout << "NOT SET" << endl; }
   cout << "  --" << gen_op.predictionOutput_l << setw( maxwidth - gen_op.predictionOutput_l.size() ) << "" 
        << "= "; if( writePredictionsToFile ) { cout << gen_op.predictionOutput << endl; } else { cout << "NOT SET" << endl; }
-  cout << "  (RF filter)          = "; if(!gen_op.noFilter) { cout << "YES" << endl; } else { cout << "NO" << endl; }
   cout << endl;
   
-  if (!gen_op.noFilter) {
-    cout << "Random forest configuration:" << endl;
-    cout << "  --(RF)ntrees         = "; if(RF_op_copy.nTrees == 0) { cout << "DEFAULT" << endl; } else { cout << RF_op_copy.nTrees << endl; }
-    cout << "  --(RF)mtry           = "; if(RF_op_copy.mTry == 0) { cout << "DEFAULT" << endl; } else { cout << RF_op_copy.mTry << endl; }
-    cout << "  --(RF)nodesize       = "; if(RF_op_copy.nodeSize == 0) { cout << "DEFAULT" << endl; } else { cout << RF_op_copy.nodeSize << endl; }
-    cout << "  --(RF)nperms         = " << RF_op_copy.nPerms << endl;
-    cout << "  --(RF)pthresold      = " << RF_op_copy.pValueThreshold << endl;
+  cout << "Random Forest configuration:" << endl;
+  cout << "  --" << RF_op_copy.nTrees_l << setw( maxwidth - RF_op_copy.nTrees_l.size() ) << "" 
+       << "= "; if(RF_op_copy.nTrees == 0) { cout << "DEFAULT" << endl; } else { cout << RF_op_copy.nTrees << endl; }
+  cout << "  --" << RF_op_copy.mTry_l << setw( maxwidth - RF_op_copy.mTry_l.size() ) << ""
+       << "= "; if(RF_op_copy.mTry == 0) { cout << "DEFAULT" << endl; } else { cout << RF_op_copy.mTry << endl; }
+  cout << "  --" << RF_op_copy.nodeSize_l << setw( maxwidth - RF_op_copy.nodeSize_l.size() ) << ""       
+       << "= "; if(RF_op_copy.nodeSize == 0) { cout << "DEFAULT" << endl; } else { cout << RF_op_copy.nodeSize << endl; }
+  cout << "  --" << RF_op_copy.nPerms_l << setw( maxwidth - RF_op_copy.nPerms_l.size() ) << ""
+       << "= " << RF_op_copy.nPerms << endl;
+  cout << endl;
+  
+  if ( !gen_op.noFilter ) {
+    cout << "Feature filter ENABLED. Configuration:" << endl;
+    cout << "  --pthresold          = " << gen_op.pValueThreshold << endl;
+    cout << endl;
+  } else {
+    cout << "Feature filter DISABLED" << endl;
     cout << endl;
   }
   
   if ( makePrediction ) {
     cout << "Gradient boosting tree configuration for prediction:" << endl;
-    cout << "  --(GBT)ntrees        = " << GBT_op.nTrees << endl;
-    cout << "  --(GBT)maxleaves     = " << GBT_op.nMaxLeaves << endl;
-    cout << "  --(GBT)shrinkage     = " << GBT_op.shrinkage << endl;
-    cout << "  --(GBT)subsamplesize = " << GBT_op.subSampleSize << endl;
+    cout << "  --" << GBT_op.nTrees_l << setw( maxwidth - GBT_op.nTrees_l.size() ) << ""
+	 << "= " << GBT_op.nTrees << endl;
+    cout << "  --" << GBT_op.nMaxLeaves_l << setw( maxwidth - GBT_op.nMaxLeaves_l.size() ) << ""
+	 << "= " << GBT_op.nMaxLeaves << endl;
+    cout << "  --" << GBT_op.shrinkage_l << setw( maxwidth - GBT_op.shrinkage_l.size() ) << ""
+	 << "= " << GBT_op.shrinkage << endl;
+    cout << "  --" << GBT_op.subSampleSize_l << setw( maxwidth - GBT_op.subSampleSize_l.size() ) << ""
+	 << "= " << GBT_op.subSampleSize << endl;
     cout << endl;
   }
 
@@ -577,16 +591,22 @@ int main(const int argc, char* const argv[]) {
       keepFeatureIcs[0] = targetIdx;
       vector<string> removedFeatures;
       vector<size_t> removedFeatureIcs;
+      size_t nKeepFeatures = 1;
       for(size_t featureIdx = 0; featureIdx < nFeatures; ++featureIdx) {
-	if(featureIdx != targetIdx && pValues[featureIdx] < RF_op.pValueThreshold) {
+	if(featureIdx != targetIdx && pValues[featureIdx] < gen_op.pValueThreshold) {
 	  keepFeatureIcs.push_back(featureIdx);
+	  pValues[nKeepFeatures] = pValues[featureIdx];
+	  importanceValues[nKeepFeatures] = importanceValues[featureIdx];
+	  ++nKeepFeatures;
 	} else {
 	  removedFeatureIcs.push_back(featureIdx);
 	  removedFeatures.push_back(treedata.getFeatureName(featureIdx));
 	}
       }
 
-      treedata.keepFeatures(keepFeatureIcs);
+      treedata.keepFeatures( keepFeatureIcs );
+      pValues.resize( nKeepFeatures );
+      importanceValues.resize ( nKeepFeatures );
       targetIdx = 0;
 
       cout << "DONE, " << treedata.nFeatures() << " / " << treedata_copy.nFeatures() << " features ( "
@@ -596,7 +616,7 @@ int main(const int argc, char* const argv[]) {
     ///////////////////////////////////////////////////////////////////////////
     //  STEP 3 ( OPTIONAL ) -- DATA PREDICTION WITH GRADIENT BOOSTING TREES  //
     ///////////////////////////////////////////////////////////////////////////
-    if( makePrediction ) {      
+    if( makePrediction && writePredictionsToFile ) {      
       cout << "    => Predicting... " << flush;
       
       StochasticForest SF(&treedata,targetIdx,GBT_op.nTrees);
@@ -606,12 +626,13 @@ int main(const int argc, char* const argv[]) {
       //SF.learnRF(static_cast<size_t>(sqrt(1.0*treedata.nFeatures())),5,false,true);
 
       Treedata treedata_test(gen_op.testInput);
-      if(!gen_op.noFilter) {
+      if ( !gen_op.noFilter ) {
 	treedata_test.keepFeatures(keepFeatureIcs);
       }
 
+      // An assertion to check that the train and test matrices have features in the same order
       assert(treedata.nFeatures() == treedata_test.nFeatures());
-      for(size_t i = 0; i < treedata.nFeatures(); ++i) {
+      for ( size_t i = 0; i < treedata.nFeatures(); ++i ) {
 	assert(treedata.getFeatureName(i) == treedata_test.getFeatureName(i));
       }
 
@@ -641,8 +662,6 @@ int main(const int argc, char* const argv[]) {
      
       cout << "DONE" << endl;
     }
-
-
     cout << endl;
             
     vector<size_t> refIcs(treedata.nFeatures());
@@ -650,11 +669,11 @@ int main(const int argc, char* const argv[]) {
     datadefs::sortDataAndMakeRef(isIncreasingOrder,importanceValues,refIcs); // BUG
     datadefs::sortFromRef<num_t>(pValues,refIcs);
 
-    if(gen_op.associationOutput != "") {
+    if( writeAssociationsToFile ) {
     
       for(size_t featureIdx = 0; featureIdx < treedata.nFeatures(); ++featureIdx) {
         
-	if(pValues[featureIdx] > RF_op.pValueThreshold) {
+	if(pValues[featureIdx] > gen_op.pValueThreshold) {
           continue;
 	}
         
@@ -678,13 +697,13 @@ int main(const int argc, char* const argv[]) {
   toAssociationFile.close();
   toPredictionFile.close();
 
-  if ( gen_op.associationOutput != "" ) {
+  if ( writeAssociationsToFile ) {
     cout << "Association file '" << gen_op.associationOutput << "' created. Format:" << endl;
     cout << "TARGET   PREDICTOR   P-VALUE   IMPORTANCE   CORRELATION" << endl;
     cout << endl;
   }
 
-  if ( gen_op.predictionOutput != "" ) {
+  if ( writePredictionsToFile ) {
     cout << "Prediction file '" << gen_op.predictionOutput << "' created. Format:" << endl;
     cout << "TARGET   SAMPLE_ID   DATA      PREDICTION   CONFIDENCE" << endl; 
     cout << endl;
