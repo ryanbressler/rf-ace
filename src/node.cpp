@@ -418,24 +418,6 @@ bool Node::optimizedSplitterSeek(Treedata* treeData,
 
   vector<num_t> featureData;
   treeData->getFeatureData(splitFeatureIdx,sampleIcs,featureData);
-  //treeData->getFeatureData(targetIdx,sampleIcs,targetData);
-
-  
-  //size_t nRealSamples = 0;
-  //for ( size_t i = 0; i < targetData.size(); ++i ) {
-  //  if ( !datadefs::isNAN( featureData[i] ) ) {
-  //    featureData[nRealSamples] = featureData[i];
-  //    targetData[nRealSamples] = targetData[i];
-  //    ++nRealSamples;
-  //  }
-  //}
-
-  //featureData.resize(nRealSamples);
-  //targetData.resize(nRealSamples);
-
-  //if ( nRealSamples < 2 * minNodeSizeToStop ) {
-  //  return(false);
-  //}
 
   if ( treeData->isFeatureNumerical(splitFeatureIdx) ) {
     

@@ -31,6 +31,7 @@ StochasticForest::~StochasticForest() {
 }
 
 void StochasticForest::learnRF(const size_t mTry, 
+			       const size_t nMaxLeaves,
 			       const size_t nodeSize,
 			       const bool useContrasts,
 			       const bool isOptimizedNodeSplit) {
@@ -39,16 +40,16 @@ void StochasticForest::learnRF(const size_t mTry,
     treeData_->permuteContrasts();
   }
 
-  numClasses_ = treeData_->nCategories(targetIdx_);
+  numClasses_ = treeData_->nCategories( targetIdx_ );
   learnedModel_ = RF_MODEL;
   featuresInForest_.clear();
-  oobMatrix_.resize(nTrees_);
-  rootNodes_.resize(nTrees_);
+  oobMatrix_.resize( nTrees_ );
+  rootNodes_.resize( nTrees_ );
 
   //These parameters, and those specified in the Random Forest initiatialization, define the type of the forest generated (an RF) 
   bool sampleWithReplacement = true;
   num_t sampleSizeFraction = 1.0;
-  size_t maxNodesToStop = treeData_->nSamples();
+  size_t maxNodesToStop = 2 * nMaxLeaves - 1;
   size_t minNodeSizeToStop = nodeSize;
   bool isRandomSplit = true;
   size_t nFeaturesForSplit = mTry;
@@ -595,17 +596,17 @@ vector<num_t> StochasticForest::featureImportance() {
   size_t nRealFeatures = treeData_->nFeatures();
 
   // But as there is an equal amount of contrast features, the total feature count is double that.
-  size_t nAllFeatures = 2*nRealFeatures;
+  size_t nAllFeatures = 2 * nRealFeatures;
 
   //Each feature, either real or contrast, will have a slot into which the importance value will be put.
-  vector<num_t> importance(nAllFeatures, 0.0);
+  vector<num_t> importance( nAllFeatures, 0.0 );
   size_t nOobSamples = 0; // !! Potentially Unintentional Humor: "Noob". That is actually intentional. :)
   
   size_t nContrastsInForest = 0;
 
   // The random forest object stores the mapping from trees to features it contains, which makes
   // the subsequent computations void of unnecessary looping
-  for(map<size_t, set<size_t> >::const_iterator tit(featuresInForest_.begin()); tit != featuresInForest_.end(); ++tit) {
+  for ( map<size_t, set<size_t> >::const_iterator tit(featuresInForest_.begin()); tit != featuresInForest_.end(); ++tit ) {
     size_t treeIdx = tit->first;
       
     size_t nNewOobSamples = oobMatrix_[treeIdx].size(); 
@@ -617,10 +618,10 @@ vector<num_t> StochasticForest::featureImportance() {
     StochasticForest::treeImpurity(treeData_,trainIcs,treeImpurity);
     //cout << "#nodes_with_train_samples=" << trainics.size() << endl;
 
-    for(set<size_t>::const_iterator fit(tit->second.begin()); fit != tit->second.end(); ++fit) {
+    for ( set<size_t>::const_iterator fit( tit->second.begin()); fit != tit->second.end(); ++fit ) {
       size_t featureIdx = *fit;
     
-      if(featureIdx >= nRealFeatures) {
+      if ( featureIdx >= nRealFeatures ) {
         ++nContrastsInForest;
       }
 
@@ -660,7 +661,8 @@ vector<size_t> StochasticForest::featureFrequency() {
 }
 
 
-void StochasticForest::treeImpurity(Treedata* treeData, map<Node*,vector<size_t> >& trainIcs, 
+void StochasticForest::treeImpurity(Treedata* treeData, 
+				    map<Node*,vector<size_t> >& trainIcs, 
 				    num_t& impurity) {
 
   impurity = 0.0;
@@ -683,9 +685,10 @@ void StochasticForest::treeImpurity(Treedata* treeData, map<Node*,vector<size_t>
 
     } else {
       for(size_t i = 0; i < nSamplesInLeaf; ++i) {
-        if(leafPrediction != targetData[i]) {
-          ++leafImpurity;
-        }
+        leafImpurity += leafPrediction != targetData[i]; 
+	//{
+	// ++leafImpurity;
+        //}
       }
     }
 

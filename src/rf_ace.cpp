@@ -24,10 +24,11 @@ const bool   GENERAL_DEFAULT_NO_PREDICTION = false; // TEMPORARY VARIABLE
 const num_t  GENERAL_DEFAULT_P_VALUE_THRESHOLD = 0.10;
 
 const bool   RF_IS_OPTIMIZED_NODE_SPLIT = false;
-const size_t RF_DEFAULT_N_TREES = 0; // zero means it will be estimated from the data by default
+const size_t RF_DEFAULT_N_TREES = 100; // zero means it will be estimated from the data by default
 const size_t RF_DEFAULT_M_TRY = 0; // same here ...
-const size_t RF_DEFAULT_NODE_SIZE = 0; // ... and here
-const size_t RF_DEFAULT_N_PERMS = 20;
+const size_t RF_DEFAULT_N_MAX_LEAVES = 10;
+const size_t RF_DEFAULT_NODE_SIZE = 5; // ... and here
+const size_t RF_DEFAULT_N_PERMS = 50;
 
 const bool   GBT_IS_OPTIMIZED_NODE_SPLIT = false;
 const size_t GBT_DEFAULT_N_TREES = 100;
@@ -125,6 +126,10 @@ struct RF_options {
   string mTry_s;
   string mTry_l;
 
+  size_t nMaxLeaves;
+  string nMaxLeaves_s;
+  string nMaxLeaves_l;
+
   size_t nodeSize;
   string nodeSize_s;
   string nodeSize_l;
@@ -145,6 +150,10 @@ struct RF_options {
     mTry(RF_DEFAULT_M_TRY),
     mTry_s("m"),
     mTry_l("RF_mtry"),
+
+    nMaxLeaves(RF_DEFAULT_N_MAX_LEAVES),
+    nMaxLeaves_s("a"),
+    nMaxLeaves_l("RF_maxleaves"),
 
     nodeSize(RF_DEFAULT_NODE_SIZE),
     nodeSize_s("s"),
@@ -255,6 +264,8 @@ void printHelp(const General_options& geno, const RF_options& rfo, const GBT_opt
        << " " << "Number of trees per RF (default nSamples/realSampleFraction)" << endl;
   cout << " -" << rfo.mTry_s << " / --" << rfo.mTry_l << setw( maxwidth - rfo.mTry_l.size() )
        << " " << "Number of randomly drawn features per node split (default sqrt(nFeatures))" << endl;
+  cout << " -" << rfo.nMaxLeaves_s << " / --" << rfo.nMaxLeaves_l << setw( maxwidth - rfo.nMaxLeaves_l.size() )
+       << " " << "Maximum number of leaves per tree (default " << RF_DEFAULT_N_MAX_LEAVES << ")" << endl;
   cout << " -" << rfo.nodeSize_s << " / --" << rfo.nodeSize_l << setw( maxwidth - rfo.nodeSize_l.size() )
        << " " << "Minimum number of train samples per node, affects tree depth (default max{5,nSamples/100})" << endl;
   cout << " -" << rfo.nPerms_s << " / --" << rfo.nPerms_l << setw( maxwidth - rfo.nPerms_l.size() ) 
@@ -340,6 +351,7 @@ int main(const int argc, char* const argv[]) {
   parser.getFlag(RF_op_copy.isOptimizedNodeSplit_s, RF_op_copy.isOptimizedNodeSplit_l, RF_op_copy.isOptimizedNodeSplit);
   parser.getArgument<size_t>(RF_op_copy.nTrees_s,RF_op_copy.nTrees_l,RF_op_copy.nTrees);
   parser.getArgument<size_t>(RF_op_copy.mTry_s, RF_op_copy.mTry_l, RF_op_copy.mTry); 
+  parser.getArgument<size_t>(RF_op_copy.nMaxLeaves_s, RF_op_copy.nMaxLeaves_l, RF_op_copy.nMaxLeaves);
   parser.getArgument<size_t>(RF_op_copy.nodeSize_s, RF_op_copy.nodeSize_l, RF_op_copy.nodeSize); 
   parser.getArgument<size_t>(RF_op_copy.nPerms_s, RF_op_copy.nPerms_l, RF_op_copy.nPerms); 
   //parser.getArgument<num_t>(RF_op_copy.pValueThreshold_s, RF_op_copy.pValueThreshold_l, RF_op_copy.pValueThreshold); 
@@ -360,57 +372,6 @@ int main(const int argc, char* const argv[]) {
   bool writeAssociationsToFile = gen_op.associationOutput != "";
   bool writePredictionsToFile = gen_op.predictionOutput != "";
 
-  //Print values of parameters of RF-ACE
-  int maxwidth = 19;
-  cout << endl;
-  cout << "RF-ACE parameter configuration:" << endl;
-  cout << endl;
-  cout << "General configuration:" << endl;
-  cout << "  --" << gen_op.trainInput_l << setw( maxwidth - gen_op.trainInput_l.size() ) << "" 
-       << "= " << gen_op.trainInput << endl;
-  cout << "  --" << gen_op.targetStr_l << setw( maxwidth - gen_op.targetStr_l.size() ) << "" 
-       << "= " << gen_op.targetStr << endl;
-  cout << "  --" << gen_op.associationOutput_l << setw( maxwidth - gen_op.associationOutput_l.size() ) << "" 
-       << "= "; if ( writeAssociationsToFile ) { cout << gen_op.associationOutput << endl; } else { cout << "NOT SET" << endl; } 
-  cout << "  --" << gen_op.testInput_l << setw( maxwidth - gen_op.testInput_l.size() ) << "" 
-       << "= "; if( makePrediction ) { cout << gen_op.testInput << endl; } else { cout << "NOT SET" << endl; }
-  cout << "  --" << gen_op.predictionOutput_l << setw( maxwidth - gen_op.predictionOutput_l.size() ) << "" 
-       << "= "; if( writePredictionsToFile ) { cout << gen_op.predictionOutput << endl; } else { cout << "NOT SET" << endl; }
-  cout << endl;
-  
-  cout << "Random Forest configuration:" << endl;
-  cout << "  --" << RF_op_copy.nTrees_l << setw( maxwidth - RF_op_copy.nTrees_l.size() ) << "" 
-       << "= "; if(RF_op_copy.nTrees == 0) { cout << "DEFAULT" << endl; } else { cout << RF_op_copy.nTrees << endl; }
-  cout << "  --" << RF_op_copy.mTry_l << setw( maxwidth - RF_op_copy.mTry_l.size() ) << ""
-       << "= "; if(RF_op_copy.mTry == 0) { cout << "DEFAULT" << endl; } else { cout << RF_op_copy.mTry << endl; }
-  cout << "  --" << RF_op_copy.nodeSize_l << setw( maxwidth - RF_op_copy.nodeSize_l.size() ) << ""       
-       << "= "; if(RF_op_copy.nodeSize == 0) { cout << "DEFAULT" << endl; } else { cout << RF_op_copy.nodeSize << endl; }
-  cout << "  --" << RF_op_copy.nPerms_l << setw( maxwidth - RF_op_copy.nPerms_l.size() ) << ""
-       << "= " << RF_op_copy.nPerms << endl;
-  cout << endl;
-  
-  if ( !gen_op.noFilter ) {
-    cout << "Feature filter ENABLED. Configuration:" << endl;
-    cout << "  --pthresold          = " << gen_op.pValueThreshold << endl;
-    cout << endl;
-  } else {
-    cout << "Feature filter DISABLED" << endl;
-    cout << endl;
-  }
-  
-  if ( makePrediction ) {
-    cout << "Gradient boosting tree configuration for prediction:" << endl;
-    cout << "  --" << GBT_op.nTrees_l << setw( maxwidth - GBT_op.nTrees_l.size() ) << ""
-	 << "= " << GBT_op.nTrees << endl;
-    cout << "  --" << GBT_op.nMaxLeaves_l << setw( maxwidth - GBT_op.nMaxLeaves_l.size() ) << ""
-	 << "= " << GBT_op.nMaxLeaves << endl;
-    cout << "  --" << GBT_op.shrinkage_l << setw( maxwidth - GBT_op.shrinkage_l.size() ) << ""
-	 << "= " << GBT_op.shrinkage << endl;
-    cout << "  --" << GBT_op.subSampleSize_l << setw( maxwidth - GBT_op.subSampleSize_l.size() ) << ""
-	 << "= " << GBT_op.subSampleSize << endl;
-    cout << endl;
-  }
-
   //Print help and exit if input file is not specified
   if ( gen_op.trainInput == "" ) {
     cerr << "Input file not specified" << endl;
@@ -430,15 +391,6 @@ int main(const int argc, char* const argv[]) {
     printHelpHint();
     return(EXIT_FAILURE);
   }
-
-  //Print help and exit if output file is not specified
-  //if(gen_op.associationOutput == "") {
-  //  cerr << "Output file not specified" << endl;
-  //  printHelpHint();
-  //  return EXIT_FAILURE;
-  //}
-  // !! FIXME No current check for the presence of the input file or output
-  // !!  directory. This should be fixed.
 
   //Read data into Treedata object
   cout << "Reading file '" << gen_op.trainInput << "', please wait... " << flush;
@@ -463,8 +415,11 @@ int main(const int argc, char* const argv[]) {
     treedata_copy.keepFeatures(keepFeatureIcs);
     cout << "DONE" << endl;
   }
-
   cout << endl;
+
+  if ( RF_op_copy.mTry == RF_DEFAULT_M_TRY ) {
+    RF_op_copy.mTry = static_cast<size_t>( 0.1 * treedata_copy.nFeatures() );
+  }
 
   //Check which feature names match with the specified target identifier
   set<size_t> targetIcs;
@@ -494,11 +449,62 @@ int main(const int argc, char* const argv[]) {
   }
 
   ofstream toAssociationFile(gen_op.associationOutput.c_str());
-  //assert(toAssociationFile.is_open());
   toAssociationFile.precision(8);
 
   ofstream toPredictionFile(gen_op.predictionOutput.c_str());
-  //assert(toPredictionFile.is_open());
+
+  //Before starting number crunching, print values of parameters of RF-ACE
+  int maxwidth = 19;
+  cout << endl;
+  cout << "RF-ACE parameter configuration:" << endl;
+  cout << endl;
+  cout << "General configuration:" << endl;
+  cout << "  --" << gen_op.trainInput_l << setw( maxwidth - gen_op.trainInput_l.size() ) << ""
+       << "= " << gen_op.trainInput << endl;
+  cout << "  --" << gen_op.targetStr_l << setw( maxwidth - gen_op.targetStr_l.size() ) << ""
+       << "= " << gen_op.targetStr << endl;
+  cout << "  --" << gen_op.associationOutput_l << setw( maxwidth - gen_op.associationOutput_l.size() ) << ""
+       << "= "; if ( writeAssociationsToFile ) { cout << gen_op.associationOutput << endl; } else { cout << "NOT SET" << endl; }
+  cout << "  --" << gen_op.testInput_l << setw( maxwidth - gen_op.testInput_l.size() ) << ""
+       << "= "; if( makePrediction ) { cout << gen_op.testInput << endl; } else { cout << "NOT SET" << endl; }
+  cout << "  --" << gen_op.predictionOutput_l << setw( maxwidth - gen_op.predictionOutput_l.size() ) << ""
+       << "= "; if( writePredictionsToFile ) { cout << gen_op.predictionOutput << endl; } else { cout << "NOT SET" << endl; }
+  cout << endl;
+
+  cout << "Random Forest configuration:" << endl;
+  cout << "  --" << RF_op_copy.nTrees_l << setw( maxwidth - RF_op_copy.nTrees_l.size() ) << ""
+       << "= "; if(RF_op_copy.nTrees == 0) { cout << "DEFAULT" << endl; } else { cout << RF_op_copy.nTrees << endl; }
+  cout << "  --" << RF_op_copy.mTry_l << setw( maxwidth - RF_op_copy.mTry_l.size() ) << ""
+       << "= "; if(RF_op_copy.mTry == 0) { cout << "DEFAULT" << endl; } else { cout << RF_op_copy.mTry << endl; }
+  cout << "  --" << RF_op_copy.nMaxLeaves_l << setw( maxwidth - RF_op_copy.nMaxLeaves_l.size() ) << ""
+       << "= " << RF_op_copy.nMaxLeaves << endl;
+  cout << "  --" << RF_op_copy.nodeSize_l << setw( maxwidth - RF_op_copy.nodeSize_l.size() ) << ""
+       << "= "; if(RF_op_copy.nodeSize == 0) { cout << "DEFAULT" << endl; } else { cout << RF_op_copy.nodeSize << endl; }
+  cout << "  --" << RF_op_copy.nPerms_l << setw( maxwidth - RF_op_copy.nPerms_l.size() ) << ""
+       << "= " << RF_op_copy.nPerms << endl;
+  cout << endl;
+
+  if ( !gen_op.noFilter ) {
+    cout << "Feature filter ENABLED. Configuration:" << endl;
+    cout << "  --pthresold          = " << gen_op.pValueThreshold << endl;
+    cout << endl;
+  } else {
+    cout << "Feature filter DISABLED" << endl;
+    cout << endl;
+  }
+
+  if ( makePrediction ) {
+    cout << "Gradient boosting tree configuration for prediction:" << endl;
+    cout << "  --" << GBT_op.nTrees_l << setw( maxwidth - GBT_op.nTrees_l.size() ) << ""
+         << "= " << GBT_op.nTrees << endl;
+    cout << "  --" << GBT_op.nMaxLeaves_l << setw( maxwidth - GBT_op.nMaxLeaves_l.size() ) << ""
+         << "= " << GBT_op.nMaxLeaves << endl;
+    cout << "  --" << GBT_op.shrinkage_l << setw( maxwidth - GBT_op.shrinkage_l.size() ) << ""
+         << "= " << GBT_op.shrinkage << endl;
+    cout << "  --" << GBT_op.subSampleSize_l << setw( maxwidth - GBT_op.subSampleSize_l.size() ) << ""
+         << "= " << GBT_op.subSampleSize << endl;
+    cout << endl;
+  }
 
   //The program starts a loop in which an RF-ACE model will be built for each spcified target feature
   size_t iter = 1;
@@ -516,11 +522,6 @@ int main(const int argc, char* const argv[]) {
 
     size_t maxwidth = 1 + static_cast<int>(targetIcs.size()) / 10;
 
-    //for ( size_t i = 0; i < treedata.nSamples(); ++i ) {
-    //  cout << "  \"" << treedata.getRawFeatureData(targetIdx,i) << "\"  ";
-    //}
-    //cout << endl;
-
     cout << "== " << setw(maxwidth) << iter << "/" << setw(maxwidth) << targetIcs.size() 
 	 << " target " << treedata.getFeatureName(targetIdx) << ", " << flush;
     
@@ -536,26 +537,12 @@ int main(const int argc, char* const argv[]) {
       cout << treedata.nCategories(targetIdx) << "-class ";
     }
     cout << "CARTs. " << nRealSamples << " / " << treedata.nSamples() << " samples ( " << 100 * ( 1 - realFraction ) << " % missing )" << endl;
-      
-    //If default nTrees is to be used...
-    if(RF_op.nTrees == RF_DEFAULT_N_TREES) {
-      RF_op.nTrees = static_cast<size_t>( 1.0*treedata.nSamples() / realFraction );
-    }
-      
+            
     //If default mTry is to be used...
     if(RF_op.mTry == RF_DEFAULT_M_TRY) {
       RF_op.mTry = static_cast<size_t>( floor( sqrt( 1.0*treedata.nFeatures() ) ) );   
     }
-      
-    //If default nodeSize is to be used...
-    if(RF_op.nodeSize == RF_DEFAULT_NODE_SIZE) {
-      RF_op.nodeSize = 5;
-      size_t altNodeSize = static_cast<size_t>( ceil( 1.0*nRealSamples/100 ) );
-      if(altNodeSize > RF_op.nodeSize) {
-        RF_op.nodeSize = altNodeSize;
-      }
-    }
-                  
+                        
     if(treedata.nFeatures() < RF_op.mTry) {
       cerr << "Not enough features (" << treedata.nFeatures()-1 << ") to test with mtry = " 
 	   << RF_op.mTry << " features per split" << endl;
@@ -567,10 +554,9 @@ int main(const int argc, char* const argv[]) {
       return EXIT_FAILURE;
     }
 
-    cout << "== " << RF_op.nPerms << " RFs; " << RF_op.nTrees << " trees per RF; " 
-	 << RF_op.mTry << " features tested per split; minimum node size of " << RF_op.nodeSize << endl;
+    //cout << "== " << RF_op.nPerms << " RFs; " << RF_op.nTrees << " trees per RF; " 
+    //	 << RF_op.mTry << " features tested per split; minimum node size of " << RF_op.nodeSize << endl;
     
-      
     ////////////////////////////////////////////////////////////////////////
     //  STEP 1 -- MULTIVARIATE ASSOCIATIONS WITH RANDOM FOREST ENSEMBLES  //
     ////////////////////////////////////////////////////////////////////////     
@@ -691,17 +677,17 @@ int main(const int argc, char* const argv[]) {
 
     if( writeAssociationsToFile ) {
     
-      for(size_t featureIdx = 0; featureIdx < treedata.nFeatures(); ++featureIdx) {
+      for ( size_t featureIdx = 0; featureIdx < treedata.nFeatures(); ++featureIdx ) {
         
-	if(pValues[featureIdx] > gen_op.pValueThreshold) {
+	if ( pValues[featureIdx] > gen_op.pValueThreshold ) {
           continue;
 	}
         
-        if(refIcs[featureIdx] == targetIdx) {
+        if ( refIcs[featureIdx] == targetIdx ) {
           continue;
         }
         
-        if(RF_op.nPerms > 1) {
+        if ( RF_op.nPerms > 1 ) {
 	  toAssociationFile << fixed << targetName.c_str() << "\t" << treedata.getFeatureName(refIcs[featureIdx]).c_str() 
 			    << "\t" << pValues[featureIdx] << "\t" << importanceValues[featureIdx] << "\t"
                             << treedata.pearsonCorrelation(targetIdx,refIcs[featureIdx]) << endl;
@@ -762,7 +748,7 @@ void executeRandomForestFilter(Treedata& treedata,
     }
 
     StochasticForest SF(&treedata,targetIdx,op.nTrees);
-    SF.learnRF(op.mTry,op.nodeSize,useContrasts,op.isOptimizedNodeSplit);
+    SF.learnRF(op.mTry,op.nMaxLeaves,op.nodeSize,useContrasts,op.isOptimizedNodeSplit);
     size_t nNodesInForest = SF.nNodes();
     nNodesInAllForests += nNodesInForest;
     importanceMat[permIdx] = SF.featureImportance();
@@ -774,8 +760,8 @@ void executeRandomForestFilter(Treedata& treedata,
     for(size_t featureIdx = 0; featureIdx < treedata.nFeatures(); ++featureIdx) {
     
       size_t nRealSamples;
-      vector<num_t> fSample(op.nPerms, datadefs::NUM_NAN );
-      vector<num_t> cSample(op.nPerms, datadefs::NUM_NAN );
+      vector<num_t> fSample(op.nPerms);
+      vector<num_t> cSample(op.nPerms);
       for(size_t permIdx = 0; permIdx < op.nPerms; ++permIdx) {
         fSample[permIdx] = importanceMat[permIdx][featureIdx];
         cSample[permIdx] = importanceMat[permIdx][featureIdx + treedata.nFeatures()];
