@@ -16,6 +16,7 @@ public:
 
   // !! Documentation: ... then, on the public side, learning would become collapsed into a single overloaded function learn(...)
   void learnRF(const size_t mTry,
+	       const size_t nMaxLeaves,
 	       const size_t nodeSize,
 	       const bool useContrasts,
 	       const bool isOptimizedNodeSplit);
