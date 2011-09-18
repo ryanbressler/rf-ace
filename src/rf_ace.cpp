@@ -589,7 +589,12 @@ int main(const int argc, char* const argv[]) {
       // Save the kept and removed features, and remember to accumulate the counter
       for ( size_t featureIdx = 0; featureIdx < nFeatures; ++featureIdx ) {
 	
-	if (featureIdx == targetIdx || pValues[featureIdx] <= gen_op.pValueThreshold ) {
+	//if ( featureIdx == targetIdx ) {
+	//  cout << treedata.getFeatureName(targetIdx) << endl;
+	//  targetIdx = nKeepFeatures;
+	//}
+
+	if ( featureIdx == targetIdx || pValues[featureIdx] <= gen_op.pValueThreshold ) {
 	  keepFeatureIcs.push_back(featureIdx);
 	  pValues[nKeepFeatures] = pValues[featureIdx];
 	  importanceValues[nKeepFeatures] = importanceValues[featureIdx];
@@ -599,14 +604,18 @@ int main(const int argc, char* const argv[]) {
 	  removedFeatures.push_back(treedata.getFeatureName(featureIdx));
 	}
       }
-
+      
       // Resize containers
       treedata.keepFeatures( keepFeatureIcs );
       pValues.resize( keepFeatureIcs.size() );
       importanceValues.resize ( keepFeatureIcs.size() );
+      set<size_t> foo;
+      treedata.getMatchingTargetIcs(targetName,foo);
+      targetIdx = *foo.begin();
+      //cout << treedata.getFeatureName(targetIdx);
       
       // Reassign target index variable point to the target, which is the last feature in the list
-      targetIdx = keepFeatureIcs.size() - 1;
+      //targetIdx = keepFeatureIcs.size() - 1;
 
       // Print some statistics
       cout << "DONE, " << treedata.nFeatures() << " / " << treedata_copy.nFeatures() << " features ( "
@@ -629,6 +638,10 @@ int main(const int argc, char* const argv[]) {
       if ( !gen_op.noFilter ) {
 	treedata_test.keepFeatures(keepFeatureIcs);
       }
+
+      //cout << treedata.getFeatureName(targetIdx) << " " << treedata_test.getFeatureName(targetIdx) << " " << targetName << endl;
+      assert( treedata.getFeatureName(targetIdx) == targetName );
+      assert( treedata_test.getFeatureName(targetIdx) == targetName );
 
       // An assertion to check that the train and test matrices have features in the same order
       assert(treedata.nFeatures() == treedata_test.nFeatures());
@@ -677,18 +690,18 @@ int main(const int argc, char* const argv[]) {
           continue;
 	}
         
-        if ( refIcs[featureIdx] == targetIdx ) {
+        if ( refIcs[featureIdx] == refIcs[targetIdx] ) {
           continue;
         }
         
         if ( RF_op.nPerms > 1 ) {
 	  toAssociationFile << fixed << targetName.c_str() << "\t" << treedata.getFeatureName(refIcs[featureIdx]).c_str() 
 			    << "\t" << pValues[featureIdx] << "\t" << importanceValues[featureIdx] << "\t"
-                            << treedata.pearsonCorrelation(targetIdx,refIcs[featureIdx]) << endl;
+                            << treedata.pearsonCorrelation(refIcs[targetIdx],refIcs[featureIdx]) << endl;
 	} else {
           toAssociationFile << fixed << targetName.c_str() << "\t" << treedata.getFeatureName(refIcs[featureIdx]).c_str() 
 			    << "\tNA\t" << importanceValues[featureIdx] << "\t"
-			    << treedata.pearsonCorrelation(targetIdx,refIcs[featureIdx]) << endl;
+			    << treedata.pearsonCorrelation(refIcs[targetIdx],refIcs[featureIdx]) << endl;
         }    
       }
     }
