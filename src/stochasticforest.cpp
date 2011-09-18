@@ -628,17 +628,23 @@ vector<num_t> StochasticForest::featureImportance() {
       StochasticForest::percolateSampleIcsAtRandom(treeData_,featureIdx,rootNodes_[treeIdx],oobMatrix_[treeIdx],trainIcs);
       num_t permutedTreeImpurity;
       StochasticForest::treeImpurity(treeData_,trainIcs,permutedTreeImpurity);
-      if(fabs(treeImpurity) > datadefs::EPS) {
+      if ( fabs( treeImpurity ) > datadefs::EPS) {
         importance[featureIdx] += nNewOobSamples * (permutedTreeImpurity - treeImpurity) / treeImpurity;
       }
-      
+      //cout << treeData_->getFeatureName(featureIdx) << " += " << importance[featureIdx] << endl;
     }
       
   }
   
-  for(size_t featureIdx = 0; featureIdx < nAllFeatures; ++featureIdx) {
+  for ( size_t featureIdx = 0; featureIdx < nAllFeatures; ++featureIdx ) {
     //importance[featureIdx] *= 100.0*nTrees_/nNodesInForest;//1.0*nNodesInForest/nTrees_; //nContrastsInForest
-    importance[featureIdx] /= nOobSamples; //nRealFeatures
+    //cout << "I(" << treeData_->getFeatureName(featureIdx) << ") = " << importance[featureIdx] << endl;
+    if ( fabs( importance[featureIdx] ) < datadefs::EPS ) {
+      importance[featureIdx] = datadefs::NUM_NAN;
+    } else {
+      importance[featureIdx] /= nOobSamples;
+    }
+    //cout << "I(" << treeData_->getFeatureName(featureIdx) << ") = " << importance[featureIdx] << endl;
   }
 
   return(importance);

@@ -582,6 +582,21 @@ void datadefs::regularized_betainc(const datadefs::num_t x,
 // !! Legibility: this function contains nested control flow that isn't immediately
 // !! obvious to the reader. Consider refactoring.
 
+// A modified implementation of the original u-test. This version accumulates the u-score if
+// 
+//   x is positive and x > y
+//   OR 
+//   x is positive and y is NaN
+//
+// x accumulates sample if 
+// 
+//   x is not NaN
+//
+// y accumulates sample ALWAYS, regardless of its value
+//
+// After accumulation of the u-score the p-value is computed with the normal approximation, 
+// which is accurate if the sample size is large enough
+
 void datadefs::utest(vector<datadefs::num_t> const& x,
                      vector<datadefs::num_t> const& y,
                      datadefs::num_t& pvalue) {
@@ -593,7 +608,13 @@ void datadefs::utest(vector<datadefs::num_t> const& x,
   for ( size_t i = 0; i < x.size(); ++i ) {
     
     if ( !datadefs::isNAN(x[i]) ) {
+
       ++m;
+
+      if ( x[i] < 0.0 ) {
+	continue;
+      }
+
       for ( size_t j = 0; j < y.size(); ++j ) {
         
         if ( datadefs::isNAN(y[j]) || x[i] > y[j] ) {
@@ -604,6 +625,11 @@ void datadefs::utest(vector<datadefs::num_t> const& x,
         }
       }
     }
+  }
+
+  if ( m < 5 ) {
+    pvalue = 1;
+    return;
   }
   
   //n /= m;

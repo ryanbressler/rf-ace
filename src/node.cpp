@@ -57,24 +57,14 @@ void Node::setSplitter(size_t splitter, num_t threshold) {
   hasChildren_ = true;
 }
 
-
-// !! Cruft: remove this after verifying the inline representation in our
-// !! header file is sufficient.
-/*
-  int Node::getSplitter() {
-  assert(hasChildren_);
-  return(splitter_);
-  }
-*/
-
 Node* Node::percolateData(num_t value) {
 
-  if(!hasChildren_) { return(this); }
+  if ( !hasChildren_ ) { return( this ); }
 
-  if(isSplitterNumerical_) {
-    if(value <= threshold_) { return(leftChild_); } else { return(rightChild_); }
+  if ( isSplitterNumerical_ ) {
+    if ( value <= threshold_ ) { return( leftChild_ ); } else { return( rightChild_ ); }
   } else {
-    if(classSet_.find(value) != classSet_.end()) { return(leftChild_); } else { return(rightChild_); }
+    if ( classSet_.find(value) != classSet_.end() ) { return( leftChild_ ); } else { return( rightChild_ ); }
   }
 }
 
@@ -82,22 +72,22 @@ Node* Node::percolateData(num_t value) {
 // !! variable (hasChildren_) is just asking for bugs. If you really do want to
 // !! use hasChildren as a resource lock, at the very least drop an assert here.
 Node* Node::leftChild() {
-  if(hasChildren_) {
-    return(leftChild_);
-  } else {
-    return(NULL);
-  }
+  //assert( hasChildren_ ) {
+  return( leftChild_ );
+  //} else {
+  //return(NULL);
+  //}
 }
 
 // !! Inefficient: just use NULL as a sentinel here. Proxying through another
 // !! variable (hasChildren_) is just asking for bugs. If you really do want to
 // !! use hasChildren as a resource lock, at the very least drop an assert here.
 Node* Node::rightChild() {
-  if(hasChildren_) {
-    return(rightChild_);
-  } else {
-    return(NULL);
-  }
+  //assert( hasChildren_ );
+  return( rightChild_ );
+  //} else {
+  //  return(NULL);
+  //}
 }
 
 // !! Documentation: walks the number of nodes downwards, in linear time and
@@ -225,6 +215,22 @@ void Node::recursiveNodeSplit(Treedata* treeData,
     return;
   }
 
+  if ( false ) {
+    cout << "Out of ";
+    for ( size_t i = 0; i < featureSampleIcs.size(); ++i ) {
+      cout << " " << treeData->getFeatureName(featureSampleIcs[i]);
+    }
+    cout << endl;
+    cout << " ---- Feature " << treeData->getFeatureName(splitFeatureIdx) << " splits the data: [";
+    for ( size_t i = 0; i < sampleIcs_left.size(); ++i ) {
+      cout << " " << treeData->getRawFeatureData(targetIdx,sampleIcs_left[i]);
+    }
+    cout << " ] <==> [ ";
+    for ( size_t i = 0; i < sampleIcs_right.size(); ++i ) {
+      cout << " " << treeData->getRawFeatureData(targetIdx,sampleIcs_right[i]);
+    }
+    cout << " ] FITNESS: " << splitFitness << endl;
+  }
      
   if ( treeData->isFeatureNumerical(splitFeatureIdx) ) {
     //cout << "num splitter" << endl;
@@ -267,6 +273,11 @@ bool Node::regularSplitterSeek(Treedata* treeData,
     //vector<num_t> newSplitFeatureData;
     size_t newSplitFeatureIdx = featureSampleIcs[i];
     //bool isFeatureNumerical = treeData->isFeatureNumerical(newSplitFeatureIdx);
+
+    //Neither the real nor the contrast feature can appear in the tree as splitter
+    if ( newSplitFeatureIdx == targetIdx ) {
+      continue;
+    }
 
     num_t newSplitFitness;
     vector<size_t> newSampleIcs_left, newSampleIcs_right;

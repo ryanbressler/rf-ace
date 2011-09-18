@@ -35,14 +35,10 @@ public:
   //Given a value, descends to either one of the child nodes, if existing, otherwise returns a pointer to the current node
   Node* percolateData(num_t value);
 
-  //void setLeafTrainPrediction(const num_t trainPrediction);
   num_t getLeafTrainPrediction();
 
-  //void accumulateLeafTestPredictionError(const num_t newTestData);
-  //void eraseLeafTestPredictionError();
-
   //Logic test whether the node has children or not
-  inline bool hasChildren() { return(hasChildren_); }
+  inline bool hasChildren() { return( hasChildren_ ); }
 
   Node* leftChild();
   Node* rightChild();
@@ -50,10 +46,6 @@ public:
   size_t nNodes();
 
   enum LeafPredictionFunctionType { LEAF_MEAN, LEAF_MODE, LEAF_GAMMA };
-
-  //Helper functions
-  //void print();
-  //void print_compact();
 
 #ifndef TEST__
 protected:

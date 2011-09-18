@@ -306,12 +306,12 @@ void Treedata::readARFF(ifstream& featurestream, vector<vector<string> >& rawMat
   isFeatureNumerical.clear();
   
   //Read one line from the ARFF file
-  while(getline(featurestream,row)) {
+  while ( getline(featurestream,row) ) {
 
     //This is the final branch: once relation and attributes are read, and we find data header, we'll start reading the data in 
-    if(hasData && hasRelation) {
+    if ( hasData && hasRelation ) {
       //There must be at least two attributes, otherwise the ARFF file makes no sense
-      if(nFeatures < 2) {
+      if ( nFeatures < 2 ) {
         cerr << "too few attributes ( < 2 ) found from the ARFF file" << endl;
         assert(false);
       }
@@ -395,7 +395,7 @@ void Treedata::parseARFFattribute(const string& str, string& attributeName, bool
   getline(ss,attributeType);
 
   //string prefix;
-  if(attributeType == "real") {
+  if(datadefs::toUpperCase(attributeType) == "NUMERIC" || datadefs::toUpperCase(attributeType) == "REAL" ) {
     isFeatureNumerical = true;
   } else {
     isFeatureNumerical = false;
