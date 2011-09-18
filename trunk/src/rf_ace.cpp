@@ -227,10 +227,11 @@ private:
 void printHeader() {
   cout << endl;
   cout << " ------------------------------------------------------- " << endl;
-  cout << "|         RF-ACE v0.8.0, September 8th 2011             |" << endl;
+  cout << "|         RF-ACE v0.8.2, September 16th 2011            |" << endl;
   cout << "|                                                       |" << endl;
-  cout << "|  Project page: http://code.google.com/p/rf-ace        |" << endl;
+  cout << "|    Project page: http://code.google.com/p/rf-ace      |" << endl;
   cout << " ------------------------------------------------------- " << endl;
+  cout << endl;
 }
 
 void printHelp(const General_options& geno, const RF_options& rfo, const GBT_options& gbto) {
@@ -570,28 +571,25 @@ int main(const int argc, char* const argv[]) {
     //  STEP 2 ( OPTIONAL ) -- FEATURE FILTERING WITH P-VALUES  //
     //////////////////////////////////////////////////////////////
     
-    // We keep at least the target feature itself
-    vector<size_t> keepFeatureIcs(1);
-    
+
+    vector<size_t> keepFeatureIcs;    
     // If filtering is to be applied ...
     if(!gen_op.noFilter) {
       cout << "    => Filtering features... " << flush;
       size_t nFeatures = treedata.nFeatures();
-
-      // First kept feature is the target itself
-      keepFeatureIcs[0] = targetIdx;
 
       //Store removed features and their indices here, just in case
       vector<string> removedFeatures;
       vector<size_t> removedFeatureIcs;
 
       // So we've already kept the target, hence start counting from 1
-      size_t nKeepFeatures = 1;
+      size_t nKeepFeatures = 0;
 
       // Go through each feature, and keep those having p-value higher than the threshold. 
-      // Save the kept and removed feeatures, and remember to accumulate the counter
-      for(size_t featureIdx = 0; featureIdx < nFeatures; ++featureIdx) {
-	if(featureIdx != targetIdx && pValues[featureIdx] < gen_op.pValueThreshold) {
+      // Save the kept and removed features, and remember to accumulate the counter
+      for ( size_t featureIdx = 0; featureIdx < nFeatures; ++featureIdx ) {
+	
+	if (featureIdx == targetIdx || pValues[featureIdx] <= gen_op.pValueThreshold ) {
 	  keepFeatureIcs.push_back(featureIdx);
 	  pValues[nKeepFeatures] = pValues[featureIdx];
 	  importanceValues[nKeepFeatures] = importanceValues[featureIdx];
@@ -604,17 +602,13 @@ int main(const int argc, char* const argv[]) {
 
       // Resize containers
       treedata.keepFeatures( keepFeatureIcs );
-      pValues.resize( nKeepFeatures );
-      importanceValues.resize ( nKeepFeatures );
+      pValues.resize( keepFeatureIcs.size() );
+      importanceValues.resize ( keepFeatureIcs.size() );
       
-      // Reset these values for the target to NaNs, just in case
-      pValues[0] = datadefs::NUM_NAN;
-      importanceValues[0] = datadefs::NUM_NAN;
+      // Reassign target index variable point to the target, which is the last feature in the list
+      targetIdx = keepFeatureIcs.size() - 1;
 
-      // Reassign target index variable point to the first kept feature, which is the target
-      targetIdx = 0;
-
-      //Print some statistics
+      // Print some statistics
       cout << "DONE, " << treedata.nFeatures() << " / " << treedata_copy.nFeatures() << " features ( "
 	   << 100.0 * treedata.nFeatures() / treedata_copy.nFeatures() << " % ) left " << endl;
     }
@@ -670,10 +664,10 @@ int main(const int argc, char* const argv[]) {
     }
     cout << endl;
             
-    vector<size_t> refIcs(treedata.nFeatures());
-    bool isIncreasingOrder = false;
-    datadefs::sortDataAndMakeRef(isIncreasingOrder,importanceValues,refIcs); // BUG
-    datadefs::sortFromRef<num_t>(pValues,refIcs);
+    vector<size_t> refIcs( treedata.nFeatures() );
+    bool isIncreasingOrder = true;
+    datadefs::sortDataAndMakeRef(isIncreasingOrder,pValues,refIcs); // BUG
+    datadefs::sortFromRef<num_t>(importanceValues,refIcs);
 
     if( writeAssociationsToFile ) {
     
@@ -758,7 +752,7 @@ void executeRandomForestFilter(Treedata& treedata,
 
   if(op.nPerms > 1) {
     for(size_t featureIdx = 0; featureIdx < treedata.nFeatures(); ++featureIdx) {
-    
+
       size_t nRealSamples;
       vector<num_t> fSample(op.nPerms);
       vector<num_t> cSample(op.nPerms);
@@ -766,6 +760,7 @@ void executeRandomForestFilter(Treedata& treedata,
         fSample[permIdx] = importanceMat[permIdx][featureIdx];
         cSample[permIdx] = importanceMat[permIdx][featureIdx + treedata.nFeatures()];
       }
+      
       datadefs::utest(fSample,cSample,pValues[featureIdx]);
       datadefs::mean(fSample,importanceValues[featureIdx],nRealSamples);
     }
