@@ -554,10 +554,9 @@ int main(const int argc, char* const argv[]) {
       cerr << "Not enough samples (" << treedata.nSamples() << ") to perform a single split" << endl;
       return EXIT_FAILURE;
     }
-
-    //cout << "== " << RF_op.nPerms << " RFs; " << RF_op.nTrees << " trees per RF; " 
-    //	 << RF_op.mTry << " features tested per split; minimum node size of " << RF_op.nodeSize << endl;
     
+
+
     ////////////////////////////////////////////////////////////////////////
     //  STEP 1 -- MULTIVARIATE ASSOCIATIONS WITH RANDOM FOREST ENSEMBLES  //
     ////////////////////////////////////////////////////////////////////////     
@@ -567,11 +566,11 @@ int main(const int argc, char* const argv[]) {
     executeRandomForestFilter(treedata,targetIdx,RF_op,pValues,importanceValues);
     cout << "DONE" << endl;
 
+
+
     //////////////////////////////////////////////////////////////
     //  STEP 2 ( OPTIONAL ) -- FEATURE FILTERING WITH P-VALUES  //
     //////////////////////////////////////////////////////////////
-    
-
     vector<size_t> keepFeatureIcs;    
     // If filtering is to be applied ...
     if(!gen_op.noFilter) {
@@ -612,10 +611,7 @@ int main(const int argc, char* const argv[]) {
       set<size_t> foo;
       treedata.getMatchingTargetIcs(targetName,foo);
       targetIdx = *foo.begin();
-      //cout << treedata.getFeatureName(targetIdx);
-      
-      // Reassign target index variable point to the target, which is the last feature in the list
-      //targetIdx = keepFeatureIcs.size() - 1;
+      assert( targetName == treedata.getFeatureName(targetIdx) );
 
       // Print some statistics
       cout << "DONE, " << treedata.nFeatures() << " / " << treedata_copy.nFeatures() << " features ( "
@@ -657,8 +653,7 @@ int main(const int argc, char* const argv[]) {
 
 	for(size_t i = 0; i < prediction.size(); ++i) {
 	  toPredictionFile << targetName.c_str() << "\t" << "sampleID" << "\t" << treedata_test.getRawFeatureData(targetIdx,i) 
-			   << "\t" << prediction[i] << "\t" << setprecision(3) << confidence[i] << endl;
-	  
+			   << "\t" << prediction[i] << "\t" << setprecision(3) << confidence[i] << endl;	  
 	}
        
       } else {
@@ -677,31 +672,35 @@ int main(const int argc, char* const argv[]) {
     }
     cout << endl;
             
-    vector<size_t> refIcs( treedata.nFeatures() );
-    bool isIncreasingOrder = true;
-    datadefs::sortDataAndMakeRef(isIncreasingOrder,pValues,refIcs); // BUG
-    datadefs::sortFromRef<num_t>(importanceValues,refIcs);
-
     if( writeAssociationsToFile ) {
-    
-      for ( size_t featureIdx = 0; featureIdx < treedata.nFeatures(); ++featureIdx ) {
-        
-	if ( pValues[featureIdx] > gen_op.pValueThreshold ) {
+
+      vector<size_t> refIcs( treedata.nFeatures() );
+      bool isIncreasingOrder = true;
+      datadefs::sortDataAndMakeRef(isIncreasingOrder,pValues,refIcs); // BUG
+      datadefs::sortFromRef<num_t>(importanceValues,refIcs);
+      //targetIdx = refIcs[targetIdx];
+      
+      assert( targetName == treedata.getFeatureName(targetIdx) );
+
+      for ( size_t i = 0; i < refIcs.size(); ++i ) {
+	size_t featureIdx = refIcs[i];
+
+	if ( pValues[i] > gen_op.pValueThreshold ) {
           continue;
 	}
         
-        if ( refIcs[featureIdx] == refIcs[targetIdx] ) {
+        if ( featureIdx == targetIdx ) {
           continue;
         }
         
         if ( RF_op.nPerms > 1 ) {
-	  toAssociationFile << fixed << targetName.c_str() << "\t" << treedata.getFeatureName(refIcs[featureIdx]).c_str() 
-			    << "\t" << pValues[featureIdx] << "\t" << importanceValues[featureIdx] << "\t"
-                            << treedata.pearsonCorrelation(refIcs[targetIdx],refIcs[featureIdx]) << endl;
+	  toAssociationFile << fixed << targetName.c_str() << "\t" << treedata.getFeatureName(featureIdx).c_str() 
+			    << "\t" << pValues[i] << "\t" << importanceValues[i] << "\t"
+			    << treedata.pearsonCorrelation(targetIdx,featureIdx) << endl;
 	} else {
-          toAssociationFile << fixed << targetName.c_str() << "\t" << treedata.getFeatureName(refIcs[featureIdx]).c_str() 
-			    << "\tNA\t" << importanceValues[featureIdx] << "\t"
-			    << treedata.pearsonCorrelation(refIcs[targetIdx],refIcs[featureIdx]) << endl;
+	  toAssociationFile << fixed << targetName.c_str() << "\t" << treedata.getFeatureName(featureIdx).c_str() 
+			    << "\tNA\t" << importanceValues[i] << "\t"
+			    << treedata.pearsonCorrelation(targetIdx,featureIdx) << endl;
         }    
       }
     }
