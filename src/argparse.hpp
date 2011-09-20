@@ -23,7 +23,7 @@ public:
       throw ERRNO_INVALID_ARGUMENT;
     }
 
-    string currArg;
+    string currArg = "";
     for (int i = 0; i < argc; ++i) {
       
       try {
@@ -93,6 +93,10 @@ public:
                                             //  that should never be hit by
                                             //  correct code.
       }
+    }
+    if (!currArg.empty()) {
+      mappedArgs[currArg] = string("");
+      currArg = string("");
     }
 
     /*
