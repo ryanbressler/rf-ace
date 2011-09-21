@@ -149,13 +149,13 @@ datadefs::num_t datadefs::str2num(string& str) {
   ss >> ret;
   
   if (ss.fail()) {  // Ensure reading didn't fail
-    cerr << "WARNING: parameter '" << str
+    cerr << "datadefs::str2num: WARNING: parameter '" << str
 	 << "' could not be read properly. *THIS MAY CAUSE SPURIOUS RESULTS!*"
 	 << endl;
     ret = 0.0;
     
   } else if (!ss.eof()) {   // Ensure eofbit is set
-    cerr << "WARNING: parameter '" << str
+    cerr << "datadefs::str2num: WARNING: parameter '" << str
 	 << "' was only partially read. *THIS MAY CAUSE SPURIOUS RESULTS!*"
 	 << endl;
     
