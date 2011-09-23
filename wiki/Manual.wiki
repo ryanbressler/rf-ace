@@ -50,7 +50,7 @@ Sample headers are not constrained, except that they must not contain preambles 
 
 [http://www.cs.waikato.ac.nz/~ml/weka/arff.html ARFF specification].      
 
-= Usage =
+= Help =
 The following examples follow Linux syntax. Type 
 {{{
 bin/rf_ace --help
@@ -59,101 +59,62 @@ or
 {{{
 bin/rf_ace -h
 }}}
-to bring up help:
-{{{
-REQUIRED ARGUMENTS:
- -I / --input        input feature file (AFM or ARFF)
- -i / --target       target, specified as integer or string that is to be matched with the content of input
- -O / --output       output association file
+to bring up help, describing all the required and optional arguments one can set for RF-ACE analysis.
 
-OPTIONAL ARGUMENTS:
- -n / --ntrees       number of trees per RF (default nsamples/nrealsamples)
- -m / --mtry         number of randomly drawn features per node split (default sqrt(nfeatures))
- -s / --nodesize     minimum number of train samples per node, affects tree depth (default max{5,nsamples/20})
- -p / --nperms       number of Random Forests (default 50)
- -t / --pthreshold   p-value threshold below which associations are listed (default 0.1)
- -g / --gbt          Enable (1 == YES) Gradient Boosting Trees, a subsequent filtering procedure (default 0 == NO)
-}}} 
-
-So all that is required is an input file (`-I/--input`), either of type `.arff` or `.afm`, and a target (`-i/--target`) to build the RF-ACE model upon. Target in this case corresponds to a feature in the input file, and it can be identified with an index corresponding to it's order of appearance in the file, or with it's name. Thus, if the target is `N:age` (we would be looking for features associated with age) existing on row `123` (0-base and omitting the header row), one execute RF-ACE by typing
+= Association analysis =
+Minimum requirement to running RF-ACE for association studies is an input file (`-I/--input`), either of type `.arff` or `.afm`, a target (`-i/--target`) to build the RF-ACE model upon, and output association file (`-O / --associations`). Target in this case corresponds to a feature in the input file, and it can be identified with an index corresponding to it's order of appearance in the file, or with it's name. Thus, if the target is called `FOXA1` existing on row `123` (0-base and omitting the header row), one execute RF-ACE by typing
 {{{
-bin/rf_ace --input featurematrix.afm --target 123 --output associations.tsv 
+bin/rf_ace --input data/featurematrix.afm --target 123 --output associations.tsv 
 }}}
 or with the short-hand notation equivalently as
 {{{
-bin/rf_ace -I featurematrix.afm -i 123 -O associations.tsv 
+bin/rf_ace -I data/featurematrix.afm -i 123 -O associations.tsv 
 }}}
-or by using the header "N:age" instead of the index by typing
+or by using the header "FOXA1" instead of the index by typing
 {{{
-bin/rf_ace -I featurematrix.afm -i N:age -O associations.tsv
+bin/rf_ace -I data/featurematrix.afm -i FOXA1 -O associations.tsv
 }}}
-In case a provided (sub)string identifies multiple target candidates, RF-ACE will be executed serially for all target candidates, results catenated in the specified output file.
+In case a provided (sub)string identifies multiple target candidates, RF-ACE will be executed serially for all target candidates, results catenated in the specified output file. The example above produces the following print-out:
 
-The above will execute RF-ACE with the default parameters; as the help documentation points out, most of the parameters are estimated dynamically based on the data dimensions and content, so running RF-ACE with no information about the algorithm itself is possible.
-
-= Output = 
-The following call (assuming now the substring `age` uniquely identifies just one feature, `N:age`)
 {{{
-bin/rf_ace -I featurematrix.afm -i age -O associations.tsv
+General configuration:
+    nfeatures          = 35022
+    nsamples           = 476
+  --traindata          = data/featurematrix.afm
+  --target             = FOXA1 ( 2 hits! )
+  --associations       = associations.tsv
+  --testdata           = NOT SET
+  --predictions        = NOT SET
+
+Random Forest configuration:
+  --RF_ntrees          = 100
+  --RF_mtry            = 3502
+  --RF_maxleaves       = 10
+  --RF_nodesize        = 5
+  --RF_nperms          = 50
+
+Feature filter ENABLED. Configuration:
+  --pthresold          = 0.1
 }}}
-produces the output
+describing information about data dimensions, provided target (if not unique, the number of hits displayed), Random Forest configuration, and threshold for choosing which associations are significant (listed in the output) and which are not (omitted in the output) based on the p-value.
+
+Now that there are two targets matching the provided string "FOXA1", RF-ACE will be run twice. The output which follows right after the configuration print-outs look like follows
 {{{
+== 1/2 target N:GEXP:FOXA1:chr14:37130320:37133928:, regression CARTs. 433 / 476 samples ( 9.03361 % missing )
+    => Uncovering associations... DONE
+    => Filtering features... DONE, 205 / 35022 features ( 0.585346 % ) left
 
+== 1/2 target N:GEXP:FOXA1:chr14:37130320:37133928:, regression CARTs. 433 / 476 samples ( 9.03361 % missing )
+    => Uncovering associations... DONE
+    => Filtering features... DONE, 205 / 35022 features ( 0.585346 % ) left
 
- ---------------------------------------------------------------
-| RF-ACE -- efficient feature selection with heterogeneous data |
-|                                                               |
-|  Version:      RF-ACE v0.5.5, July 4th, 2011                  |
-|  Project page: http://code.google.com/p/rf-ace                |
-|  Contact:      timo.p.erkkila@tut.fi                          |
-|                kari.torkkola@gmail.com                        |
-|                                                               |
-|              DEVELOPMENT VERSION, BUGS EXIST!                 |
- ---------------------------------------------------------------
+== 2/2 target N:GNAB:FOXA1:chr14:37130320:37133928:, regression CARTs. 153 / 476 samples ( 67.8571 % missing )
+    => Uncovering associations... DONE
+    => Filtering features... DONE, 39 / 35022 features ( 0.111359 % ) left
 
-Reading file 'featurematrix.afm'
-File type is unknown -- defaulting to Annotated Feature Matrix (AFM)
-AFM orientation: features as rows
-
-RF-ACE parameter configuration:
-  --input      = featurematrix.afm
-  --nsamples   = 223 / 282 (20.922% missing)
-  --nfeatures  = 48912
-  --targetidx  = 123, header 'N:age'
-  --ntrees     = 356
-  --mtry       = 221
-  --nodesize   = 12
-  --nperms     = 50
-  --pthresold  = 0.1
-  --output     = associations.tsv
-
-Growing 50 Random Forests (RFs), please wait...
-  RF 1: 4880 nodes (avg. 13.7079 nodes / tree)
-  RF 2: 4810 nodes (avg. 13.5112 nodes / tree)
-  RF 3: 4856 nodes (avg. 13.6404 nodes / tree)
-  RF 4: 4994 nodes (avg. 14.0281 nodes / tree)
-  RF 5: 5036 nodes (avg. 14.1461 nodes / tree)
-  RF 6: 5016 nodes (avg. 14.0899 nodes / tree)
-  RF 7: 5132 nodes (avg. 14.4157 nodes / tree)
-...
-  RF 47: 4736 nodes (avg. 13.3034 nodes / tree)
-  RF 48: 5234 nodes (avg. 14.7022 nodes / tree)
-  RF 49: 4582 nodes (avg. 12.8708 nodes / tree)
-  RF 50: 5210 nodes (avg. 14.6348 nodes / tree)
-50 RFs, 17800 trees, and 247516 nodes generated in 102.91 seconds (2405.17 nodes per second)
-Gradient Boosting Trees *DISABLED*
-
-Association file created. Format:
+Association file 'associations.tsv' created. Format:
 TARGET   PREDICTOR   P-VALUE   IMPORTANCE   CORRELATION
 
-Done.
+RF-ACE completed successfully.
 }}}
-
-If there are no associations found, the program would end as follows:
-{{{
-No significant associations found, quitting...
-}}}
-
-= RF-ACE configuration =
-
-Information will be added in the future
+containing all kinds of information about the target, how the analysis is making progress, how many features were filtered, what is the format of the output, etc. 
