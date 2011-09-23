@@ -104,10 +104,6 @@ Now that there are two targets matching the provided string "FOXA1", RF-ACE will
     => Uncovering associations... DONE
     => Filtering features... DONE, 205 / 35022 features ( 0.585346 % ) left
 
-== 1/2 target N:GEXP:FOXA1:chr14:37130320:37133928:, regression CARTs. 433 / 476 samples ( 9.03361 % missing )
-    => Uncovering associations... DONE
-    => Filtering features... DONE, 205 / 35022 features ( 0.585346 % ) left
-
 == 2/2 target N:GNAB:FOXA1:chr14:37130320:37133928:, regression CARTs. 153 / 476 samples ( 67.8571 % missing )
     => Uncovering associations... DONE
     => Filtering features... DONE, 39 / 35022 features ( 0.111359 % ) left
