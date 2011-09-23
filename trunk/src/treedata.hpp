@@ -91,7 +91,7 @@ private:
 
   void readFileType(string& fileName, FileType& fileType);
 
-  void readAFM(ifstream& featurestream, vector<vector<string> >& rawMatrix, vector<string>& featureHeaders, vector<bool>& isFeatureNumerical);
+  void readAFM(ifstream& featurestream, vector<vector<string> >& rawMatrix, vector<string>& featureHeaders, /* vector<string>& sampleHeaders, */ vector<bool>& isFeatureNumerical);
   void readARFF(ifstream& featurestream, vector<vector<string> >& rawMatrix, vector<string>& featureHeaders, vector<bool>& isFeatureNumerical);
 
   void parseARFFattribute(const string& str, string& attributeName, bool& isFeatureNumerical);

@@ -55,7 +55,9 @@ namespace datadefs {
   
   void strv2catv(vector<string>& strvec, vector<num_t>& catvec, map<string,num_t>& mapping, map<num_t,string>& backMapping);
   void strv2numv(vector<string>& strvec, vector<num_t>& numvec);
-  num_t str2num(string& str);
+  num_t str2num(const string& str);
+
+  string chomp(const string& str);
 
   //void mean(vector<num_t> const& data, num_t& mu, size_t& nreal);
 

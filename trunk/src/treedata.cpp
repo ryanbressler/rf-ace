@@ -182,12 +182,15 @@ void Treedata::readFileType(string& fileName, FileType& fileType) {
 
 }
 
-void Treedata::readAFM(ifstream& featurestream, vector<vector<string> >& rawMatrix, vector<string>& featureHeaders, vector<bool>& isFeatureNumerical) {
+void Treedata::readAFM(ifstream& featurestream, 
+		       vector<vector<string> >& rawMatrix, 
+		       vector<string>& featureHeaders, 
+		       //vector<string>& sampleHeaders,
+		       vector<bool>& isFeatureNumerical) {
 
   string field;
   string row;
 
-  //TODO: add Treedata::clearData(...)
   rawMatrix.clear();
   featureHeaders.clear();
   isFeatureNumerical.clear();
@@ -195,73 +198,53 @@ void Treedata::readAFM(ifstream& featurestream, vector<vector<string> >& rawMatr
   //Remove upper left element from the matrix as useless
   getline(featurestream,field,'\t');
 
-  //Count the number of columns (NEEDS REWORKING)
+  //Next read the first row, which should contain the column headers
   getline(featurestream,row);
-  stringstream ss(row);
-  size_t nColumns = 0;
+  stringstream ss( datadefs::chomp(row) );
   bool isFeaturesAsRows = true;
-  while(getline(ss,field,'\t')) {
-    if(isFeaturesAsRows && isValidFeatureHeader(field)) {
+  vector<string> columnHeaders;
+  while ( getline(ss,field,'\t') ) {
+
+    // If at least one of the column headers is a valid feature header, we assume features are stored as columns
+    if ( isFeaturesAsRows && isValidFeatureHeader(field) ) {
       isFeaturesAsRows = false;
     }
-    ++nColumns;
+    columnHeaders.push_back(field);
   }
 
-  //Count the number of rows
-  size_t nRows = 0;
-  while(getline(featurestream,row)) {
-    ++nRows;
-  }
+  // We should have reached the end of file. NOTE: failbit is set since the last element read did not end at '\t'
+  assert( ss.eof() );
+  //assert( !ss.fail() );
 
-  //Reset streams and remove upper left element from the matrix as useless
-  featurestream.clear();
-  featurestream.seekg(0, ios::beg);
-  getline(featurestream,field,'\t');
-  ss.clear();
-  ss.str("");
+  size_t nColumns = columnHeaders.size();
 
-  //These are temporary containers
-  vector<string> columnHeaders(nColumns);
-  vector<string> rowHeaders(nRows);
-  //vector<vector<string> > rawmatrix(nrows);
-  rawMatrix.resize(nRows);
-  for(size_t i = 0; i < nRows; ++i) {
-    rawMatrix[i] = columnHeaders;
-  }
-
-  //cout << "read " << rawmatrix.size() << " rows and " << rawmatrix[0].size() << " columns." << endl;
-
-  //Read first row into the stream
-  getline(featurestream,row);
-  ss << row;
-
-  //Read column headers from the stream
-  for(size_t i = 0; i < nColumns; ++i) {
-    getline(ss,columnHeaders[i],'\t');
-    //cout << '\t' << colheaders[i];
-  }
-  //cout << endl;
+  vector<string> rowHeaders;
+  vector<string> sampleHeaders; // THIS WILL BE DEFINED AS ONE OF THE INPUT ARGUMENTS
 
   //Go through the rest of the rows
-  for(size_t i = 0; i < nRows; ++i) {
+  while ( getline(featurestream,row) ) {
+
+    row = datadefs::chomp(row);
+
     //Read row from the stream
-    getline(featurestream,row);
     ss.clear();
     ss.str("");
 
-    //Read the string back to a stream (REDUNDANCY)
+    //Read the string back to a stream
     ss << row;
 
-    //Read one element from the row stream
-    getline(ss,rowHeaders[i],'\t');
-    //cout << rowheaders[i];
-    for(size_t j = 0; j < nColumns; ++j) {
-      getline(ss,rawMatrix[i][j],'\t');
-      //cout << '\t' << rawmatrix[i][j];
+    //Read the next row header from the stream
+    getline(ss,field,'\t');
+    rowHeaders.push_back(field);
+
+    vector<string> rawVector(nColumns);
+    for(size_t i = 0; i < nColumns; ++i) {
+      getline(ss,rawVector[i],'\t');
     }
-    //cout << endl;
+    assert(!ss.fail());
+    assert(ss.eof());
+    rawMatrix.push_back(rawVector);
   }
-  //cout << endl;
 
   //If the data is row-formatted...
   if(isFeaturesAsRows) {
@@ -269,6 +252,7 @@ void Treedata::readAFM(ifstream& featurestream, vector<vector<string> >& rawMatr
 
     //... and feature headers are row headers
     featureHeaders = rowHeaders;
+    sampleHeaders = columnHeaders;
 
   } else {
 
@@ -278,6 +262,7 @@ void Treedata::readAFM(ifstream& featurestream, vector<vector<string> >& rawMatr
       
     //... and feature headers are row headers
     featureHeaders = columnHeaders;
+    sampleHeaders = rowHeaders;
       
   }
 

@@ -116,7 +116,7 @@ void datadefs::strv2numv(vector<string>& strvec,
   assert(strvec.size() == numvec.size());
   
   for(size_t strIdx = 0; strIdx < strvec.size(); ++strIdx) {
-    //toupper(strvec[strIdx]);
+    //cout << strIdx << ": \"" << strvec[strIdx] << "\"" << endl;
     if(!datadefs::isNAN(strvec[strIdx])) {
       numvec[strIdx] = str2num(strvec[strIdx]);
     } else {
@@ -125,15 +125,8 @@ void datadefs::strv2numv(vector<string>& strvec,
   }
 }
 
-/**
- * Convert a string to a number using the intuitive solution, in base 10.
-
- !! Correctness: see the considerations raised here:
- http://stackoverflow.com/questions/194465/how-to-parse-a-string-to-an-int-in-c/6154614#6154614
-
- Refactor this method to conform to a more correct model for error handling.
-*/
-datadefs::num_t datadefs::str2num(string& str) {
+// Makes a copy of the string, chomps, and returns
+string datadefs::chomp(const string& str) {
 
   // Chop at the first newline character, if it exists
   int crIdx = str.find("\r");
@@ -143,8 +136,33 @@ datadefs::num_t datadefs::str2num(string& str) {
     terminatorIdx = lfIdx;
   }
 
+  string ret(str);
+
+  return( terminatorIdx != -1 ? ret.substr(0,terminatorIdx) : ret );
+}
+
+
+/**
+ * Convert a string to a number using the intuitive solution, in base 10.
+
+ !! Correctness: see the considerations raised here:
+ http://stackoverflow.com/questions/194465/how-to-parse-a-string-to-an-int-in-c/6154614#6154614
+
+ Refactor this method to conform to a more correct model for error handling.
+*/
+datadefs::num_t datadefs::str2num(const string& str) {
+
+  // Chop at the first newline character, if it exists
+  //int crIdx = str.find("\r");
+  //int lfIdx = str.find("\n");
+  //int terminatorIdx = crIdx;
+  //if (lfIdx != -1 && lfIdx < crIdx) {
+  //  terminatorIdx = lfIdx;
+  //}
+
   // Initialize and use the stringstream
-  stringstream ss(terminatorIdx != -1 ? str.substr(0,terminatorIdx) : str);
+  //stringstream ss(terminatorIdx != -1 ? str.substr(0,terminatorIdx) : str);
+  stringstream ss( datadefs::chomp(str) );
   datadefs::num_t ret;
   ss >> ret;
   
@@ -609,41 +627,36 @@ void datadefs::utest(vector<datadefs::num_t> const& x,
     
     if ( !datadefs::isNAN(x[i]) ) {
 
+      // If x is non-NaN, accumulate sample size
       ++m;
 
+      // If x is negative, don't accumulate the U-statistic
       if ( x[i] < 0.0 ) {
 	continue;
       }
 
+      // For nonnegative x, test each y
       for ( size_t j = 0; j < y.size(); ++j ) {
         
+	// If y is NaN or x is greater than y, accumulate the U-statistic
         if ( datadefs::isNAN(y[j]) || x[i] > y[j] ) {
-          //++n;
-          //if ( x[i] > y[j] ) {
 	  uvalue += 1;
-	  //}
         }
       }
     }
   }
 
+  // In case the sample size for x is too small, we set the p-value to 1.
+  // We could also proceed and notify about possibly unreliable p-value
   if ( m < 5 ) {
     pvalue = 1;
     return;
   }
-  
-  //n /= m;
-
-  //cout << m << "," << n << endl;
 
   num_t mu = 1.0 * m * n / 2.0;
   num_t s = sqrt( 1.0 * m * n * ( n + m + 1 ) / 12.0 );
-
-  //cout << uvalue << " " << mu << " " << s << endl;
-  //cout << datadefs::erf( (uvalue-mu) / (s*sqrt(2.0)) )  << endl;
   
   pvalue = 1.0 - 0.5 * ( 1 + datadefs::erf( (uvalue - mu) / (s * sqrt(2.0)) ) );
-  //cout << " ==> " << pvalue << endl;
 
 }
 

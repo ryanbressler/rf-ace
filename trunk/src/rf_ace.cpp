@@ -454,16 +454,18 @@ int main(const int argc, char* const argv[]) {
 
   ofstream toPredictionFile(gen_op.predictionOutput.c_str());
 
-  //Before starting number crunching, print values of parameters of RF-ACE
+  //Before number crunching, print values of parameters of RF-ACE
   int maxwidth = 19;
   cout << endl;
   cout << "RF-ACE parameter configuration:" << endl;
   cout << endl;
   cout << "General configuration:" << endl;
+  cout << "    nfeatures" << setw(10) << "" << "= " << treedata_copy.nFeatures() << endl;
+  cout << "    nsamples"  << setw(11) << "" << "= " << treedata_copy.nSamples() << endl; 
   cout << "  --" << gen_op.trainInput_l << setw( maxwidth - gen_op.trainInput_l.size() ) << ""
        << "= " << gen_op.trainInput << endl;
   cout << "  --" << gen_op.targetStr_l << setw( maxwidth - gen_op.targetStr_l.size() ) << ""
-       << "= " << gen_op.targetStr << endl;
+       << "= " << gen_op.targetStr; if (targetIcs.size() > 1) { cout << " ( " << targetIcs.size() << " hits! )" << endl; } else { cout << endl; }
   cout << "  --" << gen_op.associationOutput_l << setw( maxwidth - gen_op.associationOutput_l.size() ) << ""
        << "= "; if ( writeAssociationsToFile ) { cout << gen_op.associationOutput << endl; } else { cout << "NOT SET" << endl; }
   cout << "  --" << gen_op.testInput_l << setw( maxwidth - gen_op.testInput_l.size() ) << ""
