@@ -123,6 +123,13 @@ namespace datadefs {
                            vector<num_t> const& y,
                            num_t& corr);
 
+
+  vector<num_t> zerotrim(const vector<num_t>& x);
+
+  void print(const vector<num_t>& x);
+
+  void percentile(vector<num_t> x, const num_t alpha, num_t& prc);
+
   
   ////////////////////////////////////////////////////////////
   // DEPRECATED METHOD DECLARATIONS
@@ -136,8 +143,6 @@ namespace datadefs {
                            const size_t a, 
                            num_t& ibval);
 
-  //DEPRECATED
-  void percentile(vector<num_t> x, const num_t alpha, num_t& prc);
 
   
   ////////////////////////////////////////////////////////////
