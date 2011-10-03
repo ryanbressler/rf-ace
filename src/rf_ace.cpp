@@ -398,7 +398,9 @@ int main(const int argc, char* const argv[]) {
   Treedata treedata_copy(gen_op.trainInput);
   cout << "DONE" << endl;
 
+  //Check if the target(s) is specified as an index
   int integer;
+  bool isTargetAsIdx = false;
   if ( datadefs::isInteger(gen_op.targetStr,integer) ) {
 
     if ( integer < 0 || integer >= static_cast<int>( treedata_copy.nFeatures() ) ) {
@@ -406,9 +408,12 @@ int main(const int argc, char* const argv[]) {
       return EXIT_FAILURE;
     }
 
-    gen_op.targetStr = treedata_copy.getFeatureName( static_cast<size_t>( integer ) );
-  }
+    isTargetAsIdx = true;
+    gen_op.targetStr = treedata_copy.getFeatureName(static_cast<size_t>(integer));
 
+  }
+  
+  //Perform masking, if requested
   vector<size_t> keepFeatureIcs;
   if(gen_op.featureMaskInput != "") {
     cout << "Reading masking file '" << gen_op.featureMaskInput << "', please wait... " << flush;
@@ -418,13 +423,22 @@ int main(const int argc, char* const argv[]) {
   }
   cout << endl;
 
+  //Determine the number of features tested for each split
   if ( RF_op_copy.mTry == RF_DEFAULT_M_TRY ) {
     RF_op_copy.mTry = static_cast<size_t>( 0.1 * treedata_copy.nFeatures() );
   }
 
-  //Check which feature names match with the specified target identifier
+  //Check which feature names match with the specified target identifier.
+  //If the target is an index, force the 
   set<size_t> targetIcs;
-  treedata_copy.getMatchingTargetIcs(gen_op.targetStr,targetIcs);
+  if(isTargetAsIdx) {
+    size_t targetIdx;
+    treedata_copy.getMatchingTargetIdx(gen_op.targetStr,targetIdx);
+    targetIcs.insert(targetIdx);
+  } else {
+    treedata_copy.getMatchingTargetIcs(gen_op.targetStr,targetIcs);
+  }
+
   if(targetIcs.size() == 0) {
     cerr << "No features match the specified target identifier '" << gen_op.targetStr << "'" << endl;
     if ( gen_op.featureMaskInput != "" ) {
@@ -523,9 +537,16 @@ int main(const int argc, char* const argv[]) {
     size_t nRealSamples = treedata.nRealSamples(targetIdx);
     num_t realFraction = 1.0*nRealSamples / treedata.nSamples();
 
-    size_t maxwidth = 1 + static_cast<int>(targetIcs.size()) / 10;
+    size_t nDigits = 0;
+    size_t remainder = targetIcs.size();
+    while ( remainder > 0 ) {
+      remainder /= 10;
+      ++nDigits;
+    }
 
-    cout << "== " << setw(maxwidth) << iter << "/" << setw(maxwidth) << targetIcs.size() 
+    //size_t maxwidth = 1 + static_cast<int>(targetIcs.size()) / 10;
+
+    cout << "== " << setw(nDigits) << iter  << "/" << setw(nDigits) << targetIcs.size() 
 	 << " target " << treedata.getFeatureName(targetIdx) << ", " << flush;
     
     //If the target has no real samples, the program will just exit
@@ -610,9 +631,8 @@ int main(const int argc, char* const argv[]) {
       treedata.keepFeatures( keepFeatureIcs );
       pValues.resize( keepFeatureIcs.size() );
       importanceValues.resize ( keepFeatureIcs.size() );
-      set<size_t> foo;
-      treedata.getMatchingTargetIcs(targetName,foo);
-      targetIdx = *foo.begin();
+      size_t targetIdx;
+      treedata.getMatchingTargetIdx(targetName,targetIdx);
       assert( targetName == treedata.getFeatureName(targetIdx) );
 
       // Print some statistics
@@ -765,14 +785,28 @@ void executeRandomForestFilter(Treedata& treedata,
   }
 
   if(op.nPerms > 1) {
+
+    vector<num_t> cSample(op.nPerms);
+    for(size_t permIdx = 0; permIdx < op.nPerms; ++permIdx) {
+      vector<num_t> cVector(treedata.nFeatures());
+      for(size_t featureIdx = treedata.nFeatures(); featureIdx < 2*treedata.nFeatures(); ++featureIdx) {
+	cVector[featureIdx - treedata.nFeatures()] = importanceMat[permIdx][featureIdx];
+      }
+      //datadefs::print(datadefs::zerotrim(cVector));
+      datadefs::percentile(datadefs::zerotrim(cVector),0.95,cSample[permIdx]);
+      //cout << " " << cSample[permIdx];
+    }
+    //cout << endl;
+    //datadefs::print(cSample);
+
     for(size_t featureIdx = 0; featureIdx < treedata.nFeatures(); ++featureIdx) {
 
       size_t nRealSamples;
       vector<num_t> fSample(op.nPerms);
-      vector<num_t> cSample(op.nPerms);
+      //vector<num_t> cSample(op.nPerms);
       for(size_t permIdx = 0; permIdx < op.nPerms; ++permIdx) {
         fSample[permIdx] = importanceMat[permIdx][featureIdx];
-        cSample[permIdx] = importanceMat[permIdx][featureIdx + treedata.nFeatures()];
+        //cSample[permIdx] = importanceMat[permIdx][featureIdx + treedata.nFeatures()];
       }
       
       datadefs::utest(fSample,cSample,pValues[featureIdx]);

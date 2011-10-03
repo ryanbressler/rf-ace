@@ -104,24 +104,24 @@ protected:
 private:
 #endif
 
-  inline void cleanPairVectorFromNANs(const vector<num_t>& v1_copy,
-                                      const vector<num_t>& v2_copy,
+  inline void cleanPairVectorFromNANs(//const vector<num_t>& v1_copy,
+                                      //const vector<num_t>& v2_copy,
                                       vector<num_t>& v1,
                                       vector<num_t>& v2,
                                       vector<size_t>& mapIcs);
 
-  void numericalFeatureSplit(const vector<num_t>& tv_copy,
+  void numericalFeatureSplit(vector<num_t> tv,
                              const bool isTargetNumerical,
-                             const vector<num_t>& fv_copy,
+                             vector<num_t> fv,
                              const size_t min_split,
                              vector<size_t>& sampleIcs_left,
                              vector<size_t>& sampleIcs_right,
                              num_t& splitValue,
                              num_t& splitFitness);
 
-  void categoricalFeatureSplit(const vector<num_t>& tv_copy,
+  void categoricalFeatureSplit(vector<num_t> tv,
                                const bool isTargetNumerical,
-                               const vector<num_t>& fv_copy, /* MIN SPLIT MISSING (CHECK numericalFeatureSplit()) */
+                               vector<num_t> fv, /* MIN SPLIT MISSING (CHECK numericalFeatureSplit()) */
                                vector<size_t>& sampleIcs_left,
                                vector<size_t>& sampleIcs_right,
                                set<num_t>& categories_left,

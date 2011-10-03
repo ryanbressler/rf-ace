@@ -416,25 +416,21 @@ num_t Treedata::pearsonCorrelation(size_t featureidx1, size_t featureidx2) {
   return(r);
 }
 
-/*
-  bool Treedata::isPositiveInteger(const string& str, size_t& positiveInteger) {
-  stringstream ss(str);
-  if(ss >> positiveInteger && ss.eof()) {
-  return(true);
-  } else {
-  return(false);
+void Treedata::getMatchingTargetIdx(const string& targetStr, size_t& targetIdx) {
+  
+  bool isFound = false;
+
+  for(size_t featureIdx = 0; featureIdx < nFeatures_; ++featureIdx) {
+    if(features_[featureIdx].name == targetStr) {
+      assert(!isFound);
+      isFound = true;
+      targetIdx = featureIdx;
+    }
   }
-  }
-*/
+}
 
 void Treedata::getMatchingTargetIcs(const string& targetStr, set<size_t>& targetIcs) {
   targetIcs.clear();
-  //size_t positiveInteger;
-  //if(Treedata::isPositiveInteger(targetStr,positiveInteger)) {
-  //  if(positiveInteger < nFeatures_) {
-  //    targetIcs.insert(positiveInteger);
-  //  }
-  //} else { 
   for(size_t featureIdx = 0; featureIdx < nFeatures_; ++featureIdx) {
     string featureName(features_[featureIdx].name);
     if( featureName.find(targetStr) != string::npos) {

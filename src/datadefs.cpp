@@ -167,16 +167,17 @@ datadefs::num_t datadefs::str2num(const string& str) {
   ss >> ret;
   
   if (ss.fail()) {  // Ensure reading didn't fail
-    cerr << "datadefs::str2num: WARNING: parameter '" << str
-	 << "' could not be read properly. *THIS MAY CAUSE SPURIOUS RESULTS!*"
+    cerr << "datadefs::str2num: ERROR: parameter '" << str
+	 << "' could not be read properly. Quitting... "
 	 << endl;
+    assert(false);
     ret = 0.0;
     
   } else if (!ss.eof()) {   // Ensure eofbit is set
-    cerr << "datadefs::str2num: WARNING: parameter '" << str
-	 << "' was only partially read. *THIS MAY CAUSE SPURIOUS RESULTS!*"
+    cerr << "datadefs::str2num: ERROR: parameter '" << str
+	 << "' was only partially read. Quitting... "
 	 << endl;
-    
+    assert(false);
   }
   return(ret);
 }
@@ -734,15 +735,30 @@ void datadefs::pearson_correlation(vector<datadefs::num_t> const& x,
 
 }
 
+void datadefs::print(const vector<datadefs::num_t>& x) {
+  for(size_t i = 0; i < x.size(); ++i) {
+    cout << " " << x[i];
+  }
+  cout << endl;
+}
 
+vector<datadefs::num_t> datadefs::zerotrim(const vector<datadefs::num_t>& x) {
+  
+  vector<datadefs::num_t> trimmed(x.size());
 
-//DEPRECATED
+  size_t nNonZero = 0;
+  for(size_t i = 0; i < x.size(); ++i) {
+    if(fabs(x[i]) > datadefs::EPS) {
+      trimmed[nNonZero] = x[i];
+      ++nNonZero;
+    }
+  }
+  trimmed.resize(nNonZero);
+  return(trimmed);
+}
 
 // !! Documentation: computes the percentile for the value x, given an alpha
 // !! score and "prc." I have no idea what "prc" means, here.
-
-// !! Spurious deprecation: this isn't used in the existing codebase, but it
-// !! has value within the API. Can we consider it "deprecated?"
 void datadefs::percentile(vector<datadefs::num_t> x, 
                           const datadefs::num_t alpha, 
                           datadefs::num_t& prc) {

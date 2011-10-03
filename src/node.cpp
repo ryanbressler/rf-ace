@@ -268,6 +268,12 @@ bool Node::regularSplitterSeek(Treedata* treeData,
   splitFeatureIdx = nFeaturesForSplit;
   splitFitness = 0.0;
   
+  num_t newSplitFitness;
+  vector<size_t> newSampleIcs_left;
+  vector<size_t> newSampleIcs_right;
+  num_t newSplitValue;
+  set<num_t> newSplitValues_left;
+  
   for ( size_t i = 0; i < nFeaturesForSplit; ++i ) {
     
     //vector<num_t> newSplitFeatureData;
@@ -278,11 +284,6 @@ bool Node::regularSplitterSeek(Treedata* treeData,
     if ( newSplitFeatureIdx == targetIdx ) {
       continue;
     }
-
-    num_t newSplitFitness;
-    vector<size_t> newSampleIcs_left, newSampleIcs_right;
-    num_t newSplitValue;
-    set<num_t> newSplitValues_left;
 
     vector<num_t> featureData;
     treeData->getFeatureData(newSplitFeatureIdx,sampleIcs,featureData);
@@ -316,7 +317,6 @@ bool Node::regularSplitterSeek(Treedata* treeData,
       splitValues_left = newSplitValues_left;
       sampleIcs_left = newSampleIcs_left;
       sampleIcs_right = newSampleIcs_right;
-
     }    
 
   }
@@ -474,40 +474,45 @@ bool Node::optimizedSplitterSeek(Treedata* treeData,
 
 // !! Correctness: Um. This should be removed once the checks for NAN go in
 // !! place and a tolerable policy is created.
-inline void Node::cleanPairVectorFromNANs(const vector<num_t>& v1_copy, 
-                                          const vector<num_t>& v2_copy, 
+inline void Node::cleanPairVectorFromNANs(//const vector<num_t>& v1_copy, 
+                                          //const vector<num_t>& v2_copy, 
                                           vector<num_t>& v1, 
                                           vector<num_t>& v2, 
-                                          vector<size_t>& mapIcs) {
-  v1.clear();
-  v2.clear();
-  mapIcs.clear();
-  for(size_t i = 0; i < v1_copy.size(); ++i) {
-    if(!datadefs::isNAN(v1_copy[i]) && !datadefs::isNAN(v2_copy[i])) {
-      mapIcs.push_back(i);
-      v1.push_back(v1_copy[i]);
-      v2.push_back(v2_copy[i]);
+					  vector<size_t>& mapIcs) {
+  size_t n = v1.size();
+  //v1.resize(n);
+  //v2.resize(n);
+  mapIcs.resize(n);
+  size_t nReal = 0;
+  for(size_t i = 0; i < n; ++i) {
+    if(!datadefs::isNAN(v1[i]) && !datadefs::isNAN(v2[i])) {
+      mapIcs[nReal] = i;
+      v1[nReal] = v1[i];
+      v2[nReal] = v2[i];
+      ++nReal;
     }
   }
-
+  v1.resize(nReal);
+  v2.resize(nReal);
+  mapIcs.resize(nReal);
 }
 
 // !! Correctness, Inadequate Abstraction: kill this method with fire. Refactor, REFACTOR, _*REFACTOR*_.
-void Node::numericalFeatureSplit(const vector<num_t>& tv_copy,
+void Node::numericalFeatureSplit(vector<num_t> tv,
                                  const bool isTargetNumerical,
-                                 const vector<num_t>& fv_copy,
+                                 vector<num_t> fv,
                                  const size_t min_split,
                                  vector<size_t>& sampleIcs_left,
                                  vector<size_t>& sampleIcs_right,
                                  num_t& splitValue,
                                  num_t& splitFitness) {
 
-  assert(tv_copy.size() == fv_copy.size());
+  assert(tv.size() == fv.size());
 
-  vector<num_t> tv,fv;
+  //vector<num_t> tv,fv;
   vector<size_t> mapIcs;
  
-  Node::cleanPairVectorFromNANs(tv_copy,fv_copy,tv,fv,mapIcs);
+  Node::cleanPairVectorFromNANs(tv,fv,mapIcs);
 
   size_t n_tot = tv.size();
   size_t n_right = n_tot;
@@ -609,34 +614,36 @@ void Node::numericalFeatureSplit(const vector<num_t>& tv_copy,
   //cout << sampleIcs_left.size() << " " << sampleIcs_right.size() << " == " << n_tot << endl;
   assert(n_left + n_right == n_tot);
 
-  if(false) {
+  /*
+    if(false) {
     cout << "Numerical feature splits target [";
     for(size_t i = 0; i < sampleIcs_left.size(); ++i) {
-      cout << " " << tv_copy[sampleIcs_left[i]];
+    cout << " " << tv_copy[sampleIcs_left[i]];
     }
     cout << " ] <==> [";
     for(size_t i = 0; i < sampleIcs_right.size(); ++i) {
-      cout << " " << tv_copy[sampleIcs_right[i]];
+    cout << " " << tv_copy[sampleIcs_right[i]];
     }
     cout << " ]" << endl;
-  }
+    }
+  */
 }
 
 // !! Inadequate Abstraction: Refactor me.
-void Node::categoricalFeatureSplit(const vector<num_t>& tv_copy,
+void Node::categoricalFeatureSplit(vector<num_t> tv,
                                    const bool isTargetNumerical,
-                                   const vector<num_t>& fv_copy,
+                                   vector<num_t> fv,
                                    vector<size_t>& sampleIcs_left,
                                    vector<size_t>& sampleIcs_right,
                                    set<num_t>& categories_left,
                                    num_t& splitFitness) {
 
-  assert(tv_copy.size() == fv_copy.size());
+  assert(tv.size() == fv.size());
 
-  vector<num_t> tv,fv;
+  //vector<num_t> tv,fv;
   vector<size_t> mapIcs;
 
-  Node::cleanPairVectorFromNANs(tv_copy,fv_copy,tv,fv,mapIcs);
+  Node::cleanPairVectorFromNANs(tv,fv,mapIcs);
 
   size_t n_tot = tv.size();
   size_t n_right = n_tot;
@@ -802,17 +809,19 @@ void Node::categoricalFeatureSplit(const vector<num_t>& tv_copy,
     sampleIcs_left[i] = mapIcs[sampleIcs_left[i]];
   }
 
-  if(false) {
+  /*
+    if(false) {
     cout << "Categorical feature splits target [";
     for(size_t i = 0; i < sampleIcs_left.size(); ++i) {
-      cout << " " << tv_copy[sampleIcs_left[i]];
+    cout << " " << tv_copy[sampleIcs_left[i]];
     }
     cout << " ] <==> [";
     for(size_t i = 0; i < sampleIcs_right.size(); ++i) {
-      cout << " " << tv_copy[sampleIcs_right[i]];
+    cout << " " << tv_copy[sampleIcs_right[i]];
     }
     cout << " ]" << endl;
-  }
+    }
+  */
 }
 
 // !! Legibility: Clean out all of the print statements.
