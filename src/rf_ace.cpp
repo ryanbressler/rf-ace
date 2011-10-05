@@ -298,11 +298,11 @@ void printHelp(const General_options& geno, const RF_options& rfo, const GBT_opt
   cout << "EXAMPLES:" << endl;
   cout << endl;
 
-  cout << "List features associated with feature called \"AFFECTION\":" << endl;
-  cout << "bin/rf_ace --traindata featurematrix.afm --target AFFECTION --associations associations.tsv" << endl << endl;
+  cout << "List features associated with feature called \"C:AFFECTION\":" << endl;
+  cout << "bin/rf_ace --traindata featurematrix.afm --target C:AFFECTION --associations associations.tsv" << endl << endl;
 
-  cout << "Train the model for \"AFFECTION\" with \"original.afm\", and predict new data for \"AFFECTION\" with \"newdata.afm\":" << endl;
-  cout << "bin/rf_ace --traindata original.afm --target AFFECTION --testdata newdata.afm --predictions.tsv" << endl << endl;
+  cout << "Train the model for \"C:AFFECTION\" with \"original.afm\", and predict new data for \"C:AFFECTION\" with \"newdata.afm\":" << endl;
+  cout << "bin/rf_ace --traindata original.afm --target C:AFFECTION --testdata newdata.afm --predictions.tsv" << endl << endl;
 }
 
 void printHelpHint() {
