@@ -65,6 +65,11 @@ Treedata::Treedata(string fileName):
     }
   }      
 
+  if ( !datadefs::is_unique(featureHeaders) ) {
+    cerr << "Feature headers are not unique!" << endl;
+    assert(false);
+  }
+
   nSamples_ = rawMatrix[0].size();
   nFeatures_ = featureHeaders.size();
   features_.resize(2*nFeatures_);
@@ -418,28 +423,29 @@ num_t Treedata::pearsonCorrelation(size_t featureidx1, size_t featureidx2) {
 
 void Treedata::getMatchingTargetIdx(const string& targetStr, size_t& targetIdx) {
   
-  bool isFound = false;
+  bool isFoundAlready = false;
 
-  for(size_t featureIdx = 0; featureIdx < nFeatures_; ++featureIdx) {
-    if(features_[featureIdx].name == targetStr) {
-      assert(!isFound);
-      isFound = true;
+  for ( size_t featureIdx = 0; featureIdx < nFeatures_; ++featureIdx ) {
+    
+    if ( features_[featureIdx].name == targetStr ) {
+    
+      if ( isFoundAlready ) {
+	cerr << "Multiple instances of the same target found in the data!" << endl;
+	assert(false);
+      }
+      
+      isFoundAlready = true;
       targetIdx = featureIdx;
+    
     }
   }
-}
 
-void Treedata::getMatchingTargetIcs(const string& targetStr, set<size_t>& targetIcs) {
-  targetIcs.clear();
-  for(size_t featureIdx = 0; featureIdx < nFeatures_; ++featureIdx) {
-    string featureName(features_[featureIdx].name);
-    if( featureName.find(targetStr) != string::npos) {
-      targetIcs.insert(featureIdx);
-    }
+  if ( !isFoundAlready ) {
+    cerr << "Feature '" << targetStr << "' not found" << endl;
+    assert(false);
   }
+
 }
-
-
 
 string Treedata::getFeatureName(const size_t featureIdx) {
   return(features_[featureIdx].name);

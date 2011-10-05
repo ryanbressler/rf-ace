@@ -141,6 +141,18 @@ string datadefs::chomp(const string& str) {
   return( terminatorIdx != -1 ? ret.substr(0,terminatorIdx) : ret );
 }
 
+bool datadefs::is_unique(const vector<string>& strvec) {
+
+  set<string> strset;
+  for ( size_t i = 0; i < strvec.size(); ++i ) {
+    if ( strset.find(strvec[i]) != strset.end() ) {
+      return false;
+    } else {
+      strset.insert(strvec[i]);
+    }
+  }
+  return true;
+}
 
 /**
  * Convert a string to a number using the intuitive solution, in base 10.

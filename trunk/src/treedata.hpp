@@ -32,7 +32,7 @@ public:
   num_t pearsonCorrelation(size_t featureidx1, size_t featureidx2);
 
   void getMatchingTargetIdx(const string& targetStr, size_t& targetIdx);
-  void getMatchingTargetIcs(const string& targetStr, set<size_t>& targetIcs);
+  //void getMatchingTargetIcs(const string& targetStr, set<size_t>& targetIcs);
 
   string getFeatureName(const size_t featureIdx);
   //string get_targetheader();
