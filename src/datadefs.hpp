@@ -59,6 +59,8 @@ namespace datadefs {
 
   string chomp(const string& str);
 
+  bool is_unique(const vector<string>& strvec);
+
   //void mean(vector<num_t> const& data, num_t& mu, size_t& nreal);
 
   // Newly added function set which used in calculating leaf node predictions
