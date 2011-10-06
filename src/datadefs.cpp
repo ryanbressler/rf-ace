@@ -164,14 +164,6 @@ bool datadefs::is_unique(const vector<string>& strvec) {
 */
 datadefs::num_t datadefs::str2num(const string& str) {
 
-  // Chop at the first newline character, if it exists
-  //int crIdx = str.find("\r");
-  //int lfIdx = str.find("\n");
-  //int terminatorIdx = crIdx;
-  //if (lfIdx != -1 && lfIdx < crIdx) {
-  //  terminatorIdx = lfIdx;
-  //}
-
   // Initialize and use the stringstream
   //stringstream ss(terminatorIdx != -1 ? str.substr(0,terminatorIdx) : str);
   stringstream ss( datadefs::chomp(str) );
@@ -515,29 +507,38 @@ void datadefs::range(vector<size_t>& ics) {
 void datadefs::ttest(vector<datadefs::num_t> const& x, 
                      vector<datadefs::num_t> const& y, 
                      datadefs::num_t& pvalue) {
+
   // Sample mean and variance of x
   datadefs::num_t mean_x = 0;
   datadefs::num_t var_x = 0;
   size_t nreal_x = 0;
-
   datadefs::sqerr(x, mean_x, var_x, nreal_x);
 
-  assert(nreal_x > 1);
+  if ( nreal_x == 0 ) {
+    pvalue = 1.0;
+    return;
+  }
 
-  var_x /= (nreal_x - 1);
+  if ( nreal_x > 1 ) {
+    var_x /= (nreal_x - 1);
+  }
 
   // Sample mean and variance of y
   datadefs::num_t mean_y = 0;
   datadefs::num_t var_y = 0;
   size_t nreal_y = 0;
-
   datadefs::sqerr(y, mean_y, var_y, nreal_y);
+   
+  if ( nreal_y == 0 ) {
+    pvalue = 0.0;
+    return;
+  }
+ 
+  if ( nreal_y > 1 ) {
+    var_y /= (nreal_y - 1);
+  } 
     
-  assert(nreal_y > 1);
-
-  var_y /= (nreal_y - 1);
-    
-  assert(nreal_x == nreal_y);
+  //assert(nreal_x == nreal_y);
 
   if(var_x < datadefs::EPS && var_y < datadefs::EPS) {
     if(fabs(mean_x - mean_y) < datadefs::EPS) {
@@ -561,7 +562,7 @@ void datadefs::ttest(vector<datadefs::num_t> const& x,
 
   datadefs::regularized_betainc(ttrans,nreal_x - 1,pvalue);  
   pvalue = 1-pvalue;
-    
+
 }
 
 //DEPRECATED
@@ -660,7 +661,7 @@ void datadefs::utest(vector<datadefs::num_t> const& x,
   }
 
   // In case the sample size for x is too small, we set the p-value to 1.
-  // We could also proceed and notify about possibly unreliable p-value
+  // We could also proceed and notify about potentially unreliable p-value
   if ( m < 5 ) {
     pvalue = 1;
     return;
