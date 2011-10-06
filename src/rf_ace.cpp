@@ -336,7 +336,6 @@ int main(const int argc, char* const argv[]) {
 
   //Read the user parameters ... 
   ArgParse parser(argc,argv);
-
   
   // First read general options
   parser.getFlag(gen_op.printHelp_s, gen_op.printHelp_l, gen_op.printHelp);
@@ -346,7 +345,7 @@ int main(const int argc, char* const argv[]) {
   parser.getArgument<string>(gen_op.featureMaskInput_s, gen_op.featureMaskInput_l, gen_op.featureMaskInput);
   parser.getArgument<string>(gen_op.testInput_s, gen_op.testInput_l, gen_op.testInput);
   parser.getArgument<string>(gen_op.predictionOutput_s, gen_op.predictionOutput_l, gen_op.predictionOutput);
-  parser.getFlag(gen_op.noFilter_s, gen_op.noFilter_l, gen_op.noFilter);
+  //parser.getFlag(gen_op.noFilter_s, gen_op.noFilter_l, gen_op.noFilter);
   parser.getArgument<num_t>(gen_op.pValueThreshold_s, gen_op.pValueThreshold_l, gen_op.pValueThreshold);
 
   // Then read Random Forest specific options
@@ -496,14 +495,9 @@ int main(const int argc, char* const argv[]) {
        << "= " << RF_op.nPerms << endl;
   cout << endl;
 
-  if ( !gen_op.noFilter ) {
-    cout << "Feature filter ENABLED. Configuration:" << endl;
-    cout << "  --pthresold          = " << gen_op.pValueThreshold << endl;
-    cout << endl;
-  } else {
-    cout << "Feature filter DISABLED" << endl;
-    cout << endl;
-  }
+  cout << "Filter configuration:" << endl;
+  cout << "  --pthresold          = " << gen_op.pValueThreshold << endl;
+  cout << endl;
 
   if ( makePrediction ) {
     cout << "Gradient boosting tree configuration for prediction:" << endl;

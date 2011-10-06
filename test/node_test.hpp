@@ -206,9 +206,34 @@ void NodeTest::test_recursiveNodeSplit() {
 }
 
 void NodeTest::test_cleanPairVectorFromNANs() { 
+
 }
 
 void NodeTest::test_numericalFeatureSplit() { 
+
+  vector<datadefs::num_t> featureData,targetData;
+
+  for(size_t i = 0; i < 50; ++i) {
+    featureData.push_back(static_cast<datadefs::num_t>(i));
+    featureData.push_back(static_cast<datadefs::num_t>(i));
+  }
+
+  vector<size_t> sampleIcs_left,sampleIcs_right;
+  bool isTargetNumerical = true;
+  size_t minSplit = 5;
+  datadefs::num_t splitValue,splitFitness;
+
+  Node::numericalFeatureSplit(targetData,
+			      isTargetNumerical,
+			      featureData,
+			      minSplit,
+			      sampleIcs_left,
+			      sampleIcs_right,
+			      splitValue,
+			      splitFitness);
+
+  
+
 }
 
 void NodeTest::test_categoricalFeatureSplit() { 
