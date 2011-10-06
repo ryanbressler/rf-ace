@@ -28,7 +28,7 @@ const size_t RF_DEFAULT_N_TREES = 100; // zero means it will be estimated from t
 const size_t RF_DEFAULT_M_TRY = 0; // same here ...
 const size_t RF_DEFAULT_N_MAX_LEAVES = 10;
 const size_t RF_DEFAULT_NODE_SIZE = 5; // ... and here
-const size_t RF_DEFAULT_N_PERMS = 50;
+const size_t RF_DEFAULT_N_PERMS = 20;
 
 const bool   GBT_IS_OPTIMIZED_NODE_SPLIT = false;
 const size_t GBT_DEFAULT_N_TREES = 100;
@@ -262,13 +262,13 @@ void printHelp(const General_options& geno, const RF_options& rfo, const GBT_opt
        << setw( maxwidth - rfo.isOptimizedNodeSplit_l.size() )
        << " " << "Perform optimized node splitting with Random Forests (currently ENFORCED)" << endl;
   cout << " -" << rfo.nTrees_s << " / --" << rfo.nTrees_l << setw( maxwidth - rfo.nTrees_l.size() )
-       << " " << "Number of trees per RF (default nSamples/realSampleFraction)" << endl;
+       << " " << "Number of trees per RF (default 100)" << endl;
   cout << " -" << rfo.mTry_s << " / --" << rfo.mTry_l << setw( maxwidth - rfo.mTry_l.size() )
-       << " " << "Number of randomly drawn features per node split (default sqrt(nFeatures))" << endl;
+       << " " << "Number of randomly drawn features per node split (default floor(0.1*nFeatures))" << endl;
   cout << " -" << rfo.nMaxLeaves_s << " / --" << rfo.nMaxLeaves_l << setw( maxwidth - rfo.nMaxLeaves_l.size() )
        << " " << "Maximum number of leaves per tree (default " << RF_DEFAULT_N_MAX_LEAVES << ")" << endl;
   cout << " -" << rfo.nodeSize_s << " / --" << rfo.nodeSize_l << setw( maxwidth - rfo.nodeSize_l.size() )
-       << " " << "Minimum number of train samples per node, affects tree depth (default max{5,nSamples/100})" << endl;
+       << " " << "Minimum number of train samples per node, affects tree depth (default 5)" << endl;
   cout << " -" << rfo.nPerms_s << " / --" << rfo.nPerms_l << setw( maxwidth - rfo.nPerms_l.size() ) 
        << " " << "Number of Random Forests (default " << RF_DEFAULT_N_PERMS << ")" << endl;
   cout << endl;
@@ -731,7 +731,7 @@ void executeRandomForestFilter(Treedata& treedata,
 	cVector[featureIdx - treedata.nFeatures()] = importanceMat[permIdx][featureIdx];
       }
       //datadefs::print(datadefs::zerotrim(cVector));
-      datadefs::percentile(datadefs::zerotrim(cVector),0.5,cSample[permIdx]);
+      datadefs::percentile(datadefs::zerotrim(cVector),0.95,cSample[permIdx]);
       //cout << " " << cSample[permIdx];
     }
     //cout << endl;
@@ -747,7 +747,8 @@ void executeRandomForestFilter(Treedata& treedata,
         //cSample[permIdx] = importanceMat[permIdx][featureIdx + treedata.nFeatures()];
       }
       
-      datadefs::utest(fSample,cSample,pValues[featureIdx]);
+      //datadefs::print(fSample);
+      datadefs::ttest(fSample,cSample,pValues[featureIdx]);
       datadefs::mean(fSample,importanceValues[featureIdx],nRealSamples);
     }
   } else {
