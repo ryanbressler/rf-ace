@@ -478,24 +478,43 @@ void Treedata::print(const size_t featureIdx) {
 
 
 void Treedata::permuteContrasts() {
+
   for(size_t i = nFeatures_; i < 2*nFeatures_; ++i) {
     Treedata::permute(features_[i].data);
   }
+
 }
 
 bool Treedata::isFeatureNumerical(size_t featureIdx) {
+
   return(features_[featureIdx].isNumerical);
+
 }
 
 
 size_t Treedata::nRealSamples(const size_t featureIdx) { 
+  
   size_t nRealSamples;
   datadefs::countRealValues(features_[featureIdx].data,nRealSamples);
+  return(nRealSamples);
+
+}
+
+size_t Treedata::nRealSamples(const size_t featureIdx1, const size_t featureIdx2) {
+
+  size_t nRealSamples = 0;
+  for(size_t i = 0; i < nSamples_; ++i ) {
+    if( !datadefs::isNAN(features_[featureIdx1].data[i]) && !datadefs::isNAN(features_[featureIdx2].data[i])) {
+      ++nRealSamples;
+    }
+  }
   return(nRealSamples);
 }
 
 size_t Treedata::nCategories(const size_t featureIdx) {
+
   return(features_[featureIdx].nCategories);
+
 }
 
 

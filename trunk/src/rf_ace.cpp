@@ -19,7 +19,7 @@ using namespace std;
 using datadefs::num_t;
 
 const bool   GENERAL_DEFAULT_PRINT_HELP = false;
-const bool   GENERAL_DEFAULT_NO_FILTER = false;
+//const bool   GENERAL_DEFAULT_NO_FILTER = false;
 const bool   GENERAL_DEFAULT_NO_PREDICTION = false; // TEMPORARY VARIABLE
 const num_t  GENERAL_DEFAULT_P_VALUE_THRESHOLD = 0.10;
 
@@ -66,9 +66,9 @@ struct General_options {
   string predictionOutput_s;
   string predictionOutput_l;
 
-  bool   noFilter;
-  string noFilter_s;
-  string noFilter_l;
+  //bool   noFilter;
+  //string noFilter_s;
+  //string noFilter_l;
 
   num_t  pValueThreshold;
   string pValueThreshold_s;
@@ -103,9 +103,9 @@ struct General_options {
     predictionOutput_s("P"),
     predictionOutput_l("predictions"),
   
-    noFilter(GENERAL_DEFAULT_NO_FILTER),
-    noFilter_s("f"),
-    noFilter_l("noFilter"),
+    //noFilter(GENERAL_DEFAULT_NO_FILTER),
+    //noFilter_s("f"),
+    //noFilter_l("noFilter"),
 
     pValueThreshold(GENERAL_DEFAULT_P_VALUE_THRESHOLD),
     pValueThreshold_s("t"),
@@ -274,8 +274,8 @@ void printHelp(const General_options& geno, const RF_options& rfo, const GBT_opt
   cout << endl;
 
   cout << "OPTIONAL ARGUMENTS -- FEATURE FILTER:" << endl;
-  cout << " -" << geno.noFilter_s << " / --" << geno.noFilter_l << setw( maxwidth - geno.noFilter_l.size() )
-       << " " << "Set this flag to turn RF filtering OFF (default ON)" << endl;
+  //cout << " -" << geno.noFilter_s << " / --" << geno.noFilter_l << setw( maxwidth - geno.noFilter_l.size() )
+  //     << " " << "Set this flag to turn RF filtering OFF (default ON)" << endl;
   cout << " -" << geno.pValueThreshold_s << " / --" << geno.pValueThreshold_l << setw( maxwidth - geno.pValueThreshold_l.size() )
        << " " << "p-value threshold below which associations are listed (default "
        << GENERAL_DEFAULT_P_VALUE_THRESHOLD << ")" << endl;
@@ -310,11 +310,11 @@ void printHelpHint() {
   cout << "To get started, type \"-h\" or \"--help\"" << endl;
 }
 
-void executeRandomForestFilter(Treedata& treedata,
-                               const size_t targetIdx,
-                               const RF_options& op,
-                               vector<num_t>& pValues,
-                               vector<num_t>& importanceValues);
+void executeRandomForest(Treedata& treedata,
+			 const size_t targetIdx,
+			 const RF_options& op,
+			 vector<num_t>& pValues,
+			 vector<num_t>& importanceValues);
 
 void readFeatureMask(const string& fileName, const size_t nFeatures, vector<size_t>& keepFeatureIcs);
 
@@ -370,6 +370,7 @@ int main(const int argc, char* const argv[]) {
   }
   
   // Extract some handy boolean flags from the options
+  bool performMasking = gen_op.featureMaskInput != "";
   bool makePrediction = ( gen_op.testInput != "" ) && (gen_op.predictionOutput != "" );
   bool writeAssociationsToFile = gen_op.associationOutput != "";
   bool writePredictionsToFile = gen_op.predictionOutput != "";
@@ -415,9 +416,11 @@ int main(const int argc, char* const argv[]) {
   
   // Perform masking, if requested
   vector<size_t> maskFeatureIcs;
-  if(gen_op.featureMaskInput != "") {
+  if ( performMasking ) {
     cout << "Reading masking file '" << gen_op.featureMaskInput << "', please wait... " << flush;
     readFeatureMask(gen_op.featureMaskInput,treedata.nFeatures(),maskFeatureIcs);
+    cout << "DONE" << endl;
+    cout << "Applying feature mask, removing " << treedata.nFeatures() - maskFeatureIcs.size() << " / " << treedata.nFeatures() << " features, please wait... " << flush;
     treedata.keepFeatures(maskFeatureIcs);
     cout << "DONE" << endl;
   }
@@ -428,7 +431,7 @@ int main(const int argc, char* const argv[]) {
   size_t targetIdx;
   treedata.getMatchingTargetIdx(gen_op.targetStr,targetIdx);
 
-  // NOTE: this is to override node split optimization settings
+  // !! NOTE: this is to override node split optimization settings
   bool noOptimization = false;
   parser.getFlag("q","optimization_off",noOptimization);
   if ( noOptimization) {
@@ -496,7 +499,7 @@ int main(const int argc, char* const argv[]) {
   cout << endl;
 
   cout << "Filter configuration:" << endl;
-  cout << "  --pthresold          = " << gen_op.pValueThreshold << endl;
+  cout << "  --pthresold" << setw(6) << "" << "= " << gen_op.pValueThreshold << endl;
   cout << endl;
 
   if ( makePrediction ) {
@@ -524,52 +527,49 @@ int main(const int argc, char* const argv[]) {
   vector<num_t> pValues; //(treedata.nFeatures());
   vector<num_t> importanceValues; //(treedata.nFeatures());
   cout << "===> Uncovering associations... " << flush;
-  executeRandomForestFilter(treedata,targetIdx,RF_op,pValues,importanceValues);
+  executeRandomForest(treedata,targetIdx,RF_op,pValues,importanceValues);
   cout << "DONE" << endl;
   
-  //////////////////////////////////////////////////////////////
-  //  STEP 2 ( OPTIONAL ) -- FEATURE FILTERING WITH P-VALUES  //
-  //////////////////////////////////////////////////////////////
-  // If filtering is to be applied ...
+  /////////////////////////////////////////////////
+  //  STEP 2 -- FEATURE FILTERING WITH P-VALUES  //
+  /////////////////////////////////////////////////
   vector<size_t> significantFeatureIcs;
-  if(!gen_op.noFilter) {
-    cout << "===> Filtering features... " << flush;
-    size_t nFeatures = treedata.nFeatures();
+  cout << "===> Filtering features... " << flush;
+
+  size_t nFeatures = treedata.nFeatures();
+  
+  //Store removed features and their indices here, just in case
+  vector<string> removedFeatures;
+  vector<size_t> removedFeatureIcs;
+  
+  size_t nSignificantFeatures = 0;
+  
+  // Go through each feature, and keep those having p-value higher than the threshold. 
+  // Save the kept and removed features, and remember to accumulate the counter
+  for ( size_t featureIdx = 0; featureIdx < nFeatures; ++featureIdx ) {
     
-    //Store removed features and their indices here, just in case
-    vector<string> removedFeatures;
-    vector<size_t> removedFeatureIcs;
-    
-    size_t nSignificantFeatures = 0;
-    
-    // Go through each feature, and keep those having p-value higher than the threshold. 
-    // Save the kept and removed features, and remember to accumulate the counter
-    for ( size_t featureIdx = 0; featureIdx < nFeatures; ++featureIdx ) {
-            
-      if ( featureIdx == targetIdx || pValues[featureIdx] <= gen_op.pValueThreshold ) {
-	significantFeatureIcs.push_back(featureIdx);
-	pValues[nSignificantFeatures] = pValues[featureIdx];
-	importanceValues[nSignificantFeatures] = importanceValues[featureIdx];
-	++nSignificantFeatures;
-      } else {
-	removedFeatureIcs.push_back(featureIdx);
-	removedFeatures.push_back(treedata.getFeatureName(featureIdx));
-      }
+    if ( featureIdx == targetIdx || pValues[featureIdx] <= gen_op.pValueThreshold ) {
+      significantFeatureIcs.push_back(featureIdx);
+      pValues[nSignificantFeatures] = pValues[featureIdx];
+      importanceValues[nSignificantFeatures] = importanceValues[featureIdx];
+      ++nSignificantFeatures;
+    } else {
+      removedFeatureIcs.push_back(featureIdx);
+      removedFeatures.push_back(treedata.getFeatureName(featureIdx));
     }
-    
-    // Resize containers
-    treedata.keepFeatures( significantFeatureIcs );
-    pValues.resize( nSignificantFeatures );
-    importanceValues.resize ( nSignificantFeatures );
-     
-    size_t targetIdx;
-    treedata.getMatchingTargetIdx(gen_op.targetStr,targetIdx);
-    assert( gen_op.targetStr == treedata.getFeatureName(targetIdx) );
-    
-    // Print some statistics
-    cout << "DONE, " << treedata.nFeatures() << " / " << nAllFeatures << " features ( "
-	 << 100.0 * treedata.nFeatures() / nAllFeatures << " % ) left " << endl;
   }
+  
+  // Resize containers
+  treedata.keepFeatures( significantFeatureIcs );
+  pValues.resize( nSignificantFeatures );
+  importanceValues.resize ( nSignificantFeatures );
+  
+  treedata.getMatchingTargetIdx(gen_op.targetStr,targetIdx);
+  assert( gen_op.targetStr == treedata.getFeatureName(targetIdx) );
+  
+  // Print some statistics
+  cout << "DONE, " << treedata.nFeatures() << " / " << nAllFeatures << " features ( "
+       << 100.0 * treedata.nFeatures() / nAllFeatures << " % ) left " << endl;
 
   ofstream toAssociationFile(gen_op.associationOutput.c_str());
   toAssociationFile.precision(8);
@@ -579,26 +579,24 @@ int main(const int argc, char* const argv[]) {
   ///////////////////////////////////////////////////////////////////////////
   //  STEP 3 ( OPTIONAL ) -- DATA PREDICTION WITH GRADIENT BOOSTING TREES  //
   ///////////////////////////////////////////////////////////////////////////
-  if( makePrediction && writePredictionsToFile ) {      
+  if ( makePrediction && writePredictionsToFile ) {      
     cout << "===> Predicting... " << flush;
     
     StochasticForest SF(&treedata,targetIdx,GBT_op.nTrees);
     SF.learnGBT(GBT_op.nMaxLeaves, GBT_op.shrinkage, GBT_op.subSampleSize);
     
     Treedata treedata_test(gen_op.testInput);
-    if ( !gen_op.noFilter ) {
-      treedata_test.keepFeatures(significantFeatureIcs);
+    if ( performMasking ) {
+      treedata_test.keepFeatures(maskFeatureIcs);
     }
+    treedata_test.keepFeatures(significantFeatureIcs);
     
-    //cout << treedata.getFeatureName(targetIdx) << " " << treedata_test.getFeatureName(targetIdx) << " " << gen_op.targetStr << endl;
+    // Some assertions to make sure both treedata and treedata_test contain the same information
+    for ( size_t i = 0; i < treedata.nFeatures(); ++i ) {
+      assert( treedata_test.getFeatureName(i) == treedata.getFeatureName(i) );
+    }
     assert( treedata.getFeatureName(targetIdx) == gen_op.targetStr );
     assert( treedata_test.getFeatureName(targetIdx) == gen_op.targetStr );
-    
-    // An assertion to check that the train and test matrices have features in the same order
-    assert(treedata.nFeatures() == treedata_test.nFeatures());
-    for ( size_t i = 0; i < treedata.nFeatures(); ++i ) {
-      assert(treedata.getFeatureName(i) == treedata_test.getFeatureName(i));
-    }
     
     vector<num_t> confidence;
     if(treedata_test.isFeatureNumerical(targetIdx)) {
@@ -650,12 +648,12 @@ int main(const int argc, char* const argv[]) {
       
       if ( RF_op.nPerms > 1 ) {
 	toAssociationFile << fixed << gen_op.targetStr.c_str() << "\t" << treedata.getFeatureName(featureIdx).c_str() 
-			  << "\t" << pValues[i] << "\t" << importanceValues[i] << "\t"
-			  << treedata.pearsonCorrelation(targetIdx,featureIdx) << endl;
+			  << "\t" << log10(pValues[i]) << "\t" << importanceValues[i] << "\t"
+			  << treedata.pearsonCorrelation(targetIdx,featureIdx) << "\t" << treedata.nRealSamples(targetIdx,featureIdx) << endl;
       } else {
 	toAssociationFile << fixed << gen_op.targetStr.c_str() << "\t" << treedata.getFeatureName(featureIdx).c_str() 
 			  << "\tNA\t" << importanceValues[i] << "\t"
-			  << treedata.pearsonCorrelation(targetIdx,featureIdx) << endl;
+			  << treedata.pearsonCorrelation(targetIdx,featureIdx) << "\t" << treedata.nRealSamples(targetIdx,featureIdx) << endl;
       }    
     }
   }
@@ -665,7 +663,7 @@ int main(const int argc, char* const argv[]) {
   
   if ( writeAssociationsToFile ) {
     cout << "Association file '" << gen_op.associationOutput << "' created. Format:" << endl;
-    cout << "TARGET   PREDICTOR   P-VALUE   IMPORTANCE   CORRELATION" << endl;
+    cout << "TARGET   PREDICTOR   LOG10(P-VALUE)   IMPORTANCE   CORRELATION   NSAMPLES" << endl;
     cout << endl;
   }
   
@@ -682,12 +680,12 @@ int main(const int argc, char* const argv[]) {
 }
 
 
-void executeRandomForestFilter(Treedata& treedata,
-                               const size_t targetIdx,
-                               const RF_options& op,
-                               vector<num_t>& pValues,
-                               vector<num_t>& importanceValues) {
-
+void executeRandomForest(Treedata& treedata,
+			 const size_t targetIdx,
+			 const RF_options& op,
+			 vector<num_t>& pValues,
+			 vector<num_t>& importanceValues) {
+  
   vector<vector<num_t> > importanceMat(op.nPerms);
   pValues.resize(treedata.nFeatures());
   importanceValues.resize(treedata.nFeatures());
