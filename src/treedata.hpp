@@ -42,6 +42,7 @@ public:
 
   //Returns the number of real samples the target (resp. any feature) has
   size_t nRealSamples(const size_t featureIdx);
+  size_t nRealSamples(const size_t featureIdx1, const size_t featureIdx2);
   size_t nCategories(const size_t featureIdx);
 
   //Prints the treedata matrix in its internal form
