@@ -322,7 +322,7 @@ void readFeatureMask(const string& fileName, const size_t nFeatures, vector<size
 int main(const int argc, char* const argv[]) {
 
   General_options gen_op;
-  RF_options RF_op; // We need a copy (backup) since the options will differ between RF permutations, if enabled ...
+  RF_options RF_op; 
   GBT_options GBT_op;
 
   //Print the intro header
@@ -465,9 +465,6 @@ int main(const int argc, char* const argv[]) {
 
   //Before number crunching, print values of parameters of RF-ACE
   int maxwidth = 15;
-  //cout << endl;
-  //cout << "RF-ACE parameter configuration:" << endl;
-  //cout << endl;
   cout << "General configuration:" << endl;
   cout << "    nfeatures" << setw(6) << "" << "= " << nAllFeatures << endl;
   cout << "    nsamples"  << setw(7) << "" << "= " << treedata.nRealSamples(targetIdx) << " / " << treedata.nSamples() << " ( " << 100.0 * ( 1 - realFraction ) << " % missing )" << endl; 
@@ -494,11 +491,12 @@ int main(const int argc, char* const argv[]) {
        << "= " << RF_op.nMaxLeaves << endl;
   cout << "  --" << RF_op.nodeSize_l << setw( maxwidth - RF_op.nodeSize_l.size() ) << ""
        << "= "; if(RF_op.nodeSize == 0) { cout << "DEFAULT" << endl; } else { cout << RF_op.nodeSize << endl; }
-  cout << "  --" << RF_op.nPerms_l << setw( maxwidth - RF_op.nPerms_l.size() ) << ""
-       << "= " << RF_op.nPerms << endl;
   cout << endl;
 
-  cout << "Filter configuration:" << endl;
+  cout << "Significance analysis configuration:" << endl;
+  cout << "  --" << RF_op.nPerms_l << setw( maxwidth - RF_op.nPerms_l.size() ) << ""
+       << "= " << RF_op.nPerms << endl;
+  cout << "    test type" << setw(6) << "" << "= T-test" << endl;
   cout << "  --pthresold" << setw(6) << "" << "= " << gen_op.pValueThreshold << endl;
   cout << endl;
 
@@ -647,6 +645,12 @@ int main(const int argc, char* const argv[]) {
       }
       
       if ( RF_op.nPerms > 1 ) {
+	
+	num_t log10p = log10(pValues[i]);
+	if ( log10p < -30.0 ) {
+	  log10p = -30.0;
+	}
+
 	toAssociationFile << fixed << gen_op.targetStr.c_str() << "\t" << treedata.getFeatureName(featureIdx).c_str() 
 			  << "\t" << log10(pValues[i]) << "\t" << importanceValues[i] << "\t"
 			  << treedata.pearsonCorrelation(targetIdx,featureIdx) << "\t" << treedata.nRealSamples(targetIdx,featureIdx) << endl;

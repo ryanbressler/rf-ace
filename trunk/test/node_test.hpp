@@ -7,7 +7,7 @@
 #include "errno.hpp"
 
 class NodeTest : public CppUnit::TestFixture {
-  CPPUNIT_TEST_SUITE();
+  CPPUNIT_TEST_SUITE( NodeTest );
   CPPUNIT_TEST( test_setSplitter );
   CPPUNIT_TEST( test_setSplitter );
   CPPUNIT_TEST( test_getSplitter );
@@ -30,7 +30,7 @@ public:
   void tearDown();
 
   void test_setSplitter();
-  void test_setSplitter();
+  //void test_setSplitter();
   void test_getSplitter();
   void test_percolateData();
   void test_getLeafTrainPrediction();
@@ -211,28 +211,56 @@ void NodeTest::test_cleanPairVectorFromNANs() {
 
 void NodeTest::test_numericalFeatureSplit() { 
 
-  vector<datadefs::num_t> featureData,targetData;
+  vector<datadefs::num_t> featureData(8);
+  vector<datadefs::num_t> targetData(8);
 
-  for(size_t i = 0; i < 50; ++i) {
-    featureData.push_back(static_cast<datadefs::num_t>(i));
-    featureData.push_back(static_cast<datadefs::num_t>(i));
-  }
+  featureData[0] = 3;
+  featureData[1] = 2;
+  featureData[2] = datadefs::NUM_NAN;
+  featureData[3] = 2.4;
+  featureData[4] = 5;
+  featureData[5] = 4;
+  featureData[6] = 2.9;
+  featureData[7] = 3.1;
+
+  targetData[0] = 1;
+  targetData[1] = 3;
+  targetData[2] = 2;
+  targetData[3] = datadefs::NUM_NAN;
+  targetData[4] = 4;
+  targetData[5] = 5;
+  targetData[6] = 3.6;
+  targetData[7] = 2.8;
 
   vector<size_t> sampleIcs_left,sampleIcs_right;
   bool isTargetNumerical = true;
-  size_t minSplit = 5;
+  size_t minSplit = 2;
   datadefs::num_t splitValue,splitFitness;
 
-  Node::numericalFeatureSplit(targetData,
-			      isTargetNumerical,
-			      featureData,
-			      minSplit,
-			      sampleIcs_left,
-			      sampleIcs_right,
-			      splitValue,
-			      splitFitness);
+  Node node;
 
-  
+  node.numericalFeatureSplit(targetData,
+			     isTargetNumerical,
+			     featureData,
+			     minSplit,
+			     sampleIcs_left,
+			     sampleIcs_right,
+			     splitValue,
+			     splitFitness);
+
+  CPPUNIT_ASSERT(splitValue == 3.1);
+
+  CPPUNIT_ASSERT(splitFitness == 0.5305);
+
+  CPPUNIT_ASSERT(sampleIcs_left.size() == 4);
+  CPPUNIT_ASSERT(sampleIcs_left[0] == 2);
+  CPPUNIT_ASSERT(sampleIcs_left[1] == 5);
+  CPPUNIT_ASSERT(sampleIcs_left[2] == 1);
+  CPPUNIT_ASSERT(sampleIcs_left[3] == 6);
+
+  CPPUNIT_ASSERT(sampleIcs_right.size() == 2);
+  CPPUNIT_ASSERT(sampleIcs_right[0] == 4);
+  CPPUNIT_ASSERT(sampleIcs_right[1] == 3);
 
 }
 
@@ -246,6 +274,6 @@ void NodeTest::test_recursiveNDescendantNodes() {
   
 }
 // Registers the fixture into the test 'registry'
-CPPUNIT_TEST_SUITE_REGISTRATION() { 
+CPPUNIT_TEST_SUITE_REGISTRATION( NodeTest ); 
 
 #endif // NODETEST_HPP
