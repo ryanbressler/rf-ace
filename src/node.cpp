@@ -614,19 +614,19 @@ void Node::numericalFeatureSplit(vector<num_t> tv,
   //cout << sampleIcs_left.size() << " " << sampleIcs_right.size() << " == " << n_tot << endl;
   assert(n_left + n_right == n_tot);
 
-  /*
-    if(false) {
+ 
+  if(false) {
     cout << "Numerical feature splits target [";
     for(size_t i = 0; i < sampleIcs_left.size(); ++i) {
-    cout << " " << tv_copy[sampleIcs_left[i]];
+      cout << " " << sampleIcs_left[i] << ":" << tv[sampleIcs_left[i]];
     }
     cout << " ] <==> [";
     for(size_t i = 0; i < sampleIcs_right.size(); ++i) {
-    cout << " " << tv_copy[sampleIcs_right[i]];
+      cout << " " << sampleIcs_right[i] << ":" << tv[sampleIcs_right[i]];
     }
     cout << " ]" << endl;
-    }
-  */
+  }
+  
 }
 
 // !! Inadequate Abstraction: Refactor me.

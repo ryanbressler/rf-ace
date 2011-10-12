@@ -616,9 +616,9 @@ void datadefs::regularized_betainc(const datadefs::num_t x,
 
 // A modified implementation of the original u-test. This version accumulates the u-score if
 // 
-//   x is positive and x > y
+//   x > y
 //   OR 
-//   x is positive and y is NaN
+//   y is NaN
 //
 // x accumulates sample if 
 // 
@@ -645,25 +645,29 @@ void datadefs::utest(vector<datadefs::num_t> const& x,
       ++m;
 
       // If x is negative, don't accumulate the U-statistic
-      if ( x[i] < 0.0 ) {
-	continue;
-      }
+      //if ( x[i] < 0.0 ) {
+      //	continue;
+      //}
 
       // For nonnegative x, test each y
       for ( size_t j = 0; j < y.size(); ++j ) {
         
-	// If y is NaN or x is greater than y, accumulate the U-statistic
-        if ( datadefs::isNAN(y[j]) || x[i] > y[j] ) {
-	  uvalue += 1;
-        }
+	// If y is NaN or x is greater than y, accumulate the U-statistic by 1.0
+        if ( datadefs::isNAN(y[j]) ) {
+	  uvalue += 1.0;
+	} else if ( x[i] > y[j] ) {
+	  uvalue += 1.0;
+	} else if ( x[i] == y[j] ) {
+	  uvalue += 0.5; // In case of a tie, accumulate by 0.5
+	}
+	
       }
     }
   }
 
-  // In case the sample size for x is too small, we set the p-value to 1.
-  // We could also proceed and notify about potentially unreliable p-value
-  if ( m < 5 ) {
-    pvalue = 1;
+  // If x has no real values, return NaN
+  if ( m == 0 ) {
+    pvalue = datadefs::NUM_NAN;
     return;
   }
 
@@ -671,7 +675,7 @@ void datadefs::utest(vector<datadefs::num_t> const& x,
   num_t s = sqrt( 1.0 * m * n * ( n + m + 1 ) / 12.0 );
   
   pvalue = 1.0 - 0.5 * ( 1 + datadefs::erf( (uvalue - mu) / (s * sqrt(2.0)) ) );
-
+  //cout << uvalue << " " << mu << " " << s << " " << pvalue << endl;
 }
 
 // !! Documentation: computes the error function for the given value

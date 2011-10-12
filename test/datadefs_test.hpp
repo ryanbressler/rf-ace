@@ -746,25 +746,23 @@ void DataDefsTest::test_utest() {
   }
 
   datadefs::utest(x, y, pvalue);
-  CPPUNIT_ASSERT(pvalue == 1);
+  CPPUNIT_ASSERT(pvalue == 0.5);
 
   datadefs::utest(x, y2, pvalue);
-  CPPUNIT_ASSERT(pvalue == 1);
+  CPPUNIT_ASSERT(pvalue == 0.5);
 
   // Interleave the original input with NaNs; verify we get different results
   for (int i = 0; i < 50; ++i) {
     x.insert(x.begin() + (i*2), datadefs::NUM_NAN);
-    y.insert(y.begin() + (i*2), datadefs::NUM_NAN);
-    y2.insert(y2.begin() + (i*2), datadefs::NUM_NAN);
+    //y.insert(y.begin() + (i*2), datadefs::NUM_NAN);
+    //y2.insert(y2.begin() + (i*2), datadefs::NUM_NAN);
   }
   
   datadefs::utest(x, y, pvalue);
-  CPPUNIT_ASSERT(fabs(pvalue - 1)
-                  < datadefs::EPS);
+  CPPUNIT_ASSERT( pvalue == 0.5 );
 
   datadefs::utest(x, y2, pvalue);
-  CPPUNIT_ASSERT(fabs(pvalue - 1)
-                  < datadefs::EPS);
+  CPPUNIT_ASSERT( pvalue == 0.5 );
 
   // Verify behavior when x and y are empty
   x.clear();
@@ -790,7 +788,7 @@ void DataDefsTest::test_utest() {
   }
 
   datadefs::utest(x, y, pvalue);
-  CPPUNIT_ASSERT(datadefs::isNAN(pvalue));
+  CPPUNIT_ASSERT( fabs(pvalue - 0.0) < datadefs::EPS );
 }
 
 void DataDefsTest::test_erf() {
