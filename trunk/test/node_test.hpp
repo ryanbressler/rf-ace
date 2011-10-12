@@ -250,17 +250,20 @@ void NodeTest::test_numericalFeatureSplit() {
 
   CPPUNIT_ASSERT(splitValue == 3.1);
 
-  CPPUNIT_ASSERT(splitFitness == 0.5305);
+  //cout << splitFitness << endl;
+  CPPUNIT_ASSERT( fabs(splitFitness - 0.530492285084497) < 1e-10 );
 
   CPPUNIT_ASSERT(sampleIcs_left.size() == 4);
-  CPPUNIT_ASSERT(sampleIcs_left[0] == 2);
-  CPPUNIT_ASSERT(sampleIcs_left[1] == 5);
-  CPPUNIT_ASSERT(sampleIcs_left[2] == 1);
-  CPPUNIT_ASSERT(sampleIcs_left[3] == 6);
+  for(size_t i = 0; i < sampleIcs_left.size(); ++i) {
+    size_t idx = sampleIcs_left[i];
+    CPPUNIT_ASSERT(idx == 1 || idx == 6 || idx == 0 || idx == 7);
+  }
 
   CPPUNIT_ASSERT(sampleIcs_right.size() == 2);
-  CPPUNIT_ASSERT(sampleIcs_right[0] == 4);
-  CPPUNIT_ASSERT(sampleIcs_right[1] == 3);
+  for(size_t i = 0; i < sampleIcs_right.size(); ++i) {
+    size_t idx = sampleIcs_right[i];
+    CPPUNIT_ASSERT(idx == 5 || idx == 4);
+  }
 
 }
 
