@@ -9,17 +9,17 @@ using namespace std;
 class GrayCode {
 
 public:
-  GrayCode();
+
+  typedef size_t graycode_t;
+
+  GrayCode(const size_t nMaxBits);
   ~GrayCode();
+
+  graycode_t getCode(const size_t codeIdx);
 
 private:
   
-  typedef char graycode_t;
-
   vector<graycode_t> graycode;
-
-  //vector<vector<bool> > setBit_;
-  //vector<vector<int> > code_;
 
 };
 
