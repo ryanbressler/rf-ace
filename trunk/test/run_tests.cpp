@@ -5,7 +5,7 @@
 #include "argparse_test.hpp"
 #include "datadefs_test.hpp"
 #include "node_test.hpp"
-#include "graycode_test.hpp"
+#include "partitionsequence_test.hpp"
 #include <cppunit/CompilerOutputter.h>
 #include <cppunit/extensions/TestFactoryRegistry.h>
 #include <cppunit/ui/text/TestRunner.h>

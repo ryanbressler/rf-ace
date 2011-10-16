@@ -509,7 +509,6 @@ void Node::numericalFeatureSplit(vector<num_t> tv,
 
   assert(tv.size() == fv.size());
 
-  //vector<num_t> tv,fv;
   vector<size_t> mapIcs;
  
   Node::cleanPairVectorFromNANs(tv,fv,mapIcs);
@@ -526,9 +525,6 @@ void Node::numericalFeatureSplit(vector<num_t> tv,
   sampleIcs_left.clear();
   sampleIcs_right.clear();
 
-  //Check that there are enough samples to make the split in the first place
-  //assert(n_tot >= 2*min_split);
-
   //Make reference indices that define the sorting wrt. feature
   bool isIncreasingOrder = true;//vector<size_t> refIcs;
 
@@ -536,19 +532,10 @@ void Node::numericalFeatureSplit(vector<num_t> tv,
   datadefs::sortDataAndMakeRef(isIncreasingOrder,fv,sampleIcs_right);
 
   //Use the reference indices to sort sample indices
-  //datadefs::sortFromRef<size_t>(sampleics,refIcs);
   datadefs::sortFromRef<num_t>(tv,sampleIcs_right);
-
-  //Count how many real values the feature and target has
-  //size_t nreal_f,nreal_t;
-  //datadefs::countRealValues(fv,nreal_f);
-  //datadefs::countRealValues(tv,nreal_t);
-  //cout << nreal_f << " " << nreal_t << " " << n_tot << endl;
-  //assert(nreal_t == n_tot && nreal_f == n_tot);
 
   int bestSplitIdx = -1;
   
-
   //If the target is numerical, we use the iterative squared error formula to update impurity scores while we traverse "right"
   if(isTargetNumerical) {
     num_t mu_right = 0.0;
@@ -557,7 +544,6 @@ void Node::numericalFeatureSplit(vector<num_t> tv,
     num_t se_left = 0.0;
     num_t se_best = 0.0;
     num_t se_tot = 0.0;
-    //size_t nreal_right = 0;
 
     datadefs::sqerr(tv,mu_right,se_right,n_right);
     assert(n_tot == n_right);
@@ -579,7 +565,6 @@ void Node::numericalFeatureSplit(vector<num_t> tv,
     map<num_t,size_t> freq_right;
     size_t sf_left = 0;
     size_t sf_right = 0;
-    //size_t nreal_right = 0;
 
     datadefs::sqfreq(tv,freq_right,sf_right,n_right);
     num_t sf_tot = sf_right;
@@ -640,7 +625,6 @@ void Node::categoricalFeatureSplit(vector<num_t> tv,
 
   assert(tv.size() == fv.size());
 
-  //vector<num_t> tv,fv;
   vector<size_t> mapIcs;
 
   Node::cleanPairVectorFromNANs(tv,fv,mapIcs);
@@ -657,15 +641,6 @@ void Node::categoricalFeatureSplit(vector<num_t> tv,
   sampleIcs_left.clear();
   sampleIcs_right.clear();
   categories_left.clear();
-
-  //Check that sample size is positive
-  //assert(n_tot > 0);
-
-  //Count how many real values the feature and target has (this is just to make sure there are no missing values thrown in)
-  //size_t nreal_f,nreal_t;
-  //datadefs::countRealValues(fv,nreal_f);
-  //datadefs::countRealValues(tv,nreal_t);
-  //assert(nreal_t == n_tot && nreal_f == n_tot);
 
   //Map all feature categories to the corresponding samples and represent it as map. The map is used to assign samples to left and right branches
   map<num_t,vector<size_t> > fmap_right;
@@ -970,41 +945,3 @@ void Node::leafGamma(const vector<datadefs::num_t>& data, const size_t numClasse
   isTrainPredictionSet_ = true;
 }
   
-// !! Cruft: remove me.
-/*
-  if(isTargetNumerical) {
-  num_t trainPredictionSE = 0.0;
-  size_t nTrainSamples = 0;
-  datadefs::sqerr(trainData,trainPrediction_,trainPredictionSE,nTrainSamples);
-  
-  assert(nTrainSamples > 0);
-  } else {
-  map<num_t,size_t> freq;
-  size_t nTrainSamples = 0;
-  datadefs::count_freq(trainData,freq,nTrainSamples);
-  map<num_t,size_t>::iterator it(max_element(freq.begin(),freq.end(),datadefs::freqIncreasingOrder()));
-  trainPrediction_ = it->first;
-  
-  assert(nTrainSamples > 0);
-  }
-  
-  isTrainPredictionSet_ = true;
-  }
-*/
-
-// !! Cruft: remove me.
-
-/*
-  void Node::accumulateLeafTestPredictionError(const num_t newTestData) {
-  assert(!hasChildren_);
-  assert(false); 
-  }
-  
-  void Node::eraseLeafTestPredictionError() {
-  assert(!hasChildren_);
-  
-  testPredictionError_ = 0.0;
-  nTestSamples_ = 0;
-  }
-  
-*/
