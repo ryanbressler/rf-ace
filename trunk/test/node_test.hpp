@@ -234,15 +234,17 @@ void NodeTest::test_numericalFeatureSplit() {
 
   vector<size_t> sampleIcs_left,sampleIcs_right;
   bool isTargetNumerical = true;
-  size_t minSplit = 2;
   datadefs::num_t splitValue,splitFitness;
 
   Node node;
 
+  Node::GrowInstructions GI;
+  GI.minNodeSizeToStop = 2;
+
   node.numericalFeatureSplit(targetData,
 			     isTargetNumerical,
 			     featureData,
-			     minSplit,
+			     GI,
 			     sampleIcs_left,
 			     sampleIcs_right,
 			     splitValue,

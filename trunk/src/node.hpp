@@ -10,6 +10,7 @@
 #include <set>
 #include "datadefs.hpp"
 #include "treedata.hpp"
+#include "partitionsequence.hpp"
 
 using namespace std;
 using datadefs::num_t;
@@ -62,6 +63,7 @@ protected:
     bool isOptimizedNodeSplit;
     LeafPredictionFunction leafPredictionFunction;
     size_t numClasses;
+    PartitionSequence* partitionSequence;
   };
 
   //Leaf prediction functions
@@ -80,7 +82,7 @@ protected:
 			   const size_t targetIdx,
 			   const vector<size_t>& sampleIcs,
 			   const vector<size_t>& featureSampleIcs,
-			   const size_t minNodeSizeToStop,
+			   const GrowInstructions& GI,
 			   size_t& splitFeatureIdx,
 			   vector<size_t>& sampleIcs_left,
 			   vector<size_t>& sampleIcs_right,
@@ -92,7 +94,7 @@ protected:
 			     const size_t targetIdx,
 			     const vector<size_t>& sampleIcs,
 			     const vector<size_t>& featureSampleIcs,
-			     const size_t minNodeSizeToStop,
+			     const GrowInstructions& GI,
 			     size_t& splitFeatureIdx,
 			     vector<size_t>& sampleIcs_left,
 			     vector<size_t>& sampleIcs_right,
@@ -113,7 +115,7 @@ private:
   void numericalFeatureSplit(vector<num_t> tv,
                              const bool isTargetNumerical,
                              vector<num_t> fv,
-                             const size_t min_split,
+                             const GrowInstructions& GI,
                              vector<size_t>& sampleIcs_left,
                              vector<size_t>& sampleIcs_right,
                              num_t& splitValue,
@@ -122,7 +124,8 @@ private:
   void categoricalFeatureSplit(vector<num_t> tv,
                                const bool isTargetNumerical,
                                vector<num_t> fv, /* MIN SPLIT MISSING (CHECK numericalFeatureSplit()) */
-                               vector<size_t>& sampleIcs_left,
+			       const GrowInstructions& GI,
+			       vector<size_t>& sampleIcs_left,
                                vector<size_t>& sampleIcs_right,
                                set<num_t>& categories_left,
                                num_t& splitFitness);
