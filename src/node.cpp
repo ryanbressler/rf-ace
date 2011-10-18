@@ -181,7 +181,7 @@ void Node::recursiveNodeSplit(Treedata* treeData,
 						    targetIdx,
 						    sampleIcs,
 						    featureSampleIcs,
-						    GI.minNodeSizeToStop,
+						    GI,
 						    splitFeatureIdx,
 						    sampleIcs_left,
 						    sampleIcs_right,
@@ -195,7 +195,7 @@ void Node::recursiveNodeSplit(Treedata* treeData,
 						  targetIdx,
 						  sampleIcs,
 						  featureSampleIcs,
-						  GI.minNodeSizeToStop,
+						  GI,
 						  splitFeatureIdx,
 						  sampleIcs_left,
 						  sampleIcs_right,
@@ -252,7 +252,7 @@ bool Node::regularSplitterSeek(Treedata* treeData,
 			       const size_t targetIdx,
 			       const vector<size_t>& sampleIcs,
 			       const vector<size_t>& featureSampleIcs,
-			       const size_t minNodeSizeToStop,
+			       const GrowInstructions& GI,
 			       size_t& splitFeatureIdx,
 			       vector<size_t>& sampleIcs_left,
 			       vector<size_t>& sampleIcs_right,
@@ -292,7 +292,7 @@ bool Node::regularSplitterSeek(Treedata* treeData,
       Node::numericalFeatureSplit(targetData,
 				  isTargetNumerical,
 				  featureData,
-				  minNodeSizeToStop,
+				  GI,
 				  newSampleIcs_left,
 				  newSampleIcs_right,
 				  newSplitValue,
@@ -301,6 +301,7 @@ bool Node::regularSplitterSeek(Treedata* treeData,
       Node::categoricalFeatureSplit(targetData,
 				    isTargetNumerical,
 				    featureData,
+				    GI,
 				    newSampleIcs_left,
 				    newSampleIcs_right,
 				    newSplitValues_left,
@@ -308,8 +309,8 @@ bool Node::regularSplitterSeek(Treedata* treeData,
     }
 
     if( newSplitFitness > splitFitness &&
-	newSampleIcs_left.size() >= minNodeSizeToStop &&
-	newSampleIcs_right.size() >= minNodeSizeToStop ) {
+	newSampleIcs_left.size() >= GI.minNodeSizeToStop &&
+	newSampleIcs_right.size() >= GI.minNodeSizeToStop ) {
       
       splitFitness = newSplitFitness;
       splitFeatureIdx = newSplitFeatureIdx;
@@ -359,7 +360,7 @@ bool Node::optimizedSplitterSeek(Treedata* treeData,
 				 const size_t targetIdx, 
 				 const vector<size_t>& sampleIcs, 
 				 const vector<size_t>& featureSampleIcs, 
-				 const size_t minNodeSizeToStop, 
+				 const GrowInstructions& GI, 
 				 size_t& splitFeatureIdx,
 				 vector<size_t>& sampleIcs_left,
 				 vector<size_t>& sampleIcs_right,
@@ -375,7 +376,7 @@ bool Node::optimizedSplitterSeek(Treedata* treeData,
     Node::numericalFeatureSplit(targetData,
 				isTargetNumerical,
 				targetData,
-				minNodeSizeToStop,
+				GI,
 				sampleIcs_left,
 				sampleIcs_right,
 				splitValue,
@@ -384,6 +385,7 @@ bool Node::optimizedSplitterSeek(Treedata* treeData,
     Node::categoricalFeatureSplit(targetData,
 				  isTargetNumerical,
 				  targetData,
+				  GI,
 				  sampleIcs_left,
 				  sampleIcs_right,
 				  splitValues_left,
@@ -409,13 +411,13 @@ bool Node::optimizedSplitterSeek(Treedata* treeData,
     
     num_t newSplitFitness = Node::splitFitness(newSplitFeatureData,
 					       isFeatureNumerical,
-					       minNodeSizeToStop,
+					       GI.minNodeSizeToStop,
 					       sampleIcs_left,
 					       sampleIcs_right);
     
     if( newSplitFitness > splitFitness && 
-       sampleIcs_left.size() >= minNodeSizeToStop && 
-       sampleIcs_right.size() >= minNodeSizeToStop ) {
+       sampleIcs_left.size() >= GI.minNodeSizeToStop && 
+       sampleIcs_right.size() >= GI.minNodeSizeToStop ) {
       
       splitFitness = newSplitFitness;
       splitFeatureIdx = newSplitFeatureIdx;
@@ -435,7 +437,7 @@ bool Node::optimizedSplitterSeek(Treedata* treeData,
     Node::numericalFeatureSplit(targetData,
 				isTargetNumerical,
 				featureData,
-				minNodeSizeToStop,
+				GI,
 				sampleIcs_left,
 				sampleIcs_right,
 				splitValue,
@@ -446,6 +448,7 @@ bool Node::optimizedSplitterSeek(Treedata* treeData,
     Node::categoricalFeatureSplit(targetData,
 				  isTargetNumerical,
 				  featureData,
+				  GI,
 				  sampleIcs_left,
 				  sampleIcs_right,
 				  splitValues_left,
@@ -453,7 +456,7 @@ bool Node::optimizedSplitterSeek(Treedata* treeData,
 
   }
 
-  if ( sampleIcs_left.size() < minNodeSizeToStop || sampleIcs_right.size() < minNodeSizeToStop ) {
+  if ( sampleIcs_left.size() < GI.minNodeSizeToStop || sampleIcs_right.size() < GI.minNodeSizeToStop ) {
     return(false);
   }
 
@@ -501,7 +504,7 @@ inline void Node::cleanPairVectorFromNANs(//const vector<num_t>& v1_copy,
 void Node::numericalFeatureSplit(vector<num_t> tv,
                                  const bool isTargetNumerical,
                                  vector<num_t> fv,
-                                 const size_t min_split,
+                                 const GrowInstructions& GI,
                                  vector<size_t>& sampleIcs_left,
                                  vector<size_t>& sampleIcs_right,
                                  num_t& splitValue,
@@ -517,7 +520,7 @@ void Node::numericalFeatureSplit(vector<num_t> tv,
   size_t n_right = n_tot;
   size_t n_left = 0;
 
-  if(n_tot < 2 * min_split) {
+  if(n_tot < 2 * GI.minNodeSizeToStop) {
     splitFitness = datadefs::NUM_NAN;
     return;
   }
@@ -551,9 +554,9 @@ void Node::numericalFeatureSplit(vector<num_t> tv,
     se_tot = se_right;
 
     size_t idx = 0;
-    while(n_left < n_tot - min_split) {
+    while(n_left < n_tot - GI.minNodeSizeToStop) {
       datadefs::forward_backward_sqerr(tv[idx],n_left,mu_left,se_left,n_right,mu_right,se_right);
-      if( se_left + se_right < se_best && n_left >= min_split) {
+      if( se_left + se_right < se_best && n_left >= GI.minNodeSizeToStop) {
         bestSplitIdx = idx;
         se_best = se_left + se_right;
       }
@@ -572,9 +575,9 @@ void Node::numericalFeatureSplit(vector<num_t> tv,
     assert(n_tot == n_right);
 
     size_t idx = 0;
-    while(n_left < n_tot - min_split) {
+    while(n_left < n_tot - GI.minNodeSizeToStop) {
       datadefs::forward_backward_sqfreq(tv[idx],n_left,freq_left,sf_left,n_right,freq_right,sf_right);
-      if(1.0 * n_right * sf_left + 1.0 * n_left * sf_right > n_left * n_right * nsf_best && n_left >= min_split) {
+      if(1.0 * n_right * sf_left + 1.0 * n_left * sf_right > n_left * n_right * nsf_best && n_left >= GI.minNodeSizeToStop) {
         bestSplitIdx = idx;
         nsf_best = 1.0 * sf_left / n_left + 1.0 * sf_right / n_right;
       }
@@ -618,6 +621,7 @@ void Node::numericalFeatureSplit(vector<num_t> tv,
 void Node::categoricalFeatureSplit(vector<num_t> tv,
                                    const bool isTargetNumerical,
                                    vector<num_t> fv,
+				   const GrowInstructions& GI,
                                    vector<size_t>& sampleIcs_left,
                                    vector<size_t>& sampleIcs_right,
                                    set<num_t>& categories_left,
@@ -647,6 +651,8 @@ void Node::categoricalFeatureSplit(vector<num_t> tv,
   size_t n_f;
   datadefs::map_data(fv,fmap_right,n_f);
   assert(n_tot == n_f);
+
+  
 
   if(isTargetNumerical) {
 

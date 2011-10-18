@@ -22,13 +22,15 @@ RootNode::RootNode(bool sampleWithReplacement,
   GI_.useContrasts = useContrasts;
   GI_.isOptimizedNodeSplit = isOptimizedNodeSplit;
   GI_.numClasses = numClasses;
+  GI_.partitionSequence = new PartitionSequence(10); // 10 is the maximum number of classes per categorical features
 }
 
-/*
+
 RootNode::~RootNode() { 
-  ~Node();
+  delete GI_.partitionSequence;
+  GI_.partitionSequence = NULL;
 }
-*/
+
 
 
 void RootNode::growTree(Treedata* treeData,

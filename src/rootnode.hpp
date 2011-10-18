@@ -19,6 +19,8 @@ public:
            bool isOptimizedNodeSplit,
            size_t numClasses);
 
+  ~RootNode();
+
   void growTree(Treedata* treeData,
                 const size_t targetIdx,
                 const LeafPredictionFunctionType leafPredictionFunctionType,
