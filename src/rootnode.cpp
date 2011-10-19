@@ -11,7 +11,8 @@ RootNode::RootNode(bool sampleWithReplacement,
                    size_t nFeaturesForSplit,
                    bool useContrasts,
                    bool isOptimizedNodeSplit,
-                   size_t numClasses):
+                   size_t numClasses,
+		   PartitionSequence* partitionSequence):
   Node() {
   GI_.sampleWithReplacement = sampleWithReplacement;
   GI_.sampleSizeFraction = sampleSizeFraction;
@@ -22,13 +23,13 @@ RootNode::RootNode(bool sampleWithReplacement,
   GI_.useContrasts = useContrasts;
   GI_.isOptimizedNodeSplit = isOptimizedNodeSplit;
   GI_.numClasses = numClasses;
-  GI_.partitionSequence = new PartitionSequence(10); // 10 is the maximum number of classes per categorical features
+  GI_.partitionSequence = partitionSequence; 
 }
 
 
 RootNode::~RootNode() { 
-  delete GI_.partitionSequence;
-  GI_.partitionSequence = NULL;
+  //delete GI_.partitionSequence;
+  //GI_.partitionSequence = NULL;
 }
 
 
@@ -97,5 +98,5 @@ void RootNode::growTree(Treedata* treeData,
 
   //Start the recursive node splitting from the root node. This will generate the tree.
   Node::recursiveNodeSplit(treeData,targetIdx,bootstrapIcs,GI_,featuresInTree,nNodes);
-
+  
 }

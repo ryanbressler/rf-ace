@@ -17,7 +17,8 @@ public:
            size_t nFeaturesForSplit,
            bool useContrasts,
            bool isOptimizedNodeSplit,
-           size_t numClasses);
+           size_t numClasses,
+	   PartitionSequence* partitionSequence);
 
   ~RootNode();
 

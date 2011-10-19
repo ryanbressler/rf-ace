@@ -444,8 +444,11 @@ int main(const int argc, char* const argv[]) {
   }
 
   //If default mTry is to be used...
-  if(RF_op.mTry == RF_DEFAULT_M_TRY) {
+  if ( RF_op.mTry == RF_DEFAULT_M_TRY ) {
     RF_op.mTry = static_cast<size_t>( floor(0.1*treedata.nFeatures()) );
+    if ( RF_op.mTry == 0 ) {
+      RF_op.mTry = 2;
+    }
   }
 
   if(treedata.nFeatures() < RF_op.mTry) {
@@ -718,6 +721,8 @@ void executeRandomForest(Treedata& treedata,
     progress.update( 1.0 * ( 1 + permIdx ) / op.nPerms );
   }
 
+  //cout << "Entering t-test..." << endl;
+
   if(op.nPerms > 1) {
 
     vector<num_t> cSample(op.nPerms);
@@ -726,12 +731,18 @@ void executeRandomForest(Treedata& treedata,
       for(size_t featureIdx = treedata.nFeatures(); featureIdx < 2*treedata.nFeatures(); ++featureIdx) {
 	cVector[featureIdx - treedata.nFeatures()] = importanceMat[permIdx][featureIdx];
       }
-      //datadefs::print(datadefs::zerotrim(cVector));
-      datadefs::percentile(datadefs::zerotrim(cVector),0.95,cSample[permIdx]);
+      vector<num_t> trimmedCVector = datadefs::trim(cVector);
+      if ( trimmedCVector.size() > 0 ) {
+	datadefs::percentile(trimmedCVector,0.95,cSample[permIdx]);
+      } else {
+	cSample[permIdx] = 0.0;
+      }
       //cout << " " << cSample[permIdx];
     }
     //cout << endl;
     //datadefs::print(cSample);
+
+    //cout << "cSample created." << endl;
 
     for(size_t featureIdx = 0; featureIdx < treedata.nFeatures(); ++featureIdx) {
 
@@ -746,6 +757,7 @@ void executeRandomForest(Treedata& treedata,
       //datadefs::print(fSample);
       datadefs::ttest(fSample,cSample,pValues[featureIdx]);
       datadefs::mean(fSample,importanceValues[featureIdx],nRealSamples);
+      //cout << "t-test ready for feature idx " << featureIdx << endl;
     }
   } else {
     importanceValues = importanceMat[0];

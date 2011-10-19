@@ -5,7 +5,7 @@
 PartitionSequence::PartitionSequence(const size_t nMaxLength) {
 
   assert( nMaxLength > 0 );
-  assert( nMaxLength < sizeof(graycode_t) );
+  assert( nMaxLength < sizeof(graycode_t)*8 );
 
   size_t nCodes = (1 << nMaxLength);
 
