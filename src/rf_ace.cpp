@@ -66,10 +66,6 @@ struct General_options {
   string predictionOutput_s;
   string predictionOutput_l;
 
-  //bool   noFilter;
-  //string noFilter_s;
-  //string noFilter_l;
-
   num_t  pValueThreshold;
   string pValueThreshold_s;
   string pValueThreshold_l;
@@ -103,10 +99,6 @@ struct General_options {
     predictionOutput_s("P"),
     predictionOutput_l("predictions"),
   
-    //noFilter(GENERAL_DEFAULT_NO_FILTER),
-    //noFilter_s("f"),
-    //noFilter_l("noFilter"),
-
     pValueThreshold(GENERAL_DEFAULT_P_VALUE_THRESHOLD),
     pValueThreshold_s("t"),
     pValueThreshold_l("pthreshold") {}
@@ -227,7 +219,7 @@ private:
 void printHeader() {
   cout << endl;
   cout << " ------------------------------------------------------- " << endl;
-  cout << "|  RF-ACE version:  0.8.6, October 6th, 2011            |" << endl;
+  cout << "|  RF-ACE version:  0.8.7, October 19th, 2011           |" << endl;
   cout << "|    Project page:  http://code.google.com/p/rf-ace     |" << endl;
   cout << "|     Report bugs:  timo.p.erkkila@tut.fi               |" << endl;                     
   cout << " ------------------------------------------------------- " << endl;
