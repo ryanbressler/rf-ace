@@ -4,6 +4,7 @@
 #include<cstdlib>
 #include "rootnode.hpp"
 #include "treedata.hpp"
+#include "partitionsequence.hpp"
 
 using namespace std;
 
@@ -91,7 +92,8 @@ private:
   size_t numClasses_;
   num_t shrinkage_;
 
-
+  // This object generates a sequence that makes splitting data with categorical splitters fast
+  PartitionSequence partitionSequence_;
 
 };
 

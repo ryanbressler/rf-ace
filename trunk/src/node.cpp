@@ -212,6 +212,7 @@ void Node::recursiveNodeSplit(Treedata* treeData,
     // !! Potential Crash: This is unsafe. Add asserts or runtime checks.
     // !! Correctness: Violates the Principle of Least Knowledge. Refactor.
     (this->*GI.leafPredictionFunction)(leafTrainData,GI.numClasses);
+    //cout << "Stopping tree generation after creation of " << nNodes << " nodes" << endl;
     return;
   }
 
@@ -414,7 +415,7 @@ bool Node::optimizedSplitterSeek(Treedata* treeData,
 					       GI.minNodeSizeToStop,
 					       sampleIcs_left,
 					       sampleIcs_right);
-    
+   
     if( newSplitFitness > splitFitness && 
        sampleIcs_left.size() >= GI.minNodeSizeToStop && 
        sampleIcs_right.size() >= GI.minNodeSizeToStop ) {

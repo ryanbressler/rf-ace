@@ -759,18 +759,21 @@ void datadefs::print(const vector<datadefs::num_t>& x) {
   cout << endl;
 }
 
-vector<datadefs::num_t> datadefs::zerotrim(const vector<datadefs::num_t>& x) {
+vector<datadefs::num_t> datadefs::trim(const vector<datadefs::num_t>& x) {
   
   vector<datadefs::num_t> trimmed(x.size());
 
-  size_t nNonZero = 0;
+  size_t nRetained = 0;
   for(size_t i = 0; i < x.size(); ++i) {
-    if(fabs(x[i]) > datadefs::EPS) {
-      trimmed[nNonZero] = x[i];
-      ++nNonZero;
+    if( !datadefs::isNAN(x[i]) && fabs(x[i]) > datadefs::EPS) {
+      trimmed[nRetained] = x[i];
+      ++nRetained;
     }
   }
-  trimmed.resize(nNonZero);
+  trimmed.resize(nRetained);
+  if ( nRetained == 0 ) {
+    cout << "WARNING: trimmed vector has 0 length!" << endl;
+  }
   return(trimmed);
 }
 

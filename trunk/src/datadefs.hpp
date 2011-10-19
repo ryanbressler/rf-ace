@@ -126,7 +126,7 @@ namespace datadefs {
                            num_t& corr);
 
 
-  vector<num_t> zerotrim(const vector<num_t>& x);
+  vector<num_t> trim(const vector<num_t>& x);
 
   void print(const vector<num_t>& x);
 

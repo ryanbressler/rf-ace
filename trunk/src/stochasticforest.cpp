@@ -11,7 +11,8 @@ StochasticForest::StochasticForest(Treedata* treeData, const size_t targetIdx, c
   targetIdx_(targetIdx),
   nTrees_(nTrees),
   rootNodes_(0),
-  oobMatrix_(0) {
+  oobMatrix_(0),
+  partitionSequence_(20) {
 
   featuresInForest_.clear();
 
@@ -19,6 +20,8 @@ StochasticForest::StochasticForest(Treedata* treeData, const size_t targetIdx, c
   targetIdx_ = targetIdx;
 
   learnedModel_ = NO_MODEL;
+
+  //PartitionSequence partitionSequence_; 
 
   //cout << "ctor: " << learnedModel_ << endl;
 
@@ -64,7 +67,8 @@ void StochasticForest::learnRF(const size_t mTry,
                                        nFeaturesForSplit,
                                        useContrasts,
                                        isOptimizedNodeSplit,
-                                       numClasses_);
+                                       numClasses_,
+				       &partitionSequence_);
 
     size_t nNodes;
 
@@ -124,7 +128,8 @@ void StochasticForest::learnGBT(const size_t nMaxLeaves,
                                        nFeaturesForSplit,
                                        useContrasts,
                                        isOptimizedNodeSplit,
-                                       numClasses_);
+                                       numClasses_,
+				       &partitionSequence_);
   }
   //Let's grow the forest
   //cout << "Target is "<< treeData_->getFeatureName(targetIdx_) <<" ["<<targetIdx_<<"]. It has "<<numClasses_<<" classes."<<endl;
