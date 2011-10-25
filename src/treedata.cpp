@@ -29,7 +29,10 @@ Treedata::Treedata(string fileName):
   //Initialize stream to read from file
   ifstream featurestream;
   featurestream.open(fileName.c_str());
-  assert(featurestream.good());
+  if ( !featurestream.good() ) {
+    cerr << "Failed to open file '" << fileName << "' for reading" << endl;
+    assert(false);
+  }
 
   //TODO: a sniffer function that find out the type of the input file based on its content.
   //*************************************************************************************** 
