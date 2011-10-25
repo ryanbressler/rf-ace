@@ -643,19 +643,36 @@ void Node::categoricalFeatureSplit(vector<num_t> tv,
     return;
   }
 
-  sampleIcs_left.clear();
-  sampleIcs_right.clear();
-  categories_left.clear();
+  //sampleIcs_left.clear();
+  //sampleIcs_right.clear();
+  //categories_left.clear();
 
   //Map all feature categories to the corresponding samples and represent it as map. The map is used to assign samples to left and right branches
   map<num_t,vector<size_t> > fmap_right;
+  map<num_t,vector<size_t> > fmap_left;
+  map<num_t,vector<size_t> > fmap_right_best;
+  map<num_t,vector<size_t> > fmap_left_best;
+  
   size_t n_f;
   datadefs::map_data(fv,fmap_right,n_f);
   assert(n_tot == n_f);
-
   
+  map<size_t,num_t> int2num;
+  size_t iter = 0;
+  for ( map<num_t,vector<size_t> >::const_iterator it( fmap_right.begin() ); it != fmap_right.end(); ++it ) {
+    int2num.insert( pair<size_t,num_t>( iter, it->first ) );
+    ++iter;
+  }
 
-  if(isTargetNumerical) {
+  // A variable to determine the index for the last sample in the partition sequence: lastSample = GI.partitionSequence->at(psMax)
+  size_t psMax = 0;
+  if ( fmap_right.size() > 2 ) {
+    psMax = ( 1 << (fmap_right.size() - 2) ); // 2^( fmap_right.size() - 2 )
+  }
+
+  //assert( psMax == iter );
+
+  if ( isTargetNumerical ) {
 
     num_t mu_right;
     num_t mu_left = 0.0;
@@ -666,130 +683,131 @@ void Node::categoricalFeatureSplit(vector<num_t> tv,
     num_t se_best = se_right;
     num_t se_tot = se_right;
 
-    while(fmap_right.size() > 0) {
+    for ( size_t psIdx = 0; psIdx <= psMax; ++psIdx ) {
+            
+      // If the category is added from right to left
+      if ( GI.partitionSequence->isAdded(psIdx) ) {
+      
+	//Take samples from right and put them left
+	//vector<size_t>* moveIcs = &fmap_right[ int2num[ psIdx ] ];
+	map<num_t,vector<size_t> >::iterator it( fmap_right.find( int2num[ psIdx ] ) );
+	for(size_t i = 0; i < it->second.size(); ++i) {
+	  datadefs::forward_backward_sqerr(tv[ it->second[i] ],n_left,mu_left,se_left,n_right,mu_right,se_right);
+	  //cout << n_left << "\t" << n_right << "\t" << se_left << "\t" << se_right << endl;
+	}
 
-      map<num_t,vector<size_t> >::iterator it_best(fmap_right.end());
+	fmap_left.insert( *it );
+	fmap_right.erase( it->first );
 
-      for(map<num_t,vector<size_t> >::iterator it(fmap_right.begin()); it != fmap_right.end(); ++it) {
-
-        //Take samples from right and put them left
-        for(size_t i = 0; i < it->second.size(); ++i) {
-          datadefs::forward_backward_sqerr(tv[it->second[i]],n_left,mu_left,se_left,n_right,mu_right,se_right);
-          //cout << n_left << "\t" << n_right << "\t" << se_left << "\t" << se_right << endl;
-        }
-
-        if(se_left+se_right < se_best) {
-          it_best = it;
-          se_best = se_left + se_right;
-        }
-
+      } else {
+	
         //Take samples from left back to right
+	map<num_t,vector<size_t> >::iterator it( fmap_left.find( int2num[ psIdx ] ) );
         for(size_t i = 0; i < it->second.size(); ++i) {
           //cout << tv[it->second[i]] << ": ";
-          datadefs::forward_backward_sqerr(tv[it->second[i]],n_right,mu_right,se_right,n_left,mu_left,se_left);
+          datadefs::forward_backward_sqerr(tv[ it->second[i] ],n_right,mu_right,se_right,n_left,mu_left,se_left);
           //cout << n_left << "\t" << n_right << "\t" << se_left << "\t" << se_right << endl;
         }
+
+	fmap_right.insert( *it );
+	fmap_left.erase( it->first );
+
       }
 
-      //If we found a categorical split that reduces impurity...
-      if(it_best == fmap_right.end()) {
-        break;
+      if ( se_left+se_right < se_best ) {
+	fmap_left_best = fmap_left;
+	fmap_right_best = fmap_right;
+	se_best = se_left + se_right;
       }
-
-
-      //Take samples from right and put them left
-      for(size_t i = 0; i < it_best->second.size(); ++i) {
-        categories_left.insert(it_best->first);
-        //cout << "removing index " << it_best->second[i] << " (value " << tv[it_best->second[i]] << ") from right: ";
-        datadefs::forward_backward_sqerr(tv[it_best->second[i]],n_left,mu_left,se_left,n_right,mu_right,se_right);
-        sampleIcs_left.push_back(it_best->second[i]);
-        //cout << n_left << "\t" << n_right << "\t" << se_left << "\t" << se_right << endl;
-      }
-      fmap_right.erase(it_best->first);
-
     }
-    splitFitness = (se_tot - se_best) / se_tot;
+
+    splitFitness = ( se_tot - se_best ) / se_tot;
+
   } else {
+    
     map<num_t,size_t> freq_left,freq_right;
     size_t sf_left = 0;
     size_t sf_right;
     datadefs::sqfreq(tv,freq_right,sf_right,n_right);
     assert(n_tot == n_right);
-
+    
     num_t sf_tot = sf_right;
     num_t nsf_best = 1.0 * sf_right / n_right;
+    
+    for ( size_t psIdx = 0; psIdx <= psMax; ++psIdx ) {
 
-    while(fmap_right.size() > 1) {
+      //cout << "psIdx = " << GI.partitionSequence->at(psIdx) << " is thrown " << flush;
+      
+      // If the samples corresponding to the next shifted category is from right to left 
+      if ( GI.partitionSequence->isAdded(psIdx) ) {
+	
+	//cout << "from right to left: ics [";
 
-      map<num_t,vector<size_t> >::iterator it_best(fmap_right.end());
+	// Take samples from right and put them left
+	map<num_t,vector<size_t> >::iterator it( fmap_right.find( int2num[ GI.partitionSequence->at(psIdx) ] ) );
+	for(size_t i = 0; i < it->second.size(); ++i) {
+	  //cout << " " << tv[it->second[i]];
+	  //cout << " " << it->second[i];
+	  datadefs::forward_backward_sqfreq(tv[ it->second[i] ],n_left,freq_left,sf_left,n_right,freq_right,sf_right);
+	  //cout << n_left << "\t" << n_right << "\t" << sf_left << "\t" << sf_right << endl;
+	}
+	//cout << " ]" << endl;
 
-      for(map<num_t,vector<size_t> >::iterator it(fmap_right.begin()); it != fmap_right.end(); ++it) {
+	fmap_left.insert( *it );
+        fmap_right.erase( it->first );
+	
+      } else {
 
-        size_t n_left_c = n_left;
-        size_t n_right_c = n_right;
-        map<num_t,size_t> freq_left_c = freq_left;
-        map<num_t,size_t> freq_right_c = freq_right;
-        //Take samples from right and put them left
-        //cout << "Moving " << it->second.size() << " samples corresponding to feature category " << it->first << " from right to left" << endl;
-        for(size_t i = 0; i < it->second.size(); ++i) {
-          //cout << " " << tv[it->second[i]];
-          datadefs::forward_backward_sqfreq(tv[it->second[i]],n_left,freq_left,sf_left,n_right,freq_right,sf_right);
-          //cout << n_left << "\t" << n_right << "\t" << sf_left << "\t" << sf_right << endl;
-        }
-        //cout << endl;
+	//cout << "from left to right: ics [";
 
-        if(1.0*n_right*sf_left + n_left*sf_right > n_left*n_right*nsf_best) {
-          it_best = it;
-          nsf_best = 1.0*sf_left/n_left + 1.0*sf_right/n_right;
-        }
-
-        //cout << "Moving " << it->second.size() << " samples corresponding to feature category " << it->first << " from left to right" << endl;
         //Take samples from left back to right
+	map<num_t,vector<size_t> >::iterator it( fmap_left.find( int2num[ GI.partitionSequence->at(psIdx) ] ) );
         for(size_t i = 0; i < it->second.size(); ++i) {
           //cout << " " << tv[it->second[i]];
-          datadefs::forward_backward_sqfreq(tv[it->second[i]],n_right,freq_right,sf_right,n_left,freq_left,sf_left);
+	  //cout << " " << it->second[i];
+          datadefs::forward_backward_sqfreq(tv[ it->second[i] ],n_right,freq_right,sf_right,n_left,freq_left,sf_left);
           //cout << n_left << "\t" << n_right << "\t" << sf_left << "\t" << sf_right << endl;
         }
-        //cout << endl;
+        //cout << " ]" << endl;
 
-        assert(n_left_c == n_left);
-        assert(n_right_c == n_right);
-        assert(freq_left_c.size() == freq_left.size());
-        assert(freq_right_c.size() == freq_right.size());
+	fmap_right.insert( *it );
+        fmap_left.erase( it->first );
 
       }
-
-      //If we found a categorical split that reduces impurity...
-      if(it_best == fmap_right.end()) {
-        break;
+      
+      if ( 1.0*n_right*sf_left + n_left*sf_right > n_left*n_right*nsf_best ) {
+	fmap_left_best = fmap_left;
+	fmap_right_best = fmap_right;
+	nsf_best = 1.0*sf_left/n_left + 1.0*sf_right/n_right;
       }
-
-
-      //Take samples from right and put them left
-      for(size_t i = 0; i < it_best->second.size(); ++i) {
-        categories_left.insert(it_best->first);
-        //cout << "removing index " << it_best->second[i] << " (value " << tv[it_best->second[i]] << ") from right: ";
-        datadefs::forward_backward_sqfreq(tv[it_best->second[i]],n_left,freq_left,sf_left,n_right,freq_right,sf_right);
-        sampleIcs_left.push_back(it_best->second[i]);
-        //cout << n_left << "\t" << n_right << "\t" << sf_left << "\t" << sf_right << endl;
-      }
-      fmap_right.erase(it_best->first);
-
+            
     }
     splitFitness = ( -1.0 * n_left*n_right*sf_tot + n_tot*n_right*sf_left + n_tot*n_left*sf_right ) / ( n_left*n_right * (1.0*n_tot*n_tot - sf_tot) );
   }
-
-  //Next we assign samples remaining on right
-  sampleIcs_right.clear();
-  for(map<num_t,vector<size_t> >::const_iterator it(fmap_right.begin()); it != fmap_right.end(); ++it) {
-    for(size_t i = 0; i < it->second.size(); ++i) {
-      sampleIcs_right.push_back(mapIcs[it->second[i]]);
+  
+  // Assign samples on the right
+  sampleIcs_right.resize(n_tot);
+  iter = 0;
+  for ( map<num_t,vector<size_t> >::const_iterator it(fmap_right_best.begin()); it != fmap_right_best.end(); ++it ) {
+    for ( size_t i = 0; i < it->second.size(); ++i ) {
+      sampleIcs_right[iter] = mapIcs[ it->second[i] ];
+      ++iter;
     }
   }
-
-  for(size_t i = 0; i < sampleIcs_left.size(); ++i) {
-    sampleIcs_left[i] = mapIcs[sampleIcs_left[i]];
+  sampleIcs_right.resize(iter);
+  
+  // Assign samples and categories on the left
+  sampleIcs_left.resize(n_tot);
+  categories_left.clear();
+  iter = 0;
+  for ( map<num_t,vector<size_t> >::const_iterator it(fmap_left_best.begin()); it != fmap_left_best.end(); ++it ) {
+    for ( size_t i = 0; i < it->second.size(); ++i ) {
+      sampleIcs_left[iter] = mapIcs[ it->second[i] ];
+      ++iter;
+    }
+    categories_left.insert( it->first );
   }
+  sampleIcs_left.resize(iter);
 
   /*
     if(false) {
