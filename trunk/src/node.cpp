@@ -279,7 +279,7 @@ bool Node::regularSplitterSeek(Treedata* treeData,
     
     //vector<num_t> newSplitFeatureData;
     size_t newSplitFeatureIdx = featureSampleIcs[i];
-    //bool isFeatureNumerical = treeData->isFeatureNumerical(newSplitFeatureIdx);
+    bool isFeatureNumerical = treeData->isFeatureNumerical(newSplitFeatureIdx);
 
     //Neither the real nor the contrast feature can appear in the tree as splitter
     if ( newSplitFeatureIdx == targetIdx ) {
@@ -289,7 +289,7 @@ bool Node::regularSplitterSeek(Treedata* treeData,
     vector<num_t> featureData;
     treeData->getFeatureData(newSplitFeatureIdx,sampleIcs,featureData);
 
-    if ( isTargetNumerical ) {
+    if ( isFeatureNumerical ) {
       Node::numericalFeatureSplit(targetData,
 				  isTargetNumerical,
 				  featureData,
@@ -661,6 +661,7 @@ void Node::categoricalFeatureSplit(vector<num_t> tv,
   size_t iter = 0;
   for ( map<num_t,vector<size_t> >::const_iterator it( fmap_right.begin() ); it != fmap_right.end(); ++it ) {
     int2num.insert( pair<size_t,num_t>( iter, it->first ) );
+    //cout << iter << "->" << it->first << endl;
     ++iter;
   }
 
@@ -670,7 +671,8 @@ void Node::categoricalFeatureSplit(vector<num_t> tv,
     psMax = ( 1 << (fmap_right.size() - 2) ); // 2^( fmap_right.size() - 2 )
   }
 
-  //assert( psMax == iter );
+  //cout << "iter = " << iter << ", psMax = " << psMax << endl;
+  //assert( psMax < 10);
 
   if ( isTargetNumerical ) {
 
@@ -685,7 +687,7 @@ void Node::categoricalFeatureSplit(vector<num_t> tv,
 
     for ( size_t psIdx = 0; psIdx <= psMax; ++psIdx ) {
 
-      //cout << "psIdx = " << GI.partitionSequence->at(psIdx) << " is thrown " << flush;
+      //cout << "psIdx = " << psIdx << " <= " << psMax << ", PS(psIdx) = " << GI.partitionSequence->at(psIdx) << " is thrown " << flush;
             
       // If the category is added from right to left
       if ( GI.partitionSequence->isAdded(psIdx) ) {
@@ -745,7 +747,7 @@ void Node::categoricalFeatureSplit(vector<num_t> tv,
     
     for ( size_t psIdx = 0; psIdx <= psMax; ++psIdx ) {
 
-      //cout << "psIdx = " << GI.partitionSequence->at(psIdx) << " is thrown " << flush;
+      //cout << "psIdx = " << psIdx << ", PS(psIdx) = " << GI.partitionSequence->at(psIdx) << " is thrown " << flush;
       
       // If the samples corresponding to the next shifted category is from right to left 
       if ( GI.partitionSequence->isAdded(psIdx) ) {
