@@ -684,30 +684,39 @@ void Node::categoricalFeatureSplit(vector<num_t> tv,
     num_t se_tot = se_right;
 
     for ( size_t psIdx = 0; psIdx <= psMax; ++psIdx ) {
+
+      //cout << "psIdx = " << GI.partitionSequence->at(psIdx) << " is thrown " << flush;
             
       // If the category is added from right to left
       if ( GI.partitionSequence->isAdded(psIdx) ) {
+
+	//cout << "from right to left: ics [";
       
 	//Take samples from right and put them left
-	//vector<size_t>* moveIcs = &fmap_right[ int2num[ psIdx ] ];
-	map<num_t,vector<size_t> >::iterator it( fmap_right.find( int2num[ psIdx ] ) );
+	map<num_t,vector<size_t> >::iterator it( fmap_right.find( int2num[ GI.partitionSequence->at(psIdx) ] ) );
 	for(size_t i = 0; i < it->second.size(); ++i) {
+	  //cout << " " << it->second[i];
 	  datadefs::forward_backward_sqerr(tv[ it->second[i] ],n_left,mu_left,se_left,n_right,mu_right,se_right);
 	  //cout << n_left << "\t" << n_right << "\t" << se_left << "\t" << se_right << endl;
 	}
+	//cout << " ]" << endl;
 
 	fmap_left.insert( *it );
 	fmap_right.erase( it->first );
 
       } else {
 	
+	//cout << "from left to right: ics [";
+
         //Take samples from left back to right
-	map<num_t,vector<size_t> >::iterator it( fmap_left.find( int2num[ psIdx ] ) );
+	map<num_t,vector<size_t> >::iterator it( fmap_left.find( int2num[ GI.partitionSequence->at(psIdx) ] ) );
         for(size_t i = 0; i < it->second.size(); ++i) {
+	  //cout << " " << it->second[i];
           //cout << tv[it->second[i]] << ": ";
           datadefs::forward_backward_sqerr(tv[ it->second[i] ],n_right,mu_right,se_right,n_left,mu_left,se_left);
           //cout << n_left << "\t" << n_right << "\t" << se_left << "\t" << se_right << endl;
         }
+	//cout << " ]" << endl;
 
 	fmap_right.insert( *it );
 	fmap_left.erase( it->first );
