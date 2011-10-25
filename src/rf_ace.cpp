@@ -22,15 +22,16 @@ const bool   GENERAL_DEFAULT_PRINT_HELP = false;
 //const bool   GENERAL_DEFAULT_NO_FILTER = false;
 const bool   GENERAL_DEFAULT_NO_PREDICTION = false; // TEMPORARY VARIABLE
 const num_t  GENERAL_DEFAULT_P_VALUE_THRESHOLD = 0.10;
+const bool   GENERAL_IS_OPTIMIZED_NODE_SPLIT = false;
 
-const bool   RF_IS_OPTIMIZED_NODE_SPLIT = false;
+//const bool   RF_IS_OPTIMIZED_NODE_SPLIT = false;
 const size_t RF_DEFAULT_N_TREES = 100; // zero means it will be estimated from the data by default
 const size_t RF_DEFAULT_M_TRY = 0; // same here ...
 const size_t RF_DEFAULT_N_MAX_LEAVES = 10;
 const size_t RF_DEFAULT_NODE_SIZE = 5; // ... and here
 const size_t RF_DEFAULT_N_PERMS = 20;
 
-const bool   GBT_IS_OPTIMIZED_NODE_SPLIT = false;
+//const bool   GBT_IS_OPTIMIZED_NODE_SPLIT = false;
 const size_t GBT_DEFAULT_N_TREES = 100;
 const size_t GBT_DEFAULT_N_MAX_LEAVES = 6;
 const num_t  GBT_DEFAULT_SHRINKAGE = 0.1;
@@ -65,11 +66,15 @@ struct General_options {
   string predictionOutput;
   string predictionOutput_s;
   string predictionOutput_l;
-
+  
   num_t  pValueThreshold;
   string pValueThreshold_s;
   string pValueThreshold_l;
-
+  
+  bool   isOptimizedNodeSplit;
+  string isOptimizedNodeSplit_s;
+  string isOptimizedNodeSplit_l;
+  
   General_options():
     printHelp(GENERAL_DEFAULT_PRINT_HELP),
     printHelp_s("h"),
@@ -101,15 +106,15 @@ struct General_options {
   
     pValueThreshold(GENERAL_DEFAULT_P_VALUE_THRESHOLD),
     pValueThreshold_s("t"),
-    pValueThreshold_l("pthreshold") {}
+    pValueThreshold_l("pthreshold"),
+
+    isOptimizedNodeSplit(GENERAL_IS_OPTIMIZED_NODE_SPLIT),
+    isOptimizedNodeSplit_s("q"),
+    isOptimizedNodeSplit_l("optimized_split") {}
 };
 
 struct RF_options {
-  
-  bool isOptimizedNodeSplit;
-  string isOptimizedNodeSplit_s;
-  string isOptimizedNodeSplit_l;
-  
+    
   size_t nTrees;
   string nTrees_s;
   string nTrees_l;
@@ -131,10 +136,6 @@ struct RF_options {
   string nPerms_l;
 
   RF_options():
-    isOptimizedNodeSplit(RF_IS_OPTIMIZED_NODE_SPLIT),
-    isOptimizedNodeSplit_s("o"),
-    isOptimizedNodeSplit_l("RF_optimize"),
-
     nTrees(RF_DEFAULT_N_TREES),
     nTrees_s("n"),
     nTrees_l("RF_ntrees"),
@@ -158,10 +159,6 @@ struct RF_options {
 
 struct GBT_options {
 
-  bool isOptimizedNodeSplit;
-  string isOptimizedNodeSplit_s;
-  string isOptimizedNodeSplit_l;
-
   size_t nTrees;
   string nTrees_s;
   string nTrees_l;
@@ -178,11 +175,7 @@ struct GBT_options {
   string subSampleSize_s;
   string subSampleSize_l;
 
-  GBT_options():
-    isOptimizedNodeSplit(GBT_IS_OPTIMIZED_NODE_SPLIT),
-    isOptimizedNodeSplit_s("b"),
-    isOptimizedNodeSplit_l("GBT_optimize"),
-    
+  GBT_options():    
     nTrees(GBT_DEFAULT_N_TREES),
     nTrees_s("r"),
     nTrees_l("GBT_ntrees"),
@@ -247,12 +240,11 @@ void printHelp(const General_options& geno, const RF_options& rfo, const GBT_opt
        << " " << "Prediction output file" << endl;  
   cout << " -" << geno.featureMaskInput_s << " / --" << geno.featureMaskInput_l << setw( maxwidth - geno.featureMaskInput_l.size() )
        << " " << "Feature mask input file. String of ones and zeroes, zeroes indicating removal of the feature in the matrix" << endl;
+  cout << " -" << geno.isOptimizedNodeSplit_s << " / --" << geno.isOptimizedNodeSplit_l << setw( maxwidth - geno.isOptimizedNodeSplit_l.size() )
+       << " " << "Perform optimized node splitting (faster but more inaccurate; default OFF)" << endl;
   cout << endl;
   
   cout << "OPTIONAL ARGUMENTS -- RANDOM FOREST:" << endl;
-  cout << " -" << rfo.isOptimizedNodeSplit_s << " / --" << rfo.isOptimizedNodeSplit_l
-       << setw( maxwidth - rfo.isOptimizedNodeSplit_l.size() )
-       << " " << "Perform optimized node splitting with Random Forests (currently ENFORCED)" << endl;
   cout << " -" << rfo.nTrees_s << " / --" << rfo.nTrees_l << setw( maxwidth - rfo.nTrees_l.size() )
        << " " << "Number of trees per RF (default 100)" << endl;
   cout << " -" << rfo.mTry_s << " / --" << rfo.mTry_l << setw( maxwidth - rfo.mTry_l.size() )
@@ -266,17 +258,12 @@ void printHelp(const General_options& geno, const RF_options& rfo, const GBT_opt
   cout << endl;
 
   cout << "OPTIONAL ARGUMENTS -- FEATURE FILTER:" << endl;
-  //cout << " -" << geno.noFilter_s << " / --" << geno.noFilter_l << setw( maxwidth - geno.noFilter_l.size() )
-  //     << " " << "Set this flag to turn RF filtering OFF (default ON)" << endl;
   cout << " -" << geno.pValueThreshold_s << " / --" << geno.pValueThreshold_l << setw( maxwidth - geno.pValueThreshold_l.size() )
        << " " << "p-value threshold below which associations are listed (default "
        << GENERAL_DEFAULT_P_VALUE_THRESHOLD << ")" << endl;
   cout << endl;
   
   cout << "OPTIONAL ARGUMENTS -- GRADIENT BOOSTING TREES:" << endl;
-  cout << " -" << gbto.isOptimizedNodeSplit_s << " / --" << gbto.isOptimizedNodeSplit_l
-       << setw( maxwidth - gbto.isOptimizedNodeSplit_l.size() ) 
-       << " " << "Perform optimized node splitting with Gradient Boosting Trees (currently ENFORCED)" << endl;
   cout << " -" << gbto.nTrees_s << " / --" << gbto.nTrees_l << setw( maxwidth - gbto.nTrees_l.size() ) 
        << " " << "Number of trees in the GBT (default " << GBT_DEFAULT_N_TREES << ")" << endl; 
   cout << " -" << gbto.nMaxLeaves_s << " / --" << gbto.nMaxLeaves_l << setw( maxwidth - gbto.nMaxLeaves_l.size() ) 
@@ -304,7 +291,8 @@ void printHelpHint() {
 
 void executeRandomForest(Treedata& treedata,
 			 const size_t targetIdx,
-			 const RF_options& op,
+			 const RF_options& RF_op,
+			 const bool isOptimizedNodeSplit,
 			 vector<num_t>& pValues,
 			 vector<num_t>& importanceValues);
 
@@ -313,20 +301,21 @@ void readFeatureMask(const string& fileName, const size_t nFeatures, vector<size
 
 int main(const int argc, char* const argv[]) {
 
+  // Structs that store all the user-specified command-line arguments
   General_options gen_op;
   RF_options RF_op; 
   GBT_options GBT_op;
 
-  //Print the intro header
+  // Print the intro header
   printHeader();
 
-  //With no input arguments the help is printed
+  // With no input arguments the help is printed
   if(argc == 1) {
     printHelp(gen_op,RF_op,GBT_op);
     return(EXIT_SUCCESS);
   }
 
-  //Read the user parameters ... 
+  // Read the user parameters ... 
   ArgParse parser(argc,argv);
   
   // First read general options
@@ -337,11 +326,10 @@ int main(const int argc, char* const argv[]) {
   parser.getArgument<string>(gen_op.featureMaskInput_s, gen_op.featureMaskInput_l, gen_op.featureMaskInput);
   parser.getArgument<string>(gen_op.testInput_s, gen_op.testInput_l, gen_op.testInput);
   parser.getArgument<string>(gen_op.predictionOutput_s, gen_op.predictionOutput_l, gen_op.predictionOutput);
-  //parser.getFlag(gen_op.noFilter_s, gen_op.noFilter_l, gen_op.noFilter);
   parser.getArgument<num_t>(gen_op.pValueThreshold_s, gen_op.pValueThreshold_l, gen_op.pValueThreshold);
+  parser.getFlag(gen_op.isOptimizedNodeSplit_s, gen_op.isOptimizedNodeSplit_l, gen_op.isOptimizedNodeSplit);
 
   // Then read Random Forest specific options
-  parser.getFlag(RF_op.isOptimizedNodeSplit_s, RF_op.isOptimizedNodeSplit_l, RF_op.isOptimizedNodeSplit);
   parser.getArgument<size_t>(RF_op.nTrees_s,RF_op.nTrees_l,RF_op.nTrees);
   parser.getArgument<size_t>(RF_op.mTry_s, RF_op.mTry_l, RF_op.mTry); 
   parser.getArgument<size_t>(RF_op.nMaxLeaves_s, RF_op.nMaxLeaves_l, RF_op.nMaxLeaves);
@@ -349,7 +337,6 @@ int main(const int argc, char* const argv[]) {
   parser.getArgument<size_t>(RF_op.nPerms_s, RF_op.nPerms_l, RF_op.nPerms); 
 
   // And last read Gradient Boosting Trees options
-  parser.getFlag(GBT_op.isOptimizedNodeSplit_s, GBT_op.isOptimizedNodeSplit_l, GBT_op.isOptimizedNodeSplit);
   parser.getArgument<size_t>(GBT_op.nTrees_s, GBT_op.nTrees_l, GBT_op.nTrees);
   parser.getArgument<size_t>(GBT_op.nMaxLeaves_s, GBT_op.nMaxLeaves_l, GBT_op.nMaxLeaves);
   parser.getArgument<num_t>(GBT_op.shrinkage_s, GBT_op.shrinkage_l, GBT_op.shrinkage);
@@ -423,17 +410,16 @@ int main(const int argc, char* const argv[]) {
   size_t targetIdx;
   treedata.getMatchingTargetIdx(gen_op.targetStr,targetIdx);
 
-  // !! NOTE: this is to override node split optimization settings
-  bool noOptimization = false;
-  parser.getFlag("q","optimization_off",noOptimization);
-  if ( noOptimization) {
+  /*
+    if ( gen_op.isOptimizedNodeSplit) {
     cout << "TEST MODE: optimized node split turned OFF" << endl << endl;
-    RF_op.isOptimizedNodeSplit = false;
-    GBT_op.isOptimizedNodeSplit = false;
-  } else {
     RF_op.isOptimizedNodeSplit = true;
     GBT_op.isOptimizedNodeSplit = true;
-  }
+    } else {
+    RF_op.isOptimizedNodeSplit = false;
+    GBT_op.isOptimizedNodeSplit = false;
+    }
+  */
 
   //If default mTry is to be used...
   if ( RF_op.mTry == RF_DEFAULT_M_TRY ) {
@@ -459,11 +445,11 @@ int main(const int argc, char* const argv[]) {
   num_t realFraction = 1.0*nRealSamples / treedata.nSamples();
 
   //Before number crunching, print values of parameters of RF-ACE
-  int maxwidth = 15;
+  int maxwidth = 17;
   cout << "General configuration:" << endl;
-  cout << "    nfeatures" << setw(6) << "" << "= " << nAllFeatures << endl;
-  cout << "    nsamples"  << setw(7) << "" << "= " << treedata.nRealSamples(targetIdx) << " / " << treedata.nSamples() << " ( " << 100.0 * ( 1 - realFraction ) << " % missing )" << endl; 
-  cout << "    tree type" << setw(6) << "" << "= ";
+  cout << "    nfeatures" << setw(8) << "" << "= " << nAllFeatures << endl;
+  cout << "    nsamples"  << setw(9) << "" << "= " << treedata.nRealSamples(targetIdx) << " / " << treedata.nSamples() << " ( " << 100.0 * ( 1 - realFraction ) << " % missing )" << endl; 
+  cout << "    tree type" << setw(8) << "" << "= ";
   if(treedata.isFeatureNumerical(targetIdx)) { cout << "Regression CART" << endl; } else { cout << treedata.nCategories(targetIdx) << "-class CART" << endl; }
   cout << "  --" << gen_op.trainInput_l << setw( maxwidth - gen_op.trainInput_l.size() ) << ""
        << "= " << gen_op.trainInput << endl;
@@ -475,6 +461,8 @@ int main(const int argc, char* const argv[]) {
        << "= "; if( makePrediction ) { cout << gen_op.testInput << endl; } else { cout << "NOT SET" << endl; }
   cout << "  --" << gen_op.predictionOutput_l << setw( maxwidth - gen_op.predictionOutput_l.size() ) << ""
        << "= "; if( writePredictionsToFile ) { cout << gen_op.predictionOutput << endl; } else { cout << "NOT SET" << endl; }
+  cout << "  --" << gen_op.isOptimizedNodeSplit_l << setw( maxwidth - gen_op.isOptimizedNodeSplit_l.size() ) << ""
+       << "= "; if( gen_op.isOptimizedNodeSplit ) { cout << "YES" << endl; } else { cout << "NO" << endl; }
   cout << endl;
 
   cout << "Random Forest configuration:" << endl;
@@ -491,8 +479,8 @@ int main(const int argc, char* const argv[]) {
   cout << "Significance analysis configuration:" << endl;
   cout << "  --" << RF_op.nPerms_l << setw( maxwidth - RF_op.nPerms_l.size() ) << ""
        << "= " << RF_op.nPerms << endl;
-  cout << "    test type" << setw(6) << "" << "= T-test" << endl;
-  cout << "  --pthresold" << setw(6) << "" << "= " << gen_op.pValueThreshold << endl;
+  cout << "    test type" << setw(8) << "" << "= T-test" << endl;
+  cout << "  --pthresold" << setw(8) << "" << "= " << gen_op.pValueThreshold << endl;
   cout << endl;
 
   if ( makePrediction ) {
@@ -520,7 +508,7 @@ int main(const int argc, char* const argv[]) {
   vector<num_t> pValues; //(treedata.nFeatures());
   vector<num_t> importanceValues; //(treedata.nFeatures());
   cout << "===> Uncovering associations... " << flush;
-  executeRandomForest(treedata,targetIdx,RF_op,pValues,importanceValues);
+  executeRandomForest(treedata,targetIdx,RF_op,gen_op.isOptimizedNodeSplit,pValues,importanceValues);
   cout << "DONE" << endl;
   
   /////////////////////////////////////////////////
@@ -681,44 +669,45 @@ int main(const int argc, char* const argv[]) {
 
 void executeRandomForest(Treedata& treedata,
 			 const size_t targetIdx,
-			 const RF_options& op,
+			 const RF_options& RF_op,
+			 const bool isOptimizedNodeSplit,
 			 vector<num_t>& pValues,
 			 vector<num_t>& importanceValues) {
   
-  vector<vector<num_t> > importanceMat(op.nPerms);
+  vector<vector<num_t> > importanceMat(RF_op.nPerms);
   pValues.resize(treedata.nFeatures());
   importanceValues.resize(treedata.nFeatures());
   size_t nNodesInAllForests = 0;
 
   Progress progress;
-  for(int permIdx = 0; permIdx < static_cast<int>(op.nPerms); ++permIdx) {
+  for(int permIdx = 0; permIdx < static_cast<int>(RF_op.nPerms); ++permIdx) {
     //cout << "  RF " << permIdx + 1 << ": ";
     //Treedata td_thread = treedata;
 
-    progress.update(1.0*permIdx/op.nPerms);
+    progress.update(1.0*permIdx/RF_op.nPerms);
   
     bool useContrasts;
-    if(op.nPerms > 1) {
+    if(RF_op.nPerms > 1) {
       useContrasts = true;
     } else {
       useContrasts = false;
     }
 
-    StochasticForest SF(&treedata,targetIdx,op.nTrees);
-    SF.learnRF(op.mTry,op.nMaxLeaves,op.nodeSize,useContrasts,op.isOptimizedNodeSplit);
+    StochasticForest SF(&treedata,targetIdx,RF_op.nTrees);
+    SF.learnRF(RF_op.mTry,RF_op.nMaxLeaves,RF_op.nodeSize,useContrasts,isOptimizedNodeSplit);
     size_t nNodesInForest = SF.nNodes();
     nNodesInAllForests += nNodesInForest;
     importanceMat[permIdx] = SF.featureImportance();
     //printf("  RF %i: %i nodes (avg. %6.3f nodes/tree)\n",permIdx+1,static_cast<int>(nNodesInForest),1.0*nNodesInForest/op.nTrees);
-    progress.update( 1.0 * ( 1 + permIdx ) / op.nPerms );
+    progress.update( 1.0 * ( 1 + permIdx ) / RF_op.nPerms );
   }
 
   //cout << "Entering t-test..." << endl;
 
-  if(op.nPerms > 1) {
+  if(RF_op.nPerms > 1) {
 
-    vector<num_t> cSample(op.nPerms);
-    for(size_t permIdx = 0; permIdx < op.nPerms; ++permIdx) {
+    vector<num_t> cSample(RF_op.nPerms);
+    for(size_t permIdx = 0; permIdx < RF_op.nPerms; ++permIdx) {
       vector<num_t> cVector(treedata.nFeatures());
       for(size_t featureIdx = treedata.nFeatures(); featureIdx < 2*treedata.nFeatures(); ++featureIdx) {
 	cVector[featureIdx - treedata.nFeatures()] = importanceMat[permIdx][featureIdx];
@@ -739,9 +728,9 @@ void executeRandomForest(Treedata& treedata,
     for(size_t featureIdx = 0; featureIdx < treedata.nFeatures(); ++featureIdx) {
 
       size_t nRealSamples;
-      vector<num_t> fSample(op.nPerms);
+      vector<num_t> fSample(RF_op.nPerms);
       //vector<num_t> cSample(op.nPerms);
-      for(size_t permIdx = 0; permIdx < op.nPerms; ++permIdx) {
+      for(size_t permIdx = 0; permIdx < RF_op.nPerms; ++permIdx) {
         fSample[permIdx] = importanceMat[permIdx][featureIdx];
         //cSample[permIdx] = importanceMat[permIdx][featureIdx + treedata.nFeatures()];
       }
