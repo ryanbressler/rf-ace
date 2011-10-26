@@ -271,26 +271,18 @@ void NodeTest::test_numericalFeatureSplit() {
 
 void NodeTest::test_categoricalFeatureSplit() { 
 
-  vector<datadefs::num_t> featureData(8);
-  vector<datadefs::num_t> targetData(8);
+  size_t n = 10;
 
-  featureData[0] = 3;
-  featureData[1] = 2;
-  featureData[2] = datadefs::NUM_NAN;
-  featureData[3] = 2;
-  featureData[4] = 2;
-  featureData[5] = 1;
-  featureData[6] = 0;
-  featureData[7] = 0;
+  vector<datadefs::num_t> featureData(n);
+  vector<datadefs::num_t> targetData(n,0);
 
-  targetData[0] = 1;
-  targetData[1] = 1;
-  targetData[2] = 1;
-  targetData[3] = datadefs::NUM_NAN;
-  targetData[4] = 1;
-  targetData[5] = 1;
-  targetData[6] = 0;
-  targetData[7] = 0;
+  for ( size_t i = 0; i < n; ++i ) {
+    featureData[i] = static_cast<datadefs::num_t>(i);
+  }
+
+  for ( size_t i = 0; i < n / 2; ++i ) {
+    targetData[i] = 1;
+  }
 
   vector<size_t> sampleIcs_left,sampleIcs_right;
   bool isTargetNumerical = false;
@@ -298,7 +290,7 @@ void NodeTest::test_categoricalFeatureSplit() {
   datadefs::num_t splitFitness;
 
   Node node;
-  PartitionSequence PS(4);
+  PartitionSequence PS(n);
 
   Node::GrowInstructions GI;
   GI.minNodeSizeToStop = 2;
@@ -313,10 +305,17 @@ void NodeTest::test_categoricalFeatureSplit() {
 			       splitValues_left,
 			       splitFitness);
 
-  //for(set<datadefs::num_t>::const_iterator it(splitValues_left.begin()); it != splitValues_left.end(); ++it) {
-  //  cout << " " << *it;
-  //}
-  //cout << endl;
+  CPPUNIT_ASSERT( sampleIcs_left.size() == sampleIcs_right.size() );
+
+  CPPUNIT_ASSERT( splitValues_left.find(0) != splitValues_left.end() );
+  CPPUNIT_ASSERT( splitValues_left.find(1) != splitValues_left.end() );
+  
+  for(size_t i = 0; i < sampleIcs_left.size(); ++i ) {
+    CPPUNIT_ASSERT( targetData[sampleIcs_left[i]] == 1 );
+    CPPUNIT_ASSERT( targetData[sampleIcs_right[i]] == 0 );
+  }
+
+  CPPUNIT_ASSERT( fabs(splitFitness - 1) < datadefs::EPS );
 
 }
 

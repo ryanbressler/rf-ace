@@ -699,7 +699,7 @@ void DataDefsTest::test_sortDataAndMakeRef() {
   }
   
   for (int i = 49; i > -1; --i) { // Deliberately of length data.size() - 1
-    refIcs.push_back(static_cast<datadefs::num_t>(i));
+    refIcs.push_back(static_cast<size_t>(i));
   } // This allocation should be irrelevant. We keep it here deliberately to
     //  ensure the results are flattened in a safe manner; we expect a bounds
     //  checker to complain violently should that not be the case. 
