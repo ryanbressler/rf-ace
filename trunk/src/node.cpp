@@ -631,31 +631,23 @@ void Node::categoricalFeatureSplit(vector<num_t> tv,
   assert(tv.size() == fv.size());
 
   vector<size_t> mapIcs;
-
   Node::cleanPairVectorFromNANs(tv,fv,mapIcs);
 
-  size_t n_tot = tv.size();
-  size_t n_right = n_tot;
-  size_t n_left = 0;
-
-  if(n_tot < 2) {
-    splitFitness = datadefs::NUM_NAN;
-    return;
-  }
-
-  //sampleIcs_left.clear();
-  //sampleIcs_right.clear();
-  //categories_left.clear();
-
-  //Map all feature categories to the corresponding samples and represent it as map. The map is used to assign samples to left and right branches
+  // Map all feature categories to the corresponding samples and represent it as map. The map is used to assign samples to left and right branches
   map<num_t,vector<size_t> > fmap_right;
   map<num_t,vector<size_t> > fmap_left;
   map<num_t,vector<size_t> > fmap_right_best;
   map<num_t,vector<size_t> > fmap_left_best;
-  
-  size_t n_f;
-  datadefs::map_data(fv,fmap_right,n_f);
-  assert(n_tot == n_f);
+
+  size_t n_tot = 0;
+  datadefs::map_data(fv,fmap_right,n_tot);
+  size_t n_right = n_tot;
+  size_t n_left = 0;
+
+  if(n_tot < GI.minNodeSizeToStop) {
+    splitFitness = datadefs::NUM_NAN;
+    return;
+  }
   
   map<size_t,num_t> int2num;
   size_t iter = 0;
@@ -670,9 +662,6 @@ void Node::categoricalFeatureSplit(vector<num_t> tv,
   if ( fmap_right.size() > 2 ) {
     psMax = ( 1 << (fmap_right.size() - 2) ); // 2^( fmap_right.size() - 2 )
   }
-
-  //cout << "iter = " << iter << ", psMax = " << psMax << endl;
-  //assert( psMax < 10);
 
   if ( isTargetNumerical ) {
 
@@ -760,7 +749,7 @@ void Node::categoricalFeatureSplit(vector<num_t> tv,
 	  //cout << " " << tv[it->second[i]];
 	  //cout << " " << it->second[i];
 	  datadefs::forward_backward_sqfreq(tv[ it->second[i] ],n_left,freq_left,sf_left,n_right,freq_right,sf_right);
-	  //cout << n_left << "\t" << n_right << "\t" << sf_left << "\t" << sf_right << endl;
+	  //cout << "<-" << tv[it->second[i]] << "   :" << n_left << "," << n_right << "," << sf_left << "," << sf_right << endl;
 	}
 	//cout << " ]" << endl;
 
@@ -777,7 +766,7 @@ void Node::categoricalFeatureSplit(vector<num_t> tv,
           //cout << " " << tv[it->second[i]];
 	  //cout << " " << it->second[i];
           datadefs::forward_backward_sqfreq(tv[ it->second[i] ],n_right,freq_right,sf_right,n_left,freq_left,sf_left);
-          //cout << n_left << "\t" << n_right << "\t" << sf_left << "\t" << sf_right << endl;
+          //cout << "  " << tv[it->second[i]] << "-> :" << n_left << "," << n_right << "," << sf_left << "," << sf_right << endl;
         }
         //cout << " ]" << endl;
 
@@ -790,22 +779,13 @@ void Node::categoricalFeatureSplit(vector<num_t> tv,
 	fmap_left_best = fmap_left;
 	fmap_right_best = fmap_right;
 	nsf_best = 1.0*sf_left/n_left + 1.0*sf_right/n_right;
+	splitFitness = ( -1.0 * n_left*n_right*sf_tot + n_tot*n_right*sf_left + n_tot*n_left*sf_right ) / ( n_left*n_right * (1.0*n_tot*n_tot - sf_tot) );
       }
             
     }
-    splitFitness = ( -1.0 * n_left*n_right*sf_tot + n_tot*n_right*sf_left + n_tot*n_left*sf_right ) / ( n_left*n_right * (1.0*n_tot*n_tot - sf_tot) );
+    //cout << n_left << "," << sf_left << " <-> " << n_right << "," << "," << sf_right << endl;
+    //splitFitness = ( -1.0 * n_left*n_right*sf_tot + n_tot*n_right*sf_left + n_tot*n_left*sf_right ) / ( n_left*n_right * (1.0*n_tot*n_tot - sf_tot) );
   }
-  
-  // Assign samples on the right
-  sampleIcs_right.resize(n_tot);
-  iter = 0;
-  for ( map<num_t,vector<size_t> >::const_iterator it(fmap_right_best.begin()); it != fmap_right_best.end(); ++it ) {
-    for ( size_t i = 0; i < it->second.size(); ++i ) {
-      sampleIcs_right[iter] = mapIcs[ it->second[i] ];
-      ++iter;
-    }
-  }
-  sampleIcs_right.resize(iter);
   
   // Assign samples and categories on the left
   sampleIcs_left.resize(n_tot);
@@ -820,19 +800,17 @@ void Node::categoricalFeatureSplit(vector<num_t> tv,
   }
   sampleIcs_left.resize(iter);
 
-  /*
-    if(false) {
-    cout << "Categorical feature splits target [";
-    for(size_t i = 0; i < sampleIcs_left.size(); ++i) {
-    cout << " " << tv_copy[sampleIcs_left[i]];
+  // Assign samples on the right
+  sampleIcs_right.resize(n_tot);
+  iter = 0;
+  for ( map<num_t,vector<size_t> >::const_iterator it(fmap_right_best.begin()); it != fmap_right_best.end(); ++it ) {
+    for ( size_t i = 0; i < it->second.size(); ++i ) {
+      sampleIcs_right[iter] = mapIcs[ it->second[i] ];
+      ++iter;
     }
-    cout << " ] <==> [";
-    for(size_t i = 0; i < sampleIcs_right.size(); ++i) {
-    cout << " " << tv_copy[sampleIcs_right[i]];
-    }
-    cout << " ]" << endl;
-    }
-  */
+  }
+  sampleIcs_right.resize(iter);
+  
 }
 
 // !! Legibility: Clean out all of the print statements.
