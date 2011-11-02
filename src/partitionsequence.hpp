@@ -10,8 +10,6 @@ class PartitionSequence {
 
 public:
 
-  typedef size_t graycode_t;
-
   PartitionSequence(const size_t nMaxLength);
   ~PartitionSequence();
 
@@ -19,6 +17,8 @@ public:
   size_t at(const size_t pos);
 
 private:
+
+  typedef size_t graycode_t;
 
   vector<graycode_t> graycode_;
   vector<size_t> bitSequence_;

@@ -25,10 +25,10 @@ const num_t  GENERAL_DEFAULT_P_VALUE_THRESHOLD = 0.10;
 const bool   GENERAL_IS_OPTIMIZED_NODE_SPLIT = false;
 
 //const bool   RF_IS_OPTIMIZED_NODE_SPLIT = false;
-const size_t RF_DEFAULT_N_TREES = 100; // zero means it will be estimated from the data by default
+const size_t RF_DEFAULT_N_TREES = 1000; // zero means it will be estimated from the data by default
 const size_t RF_DEFAULT_M_TRY = 0; // same here ...
-const size_t RF_DEFAULT_N_MAX_LEAVES = 10;
-const size_t RF_DEFAULT_NODE_SIZE = 5; // ... and here
+const size_t RF_DEFAULT_N_MAX_LEAVES = 100;
+const size_t RF_DEFAULT_NODE_SIZE = 3; // ... and here
 const size_t RF_DEFAULT_N_PERMS = 20;
 
 //const bool   GBT_IS_OPTIMIZED_NODE_SPLIT = false;
@@ -212,7 +212,7 @@ private:
 void printHeader() {
   cout << endl;
   cout << " ------------------------------------------------------- " << endl;
-  cout << "|  RF-ACE version:  0.8.7, October 19th, 2011           |" << endl;
+  cout << "|  RF-ACE version:  0.9.0, November 2nd, 2011           |" << endl;
   cout << "|    Project page:  http://code.google.com/p/rf-ace     |" << endl;
   cout << "|     Report bugs:  timo.p.erkkila@tut.fi               |" << endl;                     
   cout << " ------------------------------------------------------- " << endl;
@@ -423,7 +423,8 @@ int main(const int argc, char* const argv[]) {
 
   //If default mTry is to be used...
   if ( RF_op.mTry == RF_DEFAULT_M_TRY ) {
-    RF_op.mTry = static_cast<size_t>( floor(0.1*treedata.nFeatures()) );
+    RF_op.mTry = static_cast<size_t>( sqrtf(static_cast<float>(treedata.nFeatures())) );
+    //RF_op.mTry = static_cast<size_t>( floor(0.1*treedata.nFeatures()) );
     if ( RF_op.mTry == 0 ) {
       RF_op.mTry = 2;
     }
@@ -549,8 +550,9 @@ int main(const int argc, char* const argv[]) {
   assert( gen_op.targetStr == treedata.getFeatureName(targetIdx) );
   
   // Print some statistics
-  cout << "DONE, " << treedata.nFeatures() << " / " << nAllFeatures << " features ( "
-       << 100.0 * treedata.nFeatures() / nAllFeatures << " % ) left " << endl;
+  // NOTE: we're subtracting the target from the total head count, that's why we need to subtract by 1
+  cout << "DONE, " << treedata.nFeatures() - 1 << " / " << nAllFeatures  - 1 << " features ( "
+       << 100.0 * ( treedata.nFeatures() - 1 ) / ( nAllFeatures - 1 ) << " % ) left " << endl;
 
   ofstream toAssociationFile(gen_op.associationOutput.c_str());
   toAssociationFile.precision(8);
