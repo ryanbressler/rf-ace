@@ -633,9 +633,9 @@ vector<num_t> StochasticForest::featureImportance() {
       StochasticForest::percolateSampleIcsAtRandom(treeData_,featureIdx,rootNodes_[treeIdx],oobMatrix_[treeIdx],trainIcs);
       num_t permutedTreeImpurity;
       StochasticForest::treeImpurity(treeData_,trainIcs,permutedTreeImpurity);
-      if ( fabs( treeImpurity ) > datadefs::EPS) {
-        importance[featureIdx] += nNewOobSamples * (permutedTreeImpurity - treeImpurity) / treeImpurity;
-      }
+      //if ( fabs( treeImpurity ) > datadefs::EPS) {
+      importance[featureIdx] += nNewOobSamples * (permutedTreeImpurity - treeImpurity); // / treeImpurity;
+      //}
       //cout << treeData_->getFeatureName(featureIdx) << " += " << importance[featureIdx] << endl;
     }
       
