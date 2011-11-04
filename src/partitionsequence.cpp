@@ -4,8 +4,18 @@
 
 PartitionSequence::PartitionSequence(const size_t nMaxLength) {
 
-  assert( nMaxLength > 0 );
-  assert( nMaxLength < sizeof(graycode_t)*8 );
+  //assert( nMaxLength > 0 );
+  //assert( nMaxLength < sizeof(graycode_t)*8 );
+
+  if( nMaxLength == 0 ) {
+    cerr << endl << "ERROR: Number of bits in Gray Code must be > 0. Quitting..." << endl;
+    exit(1);
+  }
+
+  if( nMaxLength > sizeof(graycode_t)*8 - 1 )  {
+    cerr << endl << "ERROR: Number of bits in Gray Code must be < " << sizeof(graycode_t)*8 << " (" << nMaxLength << " requested). Quitting..." << endl;
+    exit(1);
+  }
 
   size_t nCodes = (1 << nMaxLength);
 

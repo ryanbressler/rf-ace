@@ -43,7 +43,12 @@ public:
   //Returns the number of real samples the target (resp. any feature) has
   size_t nRealSamples(const size_t featureIdx);
   size_t nRealSamples(const size_t featureIdx1, const size_t featureIdx2);
+  
+  // Returns the number of categories a feature has
   size_t nCategories(const size_t featureIdx);
+
+  // Returns the number of categories of the feature with the highest cardinality
+  size_t nMaxCategories();
 
   //Prints the treedata matrix in its internal form
   void print();

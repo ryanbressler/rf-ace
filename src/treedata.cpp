@@ -498,25 +498,38 @@ bool Treedata::isFeatureNumerical(size_t featureIdx) {
 size_t Treedata::nRealSamples(const size_t featureIdx) { 
   
   size_t nRealSamples;
-  datadefs::countRealValues(features_[featureIdx].data,nRealSamples);
-  return(nRealSamples);
+  datadefs::countRealValues( features_[featureIdx].data, nRealSamples );
+  return( nRealSamples );
 
 }
 
 size_t Treedata::nRealSamples(const size_t featureIdx1, const size_t featureIdx2) {
 
   size_t nRealSamples = 0;
-  for(size_t i = 0; i < nSamples_; ++i ) {
-    if( !datadefs::isNAN(features_[featureIdx1].data[i]) && !datadefs::isNAN(features_[featureIdx2].data[i])) {
+  for( size_t i = 0; i < nSamples_; ++i ) {
+    if( !datadefs::isNAN( features_[featureIdx1].data[i] ) && !datadefs::isNAN( features_[featureIdx2].data[i] ) ) {
       ++nRealSamples;
     }
   }
-  return(nRealSamples);
+  return( nRealSamples );
 }
 
 size_t Treedata::nCategories(const size_t featureIdx) {
 
-  return(features_[featureIdx].nCategories);
+  return( features_[featureIdx].nCategories );
+
+}
+
+size_t Treedata::nMaxCategories() {
+
+  size_t ret = 0;
+  for( size_t i = 0; i < nFeatures_; ++i ) {
+    if( ret < features_[i].nCategories ) {
+      ret = features_[i].nCategories;
+    }
+  }
+  
+  return( ret ); 
 
 }
 

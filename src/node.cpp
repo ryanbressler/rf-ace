@@ -628,6 +628,8 @@ void Node::categoricalFeatureSplit(vector<num_t> tv,
                                    set<num_t>& categories_left,
                                    num_t& splitFitness) {
 
+  cout << "Node::categoricalFeatureSplit..." << endl;
+
   assert(tv.size() == fv.size());
 
   vector<size_t> mapIcs;
@@ -663,7 +665,11 @@ void Node::categoricalFeatureSplit(vector<num_t> tv,
     psMax = ( 1 << (fmap_right.size() - 2) ); // 2^( fmap_right.size() - 2 )
   }
 
+  cout << "Splitter has " << fmap_right.size() << " categories => psMax is " << psMax << endl;
+
   if ( isTargetNumerical ) {
+
+    cout << "Target is numerical" << endl;
 
     num_t mu_right;
     num_t mu_left = 0.0;
@@ -724,6 +730,8 @@ void Node::categoricalFeatureSplit(vector<num_t> tv,
     splitFitness = ( se_tot - se_best ) / se_tot;
 
   } else {
+
+    //cout << "Target is categorical" << endl;
     
     map<num_t,size_t> freq_left,freq_right;
     size_t sf_left = 0;
