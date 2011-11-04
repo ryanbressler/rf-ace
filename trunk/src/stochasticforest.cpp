@@ -12,7 +12,7 @@ StochasticForest::StochasticForest(Treedata* treeData, const size_t targetIdx, c
   nTrees_(nTrees),
   rootNodes_(0),
   oobMatrix_(0),
-  partitionSequence_(20) {
+  partitionSequence_( treeData->nMaxCategories() ){
 
   featuresInForest_.clear();
 
@@ -20,10 +20,6 @@ StochasticForest::StochasticForest(Treedata* treeData, const size_t targetIdx, c
   targetIdx_ = targetIdx;
 
   learnedModel_ = NO_MODEL;
-
-  //PartitionSequence partitionSequence_; 
-
-  //cout << "ctor: " << learnedModel_ << endl;
 
 }
 

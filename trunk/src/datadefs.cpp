@@ -90,8 +90,7 @@ void datadefs::strv2catv(vector<string>& strvec,
       } else {
 	catvec[strIdx] = it->second; 
       }
-      //...and use the map to set the value for the output vector
-      //catvec[strIdx] = val; //backMapping[strvec[strIdx]];
+
     } else {    //If the string is defined to NaN, however...
       catvec[strIdx] = datadefs::NUM_NAN;
     }
@@ -99,13 +98,14 @@ void datadefs::strv2catv(vector<string>& strvec,
 
   
 
-  if(false) {
+  if(true) {
     cout << "mapping:" << endl;
     //for(size_t i = 0; i < strvec.size(); ++i) {
     for(map<string,num_t>::const_iterator it(mapping.begin()); it != mapping.end(); ++it) {
       cout << "mapping[" << it->first << "] => " << it->second << " => " << backMapping[ it->second ] << endl;  		    
     }
   }
+
 }
 
 /**
@@ -281,7 +281,7 @@ void datadefs::countRealValues(vector<num_t> const& data, size_t& nRealValues) {
 void datadefs::sortDataAndMakeRef(const bool isIncreasingOrder,
                                   vector<num_t>& data,
                                   vector<size_t>& refIcs) {
-  //cout << "sort_and_make_ref: in the beginning" << endl;
+
   //assert(v.size() == ref_ics.size());
   vector<pair<num_t,size_t> > pairedv(data.size()); // !! Understandibility:
                                                     // !! consider a typedef
@@ -294,15 +294,15 @@ void datadefs::sortDataAndMakeRef(const bool isIncreasingOrder,
                               //  resized. Note that any values that are unsafe
                               //  for equals may cause an unintended memory leak.
   datadefs::range(refIcs);
-  //cout << "sort_and_make_ref: used range()" << endl;
+
   datadefs::make_pairedv<num_t,size_t>(data,refIcs,pairedv);
-  //cout << "sort_and_make_ref: made pairedv" << endl;
+
   if(isIncreasingOrder) {
     sort(pairedv.begin(),pairedv.end(),datadefs::increasingOrder<num_t>());
   } else {
     sort(pairedv.begin(),pairedv.end(),datadefs::decreasingOrder<num_t>());
   }
-  //cout << "sort_and_make_ref: pairedv sorted" << endl;
+
   datadefs::separate_pairedv<num_t,size_t>(pairedv,data,refIcs);
 }
 
