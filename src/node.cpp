@@ -628,7 +628,7 @@ void Node::categoricalFeatureSplit(vector<num_t> tv,
                                    set<num_t>& categories_left,
                                    num_t& splitFitness) {
 
-  cout << "Node::categoricalFeatureSplit..." << endl;
+  //cout << "Node::categoricalFeatureSplit..." << endl;
 
   assert(tv.size() == fv.size());
 

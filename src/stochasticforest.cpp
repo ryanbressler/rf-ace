@@ -630,7 +630,7 @@ vector<num_t> StochasticForest::featureImportance() {
       num_t permutedTreeImpurity;
       StochasticForest::treeImpurity(treeData_,trainIcs,permutedTreeImpurity);
       //if ( fabs( treeImpurity ) > datadefs::EPS) {
-      importance[featureIdx] += nNewOobSamples * (permutedTreeImpurity - treeImpurity); // / treeImpurity;
+      importance[featureIdx] += nNewOobSamples * (permutedTreeImpurity - treeImpurity) / treeImpurity;
       //}
       //cout << treeData_->getFeatureName(featureIdx) << " += " << importance[featureIdx] << endl;
     }
