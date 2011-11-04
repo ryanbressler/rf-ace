@@ -98,7 +98,7 @@ void datadefs::strv2catv(vector<string>& strvec,
 
   
 
-  if(true) {
+  if(false) {
     cout << "mapping:" << endl;
     //for(size_t i = 0; i < strvec.size(); ++i) {
     for(map<string,num_t>::const_iterator it(mapping.begin()); it != mapping.end(); ++it) {

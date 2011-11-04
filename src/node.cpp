@@ -665,7 +665,7 @@ void Node::categoricalFeatureSplit(vector<num_t> tv,
     psMax = ( 1 << (fmap_right.size() - 2) ); // 2^( fmap_right.size() - 2 )
   }
 
-  cout << "Splitter has " << fmap_right.size() << " categories => psMax is " << psMax << endl;
+  //cout << "Splitter has " << fmap_right.size() << " categories => psMax is " << psMax << endl;
 
   if ( isTargetNumerical ) {
 
