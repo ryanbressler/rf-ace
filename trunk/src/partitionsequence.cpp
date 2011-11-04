@@ -8,12 +8,12 @@ PartitionSequence::PartitionSequence(const size_t nMaxLength) {
   //assert( nMaxLength < sizeof(graycode_t)*8 );
 
   if( nMaxLength == 0 ) {
-    cerr << endl << "ERROR: Number of bits in Gray Code must be > 0. Quitting..." << endl;
+    cerr << endl << "ERROR: Gray Code cannot be initialized with 0 bits. Quitting..." << endl;
     exit(1);
   }
 
   if( nMaxLength > sizeof(graycode_t)*8 - 1 )  {
-    cerr << endl << "ERROR: Number of bits in Gray Code must be < " << sizeof(graycode_t)*8 << " (" << nMaxLength << " requested). Quitting..." << endl;
+    cerr << endl << "ERROR: one or more features have too high cardinality ("  << nMaxLength + 1 << " > " << sizeof(graycode_t)*8 << endl;
     exit(1);
   }
 

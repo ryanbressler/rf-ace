@@ -8,7 +8,6 @@
 #include <cmath>
 #include <stdio.h>
 #include <iomanip>
-//#include <omp.h>
 
 #include "argparse.hpp"
 #include "stochasticforest.hpp"
@@ -32,7 +31,7 @@ const size_t RF_DEFAULT_NODE_SIZE = 3; // ... and here
 const size_t RF_DEFAULT_N_PERMS = 20;
 
 //const bool   GBT_IS_OPTIMIZED_NODE_SPLIT = false;
-const size_t GBT_DEFAULT_N_TREES = 100;
+const size_t GBT_DEFAULT_N_TREES = 1000;
 const size_t GBT_DEFAULT_N_MAX_LEAVES = 6;
 const num_t  GBT_DEFAULT_SHRINKAGE = 0.1;
 const num_t  GBT_DEFAULT_SUB_SAMPLE_SIZE = 0.5;
@@ -410,17 +409,6 @@ int main(const int argc, char* const argv[]) {
   size_t targetIdx;
   treedata.getMatchingTargetIdx(gen_op.targetStr,targetIdx);
 
-  /*
-    if ( gen_op.isOptimizedNodeSplit) {
-    cout << "TEST MODE: optimized node split turned OFF" << endl << endl;
-    RF_op.isOptimizedNodeSplit = true;
-    GBT_op.isOptimizedNodeSplit = true;
-    } else {
-    RF_op.isOptimizedNodeSplit = false;
-    GBT_op.isOptimizedNodeSplit = false;
-    }
-  */
-
   //If default mTry is to be used...
   if ( RF_op.mTry == RF_DEFAULT_M_TRY ) {
     RF_op.mTry = static_cast<size_t>( sqrtf(static_cast<float>(treedata.nFeatures())) );
@@ -586,7 +574,7 @@ int main(const int argc, char* const argv[]) {
       
       vector<num_t> prediction;
       SF.predict(&treedata_test,prediction,confidence);
-      
+   
       for(size_t i = 0; i < prediction.size(); ++i) {
 	toPredictionFile << gen_op.targetStr.c_str() << "\t" << "sampleID" << "\t" << treedata_test.getRawFeatureData(targetIdx,i) 
 			 << "\t" << prediction[i] << "\t" << setprecision(3) << confidence[i] << endl;	  

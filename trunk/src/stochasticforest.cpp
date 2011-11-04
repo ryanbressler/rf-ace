@@ -11,8 +11,7 @@ StochasticForest::StochasticForest(Treedata* treeData, const size_t targetIdx, c
   targetIdx_(targetIdx),
   nTrees_(nTrees),
   rootNodes_(0),
-  oobMatrix_(0),
-  partitionSequence_( treeData->nMaxCategories() - 2 ){
+  oobMatrix_(0) {
 
   featuresInForest_.clear();
 
@@ -21,12 +20,23 @@ StochasticForest::StochasticForest(Treedata* treeData, const size_t targetIdx, c
 
   learnedModel_ = NO_MODEL;
 
+  // If treeData has at least one categorical variable with cardinality >= 2, initialize partitionSequence
+  if( treeData->nMaxCategories() >= 2 ) {
+    partitionSequence_ = new PartitionSequence( treeData->nMaxCategories() - 1 );
+  } else {
+    partitionSequence_ = new PartitionSequence( 1 );
+  }
+    
+
 }
 
 StochasticForest::~StochasticForest() {
   for(size_t treeIdx = 0; treeIdx < rootNodes_.size(); ++treeIdx) {
     delete rootNodes_[treeIdx];
   }
+
+  delete partitionSequence_;
+
 }
 
 void StochasticForest::learnRF(const size_t mTry, 
@@ -64,7 +74,7 @@ void StochasticForest::learnRF(const size_t mTry,
                                        useContrasts,
                                        isOptimizedNodeSplit,
                                        numClasses_,
-				       &partitionSequence_);
+				       partitionSequence_);
 
     size_t nNodes;
 
@@ -125,7 +135,7 @@ void StochasticForest::learnGBT(const size_t nMaxLeaves,
                                        useContrasts,
                                        isOptimizedNodeSplit,
                                        numClasses_,
-				       &partitionSequence_);
+				       partitionSequence_);
   }
   //Let's grow the forest
   //cout << "Target is "<< treeData_->getFeatureName(targetIdx_) <<" ["<<targetIdx_<<"]. It has "<<numClasses_<<" classes."<<endl;

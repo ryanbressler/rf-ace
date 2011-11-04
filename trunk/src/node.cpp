@@ -669,7 +669,7 @@ void Node::categoricalFeatureSplit(vector<num_t> tv,
 
   if ( isTargetNumerical ) {
 
-    cout << "Target is numerical" << endl;
+    //cout << "Target is numerical" << endl;
 
     num_t mu_right;
     num_t mu_left = 0.0;
