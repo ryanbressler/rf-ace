@@ -581,10 +581,16 @@ void Node::numericalFeatureSplit(vector<num_t> tv,
       if(1.0 * n_right * sf_left + 1.0 * n_left * sf_right > n_left * n_right * nsf_best && n_left >= GI.minNodeSizeToStop) {
         bestSplitIdx = idx;
         nsf_best = 1.0 * sf_left / n_left + 1.0 * sf_right / n_right;
+	splitFitness = ( -1.0 * n_left*n_right*sf_tot + n_tot*n_right*sf_left + n_tot*n_left*sf_right ) / ( n_left*n_right * (1.0*n_tot*n_tot - sf_tot) );
       }
       ++idx;
     }
-    splitFitness = ( -1.0 * n_left*n_right*sf_tot + n_tot*n_right*sf_left + n_tot*n_left*sf_right ) / ( n_left*n_right * (1.0*n_tot*n_tot - sf_tot) );
+    //splitFitness = ( -1.0 * n_left*n_right*sf_tot + n_tot*n_right*sf_left + n_tot*n_left*sf_right ) / ( n_left*n_right * (1.0*n_tot*n_tot - sf_tot) );
+  }
+
+  if(bestSplitIdx == -1) {
+    splitFitness = 0.0;
+    return;
   }
 
   splitValue = fv[bestSplitIdx];
@@ -667,6 +673,8 @@ void Node::categoricalFeatureSplit(vector<num_t> tv,
 
   //cout << "Splitter has " << fmap_right.size() << " categories => psMax is " << psMax << endl;
 
+  bool foundSplit = false;
+
   if ( isTargetNumerical ) {
 
     //cout << "Target is numerical" << endl;
@@ -721,6 +729,7 @@ void Node::categoricalFeatureSplit(vector<num_t> tv,
       }
 
       if ( se_left+se_right < se_best ) {
+	foundSplit = true;
 	fmap_left_best = fmap_left;
 	fmap_right_best = fmap_right;
 	se_best = se_left + se_right;
@@ -784,6 +793,7 @@ void Node::categoricalFeatureSplit(vector<num_t> tv,
       }
       
       if ( 1.0*n_right*sf_left + n_left*sf_right > n_left*n_right*nsf_best ) {
+	foundSplit = true;
 	fmap_left_best = fmap_left;
 	fmap_right_best = fmap_right;
 	nsf_best = 1.0*sf_left/n_left + 1.0*sf_right/n_right;
@@ -795,6 +805,11 @@ void Node::categoricalFeatureSplit(vector<num_t> tv,
     //splitFitness = ( -1.0 * n_left*n_right*sf_tot + n_tot*n_right*sf_left + n_tot*n_left*sf_right ) / ( n_left*n_right * (1.0*n_tot*n_tot - sf_tot) );
   }
   
+  if(!foundSplit) {
+    splitFitness = 0.0;
+    return;
+  }
+
   // Assign samples and categories on the left
   sampleIcs_left.resize(n_tot);
   categories_left.clear();
