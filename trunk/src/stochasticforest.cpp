@@ -615,6 +615,8 @@ vector<num_t> StochasticForest::featureImportance() {
   
   size_t nContrastsInForest = 0;
 
+  num_t meanTreeImpurity = 0.0;
+
   // The random forest object stores the mapping from trees to features it contains, which makes
   // the subsequent computations void of unnecessary looping
   for ( map<size_t, set<size_t> >::const_iterator tit(featuresInForest_.begin()); tit != featuresInForest_.end(); ++tit ) {
@@ -625,10 +627,14 @@ vector<num_t> StochasticForest::featureImportance() {
 
     map<Node*,vector<size_t> > trainIcs;
     StochasticForest::percolateSampleIcs(treeData_,rootNodes_[treeIdx],oobMatrix_[treeIdx],trainIcs);
+    
     num_t treeImpurity;
     StochasticForest::treeImpurity(treeData_,trainIcs,treeImpurity);
-    //cout << "#nodes_with_train_samples=" << trainics.size() << endl;
 
+    // Accumulate tree impurity
+    meanTreeImpurity += treeImpurity / nTrees_;
+
+    // Loop through all features in the tree
     for ( set<size_t>::const_iterator fit( tit->second.begin()); fit != tit->second.end(); ++fit ) {
       size_t featureIdx = *fit;
     
@@ -640,7 +646,7 @@ vector<num_t> StochasticForest::featureImportance() {
       num_t permutedTreeImpurity;
       StochasticForest::treeImpurity(treeData_,trainIcs,permutedTreeImpurity);
       //if ( fabs( treeImpurity ) > datadefs::EPS) {
-      importance[featureIdx] += nNewOobSamples * (permutedTreeImpurity - treeImpurity) / treeImpurity;
+      importance[featureIdx] += nNewOobSamples * (permutedTreeImpurity - treeImpurity);
       //}
       //cout << treeData_->getFeatureName(featureIdx) << " += " << importance[featureIdx] << endl;
     }
@@ -648,12 +654,11 @@ vector<num_t> StochasticForest::featureImportance() {
   }
   
   for ( size_t featureIdx = 0; featureIdx < nAllFeatures; ++featureIdx ) {
-    //importance[featureIdx] *= 100.0*nTrees_/nNodesInForest;//1.0*nNodesInForest/nTrees_; //nContrastsInForest
-    //cout << "I(" << treeData_->getFeatureName(featureIdx) << ") = " << importance[featureIdx] << endl;
+    
     if ( fabs( importance[featureIdx] ) < datadefs::EPS ) {
       importance[featureIdx] = datadefs::NUM_NAN;
     } else {
-      importance[featureIdx] /= nOobSamples;
+      importance[featureIdx] /= ( nOobSamples * meanTreeImpurity );
     }
     //cout << "I(" << treeData_->getFeatureName(featureIdx) << ") = " << importance[featureIdx] << endl;
   }
