@@ -1,0 +1,159 @@
+#summary Manual pages.
+
+*The manual pages have been written on the basis of RF-ACE verson 0.5.5*
+
+= Description =
+
+RF-ACE is an efficient C++ implementation of a robust machine learning algorithm for uncovering multivariate associations from large and diverse data sets. RF-ACE natively handles numerical and categorical data with missing values, and potentially large quantities of noninformative features are handled gracefully utilizing artificial contrast features, bootstrapping, and p-value estimation.
+
+= Installation =
+
+Download the latest stable release from the [http://code.google.com/p/rf-ace/downloads/list download page], or checkout the latest development version (to directory rf-ace/) by typing
+{{{
+svn checkout http://rf-ace.googlecode.com/svn/trunk/ rf-ace
+}}}
+
+Compiler makefiles for Linux (`Makefile`) and Visual Studio for Windows (`make.bat`) are provided in the package. In Linux, you can compile the program by typing 
+{{{
+make
+}}}
+or
+{{{
+make rf_ace
+}}}
+
+In Windows and using Visual Studio, first open up the Visual Studio terminal and execute `make.bat` by typing
+{{{
+make
+}}}
+Simple as that! If you feel lucky, check for compiled binaries at the [http://code.google.com/p/rf-ace/downloads/list download page]. 
+
+= Supported data formats =
+RF-ACE currently supports two file formats, Annotated Feature Matrix (AFM) and Attribute-Relation File Format (ARFF).
+
+== Annotated Feature Matrix (AFM) ==
+
+Annotated Feature Matrix represents the data as a tab-delimited table, where both columns and rows contain headers describing the samples and features. Based on the headers, the AFM reader is able to discern the right orientation (features as rows or columns in the matrix) of the matrix. Namely AFM feature headers must encode whether the feature is (`N`)umerical, (`C`)ategorical, (`O`)rdinal, or (`B`)inary, followed by colon and the actual name of the feature as follows:
+
+ * `B:is_alive`
+ * `N:age`
+ * `C:tumor_grage` 
+ * `O:anatomic_organ_subdivision`
+
+In fact any string, even including colons, spaces, and other special characters, encodes a valid feature name as long as it starts with the preamble `N:`/`C:`/`O:`/`B:`. Thus, the following is a valid feature header:
+
+ * `N:GEXP:TP53:chr17:123:456`
+
+Sample headers are not constrained, except that they must not contain preambles `N:`/`C:`/`O:`/`B:`, being reserved for the feature headers. 
+
+== Attribute-Relation File Format (ARFF) ==
+
+[http://www.cs.waikato.ac.nz/~ml/weka/arff.html ARFF specification].      
+
+= Usage =
+The following examples follow Linux syntax. Type 
+{{{
+bin/rf_ace --help
+}}}
+or 
+{{{
+bin/rf_ace -h
+}}}
+to bring up help:
+{{{
+REQUIRED ARGUMENTS:
+ -I / --input        input feature file (AFM or ARFF)
+ -i / --target       target, specified as integer or string that is to be matched with the content of input
+ -O / --output       output association file
+
+OPTIONAL ARGUMENTS:
+ -n / --ntrees       number of trees per RF (default nsamples/nrealsamples)
+ -m / --mtry         number of randomly drawn features per node split (default sqrt(nfeatures))
+ -s / --nodesize     minimum number of train samples per node, affects tree depth (default max{5,nsamples/20})
+ -p / --nperms       number of Random Forests (default 50)
+ -t / --pthreshold   p-value threshold below which associations are listed (default 0.1)
+ -g / --gbt          Enable (1 == YES) Gradient Boosting Trees, a subsequent filtering procedure (default 0 == NO)
+}}} 
+
+So all that is required is an input file (`-I/--input`), either of type `.arff` or `.afm`, and a target (`-i/--target`) to build the RF-ACE model upon. Target in this case corresponds to a feature in the input file, and it can be identified with an index corresponding to it's order of appearance in the file, or with it's name. Thus, if the target is `N:age` (we would be looking for features associated with age) existing on row `123` (0-base and omitting the header row), one execute RF-ACE by typing
+{{{
+bin/rf_ace --input featurematrix.afm --target 123 --output associations.tsv 
+}}}
+or with the short-hand notation equivalently as
+{{{
+bin/rf_ace -I featurematrix.afm -i 123 -O associations.tsv 
+}}}
+or by using the header "N:age" instead of the index by typing
+{{{
+bin/rf_ace -I featurematrix.afm -i N:age -O associations.tsv
+}}}
+In case a provided (sub)string identifies multiple target candidates, RF-ACE will be executed serially for all target candidates, results catenated in the specified output file.
+
+The above will execute RF-ACE with the default parameters; as the help documentation points out, most of the parameters are estimated dynamically based on the data dimensions and content, so running RF-ACE with no information about the algorithm itself is possible.
+
+= Output = 
+The following call (assuming now the substring `age` uniquely identifies just one feature, `N:age`)
+{{{
+bin/rf_ace -I featurematrix.afm -i age -O associations.tsv
+}}}
+produces the output
+{{{
+
+
+ ---------------------------------------------------------------
+| RF-ACE -- efficient feature selection with heterogeneous data |
+|                                                               |
+|  Version:      RF-ACE v0.5.5, July 4th, 2011                  |
+|  Project page: http://code.google.com/p/rf-ace                |
+|  Contact:      timo.p.erkkila@tut.fi                          |
+|                kari.torkkola@gmail.com                        |
+|                                                               |
+|              DEVELOPMENT VERSION, BUGS EXIST!                 |
+ ---------------------------------------------------------------
+
+Reading file 'featurematrix.afm'
+File type is unknown -- defaulting to Annotated Feature Matrix (AFM)
+AFM orientation: features as rows
+
+RF-ACE parameter configuration:
+  --input      = featurematrix.afm
+  --nsamples   = 223 / 282 (20.922% missing)
+  --nfeatures  = 48912
+  --targetidx  = 123, header 'N:age'
+  --ntrees     = 356
+  --mtry       = 221
+  --nodesize   = 12
+  --nperms     = 50
+  --pthresold  = 0.1
+  --output     = associations.tsv
+
+Growing 50 Random Forests (RFs), please wait...
+  RF 1: 4880 nodes (avg. 13.7079 nodes / tree)
+  RF 2: 4810 nodes (avg. 13.5112 nodes / tree)
+  RF 3: 4856 nodes (avg. 13.6404 nodes / tree)
+  RF 4: 4994 nodes (avg. 14.0281 nodes / tree)
+  RF 5: 5036 nodes (avg. 14.1461 nodes / tree)
+  RF 6: 5016 nodes (avg. 14.0899 nodes / tree)
+  RF 7: 5132 nodes (avg. 14.4157 nodes / tree)
+...
+  RF 47: 4736 nodes (avg. 13.3034 nodes / tree)
+  RF 48: 5234 nodes (avg. 14.7022 nodes / tree)
+  RF 49: 4582 nodes (avg. 12.8708 nodes / tree)
+  RF 50: 5210 nodes (avg. 14.6348 nodes / tree)
+50 RFs, 17800 trees, and 247516 nodes generated in 102.91 seconds (2405.17 nodes per second)
+Gradient Boosting Trees *DISABLED*
+
+Association file created. Format:
+TARGET   PREDICTOR   P-VALUE   IMPORTANCE   CORRELATION
+
+Done.
+}}}
+
+If there are no associations found, the program would end as follows:
+{{{
+No significant associations found, quitting...
+}}}
+
+= RF-ACE configuration =
+
+Information will be added in the future
