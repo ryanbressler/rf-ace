@@ -9,12 +9,12 @@
 #include <map>
 #include <fstream>
 #include "datadefs.hpp"
-//#include "node.hpp"
 #include "mtrand.h"
 
 using namespace std;
-//using datadefs::cat_t;
 using datadefs::num_t;
+//using datadefs::fwMapping_t;
+//using datadefs::bwMapping_t;
 
 class Treedata  {
 public:
@@ -62,6 +62,9 @@ public:
 
   inline void getRandomData(const size_t featureIdx, num_t& data) {data = features_[featureIdx].data[randomInteger_() % nSamples_]; }
   inline void getRandomIndex(const size_t n, size_t& idx) { idx = randomInteger_() % n; }
+
+  map<string,num_t> getDataMapping(const size_t featureIdx);
+  
   
   //Generates a bootstrap sample from the real samples of featureIdx. Samples not in the bootstrap sample will be stored in oob_ics,
   //and the number of oob samples is stored in noob.
@@ -75,6 +78,7 @@ public:
 
   bool isFeatureNumerical(size_t featureIdx);
 
+  // DEPRECATED
   void impurity(vector<num_t>& data, bool isFeatureNumerical, num_t& impurity, size_t& nreal);
 
   //WILL DECOME DEPRECATED

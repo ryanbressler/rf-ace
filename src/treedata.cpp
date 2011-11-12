@@ -669,6 +669,13 @@ string Treedata::getRawFeatureData(const size_t featureIdx, const size_t sampleI
     
 }
 
+map<string,num_t> Treedata::getDataMapping(const size_t featureIdx) {
+
+  return( features_[featureIdx].mapping );
+
+}
+
+
 // DEPRECATED ??
 void Treedata::impurity(vector<num_t>& data, bool isFeatureNumerical, num_t& impurity, size_t& nreal) {
   
