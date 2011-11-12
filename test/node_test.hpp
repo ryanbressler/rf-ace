@@ -329,6 +329,53 @@ void NodeTest::test_categoricalFeatureSplit() {
     CPPUNIT_ASSERT( fabs(splitFitness - 1) < datadefs::EPS );
   }
 
+  for ( size_t i = 0; i < targetData.size() / 2 ; ++i ) {
+    featureData[ 2 * i ] = static_cast<num_t>( i );
+    featureData[ 2 * i + 1 ] = static_cast<num_t>( i );
+
+    if ( i == 0 || i == 1 ) {
+      targetData[ 2 * i ] = 1;
+      targetData[ 2 * i + 1 ] = 2;
+    } else {
+      targetData[ 2 * i ] = 0;
+      targetData[ 2 * i + 1 ] = 0;
+    }
+  }
+
+  iter = 0;
+  while ( iter < 2 ) {
+    if ( iter == 0 ) {
+      isTargetNumerical = false;
+    } else {
+      isTargetNumerical = true;
+    }
+ 
+    node.categoricalFeatureSplit(targetData,
+				 isTargetNumerical,
+				 featureData,
+				 GI,
+				 sampleIcs_left,
+				 sampleIcs_right,
+				 splitValues_left,
+				 splitFitness);
+    
+    CPPUNIT_ASSERT( sampleIcs_left.size() == 4 );
+    CPPUNIT_ASSERT( sampleIcs_right.size() == 6 );
+    CPPUNIT_ASSERT( splitValues_left.size() == 2 );
+    CPPUNIT_ASSERT( splitValues_left.find(0) != splitValues_left.end() );
+    CPPUNIT_ASSERT( splitValues_left.find(1) != splitValues_left.end() );
+    
+    if ( iter == 0 ) {
+      //datadefs::print<size_t>(sampleIcs_left);
+      //datadefs::print<size_t>(sampleIcs_right);
+      //cout << splitFitness << endl;
+      CPPUNIT_ASSERT( fabs( splitFitness - 0.642857142857143 ) < 1e-10 );
+    } else {
+      CPPUNIT_ASSERT( fabs(splitFitness - 0.843750000000000 ) < 1e-10 );
+    }
+     
+    ++iter;
+  }
 }
 
 void NodeTest::test_splitFitness() { 
