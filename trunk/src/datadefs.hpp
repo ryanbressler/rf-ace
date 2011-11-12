@@ -23,6 +23,12 @@ namespace datadefs {
   typedef double num_t; /** Baseline numeric representation used throughout
                          *   RF-ACE. Currently, double. */
 
+  // Data type for mapping string literals to numbers
+  //typedef map<string,num_t> fwMapping_t;
+
+  // Data type for mapping numbers (back) to string literals
+  //typedef map<num_t,string> bwMapping_t;
+
   extern const num_t NUM_NAN;       /** Numeric representation of not-a-number */
   extern const string STR_NAN;
   extern const num_t EPS;           /** Desired relative error. Literally,

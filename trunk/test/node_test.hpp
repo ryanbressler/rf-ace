@@ -285,7 +285,7 @@ void NodeTest::test_categoricalFeatureSplit() {
   }
 
   vector<size_t> sampleIcs_left,sampleIcs_right;
-  bool isTargetNumerical = false;
+  //bool isTargetNumerical = false;
   set<datadefs::num_t> splitValues_left;
   datadefs::num_t splitFitness;
 
@@ -296,26 +296,38 @@ void NodeTest::test_categoricalFeatureSplit() {
   GI.minNodeSizeToStop = 2;
   GI.partitionSequence = &PS;
 
-  node.categoricalFeatureSplit(targetData,
-			       isTargetNumerical,
-			       featureData,
-			       GI,
-			       sampleIcs_left,
-			       sampleIcs_right,
-			       splitValues_left,
-			       splitFitness);
+  size_t iter = 0;
+  bool isTargetNumerical;
+  while ( iter < 2 ) {
 
-  CPPUNIT_ASSERT( sampleIcs_left.size() == sampleIcs_right.size() );
-
-  CPPUNIT_ASSERT( splitValues_left.find(0) != splitValues_left.end() );
-  CPPUNIT_ASSERT( splitValues_left.find(1) != splitValues_left.end() );
-  
-  for(size_t i = 0; i < sampleIcs_left.size(); ++i ) {
-    CPPUNIT_ASSERT( targetData[sampleIcs_left[i]] == 1 );
-    CPPUNIT_ASSERT( targetData[sampleIcs_right[i]] == 0 );
+    if ( iter == 0 ) {
+      isTargetNumerical = false;
+    } else {
+      isTargetNumerical = true;
+    }
+    ++iter;
+ 
+    node.categoricalFeatureSplit(targetData,
+				 isTargetNumerical,
+				 featureData,
+				 GI,
+				 sampleIcs_left,
+				 sampleIcs_right,
+				 splitValues_left,
+				 splitFitness);
+    
+    CPPUNIT_ASSERT( sampleIcs_left.size() == sampleIcs_right.size() );
+    
+    CPPUNIT_ASSERT( splitValues_left.find(0) != splitValues_left.end() );
+    CPPUNIT_ASSERT( splitValues_left.find(1) != splitValues_left.end() );
+    
+    for(size_t i = 0; i < sampleIcs_left.size(); ++i ) {
+      CPPUNIT_ASSERT( targetData[sampleIcs_left[i]] == 1 );
+      CPPUNIT_ASSERT( targetData[sampleIcs_right[i]] == 0 );
+    }
+    
+    CPPUNIT_ASSERT( fabs(splitFitness - 1) < datadefs::EPS );
   }
-
-  CPPUNIT_ASSERT( fabs(splitFitness - 1) < datadefs::EPS );
 
 }
 
