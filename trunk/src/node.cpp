@@ -728,7 +728,7 @@ void Node::categoricalFeatureSplit(vector<num_t> tv,
 
       }
 
-      if ( se_left+se_right < se_best && n_left >= GI.minNodeSizeToStop && n_right >= GI.minNodeSizeToStop) {
+      if ( se_left+se_right < se_best && n_left >= GI.minNodeSizeToStop && n_right >= GI.minNodeSizeToStop ) {
 	foundSplit = true;
 	fmap_left_best = fmap_left;
 	fmap_right_best = fmap_right;
@@ -792,7 +792,7 @@ void Node::categoricalFeatureSplit(vector<num_t> tv,
 
       }
       
-      if ( 1.0*n_right*sf_left + n_left*sf_right > n_left*n_right*nsf_best && n_left >= GI.minNodeSizeToStop && n_right >= GI.minNodeSizeToStop) {
+      if ( 1.0*n_right*sf_left + n_left*sf_right > n_left*n_right*nsf_best && n_left >= GI.minNodeSizeToStop && n_right >= GI.minNodeSizeToStop ) {
 	foundSplit = true;
 	fmap_left_best = fmap_left;
 	fmap_right_best = fmap_right;

@@ -752,13 +752,6 @@ void datadefs::pearson_correlation(vector<datadefs::num_t> const& x,
 
 }
 
-void datadefs::print(const vector<datadefs::num_t>& x) {
-  for(size_t i = 0; i < x.size(); ++i) {
-    cout << " " << x[i];
-  }
-  cout << endl;
-}
-
 vector<datadefs::num_t> datadefs::trim(const vector<datadefs::num_t>& x) {
   
   vector<datadefs::num_t> trimmed(x.size());

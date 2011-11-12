@@ -134,7 +134,7 @@ namespace datadefs {
 
   vector<num_t> trim(const vector<num_t>& x);
 
-  void print(const vector<num_t>& x);
+  //void print(const vector<num_t>& x);
 
   void percentile(vector<num_t> x, const num_t alpha, num_t& prc);
 
@@ -146,7 +146,7 @@ namespace datadefs {
              vector<num_t> const& y, 
              num_t& pvalue);
 
-  //DEPRECATED
+
   void regularized_betainc(const num_t x, 
                            const size_t a, 
                            num_t& ibval);
@@ -349,6 +349,17 @@ namespace datadefs {
       data[i] = foo[refIcs[i]];
     }
   }
+
+  /**
+   * Prints a vector
+   */
+  template <typename T> void print(vector<T>& x) {
+    for(size_t i = 0; i < x.size(); ++i) {
+      cout << " " << x[i];
+    }
+    cout << endl;
+  }
+
 }
 
 #endif
