@@ -41,6 +41,7 @@ public:
   //Counts the number of nodes in the forest
   size_t nNodes();
 
+  void printToFile(const string& fileName);
 
 private:
 

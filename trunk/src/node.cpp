@@ -11,6 +11,7 @@ Node::Node():
   hasChildren_(false),
   leftChild_(NULL),
   rightChild_(NULL) {
+  
 }
 
 // !! Documentation: establishes a recursive relationship that deletes all
@@ -59,8 +60,10 @@ void Node::setSplitter(size_t splitter, num_t threshold) {
 
 Node* Node::percolateData(num_t value) {
 
-  if ( !hasChildren_ ) { return( this ); }
+  assert( !datadefs::isNAN(value) );
 
+  if ( !hasChildren_ ) { return( this ); }
+  
   if ( isSplitterNumerical_ ) {
     if ( value <= threshold_ ) { return( leftChild_ ); } else { return( rightChild_ ); }
   } else {
