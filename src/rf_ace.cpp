@@ -490,6 +490,9 @@ int main(const int argc, char* const argv[]) {
     cout << "Target has no real samples. Quitting." << endl;
     return EXIT_SUCCESS;
   }
+
+  // Store the start time (in clock cycles) just before the analysis
+  clock_t clockStart( clock() );
       
   ////////////////////////////////////////////////////////////////////////
   //  STEP 1 -- MULTIVARIATE ASSOCIATIONS WITH RANDOM FOREST ENSEMBLES  //
@@ -589,6 +592,8 @@ int main(const int argc, char* const argv[]) {
 	toPredictionFile << gen_op.targetStr.c_str() << "\t" << "sampleID" << "\t" << treedata_test.getRawFeatureData(targetIdx,i) 
 			 << "\t" << prediction[i] << "\t" << setprecision(3) << confidence[i] << endl;
       }
+
+      // SF.printToFile("GBT.tsv");
       
     }
     
@@ -625,7 +630,7 @@ int main(const int argc, char* const argv[]) {
 	}
 
 	toAssociationFile << fixed << gen_op.targetStr.c_str() << "\t" << treedata.getFeatureName(featureIdx).c_str() 
-			  << "\t" << log10(pValues[i]) << "\t" << importanceValues[i] << "\t"
+			  << "\t" << log10p << "\t" << importanceValues[i] << "\t"
 			  << treedata.pearsonCorrelation(targetIdx,featureIdx) << "\t" << treedata.nRealSamples(targetIdx,featureIdx) << endl;
       } else {
 	toAssociationFile << fixed << gen_op.targetStr.c_str() << "\t" << treedata.getFeatureName(featureIdx).c_str() 
@@ -637,6 +642,8 @@ int main(const int argc, char* const argv[]) {
   
   toAssociationFile.close();
   toPredictionFile.close();
+
+  cout << 1.0 * ( clock() - clockStart ) / CLOCKS_PER_SEC << " seconds elapsed." << endl << endl;
   
   if ( writeAssociationsToFile ) {
     cout << "Association file '" << gen_op.associationOutput << "' created. Format:" << endl;

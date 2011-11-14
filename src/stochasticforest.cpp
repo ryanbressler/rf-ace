@@ -39,6 +39,21 @@ StochasticForest::~StochasticForest() {
 
 }
 
+void StochasticForest::printToFile(const string& fileName) {
+
+  cout << "Do not call StochasticForest::printToFile() yet, it's not ready!" << endl;
+  exit(1);
+
+  for ( size_t treeIdx = 0; treeIdx < rootNodes_.size(); ++treeIdx ) {
+    Node* nodep( rootNodes_[treeIdx] );
+
+    while ( nodep->hasChildren() ) {
+      nodep->leftChild()->getSplitter();
+    }
+  }
+
+}
+
 void StochasticForest::learnRF(const size_t mTry, 
 			       const size_t nMaxLeaves,
 			       const size_t nodeSize,
@@ -330,6 +345,10 @@ num_t StochasticForest::predictSampleByTree(Treedata* treeData, size_t sampleIdx
 
     // Get the value of the splitter feature of the chosen sample 
     treeData->getFeatureData(featureIdx, sampleIdx, value);
+
+    while ( datadefs::isNAN(value) ) {
+      treeData->getRandomData(featureIdx,value);
+    }
     
     // The node then makes the branch decision. The chosen child node becomes the new currentNode 
     currentNode = currentNode->percolateData(value);
@@ -569,6 +588,11 @@ void StochasticForest::percolateSampleIdx(Treedata* treeData, const size_t sampl
     int featureIdxNew((*nodep)->getSplitter());
     num_t value;
     treeData->getFeatureData(featureIdxNew,sampleIdx,value);
+    
+    while ( datadefs::isNAN(value) ) {
+      treeData->getRandomData(featureIdxNew,value);
+    }
+    
     *nodep = (*nodep)->percolateData(value);
   }
 }
@@ -583,6 +607,11 @@ void StochasticForest::percolateSampleIdxAtRandom(Treedata* treeData, const size
       }
     } else {
       treeData->getFeatureData(featureIdxNew,sampleIdx,value);
+    
+      while ( datadefs::isNAN(value) ) {
+	treeData->getRandomData(featureIdxNew,value);
+      }
+
     }
     *nodep = (*nodep)->percolateData(value);
   }
