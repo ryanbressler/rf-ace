@@ -51,9 +51,23 @@ void NodeTest::setUp() {}
 void NodeTest::tearDown() {}
 
 void NodeTest::test_setSplitter() {
-  // Two signatures!
-  //void Node::setSplitter(size_t splitter, num_t threshold);
-  //void Node::setSplitter(size_t splitter, set<num_t> classSet);
+  
+  size_t splitterIdx = 3;
+  datadefs::num_t splitLeftLeqValue = 0.5; 
+
+  //Splitter::Splitter splitter(0.5);
+
+  Node::Node node;
+
+  CPPUNIT_ASSERT( !node.splitter_ );
+
+  node.setSplitter(splitterIdx,splitLeftLeqValue);
+
+  CPPUNIT_ASSERT( node.splitterIdx_ == splitterIdx );
+  CPPUNIT_ASSERT( node.splitter_->splitterType_ == Splitter::NUMERICAL_SPLITTER );
+  CPPUNIT_ASSERT( fabs(node.splitter_->splitLeftLeqValue_ - splitLeftLeqValue) < datadefs::EPS );
+  
+  
 }
 
 void NodeTest::test_getSplitter() {
@@ -234,7 +248,9 @@ void NodeTest::test_numericalFeatureSplit() {
 
   vector<size_t> sampleIcs_left,sampleIcs_right;
   bool isTargetNumerical = true;
-  datadefs::num_t splitValue,splitFitness;
+  
+  datadefs::num_t splitValue;
+  datadefs::num_t splitFitness;
 
   Node node;
 
@@ -250,9 +266,11 @@ void NodeTest::test_numericalFeatureSplit() {
 			     splitValue,
 			     splitFitness);
 
-  CPPUNIT_ASSERT(splitValue == 3.1);
+  Splitter::Splitter splitter(splitValue);
 
-  //cout << splitFitness << endl;
+  CPPUNIT_ASSERT( splitter.splitsLeft(3.1 - 0.00001) );
+  CPPUNIT_ASSERT( splitter.splitsRight(3.1) );
+
   CPPUNIT_ASSERT( fabs(splitFitness - 0.530492285084497) < 1e-10 );
 
   CPPUNIT_ASSERT(sampleIcs_left.size() == 4);
@@ -286,7 +304,7 @@ void NodeTest::test_categoricalFeatureSplit() {
 
   vector<size_t> sampleIcs_left,sampleIcs_right;
   //bool isTargetNumerical = false;
-  set<datadefs::num_t> splitValues_left;
+  set<datadefs::num_t> splitValues_left,splitValues_right;
   datadefs::num_t splitFitness;
 
   Node node;
@@ -314,12 +332,19 @@ void NodeTest::test_categoricalFeatureSplit() {
 				 sampleIcs_left,
 				 sampleIcs_right,
 				 splitValues_left,
+				 splitValues_right,
 				 splitFitness);
     
+    Splitter::Splitter splitter(splitValues_left,splitValues_right);
+
     CPPUNIT_ASSERT( sampleIcs_left.size() == sampleIcs_right.size() );
     
-    CPPUNIT_ASSERT( splitValues_left.find(0) != splitValues_left.end() );
-    CPPUNIT_ASSERT( splitValues_left.find(1) != splitValues_left.end() );
+    CPPUNIT_ASSERT( splitter.splitsLeft(0) );
+    CPPUNIT_ASSERT( splitter.splitsLeft(1) );
+    CPPUNIT_ASSERT( splitter.splitsLeft(2) );
+    CPPUNIT_ASSERT( splitter.splitsLeft(3) );
+    CPPUNIT_ASSERT( splitter.splitsLeft(4) );
+
     
     for(size_t i = 0; i < sampleIcs_left.size(); ++i ) {
       CPPUNIT_ASSERT( targetData[sampleIcs_left[i]] == 1 );
@@ -357,13 +382,20 @@ void NodeTest::test_categoricalFeatureSplit() {
 				 sampleIcs_left,
 				 sampleIcs_right,
 				 splitValues_left,
+				 splitValues_right,
 				 splitFitness);
     
+    Splitter::Splitter splitter;
+    CPPUNIT_ASSERT( splitter.splitterType_ == Splitter::NO_SPLITTER );
+
+    splitter.reset(splitValues_left,splitValues_right);
+
+    CPPUNIT_ASSERT( splitter.splitterType_ == Splitter::CATEGORICAL_SPLITTER );
+
     CPPUNIT_ASSERT( sampleIcs_left.size() == 4 );
     CPPUNIT_ASSERT( sampleIcs_right.size() == 6 );
-    CPPUNIT_ASSERT( splitValues_left.size() == 2 );
-    CPPUNIT_ASSERT( splitValues_left.find(0) != splitValues_left.end() );
-    CPPUNIT_ASSERT( splitValues_left.find(1) != splitValues_left.end() );
+    CPPUNIT_ASSERT( splitter.splitsLeft(0) );
+    CPPUNIT_ASSERT( splitter.splitsLeft(1) );
     
     if ( iter == 0 ) {
       //datadefs::print<size_t>(sampleIcs_left);
@@ -374,6 +406,9 @@ void NodeTest::test_categoricalFeatureSplit() {
       CPPUNIT_ASSERT( fabs(splitFitness - 0.843750000000000 ) < 1e-10 );
     }
      
+    splitter.reset();
+    CPPUNIT_ASSERT( splitter.splitterType_ == Splitter::NO_SPLITTER );
+
     ++iter;
   }
 }

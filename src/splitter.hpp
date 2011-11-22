@@ -12,18 +12,27 @@ class Splitter {
 
 public:
 
+  Splitter();
   Splitter(num_t splitLeftLeqValue);
   Splitter(const set<num_t>& splitLeftValues, const set<num_t>& splitRightValues);
+  Splitter(const Splitter& splitter);
 
   ~Splitter();
 
   bool splitsLeft(num_t testValue);
   bool splitsRight(num_t testValue);
 
+  void reset();
+  void reset(num_t splitLeftLeqValue);
+  void reset(const set<num_t>& splitLeftValues, const set<num_t>& splitRightValues);
 
+  void print();
+
+#ifndef TEST__
 private:
+#endif
 
-  enum SplitterType {NUMERICAL_SPLITTER,CATEGORICAL_SPLITTER};
+  enum SplitterType {NO_SPLITTER,NUMERICAL_SPLITTER,CATEGORICAL_SPLITTER};
 
   SplitterType splitterType_; 
 

@@ -586,8 +586,8 @@ void Treedata::bootstrapFromRealSamples(const bool withReplacement,
   //Check that the sampling parameters are appropriate
   assert(sampleSize > 0.0);
   if(!withReplacement && sampleSize > 1.0) {
-    cerr << "when sampling without replacement, sample size must be less or equal to 100% (sampleSize <= 1.0)" << endl;
-    assert(false);
+    cerr << "Treedata: when sampling without replacement, sample size must be less or equal to 100% (sampleSize <= 1.0)" << endl;
+    exit(1);
   }
 
   //First we collect all indices that correspond to real samples

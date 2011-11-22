@@ -211,7 +211,7 @@ private:
 void printHeader() {
   cout << endl;
   cout << " ------------------------------------------------------- " << endl;
-  cout << "|  RF-ACE version:  0.9.5, November 14th, 2011          |" << endl;
+  cout << "|  RF-ACE version:  0.9.6, November 21st, 2011          |" << endl;
   cout << "|    Project page:  http://code.google.com/p/rf-ace     |" << endl;
   cout << "|     Report bugs:  timo.p.erkkila@tut.fi               |" << endl;                     
   cout << " ------------------------------------------------------- " << endl;
