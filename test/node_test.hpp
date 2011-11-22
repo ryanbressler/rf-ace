@@ -9,7 +9,6 @@
 class NodeTest : public CppUnit::TestFixture {
   CPPUNIT_TEST_SUITE( NodeTest );
   CPPUNIT_TEST( test_setSplitter );
-  CPPUNIT_TEST( test_setSplitter );
   CPPUNIT_TEST( test_getSplitter );
   CPPUNIT_TEST( test_percolateData );
   CPPUNIT_TEST( test_getLeafTrainPrediction );
@@ -30,7 +29,6 @@ public:
   void tearDown();
 
   void test_setSplitter();
-  //void test_setSplitter();
   void test_getSplitter();
   void test_percolateData();
   void test_getLeafTrainPrediction();
@@ -59,6 +57,8 @@ void NodeTest::test_setSplitter() {
 
   Node::Node node;
 
+  //CPPUNIT_ASSERT( false );
+
   CPPUNIT_ASSERT( !node.splitter_ );
 
   node.setSplitter(splitterIdx,splitLeftLeqValue);
@@ -75,7 +75,14 @@ void NodeTest::test_getSplitter() {
 }
 
 void NodeTest::test_percolateData() {
-  //Node::percolateData(...);
+  
+  Node::Node node0;
+  node0.setSplitter(0,0.1);
+  CPPUNIT_ASSERT( node0.leftChild_ == node0.percolateData(0.09) );
+  CPPUNIT_ASSERT( node0.rightChild_ == node0.percolateData(0.11) );
+
+  
+
 }
 
 void NodeTest::test_getLeafTrainPrediction() {

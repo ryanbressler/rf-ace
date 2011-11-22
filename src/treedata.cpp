@@ -164,7 +164,7 @@ void Treedata::keepFeatures(const vector<size_t>& featureIcs) {
   
   size_t nFeaturesNew = featureIcs.size();
   
-  vector<Treedata::Feature> featureCopy = features_;
+  vector<Feature::Feature> featureCopy = features_;
   features_.resize(2*nFeaturesNew);
   for(size_t i = 0; i < nFeaturesNew; ++i) {
     features_[i] = featureCopy[featureIcs[i]];
@@ -650,6 +650,13 @@ void Treedata::getFeatureData(size_t featureIdx, const vector<size_t>& sampleIcs
   }
 
 }
+
+
+vector<num_t> Treedata::operator[](size_t featureIdx) {
+  return( features_[featureIdx].data );
+}
+
+
 
 string Treedata::getRawFeatureData(const size_t featureIdx, const size_t sampleIdx) {
 
