@@ -8,7 +8,9 @@
 #include <cstdlib>
 #include <map>
 #include <fstream>
+
 #include "datadefs.hpp"
+//#include "feature.hpp"
 #include "mtrand.h"
 
 using namespace std;
@@ -54,9 +56,13 @@ public:
   void print();
   void print(const size_t featureIdx);
 
+  // THESE WILL BECOME DEPRECATED
   void getFeatureData(const size_t featureIdx, vector<num_t>& data);
   void getFeatureData(const size_t featureIdx, const size_t sampleIdx, num_t& data);
   void getFeatureData(const size_t featureIdx, const vector<size_t>& sampleIcs, vector<num_t>& data);
+
+  vector<num_t> operator[](size_t featureIdx);
+  
 
   string getRawFeatureData(const size_t featureIdx, const size_t sampleIdx);
 
@@ -82,13 +88,18 @@ public:
   void impurity(vector<num_t>& data, bool isFeatureNumerical, num_t& impurity, size_t& nreal);
 
   //WILL DECOME DEPRECATED
+#ifndef TEST__  
 protected: 
+#endif
 
   //WILL BECOME DEPRECATED
   friend class StochasticForest;
 
+#ifndef TEST__
 private:
+#endif
 
+  
   struct Feature {
     vector<num_t> data;
     bool isNumerical;
@@ -97,6 +108,7 @@ private:
     size_t nCategories;
     string name;
   };
+  
 
   enum FileType {UNKNOWN, AFM, ARFF};
 
@@ -121,7 +133,6 @@ private:
   
   template <typename T> void transpose(vector<vector<T> >& mat);
     
-
   vector<Feature> features_;
   size_t nSamples_;
   size_t nFeatures_;
