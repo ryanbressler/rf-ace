@@ -47,8 +47,8 @@ void StochasticForest::printToFile(const string& fileName) {
   for ( size_t treeIdx = 0; treeIdx < rootNodes_.size(); ++treeIdx ) {
     Node* nodep( rootNodes_[treeIdx] );
 
-    while ( nodep->hasChildren() ) {
-      nodep->leftChild()->getSplitter();
+    while ( nodep->leftChild() ) {
+      nodep->leftChild()->splitterIdx();
     }
   }
 
@@ -333,15 +333,18 @@ void StochasticForest::transformLogistic(const size_t numClasses, vector<num_t>&
 num_t StochasticForest::predictSampleByTree(Treedata* treeData, size_t sampleIdx, size_t treeIdx) {
   
   // Root of current tree
-  Node *currentNode = rootNodes_[treeIdx];
-  
+  Node* currentNode = rootNodes_[treeIdx];
+  //Node* newNode = rootNodes_[treeIdx];
+
   // Traverse to the leaf of the tree
-  while(currentNode->hasChildren()) {
+  while ( currentNode->hasChildren() ) {
     
+    //currentNode = newNode;
+
     num_t value;
     
     // Get the splitter of the branch point
-    size_t featureIdx = currentNode->getSplitter();
+    size_t featureIdx = currentNode->splitterIdx();
 
     // Get the value of the splitter feature of the chosen sample 
     treeData->getFeatureData(featureIdx, sampleIdx, value);
@@ -351,7 +354,14 @@ num_t StochasticForest::predictSampleByTree(Treedata* treeData, size_t sampleIdx
     }
     
     // The node then makes the branch decision. The chosen child node becomes the new currentNode 
-    currentNode = currentNode->percolateData(value);
+    Node* childNode = currentNode->percolateData(value);
+
+    if ( childNode == currentNode ) {
+      break;
+    }
+
+    currentNode = childNode;
+
   }
 
   // The loop has ended, and currentNode now points to a leaf node; get the prediction
@@ -533,6 +543,7 @@ void StochasticForest::percolateSampleIcs(Treedata* treeData, Node* rootNode, co
   //map<Node*,vector<size_t> > trainics;
   
   for(size_t i = 0; i < sampleIcs.size(); ++i) {
+    //cout << " " << i << " / " << sampleIcs.size() << endl; 
     Node* nodep(rootNode);
     size_t sampleIdx = sampleIcs[i];
     StochasticForest::percolateSampleIdx(treeData,sampleIdx,&nodep);
@@ -584,22 +595,48 @@ void StochasticForest::percolateSampleIcsAtRandom(Treedata* treeData, const size
 }
 
 void StochasticForest::percolateSampleIdx(Treedata* treeData, const size_t sampleIdx, Node** nodep) {
-  while((*nodep)->hasChildren()) {
-    int featureIdxNew((*nodep)->getSplitter());
+
+  //Node* newNode = *nodep;
+  //Node* currentNode = NULL;
+
+  while ( (*nodep)->hasChildren() ) {
+
+    //currentNode = newNode;
+    
+    size_t featureIdxNew = (*nodep)->splitterIdx();
+    //cout << " featureIdx " << featureIdxNew << endl;  
     num_t value;
     treeData->getFeatureData(featureIdxNew,sampleIdx,value);
     
-    while ( datadefs::isNAN(value) ) {
+    while ( datadefs::isNAN( value ) ) {
       treeData->getRandomData(featureIdxNew,value);
     }
     
-    *nodep = (*nodep)->percolateData(value);
+    Node* childNode = (*nodep)->percolateData(value);
+  
+    //cout << *nodep << " -> " << childNode << endl;
+  
+    if ( childNode == *nodep ) {
+      break;
+    }
+
+    *nodep = childNode;
+
   }
+
+  //nodep = &currentNode;
 }
 
 void StochasticForest::percolateSampleIdxAtRandom(Treedata* treeData, const size_t featureIdx, const size_t sampleIdx, Node** nodep) {
-  while((*nodep)->hasChildren()) {
-    size_t featureIdxNew = (*nodep)->getSplitter();
+  
+  //Node* newNode = *nodep;
+  //Node* currentNode = NULL;
+
+  while ( (*nodep)->hasChildren() ) {
+
+    //currentNode = newNode;
+
+    size_t featureIdxNew = (*nodep)->splitterIdx();
     num_t value = datadefs::NUM_NAN;
     if(featureIdx == featureIdxNew) {
       while(datadefs::isNAN(value)) {
@@ -613,8 +650,20 @@ void StochasticForest::percolateSampleIdxAtRandom(Treedata* treeData, const size
       }
 
     }
-    *nodep = (*nodep)->percolateData(value);
+    Node* childNode = (*nodep)->percolateData(value);
+    
+    //cout << *nodep << " -> " << childNode << endl;
+
+    if ( childNode == *nodep ) {
+      break;
+    }
+
+    *nodep = childNode;
+    
   }
+
+  //nodep = &currentNode;
+
 }
 
 // In growForest a bootstrapper was utilized to generate in-box (IB) and out-of-box (OOB) samples.
@@ -631,6 +680,8 @@ void StochasticForest::percolateSampleIdxAtRandom(Treedata* treeData, const size
 //    without random sampling. Rationale: if feature_i is important, random sampling will have a 
 //    big impact, thus, relative increase of disagreement will be high.  
 vector<num_t> StochasticForest::featureImportance() {
+
+  //cout << "StochasticForest::featureImportance()..." << endl;
 
   // The number of real features in the data matrix...
   size_t nRealFeatures = treeData_->nFeatures();
@@ -651,12 +702,16 @@ vector<num_t> StochasticForest::featureImportance() {
   for ( map<size_t, set<size_t> >::const_iterator tit(featuresInForest_.begin()); tit != featuresInForest_.end(); ++tit ) {
     size_t treeIdx = tit->first;
       
+    //cout << "looping through tree " << treeIdx << " / " << featuresInForest_.size() << endl;
+
     size_t nNewOobSamples = oobMatrix_[treeIdx].size(); 
     nOobSamples += nNewOobSamples;
 
     map<Node*,vector<size_t> > trainIcs;
     StochasticForest::percolateSampleIcs(treeData_,rootNodes_[treeIdx],oobMatrix_[treeIdx],trainIcs);
     
+    //cout << "sample ics percolated" << endl;
+
     num_t treeImpurity;
     StochasticForest::treeImpurity(treeData_,trainIcs,treeImpurity);
 

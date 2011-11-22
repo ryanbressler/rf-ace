@@ -10,6 +10,7 @@
 #include <set>
 #include "datadefs.hpp"
 #include "treedata.hpp"
+#include "splitter.hpp"
 #include "partitionsequence.hpp"
 
 using namespace std;
@@ -27,11 +28,11 @@ public:
 
   //Sets a splitter feature for the node.
   //NOTE: splitter can be assigned only once! Subsequent setter calls will raise an assertion failure.
-  void setSplitter(size_t splitterIdx, set<num_t> classSet);
-  void setSplitter(size_t splitterIdx, num_t threshold);
+  void setSplitter(size_t splitterIdx, num_t splitLeftLeqValue);
+  void setSplitter(size_t splitterIdx, const set<num_t>& leftSplitValues, const set<num_t>& rightSplitValues);
 
   //Gets the splitter for the node
-  inline size_t getSplitter() { return(splitter_); }
+  inline size_t splitterIdx() { return(splitterIdx_); }
 
   //Given a value, descends to either one of the child nodes, if existing, otherwise returns a pointer to the current node
   Node* percolateData(num_t value);
@@ -39,7 +40,7 @@ public:
   num_t getLeafTrainPrediction();
 
   //Logic test whether the node has children or not
-  inline bool hasChildren() { return( hasChildren_ ); }
+  inline bool hasChildren() { return( splitter_ ); }
 
   Node* leftChild();
   Node* rightChild();
@@ -88,6 +89,7 @@ protected:
 			   vector<size_t>& sampleIcs_right,
 			   num_t& splitValue,
 			   set<num_t>& splitValues_left,
+			   set<num_t>& splitValues_right,
 			   num_t& splitFitness);
 
   bool optimizedSplitterSeek(Treedata* treeData,
@@ -100,6 +102,7 @@ protected:
 			     vector<size_t>& sampleIcs_right,
 			     num_t& splitValue,
 			     set<num_t>& splitValues_left,
+			     set<num_t>& splitValues_right,
 			     num_t& splitFitness);
     
 #ifndef TEST__
@@ -118,7 +121,7 @@ private:
                              const GrowInstructions& GI,
                              vector<size_t>& sampleIcs_left,
                              vector<size_t>& sampleIcs_right,
-                             num_t& splitValue,
+			     num_t& splitValue,
                              num_t& splitFitness);
 
   void categoricalFeatureSplit(vector<num_t> tv,
@@ -127,7 +130,8 @@ private:
 			       const GrowInstructions& GI,
 			       vector<size_t>& sampleIcs_left,
                                vector<size_t>& sampleIcs_right,
-                               set<num_t>& categories_left,
+                               set<num_t>& splitValues_left,
+                               set<num_t>& splitValues_right,
                                num_t& splitFitness);
 
   num_t splitFitness(vector<num_t> const& data,
@@ -139,18 +143,17 @@ private:
   //A recursive function that will accumulate the number of descendant nodes the current nodes has
   void recursiveNDescendantNodes(size_t& n);
 
-  bool isSplitterNumerical_;
+  //bool isSplitterNumerical_;
 
-  size_t splitter_;
-  num_t threshold_;
-  set<num_t> classSet_;
+  size_t splitterIdx_;
+  Splitter* splitter_;
 
   bool isTrainPredictionSet_;
   num_t trainPrediction_;
   size_t nTestSamples_;
   num_t testPredictionError_;
     
-  bool hasChildren_;
+  //bool hasChildren_;
   Node* leftChild_;
   Node* rightChild_;
 

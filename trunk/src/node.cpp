@@ -3,12 +3,12 @@
 #include "node.hpp"
 
 Node::Node():
-  isSplitterNumerical_(true),
+  splitter_(NULL),
   isTrainPredictionSet_(false),
   trainPrediction_(0.0),
   nTestSamples_(0),
   testPredictionError_(0.0),
-  hasChildren_(false),
+  //hasChildren_(false),
   leftChild_(NULL),
   rightChild_(NULL) {
   
@@ -17,58 +17,84 @@ Node::Node():
 // !! Documentation: establishes a recursive relationship that deletes all
 // !! children, unless their pointers are orphaned.
 
-// !! Correctness: Consider replacing hasChildren_ with a NULL check for
-// !! leftChild_ and rightChild_, or at the very least, including an assert for
-// !! such here.
 Node::~Node() {
-  if(hasChildren_) {
-    delete leftChild_;
-    delete rightChild_;
+
+  if ( leftChild_ || rightChild_ ) {
+
+    if ( leftChild_ && rightChild_ ) {
+      delete leftChild_;
+      delete rightChild_;
+      delete splitter_;
+    } else {
+      cerr << "Node has only one child!" << endl;
+      exit(1);
+    }
+    
   }
+
 }
 
 // !! Documentation: consider combining with the documentation in the header
 // !! file, fleshing it out a bit. Ideally, implementation notes should fall
 // !! here; notes on the abstraction should fall in the header file.
-void Node::setSplitter(size_t splitter, set<num_t> classSet) {
-  assert(!hasChildren_);
+void Node::setSplitter(size_t splitterIdx, num_t splitLeftLeqValue) {
   
-  isSplitterNumerical_ = false;
-
-  splitter_ = splitter;
-  classSet_ = classSet;
+  if ( leftChild_ || rightChild_ ) {
+    cerr << "Cannot set a splitter to a node twice!" << endl;
+    exit(1);
+  }
+  
+  splitterIdx_ = splitterIdx;
+  splitter_ = new Splitter(splitLeftLeqValue);
 
   leftChild_ = new Node;
   rightChild_ = new Node;
-  hasChildren_ = true;
+
 }
 
 // !! Documentation: consider combining with the documentation in the header
 // !! file, fleshing it out a bit. Ideally, implementation notes should fall
 // !! here; notes on the abstraction should fall in the header file.
-void Node::setSplitter(size_t splitter, num_t threshold) {
-  assert(!hasChildren_);
-  isSplitterNumerical_ = true;
+void Node::setSplitter(size_t splitterIdx, const set<num_t>& leftSplitValues, const set<num_t>& rightSplitValues) {
 
-  splitter_ = splitter;
-  threshold_ = threshold;
+  if ( leftChild_ || rightChild_ ) {
+    cerr << "Cannot set a splitter to a node twice!" << endl;
+    exit(1);
+  }
+
+  splitterIdx_ = splitterIdx;
+  splitter_ = new Splitter(leftSplitValues,rightSplitValues);
 
   leftChild_ = new Node;
   rightChild_ = new Node;
-  hasChildren_ = true;
+
 }
 
 Node* Node::percolateData(num_t value) {
 
-  assert( !datadefs::isNAN(value) );
-
-  if ( !hasChildren_ ) { return( this ); }
-  
-  if ( isSplitterNumerical_ ) {
-    if ( value <= threshold_ ) { return( leftChild_ ); } else { return( rightChild_ ); }
-  } else {
-    if ( classSet_.find(value) != classSet_.end() ) { return( leftChild_ ); } else { return( rightChild_ ); }
+  if ( !splitter_ ) {
+    return( this );
   }
+
+  if ( datadefs::isNAN( value ) ) {
+    cerr << "Node class does not accept NaNs to be percolated!" << endl;
+    exit(1);
+  }
+
+  if ( splitter_->splitsLeft( value ) ) {
+    return( leftChild_ );
+  }
+
+  if ( splitter_->splitsRight( value ) ) {
+    return( rightChild_ );
+  }
+
+  return( this );
+
+  //splitter_->print();
+  //cerr << "Splitter Idx " << splitterIdx_ << " with split value ( " << value << " ) does not have a split rule!" << endl;
+  //exit(1);
+
 }
 
 // !! Inefficient: just use NULL as a sentinel here. Proxying through another
@@ -105,20 +131,20 @@ size_t Node::nNodes() {
 
 // !! Inefficient: just rewrite these as a single function? 
 void Node::recursiveNDescendantNodes(size_t& n) {
-  if(!hasChildren_) {
+  if ( !leftChild_ ) {
     return;
   } else {
     n += 2;
-    leftChild_->recursiveNDescendantNodes(n);
-    rightChild_->recursiveNDescendantNodes(n);
+    leftChild_->recursiveNDescendantNodes( n );
+    rightChild_->recursiveNDescendantNodes( n );
   }
 }
 
 // !! Documentation: just your usual accessor, returning a copy of
 // !! trainPrediction_.
 num_t Node::getLeafTrainPrediction() {
-  assert(!hasChildren_ && isTrainPredictionSet_);
-  return(trainPrediction_);
+  assert( isTrainPredictionSet_ );
+  return( trainPrediction_ );
 }
 
 void Node::recursiveNodeSplit(Treedata* treeData,
@@ -169,7 +195,9 @@ void Node::recursiveNodeSplit(Treedata* treeData,
 
   vector<size_t> sampleIcs_left,sampleIcs_right;
   num_t splitValue;
-  set<num_t> splitValues_left;
+  set<num_t> splitValues_left, splitValues_right;
+  //size_t bestSplitterIdx;
+  //Splitter bestSplitter;
 
   num_t splitFitness;
   size_t splitFeatureIdx;
@@ -177,7 +205,6 @@ void Node::recursiveNodeSplit(Treedata* treeData,
   bool isSplitSuccessful;
   //bool isSplitFeatureNumerical;
   
-
   if(GI.isOptimizedNodeSplit) {
     
     isSplitSuccessful = Node::optimizedSplitterSeek(treeData,
@@ -190,6 +217,7 @@ void Node::recursiveNodeSplit(Treedata* treeData,
 						    sampleIcs_right,
 						    splitValue,
 						    splitValues_left,
+						    splitValues_right,
 						    splitFitness);
 
   } else {
@@ -204,6 +232,7 @@ void Node::recursiveNodeSplit(Treedata* treeData,
 						  sampleIcs_right,
 						  splitValue,
 						  splitValues_left,
+						  splitValues_right,
 						  splitFitness);
   }
 
@@ -219,6 +248,7 @@ void Node::recursiveNodeSplit(Treedata* treeData,
     return;
   }
 
+  
   if ( false ) {
     cout << "Out of ";
     for ( size_t i = 0; i < featureSampleIcs.size(); ++i ) {
@@ -236,13 +266,23 @@ void Node::recursiveNodeSplit(Treedata* treeData,
     cout << " ] FITNESS: " << splitFitness << endl;
   }
      
+  
+
   if ( treeData->isFeatureNumerical(splitFeatureIdx) ) {
     //cout << "num splitter" << endl;
     Node::setSplitter(splitFeatureIdx,splitValue);
   } else {
     //cout << "cat splitter" << endl;
-    Node::setSplitter(splitFeatureIdx,splitValues_left);
+    Node::setSplitter(splitFeatureIdx,splitValues_left,splitValues_right);
   }
+
+  vector<num_t> trainData;
+  treeData->getFeatureData(targetIdx,sampleIcs,trainData);
+
+  // !! Potential Crash: This is unsafe. Add asserts or runtime checks.
+  // !! Correctness: Violates the Principle of Least Knowledge. Refactor.
+  (this->*GI.leafPredictionFunction)(trainData,GI.numClasses);
+
 
   featuresInTree.insert(splitFeatureIdx);
   nNodes += 2;
@@ -262,6 +302,7 @@ bool Node::regularSplitterSeek(Treedata* treeData,
 			       vector<size_t>& sampleIcs_right,
 			       num_t& splitValue,
 			       set<num_t>& splitValues_left,
+			       set<num_t>& splitValues_right,
 			       num_t& splitFitness) {
 
   bool isTargetNumerical = treeData->isFeatureNumerical(targetIdx);
@@ -276,7 +317,7 @@ bool Node::regularSplitterSeek(Treedata* treeData,
   vector<size_t> newSampleIcs_left;
   vector<size_t> newSampleIcs_right;
   num_t newSplitValue;
-  set<num_t> newSplitValues_left;
+  set<num_t> newSplitValues_left, newSplitValues_right;
   
   for ( size_t i = 0; i < nFeaturesForSplit; ++i ) {
     
@@ -309,6 +350,7 @@ bool Node::regularSplitterSeek(Treedata* treeData,
 				    newSampleIcs_left,
 				    newSampleIcs_right,
 				    newSplitValues_left,
+				    newSplitValues_right,
 				    newSplitFitness);
     }
 
@@ -320,6 +362,7 @@ bool Node::regularSplitterSeek(Treedata* treeData,
       splitFeatureIdx = newSplitFeatureIdx;
       splitValue = newSplitValue;
       splitValues_left = newSplitValues_left;
+      splitValues_right = newSplitValues_right;
       sampleIcs_left = newSampleIcs_left;
       sampleIcs_right = newSampleIcs_right;
     }    
@@ -370,12 +413,15 @@ bool Node::optimizedSplitterSeek(Treedata* treeData,
 				 vector<size_t>& sampleIcs_right,
 				 num_t& splitValue,
 				 set<num_t>& splitValues_left,
+				 set<num_t>& splitValues_right,
 				 num_t& splitFitness) {
 
   bool isTargetNumerical = treeData->isFeatureNumerical(targetIdx);
   vector<num_t> targetData;
   treeData->getFeatureData(targetIdx,sampleIcs,targetData);
   
+  //Splitter splitter( datadefs::NUM_NAN );
+
   if ( isTargetNumerical ) {
     Node::numericalFeatureSplit(targetData,
 				isTargetNumerical,
@@ -393,6 +439,7 @@ bool Node::optimizedSplitterSeek(Treedata* treeData,
 				  sampleIcs_left,
 				  sampleIcs_right,
 				  splitValues_left,
+				  splitValues_right,
 				  splitFitness);
   }        
   
@@ -456,6 +503,7 @@ bool Node::optimizedSplitterSeek(Treedata* treeData,
 				  sampleIcs_left,
 				  sampleIcs_right,
 				  splitValues_left,
+				  splitValues_right,
 				  splitFitness);
 
   }
@@ -634,7 +682,8 @@ void Node::categoricalFeatureSplit(vector<num_t> tv,
 				   const GrowInstructions& GI,
                                    vector<size_t>& sampleIcs_left,
                                    vector<size_t>& sampleIcs_right,
-                                   set<num_t>& categories_left,
+				   set<num_t>& splitValues_left,
+				   set<num_t>& splitValues_right,
                                    num_t& splitFitness) {
 
   //cout << "Node::categoricalFeatureSplit..." << endl;
@@ -815,28 +864,32 @@ void Node::categoricalFeatureSplit(vector<num_t> tv,
 
   // Assign samples and categories on the left
   sampleIcs_left.resize(n_tot);
-  categories_left.clear();
+  splitValues_left.clear();
   iter = 0;
   for ( map<num_t,vector<size_t> >::const_iterator it(fmap_left_best.begin()); it != fmap_left_best.end(); ++it ) {
     for ( size_t i = 0; i < it->second.size(); ++i ) {
       sampleIcs_left[iter] = mapIcs[ it->second[i] ];
       ++iter;
     }
-    categories_left.insert( it->first );
+    splitValues_left.insert( it->first );
   }
   sampleIcs_left.resize(iter);
 
   // Assign samples on the right
   sampleIcs_right.resize(n_tot);
+  splitValues_right.clear();
   iter = 0;
   for ( map<num_t,vector<size_t> >::const_iterator it(fmap_right_best.begin()); it != fmap_right_best.end(); ++it ) {
     for ( size_t i = 0; i < it->second.size(); ++i ) {
       sampleIcs_right[iter] = mapIcs[ it->second[i] ];
       ++iter;
     }
+    splitValues_right.insert( it->first );
   }
   sampleIcs_right.resize(iter);
   
+  //splitter.reset( splitValues_left, splitValues_right );
+
 }
 
 // !! Legibility: Clean out all of the print statements.
@@ -928,7 +981,6 @@ num_t Node::splitFitness(vector<num_t> const& data,
 
 void Node::leafMean(const vector<datadefs::num_t>& data, const size_t numClasses) {
   
-  assert(!hasChildren_);
   assert(!isTrainPredictionSet_);
   size_t n = data.size();
   assert(n > 0);
@@ -945,7 +997,6 @@ void Node::leafMean(const vector<datadefs::num_t>& data, const size_t numClasses
 
 void Node::leafMode(const vector<datadefs::num_t>& data, const size_t numClasses) {
 
-  assert(!hasChildren_);
   assert(!isTrainPredictionSet_);
   size_t n = data.size();
   assert(n > 0);
@@ -963,7 +1014,6 @@ void Node::leafMode(const vector<datadefs::num_t>& data, const size_t numClasses
 // !! Document
 void Node::leafGamma(const vector<datadefs::num_t>& data, const size_t numClasses) {
 
-  assert(!hasChildren_);
   assert(!isTrainPredictionSet_);
   size_t n = data.size();
   assert(n > 0);
