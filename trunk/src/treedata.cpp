@@ -164,7 +164,7 @@ void Treedata::keepFeatures(const vector<size_t>& featureIcs) {
   
   size_t nFeaturesNew = featureIcs.size();
   
-  vector<Feature::Feature> featureCopy = features_;
+  vector<Feature> featureCopy = features_;
   features_.resize(2*nFeaturesNew);
   for(size_t i = 0; i < nFeaturesNew; ++i) {
     features_[i] = featureCopy[featureIcs[i]];
