@@ -171,8 +171,8 @@ void StochasticForest::growNumericalGBT() {
 
   size_t nSamples = treeData_->nSamples();
   // save a copy of the target column because it will be overwritten
-  vector<num_t> trueTargetData;
-  treeData_->getFeatureData(targetIdx_,trueTargetData);
+  vector<num_t> trueTargetData = treeData_->getFeatureData(targetIdx_);
+  //treeData_->getFeatureData(targetIdx_,trueTargetData);
 
   // Target for GBT is different for each tree
   // reference to the target column, will overwrite it
@@ -237,8 +237,7 @@ void StochasticForest::growCategoricalGBT() {
   // Save a copy of the target column because it will be overwritten later.
   // We also know that it must be categorical.
   size_t nSamples = treeData_->nSamples();
-  vector<num_t> trueTargetData;
-  treeData_->getFeatureData(targetIdx_,trueTargetData);
+  vector<num_t> trueTargetData = treeData_->getFeatureData(targetIdx_);
 
   // Target for GBT is different for each tree.
   // We use the original target column to save each temporary target.
@@ -341,13 +340,13 @@ num_t StochasticForest::predictSampleByTree(Treedata* treeData, size_t sampleIdx
     
     //currentNode = newNode;
 
-    num_t value;
+    //num_t value;
     
     // Get the splitter of the branch point
     size_t featureIdx = currentNode->splitterIdx();
 
     // Get the value of the splitter feature of the chosen sample 
-    treeData->getFeatureData(featureIdx, sampleIdx, value);
+    num_t value = treeData->getFeatureData(featureIdx, sampleIdx);
 
     while ( datadefs::isNAN(value) ) {
       treeData->getRandomData(featureIdx,value);
@@ -605,8 +604,7 @@ void StochasticForest::percolateSampleIdx(Treedata* treeData, const size_t sampl
     
     size_t featureIdxNew = (*nodep)->splitterIdx();
     //cout << " featureIdx " << featureIdxNew << endl;  
-    num_t value;
-    treeData->getFeatureData(featureIdxNew,sampleIdx,value);
+    num_t value = treeData->getFeatureData(featureIdxNew,sampleIdx);
     
     while ( datadefs::isNAN( value ) ) {
       treeData->getRandomData(featureIdxNew,value);
@@ -643,7 +641,7 @@ void StochasticForest::percolateSampleIdxAtRandom(Treedata* treeData, const size
         treeData->getRandomData(featureIdxNew,value);
       }
     } else {
-      treeData->getFeatureData(featureIdxNew,sampleIdx,value);
+      value = treeData->getFeatureData(featureIdxNew,sampleIdx);
     
       while ( datadefs::isNAN(value) ) {
 	treeData->getRandomData(featureIdxNew,value);
@@ -778,8 +776,7 @@ void StochasticForest::treeImpurity(Treedata* treeData,
 
   for(map<Node*,vector<size_t> >::iterator it(trainIcs.begin()); it != trainIcs.end(); ++it) {
 
-    vector<num_t> targetData;
-    treeData->getFeatureData(targetIdx_,it->second,targetData);
+    vector<num_t> targetData = treeData->getFeatureData(targetIdx_,it->second);
     num_t leafPrediction = it->first->getLeafTrainPrediction();
     num_t leafImpurity = 0;
     size_t nSamplesInLeaf = targetData.size();

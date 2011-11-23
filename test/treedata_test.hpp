@@ -28,10 +28,8 @@ void treeDataTest::test_bracketOperator() {
 
   CPPUNIT_ASSERT( treeData.features_.size() == 2*6 );
 
-  vector<datadefs::num_t> data;
-
   for ( size_t i = 0; i < treeData.features_.size(); ++i ) {
-    treeData.getFeatureData(i,data);
+    vector<datadefs::num_t> data = treeData.getFeatureData(i);
     for ( size_t j = 0; j < treeData.features_.size(); ++j ) {
       if ( !datadefs::isNAN(data[j]) ) {
 	CPPUNIT_ASSERT( fabs(treeData[i][j] - data[j]) < datadefs::EPS );

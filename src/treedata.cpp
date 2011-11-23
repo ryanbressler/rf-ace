@@ -632,22 +632,35 @@ void Treedata::bootstrapFromRealSamples(const bool withReplacement,
   //cout << "nOob=" << nOob << endl;
 }
 
-void Treedata::getFeatureData(size_t featureIdx, vector<num_t>& data) {
-  data.resize(nSamples_);
+
+vector<num_t> Treedata::getFeatureData(size_t featureIdx) {
+  
+  vector<num_t> data( features_[featureIdx].data.size() );
+
   for(size_t i = 0; i < nSamples_; ++i) {
     data[i] = features_[featureIdx].data[i];
   }
+
+  return( data );
 }
 
-void Treedata::getFeatureData(size_t featureIdx, const size_t sampleIdx, num_t& data) {
-  data = features_[featureIdx].data[sampleIdx];
+
+num_t Treedata::getFeatureData(size_t featureIdx, const size_t sampleIdx) {
+
+  num_t data = features_[featureIdx].data[sampleIdx];
+
+  return( data ); 
 }
 
-void Treedata::getFeatureData(size_t featureIdx, const vector<size_t>& sampleIcs, vector<num_t>& data) {
-  data.resize(sampleIcs.size());
+vector<num_t> Treedata::getFeatureData(size_t featureIdx, const vector<size_t>& sampleIcs) {
+  
+  vector<num_t> data(sampleIcs.size());
+  
   for(size_t i = 0; i < sampleIcs.size(); ++i) {
     data[i] = features_[featureIdx].data[sampleIcs[i]];
   }
+
+  return( data );
 
 }
 
