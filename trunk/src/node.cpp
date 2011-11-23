@@ -159,8 +159,7 @@ void Node::recursiveNodeSplit(Treedata* treeData,
 
   if(nSamples < 2 * GI.minNodeSizeToStop || nNodes >= GI.maxNodesToStop) {
     //cout << "Too few samples to start with, quitting" << endl;
-    vector<num_t> leafTrainData;
-    treeData->getFeatureData(targetIdx,sampleIcs,leafTrainData);
+    vector<num_t> leafTrainData = treeData->getFeatureData(targetIdx,sampleIcs);
     //Node::setLeafTrainPrediction(leafTrainData,GI);
 
     // !! Potential Crash: This is unsafe. Add asserts or runtime checks.
@@ -238,8 +237,7 @@ void Node::recursiveNodeSplit(Treedata* treeData,
 
   if(!isSplitSuccessful) {
 
-    vector<num_t> leafTrainData;
-    treeData->getFeatureData(targetIdx,sampleIcs,leafTrainData);
+    vector<num_t> leafTrainData = treeData->getFeatureData(targetIdx,sampleIcs);
 
     // !! Potential Crash: This is unsafe. Add asserts or runtime checks.
     // !! Correctness: Violates the Principle of Least Knowledge. Refactor.
@@ -276,8 +274,7 @@ void Node::recursiveNodeSplit(Treedata* treeData,
     Node::setSplitter(splitFeatureIdx,splitValues_left,splitValues_right);
   }
 
-  vector<num_t> trainData;
-  treeData->getFeatureData(targetIdx,sampleIcs,trainData);
+  vector<num_t> trainData = treeData->getFeatureData(targetIdx,sampleIcs);
 
   // !! Potential Crash: This is unsafe. Add asserts or runtime checks.
   // !! Correctness: Violates the Principle of Least Knowledge. Refactor.
@@ -306,8 +303,7 @@ bool Node::regularSplitterSeek(Treedata* treeData,
 			       num_t& splitFitness) {
 
   bool isTargetNumerical = treeData->isFeatureNumerical(targetIdx);
-  vector<num_t> targetData;
-  treeData->getFeatureData(targetIdx,sampleIcs,targetData);
+  vector<num_t> targetData = treeData->getFeatureData(targetIdx,sampleIcs);
 
   size_t nFeaturesForSplit = featureSampleIcs.size();
   splitFeatureIdx = nFeaturesForSplit;
@@ -330,8 +326,7 @@ bool Node::regularSplitterSeek(Treedata* treeData,
       continue;
     }
 
-    vector<num_t> featureData;
-    treeData->getFeatureData(newSplitFeatureIdx,sampleIcs,featureData);
+    vector<num_t> featureData = treeData->getFeatureData(newSplitFeatureIdx,sampleIcs);
 
     if ( isFeatureNumerical ) {
       Node::numericalFeatureSplit(targetData,
@@ -417,8 +412,7 @@ bool Node::optimizedSplitterSeek(Treedata* treeData,
 				 num_t& splitFitness) {
 
   bool isTargetNumerical = treeData->isFeatureNumerical(targetIdx);
-  vector<num_t> targetData;
-  treeData->getFeatureData(targetIdx,sampleIcs,targetData);
+  vector<num_t> targetData = treeData->getFeatureData(targetIdx,sampleIcs);
   
   //Splitter splitter( datadefs::NUM_NAN );
 
@@ -458,7 +452,7 @@ bool Node::optimizedSplitterSeek(Treedata* treeData,
       continue;
     }
     
-    treeData->getFeatureData(newSplitFeatureIdx,sampleIcs,newSplitFeatureData);
+    newSplitFeatureData = treeData->getFeatureData(newSplitFeatureIdx,sampleIcs);
     
     num_t newSplitFitness = Node::splitFitness(newSplitFeatureData,
 					       isFeatureNumerical,
@@ -480,8 +474,7 @@ bool Node::optimizedSplitterSeek(Treedata* treeData,
     return(false);
   } 
 
-  vector<num_t> featureData;
-  treeData->getFeatureData(splitFeatureIdx,sampleIcs,featureData);
+  vector<num_t> featureData = treeData->getFeatureData(splitFeatureIdx,sampleIcs);
 
   if ( treeData->isFeatureNumerical(splitFeatureIdx) ) {
     

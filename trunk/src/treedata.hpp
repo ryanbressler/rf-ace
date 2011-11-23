@@ -56,10 +56,9 @@ public:
   void print();
   void print(const size_t featureIdx);
 
-  // THESE WILL BECOME DEPRECATED
-  void getFeatureData(const size_t featureIdx, vector<num_t>& data);
-  void getFeatureData(const size_t featureIdx, const size_t sampleIdx, num_t& data);
-  void getFeatureData(const size_t featureIdx, const vector<size_t>& sampleIcs, vector<num_t>& data);
+  vector<num_t> getFeatureData(const size_t featureIdx);
+  num_t getFeatureData(const size_t featureIdx, const size_t sampleIdx);
+  vector<num_t> getFeatureData(const size_t featureIdx, const vector<size_t>& sampleIcs);
 
   vector<num_t> operator[](size_t featureIdx);
   

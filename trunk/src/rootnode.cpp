@@ -66,13 +66,12 @@ void RootNode::growTree(Treedata* treeData,
 
   //This is to check that the bootstrap sample doesn't contain any missing values (it shouldn't!)
   if(false) {
-    vector<num_t> targetData;
-    treeData->getFeatureData(targetIdx,bootstrapIcs,targetData);
+    vector<num_t> targetData = treeData->getFeatureData(targetIdx,bootstrapIcs);
     for(size_t i = 0; i < targetData.size(); ++i) {
       assert(!datadefs::isNAN(targetData[i]));
     }
 
-    treeData->getFeatureData(targetIdx,oobIcs,targetData);
+    targetData = treeData->getFeatureData(targetIdx,oobIcs);
     for(size_t i = 0; i < targetData.size(); ++i) {
       assert(!datadefs::isNAN(targetData[i]));
     }
