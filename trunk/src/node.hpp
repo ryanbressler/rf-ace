@@ -148,7 +148,7 @@ private:
   size_t splitterIdx_;
   Splitter* splitter_;
 
-  bool isTrainPredictionSet_;
+  //bool isTrainPredictionSet_;
   num_t trainPrediction_;
   size_t nTestSamples_;
   num_t testPredictionError_;

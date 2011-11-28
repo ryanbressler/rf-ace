@@ -4,8 +4,8 @@
 
 Node::Node():
   splitter_(NULL),
-  isTrainPredictionSet_(false),
-  trainPrediction_(0.0),
+  //isTrainPredictionSet_(false),
+  trainPrediction_(datadefs::NUM_NAN),
   nTestSamples_(0),
   testPredictionError_(0.0),
   //hasChildren_(false),
@@ -143,7 +143,7 @@ void Node::recursiveNDescendantNodes(size_t& n) {
 // !! Documentation: just your usual accessor, returning a copy of
 // !! trainPrediction_.
 num_t Node::getLeafTrainPrediction() {
-  assert( isTrainPredictionSet_ );
+  //assert( isTrainPredictionSet_ );
   return( trainPrediction_ );
 }
 
@@ -974,7 +974,11 @@ num_t Node::splitFitness(vector<num_t> const& data,
 
 void Node::leafMean(const vector<datadefs::num_t>& data, const size_t numClasses) {
   
-  assert(!isTrainPredictionSet_);
+  if ( !datadefs::isNAN(trainPrediction_) ) {
+    cerr << "Tried to set node prediction twice!" << endl;
+    exit(1);
+  }
+
   size_t n = data.size();
   assert(n > 0);
   trainPrediction_ = 0.0;
@@ -984,13 +988,17 @@ void Node::leafMean(const vector<datadefs::num_t>& data, const size_t numClasses
   }
 
   trainPrediction_ /= n;
-  isTrainPredictionSet_ = true;
+  //isTrainPredictionSet_ = true;
 
 }
 
 void Node::leafMode(const vector<datadefs::num_t>& data, const size_t numClasses) {
 
-  assert(!isTrainPredictionSet_);
+  if ( !datadefs::isNAN(trainPrediction_) ) {
+    cerr << "Tried to set node prediction twice!" << endl;
+    exit(1);
+  }
+
   size_t n = data.size();
   assert(n > 0);
   trainPrediction_ = 0.0;
@@ -1000,14 +1008,18 @@ void Node::leafMode(const vector<datadefs::num_t>& data, const size_t numClasses
   datadefs::count_freq(data,freq,n);
   map<num_t,size_t>::iterator it(max_element(freq.begin(),freq.end(),datadefs::freqIncreasingOrder()));
   trainPrediction_ = it->first;
-  isTrainPredictionSet_ = true;
+  //isTrainPredictionSet_ = true;
 
 }
 
 // !! Document
 void Node::leafGamma(const vector<datadefs::num_t>& data, const size_t numClasses) {
 
-  assert(!isTrainPredictionSet_);
+  if ( !datadefs::isNAN(trainPrediction_) ) {
+    cerr << "Tried to set node prediction twice!" << endl;
+    exit(1);
+  }
+
   size_t n = data.size();
   assert(n > 0);
   trainPrediction_ = 0.0;
@@ -1025,6 +1037,6 @@ void Node::leafGamma(const vector<datadefs::num_t>& data, const size_t numClasse
   } else {
     trainPrediction_ = (numClasses - 1)*numerator / (numClasses * denominator);
   }
-  isTrainPredictionSet_ = true;
+  //isTrainPredictionSet_ = true;
 }
   
