@@ -21,7 +21,9 @@ const bool   GENERAL_DEFAULT_PRINT_HELP = false;
 //const bool   GENERAL_DEFAULT_NO_FILTER = false;
 const bool   GENERAL_DEFAULT_NO_PREDICTION = false; // TEMPORARY VARIABLE
 const num_t  GENERAL_DEFAULT_P_VALUE_THRESHOLD = 0.10;
-const bool   GENERAL_IS_OPTIMIZED_NODE_SPLIT = false;
+const bool   GENERAL_DEFAULT_IS_OPTIMIZED_NODE_SPLIT = false;
+const string GENERAL_DEFAULT_DATA_DELIMITER = "\t";
+const string GENERAL_DEFAULT_HEADER_DELIMITER = ":";
 
 //const bool   RF_IS_OPTIMIZED_NODE_SPLIT = false;
 const size_t RF_DEFAULT_N_TREES = 1000; // zero means it will be estimated from the data by default
@@ -73,6 +75,14 @@ struct General_options {
   bool   isOptimizedNodeSplit;
   string isOptimizedNodeSplit_s;
   string isOptimizedNodeSplit_l;
+
+  string dataDelimiter;
+  string dataDelimiter_s;
+  string dataDelimiter_l;
+
+  string headerDelimiter;
+  string headerDelimiter_s;
+  string headerDelimiter_l;
   
   General_options():
     printHelp(GENERAL_DEFAULT_PRINT_HELP),
@@ -107,9 +117,17 @@ struct General_options {
     pValueThreshold_s("t"),
     pValueThreshold_l("pthreshold"),
 
-    isOptimizedNodeSplit(GENERAL_IS_OPTIMIZED_NODE_SPLIT),
+    isOptimizedNodeSplit(GENERAL_DEFAULT_IS_OPTIMIZED_NODE_SPLIT),
     isOptimizedNodeSplit_s("q"),
-    isOptimizedNodeSplit_l("optimized_split") {}
+    isOptimizedNodeSplit_l("optimized_split"),
+
+    dataDelimiter(GENERAL_DEFAULT_DATA_DELIMITER),
+    dataDelimiter_s("D"),
+    dataDelimiter_l("data_delim"),
+
+    headerDelimiter(GENERAL_DEFAULT_HEADER_DELIMITER),
+    headerDelimiter_s("H"),
+    headerDelimiter_l("head_delim") {}
 };
 
 struct RF_options {
@@ -241,6 +259,11 @@ void printHelp(const General_options& geno, const RF_options& rfo, const GBT_opt
        << " " << "Feature mask input file. String of ones and zeroes, zeroes indicating removal of the feature in the matrix" << endl;
   cout << " -" << geno.isOptimizedNodeSplit_s << " / --" << geno.isOptimizedNodeSplit_l << setw( maxwidth - geno.isOptimizedNodeSplit_l.size() )
        << " " << "Perform optimized node splitting (faster but more inaccurate; default OFF)" << endl;
+  cout << " -" << geno.dataDelimiter_s << " / --" << geno.dataDelimiter_l << setw( maxwidth - geno.dataDelimiter_l.size() )
+       << " " << "Data delimiter (default \\t)" << endl;
+  cout << " -" << geno.headerDelimiter_s << " / --" << geno.headerDelimiter_l << setw( maxwidth - geno.headerDelimiter_l.size() )
+       << " " << "Header delimiter that separates the N and C symbols in feature headers from the rest (default " << GENERAL_DEFAULT_HEADER_DELIMITER << ")" << endl;
+
   cout << endl;
   
   cout << "OPTIONAL ARGUMENTS -- RANDOM FOREST:" << endl;
@@ -327,6 +350,8 @@ int main(const int argc, char* const argv[]) {
   parser.getArgument<string>(gen_op.predictionOutput_s, gen_op.predictionOutput_l, gen_op.predictionOutput);
   parser.getArgument<num_t>(gen_op.pValueThreshold_s, gen_op.pValueThreshold_l, gen_op.pValueThreshold);
   parser.getFlag(gen_op.isOptimizedNodeSplit_s, gen_op.isOptimizedNodeSplit_l, gen_op.isOptimizedNodeSplit);
+  parser.getArgument<string>(gen_op.dataDelimiter_s,gen_op.dataDelimiter_l,gen_op.dataDelimiter);
+  parser.getArgument<string>(gen_op.headerDelimiter_s,gen_op.headerDelimiter_l,gen_op.headerDelimiter);
 
   // Then read Random Forest specific options
   parser.getArgument<size_t>(RF_op.nTrees_s,RF_op.nTrees_l,RF_op.nTrees);

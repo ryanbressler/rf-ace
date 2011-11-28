@@ -43,7 +43,9 @@ public:
 
   void printToFile(const string& fileName);
 
+#ifndef TEST__
 private:
+#endif
 
   void growNumericalGBT();
   void growCategoricalGBT();
