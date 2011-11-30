@@ -14,14 +14,20 @@ Treedata::Treedata(string fileName):
   features_(0),
   nSamples_(0),
   nFeatures_(0) {
-
-  //Initialize random number rgenerator
-  time_t now;
-  time(&now);
-  //srand((unsigned int)now);
+ 
   
+
+  //time_t now;
+  //time(&now);
+  //cout << "clock(): " << double(clock()) << ", time: " << now;
+ 
+  // Initialize the Mersenne Twister RNG with the CPU cycle count as the seed 
+  //randomInteger_.seed((unsigned int)clock());
+
+  
+
   //MTRand_int32 irand((unsigned int)now);
-  randomInteger_.seed((unsigned int)now);
+  //randomInteger_.seed((unsigned int)now);
   //datadefs::seedMT((size_t)now);
 
   //cout << "Treedata: reading matrix from file '" << filename << "'" << endl;
@@ -106,6 +112,13 @@ Treedata::Treedata(string fileName):
     //features_[i].isNumerical = features_[ i-nFeatures_ ].isNumerical;
     //features_[i].data = features_[ i-nFeatures_ ].data;
   }
+
+
+  // Initialize the Mersenne Twister RNG with the CPU cycle count as the seed
+  time_t now;
+  time(&now);
+  unsigned int seed = clock() + now;
+  randomInteger_.seed(seed);
 
   Treedata::permuteContrasts();
 
