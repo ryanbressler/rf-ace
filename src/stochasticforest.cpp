@@ -348,9 +348,9 @@ num_t StochasticForest::predictSampleByTree(Treedata* treeData, size_t sampleIdx
     // Get the value of the splitter feature of the chosen sample 
     num_t value = treeData->getFeatureData(featureIdx, sampleIdx);
 
-    if ( datadefs::isNAN(value) ) {
-      return( currentNode->getLeafTrainPrediction() );
-      //treeData->getRandomData(featureIdx,value);
+    while ( datadefs::isNAN(value) ) {
+      //return( currentNode->getLeafTrainPrediction() );
+      treeData->getRandomData(featureIdx,value);
     }
     
     // The node then makes the branch decision. The chosen child node becomes the new currentNode 

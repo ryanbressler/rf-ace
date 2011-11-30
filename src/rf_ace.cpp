@@ -234,6 +234,7 @@ void printHeader() {
   cout << "|     Report bugs:  timo.p.erkkila@tut.fi               |" << endl;                     
   cout << " ------------------------------------------------------- " << endl;
   cout << endl;
+  
 }
 
 void printHelp(const General_options& geno, const RF_options& rfo, const GBT_options& gbto) {
