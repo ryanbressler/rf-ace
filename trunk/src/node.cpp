@@ -173,11 +173,11 @@ void Node::recursiveNodeSplit(Treedata* treeData,
   if(GI.isRandomSplit) {
     if(GI.useContrasts) {
       for(size_t i = 0; i < GI.nFeaturesForSplit; ++i) {
-        treeData->getRandomIndex(2*treeData->nFeatures(),featureSampleIcs[i]);
+        featureSampleIcs[i] = treeData->getRandomIndex(2*treeData->nFeatures());
       }
     } else {
       for(size_t i = 0; i < GI.nFeaturesForSplit; ++i) {
-        treeData->getRandomIndex(treeData->nFeatures(),featureSampleIcs[i]);
+        featureSampleIcs[i] = treeData->getRandomIndex(treeData->nFeatures());
       }
     }
   } else {

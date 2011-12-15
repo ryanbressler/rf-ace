@@ -113,7 +113,7 @@ void StochasticForestTest::test_treeDataPercolation() {
   // OK so now that we've constructed a small decision tree, let's put it to use! 
   
   // First we need some data
-  Treedata::Treedata treeData("testdata.tsv");
+  Treedata::Treedata treeData("testdata.tsv",'\t',':');
 
   // Then we have to construct a stochastic forest object
   StochasticForest::StochasticForest SF(&treeData,5,1);
