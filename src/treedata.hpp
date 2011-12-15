@@ -21,7 +21,7 @@ using datadefs::num_t;
 class Treedata  {
 public:
   //Initializes the object and reads in a data matrix
-  Treedata(string fileName);
+  Treedata(string fileName, char dataDelimiter, char headerDelimiter);
   Treedata(Treedata& treedata);
   Treedata(Treedata& treedata, const vector<size_t>& featureIcs);
   ~Treedata();
@@ -37,7 +37,7 @@ public:
   //void getMatchingTargetIcs(const string& targetStr, set<size_t>& targetIcs);
 
   string getFeatureName(const size_t featureIdx);
-  //string get_targetheader();
+  string getSampleName(const size_t sampleIdx);
 
   //Returns the number of samples
   size_t nSamples();
@@ -61,12 +61,12 @@ public:
   vector<num_t> getFeatureData(const size_t featureIdx, const vector<size_t>& sampleIcs);
 
   vector<num_t> operator[](size_t featureIdx);
-  
+  vector<num_t> operator[](const string& featureName);
 
   string getRawFeatureData(const size_t featureIdx, const size_t sampleIdx);
 
-  inline void getRandomData(const size_t featureIdx, num_t& data) {data = features_[featureIdx].data[randomInteger_() % nSamples_]; }
-  inline void getRandomIndex(const size_t n, size_t& idx) { idx = randomInteger_() % n; }
+  inline void getRandomData(const size_t featureIdx, num_t& data) {data = features_[featureIdx].data[randomInteger_() % sampleHeaders_.size() ]; }
+  inline size_t getRandomIndex(const size_t n) { return( randomInteger_() % n ); }
 
   map<string,num_t> getDataMapping(const size_t featureIdx);
   
@@ -113,8 +113,16 @@ private:
 
   void readFileType(string& fileName, FileType& fileType);
 
-  void readAFM(ifstream& featurestream, vector<vector<string> >& rawMatrix, vector<string>& featureHeaders, /* vector<string>& sampleHeaders, */ vector<bool>& isFeatureNumerical);
-  void readARFF(ifstream& featurestream, vector<vector<string> >& rawMatrix, vector<string>& featureHeaders, vector<bool>& isFeatureNumerical);
+  void readAFM(ifstream& featurestream, 
+	       vector<vector<string> >& rawMatrix, 
+	       vector<string>& featureHeaders, 
+	       vector<string>& sampleHeaders, 
+	       vector<bool>& isFeatureNumerical);
+  
+  void readARFF(ifstream& featurestream, 
+		vector<vector<string> >& rawMatrix, 
+		vector<string>& featureHeaders, 
+		vector<bool>& isFeatureNumerical);
 
   void parseARFFattribute(const string& str, string& attributeName, bool& isFeatureNumerical);
 
@@ -131,10 +139,13 @@ private:
   void permute(vector<num_t>& data);
   
   template <typename T> void transpose(vector<vector<T> >& mat);
-    
+  
+  char dataDelimiter_;
+  char headerDelimiter_;
   vector<Feature> features_;
-  size_t nSamples_;
-  size_t nFeatures_;
+  vector<string> sampleHeaders_;
+
+  map<string,size_t> name2idx_;
 
   MTRand_int32 randomInteger_;
 };

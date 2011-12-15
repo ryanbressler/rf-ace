@@ -152,9 +152,7 @@ void StochasticForest::learnGBT(const size_t nMaxLeaves,
                                        numClasses_,
 				       partitionSequence_);
   }
-  //Let's grow the forest
-  //cout << "Target is "<< treeData_->getFeatureName(targetIdx_) <<" ["<<targetIdx_<<"]. It has "<<numClasses_<<" classes."<<endl;
-  
+    
   if(numClasses_ == 0) {
     StochasticForest::growNumericalGBT();
   } else {
@@ -166,7 +164,6 @@ void StochasticForest::learnGBT(const size_t nMaxLeaves,
 void StochasticForest::growNumericalGBT() {
   
   //A function pointer to a function "mean()" that is used to compute the node predictions with
-  //void (*leafPredictionFunction)(const vector<num_t>&, const size_t) = Node::leafMean;
   RootNode::LeafPredictionFunctionType leafPredictionFunctionType = RootNode::LEAF_MEAN;
 
   size_t nSamples = treeData_->nSamples();
@@ -205,7 +202,6 @@ void StochasticForest::growNumericalGBT() {
     StochasticForest::predictDatasetByTree(treeData_, t, curPrediction);
 
     // Calculate the current total prediction adding the newly generated tree
-    //cout <<endl<<"Tree "<<t<<": Predictions:"<<endl;
     num_t sqErrorSum = 0.0;
     for (size_t i=0; i<nSamples; i++) {
       prediction[i] = prediction[i] + shrinkage_ * curPrediction[i];
@@ -213,13 +209,9 @@ void StochasticForest::growNumericalGBT() {
       // diagnostics
       num_t iError = trueTargetData[i]-prediction[i];
       sqErrorSum += iError*iError;
-      //cout << setiosflags(ios::fixed) << setprecision(4);
-      ///cout <<"i="<<setw(4)<<i;
-      // cout <<" cp="<<setw(8)<<curPrediction[i]<<" ct="<<setw(8)<< curTargetData[i]<<" ce="<<setw(8)<< curTargetData[i]-curPrediction[i];
-      //cout << " p="<<setw(8)<<   prediction[i]<< " t="<<setw(8)<<trueTargetData[i]<< " e="<<setw(8)<< iError;
-      //cout << endl;
+
     }
-    //cout << "rmserror="<<sqrt(sqErrorSum/nSamples)<<endl;
+
   }
   // GBT-forest is now done!
 
@@ -256,10 +248,6 @@ void StochasticForest::growCategoricalGBT() {
   vector< vector<num_t> > curPrediction( numClasses_, vector<num_t>( nSamples, 0.0 ) );
 
   vector< vector<num_t> > curProbability( nSamples, vector<num_t>( numClasses_)  );
-  // TODO don't really need all this space allocated
-  //vector<size_t> oobIcs;
-  //set<size_t> featuresInTree;
-  //bool useContrasts = false;
 
   // Each iteration consists of numClasses_ trees,
   // each of those predicting the probability residual for each class.
@@ -294,10 +282,8 @@ void StochasticForest::growCategoricalGBT() {
       // out of the whole training data set?
       StochasticForest::predictDatasetByTree(treeData_, t, curPrediction[k] );
       // Calculate the current total prediction adding the newly generated tree
-      //cout <<"Iter="<<m<<" Class="<<k<<": Predictions:"<<endl;
       for (size_t i=0; i<nSamples; i++) {
         prediction[i][k] = prediction[i][k] + shrinkage_ * curPrediction[k][i];
-        // cout <<"i="<<i<<" CurPrediction="<<curPrediction[k][i]<<" prediction="<<prediction[i][k]<<endl;
       }
     }
   }

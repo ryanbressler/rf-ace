@@ -10,27 +10,11 @@
 
 using namespace std;
 
-Treedata::Treedata(string fileName):
+Treedata::Treedata(string fileName, char dataDelimiter, char headerDelimiter):
+  dataDelimiter_(dataDelimiter),
+  headerDelimiter_(headerDelimiter),
   features_(0),
-  nSamples_(0),
-  nFeatures_(0) {
- 
-  
-
-  //time_t now;
-  //time(&now);
-  //cout << "clock(): " << double(clock()) << ", time: " << now;
- 
-  // Initialize the Mersenne Twister RNG with the CPU cycle count as the seed 
-  //randomInteger_.seed((unsigned int)clock());
-
-  
-
-  //MTRand_int32 irand((unsigned int)now);
-  //randomInteger_.seed((unsigned int)now);
-  //datadefs::seedMT((size_t)now);
-
-  //cout << "Treedata: reading matrix from file '" << filename << "'" << endl;
+  sampleHeaders_(0) {
 
   //Initialize stream to read from file
   ifstream featurestream;
@@ -40,8 +24,6 @@ Treedata::Treedata(string fileName):
     assert(false);
   }
 
-  //TODO: a sniffer function that find out the type of the input file based on its content.
-  //*************************************************************************************** 
   FileType fileType = UNKNOWN;
   Treedata::readFileType(fileName,fileType);
 
@@ -49,42 +31,39 @@ Treedata::Treedata(string fileName):
   vector<string> featureHeaders;
   vector<bool> isFeatureNumerical;
   if(fileType == AFM) {
-    //cout << "File type interpreted as Annotated Feature Matrix (AFM)" << endl;
-    try {
-      Treedata::readAFM(featurestream,rawMatrix,featureHeaders,isFeatureNumerical);
-    }
-    catch(...) {
-      cerr << "The file could not be read. Is the file type really AFM? Quitting..." << endl;
-    }
+    
+    Treedata::readAFM(featurestream,rawMatrix,featureHeaders,sampleHeaders_,isFeatureNumerical);
+    
   } else if(fileType == ARFF) {
-    //cout << "File type interpreted as Attribute-Relation File Format (ARFF)" << endl;
-    try {
-      Treedata::readARFF(featurestream,rawMatrix,featureHeaders,isFeatureNumerical);
-    }
-    catch(...) {
-      cerr << "The file could not be read. Is the file type really ARFF? Quitting..." << endl;
-    }
+    
+    sampleHeaders_.clear();
+    sampleHeaders_.resize(rawMatrix[0].size(),"NO_SAMPLE_ID");
+    Treedata::readARFF(featurestream,rawMatrix,featureHeaders,isFeatureNumerical);
+    
   } else {
-    //cout << "File type is unknown -- defaulting to Annotated Feature Matrix (AFM)" << endl;
-    try {
-      Treedata::readAFM(featurestream,rawMatrix,featureHeaders,isFeatureNumerical);
-    }
-    catch(...) {
-      cerr << "The file could not be read, quitting..." << endl;
-    }
+    
+    Treedata::readAFM(featurestream,rawMatrix,featureHeaders,sampleHeaders_,isFeatureNumerical);
+    
   }      
-
+  
   if ( !datadefs::is_unique(featureHeaders) ) {
     cerr << "Feature headers are not unique!" << endl;
     assert(false);
   }
 
-  nSamples_ = rawMatrix[0].size();
-  nFeatures_ = featureHeaders.size();
-  features_.resize(2*nFeatures_);
+  size_t nFeatures = featureHeaders.size();
+  features_.resize(2*nFeatures);
 
-  for(size_t i = 0; i < nFeatures_; ++i) {
-    vector<num_t> featureData(nSamples_);
+  for(size_t i = 0; i < nFeatures; ++i) {
+    
+    if( name2idx_.find(featureHeaders[i]) != name2idx_.end() ) {
+      cerr << "Duplicate feature header '" << featureHeaders[i] << "' found!" << endl;
+      exit(1);
+    }
+
+    name2idx_[featureHeaders[i]] = i;
+
+    vector<num_t> featureData( sampleHeaders_.size() );
     features_[i].name = featureHeaders[i];
     features_[i].isNumerical = isFeatureNumerical[i];
     if(features_[i].isNumerical) {
@@ -102,17 +81,14 @@ Treedata::Treedata(string fileName):
       features_[i].nCategories = freq.size();
     }
     features_[i].data = featureData;
-    //features_[i].rawData = rawMatrix[i];
-    //features_[i].contrast = featureData;
   } 
   
-  for(size_t i = nFeatures_; i < 2*nFeatures_; ++i) {
-    features_[i] = features_[ i-nFeatures_ ];
-    features_[i].name = "CONTRAST";
-    //features_[i].isNumerical = features_[ i-nFeatures_ ].isNumerical;
-    //features_[i].data = features_[ i-nFeatures_ ].data;
+  for(size_t i = nFeatures; i < 2*nFeatures; ++i) {
+    features_[i] = features_[ i - nFeatures ];
+    string contrastName = features_[ i - nFeatures ].name;
+    features_[i].name = contrastName.append("_CONTRAST");
+    name2idx_[contrastName] = i;
   }
-
 
   // Initialize the Mersenne Twister RNG with the CPU cycle count as the seed
   time_t now;
@@ -120,10 +96,11 @@ Treedata::Treedata(string fileName):
   unsigned int seed = clock() + now;
   randomInteger_.seed(seed);
 
+  //cout << "permuting contrasts..." << endl;
+
   Treedata::permuteContrasts();
 
-  //targetidx_ = 0;
-  //Treedata::selectTarget(targetidx_);
+  //cout << "done permuting" << endl;
 
 }
 
@@ -131,42 +108,45 @@ Treedata::Treedata(string fileName):
 
 Treedata::Treedata(Treedata& treedata):
   features_(0),
-  nSamples_(0),
-  nFeatures_(0) {
+  sampleHeaders_(0) {
 
   time_t now;
   time(&now);
-  randomInteger_.seed((unsigned int)now);
+  unsigned int seed = clock() + now;
+  randomInteger_.seed(seed);
 
+  dataDelimiter_ = treedata.dataDelimiter_;
+  headerDelimiter_ = treedata.headerDelimiter_;
   features_ = treedata.features_;
-  nFeatures_ = treedata.nFeatures_;
-  nSamples_ = treedata.nSamples_;
+  sampleHeaders_ = treedata.sampleHeaders_;
+  name2idx_ = treedata.name2idx_;
 
 }
 
 
 Treedata::Treedata(Treedata& treedata, const vector<size_t>& featureIcs):
   features_(0),
-  nSamples_(0),
-  nFeatures_(0) {
+  sampleHeaders_(0) {
 
   time_t now;
   time(&now);
-  randomInteger_.seed((unsigned int)now);
+  unsigned int seed = clock() + now;
+  randomInteger_.seed(seed);
 
   size_t nFeaturesNew = featureIcs.size();
 
-  //We'll leave room for the contrasts
+  // We'll leave room for the contrasts
   features_.resize(2*nFeaturesNew);
   for(size_t i = 0; i < nFeaturesNew; ++i) {
     features_[i] = treedata.features_[ featureIcs[i] ];
     features_[i + nFeaturesNew] = treedata.features_[ featureIcs[i] + treedata.nFeatures() ];
   }
   
-  nSamples_ = treedata.nSamples();
-  nFeatures_ = nFeaturesNew;
+  dataDelimiter_ = treedata.dataDelimiter_;
+  headerDelimiter_ = treedata.headerDelimiter_;
 
-  //cout << nSamples_ << " " << nFeatures_ << endl;
+  sampleHeaders_ = treedata.sampleHeaders_;
+  name2idx_ = treedata.name2idx_;
   
 }
 
@@ -175,15 +155,19 @@ Treedata::~Treedata() {
 
 void Treedata::keepFeatures(const vector<size_t>& featureIcs) {
   
+  size_t nFeaturesOld = Treedata::nFeatures();
   size_t nFeaturesNew = featureIcs.size();
   
   vector<Feature> featureCopy = features_;
   features_.resize(2*nFeaturesNew);
+  name2idx_.clear();
   for(size_t i = 0; i < nFeaturesNew; ++i) {
+    name2idx_[ featureCopy[featureIcs[i]].name ] = i;
+    name2idx_[ featureCopy[ nFeaturesOld + featureIcs[i] ].name ] = nFeaturesNew + i;
     features_[i] = featureCopy[featureIcs[i]];
-    features_[ nFeaturesNew + i ] = featureCopy[ nFeatures_ + featureIcs[i] ];
+    features_[ nFeaturesNew + i ] = featureCopy[ nFeaturesOld + featureIcs[i] ];
   }
-  nFeatures_ = nFeaturesNew;
+  //nFeatures_ = nFeaturesNew;
 }
 
 void Treedata::readFileType(string& fileName, FileType& fileType) {
@@ -206,7 +190,7 @@ void Treedata::readFileType(string& fileName, FileType& fileType) {
 void Treedata::readAFM(ifstream& featurestream, 
 		       vector<vector<string> >& rawMatrix, 
 		       vector<string>& featureHeaders, 
-		       //vector<string>& sampleHeaders,
+		       vector<string>& sampleHeaders,
 		       vector<bool>& isFeatureNumerical) {
 
   string field;
@@ -214,17 +198,18 @@ void Treedata::readAFM(ifstream& featurestream,
 
   rawMatrix.clear();
   featureHeaders.clear();
+  sampleHeaders.clear();
   isFeatureNumerical.clear();
 
   //Remove upper left element from the matrix as useless
-  getline(featurestream,field,'\t');
+  getline(featurestream,field,dataDelimiter_);
 
   //Next read the first row, which should contain the column headers
   getline(featurestream,row);
   stringstream ss( datadefs::chomp(row) );
   bool isFeaturesAsRows = true;
   vector<string> columnHeaders;
-  while ( getline(ss,field,'\t') ) {
+  while ( getline(ss,field,dataDelimiter_) ) {
 
     // If at least one of the column headers is a valid feature header, we assume features are stored as columns
     if ( isFeaturesAsRows && isValidFeatureHeader(field) ) {
@@ -240,7 +225,7 @@ void Treedata::readAFM(ifstream& featurestream,
   size_t nColumns = columnHeaders.size();
 
   vector<string> rowHeaders;
-  vector<string> sampleHeaders; // THIS WILL BE DEFINED AS ONE OF THE INPUT ARGUMENTS
+  //vector<string> sampleHeaders; // THIS WILL BE DEFINED AS ONE OF THE INPUT ARGUMENTS
 
   //Go through the rest of the rows
   while ( getline(featurestream,row) ) {
@@ -255,12 +240,12 @@ void Treedata::readAFM(ifstream& featurestream,
     ss << row;
 
     //Read the next row header from the stream
-    getline(ss,field,'\t');
+    getline(ss,field,dataDelimiter_);
     rowHeaders.push_back(field);
 
     vector<string> rawVector(nColumns);
     for(size_t i = 0; i < nColumns; ++i) {
-      getline(ss,rawVector[i],'\t');
+      getline(ss,rawVector[i],dataDelimiter_);
     }
     assert(!ss.fail());
     assert(ss.eof());
@@ -342,12 +327,6 @@ void Treedata::readARFF(ifstream& featurestream, vector<vector<string> >& rawMat
         }
       }
 
-      //sampleheaders_.resize(nsamples_);
-      //for(size_t i = 0; i < nsamples_; ++i)
-      //  {
-      //    sampleheaders_[i] = "foo";
-      //  }
-      //We're done, exit
       break;
     }
 
@@ -368,16 +347,7 @@ void Treedata::readARFF(ifstream& featurestream, vector<vector<string> >& rawMat
       Treedata::parseARFFattribute(row,attributeName,isNumerical);
       featureHeaders.push_back(attributeName);
       isFeatureNumerical.push_back(isNumerical);
-      //isfeaturenum_.push_back(isNumeric);
-      //cout << "interpreted as: " << attributeName << " (";
-      //if(isNumeric)
-      // {
-      //   cout << "numeric)" << endl; 
-      //  }
-      // else
-      //  {
-      //    cout << "categorical)" << endl;
-      //  }
+
     } else if(!hasData && row.compare(0,5,"@data") == 0) {    //Read data header 
 
       hasData = true;
@@ -411,11 +381,21 @@ void Treedata::parseARFFattribute(const string& str, string& attributeName, bool
 }
 
 bool Treedata::isValidNumericalHeader(const string& str) {
-  return( str.compare(0,2,"N:") == 0 );
+  
+  stringstream ss(str);
+  string typeStr;
+  getline(ss,typeStr,headerDelimiter_);
+
+  return(  typeStr == "N" );
 }
 
 bool Treedata::isValidCategoricalHeader(const string& str) {
-  return( str.compare(0,2,"C:") == 0 || str.compare(0,2,"B:") == 0 );
+
+  stringstream ss(str);
+  string typeStr;
+  getline(ss,typeStr,headerDelimiter_);
+
+  return( typeStr == "C" || typeStr == "B" );
 }
 
 bool Treedata::isValidFeatureHeader(const string& str) {
@@ -423,11 +403,11 @@ bool Treedata::isValidFeatureHeader(const string& str) {
 }
 
 size_t Treedata::nFeatures() {
-  return(nFeatures_);
+  return( features_.size() / 2 );
 }
 
 size_t Treedata::nSamples() {
-  return(nSamples_);
+  return( sampleHeaders_.size() );
 }
 
 //WILL BECOME DEPRECATED
@@ -441,7 +421,7 @@ void Treedata::getMatchingTargetIdx(const string& targetStr, size_t& targetIdx) 
   
   bool isFoundAlready = false;
 
-  for ( size_t featureIdx = 0; featureIdx < nFeatures_; ++featureIdx ) {
+  for ( size_t featureIdx = 0; featureIdx < Treedata::nFeatures(); ++featureIdx ) {
     
     if ( features_[featureIdx].name == targetStr ) {
     
@@ -467,16 +447,20 @@ string Treedata::getFeatureName(const size_t featureIdx) {
   return(features_[featureIdx].name);
 }
 
+string Treedata::getSampleName(const size_t sampleIdx) {
+  return(sampleHeaders_[sampleIdx]);
+}
+
 
 void Treedata::print() {
   cout << "Printing feature matrix (missing values encoded to " << datadefs::NUM_NAN << "):" << endl;
-  for(size_t j = 0; j < nSamples_; ++j) {
+  for(size_t j = 0; j < Treedata::nSamples(); ++j) {
     cout << '\t' << "foo";
   }
   cout << endl;
-  for(size_t i = 0; i < nFeatures_; ++i) {
+  for(size_t i = 0; i < Treedata::nFeatures(); ++i) {
     cout << i << ':' << features_[i].name << ':';
-    for(size_t j = 0; j < nSamples_; ++j) {
+    for(size_t j = 0; j < Treedata::nSamples(); ++j) {
       cout << '\t' << features_[i].data[j];
     }
     cout << endl;
@@ -486,7 +470,7 @@ void Treedata::print() {
 
 void Treedata::print(const size_t featureIdx) {
   cout << "Print " << features_[featureIdx].name << ":";
-  for(size_t i = 0; i < nSamples_; ++i) {
+  for(size_t i = 0; i < Treedata::nSamples(); ++i) {
     cout << " " << features_[featureIdx].data[i];
   }
   cout << endl;
@@ -495,7 +479,7 @@ void Treedata::print(const size_t featureIdx) {
 
 void Treedata::permuteContrasts() {
 
-  for(size_t i = nFeatures_; i < 2*nFeatures_; ++i) {
+  for(size_t i = Treedata::nFeatures(); i < 2*Treedata::nFeatures(); ++i) {
     Treedata::permute(features_[i].data);
   }
 
@@ -519,7 +503,7 @@ size_t Treedata::nRealSamples(const size_t featureIdx) {
 size_t Treedata::nRealSamples(const size_t featureIdx1, const size_t featureIdx2) {
 
   size_t nRealSamples = 0;
-  for( size_t i = 0; i < nSamples_; ++i ) {
+  for( size_t i = 0; i < Treedata::nSamples(); ++i ) {
     if( !datadefs::isNAN( features_[featureIdx1].data[i] ) && !datadefs::isNAN( features_[featureIdx2].data[i] ) ) {
       ++nRealSamples;
     }
@@ -536,7 +520,7 @@ size_t Treedata::nCategories(const size_t featureIdx) {
 size_t Treedata::nMaxCategories() {
 
   size_t ret = 0;
-  for( size_t i = 0; i < nFeatures_; ++i ) {
+  for( size_t i = 0; i < Treedata::nFeatures(); ++i ) {
     if( ret < features_[i].nCategories ) {
       ret = features_[i].nCategories;
     }
@@ -605,7 +589,7 @@ void Treedata::bootstrapFromRealSamples(const bool withReplacement,
 
   //First we collect all indices that correspond to real samples
   vector<size_t> allIcs;
-  for(size_t i = 0; i < nSamples_; ++i) {
+  for(size_t i = 0; i < Treedata::nSamples(); ++i) {
     if(!datadefs::isNAN(features_[featureIdx].data[i])) {
       allIcs.push_back(i);
     }
@@ -650,7 +634,7 @@ vector<num_t> Treedata::getFeatureData(size_t featureIdx) {
   
   vector<num_t> data( features_[featureIdx].data.size() );
 
-  for(size_t i = 0; i < nSamples_; ++i) {
+  for(size_t i = 0; i < Treedata::nSamples(); ++i) {
     data[i] = features_[featureIdx].data[i];
   }
 
@@ -682,6 +666,9 @@ vector<num_t> Treedata::operator[](size_t featureIdx) {
   return( features_[featureIdx].data );
 }
 
+vector<num_t> Treedata::operator[](const string& featureName) {
+  return( features_[ name2idx_[featureName] ].data );
+}
 
 
 string Treedata::getRawFeatureData(const size_t featureIdx, const size_t sampleIdx) {
