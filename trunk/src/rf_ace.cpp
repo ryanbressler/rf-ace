@@ -359,6 +359,7 @@ int main(const int argc, char* const argv[]) {
   parser.getArgument<string>(gen_op.featureMaskInput_s, gen_op.featureMaskInput_l, gen_op.featureMaskInput);
   parser.getArgument<string>(gen_op.testInput_s, gen_op.testInput_l, gen_op.testInput);
   parser.getArgument<string>(gen_op.predictionOutput_s, gen_op.predictionOutput_l, gen_op.predictionOutput);
+  parser.getArgument<string>(gen_op.logFileOutput_s,gen_op.logFileOutput_l,gen_op.logFileOutput);
   parser.getArgument<num_t>(gen_op.pValueThreshold_s, gen_op.pValueThreshold_l, gen_op.pValueThreshold);
   parser.getFlag(gen_op.isOptimizedNodeSplit_s, gen_op.isOptimizedNodeSplit_l, gen_op.isOptimizedNodeSplit);
   string dataDelimiter,headerDelimiter;
@@ -397,6 +398,7 @@ int main(const int argc, char* const argv[]) {
   bool makePrediction = ( gen_op.testInput != "" ) && (gen_op.predictionOutput != "" );
   bool writeAssociationsToFile = gen_op.associationOutput != "";
   bool writePredictionsToFile = gen_op.predictionOutput != "";
+  bool writeLogToFile = gen_op.logFileOutput != "";
 
   // Print help and exit if input file is not specified
   if ( gen_op.trainInput == "" ) {
@@ -499,6 +501,8 @@ int main(const int argc, char* const argv[]) {
        << "= "; if( makePrediction ) { cout << gen_op.testInput << endl; } else { cout << "NOT SET" << endl; }
   cout << "  --" << gen_op.predictionOutput_l << setw( maxwidth - gen_op.predictionOutput_l.size() ) << ""
        << "= "; if( writePredictionsToFile ) { cout << gen_op.predictionOutput << endl; } else { cout << "NOT SET" << endl; }
+  cout << "  --" << gen_op.logFileOutput_l << setw( maxwidth - gen_op.logFileOutput_l.size() ) << ""
+       << "= "; if( writeLogToFile ) { cout << gen_op.logFileOutput << endl; } else { cout << "NOT SET" << endl; }
   cout << "  --" << gen_op.isOptimizedNodeSplit_l << setw( maxwidth - gen_op.isOptimizedNodeSplit_l.size() ) << ""
        << "= "; if( gen_op.isOptimizedNodeSplit ) { cout << "YES" << endl; } else { cout << "NO" << endl; }
   cout << endl;
@@ -744,7 +748,9 @@ void executeRandomForest(Treedata& treedata,
     size_t nNodesInForest = SF.nNodes();
     nNodesInAllForests += nNodesInForest;
     importanceMat[permIdx] = SF.featureImportance();
-    //printf("  RF %i: %i nodes (avg. %6.3f nodes/tree)\n",permIdx+1,static_cast<int>(nNodesInForest),1.0*nNodesInForest/op.nTrees);
+    
+    //printf("  RF %i: %i nodes (avg. %6.3f nodes/tree)\n",permIdx+1,static_cast<int>(nNodesInForest),1.0*nNodesInForest/RF_op.nTrees);
+    
     progress.update( 1.0 * ( 1 + permIdx ) / RF_op.nPerms );
   }
 
@@ -758,6 +764,7 @@ void executeRandomForest(Treedata& treedata,
       for(size_t featureIdx = treedata.nFeatures(); featureIdx < 2*treedata.nFeatures(); ++featureIdx) {
 	cVector[featureIdx - treedata.nFeatures()] = importanceMat[permIdx][featureIdx];
       }
+      //datadefs::print(cVector);
       vector<num_t> trimmedCVector = datadefs::trim(cVector);
       if ( trimmedCVector.size() > 0 ) {
 	datadefs::percentile(trimmedCVector,0.95,cSample[permIdx]);

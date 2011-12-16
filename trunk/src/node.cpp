@@ -154,7 +154,6 @@ void Node::recursiveNodeSplit(Treedata* treeData,
                               set<size_t>& featuresInTree,
                               size_t& nNodes) {
 
-  //const bool isTargetNumerical = treeData->isFeatureNumerical(targetIdx);
   size_t nSamples = sampleIcs.size();
 
   if(nSamples < 2 * GI.minNodeSizeToStop || nNodes >= GI.maxNodesToStop) {
@@ -173,7 +172,13 @@ void Node::recursiveNodeSplit(Treedata* treeData,
   if(GI.isRandomSplit) {
     if(GI.useContrasts) {
       for(size_t i = 0; i < GI.nFeaturesForSplit; ++i) {
-        featureSampleIcs[i] = treeData->getRandomIndex(2*treeData->nFeatures());
+	
+        featureSampleIcs[i] = treeData->getRandomIndex(treeData->nFeatures());
+	// If the sampled feature is a contrast... 
+	if( treeData->getRandomIndex( 35535 ) / 35535.0 < 0.01 ) { // CHANGE TO 0.5 and see what's the difference in time consumption
+	  //cout << "Generated CONTRAST \n" << endl;
+	  featureSampleIcs[i] += treeData->nFeatures();
+	}
       }
     } else {
       for(size_t i = 0; i < GI.nFeaturesForSplit; ++i) {
@@ -186,8 +191,8 @@ void Node::recursiveNodeSplit(Treedata* treeData,
     }
   }
 
-  vector<num_t> targetData;
-  vector<num_t> featureData;
+  //vector<num_t> targetData;
+  //vector<num_t> featureData;
   
   //const bool isTargetNumerical = rootNode->isTargetNumerical();
   //treeData->getFeatureData(targetIdx,sampleIcs,targetData);
@@ -205,22 +210,28 @@ void Node::recursiveNodeSplit(Treedata* treeData,
   //bool isSplitFeatureNumerical;
   
   if(GI.isOptimizedNodeSplit) {
-    
-    isSplitSuccessful = Node::optimizedSplitterSeek(treeData,
-						    targetIdx,
-						    sampleIcs,
-						    featureSampleIcs,
-						    GI,
-						    splitFeatureIdx,
-						    sampleIcs_left,
-						    sampleIcs_right,
-						    splitValue,
-						    splitValues_left,
-						    splitValues_right,
-						    splitFitness);
+
+    cout << "Optimized splitter is out of use, may become deprecated even. Quitting..." << endl;
+    exit(1);
+
+    /*
+      isSplitSuccessful = Node::optimizedSplitterSeek(treeData,
+      targetIdx,
+      sampleIcs,
+      featureSampleIcs,
+      GI,
+      splitFeatureIdx,
+      sampleIcs_left,
+      sampleIcs_right,
+      splitValue,
+      splitValues_left,
+      splitValues_right,
+      splitFitness);
+    */
 
   } else {
 
+    
     isSplitSuccessful = Node::regularSplitterSeek(treeData,
 						  targetIdx,
 						  sampleIcs,
@@ -245,26 +256,26 @@ void Node::recursiveNodeSplit(Treedata* treeData,
     //cout << "Stopping tree generation after creation of " << nNodes << " nodes" << endl;
     return;
   }
+  
+  if ( true ) {
+    //cout << "Out of ";
+    //for ( size_t i = 0; i < featureSampleIcs.size(); ++i ) {
+    //cout << " " << treeData->getFeatureName(featureSampleIcs[i]);
+    //}
+    //cout << endl;
+    
+    //cout << " ---- Feature " << treeData->getFeatureName(splitFeatureIdx) << " splits the data with ";
 
-  
-  if ( false ) {
-    cout << "Out of ";
-    for ( size_t i = 0; i < featureSampleIcs.size(); ++i ) {
-      cout << " " << treeData->getFeatureName(featureSampleIcs[i]);
-    }
-    cout << endl;
-    cout << " ---- Feature " << treeData->getFeatureName(splitFeatureIdx) << " splits the data: [";
-    for ( size_t i = 0; i < sampleIcs_left.size(); ++i ) {
-      cout << " " << treeData->getRawFeatureData(targetIdx,sampleIcs_left[i]);
-    }
-    cout << " ] <==> [ ";
-    for ( size_t i = 0; i < sampleIcs_right.size(); ++i ) {
-      cout << " " << treeData->getRawFeatureData(targetIdx,sampleIcs_right[i]);
-    }
-    cout << " ] FITNESS: " << splitFitness << endl;
+    //for ( size_t i = 0; i < sampleIcs_left.size(); ++i ) {
+    //  cout << " " << treeData->getRawFeatureData(targetIdx,sampleIcs_left[i]);
+    //}
+    //cout << " ] <==> [ ";
+    //for ( size_t i = 0; i < sampleIcs_right.size(); ++i ) {
+    //  cout << " " << treeData->getRawFeatureData(targetIdx,sampleIcs_right[i]);
+    //}
+    
+    //cout << "FITNESS " << splitFitness << endl;
   }
-     
-  
 
   if ( treeData->isFeatureNumerical(splitFeatureIdx) ) {
     //cout << "num splitter" << endl;
@@ -279,7 +290,6 @@ void Node::recursiveNodeSplit(Treedata* treeData,
   // !! Potential Crash: This is unsafe. Add asserts or runtime checks.
   // !! Correctness: Violates the Principle of Least Knowledge. Refactor.
   (this->*GI.leafPredictionFunction)(trainData,GI.numClasses);
-
 
   featuresInTree.insert(splitFeatureIdx);
   nNodes += 2;
@@ -302,18 +312,20 @@ bool Node::regularSplitterSeek(Treedata* treeData,
 			       set<num_t>& splitValues_right,
 			       num_t& splitFitness) {
 
-  bool isTargetNumerical = treeData->isFeatureNumerical(targetIdx);
-  vector<num_t> targetData = treeData->getFeatureData(targetIdx,sampleIcs);
+  //bool isTargetNumerical = treeData->isFeatureNumerical(targetIdx);
+  //vector<num_t> targetData = treeData->getFeatureData(targetIdx,sampleIcs);
 
   size_t nFeaturesForSplit = featureSampleIcs.size();
   splitFeatureIdx = nFeaturesForSplit;
   splitFitness = 0.0;
   
   num_t newSplitFitness;
-  vector<size_t> newSampleIcs_left;
-  vector<size_t> newSampleIcs_right;
+  //vector<size_t> newSampleIcs_left;
+  //vector<size_t> newSampleIcs_right;
   num_t newSplitValue;
   set<num_t> newSplitValues_left, newSplitValues_right;
+
+  splitFitness = 0.0;
   
   for ( size_t i = 0; i < nFeaturesForSplit; ++i ) {
     
@@ -326,21 +338,24 @@ bool Node::regularSplitterSeek(Treedata* treeData,
       continue;
     }
 
-    vector<num_t> featureData = treeData->getFeatureData(newSplitFeatureIdx,sampleIcs);
+    // vector<num_t> featureData = treeData->getFeatureData(newSplitFeatureIdx,sampleIcs);
+
+    vector<size_t> newSampleIcs_left(0);
+    vector<size_t> newSampleIcs_right = sampleIcs;
 
     if ( isFeatureNumerical ) {
-      Node::numericalFeatureSplit(targetData,
-				  isTargetNumerical,
-				  featureData,
+      Node::numericalFeatureSplit(treeData,
+				  targetIdx,
+				  newSplitFeatureIdx,
 				  GI,
 				  newSampleIcs_left,
 				  newSampleIcs_right,
 				  newSplitValue,
 				  newSplitFitness);
     } else {
-      Node::categoricalFeatureSplit(targetData,
-				    isTargetNumerical,
-				    featureData,
+      Node::categoricalFeatureSplit(treeData,
+				    targetIdx,
+				    newSplitFeatureIdx,
 				    GI,
 				    newSampleIcs_left,
 				    newSampleIcs_right,
@@ -368,13 +383,15 @@ bool Node::regularSplitterSeek(Treedata* treeData,
     return(false);
   }
 
-  for(size_t i = 0; i < sampleIcs_left.size(); ++i) {
+  /*
+    for(size_t i = 0; i < sampleIcs_left.size(); ++i) {
     sampleIcs_left[i] = sampleIcs[sampleIcs_left[i]];
-  }
-
-  for(size_t i = 0; i < sampleIcs_right.size(); ++i) {
+    }
+    
+    for(size_t i = 0; i < sampleIcs_right.size(); ++i) {
     sampleIcs_right[i] = sampleIcs[sampleIcs_right[i]];
-  }
+    }    
+  */
 
   return(true);
 
@@ -398,43 +415,48 @@ bool Node::regularSplitterSeek(Treedata* treeData,
  * If a splitter isn't found or there's something bad with it, the function will return false,
  * otherwise true.
  */
-bool Node::optimizedSplitterSeek(Treedata* treeData, 
-				 const size_t targetIdx, 
-				 const vector<size_t>& sampleIcs, 
-				 const vector<size_t>& featureSampleIcs, 
-				 const GrowInstructions& GI, 
-				 size_t& splitFeatureIdx,
-				 vector<size_t>& sampleIcs_left,
-				 vector<size_t>& sampleIcs_right,
-				 num_t& splitValue,
-				 set<num_t>& splitValues_left,
-				 set<num_t>& splitValues_right,
-				 num_t& splitFitness) {
 
+/*
+  bool Node::optimizedSplitterSeek(Treedata* treeData, 
+  const size_t targetIdx, 
+  const vector<size_t>& sampleIcs, 
+  const vector<size_t>& featureSampleIcs, 
+  const GrowInstructions& GI, 
+  size_t& splitFeatureIdx,
+  vector<size_t>& sampleIcs_left,
+  vector<size_t>& sampleIcs_right,
+  num_t& splitValue,
+  set<num_t>& splitValues_left,
+  set<num_t>& splitValues_right,
+  num_t& splitFitness) {
+  
+  cout << "Optimized splitter is out of use, may become deprecated even. Quitting..." << endl;
+  exit(1);
+  
   bool isTargetNumerical = treeData->isFeatureNumerical(targetIdx);
   vector<num_t> targetData = treeData->getFeatureData(targetIdx,sampleIcs);
   
   //Splitter splitter( datadefs::NUM_NAN );
-
+  
   if ( isTargetNumerical ) {
-    Node::numericalFeatureSplit(targetData,
-				isTargetNumerical,
-				targetData,
-				GI,
-				sampleIcs_left,
-				sampleIcs_right,
-				splitValue,
-				splitFitness);
+  Node::numericalFeatureSplit(targetData,
+  isTargetNumerical,
+  targetData,
+  GI,
+  sampleIcs_left,
+  sampleIcs_right,
+  splitValue,
+  splitFitness);
   } else {
-    Node::categoricalFeatureSplit(targetData,
-				  isTargetNumerical,
-				  targetData,
-				  GI,
-				  sampleIcs_left,
-				  sampleIcs_right,
-				  splitValues_left,
-				  splitValues_right,
-				  splitFitness);
+  Node::categoricalFeatureSplit(targetData,
+  isTargetNumerical,
+  targetData,
+  GI,
+  sampleIcs_left,
+  sampleIcs_right,
+  splitValues_left,
+  splitValues_right,
+  splitFitness);
   }        
   
   size_t nFeaturesForSplit = featureSampleIcs.size();
@@ -442,124 +464,127 @@ bool Node::optimizedSplitterSeek(Treedata* treeData,
   splitFitness = 0.0;
   
   for ( size_t i = 0; i < nFeaturesForSplit; ++i ) {
-    
-    vector<num_t> newSplitFeatureData;
-    size_t newSplitFeatureIdx = featureSampleIcs[i];
-    bool isFeatureNumerical = treeData->isFeatureNumerical(newSplitFeatureIdx);
-    
-    //Neither the real nor the contrast feature can appear in the tree as splitter
-    if ( newSplitFeatureIdx == targetIdx ) {
-      continue;
-    }
-    
-    newSplitFeatureData = treeData->getFeatureData(newSplitFeatureIdx,sampleIcs);
-    
-    num_t newSplitFitness = Node::splitFitness(newSplitFeatureData,
-					       isFeatureNumerical,
-					       GI.minNodeSizeToStop,
-					       sampleIcs_left,
-					       sampleIcs_right);
-   
-    if( newSplitFitness > splitFitness && 
-       sampleIcs_left.size() >= GI.minNodeSizeToStop && 
-       sampleIcs_right.size() >= GI.minNodeSizeToStop ) {
-      
-      splitFitness = newSplitFitness;
-      splitFeatureIdx = newSplitFeatureIdx;
-    }
-    
+  
+  vector<num_t> newSplitFeatureData;
+  size_t newSplitFeatureIdx = featureSampleIcs[i];
+  bool isFeatureNumerical = treeData->isFeatureNumerical(newSplitFeatureIdx);
+  
+  //Neither the real nor the contrast feature can appear in the tree as splitter
+  if ( newSplitFeatureIdx == targetIdx ) {
+  continue;
   }
-
+  
+  newSplitFeatureData = treeData->getFeatureData(newSplitFeatureIdx,sampleIcs);
+  
+  num_t newSplitFitness = Node::splitFitness(newSplitFeatureData,
+  isFeatureNumerical,
+  GI.minNodeSizeToStop,
+  sampleIcs_left,
+  sampleIcs_right);
+  
+  if( newSplitFitness > splitFitness && 
+  sampleIcs_left.size() >= GI.minNodeSizeToStop && 
+  sampleIcs_right.size() >= GI.minNodeSizeToStop ) {
+  
+  splitFitness = newSplitFitness;
+  splitFeatureIdx = newSplitFeatureIdx;
+  }
+  
+  }
+  
   if ( splitFeatureIdx == nFeaturesForSplit ) {
-    return(false);
+  return(false);
   } 
-
+  
   vector<num_t> featureData = treeData->getFeatureData(splitFeatureIdx,sampleIcs);
-
+  
   if ( treeData->isFeatureNumerical(splitFeatureIdx) ) {
-    
-    Node::numericalFeatureSplit(targetData,
-				isTargetNumerical,
-				featureData,
-				GI,
-				sampleIcs_left,
-				sampleIcs_right,
-				splitValue,
-				splitFitness);
+  
+  Node::numericalFeatureSplit(targetData,
+  isTargetNumerical,
+  featureData,
+  GI,
+  sampleIcs_left,
+  sampleIcs_right,
+  splitValue,
+  splitFitness);
   
   } else {
   
-    Node::categoricalFeatureSplit(targetData,
-				  isTargetNumerical,
-				  featureData,
-				  GI,
-				  sampleIcs_left,
-				  sampleIcs_right,
-				  splitValues_left,
-				  splitValues_right,
-				  splitFitness);
-
+  Node::categoricalFeatureSplit(targetData,
+  isTargetNumerical,
+  featureData,
+  GI,
+  sampleIcs_left,
+  sampleIcs_right,
+  splitValues_left,
+  splitValues_right,
+  splitFitness);
+  
   }
-
+  
   if ( sampleIcs_left.size() < GI.minNodeSizeToStop || sampleIcs_right.size() < GI.minNodeSizeToStop ) {
-    return(false);
+  return(false);
   }
-
+  
   for ( size_t i = 0; i < sampleIcs_left.size(); ++i ) {
-    sampleIcs_left[i] = sampleIcs[sampleIcs_left[i]];
+  sampleIcs_left[i] = sampleIcs[sampleIcs_left[i]];
   }
-
+  
   for ( size_t i = 0; i < sampleIcs_right.size(); ++i ) {
-    sampleIcs_right[i] = sampleIcs[sampleIcs_right[i]];
+  sampleIcs_right[i] = sampleIcs[sampleIcs_right[i]];
   }
-
+  
   return(true);
   
-}
+  }
+*/
 
 
 // !! Documentation: hey, it's a vector NAN-fixer!
 
 // !! Correctness: Um. This should be removed once the checks for NAN go in
 // !! place and a tolerable policy is created.
-inline void Node::cleanPairVectorFromNANs(//const vector<num_t>& v1_copy, 
-                                          //const vector<num_t>& v2_copy, 
-                                          vector<num_t>& v1, 
-                                          vector<num_t>& v2, 
-					  vector<size_t>& mapIcs) {
+/*
+  inline void Node::cleanPairVectorFromNANs(//const vector<num_t>& v1_copy, 
+  //const vector<num_t>& v2_copy, 
+  vector<num_t>& v1, 
+  vector<num_t>& v2, 
+  vector<size_t>& mapIcs) {
   size_t n = v1.size();
   //v1.resize(n);
   //v2.resize(n);
   mapIcs.resize(n);
   size_t nReal = 0;
   for(size_t i = 0; i < n; ++i) {
-    if(!datadefs::isNAN(v1[i]) && !datadefs::isNAN(v2[i])) {
-      mapIcs[nReal] = i;
-      v1[nReal] = v1[i];
-      v2[nReal] = v2[i];
-      ++nReal;
-    }
+  if(!datadefs::isNAN(v1[i]) && !datadefs::isNAN(v2[i])) {
+  mapIcs[nReal] = i;
+  v1[nReal] = v1[i];
+  v2[nReal] = v2[i];
+  ++nReal;
+  }
   }
   v1.resize(nReal);
   v2.resize(nReal);
   mapIcs.resize(nReal);
-}
+  }
+*/
 
 // !! Correctness, Inadequate Abstraction: kill this method with fire. Refactor, REFACTOR, _*REFACTOR*_.
-void Node::numericalFeatureSplit(vector<num_t> tv,
-                                 const bool isTargetNumerical,
-                                 vector<num_t> fv,
+void Node::numericalFeatureSplit(Treedata* treedata,
+				 const size_t targetIdx,
+                                 const size_t featureIdx,
                                  const GrowInstructions& GI,
                                  vector<size_t>& sampleIcs_left,
                                  vector<size_t>& sampleIcs_right,
                                  num_t& splitValue,
                                  num_t& splitFitness) {
 
-  assert(tv.size() == fv.size());
 
-  vector<size_t> mapIcs;
- 
-  Node::cleanPairVectorFromNANs(tv,fv,mapIcs);
+  vector<num_t> tv,fv;
+
+  sampleIcs_left.clear();
+  treedata->getFilteredDataPair(targetIdx,featureIdx,sampleIcs_right,tv,fv);
 
   size_t n_tot = tv.size();
   size_t n_right = n_tot;
@@ -570,22 +595,21 @@ void Node::numericalFeatureSplit(vector<num_t> tv,
     return;
   }
 
-  sampleIcs_left.clear();
-  sampleIcs_right.clear();
-
   //Make reference indices that define the sorting wrt. feature
-  bool isIncreasingOrder = true;//vector<size_t> refIcs;
+  bool isIncreasingOrder = true;
 
   //Sort feature vector and collect reference indices
-  datadefs::sortDataAndMakeRef(isIncreasingOrder,fv,sampleIcs_right);
+  vector<size_t> refIcs;
+  datadefs::sortDataAndMakeRef(isIncreasingOrder,fv,refIcs);
 
   //Use the reference indices to sort sample indices
-  datadefs::sortFromRef<num_t>(tv,sampleIcs_right);
+  datadefs::sortFromRef<num_t>(tv,refIcs);
+  datadefs::sortFromRef<size_t>(sampleIcs_right,refIcs);
 
   int bestSplitIdx = -1;
   
   //If the target is numerical, we use the iterative squared error formula to update impurity scores while we traverse "right"
-  if(isTargetNumerical) {
+  if ( treedata->isFeatureNumerical(targetIdx) ) {
     num_t mu_right = 0.0;
     num_t se_right = 0.0;
     num_t mu_left = 0.0;
@@ -642,36 +666,38 @@ void Node::numericalFeatureSplit(vector<num_t> tv,
   sampleIcs_left.resize(n_left);
 
   for(size_t i = 0; i < n_left; ++i) {
-    sampleIcs_left[i] = mapIcs[sampleIcs_right[i]];
+    sampleIcs_left[i] = sampleIcs_right[i];
   }
   sampleIcs_right.erase(sampleIcs_right.begin(),sampleIcs_right.begin() + n_left);
   n_right = sampleIcs_right.size();
-  for(size_t i = 0; i < n_right; ++i) {
-    sampleIcs_right[i] = mapIcs[sampleIcs_right[i]];
-  }
+  //for(size_t i = 0; i < n_right; ++i) {
+  //  sampleIcs_right[i] = sampleIcs_right[i];
+  //}
 
   //cout << sampleIcs_left.size() << " " << sampleIcs_right.size() << " == " << n_tot << endl;
   assert(n_left + n_right == n_tot);
 
  
-  if(false) {
+  /*
+    if(false) {
     cout << "Numerical feature splits target [";
     for(size_t i = 0; i < sampleIcs_left.size(); ++i) {
-      cout << " " << sampleIcs_left[i] << ":" << tv[sampleIcs_left[i]];
+    cout << " " << sampleIcs_left[i] << ":" << tv[sampleIcs_left[i]];
     }
     cout << " ] <==> [";
     for(size_t i = 0; i < sampleIcs_right.size(); ++i) {
-      cout << " " << sampleIcs_right[i] << ":" << tv[sampleIcs_right[i]];
+    cout << " " << sampleIcs_right[i] << ":" << tv[sampleIcs_right[i]];
     }
     cout << " ]" << endl;
-  }
+    }
+  */
   
 }
 
 // !! Inadequate Abstraction: Refactor me.
-void Node::categoricalFeatureSplit(vector<num_t> tv,
-                                   const bool isTargetNumerical,
-                                   vector<num_t> fv,
+void Node::categoricalFeatureSplit(Treedata* treedata,
+                                   const size_t targetIdx,
+                                   const size_t featureIdx,
 				   const GrowInstructions& GI,
                                    vector<size_t>& sampleIcs_left,
                                    vector<size_t>& sampleIcs_right,
@@ -679,12 +705,10 @@ void Node::categoricalFeatureSplit(vector<num_t> tv,
 				   set<num_t>& splitValues_right,
                                    num_t& splitFitness) {
 
-  //cout << "Node::categoricalFeatureSplit..." << endl;
+  vector<num_t> tv,fv;
 
-  assert(tv.size() == fv.size());
-
-  vector<size_t> mapIcs;
-  Node::cleanPairVectorFromNANs(tv,fv,mapIcs);
+  sampleIcs_left.clear();
+  treedata->getFilteredDataPair(targetIdx,featureIdx,sampleIcs_right,tv,fv);
 
   // Map all feature categories to the corresponding samples and represent it as map. The map is used to assign samples to left and right branches
   map<num_t,vector<size_t> > fmap_right;
@@ -720,7 +744,7 @@ void Node::categoricalFeatureSplit(vector<num_t> tv,
 
   bool foundSplit = false;
 
-  if ( isTargetNumerical ) {
+  if ( treedata->isFeatureNumerical(targetIdx) ) {
 
     //cout << "Target is numerical" << endl;
 
@@ -855,122 +879,124 @@ void Node::categoricalFeatureSplit(vector<num_t> tv,
     return;
   }
 
-  // Assign samples and categories on the left
+  // Assign samples and categories on the left. First store the original sample indices 
+  vector<size_t> sampleIcs = sampleIcs_right;
+
   sampleIcs_left.resize(n_tot);
   splitValues_left.clear();
+
+  // Then populate the left side (sample indices and split values)
   iter = 0;
   for ( map<num_t,vector<size_t> >::const_iterator it(fmap_left_best.begin()); it != fmap_left_best.end(); ++it ) {
     for ( size_t i = 0; i < it->second.size(); ++i ) {
-      sampleIcs_left[iter] = mapIcs[ it->second[i] ];
+      sampleIcs_left[iter] = sampleIcs[it->second[i]];
       ++iter;
     }
     splitValues_left.insert( it->first );
   }
   sampleIcs_left.resize(iter);
 
-  // Assign samples on the right
-  sampleIcs_right.resize(n_tot);
-  splitValues_right.clear();
+  // Last populate the right side (sample indices and split values) 
   iter = 0;
   for ( map<num_t,vector<size_t> >::const_iterator it(fmap_right_best.begin()); it != fmap_right_best.end(); ++it ) {
     for ( size_t i = 0; i < it->second.size(); ++i ) {
-      sampleIcs_right[iter] = mapIcs[ it->second[i] ];
+      sampleIcs_right[iter] = sampleIcs[it->second[i]];
       ++iter;
     }
     splitValues_right.insert( it->first );
   }
   sampleIcs_right.resize(iter);
-  
-  //splitter.reset( splitValues_left, splitValues_right );
 
 }
 
 // !! Legibility: Clean out all of the print statements.
-num_t Node::splitFitness(vector<num_t> const& data,
-                         bool const& isFeatureNumerical,
-                         size_t const& minSplit,
-                         vector<size_t> const& sampleIcs_left,
-                         vector<size_t> const& sampleIcs_right) {
-
+/*
+  num_t Node::splitFitness(vector<num_t> const& data,
+  bool const& isFeatureNumerical,
+  size_t const& minSplit,
+  vector<size_t> const& sampleIcs_left,
+  vector<size_t> const& sampleIcs_right) {
+  
   //assert(data.size() == sampleIcs_left.size() + sampleIcs_right.size());
-
+  
   size_t n_left = 0;
   size_t n_right = 0;
   if(isFeatureNumerical) {
-    num_t mu_left = 0.0;
-    num_t se_left = 0.0;
-    num_t mu_right = 0.0;
-    num_t se_right = 0.0;
-
-    for(size_t i = 0; i < sampleIcs_left.size(); ++i) {
-      datadefs::forward_sqerr(data[sampleIcs_left[i]],n_right,mu_right,se_right);
-      //cout << "forward sqerr: " << featurematrix_[featureidx][sampleics_left[i]] << " " << n_right << " " << mu_right << " " << se_right << endl;
-    }
-
-    for(size_t i = 0; i < sampleIcs_right.size(); ++i) {
-      datadefs::forward_sqerr(data[sampleIcs_right[i]],n_right,mu_right,se_right);
-      //cout << "forward sqerr: " << featurematrix_[featureidx][sampleics_right[i]] << " " << n_right << " " << mu_right << " " << se_right << endl;
-    }
-
-    if(n_right < 2*minSplit) {
-      return(0.0);
-    }
-
-    num_t se_tot = se_right;
-
-    for(size_t i = 0; i < sampleIcs_left.size(); ++i) {
-      datadefs::forward_backward_sqerr(data[sampleIcs_left[i]],n_left,mu_left,se_left,n_right,mu_right,se_right);
-      //cout << "fw bw sqerr: " << featurematrix_[featureidx][sampleics_left[i]] << " " << n_left << " " << mu_left << " " << se_left << " " << n_right
-      //  << " " << mu_right << " " << se_right << endl;
-    }
-
-    if(n_left < minSplit || n_right < minSplit) {
-      return(0.0);
-    }
-
-    return(( se_tot - se_left - se_right ) / se_tot);
-
-  } else {
-    map<num_t,size_t> freq_left,freq_right;
-    size_t sf_left = 0;
-    size_t sf_right = 0;
-
-    for(size_t i = 0; i < sampleIcs_left.size(); ++i) {
-      datadefs::forward_sqfreq(data[sampleIcs_left[i]],n_right,freq_right,sf_right);
-      //cout << "forward sqfreq: " << featurematrix_[featureidx][sampleics_left[i]] << " " << n_right << " " << sf_right << endl;
-    }
-
-    for(size_t i = 0; i < sampleIcs_right.size(); ++i) {
-      datadefs::forward_sqfreq(data[sampleIcs_right[i]],n_right,freq_right,sf_right);
-      //cout << "forward sqfreq: " << featurematrix_[featureidx][sampleics_right[i]] << " " << n_right << " " << sf_right << endl;
-    }
-
-    if(n_right < 2*minSplit) {
-      return(0.0);
-    }
-
-    size_t n_tot = n_right;
-    size_t sf_tot = sf_right;
-
-    for(size_t i = 0; i < sampleIcs_left.size(); ++i) {
-      datadefs::forward_backward_sqfreq(data[sampleIcs_left[i]],n_left,freq_left,sf_left,n_right,freq_right,sf_right);
-      //cout << "fw bw sqfreq: " << featurematrix_[featureidx][sampleics_left[i]] << " " << n_left << " "<< sf_left << " " << n_right << " " << sf_right << endl;
-    }
-
-    if(n_left < minSplit || n_right < minSplit) {
-      return(0.0);
-    }
-
-    //cout << n_left << " " << n_right << " " << sf_tot << " " << n_tot << " " << n_right << " " << sf_left << " " << n_tot*n_left*sf_right << " " << n_left*n_right << " " << pow(n_tot,2) - sf_tot << endl;
-
-    //num_t fitness = (-1.0*(n_left*n_right*sf_tot) + n_tot*n_right*sf_left + n_tot*n_left*sf_right) / (n_left*n_right*(pow(n_tot,2) - sf_tot));
-    //cout << "Fitness " << fitness << endl;
-
-    return( ( -1.0 * n_left*n_right*sf_tot + n_tot*n_right*sf_left + n_tot*n_left*sf_right ) / ( n_left*n_right * (1.0*n_tot*n_tot - sf_tot) ) ) ;
-
+  num_t mu_left = 0.0;
+  num_t se_left = 0.0;
+  num_t mu_right = 0.0;
+  num_t se_right = 0.0;
+  
+  for(size_t i = 0; i < sampleIcs_left.size(); ++i) {
+  datadefs::forward_sqerr(data[sampleIcs_left[i]],n_right,mu_right,se_right);
+  //cout << "forward sqerr: " << featurematrix_[featureidx][sampleics_left[i]] << " " << n_right << " " << mu_right << " " << se_right << endl;
   }
-
-}
+  
+  for(size_t i = 0; i < sampleIcs_right.size(); ++i) {
+  datadefs::forward_sqerr(data[sampleIcs_right[i]],n_right,mu_right,se_right);
+  //cout << "forward sqerr: " << featurematrix_[featureidx][sampleics_right[i]] << " " << n_right << " " << mu_right << " " << se_right << endl;
+  }
+  
+  if(n_right < 2*minSplit) {
+  return(0.0);
+  }
+  
+  num_t se_tot = se_right;
+  
+  for(size_t i = 0; i < sampleIcs_left.size(); ++i) {
+  datadefs::forward_backward_sqerr(data[sampleIcs_left[i]],n_left,mu_left,se_left,n_right,mu_right,se_right);
+  //cout << "fw bw sqerr: " << featurematrix_[featureidx][sampleics_left[i]] << " " << n_left << " " << mu_left << " " << se_left << " " << n_right
+  //  << " " << mu_right << " " << se_right << endl;
+  }
+  
+  if(n_left < minSplit || n_right < minSplit) {
+  return(0.0);
+  }
+  
+  return(( se_tot - se_left - se_right ) / se_tot);
+  
+  } else {
+  map<num_t,size_t> freq_left,freq_right;
+  size_t sf_left = 0;
+  size_t sf_right = 0;
+  
+  for(size_t i = 0; i < sampleIcs_left.size(); ++i) {
+  datadefs::forward_sqfreq(data[sampleIcs_left[i]],n_right,freq_right,sf_right);
+  //cout << "forward sqfreq: " << featurematrix_[featureidx][sampleics_left[i]] << " " << n_right << " " << sf_right << endl;
+  }
+  
+  for(size_t i = 0; i < sampleIcs_right.size(); ++i) {
+  datadefs::forward_sqfreq(data[sampleIcs_right[i]],n_right,freq_right,sf_right);
+  //cout << "forward sqfreq: " << featurematrix_[featureidx][sampleics_right[i]] << " " << n_right << " " << sf_right << endl;
+  }
+  
+  if(n_right < 2*minSplit) {
+  return(0.0);
+  }
+  
+  size_t n_tot = n_right;
+  size_t sf_tot = sf_right;
+  
+  for(size_t i = 0; i < sampleIcs_left.size(); ++i) {
+  datadefs::forward_backward_sqfreq(data[sampleIcs_left[i]],n_left,freq_left,sf_left,n_right,freq_right,sf_right);
+  //cout << "fw bw sqfreq: " << featurematrix_[featureidx][sampleics_left[i]] << " " << n_left << " "<< sf_left << " " << n_right << " " << sf_right << endl;
+  }
+  
+  if(n_left < minSplit || n_right < minSplit) {
+  return(0.0);
+  }
+  
+  //cout << n_left << " " << n_right << " " << sf_tot << " " << n_tot << " " << n_right << " " << sf_left << " " << n_tot*n_left*sf_right << " " << n_left*n_right << " " << pow(n_tot,2) - sf_tot << endl;
+  
+  //num_t fitness = (-1.0*(n_left*n_right*sf_tot) + n_tot*n_right*sf_left + n_tot*n_left*sf_right) / (n_left*n_right*(pow(n_tot,2) - sf_tot));
+  //cout << "Fitness " << fitness << endl;
+  
+  return( ( -1.0 * n_left*n_right*sf_tot + n_tot*n_right*sf_left + n_tot*n_left*sf_right ) / ( n_left*n_right * (1.0*n_tot*n_tot - sf_tot) ) ) ;
+  
+  }
+  
+  }
+*/
 
 void Node::leafMean(const vector<datadefs::num_t>& data, const size_t numClasses) {
   
@@ -988,7 +1014,6 @@ void Node::leafMean(const vector<datadefs::num_t>& data, const size_t numClasses
   }
 
   trainPrediction_ /= n;
-  //isTrainPredictionSet_ = true;
 
 }
 

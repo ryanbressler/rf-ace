@@ -3,6 +3,7 @@
 
 #include <cppunit/extensions/HelperMacros.h>
 #include "datadefs.hpp"
+#include "treedata.hpp"
 #include "node.hpp"
 #include "errno.hpp"
 
@@ -232,29 +233,14 @@ void NodeTest::test_cleanPairVectorFromNANs() {
 
 void NodeTest::test_numericalFeatureSplit() { 
 
-  vector<datadefs::num_t> featureData(8);
-  vector<datadefs::num_t> targetData(8);
+  Treedata treedata("test_2by8_featurerows_matrix.tsv",'\t',':');
 
-  featureData[0] = 3;
-  featureData[1] = 2;
-  featureData[2] = datadefs::NUM_NAN;
-  featureData[3] = 2.4;
-  featureData[4] = 5;
-  featureData[5] = 4;
-  featureData[6] = 2.9;
-  featureData[7] = 3.1;
+  CPPUNIT_ASSERT( treedata.getFeatureName(0) == "N:F1" );
+  CPPUNIT_ASSERT( treedata.getFeatureName(1) == "N:F2" );
 
-  targetData[0] = 1;
-  targetData[1] = 3;
-  targetData[2] = 2;
-  targetData[3] = datadefs::NUM_NAN;
-  targetData[4] = 4;
-  targetData[5] = 5;
-  targetData[6] = 3.6;
-  targetData[7] = 2.8;
-
-  vector<size_t> sampleIcs_left,sampleIcs_right;
-  bool isTargetNumerical = true;
+  vector<size_t> sampleIcs_left(0);
+  vector<size_t> sampleIcs_right(8);
+  datadefs::range(sampleIcs_right);
   
   datadefs::num_t splitValue;
   datadefs::num_t splitFitness;
@@ -264,14 +250,19 @@ void NodeTest::test_numericalFeatureSplit() {
   Node::GrowInstructions GI;
   GI.minNodeSizeToStop = 2;
 
-  node.numericalFeatureSplit(targetData,
-			     isTargetNumerical,
-			     featureData,
+  size_t targetIdx = 1;
+  size_t featureIdx = 0;
+
+  node.numericalFeatureSplit(&treedata,
+			     targetIdx,
+			     featureIdx,
 			     GI,
 			     sampleIcs_left,
 			     sampleIcs_right,
 			     splitValue,
 			     splitFitness);
+
+  //cout << splitValue << endl;
 
   Splitter::Splitter splitter(splitValue);
 
@@ -298,21 +289,28 @@ void NodeTest::test_categoricalFeatureSplit() {
 
   size_t n = 10;
 
-  vector<datadefs::num_t> featureData(n);
-  vector<datadefs::num_t> targetData(n,0);
+  Treedata treedata("test_2by10_featurerows_matrix.tsv",'\t',':');
+
+  size_t targetIdx = 1;
+  size_t featureIdx = 0;
 
   for ( size_t i = 0; i < n; ++i ) {
-    featureData[i] = static_cast<datadefs::num_t>(i);
+    treedata.features_[featureIdx].data[i] = static_cast<datadefs::num_t>(i);
   }
 
   for ( size_t i = 0; i < n / 2; ++i ) {
-    targetData[i] = 1;
+    treedata.features_[targetIdx].data[i] = 1;
   }
 
-  vector<size_t> sampleIcs_left,sampleIcs_right;
-  //bool isTargetNumerical = false;
-  set<datadefs::num_t> splitValues_left,splitValues_right;
-  datadefs::num_t splitFitness;
+  for( size_t i = n / 2; i < n; ++i ) {
+    treedata.features_[targetIdx].data[i] = 0;
+  }
+
+  //  vector<size_t> sampleIcs_left(0);
+  //vector<size_t> sampleIcs_right(n);
+  //datadefs::range(sampleIcs_right);
+  //set<datadefs::num_t> splitValues_left,splitValues_right;
+  //datadefs::num_t splitFitness;
 
   Node node;
   PartitionSequence PS(n);
@@ -322,26 +320,41 @@ void NodeTest::test_categoricalFeatureSplit() {
   GI.partitionSequence = &PS;
 
   size_t iter = 0;
-  bool isTargetNumerical;
   while ( iter < 2 ) {
 
     if ( iter == 0 ) {
-      isTargetNumerical = false;
+      treedata.features_[targetIdx].isNumerical = false;
     } else {
-      isTargetNumerical = true;
+      treedata.features_[targetIdx].isNumerical = true;
     }
     ++iter;
+
+    vector<size_t> sampleIcs_left(0);
+    vector<size_t> sampleIcs_right(n);
+    datadefs::range(sampleIcs_right);
  
-    node.categoricalFeatureSplit(targetData,
-				 isTargetNumerical,
-				 featureData,
+    set<datadefs::num_t> splitValues_left,splitValues_right;
+    datadefs::num_t splitFitness;
+
+    node.categoricalFeatureSplit(&treedata,
+                                 targetIdx,
+                                 featureIdx,
 				 GI,
-				 sampleIcs_left,
-				 sampleIcs_right,
-				 splitValues_left,
-				 splitValues_right,
-				 splitFitness);
-    
+                                 sampleIcs_left,
+                                 sampleIcs_right,
+                                 splitValues_left,
+                                 splitValues_right,
+                                 splitFitness);
+   
+    //datadefs::print<num_t>(splitValues_left);
+    //datadefs::print<num_t>(splitValues_right);
+    //datadefs::print<size_t>(sampleIcs_left);
+    //datadefs::print<size_t>(sampleIcs_right);
+    //datadefs::print<num_t>(treedata[targetIdx]);
+    //datadefs::print<num_t>(treedata[featureIdx]);
+    //datadefs::print<num_t>(treedata.getFeatureData(targetIdx,sampleIcs_left));
+    //datadefs::print<num_t>(treedata.getFeatureData(targetIdx,sampleIcs_right));
+
     Splitter::Splitter splitter(splitValues_left,splitValues_right);
 
     CPPUNIT_ASSERT( sampleIcs_left.size() == sampleIcs_right.size() );
@@ -352,45 +365,55 @@ void NodeTest::test_categoricalFeatureSplit() {
     CPPUNIT_ASSERT( splitter.splitsLeft(3) );
     CPPUNIT_ASSERT( splitter.splitsLeft(4) );
 
+    //cout << iter << endl;
     
     for(size_t i = 0; i < sampleIcs_left.size(); ++i ) {
-      CPPUNIT_ASSERT( targetData[sampleIcs_left[i]] == 1 );
-      CPPUNIT_ASSERT( targetData[sampleIcs_right[i]] == 0 );
+      CPPUNIT_ASSERT( fabs(treedata.getFeatureData(targetIdx,sampleIcs_left[i]) - 1.0) < datadefs::EPS );
+      CPPUNIT_ASSERT( fabs(treedata.getFeatureData(targetIdx,sampleIcs_right[i]) - 0.0) < datadefs::EPS );
     }
-    
+   
+    //cout << splitFitness << endl;
+ 
     CPPUNIT_ASSERT( fabs(splitFitness - 1) < datadefs::EPS );
   }
 
-  for ( size_t i = 0; i < targetData.size() / 2 ; ++i ) {
-    featureData[ 2 * i ] = static_cast<num_t>( i );
-    featureData[ 2 * i + 1 ] = static_cast<num_t>( i );
+  for ( size_t i = 0; i < treedata.nSamples() / 2 ; ++i ) {
+    treedata.features_[featureIdx].data[ 2 * i ] = static_cast<num_t>( i );
+    treedata.features_[featureIdx].data[ 2 * i + 1 ] = static_cast<num_t>( i );
 
     if ( i == 0 || i == 1 ) {
-      targetData[ 2 * i ] = 1;
-      targetData[ 2 * i + 1 ] = 2;
+      treedata.features_[targetIdx].data[ 2 * i ] = 1;
+      treedata.features_[targetIdx].data[ 2 * i + 1 ] = 2;
     } else {
-      targetData[ 2 * i ] = 0;
-      targetData[ 2 * i + 1 ] = 0;
+      treedata.features_[targetIdx].data[ 2 * i ] = 0;
+      treedata.features_[targetIdx].data[ 2 * i + 1 ] = 0;
     }
   }
 
   iter = 0;
   while ( iter < 2 ) {
     if ( iter == 0 ) {
-      isTargetNumerical = false;
+      treedata.features_[targetIdx].isNumerical = false;
     } else {
-      isTargetNumerical = true;
+      treedata.features_[targetIdx].isNumerical = true;
     }
  
-    node.categoricalFeatureSplit(targetData,
-				 isTargetNumerical,
-				 featureData,
-				 GI,
-				 sampleIcs_left,
-				 sampleIcs_right,
-				 splitValues_left,
-				 splitValues_right,
-				 splitFitness);
+    vector<size_t> sampleIcs_left(0);
+    vector<size_t> sampleIcs_right(n);
+    datadefs::range(sampleIcs_right);
+
+    set<datadefs::num_t> splitValues_left,splitValues_right;
+    datadefs::num_t splitFitness;
+
+    node.categoricalFeatureSplit(&treedata,
+                                 targetIdx,
+                                 featureIdx,
+                                 GI,
+                                 sampleIcs_left,
+                                 sampleIcs_right,
+                                 splitValues_left,
+                                 splitValues_right,
+                                 splitFitness);
     
     Splitter::Splitter splitter;
     CPPUNIT_ASSERT( splitter.splitterType_ == Splitter::NO_SPLITTER );
@@ -405,9 +428,6 @@ void NodeTest::test_categoricalFeatureSplit() {
     CPPUNIT_ASSERT( splitter.splitsLeft(1) );
     
     if ( iter == 0 ) {
-      //datadefs::print<size_t>(sampleIcs_left);
-      //datadefs::print<size_t>(sampleIcs_right);
-      //cout << splitFitness << endl;
       CPPUNIT_ASSERT( fabs( splitFitness - 0.642857142857143 ) < 1e-10 );
     } else {
       CPPUNIT_ASSERT( fabs(splitFitness - 0.843750000000000 ) < 1e-10 );

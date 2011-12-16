@@ -10,6 +10,7 @@ class treeDataTest : public CppUnit::TestFixture {
   CPPUNIT_TEST_SUITE( treeDataTest );
   CPPUNIT_TEST( test_bracketOperator );
   CPPUNIT_TEST( test_name2idxMap );
+  CPPUNIT_TEST( test_getFeatureData );
   CPPUNIT_TEST_SUITE_END();
   
 public:
@@ -17,6 +18,7 @@ public:
   void tearDown();
   void test_bracketOperator();
   void test_name2idxMap();
+  void test_getFeatureData();
 };
 
 void treeDataTest::setUp() {}
@@ -81,6 +83,21 @@ void treeDataTest::test_name2idxMap() {
   CPPUNIT_ASSERT( treeData.name2idx_["C:F5_CONTRAST"] == 10 );
   CPPUNIT_ASSERT( treeData.name2idx_["N:F6_CONTRAST"] == 11 );
   
+  
+
+}
+
+void treeDataTest::test_getFeatureData() {
+
+  Treedata treedata("test_2by8_featurerows_matrix.tsv",'\t',':');
+
+  vector<size_t> sampleIcs(8);
+  datadefs::range(sampleIcs);
+
+  vector<num_t> v1,v2;
+
+  treedata.getFilteredDataPair(0,1,sampleIcs,v1,v2);
+
   
 
 }
