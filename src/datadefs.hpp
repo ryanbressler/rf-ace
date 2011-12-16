@@ -353,9 +353,17 @@ namespace datadefs {
   /**
    * Prints a vector
    */
-  template <typename T> void print(vector<T>& x) {
+  template <typename T> void print(const vector<T>& x) {
     for(size_t i = 0; i < x.size(); ++i) {
       cout << " " << x[i];
+    }
+    cout << endl;
+  }
+
+  template <typename T> void print(const set<T>& x) {
+    
+    for( typename set<T>::const_iterator it = x.begin(); it != x.end(); ++it) {
+      cout << " " << *it;
     }
     cout << endl;
   }

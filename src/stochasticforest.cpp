@@ -703,6 +703,8 @@ vector<num_t> StochasticForest::featureImportance() {
     // Accumulate tree impurity
     meanTreeImpurity += treeImpurity / nTrees_;
 
+    //cout << " " << meanTreeImpurity;
+
     // Loop through all features in the tree
     for ( set<size_t>::const_iterator fit( tit->second.begin()); fit != tit->second.end(); ++fit ) {
       size_t featureIdx = *fit;
@@ -721,6 +723,10 @@ vector<num_t> StochasticForest::featureImportance() {
     }
       
   }
+
+  //cout << endl;
+
+  //cout << nContrastsInForest << " contrasts in forest. Mean tree impurity " << meanTreeImpurity << endl;
   
   for ( size_t featureIdx = 0; featureIdx < nAllFeatures; ++featureIdx ) {
     
@@ -767,7 +773,9 @@ void StochasticForest::treeImpurity(Treedata* treeData,
     num_t leafPrediction = it->first->getLeafTrainPrediction();
     num_t leafImpurity = 0;
     size_t nSamplesInLeaf = targetData.size();
-      
+
+    //assert( !datadefs::isNAN(leafPrediction) );
+
     if(isTargetNumerical) {
       for(size_t i = 0; i < nSamplesInLeaf; ++i) {
         leafImpurity += pow(leafPrediction - targetData[i],2);

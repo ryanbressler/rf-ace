@@ -410,13 +410,14 @@ size_t Treedata::nSamples() {
   return( sampleHeaders_.size() );
 }
 
-//WILL BECOME DEPRECATED
+// WILL BECOME DEPRECATED
 num_t Treedata::pearsonCorrelation(size_t featureidx1, size_t featureidx2) {
   num_t r;
   datadefs::pearson_correlation(features_[featureidx1].data,features_[featureidx2].data,r);
   return(r);
 }
 
+// WILL BECOME DEPRECATED
 void Treedata::getMatchingTargetIdx(const string& targetStr, size_t& targetIdx) {
   
   bool isFoundAlready = false;
@@ -530,8 +531,6 @@ size_t Treedata::nMaxCategories() {
 
 }
 
-
-//WILL BE DEPRECATED
 template <typename T> void Treedata::transpose(vector<vector<T> >& mat) {
 
   vector<vector<T> > foo = mat;
@@ -661,6 +660,29 @@ vector<num_t> Treedata::getFeatureData(size_t featureIdx, const vector<size_t>& 
 
 }
 
+void Treedata::getFilteredDataPair(const size_t featureIdx1, const size_t featureIdx2, vector<size_t>& sampleIcs, vector<num_t>& featureData1, vector<num_t>& featureData2) {
+
+  size_t n = sampleIcs.size();
+  featureData1.resize(n);
+  featureData2.resize(n);
+  size_t nReal = 0;
+  for(size_t i = 0; i < n; ++i) {
+
+    num_t v1 = features_[featureIdx1].data[sampleIcs[i]];
+    num_t v2 = features_[featureIdx2].data[sampleIcs[i]];
+    
+    if(!datadefs::isNAN(v1) && !datadefs::isNAN(v2)) {
+      sampleIcs[nReal] = sampleIcs[i];
+      featureData1[nReal] = v1;
+      featureData2[nReal] = v2;
+      ++nReal;
+    }
+  }
+  featureData1.resize(nReal);
+  featureData2.resize(nReal);
+  sampleIcs.resize(nReal);
+
+}
 
 vector<num_t> Treedata::operator[](size_t featureIdx) {
   return( features_[featureIdx].data );

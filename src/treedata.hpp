@@ -60,6 +60,8 @@ public:
   num_t getFeatureData(const size_t featureIdx, const size_t sampleIdx);
   vector<num_t> getFeatureData(const size_t featureIdx, const vector<size_t>& sampleIcs);
 
+  void getFilteredDataPair(const size_t featureIdx1, const size_t featureIdx2, vector<size_t>& sampleIcs, vector<num_t>& featureData1, vector<num_t>& featureData2);
+
   vector<num_t> operator[](size_t featureIdx);
   vector<num_t> operator[](const string& featureName);
 

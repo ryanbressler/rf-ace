@@ -92,41 +92,44 @@ protected:
 			   set<num_t>& splitValues_right,
 			   num_t& splitFitness);
 
-  bool optimizedSplitterSeek(Treedata* treeData,
-			     const size_t targetIdx,
-			     const vector<size_t>& sampleIcs,
-			     const vector<size_t>& featureSampleIcs,
-			     const GrowInstructions& GI,
-			     size_t& splitFeatureIdx,
-			     vector<size_t>& sampleIcs_left,
-			     vector<size_t>& sampleIcs_right,
-			     num_t& splitValue,
-			     set<num_t>& splitValues_left,
-			     set<num_t>& splitValues_right,
-			     num_t& splitFitness);
-    
+  /*
+    bool optimizedSplitterSeek(Treedata* treeData,
+    const size_t targetIdx,
+    const vector<size_t>& sampleIcs,
+    const vector<size_t>& featureSampleIcs,
+    const GrowInstructions& GI,
+    size_t& splitFeatureIdx,
+    vector<size_t>& sampleIcs_left,
+    vector<size_t>& sampleIcs_right,
+    num_t& splitValue,
+    set<num_t>& splitValues_left,
+    set<num_t>& splitValues_right,
+    num_t& splitFitness);
+  */
+
 #ifndef TEST__
 private:
 #endif
 
-  inline void cleanPairVectorFromNANs(//const vector<num_t>& v1_copy,
-                                      //const vector<num_t>& v2_copy,
-                                      vector<num_t>& v1,
-                                      vector<num_t>& v2,
-                                      vector<size_t>& mapIcs);
 
-  void numericalFeatureSplit(vector<num_t> tv,
-                             const bool isTargetNumerical,
-                             vector<num_t> fv,
+  //inline void cleanPairVectorFromNANs(//const vector<num_t>& v1_copy,
+  //                                    //const vector<num_t>& v2_copy,
+  //                                     vector<num_t>& v1,
+  //                                   vector<num_t>& v2,
+  //                                vector<size_t>& mapIcs);
+
+  void numericalFeatureSplit(Treedata* treedata,
+                             const size_t targetIdx,
+                             const size_t featureIdx,
                              const GrowInstructions& GI,
                              vector<size_t>& sampleIcs_left,
                              vector<size_t>& sampleIcs_right,
 			     num_t& splitValue,
                              num_t& splitFitness);
 
-  void categoricalFeatureSplit(vector<num_t> tv,
-                               const bool isTargetNumerical,
-                               vector<num_t> fv, /* MIN SPLIT MISSING (CHECK numericalFeatureSplit()) */
+  void categoricalFeatureSplit(Treedata* treedata,
+                               const size_t targetIdx,
+                               const size_t featureIdx, /* MIN SPLIT MISSING (CHECK numericalFeatureSplit()) */
 			       const GrowInstructions& GI,
 			       vector<size_t>& sampleIcs_left,
                                vector<size_t>& sampleIcs_right,
