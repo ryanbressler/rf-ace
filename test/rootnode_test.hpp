@@ -32,7 +32,6 @@ void RootNodeTest::test_regressionTreeSplitting() {
   bool isRandomSplit = true;
   size_t nFeaturesForSplit = 1;
   bool useContrasts = true;
-  bool isOptimizedNodeSplit = false;
   size_t numClasses = 0;
   PartitionSequence::PartitionSequence* partitionSequence = new PartitionSequence(5);
 
@@ -43,7 +42,6 @@ void RootNodeTest::test_regressionTreeSplitting() {
 			      isRandomSplit,
 			      nFeaturesForSplit,
 			      useContrasts,
-			      isOptimizedNodeSplit,
 			      numClasses,
 			      partitionSequence);
 
