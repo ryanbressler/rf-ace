@@ -65,9 +65,13 @@ struct General_options {
   string predictionOutput_s;
   string predictionOutput_l;
 
-  string logFileOutput;
-  string logFileOutput_s;
-  string logFileOutput_l;
+  string logOutput;
+  string logOutput_s;
+  string logOutput_l;
+
+  string forestOutput;
+  string forestOutput_s;
+  string forestOutput_l;
   
   num_t  pValueThreshold;
   string pValueThreshold_s;
@@ -114,9 +118,13 @@ struct General_options {
     predictionOutput_s("P"),
     predictionOutput_l("predictions"),
   
-    logFileOutput(""),
-    logFileOutput_s("L"),
-    logFileOutput_l("log"),
+    logOutput(""),
+    logOutput_s("L"),
+    logOutput_l("log"),
+
+    forestOutput(""),
+    forestOutput_s("F"),
+    forestOutput_l("forest"),
 
     pValueThreshold(GENERAL_DEFAULT_P_VALUE_THRESHOLD),
     pValueThreshold_s("t"),
@@ -261,8 +269,10 @@ void printHelp(const General_options& geno, const RF_options& rfo, const GBT_opt
        << " " << "Test data input file, predictions will be made from this data" << endl;
   cout << " -" << geno.predictionOutput_s << " / --" << geno.predictionOutput_l << setw( maxwidth - geno.predictionOutput_l.size() )
        << " " << "Prediction output file" << endl;  
-  cout << " -" << geno.logFileOutput_s << " / --" << geno.logFileOutput_l << setw( maxwidth - geno.logFileOutput_l.size() )
+  cout << " -" << geno.logOutput_s << " / --" << geno.logOutput_l << setw( maxwidth - geno.logOutput_l.size() )
        << " " << "Log output file" << endl;
+  cout << " -" << geno.forestOutput_s << " / --" << geno.forestOutput_l << setw( maxwidth - geno.forestOutput_l.size() )
+       << " " << "Forest output file" << endl;
   cout << " -" << geno.featureMaskInput_s << " / --" << geno.featureMaskInput_l << setw( maxwidth - geno.featureMaskInput_l.size() )
        << " " << "Feature mask input file. String of ones and zeroes, zeroes indicating removal of the feature in the matrix" << endl;
   cout << " -" << geno.isOptimizedNodeSplit_s << " / --" << geno.isOptimizedNodeSplit_l << setw( maxwidth - geno.isOptimizedNodeSplit_l.size() )
@@ -322,7 +332,7 @@ void printHelpHint() {
 void executeRandomForest(Treedata& treedata,
 			 const size_t targetIdx,
 			 const RF_options& RF_op,
-			 const bool isOptimizedNodeSplit,
+			 const General_options& gen_op,
 			 vector<num_t>& pValues,
 			 vector<num_t>& importanceValues);
 
@@ -356,7 +366,8 @@ int main(const int argc, char* const argv[]) {
   parser.getArgument<string>(gen_op.featureMaskInput_s, gen_op.featureMaskInput_l, gen_op.featureMaskInput);
   parser.getArgument<string>(gen_op.testInput_s, gen_op.testInput_l, gen_op.testInput);
   parser.getArgument<string>(gen_op.predictionOutput_s, gen_op.predictionOutput_l, gen_op.predictionOutput);
-  parser.getArgument<string>(gen_op.logFileOutput_s,gen_op.logFileOutput_l,gen_op.logFileOutput);
+  parser.getArgument<string>(gen_op.logOutput_s,gen_op.logOutput_l,gen_op.logOutput);
+  parser.getArgument<string>(gen_op.forestOutput_s,gen_op.forestOutput_l,gen_op.forestOutput);
   parser.getArgument<num_t>(gen_op.pValueThreshold_s, gen_op.pValueThreshold_l, gen_op.pValueThreshold);
   parser.getFlag(gen_op.isOptimizedNodeSplit_s, gen_op.isOptimizedNodeSplit_l, gen_op.isOptimizedNodeSplit);
   string dataDelimiter,headerDelimiter;
@@ -395,7 +406,8 @@ int main(const int argc, char* const argv[]) {
   bool makePrediction = ( gen_op.testInput != "" ) && (gen_op.predictionOutput != "" );
   bool writeAssociationsToFile = gen_op.associationOutput != "";
   bool writePredictionsToFile = gen_op.predictionOutput != "";
-  bool writeLogToFile = gen_op.logFileOutput != "";
+  bool writeLogToFile = gen_op.logOutput != "";
+  bool writeForestToFile = gen_op.forestOutput != "";
 
   // Print help and exit if input file is not specified
   if ( gen_op.trainInput == "" ) {
@@ -498,8 +510,10 @@ int main(const int argc, char* const argv[]) {
        << "= "; if( makePrediction ) { cout << gen_op.testInput << endl; } else { cout << "NOT SET" << endl; }
   cout << "  --" << gen_op.predictionOutput_l << setw( maxwidth - gen_op.predictionOutput_l.size() ) << ""
        << "= "; if( writePredictionsToFile ) { cout << gen_op.predictionOutput << endl; } else { cout << "NOT SET" << endl; }
-  cout << "  --" << gen_op.logFileOutput_l << setw( maxwidth - gen_op.logFileOutput_l.size() ) << ""
-       << "= "; if( writeLogToFile ) { cout << gen_op.logFileOutput << endl; } else { cout << "NOT SET" << endl; }
+  cout << "  --" << gen_op.logOutput_l << setw( maxwidth - gen_op.logOutput_l.size() ) << ""
+       << "= "; if( writeLogToFile ) { cout << gen_op.logOutput << endl; } else { cout << "NOT SET" << endl; }
+  cout << "  --" << gen_op.forestOutput_l << setw( maxwidth - gen_op.forestOutput_l.size() ) << ""
+       << "= "; if( writeForestToFile ) { cout << gen_op.forestOutput << endl; } else { cout << "NOT SET" << endl; }
   cout << "  --" << gen_op.isOptimizedNodeSplit_l << setw( maxwidth - gen_op.isOptimizedNodeSplit_l.size() ) << ""
        << "= "; if( gen_op.isOptimizedNodeSplit ) { cout << "YES" << endl; } else { cout << "NO" << endl; }
   cout << endl;
@@ -550,7 +564,7 @@ int main(const int argc, char* const argv[]) {
   vector<num_t> pValues; //(treedata.nFeatures());
   vector<num_t> importanceValues; //(treedata.nFeatures());
   cout << "===> Uncovering associations... " << flush;
-  executeRandomForest(treedata,targetIdx,RF_op,gen_op.isOptimizedNodeSplit,pValues,importanceValues);
+  executeRandomForest(treedata,targetIdx,RF_op,gen_op,pValues,importanceValues);
   cout << "DONE" << endl;
   
   /////////////////////////////////////////////////
@@ -595,20 +609,27 @@ int main(const int argc, char* const argv[]) {
   cout << "DONE, " << treedata.nFeatures() - 1 << " / " << nAllFeatures  - 1 << " features ( "
        << 100.0 * ( treedata.nFeatures() - 1 ) / ( nAllFeatures - 1 ) << " % ) left " << endl;
 
-  ofstream toAssociationFile(gen_op.associationOutput.c_str());
-  toAssociationFile.precision(8);
+  //ofstream toAssociationFile(gen_op.associationOutput.c_str());
+  //toAssociationFile.precision(8);
 
-  ofstream toPredictionFile(gen_op.predictionOutput.c_str());
+  //ofstream toPredictionFile(gen_op.predictionOutput.c_str());
   
   ///////////////////////////////////////////////////////////////////////////
   //  STEP 3 ( OPTIONAL ) -- DATA PREDICTION WITH GRADIENT BOOSTING TREES  //
   ///////////////////////////////////////////////////////////////////////////
   if ( makePrediction && writePredictionsToFile ) {      
+
+    ofstream toPredictionFile(gen_op.predictionOutput.c_str());
+
     cout << "===> Predicting... " << flush;
     
     StochasticForest SF(&treedata,targetIdx,GBT_op.nTrees);
     SF.learnGBT(GBT_op.nMaxLeaves, GBT_op.shrinkage, GBT_op.subSampleSize);
     
+    if( writeForestToFile ) {
+      SF.printToFile( gen_op.forestOutput );
+    }
+
     Treedata treedata_test(gen_op.testInput,gen_op.dataDelimiter,gen_op.headerDelimiter);
     if ( performMasking ) {
       treedata_test.keepFeatures(maskFeatureIcs);
@@ -646,13 +667,18 @@ int main(const int argc, char* const argv[]) {
       // SF.printToFile("GBT.tsv");
       
     }
+
+    toPredictionFile.close();
     
-    cout << "DONE" << endl;
+    cout << "DONE" << endl; 
   }
   cout << endl;
   
   if( writeAssociationsToFile ) {
     
+    ofstream toAssociationFile(gen_op.associationOutput.c_str());
+    toAssociationFile.precision(8);
+
     vector<size_t> refIcs( treedata.nFeatures() );
     bool isIncreasingOrder = true;
     datadefs::sortDataAndMakeRef(isIncreasingOrder,pValues,refIcs); // BUG
@@ -688,11 +714,10 @@ int main(const int argc, char* const argv[]) {
 			  << treedata.pearsonCorrelation(targetIdx,featureIdx) << "\t" << treedata.nRealSamples(targetIdx,featureIdx) << endl;
       }    
     }
+
+    toAssociationFile.close();
   }
   
-  toAssociationFile.close();
-  toPredictionFile.close();
-
   cout << 1.0 * ( clock() - clockStart ) / CLOCKS_PER_SEC << " seconds elapsed." << endl << endl;
   
   if ( writeAssociationsToFile ) {
@@ -717,7 +742,7 @@ int main(const int argc, char* const argv[]) {
 void executeRandomForest(Treedata& treedata,
 			 const size_t targetIdx,
 			 const RF_options& RF_op,
-			 const bool isOptimizedNodeSplit,
+			 const General_options& gen_op,
 			 vector<num_t>& pValues,
 			 vector<num_t>& importanceValues) {
   
@@ -741,11 +766,15 @@ void executeRandomForest(Treedata& treedata,
     }
 
     StochasticForest SF(&treedata,targetIdx,RF_op.nTrees);
-    SF.learnRF(RF_op.mTry,RF_op.nMaxLeaves,RF_op.nodeSize,useContrasts,isOptimizedNodeSplit);
+    SF.learnRF(RF_op.mTry,RF_op.nMaxLeaves,RF_op.nodeSize,useContrasts,gen_op.isOptimizedNodeSplit);
     size_t nNodesInForest = SF.nNodes();
     nNodesInAllForests += nNodesInForest;
     importanceMat[permIdx] = SF.featureImportance();
     
+    //if ( gen_op.forestOutput != "" ) {
+    //  SF.printToFile(gen_op.forestOutput);
+    //}
+
     //printf("  RF %i: %i nodes (avg. %6.3f nodes/tree)\n",permIdx+1,static_cast<int>(nNodesInForest),1.0*nNodesInForest/RF_op.nTrees);
     
     progress.update( 1.0 * ( 1 + permIdx ) / RF_op.nPerms );
