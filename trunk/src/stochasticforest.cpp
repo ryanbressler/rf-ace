@@ -41,16 +41,21 @@ StochasticForest::~StochasticForest() {
 
 void StochasticForest::printToFile(const string& fileName) {
 
-  cout << "Do not call StochasticForest::printToFile() yet, it's not ready!" << endl;
-  exit(1);
+  //cout << "Do not call StochasticForest::printToFile() yet, it's not ready!" << endl;
+  //exit(1);
+
+  ofstream toFile( fileName.c_str() );
 
   for ( size_t treeIdx = 0; treeIdx < rootNodes_.size(); ++treeIdx ) {
     Node* nodep( rootNodes_[treeIdx] );
 
-    while ( nodep->leftChild() ) {
-      nodep->leftChild()->splitterIdx();
+    while ( nodep->hasChildren() ) {
+      toFile << treeData_->getFeatureName(nodep->splitterIdx()) << endl;
+      nodep = nodep->leftChild();
     }
   }
+
+  toFile.close();
 
 }
 
@@ -135,7 +140,7 @@ void StochasticForest::learnGBT(const size_t nMaxLeaves,
   bool isRandomSplit = false;
   size_t nFeaturesForSplit = treeData_->nFeatures();
   bool useContrasts = false;
-  bool isOptimizedNodeSplit = true; // WILL BE AN OPTION, AT THE MOMENT REGULAR SPLITTING ISN'T WORKING
+  bool isOptimizedNodeSplit = false; // WILL BE AN OPTION, AT THE MOMENT REGULAR SPLITTING ISN'T WORKING
   //bool isSaveLeafTrainPrediction = false;
 
   //Allocates memory for the root nodes. With all these parameters, the RootNode is now able to take full control of the splitting process
