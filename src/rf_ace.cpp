@@ -20,7 +20,7 @@ using datadefs::num_t;
 const bool   GENERAL_DEFAULT_PRINT_HELP = false;
 const bool   GENERAL_DEFAULT_NO_PREDICTION = false; // TEMPORARY VARIABLE
 const num_t  GENERAL_DEFAULT_P_VALUE_THRESHOLD = 0.10;
-const bool   GENERAL_DEFAULT_IS_OPTIMIZED_NODE_SPLIT = false;
+//const bool   GENERAL_DEFAULT_IS_OPTIMIZED_NODE_SPLIT = false;
 const char   GENERAL_DEFAULT_DATA_DELIMITER = '\t';
 const char   GENERAL_DEFAULT_HEADER_DELIMITER = ':';
 
@@ -77,10 +77,6 @@ struct General_options {
   string pValueThreshold_s;
   string pValueThreshold_l;
   
-  bool   isOptimizedNodeSplit;
-  string isOptimizedNodeSplit_s;
-  string isOptimizedNodeSplit_l;
-
   char   dataDelimiter;
   string dataDelimiter_s;
   string dataDelimiter_l;
@@ -129,10 +125,6 @@ struct General_options {
     pValueThreshold(GENERAL_DEFAULT_P_VALUE_THRESHOLD),
     pValueThreshold_s("t"),
     pValueThreshold_l("pthreshold"),
-
-    isOptimizedNodeSplit(GENERAL_DEFAULT_IS_OPTIMIZED_NODE_SPLIT),
-    isOptimizedNodeSplit_s("q"),
-    isOptimizedNodeSplit_l("optimized_split"),
 
     dataDelimiter(GENERAL_DEFAULT_DATA_DELIMITER),
     dataDelimiter_s("D"),
@@ -275,13 +267,10 @@ void printHelp(const General_options& geno, const RF_options& rfo, const GBT_opt
        << " " << "Forest output file" << endl;
   cout << " -" << geno.featureMaskInput_s << " / --" << geno.featureMaskInput_l << setw( maxwidth - geno.featureMaskInput_l.size() )
        << " " << "Feature mask input file. String of ones and zeroes, zeroes indicating removal of the feature in the matrix" << endl;
-  cout << " -" << geno.isOptimizedNodeSplit_s << " / --" << geno.isOptimizedNodeSplit_l << setw( maxwidth - geno.isOptimizedNodeSplit_l.size() )
-       << " " << "Perform optimized node splitting (faster but more inaccurate; default OFF)" << endl;
   cout << " -" << geno.dataDelimiter_s << " / --" << geno.dataDelimiter_l << setw( maxwidth - geno.dataDelimiter_l.size() )
        << " " << "Data delimiter (default \\t)" << endl;
   cout << " -" << geno.headerDelimiter_s << " / --" << geno.headerDelimiter_l << setw( maxwidth - geno.headerDelimiter_l.size() )
        << " " << "Header delimiter that separates the N and C symbols in feature headers from the rest (default " << GENERAL_DEFAULT_HEADER_DELIMITER << ")" << endl;
-
   cout << endl;
   
   cout << "OPTIONAL ARGUMENTS -- RANDOM FOREST:" << endl;
@@ -369,7 +358,6 @@ int main(const int argc, char* const argv[]) {
   parser.getArgument<string>(gen_op.logOutput_s,gen_op.logOutput_l,gen_op.logOutput);
   parser.getArgument<string>(gen_op.forestOutput_s,gen_op.forestOutput_l,gen_op.forestOutput);
   parser.getArgument<num_t>(gen_op.pValueThreshold_s, gen_op.pValueThreshold_l, gen_op.pValueThreshold);
-  parser.getFlag(gen_op.isOptimizedNodeSplit_s, gen_op.isOptimizedNodeSplit_l, gen_op.isOptimizedNodeSplit);
   string dataDelimiter,headerDelimiter;
   parser.getArgument<string>(gen_op.dataDelimiter_s,gen_op.dataDelimiter_l,dataDelimiter);
   parser.getArgument<string>(gen_op.headerDelimiter_s,gen_op.headerDelimiter_l,headerDelimiter);
@@ -423,6 +411,7 @@ int main(const int argc, char* const argv[]) {
     return(EXIT_FAILURE);
   }
 
+  // TODO: rf_ace.cpp: this logic needs to be revised!
   if ( !writeAssociationsToFile && !writePredictionsToFile ) {
     cerr << "No output files specified" << endl;
     printHelpHint();
@@ -461,14 +450,13 @@ int main(const int argc, char* const argv[]) {
   cout << endl;
 
   // After masking, it's safe to refer to features as indices 
-  // !! NOTE: This should be made obsolete; instead of indices, use the feature headers
+  // TODO: rf_ace.cpp: this should be made obsolete; instead of indices, use the feature headers
   size_t targetIdx;
   treedata.getMatchingTargetIdx(gen_op.targetStr,targetIdx);
 
   //If default mTry is to be used...
   if ( RF_op.mTry == RF_DEFAULT_M_TRY ) {
     RF_op.mTry = static_cast<size_t>( 0.1*static_cast<num_t>(treedata.nFeatures()));
-    //RF_op.mTry = static_cast<size_t>( floor(0.1*treedata.nFeatures()) );
     if ( RF_op.mTry == 0 ) {
       RF_op.mTry = 2;
     }
@@ -514,8 +502,6 @@ int main(const int argc, char* const argv[]) {
        << "= "; if( writeLogToFile ) { cout << gen_op.logOutput << endl; } else { cout << "NOT SET" << endl; }
   cout << "  --" << gen_op.forestOutput_l << setw( maxwidth - gen_op.forestOutput_l.size() ) << ""
        << "= "; if( writeForestToFile ) { cout << gen_op.forestOutput << endl; } else { cout << "NOT SET" << endl; }
-  cout << "  --" << gen_op.isOptimizedNodeSplit_l << setw( maxwidth - gen_op.isOptimizedNodeSplit_l.size() ) << ""
-       << "= "; if( gen_op.isOptimizedNodeSplit ) { cout << "YES" << endl; } else { cout << "NO" << endl; }
   cout << endl;
 
   cout << "Random Forest configuration:" << endl;
@@ -608,69 +594,75 @@ int main(const int argc, char* const argv[]) {
   // NOTE: we're subtracting the target from the total head count, that's why we need to subtract by 1
   cout << "DONE, " << treedata.nFeatures() - 1 << " / " << nAllFeatures  - 1 << " features ( "
        << 100.0 * ( treedata.nFeatures() - 1 ) / ( nAllFeatures - 1 ) << " % ) left " << endl;
-
-  //ofstream toAssociationFile(gen_op.associationOutput.c_str());
-  //toAssociationFile.precision(8);
-
-  //ofstream toPredictionFile(gen_op.predictionOutput.c_str());
   
   ///////////////////////////////////////////////////////////////////////////
   //  STEP 3 ( OPTIONAL ) -- DATA PREDICTION WITH GRADIENT BOOSTING TREES  //
   ///////////////////////////////////////////////////////////////////////////
-  if ( makePrediction && writePredictionsToFile ) {      
+  bool growGBTPredictor = makePrediction || writeForestToFile;
+  if ( growGBTPredictor ) {      
 
-    ofstream toPredictionFile(gen_op.predictionOutput.c_str());
-
-    cout << "===> Predicting... " << flush;
+    cout << "===> Growing GBT predictor... " << flush;
     
     StochasticForest SF(&treedata,targetIdx,GBT_op.nTrees);
     SF.learnGBT(GBT_op.nMaxLeaves, GBT_op.shrinkage, GBT_op.subSampleSize);
     
+    cout << "DONE" << endl;
+
     if( writeForestToFile ) {
+      cout << "===> Writing predictor to file..." << flush;
       SF.printToFile( gen_op.forestOutput );
+      cout << "DONE" << endl;
     }
 
-    Treedata treedata_test(gen_op.testInput,gen_op.dataDelimiter,gen_op.headerDelimiter);
-    if ( performMasking ) {
-      treedata_test.keepFeatures(maskFeatureIcs);
-    }
-    treedata_test.keepFeatures(significantFeatureIcs);
-    
-    // Some assertions to make sure both treedata and treedata_test contain the same information
-    for ( size_t i = 0; i < treedata.nFeatures(); ++i ) {
-      assert( treedata_test.getFeatureName(i) == treedata.getFeatureName(i) );
-    }
-    assert( treedata.getFeatureName(targetIdx) == gen_op.targetStr );
-    assert( treedata_test.getFeatureName(targetIdx) == gen_op.targetStr );
-    
-    vector<num_t> confidence;
-    if(treedata_test.isFeatureNumerical(targetIdx)) {
+    if ( makePrediction ) {
+
+      cout << "===> Making predictions..." << flush;
+
+      ofstream toPredictionFile(gen_op.predictionOutput.c_str());
       
-      vector<num_t> prediction;
-      SF.predict(&treedata_test,prediction,confidence);
-   
-      for(size_t i = 0; i < prediction.size(); ++i) {
-	toPredictionFile << gen_op.targetStr.c_str() << "\t" << treedata_test.getSampleName(i) << "\t" << treedata_test.getRawFeatureData(targetIdx,i) 
-			 << "\t" << prediction[i] << "\t" << setprecision(3) << confidence[i] << endl;	  
+      Treedata treedata_test(gen_op.testInput,gen_op.dataDelimiter,gen_op.headerDelimiter);
+      if ( performMasking ) {
+	treedata_test.keepFeatures(maskFeatureIcs);
       }
+      treedata_test.keepFeatures(significantFeatureIcs);
       
-    } else {
-      
-      vector<string> prediction;
-      SF.predict(&treedata_test,prediction,confidence);
-      
-      for(size_t i = 0; i < prediction.size(); ++i) {
-	toPredictionFile << gen_op.targetStr.c_str() << "\t" << treedata_test.getSampleName(i) << "\t" << treedata_test.getRawFeatureData(targetIdx,i) 
-			 << "\t" << prediction[i] << "\t" << setprecision(3) << confidence[i] << endl;
+      // Some assertions to make sure both treedata and treedata_test contain the same information
+      for ( size_t i = 0; i < treedata.nFeatures(); ++i ) {
+	assert( treedata_test.getFeatureName(i) == treedata.getFeatureName(i) );
       }
-
-      // SF.printToFile("GBT.tsv");
+      assert( treedata.getFeatureName(targetIdx) == gen_op.targetStr );
+      assert( treedata_test.getFeatureName(targetIdx) == gen_op.targetStr );
       
-    }
+      vector<num_t> confidence;
+      if(treedata_test.isFeatureNumerical(targetIdx)) {
+	
+	vector<num_t> prediction;
+	SF.predict(&treedata_test,prediction,confidence);
+	
+	for(size_t i = 0; i < prediction.size(); ++i) {
+	  toPredictionFile << gen_op.targetStr.c_str() << "\t" << treedata_test.getSampleName(i) << "\t" << treedata_test.getRawFeatureData(targetIdx,i) 
+			   << "\t" << prediction[i] << "\t" << setprecision(3) << confidence[i] << endl;	  
+	}
+	
+      } else {
+	
+	vector<string> prediction;
+	SF.predict(&treedata_test,prediction,confidence);
+	
+	for(size_t i = 0; i < prediction.size(); ++i) {
+	  toPredictionFile << gen_op.targetStr.c_str() << "\t" << treedata_test.getSampleName(i) << "\t" << treedata_test.getRawFeatureData(targetIdx,i) 
+			   << "\t" << prediction[i] << "\t" << setprecision(3) << confidence[i] << endl;
+	}
 
-    toPredictionFile.close();
+      }
     
-    cout << "DONE" << endl; 
+      toPredictionFile.close();
+
+      cout << "DONE" << endl;
+  
+    }
+    
+    //cout << "DONE" << endl; 
   }
   cout << endl;
   
@@ -766,15 +758,11 @@ void executeRandomForest(Treedata& treedata,
     }
 
     StochasticForest SF(&treedata,targetIdx,RF_op.nTrees);
-    SF.learnRF(RF_op.mTry,RF_op.nMaxLeaves,RF_op.nodeSize,useContrasts,gen_op.isOptimizedNodeSplit);
+    SF.learnRF(RF_op.mTry,RF_op.nMaxLeaves,RF_op.nodeSize,useContrasts);
     size_t nNodesInForest = SF.nNodes();
     nNodesInAllForests += nNodesInForest;
     importanceMat[permIdx] = SF.featureImportance();
     
-    //if ( gen_op.forestOutput != "" ) {
-    //  SF.printToFile(gen_op.forestOutput);
-    //}
-
     //printf("  RF %i: %i nodes (avg. %6.3f nodes/tree)\n",permIdx+1,static_cast<int>(nNodesInForest),1.0*nNodesInForest/RF_op.nTrees);
     
     progress.update( 1.0 * ( 1 + permIdx ) / RF_op.nPerms );

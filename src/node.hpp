@@ -61,7 +61,6 @@ protected:
     bool isRandomSplit;
     size_t nFeaturesForSplit;
     bool useContrasts;
-    bool isOptimizedNodeSplit;
     LeafPredictionFunction leafPredictionFunction;
     size_t numClasses;
     PartitionSequence* partitionSequence;
@@ -92,31 +91,9 @@ protected:
 			   set<num_t>& splitValues_right,
 			   num_t& splitFitness);
 
-  /*
-    bool optimizedSplitterSeek(Treedata* treeData,
-    const size_t targetIdx,
-    const vector<size_t>& sampleIcs,
-    const vector<size_t>& featureSampleIcs,
-    const GrowInstructions& GI,
-    size_t& splitFeatureIdx,
-    vector<size_t>& sampleIcs_left,
-    vector<size_t>& sampleIcs_right,
-    num_t& splitValue,
-    set<num_t>& splitValues_left,
-    set<num_t>& splitValues_right,
-    num_t& splitFitness);
-  */
-
 #ifndef TEST__
 private:
 #endif
-
-
-  //inline void cleanPairVectorFromNANs(//const vector<num_t>& v1_copy,
-  //                                    //const vector<num_t>& v2_copy,
-  //                                     vector<num_t>& v1,
-  //                                   vector<num_t>& v2,
-  //                                vector<size_t>& mapIcs);
 
   void numericalFeatureSplit(Treedata* treedata,
                              const size_t targetIdx,
@@ -129,7 +106,7 @@ private:
 
   void categoricalFeatureSplit(Treedata* treedata,
                                const size_t targetIdx,
-                               const size_t featureIdx, /* MIN SPLIT MISSING (CHECK numericalFeatureSplit()) */
+                               const size_t featureIdx,
 			       const GrowInstructions& GI,
 			       vector<size_t>& sampleIcs_left,
                                vector<size_t>& sampleIcs_right,
@@ -146,17 +123,13 @@ private:
   //A recursive function that will accumulate the number of descendant nodes the current nodes has
   void recursiveNDescendantNodes(size_t& n);
 
-  //bool isSplitterNumerical_;
-
   size_t splitterIdx_;
   Splitter* splitter_;
 
-  //bool isTrainPredictionSet_;
   num_t trainPrediction_;
   size_t nTestSamples_;
   num_t testPredictionError_;
     
-  //bool hasChildren_;
   Node* leftChild_;
   Node* rightChild_;
 

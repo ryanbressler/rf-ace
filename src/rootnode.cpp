@@ -10,7 +10,6 @@ RootNode::RootNode(bool sampleWithReplacement,
                    bool isRandomSplit,
                    size_t nFeaturesForSplit,
                    bool useContrasts,
-                   bool isOptimizedNodeSplit,
                    size_t numClasses,
 		   PartitionSequence* partitionSequence):
   Node() {
@@ -21,15 +20,13 @@ RootNode::RootNode(bool sampleWithReplacement,
   GI_.isRandomSplit = isRandomSplit;
   GI_.nFeaturesForSplit = nFeaturesForSplit;
   GI_.useContrasts = useContrasts;
-  GI_.isOptimizedNodeSplit = isOptimizedNodeSplit;
   GI_.numClasses = numClasses;
   GI_.partitionSequence = partitionSequence; 
 }
 
 
 RootNode::~RootNode() { 
-  //delete GI_.partitionSequence;
-  //GI_.partitionSequence = NULL;
+  /* Empty dtor */
 }
 
 
