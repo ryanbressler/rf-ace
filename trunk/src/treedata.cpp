@@ -20,8 +20,8 @@ Treedata::Treedata(string fileName, char dataDelimiter, char headerDelimiter):
   ifstream featurestream;
   featurestream.open(fileName.c_str());
   if ( !featurestream.good() ) {
-    cerr << "Failed to open file '" << fileName << "' for reading" << endl;
-    assert(false);
+    cerr << "Failed to open file '" << fileName << "' for reading. Make sure the file exists. Quitting..." << endl;
+    exit(1);
   }
 
   FileType fileType = UNKNOWN;
@@ -684,13 +684,15 @@ void Treedata::getFilteredDataPair(const size_t featureIdx1, const size_t featur
 
 }
 
-vector<num_t> Treedata::operator[](size_t featureIdx) {
+/*
+  vector<num_t> Treedata::operator[](size_t featureIdx) {
   return( features_[featureIdx].data );
-}
-
-vector<num_t> Treedata::operator[](const string& featureName) {
+  }
+  
+  vector<num_t> Treedata::operator[](const string& featureName) {
   return( features_[ name2idx_[featureName] ].data );
-}
+  }
+*/
 
 
 string Treedata::getRawFeatureData(const size_t featureIdx, const size_t sampleIdx) {
@@ -719,25 +721,27 @@ map<string,num_t> Treedata::getDataMapping(const size_t featureIdx) {
 
 
 // DEPRECATED ??
-void Treedata::impurity(vector<num_t>& data, bool isFeatureNumerical, num_t& impurity, size_t& nreal) {
+/*
+  void Treedata::impurity(vector<num_t>& data, bool isFeatureNumerical, num_t& impurity, size_t& nreal) {
   
   size_t n = data.size();
   
   
   nreal = 0;
   if(isFeatureNumerical) {
-    num_t mu = 0.0;
-    num_t se = 0.0;
-    for(size_t i = 0; i < n; ++i) {
-      datadefs::forward_sqerr(data[i],nreal,mu,se);  
-    }
-    impurity = se / nreal;
-  } else {
-    map<num_t,size_t> freq;
-    size_t sf = 0;
-    for(size_t i = 0; i < n; ++i) {
-      datadefs::forward_sqfreq(data[i],nreal,freq,sf);
-    }
-    impurity = 1.0 - 1.0 * sf / (nreal * nreal);
+  num_t mu = 0.0;
+  num_t se = 0.0;
+  for(size_t i = 0; i < n; ++i) {
+  datadefs::forward_sqerr(data[i],nreal,mu,se);  
   }
-}
+  impurity = se / nreal;
+  } else {
+  map<num_t,size_t> freq;
+  size_t sf = 0;
+  for(size_t i = 0; i < n; ++i) {
+  datadefs::forward_sqfreq(data[i],nreal,freq,sf);
+  }
+  impurity = 1.0 - 1.0 * sf / (nreal * nreal);
+  }
+  }
+*/

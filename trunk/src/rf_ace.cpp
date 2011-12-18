@@ -18,21 +18,18 @@ using namespace std;
 using datadefs::num_t;
 
 const bool   GENERAL_DEFAULT_PRINT_HELP = false;
-//const bool   GENERAL_DEFAULT_NO_FILTER = false;
 const bool   GENERAL_DEFAULT_NO_PREDICTION = false; // TEMPORARY VARIABLE
 const num_t  GENERAL_DEFAULT_P_VALUE_THRESHOLD = 0.10;
 const bool   GENERAL_DEFAULT_IS_OPTIMIZED_NODE_SPLIT = false;
-const char GENERAL_DEFAULT_DATA_DELIMITER = '\t';
-const char GENERAL_DEFAULT_HEADER_DELIMITER = ':';
+const char   GENERAL_DEFAULT_DATA_DELIMITER = '\t';
+const char   GENERAL_DEFAULT_HEADER_DELIMITER = ':';
 
-//const bool   RF_IS_OPTIMIZED_NODE_SPLIT = false;
 const size_t RF_DEFAULT_N_TREES = 1000; // zero means it will be estimated from the data by default
 const size_t RF_DEFAULT_M_TRY = 0; // same here ...
 const size_t RF_DEFAULT_N_MAX_LEAVES = 100;
 const size_t RF_DEFAULT_NODE_SIZE = 3; // ... and here
 const size_t RF_DEFAULT_N_PERMS = 20;
 
-//const bool   GBT_IS_OPTIMIZED_NODE_SPLIT = false;
 const size_t GBT_DEFAULT_N_TREES = 1000;
 const size_t GBT_DEFAULT_N_MAX_LEAVES = 6;
 const num_t  GBT_DEFAULT_SHRINKAGE = 0.1;

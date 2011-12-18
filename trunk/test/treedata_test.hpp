@@ -8,7 +8,7 @@
 
 class treeDataTest : public CppUnit::TestFixture {
   CPPUNIT_TEST_SUITE( treeDataTest );
-  CPPUNIT_TEST( test_bracketOperator );
+  //CPPUNIT_TEST( test_bracketOperator );
   CPPUNIT_TEST( test_name2idxMap );
   CPPUNIT_TEST( test_getFeatureData );
   CPPUNIT_TEST_SUITE_END();
@@ -24,27 +24,30 @@ public:
 void treeDataTest::setUp() {}
 void treeDataTest::tearDown() {}
  
-void treeDataTest::test_bracketOperator() {
+/*
+  void treeDataTest::test_bracketOperator() {
   
   string fileName = "test_6by10_featurerows_matrix.tsv";
-
+  
   Treedata::Treedata treeData(fileName,'\t',':');
-
+  
   CPPUNIT_ASSERT( treeData.features_.size() == 2*6 );
-
+  
+  
   for ( size_t i = 0; i < treeData.features_.size(); ++i ) {
-    vector<datadefs::num_t> data = treeData.getFeatureData(i);
-    for ( size_t j = 0; j < treeData.features_[0].data.size(); ++j ) {
-      if ( !datadefs::isNAN(data[j]) ) {
-	CPPUNIT_ASSERT( fabs(treeData[i][j] - data[j]) < datadefs::EPS );
-	vector<datadefs::num_t> foo = treeData[treeData.features_[i].name];
-	//cout << foo[j] << " vs " << data[j] << endl;
-	CPPUNIT_ASSERT( fabs(treeData[treeData.features_[i].name][j] - data[j]) < datadefs::EPS );
-      }
-    }
+  vector<datadefs::num_t> data = treeData.getFeatureData(i);
+  for ( size_t j = 0; j < treeData.features_[0].data.size(); ++j ) {
+  if ( !datadefs::isNAN(data[j]) ) {
+  CPPUNIT_ASSERT( fabs(treeData[i][j] - data[j]) < datadefs::EPS );
+  vector<datadefs::num_t> foo = treeData[treeData.features_[i].name];
+  //cout << foo[j] << " vs " << data[j] << endl;
+  CPPUNIT_ASSERT( fabs(treeData[treeData.features_[i].name][j] - data[j]) < datadefs::EPS );
   }
-
-}
+  }
+  }
+  
+  }
+*/
 
 void treeDataTest::test_name2idxMap() {
 

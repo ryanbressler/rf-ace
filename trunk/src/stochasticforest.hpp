@@ -33,7 +33,6 @@ public:
   
   void predict(vector<string>& prediction, vector<num_t>& confidence);
   void predict(vector<num_t>& prediction, vector<num_t>& confidence);
-
   
   void predict(Treedata* treeData, vector<string>& prediction, vector<num_t>& confidence);
   void predict(Treedata* treeData, vector<num_t>& prediction, vector<num_t>& confidence);
