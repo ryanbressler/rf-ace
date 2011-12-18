@@ -19,8 +19,7 @@ public:
   void learnRF(const size_t mTry,
 	       const size_t nMaxLeaves,
 	       const size_t nodeSize,
-	       const bool useContrasts,
-	       const bool isOptimizedNodeSplit);
+	       const bool useContrasts);
 
   void learnGBT(const size_t nMaxLeaves,
 		const num_t shrinkage,
@@ -49,9 +48,10 @@ private:
   void growNumericalGBT();
   void growCategoricalGBT();
 
-  //Will be moved elsewhere!
+  // TODO: StochasticForest::transformLogistic() should be moved elsewhere
   void transformLogistic(const size_t numClasses, vector<num_t>& prediction, vector<num_t>& probability);
 
+  // TODO: predictSampleByTree() and percolateSampleIdx families in StochasticForest need to be fused together 
   num_t predictSampleByTree(Treedata* treeData, size_t sampleIdx, size_t treeIdx);
   void predictDatasetByTree(Treedata* treeData, size_t treeIdx, vector<num_t>& curPrediction);
 

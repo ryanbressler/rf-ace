@@ -16,7 +16,6 @@ public:
            bool isRandomSplit,
            size_t nFeaturesForSplit,
            bool useContrasts,
-           bool isOptimizedNodeSplit,
            size_t numClasses,
 	   PartitionSequence* partitionSequence);
 

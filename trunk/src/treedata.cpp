@@ -438,8 +438,8 @@ void Treedata::getMatchingTargetIdx(const string& targetStr, size_t& targetIdx) 
   }
 
   if ( !isFoundAlready ) {
-    cerr << "Feature '" << targetStr << "' not found" << endl;
-    assert(false);
+    cerr << "Feature '" << targetStr << "' not found. Quitting..." << endl;
+    exit(1);
   }
 
 }

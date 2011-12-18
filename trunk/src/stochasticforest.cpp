@@ -62,8 +62,7 @@ void StochasticForest::printToFile(const string& fileName) {
 void StochasticForest::learnRF(const size_t mTry, 
 			       const size_t nMaxLeaves,
 			       const size_t nodeSize,
-			       const bool useContrasts,
-			       const bool isOptimizedNodeSplit) {
+			       const bool useContrasts) {
 
   if(useContrasts) {
     treeData_->permuteContrasts();
@@ -92,7 +91,6 @@ void StochasticForest::learnRF(const size_t mTry,
                                        isRandomSplit,
                                        nFeaturesForSplit,
                                        useContrasts,
-                                       isOptimizedNodeSplit,
                                        numClasses_,
 				       partitionSequence_);
 
@@ -140,8 +138,6 @@ void StochasticForest::learnGBT(const size_t nMaxLeaves,
   bool isRandomSplit = false;
   size_t nFeaturesForSplit = treeData_->nFeatures();
   bool useContrasts = false;
-  bool isOptimizedNodeSplit = false; // WILL BE AN OPTION, AT THE MOMENT REGULAR SPLITTING ISN'T WORKING
-  //bool isSaveLeafTrainPrediction = false;
 
   //Allocates memory for the root nodes. With all these parameters, the RootNode is now able to take full control of the splitting process
   rootNodes_.resize(nTrees_);
@@ -153,7 +149,6 @@ void StochasticForest::learnGBT(const size_t nMaxLeaves,
                                        isRandomSplit,
                                        nFeaturesForSplit,
                                        useContrasts,
-                                       isOptimizedNodeSplit,
                                        numClasses_,
 				       partitionSequence_);
   }
