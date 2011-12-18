@@ -325,6 +325,8 @@ void executeRandomForest(Treedata& treedata,
 			 vector<num_t>& pValues,
 			 vector<num_t>& importanceValues);
 
+void printPredictionToFile(StochasticForest& SF, Treedata& treeData, const size_t targetIdx, const string& fileName);
+
 void readFeatureMask(const string& fileName, const size_t nFeatures, vector<size_t>& keepFeatureIcs);
 
 
@@ -390,32 +392,38 @@ int main(const int argc, char* const argv[]) {
   }
   
   // Extract some handy boolean flags from the options
-  bool performMasking = gen_op.featureMaskInput != "";
-  bool makePrediction = ( gen_op.testInput != "" ) && (gen_op.predictionOutput != "" );
-  bool writeAssociationsToFile = gen_op.associationOutput != "";
-  bool writePredictionsToFile = gen_op.predictionOutput != "";
-  bool writeLogToFile = gen_op.logOutput != "";
-  bool writeForestToFile = gen_op.forestOutput != "";
+  bool maskInputExists = gen_op.featureMaskInput != "";
+  bool trainInputExists = gen_op.trainInput != "";
+  bool testInputExists = gen_op.testInput != "";
+  bool targetExists = gen_op.targetStr != "";
+  bool predictionOutputExists = gen_op.predictionOutput != "";
+  bool associationOutputExists = gen_op.associationOutput != "";
+  bool logOutputExists = gen_op.logOutput != "";
+  bool forestOutputExists = gen_op.forestOutput != "";
 
   // Print help and exit if input file is not specified
-  if ( gen_op.trainInput == "" ) {
+  if ( !trainInputExists ) {
     cerr << "Input file not specified" << endl;
     printHelpHint();
     return EXIT_FAILURE;
   }
 
   // Print help and exit if target index is not specified
-  if ( gen_op.targetStr == "" ) {
+  if ( !targetExists ) {
     cerr << "target(s) (-i/--target) not specified" << endl;
     printHelpHint();
     return(EXIT_FAILURE);
   }
 
-  // TODO: rf_ace.cpp: this logic needs to be revised!
-  if ( !writeAssociationsToFile && !writePredictionsToFile ) {
-    cerr << "No output files specified" << endl;
+  if ( !associationOutputExists && !predictionOutputExists && !forestOutputExists ) {
+    cerr << "Cannot do anything!" << endl;
     printHelpHint();
     return(EXIT_FAILURE);
+  }
+
+  if( testInputExists ) {
+    cerr << "Prediction with test data is temporarily out-of-use! (You can still grow the predictor with training data.) Quitting..." << endl;
+    exit(1);
   }
 
   // Read train data into Treedata object
@@ -439,7 +447,7 @@ int main(const int argc, char* const argv[]) {
   
   // Perform masking, if requested
   vector<size_t> maskFeatureIcs;
-  if ( performMasking ) {
+  if ( maskInputExists ) {
     cout << "Reading masking file '" << gen_op.featureMaskInput << "', please wait... " << flush;
     readFeatureMask(gen_op.featureMaskInput,treedata.nFeatures(),maskFeatureIcs);
     cout << "DONE" << endl;
@@ -493,15 +501,15 @@ int main(const int argc, char* const argv[]) {
   cout << "  --" << gen_op.targetStr_l << setw( maxwidth - gen_op.targetStr_l.size() ) << ""
        << "= " << gen_op.targetStr << " ( index " << targetIdx << " )" << endl;
   cout << "  --" << gen_op.associationOutput_l << setw( maxwidth - gen_op.associationOutput_l.size() ) << ""
-       << "= "; if ( writeAssociationsToFile ) { cout << gen_op.associationOutput << endl; } else { cout << "NOT SET" << endl; }
+       << "= "; if ( associationOutputExists ) { cout << gen_op.associationOutput << endl; } else { cout << "NOT SET" << endl; }
   cout << "  --" << gen_op.testInput_l << setw( maxwidth - gen_op.testInput_l.size() ) << ""
-       << "= "; if( makePrediction ) { cout << gen_op.testInput << endl; } else { cout << "NOT SET" << endl; }
+       << "= "; if( testInputExists ) { cout << gen_op.testInput << endl; } else { cout << "NOT SET" << endl; }
   cout << "  --" << gen_op.predictionOutput_l << setw( maxwidth - gen_op.predictionOutput_l.size() ) << ""
-       << "= "; if( writePredictionsToFile ) { cout << gen_op.predictionOutput << endl; } else { cout << "NOT SET" << endl; }
+       << "= "; if( predictionOutputExists ) { cout << gen_op.predictionOutput << endl; } else { cout << "NOT SET" << endl; }
   cout << "  --" << gen_op.logOutput_l << setw( maxwidth - gen_op.logOutput_l.size() ) << ""
-       << "= "; if( writeLogToFile ) { cout << gen_op.logOutput << endl; } else { cout << "NOT SET" << endl; }
+       << "= "; if( logOutputExists ) { cout << gen_op.logOutput << endl; } else { cout << "NOT SET" << endl; }
   cout << "  --" << gen_op.forestOutput_l << setw( maxwidth - gen_op.forestOutput_l.size() ) << ""
-       << "= "; if( writeForestToFile ) { cout << gen_op.forestOutput << endl; } else { cout << "NOT SET" << endl; }
+       << "= "; if( forestOutputExists ) { cout << gen_op.forestOutput << endl; } else { cout << "NOT SET" << endl; }
   cout << endl;
 
   cout << "Random Forest configuration:" << endl;
@@ -522,7 +530,8 @@ int main(const int argc, char* const argv[]) {
   cout << "  --pthresold" << setw(8) << "" << "= " << gen_op.pValueThreshold << endl;
   cout << endl;
 
-  if ( makePrediction ) {
+  bool growGBTPredictor = predictionOutputExists || forestOutputExists ;
+  if ( growGBTPredictor ) {
     cout << "Gradient boosting tree configuration for prediction:" << endl;
     cout << "  --" << GBT_op.nTrees_l << setw( maxwidth - GBT_op.nTrees_l.size() ) << ""
          << "= " << GBT_op.nTrees << endl;
@@ -598,7 +607,6 @@ int main(const int argc, char* const argv[]) {
   ///////////////////////////////////////////////////////////////////////////
   //  STEP 3 ( OPTIONAL ) -- DATA PREDICTION WITH GRADIENT BOOSTING TREES  //
   ///////////////////////////////////////////////////////////////////////////
-  bool growGBTPredictor = makePrediction || writeForestToFile;
   if ( growGBTPredictor ) {      
 
     cout << "===> Growing GBT predictor... " << flush;
@@ -608,65 +616,51 @@ int main(const int argc, char* const argv[]) {
     
     cout << "DONE" << endl;
 
-    if( writeForestToFile ) {
+    if( forestOutputExists ) {
       cout << "===> Writing predictor to file..." << flush;
       SF.printToFile( gen_op.forestOutput );
       cout << "DONE" << endl;
     }
 
-    if ( makePrediction ) {
-
+    if ( predictionOutputExists ) {
+      
       cout << "===> Making predictions..." << flush;
+      
 
-      ofstream toPredictionFile(gen_op.predictionOutput.c_str());
-      
-      Treedata treedata_test(gen_op.testInput,gen_op.dataDelimiter,gen_op.headerDelimiter);
-      if ( performMasking ) {
-	treedata_test.keepFeatures(maskFeatureIcs);
-      }
-      treedata_test.keepFeatures(significantFeatureIcs);
-      
-      // Some assertions to make sure both treedata and treedata_test contain the same information
-      for ( size_t i = 0; i < treedata.nFeatures(); ++i ) {
-	assert( treedata_test.getFeatureName(i) == treedata.getFeatureName(i) );
-      }
-      assert( treedata.getFeatureName(targetIdx) == gen_op.targetStr );
-      assert( treedata_test.getFeatureName(targetIdx) == gen_op.targetStr );
-      
-      vector<num_t> confidence;
-      if(treedata_test.isFeatureNumerical(targetIdx)) {
+
+      // TODO: rf_ace.cpp: test input handling is still malfunctioning!
+      if ( testInputExists ) {
 	
-	vector<num_t> prediction;
-	SF.predict(&treedata_test,prediction,confidence);
-	
-	for(size_t i = 0; i < prediction.size(); ++i) {
-	  toPredictionFile << gen_op.targetStr.c_str() << "\t" << treedata_test.getSampleName(i) << "\t" << treedata_test.getRawFeatureData(targetIdx,i) 
-			   << "\t" << prediction[i] << "\t" << setprecision(3) << confidence[i] << endl;	  
+	Treedata treedata_test(gen_op.testInput,gen_op.dataDelimiter,gen_op.headerDelimiter);
+	if ( maskInputExists ) {
+	  treedata_test.keepFeatures(maskFeatureIcs);
 	}
+	treedata_test.keepFeatures(significantFeatureIcs);
+	
+	// Some assertions to make sure both treedata and treedata_test contain the same information
+	for ( size_t i = 0; i < treedata.nFeatures(); ++i ) {
+	  assert( treedata_test.getFeatureName(i) == treedata.getFeatureName(i) );
+	}
+	assert( treedata.getFeatureName(targetIdx) == gen_op.targetStr );
+	assert( treedata_test.getFeatureName(targetIdx) == gen_op.targetStr );
+	
+	printPredictionToFile(SF,treedata_test,targetIdx,gen_op.predictionOutput);
 	
       } else {
 	
-	vector<string> prediction;
-	SF.predict(&treedata_test,prediction,confidence);
+	printPredictionToFile(SF,treedata,targetIdx,gen_op.predictionOutput);
 	
-	for(size_t i = 0; i < prediction.size(); ++i) {
-	  toPredictionFile << gen_op.targetStr.c_str() << "\t" << treedata_test.getSampleName(i) << "\t" << treedata_test.getRawFeatureData(targetIdx,i) 
-			   << "\t" << prediction[i] << "\t" << setprecision(3) << confidence[i] << endl;
-	}
-
       }
-    
-      toPredictionFile.close();
-
+      
       cout << "DONE" << endl;
-  
+      
     }
     
     //cout << "DONE" << endl; 
   }
   cout << endl;
   
-  if( writeAssociationsToFile ) {
+  if( associationOutputExists ) {
     
     ofstream toAssociationFile(gen_op.associationOutput.c_str());
     toAssociationFile.precision(8);
@@ -690,35 +684,35 @@ int main(const int argc, char* const argv[]) {
 	continue;
       }
       
-      if ( RF_op.nPerms > 1 ) {
-	
-	num_t log10p = log10(pValues[i]);
-	if ( log10p < -30.0 ) {
-	  log10p = -30.0;
-	}
-
-	toAssociationFile << fixed << gen_op.targetStr.c_str() << "\t" << treedata.getFeatureName(featureIdx).c_str() 
-			  << "\t" << log10p << "\t" << importanceValues[i] << "\t"
-			  << treedata.pearsonCorrelation(targetIdx,featureIdx) << "\t" << treedata.nRealSamples(targetIdx,featureIdx) << endl;
-      } else {
-	toAssociationFile << fixed << gen_op.targetStr.c_str() << "\t" << treedata.getFeatureName(featureIdx).c_str() 
-			  << "\tNA\t" << importanceValues[i] << "\t"
-			  << treedata.pearsonCorrelation(targetIdx,featureIdx) << "\t" << treedata.nRealSamples(targetIdx,featureIdx) << endl;
-      }    
+      //if ( RF_op.nPerms > 1 ) {
+      
+      num_t log10p = log10(pValues[i]);
+      if ( log10p < -30.0 ) {
+	log10p = -30.0;
+      }
+      
+      toAssociationFile << fixed << gen_op.targetStr.c_str() << "\t" << treedata.getFeatureName(featureIdx).c_str() 
+			<< "\t" << log10p << "\t" << importanceValues[i] << "\t"
+			<< treedata.pearsonCorrelation(targetIdx,featureIdx) << "\t" << treedata.nRealSamples(targetIdx,featureIdx) << endl;
+      //} else {
+      //toAssociationFile << fixed << gen_op.targetStr.c_str() << "\t" << treedata.getFeatureName(featureIdx).c_str() 
+      //		  << "\tNA\t" << importanceValues[i] << "\t"
+      //		  << treedata.pearsonCorrelation(targetIdx,featureIdx) << "\t" << treedata.nRealSamples(targetIdx,featureIdx) << endl;
+      //}    
     }
-
+    
     toAssociationFile.close();
   }
   
   cout << 1.0 * ( clock() - clockStart ) / CLOCKS_PER_SEC << " seconds elapsed." << endl << endl;
   
-  if ( writeAssociationsToFile ) {
+  if ( associationOutputExists ) {
     cout << "Association file '" << gen_op.associationOutput << "' created. Format:" << endl;
     cout << "TARGET   PREDICTOR   LOG10(P-VALUE)   IMPORTANCE   CORRELATION   NSAMPLES" << endl;
     cout << endl;
   }
   
-  if ( writePredictionsToFile ) {
+  if ( predictionOutputExists ) {
     cout << "Prediction file '" << gen_op.predictionOutput << "' created. Format:" << endl;
     cout << "TARGET   SAMPLE_ID   DATA      PREDICTION   CONFIDENCE" << endl; 
     cout << endl;
@@ -739,7 +733,9 @@ void executeRandomForest(Treedata& treedata,
 			 vector<num_t>& importanceValues) {
   
   vector<vector<num_t> > importanceMat(RF_op.nPerms);
-  pValues.resize(treedata.nFeatures());
+
+  pValues.clear();
+  pValues.resize(treedata.nFeatures(),datadefs::NUM_NAN);
   importanceValues.resize(treedata.nFeatures());
   size_t nNodesInAllForests = 0;
 
@@ -771,7 +767,7 @@ void executeRandomForest(Treedata& treedata,
   //cout << "Entering t-test..." << endl;
 
   if(RF_op.nPerms > 1) {
-
+    
     vector<num_t> cSample(RF_op.nPerms);
     for(size_t permIdx = 0; permIdx < RF_op.nPerms; ++permIdx) {
       vector<num_t> cVector(treedata.nFeatures());
@@ -789,11 +785,11 @@ void executeRandomForest(Treedata& treedata,
     }
     //cout << endl;
     //datadefs::print(cSample);
-
+    
     //cout << "cSample created." << endl;
-
+    
     for(size_t featureIdx = 0; featureIdx < treedata.nFeatures(); ++featureIdx) {
-
+      
       size_t nRealSamples;
       vector<num_t> fSample(RF_op.nPerms);
       //vector<num_t> cSample(op.nPerms);
@@ -810,9 +806,43 @@ void executeRandomForest(Treedata& treedata,
   } else {
     importanceValues = importanceMat[0];
   }
-
+  
   importanceValues.resize(treedata.nFeatures());
   
+}
+
+void printPredictionToFile(StochasticForest& SF, Treedata& treeData, const size_t targetIdx, const string& fileName) {
+  
+  ofstream toPredictionFile(fileName.c_str());
+
+  string targetStr = treeData.getFeatureName(targetIdx);
+
+  if ( treeData.isFeatureNumerical(targetIdx)) {
+    
+    vector<num_t> prediction;
+    vector<num_t> confidence;
+    SF.predict(&treeData,prediction,confidence);
+    
+    for(size_t i = 0; i < prediction.size(); ++i) {
+      toPredictionFile << targetStr << "\t" << treeData.getSampleName(i) << "\t" << treeData.getRawFeatureData(targetIdx,i)
+		       << "\t" << prediction[i] << "\t" << setprecision(3) << confidence[i] << endl;
+    }
+    
+  } else {
+    
+    vector<string> prediction;
+    vector<num_t> confidence;
+    SF.predict(&treeData,prediction,confidence);
+    
+    for(size_t i = 0; i < prediction.size(); ++i) {
+      toPredictionFile << targetStr << "\t" << treeData.getSampleName(i) << "\t" << treeData.getRawFeatureData(targetIdx,i)
+                       << "\t" << prediction[i] << "\t" << setprecision(3) << confidence[i] << endl;
+    }
+    
+  }
+
+  toPredictionFile.close();
+   
 }
 
 void readFeatureMask(const string& fileName, const size_t nFeatures, vector<size_t>& keepFeatureIcs) {
