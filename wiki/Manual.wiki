@@ -22,9 +22,13 @@ or
 make rf_ace
 }}}
 
-In Windows and using Visual Studio, first open up the Visual Studio terminal and execute `make.bat` by typing
+In Windows and using Visual Studio, first open up the Visual Studio terminal and execute either `make_win32.bat` or `make_win64.bat` by typing
 {{{
-make
+make_win32
+}}}
+or
+{{{
+make_win64
 }}}
 Simple as that! If you feel lucky, check for compiled binaries at the [http://code.google.com/p/rf-ace/downloads/list download page]. 
 
@@ -33,18 +37,17 @@ RF-ACE currently supports two file formats, Annotated Feature Matrix (AFM) and A
 
 == Annotated Feature Matrix (AFM) ==
 
-Annotated Feature Matrix represents the data as a tab-delimited table, where both columns and rows contain headers describing the samples and features. Based on the headers, the AFM reader is able to discern the right orientation (features as rows or columns in the matrix) of the matrix. Namely AFM feature headers must encode whether the feature is (`N`)umerical, (`C`)ategorical, (`O`)rdinal, or (`B`)inary, followed by colon and the actual name of the feature as follows:
+Annotated Feature Matrix represents the data as a tab-delimited table, where both columns and rows contain headers describing the samples and features. Based on the headers, the AFM reader is able to discern the right orientation (features as rows or columns in the matrix) of the matrix. Namely AFM feature headers must encode whether the feature is (`N`)umerical, (`C`)ategorical, or (`B`)inary, followed by colon and the actual name of the feature as follows:
 
  * `B:is_alive`
  * `N:age`
  * `C:tumor_grage` 
- * `O:anatomic_organ_subdivision`
 
-In fact any string, even including colons, spaces, and other special characters, encodes a valid feature name as long as it starts with the preamble `N:`/`C:`/`O:`/`B:`. Thus, the following is a valid feature header:
+In fact any string, even including colons, spaces, and other special characters, encodes a valid feature name as long as it starts with the preamble `N:`/`C:`/`B:`. Thus, the following is a valid feature header:
 
  * `N:GEXP:TP53:chr17:123:456`
 
-Sample headers are not constrained, except that they must not contain preambles `N:`/`C:`/`O:`/`B:`, being reserved for the feature headers. 
+Sample headers are not constrained, except that they must not contain preambles `N:`/`C:`/`B:`, being reserved for the feature headers. 
 
 == Attribute-Relation File Format (ARFF) ==
 
@@ -62,55 +65,3 @@ bin/rf_ace -h
 to bring up help, describing all the required and optional arguments one can set for RF-ACE analysis.
 
 = Association analysis =
-Minimum requirement to running RF-ACE for association studies is an input file (`-I/--input`), either of type `.arff` or `.afm`, a target (`-i/--target`) to build the RF-ACE model upon, and output association file (`-O / --associations`). Target in this case corresponds to a feature in the input file, and it can be identified with an index corresponding to it's order of appearance in the file, or with it's name. Thus, if the target is called `FOXA1` existing on row `123` (0-base and omitting the header row), one execute RF-ACE by typing
-{{{
-bin/rf_ace --input data/featurematrix.afm --target 123 --output associations.tsv 
-}}}
-or with the short-hand notation equivalently as
-{{{
-bin/rf_ace -I data/featurematrix.afm -i 123 -O associations.tsv 
-}}}
-or by using the header "FOXA1" instead of the index by typing
-{{{
-bin/rf_ace -I data/featurematrix.afm -i FOXA1 -O associations.tsv
-}}}
-In case a provided (sub)string identifies multiple target candidates, RF-ACE will be executed serially for all target candidates, results catenated in the specified output file. The example above produces the following print-out:
-
-{{{
-General configuration:
-    nfeatures          = 35022
-    nsamples           = 476
-  --traindata          = data/featurematrix.afm
-  --target             = FOXA1 ( 2 hits! )
-  --associations       = associations.tsv
-  --testdata           = NOT SET
-  --predictions        = NOT SET
-
-Random Forest configuration:
-  --RF_ntrees          = 100
-  --RF_mtry            = 3502
-  --RF_maxleaves       = 10
-  --RF_nodesize        = 5
-  --RF_nperms          = 50
-
-Feature filter ENABLED. Configuration:
-  --pthresold          = 0.1
-}}}
-describing information about data dimensions, provided target (if not unique, the number of hits displayed), Random Forest configuration, and threshold for choosing which associations are significant (listed in the output) and which are not (omitted in the output) based on the p-value.
-
-Now that there are two targets matching the provided string "FOXA1", RF-ACE will be run twice. The output which follows right after the configuration print-outs look like follows
-{{{
-== 1/2 target N:GEXP:FOXA1:chr14:37130320:37133928:, regression CARTs. 433 / 476 samples ( 9.03361 % missing )
-    => Uncovering associations... DONE
-    => Filtering features... DONE, 205 / 35022 features ( 0.585346 % ) left
-
-== 2/2 target N:GNAB:FOXA1:chr14:37130320:37133928:, regression CARTs. 153 / 476 samples ( 67.8571 % missing )
-    => Uncovering associations... DONE
-    => Filtering features... DONE, 39 / 35022 features ( 0.111359 % ) left
-
-Association file 'associations.tsv' created. Format:
-TARGET   PREDICTOR   P-VALUE   IMPORTANCE   CORRELATION
-
-RF-ACE completed successfully.
-}}}
-containing all kinds of information about the target, how the analysis is making progress, how many features were filtered, what is the format of the output, etc. 
