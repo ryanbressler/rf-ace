@@ -1,6 +1,6 @@
 #summary Manual pages.
 
-*The manual pages have been written on the basis of RF-ACE verson 0.9.7*
+*The manual pages have been written on the basis of RF-ACE verson 0.9.6*
 
 = Description =
 
@@ -65,3 +65,16 @@ bin/rf_ace -h
 to bring up help, describing all the required and optional arguments one can set for RF-ACE analysis.
 
 = Association analysis =
+
+{{{
+bin/rf_ace -I data.afm -i N:target -O associations.tsv
+}}}
+
+= Data prediction =
+{{{
+bin/rf_ace -I data.afm -i N:target -P predictions.tsv
+}}}
+
+{{{
+bin/rf_ace -I data.afm -i N:target -F gbt.sf -P predictions.tsv
+}}}
