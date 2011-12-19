@@ -26,7 +26,10 @@ void splitterTest::test_NumericalSplitterSplitsLeftAndRight() {
 
   num_t splitLeftLeqValue = 0.5;
 
-  Splitter::Splitter splitter(splitLeftLeqValue);
+  Splitter::Splitter splitter("foo",splitLeftLeqValue);
+
+  CPPUNIT_ASSERT( splitter.splitterName_ == "foo" );
+  CPPUNIT_ASSERT( splitter.name() == "foo" );
 
   CPPUNIT_ASSERT( splitter.splitsLeft(0.3) );
   CPPUNIT_ASSERT( !splitter.splitsLeft(0.66) );
@@ -50,8 +53,10 @@ void splitterTest::test_CategoricalSplitterSplitsLeftAndRight() {
   splitValuesRight.insert(2);
   splitValuesRight.insert(5);
   
-  Splitter::Splitter splitter(splitValuesLeft,splitValuesRight);
+  Splitter::Splitter splitter("foo",splitValuesLeft,splitValuesRight);
   
+  CPPUNIT_ASSERT( splitter.splitterName_ == "foo" );
+  CPPUNIT_ASSERT( splitter.name() == "foo" );
     
   CPPUNIT_ASSERT( splitter.splitsLeft(0) );
   CPPUNIT_ASSERT( splitter.splitsLeft(1) );
@@ -66,8 +71,7 @@ void splitterTest::test_CategoricalSplitterSplitsLeftAndRight() {
   
   CPPUNIT_ASSERT( splitter.splitsRight(2) );
   CPPUNIT_ASSERT( splitter.splitsRight(5) );
-  
-  
+    
   CPPUNIT_ASSERT( !splitter.splitsLeft(4) );
   CPPUNIT_ASSERT( !splitter.splitsRight(4) );
   

@@ -13,10 +13,10 @@ class Splitter {
 
 public:
 
-  Splitter();
+  //Splitter();
   Splitter(const string& splitterName, num_t splitLeftLeqValue);
   Splitter(const string& splitterName, const set<num_t>& splitLeftValues, const set<num_t>& splitRightValues);
-  Splitter(const string& splitterName, const Splitter& splitter);
+  Splitter(const Splitter& splitter);
 
   ~Splitter();
 

@@ -62,7 +62,7 @@ void NodeTest::test_setSplitter() {
 
   CPPUNIT_ASSERT( !node.splitter_ );
 
-  node.setSplitter(splitterIdx,splitLeftLeqValue);
+  node.setSplitter(splitterIdx,"foo",splitLeftLeqValue);
 
   CPPUNIT_ASSERT( node.splitterIdx_ == splitterIdx );
   CPPUNIT_ASSERT( node.splitter_->splitterType_ == Splitter::NUMERICAL_SPLITTER );
@@ -78,7 +78,7 @@ void NodeTest::test_getSplitter() {
 void NodeTest::test_percolateData() {
   
   Node::Node node0;
-  node0.setSplitter(0,0.1);
+  node0.setSplitter(0,"foo",0.1);
   CPPUNIT_ASSERT( node0.leftChild_ == node0.percolateData(0.09) );
   CPPUNIT_ASSERT( node0.rightChild_ == node0.percolateData(0.11) );
 
@@ -264,7 +264,7 @@ void NodeTest::test_numericalFeatureSplit() {
 
   //cout << splitValue << endl;
 
-  Splitter::Splitter splitter(splitValue);
+  Splitter::Splitter splitter("foo",splitValue);
 
   CPPUNIT_ASSERT( splitter.splitsLeft(3.1 - 0.00001) );
   CPPUNIT_ASSERT( splitter.splitsRight(3.1) );
@@ -355,7 +355,7 @@ void NodeTest::test_categoricalFeatureSplit() {
     //datadefs::print<num_t>(treedata.getFeatureData(targetIdx,sampleIcs_left));
     //datadefs::print<num_t>(treedata.getFeatureData(targetIdx,sampleIcs_right));
 
-    Splitter::Splitter splitter(splitValues_left,splitValues_right);
+    Splitter::Splitter splitter("foo",splitValues_left,splitValues_right);
 
     CPPUNIT_ASSERT( sampleIcs_left.size() == sampleIcs_right.size() );
     
@@ -415,10 +415,10 @@ void NodeTest::test_categoricalFeatureSplit() {
                                  splitValues_right,
                                  splitFitness);
     
-    Splitter::Splitter splitter;
-    CPPUNIT_ASSERT( splitter.splitterType_ == Splitter::NO_SPLITTER );
+    //Splitter::Splitter splitter;
+    //CPPUNIT_ASSERT( splitter.splitterType_ == Splitter::NO_SPLITTER );
 
-    splitter.reset(splitValues_left,splitValues_right);
+    Splitter::Splitter splitter("foo",splitValues_left,splitValues_right);
 
     CPPUNIT_ASSERT( splitter.splitterType_ == Splitter::CATEGORICAL_SPLITTER );
 
@@ -433,8 +433,8 @@ void NodeTest::test_categoricalFeatureSplit() {
       CPPUNIT_ASSERT( fabs(splitFitness - 0.843750000000000 ) < 1e-10 );
     }
      
-    splitter.reset();
-    CPPUNIT_ASSERT( splitter.splitterType_ == Splitter::NO_SPLITTER );
+    //splitter.reset();
+    //CPPUNIT_ASSERT( splitter.splitterType_ == Splitter::NO_SPLITTER );
 
     ++iter;
   }
