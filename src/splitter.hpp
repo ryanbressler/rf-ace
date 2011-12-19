@@ -2,6 +2,7 @@
 #define SPLITTER_HPP
 
 #include <set>
+#include <string>
 
 #include "datadefs.hpp"
 
@@ -13,18 +14,22 @@ class Splitter {
 public:
 
   Splitter();
-  Splitter(num_t splitLeftLeqValue);
-  Splitter(const set<num_t>& splitLeftValues, const set<num_t>& splitRightValues);
-  Splitter(const Splitter& splitter);
+  Splitter(const string& splitterName, num_t splitLeftLeqValue);
+  Splitter(const string& splitterName, const set<num_t>& splitLeftValues, const set<num_t>& splitRightValues);
+  Splitter(const string& splitterName, const Splitter& splitter);
 
   ~Splitter();
 
   bool splitsLeft(num_t testValue);
   bool splitsRight(num_t testValue);
 
-  void reset();
-  void reset(num_t splitLeftLeqValue);
-  void reset(const set<num_t>& splitLeftValues, const set<num_t>& splitRightValues);
+  string name();
+
+  /*
+    void reset();
+    void reset(const string& splitterName, num_t splitLeftLeqValue);
+    void reset(const string& splitterName, const set<num_t>& splitLeftValues, const set<num_t>& splitRightValues);
+  */
 
   void print();
 
@@ -35,6 +40,7 @@ private:
   enum SplitterType {NO_SPLITTER,NUMERICAL_SPLITTER,CATEGORICAL_SPLITTER};
 
   SplitterType splitterType_; 
+  string splitterName_;
 
   num_t splitLeftLeqValue_;
   set<num_t> splitLeftValues_;

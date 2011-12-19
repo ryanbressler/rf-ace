@@ -28,8 +28,8 @@ public:
 
   //Sets a splitter feature for the node.
   //NOTE: splitter can be assigned only once! Subsequent setter calls will raise an assertion failure.
-  void setSplitter(size_t splitterIdx, num_t splitLeftLeqValue);
-  void setSplitter(size_t splitterIdx, const set<num_t>& leftSplitValues, const set<num_t>& rightSplitValues);
+  void setSplitter(size_t splitterIdx, const string& splitterName, num_t splitLeftLeqValue);
+  void setSplitter(size_t splitterIdx, const string& splitterName, const set<num_t>& leftSplitValues, const set<num_t>& rightSplitValues);
 
   //Gets the splitter for the node
   inline size_t splitterIdx() { return(splitterIdx_); }
@@ -46,6 +46,8 @@ public:
   Node* rightChild();
 
   size_t nNodes();
+
+  void print(ofstream& toFile);
 
   enum LeafPredictionFunctionType { LEAF_MEAN, LEAF_MODE, LEAF_GAMMA };
 
