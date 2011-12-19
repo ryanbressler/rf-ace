@@ -30,7 +30,7 @@ const size_t RF_DEFAULT_N_MAX_LEAVES = 100;
 const size_t RF_DEFAULT_NODE_SIZE = 3; // ... and here
 const size_t RF_DEFAULT_N_PERMS = 20;
 
-const size_t GBT_DEFAULT_N_TREES = 1000;
+const size_t GBT_DEFAULT_N_TREES = 100;
 const size_t GBT_DEFAULT_N_MAX_LEAVES = 6;
 const num_t  GBT_DEFAULT_SHRINKAGE = 0.1;
 const num_t  GBT_DEFAULT_SUB_SAMPLE_SIZE = 0.5;

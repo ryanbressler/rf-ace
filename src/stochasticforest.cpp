@@ -326,39 +326,46 @@ num_t StochasticForest::predictSampleByTree(Treedata* treeData, size_t sampleIdx
   // Root of current tree
   Node* currentNode = rootNodes_[treeIdx];
   //Node* newNode = rootNodes_[treeIdx];
+  
+  StochasticForest::percolateSampleIdx(treeData, sampleIdx, &currentNode);
+  
+  return( currentNode->getLeafTrainPrediction() );
+}  
 
-  // Traverse to the leaf of the tree
+/*
+  Traverse to the leaf of the tree
   while ( currentNode->hasChildren() ) {
-    
-    //currentNode = newNode;
-
-    //num_t value;
-    
-    // Get the splitter of the branch point
-    size_t featureIdx = currentNode->splitterIdx();
-
-    // Get the value of the splitter feature of the chosen sample 
-    num_t value = treeData->getFeatureData(featureIdx, sampleIdx);
-
-    while ( datadefs::isNAN(value) ) {
-      //return( currentNode->getLeafTrainPrediction() );
-      treeData->getRandomData(featureIdx,value);
-    }
-    
-    // The node then makes the branch decision. The chosen child node becomes the new currentNode 
-    Node* childNode = currentNode->percolateData(value);
-
-    if ( childNode == currentNode ) {
-      break;
-    }
-
-    currentNode = childNode;
-
+  
+  //currentNode = newNode;
+  
+  //num_t value;
+  
+  // Get the splitter of the branch point
+  size_t featureIdx = currentNode->splitterIdx();
+  
+  // Get the value of the splitter feature of the chosen sample 
+  num_t value = treeData->getFeatureData(featureIdx, sampleIdx);
+  
+  while ( datadefs::isNAN(value) ) {
+  //return( currentNode->getLeafTrainPrediction() );
+  treeData->getRandomData(featureIdx,value);
   }
-
+  
+  // The node then makes the branch decision. The chosen child node becomes the new currentNode 
+  Node* childNode = currentNode->percolateData(value);
+  
+  if ( childNode == currentNode ) {
+  break;
+  }
+  
+  currentNode = childNode;
+  
+  }
+  
   // The loop has ended, and currentNode now points to a leaf node; get the prediction
   return currentNode->getLeafTrainPrediction();
-}
+  }
+*/
 
 // Use a single GBT tree to produce predictions for an arbitrary data set.
 vector<num_t> StochasticForest::predictDatasetByTree(Treedata* treeData, size_t treeIdx) {
