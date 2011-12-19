@@ -1,6 +1,6 @@
 #summary Manual pages.
 
-*The manual pages have been written on the basis of RF-ACE verson 0.5.5*
+*The manual pages have been written on the basis of RF-ACE verson 0.9.7*
 
 = Description =
 
