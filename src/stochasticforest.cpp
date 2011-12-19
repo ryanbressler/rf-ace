@@ -183,29 +183,29 @@ void StochasticForest::growNumericalGBT() {
 
   // Set the initial prediction to zero.
   vector<num_t> prediction(nSamples, 0.0);
-  vector<num_t> curPrediction(nSamples);
+  //vector<num_t> curPrediction(nSamples);
 
   size_t nNodes;
 
 
-  for(size_t t = 0; t < nTrees_; ++t) {
+  for ( size_t treeIdx = 0; treeIdx < nTrees_; ++treeIdx ) {
     // current target is the negative gradient of the loss function
     // for square loss, it is target minus current prediction
-    for (size_t i=0; i<nSamples; i++) {
+    for (size_t i = 0; i < nSamples; i++ ) {
       curTargetData[i] = trueTargetData[i] - prediction[i];
     }
 
     // Grow a tree to predict the current target
-    rootNodes_[t]->growTree(treeData_,
-                            targetIdx_,
-                            leafPredictionFunctionType,
-                            oobMatrix_[t],
-                            featuresInForest_[t],
-                            nNodes);
+    rootNodes_[treeIdx]->growTree(treeData_,
+				  targetIdx_,
+				  leafPredictionFunctionType,
+				  oobMatrix_[treeIdx],
+				  featuresInForest_[treeIdx],
+				  nNodes);
 
 
     // What kind of a prediction does the new tree produce?
-    StochasticForest::predictDatasetByTree(treeData_, t, curPrediction);
+    vector<num_t> curPrediction = StochasticForest::predictDatasetByTree(treeData_, treeIdx);
 
     // Calculate the current total prediction adding the newly generated tree
     num_t sqErrorSum = 0.0;
@@ -275,20 +275,20 @@ void StochasticForest::growCategoricalGBT() {
       }
 
       // Grow a tree to predict the current target
-      size_t t = m * numClasses_ + k; // tree index
+      size_t treeIdx = m * numClasses_ + k; // tree index
       size_t nNodes;
-      rootNodes_[t]->growTree(treeData_,
-                              targetIdx_,
-                              leafPredictionFunctionType,
-                              oobMatrix_[t],
-                              featuresInForest_[t],
-                              nNodes);
+      rootNodes_[treeIdx]->growTree(treeData_,
+				    targetIdx_,
+				    leafPredictionFunctionType,
+				    oobMatrix_[treeIdx],
+				    featuresInForest_[treeIdx],
+				    nNodes);
 
       // What kind of a prediction does the new tree produce
       // out of the whole training data set?
-      StochasticForest::predictDatasetByTree(treeData_, t, curPrediction[k] );
+      curPrediction[k] = StochasticForest::predictDatasetByTree(treeData_, treeIdx);
       // Calculate the current total prediction adding the newly generated tree
-      for (size_t i=0; i<nSamples; i++) {
+      for (size_t i = 0; i < nSamples; i++) {
         prediction[i][k] = prediction[i][k] + shrinkage_ * curPrediction[k][i];
       }
     }
@@ -361,13 +361,19 @@ num_t StochasticForest::predictSampleByTree(Treedata* treeData, size_t sampleIdx
 }
 
 // Use a single GBT tree to produce predictions for an arbitrary data set.
-void StochasticForest::predictDatasetByTree(Treedata* treeData, size_t treeIdx, vector<num_t>& curPrediction) {
+vector<num_t> StochasticForest::predictDatasetByTree(Treedata* treeData, size_t treeIdx) {
+  
   size_t nSamples = treeData->nSamples();
+
+  vector<num_t> prediction(nSamples);
+
   // predict for all samples
-  for(size_t i = 0; i < nSamples; ++i) {
-    curPrediction[i] = StochasticForest::predictSampleByTree(treeData, i, treeIdx);
+  for ( size_t sampleIdx = 0; sampleIdx < nSamples; ++sampleIdx) {
+    prediction[sampleIdx] = StochasticForest::predictSampleByTree(treeData, sampleIdx, treeIdx);
     // cout << "Sample " << i << ", prediction " << curPrediction[i]  << endl;
   }
+
+  return( prediction );
 }
 
 void StochasticForest::predict(vector<string>& prediction, vector<num_t>& confidence) {
