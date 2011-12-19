@@ -53,7 +53,7 @@ private:
 
   // TODO: predictSampleByTree() and percolateSampleIdx families in StochasticForest need to be fused together 
   num_t predictSampleByTree(Treedata* treeData, size_t sampleIdx, size_t treeIdx);
-  void predictDatasetByTree(Treedata* treeData, size_t treeIdx, vector<num_t>& curPrediction);
+  vector<num_t> predictDatasetByTree(Treedata* treeData, size_t treeIdx);
 
   void predictWithCategoricalRF(Treedata* treeData, vector<string>& categoryPrediction);
   void predictWithNumericalRF(Treedata* treeData, vector<num_t>& prediction);
