@@ -20,14 +20,19 @@ StochasticForest::StochasticForest(Treedata* treeData, const size_t targetIdx, c
 
   learnedModel_ = NO_MODEL;
 
-  // If treeData has at least one categorical variable with cardinality >= 2, initialize partitionSequence
+  /* PartitionSequence stores the optimal binary split strategy for data with nMaxCategories 
+   * as a Gray Code sequence. It is assumed that the two disjoint partitions are interchangeable,
+   * thus, the sequence has length of
+   * 
+   *  treeData->nMaxCategories() - 1
+   *
+   */
   if( treeData->nMaxCategories() >= 2 ) {
     partitionSequence_ = new PartitionSequence( treeData->nMaxCategories() - 1 );
   } else {
     partitionSequence_ = new PartitionSequence( 1 );
   }
     
-
 }
 
 StochasticForest::~StochasticForest() {
@@ -39,24 +44,25 @@ StochasticForest::~StochasticForest() {
 
 }
 
+/* Prints the forest into a file, so that the forest can be loaded for later use (e.g. prediction).
+ * This function still lacks most of the content. 
+ */
 void StochasticForest::printToFile(const string& fileName) {
 
-  //cout << "Do not call StochasticForest::printToFile() yet, it's not ready!" << endl;
-  //exit(1);
-
+  // Open stream for writing
   ofstream toFile( fileName.c_str() );
 
+  // Save each tree in the forest
   for ( size_t treeIdx = 0; treeIdx < rootNodes_.size(); ++treeIdx ) {
-    Node* nodep( rootNodes_[treeIdx] );
-
-    while ( nodep->hasChildren() ) {
-      toFile << treeData_->getFeatureName(nodep->splitterIdx()) << endl;
-      nodep = nodep->leftChild();
-    }
+    toFile << endl << "TREE " << treeIdx << endl;
+    rootNodes_[treeIdx]->print(toFile);
   }
+  
+  // TODO: StcohasticForest::printToFile() must also print the forest parameters
 
+  // Close stream
   toFile.close();
-
+  
 }
 
 void StochasticForest::learnRF(const size_t mTry, 

@@ -5,17 +5,21 @@ Splitter::Splitter():
 
 }
 
-Splitter::Splitter(num_t splitLeftLeqValue):
+Splitter::Splitter(const string& splitterName,
+		   num_t splitLeftLeqValue):
   splitterType_(NUMERICAL_SPLITTER),
+  splitterName_(splitterName),
   splitLeftLeqValue_(splitLeftLeqValue) {
 
   /* Empty constructor */
 
 }
 
-Splitter::Splitter(const set<num_t>& splitLeftValues,
+Splitter::Splitter(const string& splitterName,
+		   const set<num_t>& splitLeftValues,
 		   const set<num_t>& splitRightValues):
   splitterType_(CATEGORICAL_SPLITTER),
+  splitterName_(splitterName),
   splitLeftValues_(splitLeftValues),
   splitRightValues_(splitRightValues) {
 
@@ -23,17 +27,17 @@ Splitter::Splitter(const set<num_t>& splitLeftValues,
 
 }
 
-Splitter::Splitter(const Splitter& splitter) {
+/*
+  Splitter::Splitter(const Splitter& splitter) {
   
   splitterType_ = splitter.splitterType_;
+  splitterName_ = splitter.splitterName_;
   splitLeftLeqValue_ = splitter.splitLeftLeqValue_;
   splitLeftValues_ = splitter.splitLeftValues_;
   splitRightValues_ = splitter.splitRightValues_;
-
-  //Splitter::print();
-  //splitter.print();
-
-}
+  
+  }
+*/
 
 Splitter::~Splitter() {
 
@@ -99,25 +103,31 @@ bool Splitter::splitsRight(num_t testValue) {
   
 }
 
-void Splitter::reset() {
+/*
+  void Splitter::reset() {
   splitterType_ = NO_SPLITTER;
-}
-
-void Splitter::reset(num_t splitLeftLeqValue) {
-
+  }
+  
+  void Splitter::reset(num_t splitLeftLeqValue) {
+  
   splitterType_ = NUMERICAL_SPLITTER;
-
+  
   splitLeftLeqValue_ = splitLeftLeqValue;
-
-}
-
-void Splitter::reset(const set<num_t>& splitLeftValues, const set<num_t>& splitRightValues) {
-
+  
+  }
+  
+  void Splitter::reset(const set<num_t>& splitLeftValues, const set<num_t>& splitRightValues) {
+  
   splitterType_ = CATEGORICAL_SPLITTER;
-
+  
   splitLeftValues_ = splitLeftValues;
   splitRightValues_ = splitRightValues;
+  
+  }
+*/
 
+string Splitter::name() {
+  return( splitterName_ );
 }
 
 void Splitter::print() {

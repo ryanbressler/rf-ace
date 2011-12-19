@@ -37,7 +37,7 @@ Node::~Node() {
 // !! Documentation: consider combining with the documentation in the header
 // !! file, fleshing it out a bit. Ideally, implementation notes should fall
 // !! here; notes on the abstraction should fall in the header file.
-void Node::setSplitter(size_t splitterIdx, num_t splitLeftLeqValue) {
+void Node::setSplitter(size_t splitterIdx, const string& splitterName, num_t splitLeftLeqValue) {
   
   if ( leftChild_ || rightChild_ ) {
     cerr << "Cannot set a splitter to a node twice!" << endl;
@@ -45,7 +45,7 @@ void Node::setSplitter(size_t splitterIdx, num_t splitLeftLeqValue) {
   }
   
   splitterIdx_ = splitterIdx;
-  splitter_ = new Splitter(splitLeftLeqValue);
+  splitter_ = new Splitter(splitterName,splitLeftLeqValue);
 
   leftChild_ = new Node;
   rightChild_ = new Node;
@@ -55,7 +55,7 @@ void Node::setSplitter(size_t splitterIdx, num_t splitLeftLeqValue) {
 // !! Documentation: consider combining with the documentation in the header
 // !! file, fleshing it out a bit. Ideally, implementation notes should fall
 // !! here; notes on the abstraction should fall in the header file.
-void Node::setSplitter(size_t splitterIdx, const set<num_t>& leftSplitValues, const set<num_t>& rightSplitValues) {
+void Node::setSplitter(size_t splitterIdx, const string& splitterName, const set<num_t>& leftSplitValues, const set<num_t>& rightSplitValues) {
 
   if ( leftChild_ || rightChild_ ) {
     cerr << "Cannot set a splitter to a node twice!" << endl;
@@ -63,7 +63,7 @@ void Node::setSplitter(size_t splitterIdx, const set<num_t>& leftSplitValues, co
   }
 
   splitterIdx_ = splitterIdx;
-  splitter_ = new Splitter(leftSplitValues,rightSplitValues);
+  splitter_ = new Splitter(splitterName,leftSplitValues,rightSplitValues);
 
   leftChild_ = new Node;
   rightChild_ = new Node;
@@ -72,13 +72,13 @@ void Node::setSplitter(size_t splitterIdx, const set<num_t>& leftSplitValues, co
 
 Node* Node::percolateData(num_t value) {
 
-  if ( !splitter_ ) {
-    return( this );
-  }
-
   if ( datadefs::isNAN( value ) ) {
     cerr << "Node class does not accept NaNs to be percolated!" << endl;
     exit(1);
+  }
+
+  if ( !splitter_ ) {
+    return( this );
   }
 
   if ( splitter_->splitsLeft( value ) ) {
@@ -91,47 +91,36 @@ Node* Node::percolateData(num_t value) {
 
   return( this );
 
-  //splitter_->print();
-  //cerr << "Splitter Idx " << splitterIdx_ << " with split value ( " << value << " ) does not have a split rule!" << endl;
-  //exit(1);
-
 }
 
-// !! Inefficient: just use NULL as a sentinel here. Proxying through another
-// !! variable (hasChildren_) is just asking for bugs. If you really do want to
-// !! use hasChildren as a resource lock, at the very least drop an assert here.
 Node* Node::leftChild() {
-  //assert( hasChildren_ ) {
   return( leftChild_ );
-  //} else {
-  //return(NULL);
-  //}
 }
 
-// !! Inefficient: just use NULL as a sentinel here. Proxying through another
-// !! variable (hasChildren_) is just asking for bugs. If you really do want to
-// !! use hasChildren as a resource lock, at the very least drop an assert here.
+
 Node* Node::rightChild() {
-  //assert( hasChildren_ );
   return( rightChild_ );
-  //} else {
-  //  return(NULL);
-  //}
 }
 
-// !! Documentation: walks the number of nodes downwards, in linear time and
-// !! log2 space. Not much to see here.
+/** 
+ * Counts the number of (descending) nodes the tree has. 
+ * If called from the root node, will return the size of 
+ * the whole tree.
+ */
 size_t Node::nNodes() {
+  
   size_t n = 1;
+  
+  // Recursive call to dig out the number of descending nodes
   this->recursiveNDescendantNodes(n);
   return(n);
 }
 
-// !! Documentation: recursive function for the above.
-
-// !! Inefficient: just rewrite these as a single function? 
+/**
+ * Recursive function for actually counting the number of nodes
+ */
 void Node::recursiveNDescendantNodes(size_t& n) {
-  if ( !leftChild_ ) {
+  if ( !this->hasChildren() ) {
     return;
   } else {
     n += 2;
@@ -139,6 +128,19 @@ void Node::recursiveNDescendantNodes(size_t& n) {
     rightChild_->recursiveNDescendantNodes( n );
   }
 }
+
+void Node::print(ofstream& toFile) {
+  
+  if ( !this->hasChildren() ) {
+    return;
+  }
+  
+  toFile << this->splitter_->name() << "   SPLITTER_NAME   SPLIT_LEFT   SPLIT_RIGHT" << endl;
+  
+  this->leftChild()->print(toFile);
+  this->rightChild()->print(toFile);
+}
+
 
 // !! Documentation: just your usual accessor, returning a copy of
 // !! trainPrediction_.
@@ -256,10 +258,10 @@ void Node::recursiveNodeSplit(Treedata* treeData,
 
   if ( treeData->isFeatureNumerical(splitFeatureIdx) ) {
     //cout << "num splitter" << endl;
-    Node::setSplitter(splitFeatureIdx,splitValue);
+    Node::setSplitter(splitFeatureIdx,treeData->getFeatureName(splitFeatureIdx),splitValue);
   } else {
     //cout << "cat splitter" << endl;
-    Node::setSplitter(splitFeatureIdx,splitValues_left,splitValues_right);
+    Node::setSplitter(splitFeatureIdx,treeData->getFeatureName(splitFeatureIdx),splitValues_left,splitValues_right);
   }
 
   vector<num_t> trainData = treeData->getFeatureData(targetIdx,sampleIcs);
