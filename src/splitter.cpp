@@ -1,9 +1,11 @@
 #include "splitter.hpp"
 
-Splitter::Splitter():
+/*
+  Splitter::Splitter():
   splitterType_(NO_SPLITTER) {
-
-}
+  
+  }
+*/
 
 Splitter::Splitter(const string& splitterName,
 		   num_t splitLeftLeqValue):
@@ -27,8 +29,8 @@ Splitter::Splitter(const string& splitterName,
 
 }
 
-/*
-  Splitter::Splitter(const Splitter& splitter) {
+
+Splitter::Splitter(const Splitter& splitter) {
   
   splitterType_ = splitter.splitterType_;
   splitterName_ = splitter.splitterName_;
@@ -36,8 +38,8 @@ Splitter::Splitter(const string& splitterName,
   splitLeftValues_ = splitter.splitLeftValues_;
   splitRightValues_ = splitter.splitRightValues_;
   
-  }
-*/
+}
+
 
 Splitter::~Splitter() {
 
