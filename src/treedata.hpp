@@ -10,13 +10,10 @@
 #include <fstream>
 
 #include "datadefs.hpp"
-//#include "feature.hpp"
 #include "mtrand.h"
 
 using namespace std;
 using datadefs::num_t;
-//using datadefs::fwMapping_t;
-//using datadefs::bwMapping_t;
 
 class Treedata  {
 public:
@@ -28,14 +25,11 @@ public:
   
   void keepFeatures(const vector<size_t>& featureIcs);
 
-  //Returns the number of features
   size_t nFeatures();
 
   num_t pearsonCorrelation(size_t featureidx1, size_t featureidx2);
 
-  void getMatchingTargetIdx(const string& targetStr, size_t& targetIdx);
-  //void getMatchingTargetIcs(const string& targetStr, set<size_t>& targetIcs);
-
+  size_t getFeatureIdx(const string& featureName);
   string getFeatureName(const size_t featureIdx);
   string getSampleName(const size_t sampleIdx);
 

@@ -459,8 +459,7 @@ int main(const int argc, char* const argv[]) {
 
   // After masking, it's safe to refer to features as indices 
   // TODO: rf_ace.cpp: this should be made obsolete; instead of indices, use the feature headers
-  size_t targetIdx;
-  treedata.getMatchingTargetIdx(gen_op.targetStr,targetIdx);
+  size_t targetIdx = treedata.getFeatureIdx(gen_op.targetStr);
 
   //If default mTry is to be used...
   if ( RF_op.mTry == RF_DEFAULT_M_TRY ) {
@@ -596,7 +595,7 @@ int main(const int argc, char* const argv[]) {
   pValues.resize( nSignificantFeatures );
   importanceValues.resize ( nSignificantFeatures );
   
-  treedata.getMatchingTargetIdx(gen_op.targetStr,targetIdx);
+  targetIdx = treedata.getFeatureIdx(gen_op.targetStr);
   assert( gen_op.targetStr == treedata.getFeatureName(targetIdx) );
   
   // Print some statistics

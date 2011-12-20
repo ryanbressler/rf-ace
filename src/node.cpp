@@ -19,19 +19,30 @@ Node::Node():
 
 Node::~Node() {
 
-  if ( leftChild_ || rightChild_ ) {
-
-    if ( leftChild_ && rightChild_ ) {
-      delete leftChild_;
-      delete rightChild_;
-      delete splitter_;
-    } else {
-      cerr << "Node has only one child!" << endl;
-      exit(1);
-    }
+  // if ( leftChild_ || rightChild_ ) {
+  
+  if ( this->hasChildren() ) {
     
+    this->deleteTree();
+    
+    //} else {
+    //cerr << "Node::~Node(): the node has only one child!" << endl;
+    //exit(1);
   }
+  
+  // }
+  
+}
 
+/**
+ * Deletes child nodes, which will cascade all the way to the leaf nodes 
+ */
+void Node::deleteTree() {
+  
+  delete leftChild_;
+  delete rightChild_;
+  delete splitter_;
+  
 }
 
 // !! Documentation: consider combining with the documentation in the header
@@ -144,8 +155,7 @@ void Node::print(ofstream& toFile) {
 
 // !! Documentation: just your usual accessor, returning a copy of
 // !! trainPrediction_.
-num_t Node::getLeafTrainPrediction() {
-  //assert( isTrainPredictionSet_ );
+num_t Node::getTrainPrediction() {
   return( trainPrediction_ );
 }
 
@@ -177,7 +187,7 @@ void Node::recursiveNodeSplit(Treedata* treeData,
 	
         featureSampleIcs[i] = treeData->getRandomIndex(treeData->nFeatures());
 	// If the sampled feature is a contrast... 
-	if( treeData->getRandomIndex( 35535 ) / 35535.0 < 0.01 ) { // CHANGE TO 0.5 and see what's the difference in time consumption
+	if( treeData->getRandomIndex( 35535 ) < 355.35 ) { // %1 sampling rate
 	  //cout << "Generated CONTRAST \n" << endl;
 	  featureSampleIcs[i] += treeData->nFeatures();
 	}
@@ -257,11 +267,9 @@ void Node::recursiveNodeSplit(Treedata* treeData,
   }
 
   if ( treeData->isFeatureNumerical(splitFeatureIdx) ) {
-    //cout << "num splitter" << endl;
-    Node::setSplitter(splitFeatureIdx,treeData->getFeatureName(splitFeatureIdx),splitValue);
+    this->setSplitter(splitFeatureIdx,treeData->getFeatureName(splitFeatureIdx),splitValue);
   } else {
-    //cout << "cat splitter" << endl;
-    Node::setSplitter(splitFeatureIdx,treeData->getFeatureName(splitFeatureIdx),splitValues_left,splitValues_right);
+    this->setSplitter(splitFeatureIdx,treeData->getFeatureName(splitFeatureIdx),splitValues_left,splitValues_right);
   }
 
   vector<num_t> trainData = treeData->getFeatureData(targetIdx,sampleIcs);

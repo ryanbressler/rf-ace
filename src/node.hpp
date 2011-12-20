@@ -37,13 +37,15 @@ public:
   //Given a value, descends to either one of the child nodes, if existing, otherwise returns a pointer to the current node
   Node* percolateData(num_t value);
 
-  num_t getLeafTrainPrediction();
+  num_t getTrainPrediction();
 
   //Logic test whether the node has children or not
   inline bool hasChildren() { return( splitter_ ); }
 
   Node* leftChild();
   Node* rightChild();
+
+  void deleteTree();
 
   size_t nNodes();
 

@@ -121,12 +121,12 @@ void StochasticForestTest::test_treeDataPercolation() {
   Node::Node* nodep(&rootNode);
   SF.percolateSampleIdx(&treeData,0,&nodep);
   CPPUNIT_ASSERT( nodep == node00 );
-  CPPUNIT_ASSERT( fabs( nodep->getLeafTrainPrediction() - 3.9 ) < datadefs::EPS );
+  CPPUNIT_ASSERT( fabs( nodep->getTrainPrediction() - 3.9 ) < datadefs::EPS );
 
   nodep = &rootNode;
   SF.percolateSampleIdx(&treeData,1,&nodep);
   CPPUNIT_ASSERT( nodep == node011 );
-  CPPUNIT_ASSERT( fabs( nodep->getLeafTrainPrediction() - 4.3 ) < datadefs::EPS );
+  CPPUNIT_ASSERT( fabs( nodep->getTrainPrediction() - 4.3 ) < datadefs::EPS );
 
   CPPUNIT_ASSERT( fabs( SF.predictSampleByTree(&treeData,0,0) - 3.9 ) < datadefs::EPS );
   CPPUNIT_ASSERT( fabs( SF.predictSampleByTree(&treeData,1,0) - 4.3 ) < datadefs::EPS );
