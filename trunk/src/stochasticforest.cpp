@@ -329,7 +329,7 @@ num_t StochasticForest::predictSampleByTree(Treedata* treeData, size_t sampleIdx
   
   StochasticForest::percolateSampleIdx(treeData, sampleIdx, &currentNode);
   
-  return( currentNode->getLeafTrainPrediction() );
+  return( currentNode->getTrainPrediction() );
 }  
 
 /*
@@ -460,7 +460,7 @@ void StochasticForest::predictWithNumericalRF(Treedata* treeData, vector<num_t>&
       
       Node* nodep(rootNodes_[treeIdx]);
       StochasticForest::percolateSampleIdx(treeData, sampleIdx, &nodep);
-      prediction[sampleIdx] += nodep->getLeafTrainPrediction();
+      prediction[sampleIdx] += nodep->getTrainPrediction();
     
     }
 
@@ -789,28 +789,23 @@ void StochasticForest::treeImpurity(Treedata* treeData,
   for(map<Node*,vector<size_t> >::iterator it(trainIcs.begin()); it != trainIcs.end(); ++it) {
 
     vector<num_t> targetData = treeData->getFeatureData(targetIdx_,it->second);
-    num_t leafPrediction = it->first->getLeafTrainPrediction();
-    num_t leafImpurity = 0;
-    size_t nSamplesInLeaf = targetData.size();
-
-    //assert( !datadefs::isNAN(leafPrediction) );
+    num_t nodePrediction = it->first->getTrainPrediction();
+    num_t nodeImpurity = 0;
+    size_t nSamplesInNode = targetData.size();
 
     if(isTargetNumerical) {
-      for(size_t i = 0; i < nSamplesInLeaf; ++i) {
-        leafImpurity += pow(leafPrediction - targetData[i],2);
+      for(size_t i = 0; i < nSamplesInNode; ++i) {
+        nodeImpurity += pow(nodePrediction - targetData[i],2);
       }
 
     } else {
-      for(size_t i = 0; i < nSamplesInLeaf; ++i) {
-        leafImpurity += leafPrediction != targetData[i]; 
-	//{
-	// ++leafImpurity;
-        //}
+      for(size_t i = 0; i < nSamplesInNode; ++i) {
+        nodeImpurity += nodePrediction != targetData[i]; 
       }
     }
 
-    n_tot += nSamplesInLeaf;
-    impurity += nSamplesInLeaf * leafImpurity;
+    n_tot += nSamplesInNode;
+    impurity += nSamplesInNode * nodeImpurity;
   }
 
   if(n_tot > 0) {

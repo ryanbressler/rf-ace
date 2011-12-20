@@ -417,32 +417,38 @@ num_t Treedata::pearsonCorrelation(size_t featureidx1, size_t featureidx2) {
   return(r);
 }
 
+size_t Treedata::getFeatureIdx(const string& featureName) {
+  return( name2idx_[featureName] );
+}
+
 // WILL BECOME DEPRECATED
-void Treedata::getMatchingTargetIdx(const string& targetStr, size_t& targetIdx) {
+/*
+  void Treedata::getMatchingTargetIdx(const string& targetStr, size_t& targetIdx) {
   
   bool isFoundAlready = false;
-
+  
   for ( size_t featureIdx = 0; featureIdx < Treedata::nFeatures(); ++featureIdx ) {
-    
-    if ( features_[featureIdx].name == targetStr ) {
-    
-      if ( isFoundAlready ) {
-	cerr << "Multiple instances of the same target found in the data!" << endl;
-	assert(false);
-      }
-      
-      isFoundAlready = true;
-      targetIdx = featureIdx;
-    
-    }
+  
+  if ( features_[featureIdx].name == targetStr ) {
+  
+  if ( isFoundAlready ) {
+  cerr << "Multiple instances of the same target found in the data!" << endl;
+  assert(false);
   }
-
+  
+  isFoundAlready = true;
+  targetIdx = featureIdx;
+  
+  }
+  }
+  
   if ( !isFoundAlready ) {
-    cerr << "Feature '" << targetStr << "' not found. Quitting..." << endl;
-    exit(1);
+  cerr << "Feature '" << targetStr << "' not found. Quitting..." << endl;
+  exit(1);
   }
-
-}
+  
+  }
+*/
 
 string Treedata::getFeatureName(const size_t featureIdx) {
   return(features_[featureIdx].name);
