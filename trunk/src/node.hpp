@@ -40,7 +40,7 @@ public:
   num_t getTrainPrediction();
 
   //Logic test whether the node has children or not
-  inline bool hasChildren() { if ( splitter_ ) { return(true); } else { return(false); } }
+  inline bool hasChildren() { return(splitter_); }
 
   Node* leftChild();
   Node* rightChild();
