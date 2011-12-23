@@ -14,24 +14,18 @@ Node::Node():
   
 }
 
-// !! Documentation: establishes a recursive relationship that deletes all
-// !! children, unless their pointers are orphaned.
-
+/** 
+ * Destructor for the node: initiates a recursive destruction for all child nodes
+ */
 Node::~Node() {
-
-  // if ( leftChild_ || rightChild_ ) {
   
+  //If the node has children, some moery cleanup needs to be performed
   if ( this->hasChildren() ) {
-    
+
+    // Deallocates dynamically allocated memory
     this->deleteTree();
-    
-    //} else {
-    //cerr << "Node::~Node(): the node has only one child!" << endl;
-    //exit(1);
   }
-  
-  // }
-  
+
 }
 
 /**
@@ -81,6 +75,7 @@ void Node::setSplitter(size_t splitterIdx, const string& splitterName, const set
 
 }
 
+
 Node* Node::percolateData(num_t value) {
 
   if ( datadefs::isNAN( value ) ) {
@@ -88,18 +83,23 @@ Node* Node::percolateData(num_t value) {
     exit(1);
   }
 
-  if ( !splitter_ ) {
+  // Return this if the node doesn't have children ( == is a leaf node )
+  if ( !this->hasChildren() ) {
     return( this );
   }
 
+  // Return left child if splits left
   if ( splitter_->splitsLeft( value ) ) {
     return( leftChild_ );
   }
 
+  // Return right child if splits right
   if ( splitter_->splitsRight( value ) ) {
     return( rightChild_ );
   }
 
+  // Return this if splits neither left nor right, which can happen if 
+  // the splitter is categorical
   return( this );
 
 }
@@ -140,12 +140,16 @@ void Node::recursiveNDescendantNodes(size_t& n) {
   }
 }
 
+/**
+ * Recursively prints a tree to a stream (file)
+ */
 void Node::print(ofstream& toFile) {
   
   if ( !this->hasChildren() ) {
     return;
   }
   
+  // TODO: Node::print() needs to be completed
   toFile << this->splitter_->name() << "   SPLITTER_NAME   SPLIT_LEFT   SPLIT_RIGHT" << endl;
   
   this->leftChild()->print(toFile);
@@ -203,39 +207,22 @@ void Node::recursiveNodeSplit(Treedata* treeData,
     }
   }
 
-  //vector<num_t> targetData;
-  //vector<num_t> featureData;
-  
-  //const bool isTargetNumerical = rootNode->isTargetNumerical();
-  //treeData->getFeatureData(targetIdx,sampleIcs,targetData);
-
   vector<size_t> sampleIcs_left,sampleIcs_right;
-  num_t splitValue;
-  set<num_t> splitValues_left, splitValues_right;
-  //size_t bestSplitterIdx;
-  //Splitter bestSplitter;
 
-  num_t splitFitness;
   size_t splitFeatureIdx;
-
-  bool isSplitSuccessful;
+  num_t splitFitness;
   
+  bool foundSplit = this->regularSplitterSeek(treeData,
+					      targetIdx,
+					      sampleIcs,
+					      featureSampleIcs,
+					      GI,
+					      splitFeatureIdx,
+					      sampleIcs_left,
+					      sampleIcs_right,
+					      splitFitness);
   
-  isSplitSuccessful = Node::regularSplitterSeek(treeData,
-						targetIdx,
-						sampleIcs,
-						featureSampleIcs,
-						GI,
-						splitFeatureIdx,
-						sampleIcs_left,
-						sampleIcs_right,
-						splitValue,
-						splitValues_left,
-						splitValues_right,
-						splitFitness);
-  
-  
-  if(!isSplitSuccessful) {
+  if ( !foundSplit ) {
 
     vector<num_t> leafTrainData = treeData->getFeatureData(targetIdx,sampleIcs);
 
@@ -246,31 +233,31 @@ void Node::recursiveNodeSplit(Treedata* treeData,
     return;
   }
   
-  if ( true ) {
-    //cout << "Out of ";
-    //for ( size_t i = 0; i < featureSampleIcs.size(); ++i ) {
-    //cout << " " << treeData->getFeatureName(featureSampleIcs[i]);
-    //}
-    //cout << endl;
-    
-    //cout << " ---- Feature " << treeData->getFeatureName(splitFeatureIdx) << " splits the data with ";
+  //if ( false ) {
+  //cout << "Out of ";
+  //for ( size_t i = 0; i < featureSampleIcs.size(); ++i ) {
+  //cout << " " << treeData->getFeatureName(featureSampleIcs[i]);
+  //}
+  //cout << endl;
+  
+  //cout << " ---- Feature " << treeData->getFeatureName(splitFeatureIdx) << " splits the data with ";
+  
+  //for ( size_t i = 0; i < sampleIcs_left.size(); ++i ) {
+  //  cout << " " << treeData->getRawFeatureData(targetIdx,sampleIcs_left[i]);
+  //}
+  //cout << " ] <==> [ ";
+  //for ( size_t i = 0; i < sampleIcs_right.size(); ++i ) {
+  //  cout << " " << treeData->getRawFeatureData(targetIdx,sampleIcs_right[i]);
+  //}
+  
+  //cout << "FITNESS " << splitFitness << endl;
+  //}
 
-    //for ( size_t i = 0; i < sampleIcs_left.size(); ++i ) {
-    //  cout << " " << treeData->getRawFeatureData(targetIdx,sampleIcs_left[i]);
-    //}
-    //cout << " ] <==> [ ";
-    //for ( size_t i = 0; i < sampleIcs_right.size(); ++i ) {
-    //  cout << " " << treeData->getRawFeatureData(targetIdx,sampleIcs_right[i]);
-    //}
-    
-    //cout << "FITNESS " << splitFitness << endl;
-  }
-
-  if ( treeData->isFeatureNumerical(splitFeatureIdx) ) {
-    this->setSplitter(splitFeatureIdx,treeData->getFeatureName(splitFeatureIdx),splitValue);
-  } else {
-    this->setSplitter(splitFeatureIdx,treeData->getFeatureName(splitFeatureIdx),splitValues_left,splitValues_right);
-  }
+  //if ( treeData->isFeatureNumerical(splitFeatureIdx) ) {
+  //this->setSplitter(splisplitFeatureIdx,treeData->getFeatureName(splitFeatureIdx),splitValue);
+  //} else {
+  //this->setSplitter(splitter);//splitFeatureIdx,treeData->getFeatureName(splitFeatureIdx),splitValues_left,splitValues_right);
+  //}
 
   vector<num_t> trainData = treeData->getFeatureData(targetIdx,sampleIcs);
 
@@ -294,21 +281,16 @@ bool Node::regularSplitterSeek(Treedata* treeData,
 			       size_t& splitFeatureIdx,
 			       vector<size_t>& sampleIcs_left,
 			       vector<size_t>& sampleIcs_right,
-			       num_t& splitValue,
-			       set<num_t>& splitValues_left,
-			       set<num_t>& splitValues_right,
 			       num_t& splitFitness) {
-
-  //bool isTargetNumerical = treeData->isFeatureNumerical(targetIdx);
-  //vector<num_t> targetData = treeData->getFeatureData(targetIdx,sampleIcs);
-
+  
+  num_t splitValue = datadefs::NUM_NAN;
+  set<num_t> splitValues_left,splitValues_right;
+  
   size_t nFeaturesForSplit = featureSampleIcs.size();
   splitFeatureIdx = nFeaturesForSplit;
-  splitFitness = 0.0;
+  //splitFitness = 0.0;
   
   num_t newSplitFitness;
-  //vector<size_t> newSampleIcs_left;
-  //vector<size_t> newSampleIcs_right;
   num_t newSplitValue;
   set<num_t> newSplitValues_left, newSplitValues_right;
 
@@ -368,6 +350,12 @@ bool Node::regularSplitterSeek(Treedata* treeData,
   
   if ( splitFeatureIdx == nFeaturesForSplit ) {
     return(false);
+  }
+
+  if ( treeData->isFeatureNumerical(splitFeatureIdx) ) {
+    this->setSplitter(splitFeatureIdx,treeData->getFeatureName(splitFeatureIdx),splitValue);
+  } else {
+    this->setSplitter(splitFeatureIdx,treeData->getFeatureName(splitFeatureIdx),splitValues_left,splitValues_right);
   }
 
   return(true);

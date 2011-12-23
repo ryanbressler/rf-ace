@@ -23,7 +23,7 @@ public:
   bool splitsLeft(num_t testValue);
   bool splitsRight(num_t testValue);
 
-  string name();
+  inline string name() { return(splitterName_); }
 
   /*
     void reset();

@@ -106,31 +106,10 @@ bool Splitter::splitsRight(num_t testValue) {
 }
 
 /*
-  void Splitter::reset() {
-  splitterType_ = NO_SPLITTER;
-  }
-  
-  void Splitter::reset(num_t splitLeftLeqValue) {
-  
-  splitterType_ = NUMERICAL_SPLITTER;
-  
-  splitLeftLeqValue_ = splitLeftLeqValue;
-  
-  }
-  
-  void Splitter::reset(const set<num_t>& splitLeftValues, const set<num_t>& splitRightValues) {
-  
-  splitterType_ = CATEGORICAL_SPLITTER;
-  
-  splitLeftValues_ = splitLeftValues;
-  splitRightValues_ = splitRightValues;
-  
+  string Splitter::name() {
+  return( splitterName_ );
   }
 */
-
-string Splitter::name() {
-  return( splitterName_ );
-}
 
 void Splitter::print() {
 

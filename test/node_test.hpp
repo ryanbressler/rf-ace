@@ -49,27 +49,29 @@ public:
 void NodeTest::setUp() {}
 void NodeTest::tearDown() {}
 
+
 void NodeTest::test_setSplitter() {
   
   size_t splitterIdx = 3;
   datadefs::num_t splitLeftLeqValue = 0.5; 
-
+  
   //Splitter::Splitter splitter(0.5);
-
+  
   Node::Node node;
-
+  
   //CPPUNIT_ASSERT( false );
-
+  
   CPPUNIT_ASSERT( !node.splitter_ );
-
+  
   node.setSplitter(splitterIdx,"foo",splitLeftLeqValue);
-
+  
   CPPUNIT_ASSERT( node.splitterIdx_ == splitterIdx );
   CPPUNIT_ASSERT( node.splitter_->splitterType_ == Splitter::NUMERICAL_SPLITTER );
   CPPUNIT_ASSERT( fabs(node.splitter_->splitLeftLeqValue_ - splitLeftLeqValue) < datadefs::EPS );
   
   
 }
+
 
 void NodeTest::test_getSplitter() {
   //Node::getSplitter(...);
@@ -78,11 +80,10 @@ void NodeTest::test_getSplitter() {
 void NodeTest::test_percolateData() {
   
   Node::Node node0;
-  node0.setSplitter(0,"foo",0.1);
+  //Splitter splitter("foo",0.1);
+  node0.setSplitter(1,"foo",0.1);
   CPPUNIT_ASSERT( node0.leftChild_ == node0.percolateData(0.09) );
   CPPUNIT_ASSERT( node0.rightChild_ == node0.percolateData(0.11) );
-
-  
 
 }
 
