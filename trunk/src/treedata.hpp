@@ -66,7 +66,6 @@ public:
 
   map<string,num_t> getDataMapping(const size_t featureIdx);
   
-  
   //Generates a bootstrap sample from the real samples of featureIdx. Samples not in the bootstrap sample will be stored in oob_ics,
   //and the number of oob samples is stored in noob.
   void bootstrapFromRealSamples(const bool withReplacement, 

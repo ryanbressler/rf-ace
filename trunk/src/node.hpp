@@ -26,13 +26,13 @@ public:
   Node();
   ~Node();
 
+  //Gets the splitter for the node
+  inline size_t splitterIdx() { return( splitterIdx_ ); }
+
   //Sets a splitter feature for the node.
   //NOTE: splitter can be assigned only once! Subsequent setter calls will raise an assertion failure.
   void setSplitter(size_t splitterIdx, const string& splitterName, num_t splitLeftLeqValue);
   void setSplitter(size_t splitterIdx, const string& splitterName, const set<num_t>& leftSplitValues, const set<num_t>& rightSplitValues);
-
-  //Gets the splitter for the node
-  inline size_t splitterIdx() { return(splitterIdx_); }
 
   //Given a value, descends to either one of the child nodes, if existing, otherwise returns a pointer to the current node
   Node* percolateData(num_t value);
@@ -40,7 +40,7 @@ public:
   num_t getTrainPrediction();
 
   //Logic test whether the node has children or not
-  inline bool hasChildren() { return( splitter_ ); }
+  inline bool hasChildren() { if ( splitter_ ) { return(true); } else { return(false); } }
 
   Node* leftChild();
   Node* rightChild();
@@ -90,9 +90,6 @@ protected:
 			   size_t& splitFeatureIdx,
 			   vector<size_t>& sampleIcs_left,
 			   vector<size_t>& sampleIcs_right,
-			   num_t& splitValue,
-			   set<num_t>& splitValues_left,
-			   set<num_t>& splitValues_right,
 			   num_t& splitFitness);
 
 #ifndef TEST__

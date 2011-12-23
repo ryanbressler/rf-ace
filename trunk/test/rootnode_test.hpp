@@ -46,7 +46,7 @@ void RootNodeTest::test_regressionTreeSplitting() {
 			      partitionSequence);
 
   // Split the rootnode
-  rootNode.setSplitter(0,"foo",1.1);
+  rootNode.setSplitter(1,"foo",1.1);
   rootNode.trainPrediction_ = 5.0;
   Node::Node* node0 = rootNode.leftChild_;
   Node::Node* node1 = rootNode.rightChild_;
