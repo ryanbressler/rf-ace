@@ -1,5 +1,6 @@
 #include<iostream>
 #include<cassert>
+#include<iomanip>
 #include "node.hpp"
 
 Node::Node():
@@ -140,20 +141,33 @@ void Node::recursiveNDescendantNodes(size_t& n) {
   }
 }
 
+
 /**
  * Recursively prints a tree to a stream (file)
  */
-void Node::print(ofstream& toFile) {
-  
+void Node::print(size_t& nodeIdx, ofstream& toFile) {
+
+  toFile << "NODE " << setw(4) << nodeIdx << " PRED. = " << setprecision(3) << trainPrediction_;
+
   if ( !this->hasChildren() ) {
+    toFile << "\tLEAF" << endl;
     return;
   }
-  
+
   // TODO: Node::print() needs to be completed
-  toFile << this->splitter_->name() << "   SPLITTER_NAME   SPLIT_LEFT   SPLIT_RIGHT" << endl;
+  toFile << "\tL[" << nodeIdx+1 << "](" << setprecision(3) << leftChild_->getTrainPrediction() << ") <==> R[" << nodeIdx+2 << "](" 
+	 << setprecision(3) << rightChild_->getTrainPrediction() << ")\tSPLITTER = " << splitter_->name() << endl;
+
+  leftChild_->print(++nodeIdx,toFile);
+  rightChild_->print(++nodeIdx,toFile);
+}
+
+void Node::print(ofstream& toFile) {
   
-  this->leftChild()->print(toFile);
-  this->rightChild()->print(toFile);
+  size_t nodeIdx = 0;
+
+  this->print(nodeIdx,toFile);
+
 }
 
 

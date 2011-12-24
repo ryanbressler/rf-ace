@@ -50,6 +50,7 @@ public:
   size_t nNodes();
 
   void print(ofstream& toFile);
+  void print(size_t& nodeIdx, ofstream& toFile);
 
   enum LeafPredictionFunctionType { LEAF_MEAN, LEAF_MODE, LEAF_GAMMA };
 
@@ -115,11 +116,11 @@ private:
                                set<num_t>& splitValues_right,
                                num_t& splitFitness);
 
-  num_t splitFitness(vector<num_t> const& data,
-                     bool const& isFeatureNumerical,
-                     size_t const& minSplit,
-                     vector<size_t> const& sampleIcs_left,
-                     vector<size_t> const& sampleIcs_right);
+  //num_t splitFitness(vector<num_t> const& data,
+  //                  bool const& isFeatureNumerical,
+  //                  size_t const& minSplit,
+  //                  vector<size_t> const& sampleIcs_left,
+  //                  vector<size_t> const& sampleIcs_right);
 
   //A recursive function that will accumulate the number of descendant nodes the current nodes has
   void recursiveNDescendantNodes(size_t& n);
