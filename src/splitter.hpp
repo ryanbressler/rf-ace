@@ -25,6 +25,8 @@ public:
 
   inline string name() { return(splitterName_); }
 
+  //void print();
+
   /*
     void reset();
     void reset(const string& splitterName, num_t splitLeftLeqValue);

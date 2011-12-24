@@ -106,29 +106,27 @@ bool Splitter::splitsRight(num_t testValue) {
 }
 
 /*
-  string Splitter::name() {
-  return( splitterName_ );
+  void Splitter::print(ofstream& toFile) {
+  
+  toFile << this->name();
+  
+  if ( splitterType_ == NO_SPLITTER ) {
+  toFile << "Splitter: NOT SET" << endl;
+  } else if ( splitterType_ == CATEGORICAL_SPLITTER ) {
+  toFile << "Splitter: CATEGORICAL" << endl;
+  toFile << "[";
+  for ( set<num_t>::const_iterator it( splitLeftValues_.begin() ); it != splitLeftValues_.end(); ++it) {
+  toFile << " " << *it;
+  }
+  toFile << " ] <==> [";
+  for ( set<num_t>::const_iterator it( splitRightValues_.begin() ); it != splitRightValues_.end(); ++it) {
+  toFile << " " << *it;
+  }
+  toFile << " ]" << endl;
+  } else {
+  toFile << "Splitter: NUMERICAL" << endl;
+  toFile << " < " << splitLeftLeqValue_ << endl;  
+  }
+  
   }
 */
-
-void Splitter::print() {
-
-  if ( splitterType_ == NO_SPLITTER ) {
-    cout << "Splitter: NOT SET" << endl;
-  } else if ( splitterType_ == CATEGORICAL_SPLITTER ) {
-    cout << "Splitter: CATEGORICAL" << endl;
-    cout << "[";
-    for ( set<num_t>::const_iterator it( splitLeftValues_.begin() ); it != splitLeftValues_.end(); ++it) {
-      cout << " " << *it;
-    }
-    cout << " ] <==> [";
-    for ( set<num_t>::const_iterator it( splitRightValues_.begin() ); it != splitRightValues_.end(); ++it) {
-      cout << " " << *it;
-    }
-    cout << " ]" << endl;
-  } else {
-    cout << "Splitter: NUMERICAL" << endl;
-    cout << " < " << splitLeftLeqValue_ << endl;  
-  }
-
-}
