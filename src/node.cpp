@@ -145,28 +145,51 @@ void Node::recursiveNDescendantNodes(size_t& n) {
 /**
  * Recursively prints a tree to a stream (file)
  */
-void Node::print(size_t& nodeIdx, ofstream& toFile) {
+void Node::print(string& traversal, ofstream& toFile) {
 
-  toFile << "NODE " << setw(4) << nodeIdx << " PRED. = " << setprecision(3) << trainPrediction_;
+  toFile << "NODE [" << traversal << "] PRED. = " << setprecision(3) << trainPrediction_;
 
   if ( !this->hasChildren() ) {
     toFile << "\tLEAF" << endl;
     return;
   }
 
+  string traversalLeft = traversal;
+  traversalLeft.append("L");
+  string traversalRight = traversal;
+  traversalRight.append("R");
+
+  bool isLeftNodeLeaf = false;
+  bool isRightNodeLeaf = false;
+
+  if ( !leftChild_->hasChildren() ) {
+    isLeftNodeLeaf = true;
+    traversalLeft.append("*");
+  }
+
+  if ( !rightChild_->hasChildren() ) {
+    isRightNodeLeaf = true;
+    traversalRight.append("*");
+  }
+
   // TODO: Node::print() needs to be completed
-  toFile << "\tL[" << nodeIdx+1 << "](" << setprecision(3) << leftChild_->getTrainPrediction() << ") <==> R[" << nodeIdx+2 << "](" 
+  toFile << "\t[" << traversalLeft << "](" << setprecision(3) << leftChild_->getTrainPrediction() << ") <==> [" << traversalRight << "](" 
 	 << setprecision(3) << rightChild_->getTrainPrediction() << ")\tSPLITTER = " << splitter_->name() << endl;
 
-  leftChild_->print(++nodeIdx,toFile);
-  rightChild_->print(++nodeIdx,toFile);
+  if ( !isLeftNodeLeaf ) {
+    leftChild_->print(traversalLeft,toFile);
+  }
+
+  if ( !isRightNodeLeaf ) {
+    rightChild_->print(traversalRight,toFile);
+  }
 }
 
 void Node::print(ofstream& toFile) {
   
-  size_t nodeIdx = 0;
+  string traversal("");
 
-  this->print(nodeIdx,toFile);
+  this->print(traversal,toFile);
 
 }
 
