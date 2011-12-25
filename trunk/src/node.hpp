@@ -50,7 +50,7 @@ public:
   size_t nNodes();
 
   void print(ofstream& toFile);
-  void print(size_t& nodeIdx, ofstream& toFile);
+  void print(string& traversal, ofstream& toFile);
 
   enum LeafPredictionFunctionType { LEAF_MEAN, LEAF_MODE, LEAF_GAMMA };
 
