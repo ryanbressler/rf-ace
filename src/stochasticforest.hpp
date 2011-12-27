@@ -33,8 +33,8 @@ public:
   void predict(vector<string>& prediction, vector<num_t>& confidence);
   void predict(vector<num_t>& prediction, vector<num_t>& confidence);
   
-  void predict(Treedata* treeData, vector<string>& prediction, vector<num_t>& confidence);
-  void predict(Treedata* treeData, vector<num_t>& prediction, vector<num_t>& confidence);
+  //void predict(Treedata* treeData, vector<string>& prediction, vector<num_t>& confidence);
+  //void predict(Treedata* treeData, vector<num_t>& prediction, vector<num_t>& confidence);
 
   //Counts the number of nodes in the forest
   size_t nNodes();
@@ -52,24 +52,24 @@ private:
   void transformLogistic(const size_t numClasses, vector<num_t>& prediction, vector<num_t>& probability);
 
   // TODO: predictSampleByTree() and percolateSampleIdx families in StochasticForest need to be fused together 
-  num_t predictSampleByTree(Treedata* treeData, size_t sampleIdx, size_t treeIdx);
-  vector<num_t> predictDatasetByTree(Treedata* treeData, size_t treeIdx);
+  num_t predictSampleByTree(size_t sampleIdx, size_t treeIdx);
+  vector<num_t> predictDatasetByTree(size_t treeIdx);
 
-  void predictWithCategoricalRF(Treedata* treeData, vector<string>& categoryPrediction);
-  void predictWithNumericalRF(Treedata* treeData, vector<num_t>& prediction);
+  void predictWithCategoricalRF(vector<string>& categoryPrediction);
+  void predictWithNumericalRF(vector<num_t>& prediction);
 
-  void predictWithCategoricalGBT(Treedata* treeData, vector<string>& categoryPrediction, vector<num_t>& confidence);
-  void predictWithNumericalGBT(Treedata* treeData, vector<num_t>& prediction, vector<num_t>& confidence);
+  void predictWithCategoricalGBT(vector<string>& categoryPrediction, vector<num_t>& confidence);
+  void predictWithNumericalGBT(vector<num_t>& prediction, vector<num_t>& confidence);
 
   //Percolates samples along the trees, starting from the rootNode. Spits out a map<> that ties the percolated train samples to the leaf nodes
-  void percolateSampleIcs(Treedata* treeData, Node* rootNode, const vector<size_t>& sampleIcs, map<Node*,vector<size_t> >& trainIcs);
-  void percolateSampleIcsAtRandom(Treedata* treeData, const size_t featureIdx, Node* rootNode, const vector<size_t>& sampleIcs, map<Node*,vector<size_t> >& trainIcs);
+  void percolateSampleIcs(Node* rootNode, const vector<size_t>& sampleIcs, map<Node*,vector<size_t> >& trainIcs);
+  void percolateSampleIcsAtRandom(const size_t featureIdx, Node* rootNode, const vector<size_t>& sampleIcs, map<Node*,vector<size_t> >& trainIcs);
   
-  void percolateSampleIdx(Treedata* treeData, const size_t sampleIdx, Node** nodep);
-  void percolateSampleIdxAtRandom(Treedata* treeData, const size_t featureIdx, const size_t sampleIdx, Node** nodep);
+  void percolateSampleIdx(const size_t sampleIdx, Node** nodep);
+  void percolateSampleIdxAtRandom(const size_t featureIdx, const size_t sampleIdx, Node** nodep);
 
   //Given the map<>, generated with the percolation functions, a tree impurity score is outputted
-  void treeImpurity(Treedata* treeData, map<Node*,vector<size_t> >& trainIcs, num_t& impurity);
+  void treeImpurity(map<Node*,vector<size_t> >& trainIcs, num_t& impurity);
 
   //Pointer to treeData_ object, stores all the feature data with which the trees are grown (i.e. training data)
   Treedata* treeData_;

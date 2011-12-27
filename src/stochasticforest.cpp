@@ -205,7 +205,7 @@ void StochasticForest::growNumericalGBT() {
 
 
     // What kind of a prediction does the new tree produce?
-    vector<num_t> curPrediction = StochasticForest::predictDatasetByTree(treeData_, treeIdx);
+    vector<num_t> curPrediction = StochasticForest::predictDatasetByTree(treeIdx);
 
     // Calculate the current total prediction adding the newly generated tree
     num_t sqErrorSum = 0.0;
@@ -286,7 +286,7 @@ void StochasticForest::growCategoricalGBT() {
 
       // What kind of a prediction does the new tree produce
       // out of the whole training data set?
-      curPrediction[k] = StochasticForest::predictDatasetByTree(treeData_, treeIdx);
+      curPrediction[k] = StochasticForest::predictDatasetByTree(treeIdx);
       // Calculate the current total prediction adding the newly generated tree
       for (size_t i = 0; i < nSamples; i++) {
         prediction[i][k] = prediction[i][k] + shrinkage_ * curPrediction[k][i];
@@ -321,91 +321,62 @@ void StochasticForest::transformLogistic(const size_t numClasses, vector<num_t>&
 }
 
 // Use a single GBT tree to produce a prediction from a single data sample of an arbitrary data set.
-num_t StochasticForest::predictSampleByTree(Treedata* treeData, size_t sampleIdx, size_t treeIdx) {
+num_t StochasticForest::predictSampleByTree(size_t sampleIdx, size_t treeIdx) {
   
   // Root of current tree
   Node* currentNode = rootNodes_[treeIdx];
   //Node* newNode = rootNodes_[treeIdx];
   
-  StochasticForest::percolateSampleIdx(treeData, sampleIdx, &currentNode);
+  StochasticForest::percolateSampleIdx(sampleIdx, &currentNode);
   
   return( currentNode->getTrainPrediction() );
 }  
 
-/*
-  Traverse to the leaf of the tree
-  while ( currentNode->hasChildren() ) {
-  
-  //currentNode = newNode;
-  
-  //num_t value;
-  
-  // Get the splitter of the branch point
-  size_t featureIdx = currentNode->splitterIdx();
-  
-  // Get the value of the splitter feature of the chosen sample 
-  num_t value = treeData->getFeatureData(featureIdx, sampleIdx);
-  
-  while ( datadefs::isNAN(value) ) {
-  //return( currentNode->getLeafTrainPrediction() );
-  treeData->getRandomData(featureIdx,value);
-  }
-  
-  // The node then makes the branch decision. The chosen child node becomes the new currentNode 
-  Node* childNode = currentNode->percolateData(value);
-  
-  if ( childNode == currentNode ) {
-  break;
-  }
-  
-  currentNode = childNode;
-  
-  }
-  
-  // The loop has ended, and currentNode now points to a leaf node; get the prediction
-  return currentNode->getLeafTrainPrediction();
-  }
-*/
-
 // Use a single GBT tree to produce predictions for an arbitrary data set.
-vector<num_t> StochasticForest::predictDatasetByTree(Treedata* treeData, size_t treeIdx) {
+vector<num_t> StochasticForest::predictDatasetByTree(size_t treeIdx) {
   
-  size_t nSamples = treeData->nSamples();
+  size_t nSamples = treeData_->nSamples();
 
   vector<num_t> prediction(nSamples);
 
   // predict for all samples
   for ( size_t sampleIdx = 0; sampleIdx < nSamples; ++sampleIdx) {
-    prediction[sampleIdx] = StochasticForest::predictSampleByTree(treeData, sampleIdx, treeIdx);
+    prediction[sampleIdx] = StochasticForest::predictSampleByTree(sampleIdx, treeIdx);
     // cout << "Sample " << i << ", prediction " << curPrediction[i]  << endl;
   }
 
   return( prediction );
 }
 
-void StochasticForest::predict(vector<string>& prediction, vector<num_t>& confidence) {
+/*
+  void StochasticForest::predict(vector<string>& prediction, vector<num_t>& confidence) {
   assert(numClasses_ != 0);
-  StochasticForest::predict(treeData_, prediction, confidence);
-}
-
-void StochasticForest::predict(vector<num_t>& prediction, vector<num_t>& confidence) {
+  StochasticForest::predict(prediction, confidence);
+  }
+  
+  void StochasticForest::predict(vector<num_t>& prediction, vector<num_t>& confidence) {
   assert(numClasses_ == 0);
-  StochasticForest::predict(treeData_, prediction, confidence);
-}
+  StochasticForest::predict(prediction, confidence);
+  }
+*/
 
 // Predict with the trained model and using an arbitrary data set. StochasticForest::numClasses_ determines
 // whether the prediction is for a categorical or a numerical variable.
-void StochasticForest::predict(Treedata* treeData, vector<string>& prediction, vector<num_t>& confidence) {
+void StochasticForest::predict(vector<string>& prediction, vector<num_t>& confidence) {
+  
   assert( numClasses_ != 0 );
+  
+  //cerr << "StochasticForest::predict() -- prediction with novel data not yet working" << endl;
+  //exit(1);
 
   switch ( learnedModel_ ) {
   case GBT_MODEL:
-    StochasticForest::predictWithCategoricalGBT(treeData, prediction, confidence);
+    StochasticForest::predictWithCategoricalGBT(prediction, confidence);
     break;
   case RF_MODEL:
     cerr << "Implementation of categorical prediction with RFs isn't yet working" << endl;
     assert(false);
-    StochasticForest::predictWithCategoricalRF(treeData, prediction);
+    StochasticForest::predictWithCategoricalRF(prediction);
     break;
   case NO_MODEL:
     cerr << "Cannot predict -- no model trained" << endl;
@@ -416,17 +387,19 @@ void StochasticForest::predict(Treedata* treeData, vector<string>& prediction, v
 
 // Predict with the trained model and using an arbitrary data set. StochasticForest::numClasses_ determines
 // whether the prediction is for a categorical or a numerical variable.
-void StochasticForest::predict(Treedata* treeData, vector<num_t>& prediction, vector<num_t>& confidence) {
+void StochasticForest::predict(vector<num_t>& prediction, vector<num_t>& confidence) {
+  
   assert( numClasses_ == 0 );
 
-  //cout << "Prediction of numerical data is unstable and doesn't yet yield confidence metrics" << endl;
+  //cerr << "StochasticForest::predict() -- prediction with novel data not yet working" << endl;
+  //exit(1);
   
   switch ( learnedModel_ ) {
   case GBT_MODEL:
-    StochasticForest::predictWithNumericalGBT(treeData, prediction, confidence);
+    StochasticForest::predictWithNumericalGBT(prediction, confidence);
     break;
   case RF_MODEL:
-    StochasticForest::predictWithNumericalRF(treeData, prediction);
+    StochasticForest::predictWithNumericalRF(prediction);
     break;
   case NO_MODEL:
     cerr << "Cannot predict -- no model trained" << endl;
@@ -435,47 +408,49 @@ void StochasticForest::predict(Treedata* treeData, vector<num_t>& prediction, ve
 
 }
 
-void StochasticForest::predictWithCategoricalRF(Treedata* treeData, vector<string>& categoryPrediction) {
+void StochasticForest::predictWithCategoricalRF(vector<string>& categoryPrediction) {
 
   cerr << "Prediction with RF isn't yet working" << endl;
   assert(false);
 
-  categoryPrediction.resize( treeData->nSamples() );
+  categoryPrediction.resize( treeData_->nSamples() );
   
 
 }
 
-void StochasticForest::predictWithNumericalRF(Treedata* treeData, vector<num_t>& prediction) {
+void StochasticForest::predictWithNumericalRF(vector<num_t>& prediction) {
 
   cerr << "Prediction with RF isn't yet working" << endl;
   assert(false);
 
-  prediction.resize( treeData->nSamples() );
+  prediction.resize( treeData_->nSamples() );
 
-  for(size_t sampleIdx = 0; sampleIdx < treeData->nSamples(); ++sampleIdx) {
+  /*
+    for(size_t sampleIdx = 0; sampleIdx < treeData_->nSamples(); ++sampleIdx) {
     
     prediction[sampleIdx] = 0.0;
     
     for(size_t treeIdx = 0; treeIdx < nTrees_; ++treeIdx) {
-      
-      Node* nodep(rootNodes_[treeIdx]);
-      StochasticForest::percolateSampleIdx(treeData, sampleIdx, &nodep);
-      prediction[sampleIdx] += nodep->getTrainPrediction();
+    
+    Node* nodep(rootNodes_[treeIdx]);
+    StochasticForest::percolateSampleIdx(sampleIdx, &nodep);
+    prediction[sampleIdx] += nodep->getTrainPrediction();
     
     }
-
+    
     prediction[sampleIdx] /= nTrees_;
-  
-  }
+    
+    }
+  */
   
 }
 
 
 // Predict categorical target using a GBT "forest" from an arbitrary data set. The function also outputs a confidence score for 
 // the predictions. In this case the confidence score is the probability for the prediction.
-void StochasticForest::predictWithCategoricalGBT(Treedata* treeData, vector<string>& categoryPrediction, vector<num_t>& confidence) {
+void StochasticForest::predictWithCategoricalGBT(vector<string>& categoryPrediction, vector<num_t>& confidence) {
   
-  size_t nSamples = treeData->nSamples();
+  size_t nSamples = treeData_->nSamples();
   
   // For classification, each "tree" is actually numClasses_ trees in a row, each predicting the probability of its own class.
   size_t numIterations = nTrees_ / numClasses_;
@@ -504,7 +479,7 @@ void StochasticForest::predictWithCategoricalGBT(Treedata* treeData, vector<stri
 	size_t t =  m * numClasses_ + k;
 
 	// Shrinked shift towards the new prediction
-        prediction[k] = prediction[k] + shrinkage_ * predictSampleByTree(treeData, i, t);
+        prediction[k] = prediction[k] + shrinkage_ * predictSampleByTree(i, t);
       
       }
     }
@@ -513,8 +488,8 @@ void StochasticForest::predictWithCategoricalGBT(Treedata* treeData, vector<stri
     vector<num_t>::iterator maxProb = max_element( prediction.begin(), prediction.end() );
     num_t maxProbCategory = 1.0*(maxProb - prediction.begin()); 
     
-    map<num_t,string> backMapping = treeData->features_[targetIdx_].backMapping;
-    categoryPrediction[i] = backMapping[ maxProbCategory ]; // classes are 0,1,2,...
+    //map<num_t,string> backMapping = treeData_->features_[targetIdx_].backMapping;
+    categoryPrediction[i] = treeData_->getRawFeatureData(targetIdx_,maxProbCategory); //backMapping[ maxProbCategory ]; // classes are 0,1,2,...
     
     StochasticForest::transformLogistic(numClasses_, prediction, probPrediction); // predictions-to-probabilities
     
@@ -524,9 +499,9 @@ void StochasticForest::predictWithCategoricalGBT(Treedata* treeData, vector<stri
 }
 
 // Predict numerical target using a GBT "forest" from an arbitrary data set
-void StochasticForest::predictWithNumericalGBT(Treedata* treeData, vector<num_t>& prediction, vector<num_t>& confidence) {
+void StochasticForest::predictWithNumericalGBT(vector<num_t>& prediction, vector<num_t>& confidence) {
 
-  size_t nSamples = treeData->nSamples();
+  size_t nSamples = treeData_->nSamples();
   prediction.resize(nSamples);
   confidence.resize(nSamples);
 
@@ -534,7 +509,7 @@ void StochasticForest::predictWithNumericalGBT(Treedata* treeData, vector<num_t>
   for (size_t i=0; i<nSamples; i++) {
     prediction[i] = 0;
     for(size_t t = 0; t < nTrees_; ++t) {
-      prediction[i] = prediction[i] + shrinkage_ * predictSampleByTree(treeData, i, t);
+      prediction[i] = prediction[i] + shrinkage_ * predictSampleByTree(i, t);
     }
     // diagnostic print out the true and the prediction
     //cout << i << "\t" << treeData_->features_[targetIdx_].data[i] << "\t" << prediction[i] <<endl; //// THIS WILL BECOME INVALID UPON REMOVAL OF FRIENDSHIP ASSIGNMENT IN TREEDATA ////
@@ -542,7 +517,7 @@ void StochasticForest::predictWithNumericalGBT(Treedata* treeData, vector<num_t>
 }
 
 
-void StochasticForest::percolateSampleIcs(Treedata* treeData, Node* rootNode, const vector<size_t>& sampleIcs, map<Node*,vector<size_t> >& trainIcs) {
+void StochasticForest::percolateSampleIcs(Node* rootNode, const vector<size_t>& sampleIcs, map<Node*,vector<size_t> >& trainIcs) {
   
   trainIcs.clear();
   //map<Node*,vector<size_t> > trainics;
@@ -551,7 +526,7 @@ void StochasticForest::percolateSampleIcs(Treedata* treeData, Node* rootNode, co
     //cout << " " << i << " / " << sampleIcs.size() << endl; 
     Node* nodep(rootNode);
     size_t sampleIdx = sampleIcs[i];
-    StochasticForest::percolateSampleIdx(treeData,sampleIdx,&nodep);
+    StochasticForest::percolateSampleIdx(sampleIdx,&nodep);
     map<Node*,vector<size_t> >::iterator it(trainIcs.find(nodep));
     if(it == trainIcs.end()) {
       Node* foop(nodep);
@@ -578,14 +553,14 @@ void StochasticForest::percolateSampleIcs(Treedata* treeData, Node* rootNode, co
   }
 }
 
-void StochasticForest::percolateSampleIcsAtRandom(Treedata* treeData, const size_t featureIdx, Node* rootNode, const vector<size_t>& sampleIcs, map<Node*,vector<size_t> >& trainIcs) {
+void StochasticForest::percolateSampleIcsAtRandom(const size_t featureIdx, Node* rootNode, const vector<size_t>& sampleIcs, map<Node*,vector<size_t> >& trainIcs) {
 
   trainIcs.clear();
 
   for(size_t i = 0; i < sampleIcs.size(); ++i) {
     Node* nodep(rootNode);
     size_t sampleIdx = sampleIcs[i];
-    StochasticForest::percolateSampleIdxAtRandom(treeData,featureIdx,sampleIdx,&nodep);
+    StochasticForest::percolateSampleIdxAtRandom(featureIdx,sampleIdx,&nodep);
     map<Node*,vector<size_t> >::iterator it(trainIcs.find(nodep));
     if(it == trainIcs.end()) {
       Node* foop(nodep);
@@ -599,27 +574,26 @@ void StochasticForest::percolateSampleIcsAtRandom(Treedata* treeData, const size
   }
 }
 
-void StochasticForest::percolateSampleIdx(Treedata* treeData, const size_t sampleIdx, Node** nodep) {
-
-  //Node* newNode = *nodep;
-  //Node* currentNode = NULL;
+void StochasticForest::percolateSampleIdx(const size_t sampleIdx, Node** nodep) {
 
   while ( (*nodep)->hasChildren() ) {
-
-    //currentNode = newNode;
     
     size_t featureIdxNew = (*nodep)->splitterIdx();
-    //cout << " featureIdx " << featureIdxNew << endl;  
-    num_t value = treeData->getFeatureData(featureIdxNew,sampleIdx);
+
+    num_t value = treeData_->getFeatureData(featureIdxNew,sampleIdx);
     
     while ( datadefs::isNAN( value ) ) {
-      treeData->getRandomData(featureIdxNew,value);
+      treeData_->getRandomData(featureIdxNew,value);
     }
     
-    Node* childNode = (*nodep)->percolateData(value);
-  
-    //cout << *nodep << " -> " << childNode << endl;
-  
+    Node* childNode;
+
+    if ( treeData_->isFeatureNumerical(featureIdxNew) ) {
+      childNode = (*nodep)->percolateData(value);
+    } else {
+      childNode = (*nodep)->percolateData(treeData_->dataToRaw(featureIdxNew,value));
+    }
+   
     if ( childNode == *nodep ) {
       break;
     }
@@ -628,45 +602,42 @@ void StochasticForest::percolateSampleIdx(Treedata* treeData, const size_t sampl
 
   }
 
-  //nodep = &currentNode;
 }
 
-void StochasticForest::percolateSampleIdxAtRandom(Treedata* treeData, const size_t featureIdx, const size_t sampleIdx, Node** nodep) {
+void StochasticForest::percolateSampleIdxAtRandom(const size_t featureIdx, const size_t sampleIdx, Node** nodep) {
   
-  //Node* newNode = *nodep;
-  //Node* currentNode = NULL;
-
   while ( (*nodep)->hasChildren() ) {
 
-    //currentNode = newNode;
-
     size_t featureIdxNew = (*nodep)->splitterIdx();
+
     num_t value = datadefs::NUM_NAN;
+
     if(featureIdx == featureIdxNew) {
       while(datadefs::isNAN(value)) {
-        treeData->getRandomData(featureIdxNew,value);
+        treeData_->getRandomData(featureIdxNew,value);
       }
     } else {
-      value = treeData->getFeatureData(featureIdxNew,sampleIdx);
-    
+      value = treeData_->getFeatureData(featureIdxNew,sampleIdx);
       while ( datadefs::isNAN(value) ) {
-	treeData->getRandomData(featureIdxNew,value);
+	treeData_->getRandomData(featureIdxNew,value);
       }
-
     }
-    Node* childNode = (*nodep)->percolateData(value);
-    
-    //cout << *nodep << " -> " << childNode << endl;
+
+    Node* childNode;
+
+    if ( treeData_->isFeatureNumerical(featureIdxNew) ) {
+      childNode = (*nodep)->percolateData(value);
+    } else {
+      childNode = (*nodep)->percolateData(treeData_->dataToRaw(featureIdxNew,value));
+    }
 
     if ( childNode == *nodep ) {
       break;
     }
 
     *nodep = childNode;
-    
-  }
 
-  //nodep = &currentNode;
+  }
 
 }
 
@@ -712,12 +683,12 @@ vector<num_t> StochasticForest::featureImportance() {
     nOobSamples += nNewOobSamples;
 
     map<Node*,vector<size_t> > trainIcs;
-    StochasticForest::percolateSampleIcs(treeData_,rootNodes_[treeIdx],oobMatrix_[treeIdx],trainIcs);
+    StochasticForest::percolateSampleIcs(rootNodes_[treeIdx],oobMatrix_[treeIdx],trainIcs);
     
     //cout << "sample ics percolated" << endl;
 
     num_t treeImpurity;
-    StochasticForest::treeImpurity(treeData_,trainIcs,treeImpurity);
+    StochasticForest::treeImpurity(trainIcs,treeImpurity);
 
     // Accumulate tree impurity
     meanTreeImpurity += treeImpurity / nTrees_;
@@ -732,9 +703,9 @@ vector<num_t> StochasticForest::featureImportance() {
         ++nContrastsInForest;
       }
 
-      StochasticForest::percolateSampleIcsAtRandom(treeData_,featureIdx,rootNodes_[treeIdx],oobMatrix_[treeIdx],trainIcs);
+      StochasticForest::percolateSampleIcsAtRandom(featureIdx,rootNodes_[treeIdx],oobMatrix_[treeIdx],trainIcs);
       num_t permutedTreeImpurity;
-      StochasticForest::treeImpurity(treeData_,trainIcs,permutedTreeImpurity);
+      StochasticForest::treeImpurity(trainIcs,permutedTreeImpurity);
       //if ( fabs( treeImpurity ) > datadefs::EPS) {
       importance[featureIdx] += nNewOobSamples * (permutedTreeImpurity - treeImpurity);
       //}
@@ -777,18 +748,17 @@ vector<size_t> StochasticForest::featureFrequency() {
 }
 
 
-void StochasticForest::treeImpurity(Treedata* treeData, 
-				    map<Node*,vector<size_t> >& trainIcs, 
+void StochasticForest::treeImpurity(map<Node*,vector<size_t> >& trainIcs, 
 				    num_t& impurity) {
 
   impurity = 0.0;
   size_t n_tot = 0;
 
-  bool isTargetNumerical = treeData->isFeatureNumerical(targetIdx_);
+  bool isTargetNumerical = treeData_->isFeatureNumerical(targetIdx_);
 
   for(map<Node*,vector<size_t> >::iterator it(trainIcs.begin()); it != trainIcs.end(); ++it) {
 
-    vector<num_t> targetData = treeData->getFeatureData(targetIdx_,it->second);
+    vector<num_t> targetData = treeData_->getFeatureData(targetIdx_,it->second);
     num_t nodePrediction = it->first->getTrainPrediction();
     num_t nodeImpurity = 0;
     size_t nSamplesInNode = targetData.size();

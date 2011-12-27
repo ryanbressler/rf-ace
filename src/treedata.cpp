@@ -703,27 +703,46 @@ void Treedata::getFilteredDataPair(const size_t featureIdx1, const size_t featur
 
 string Treedata::getRawFeatureData(const size_t featureIdx, const size_t sampleIdx) {
 
-  num_t value = features_[featureIdx].data[sampleIdx];
+  num_t data = features_[featureIdx].data[sampleIdx];
 
-  if(datadefs::isNAN(value)) {
+  return( this->getRawFeatureData(featureIdx,data) );
+    
+}
+
+string Treedata::getRawFeatureData(const size_t featureIdx, const num_t data) {
+
+  if(datadefs::isNAN(data)) {
     return(datadefs::STR_NAN);
   } else {
     if(features_[featureIdx].isNumerical) {
       stringstream ss;
-      ss << value;
+      ss << data;
       return(ss.str());
     } else {
-      return(features_[featureIdx].backMapping[ value ]);
+      //cout << data << " --> " << features_[featureIdx].backMapping[ data ] << endl;
+      return(features_[featureIdx].backMapping[ data ]);
     }
   }
-    
 }
 
-map<string,num_t> Treedata::getDataMapping(const size_t featureIdx) {
+string Treedata::dataToRaw(const size_t featureIdx, const num_t data) {
+  return( features_[featureIdx].backMapping[data] );
+}
 
+/*
+  map<string,num_t> Treedata::getDataMapping(const size_t featureIdx) {
+  
   return( features_[featureIdx].mapping );
+  
+  }
+  
+  map<num_t,string> Treedata::getDataBackMapping(const size_t featureIdx) {
+  
+  return( features_[featureIdx].backMapping );
+  
+  }
+*/
 
-}
 
 
 // DEPRECATED ??

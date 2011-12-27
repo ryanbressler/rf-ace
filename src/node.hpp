@@ -32,10 +32,12 @@ public:
   //Sets a splitter feature for the node.
   //NOTE: splitter can be assigned only once! Subsequent setter calls will raise an assertion failure.
   void setSplitter(size_t splitterIdx, const string& splitterName, num_t splitLeftLeqValue);
-  void setSplitter(size_t splitterIdx, const string& splitterName, const set<num_t>& leftSplitValues, const set<num_t>& rightSplitValues);
+  void setSplitter(size_t splitterIdx, const string& splitterName, const set<string>& leftSplitValues, const set<string>& rightSplitValues);
 
   //Given a value, descends to either one of the child nodes, if existing, otherwise returns a pointer to the current node
-  Node* percolateData(num_t value);
+  // TODO: get rid of these as there's too much redundancy hidden within
+  Node* percolateData(const num_t data);
+  Node* percolateData(const string& data);
 
   num_t getTrainPrediction();
 

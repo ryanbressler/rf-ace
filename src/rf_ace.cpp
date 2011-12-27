@@ -234,7 +234,7 @@ private:
 void printHeader() {
   cout << endl;
   cout << " ------------------------------------------------------- " << endl;
-  cout << "|  RF-ACE version:  0.9.7, December 18th, 2011          |" << endl;
+  cout << "|  RF-ACE version:  0.9.7, December 27th, 2011          |" << endl;
   cout << "|    Project page:  http://code.google.com/p/rf-ace     |" << endl;
   cout << "|     Report bugs:  timo.p.erkkila@tut.fi               |" << endl;                     
   cout << " ------------------------------------------------------- " << endl;
@@ -406,6 +406,11 @@ int main(const int argc, char* const argv[]) {
     cerr << "Input file not specified" << endl;
     printHelpHint();
     return EXIT_FAILURE;
+  }
+
+  if ( testInputExists ) {
+    cerr << "Test input file support is currently lacking. Future updates will bring it back up." << endl;
+    exit(1);
   }
 
   // Print help and exit if target index is not specified
@@ -820,7 +825,7 @@ void printPredictionToFile(StochasticForest& SF, Treedata& treeData, const size_
     
     vector<num_t> prediction;
     vector<num_t> confidence;
-    SF.predict(&treeData,prediction,confidence);
+    SF.predict(prediction,confidence);
     
     for(size_t i = 0; i < prediction.size(); ++i) {
       toPredictionFile << targetStr << "\t" << treeData.getSampleName(i) << "\t" << treeData.getRawFeatureData(targetIdx,i)
@@ -831,7 +836,7 @@ void printPredictionToFile(StochasticForest& SF, Treedata& treeData, const size_
     
     vector<string> prediction;
     vector<num_t> confidence;
-    SF.predict(&treeData,prediction,confidence);
+    SF.predict(prediction,confidence);
     
     for(size_t i = 0; i < prediction.size(); ++i) {
       toPredictionFile << targetStr << "\t" << treeData.getSampleName(i) << "\t" << treeData.getRawFeatureData(targetIdx,i)
