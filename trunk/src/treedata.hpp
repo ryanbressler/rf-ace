@@ -60,11 +60,15 @@ public:
   //vector<num_t> operator[](const string& featureName);
 
   string getRawFeatureData(const size_t featureIdx, const size_t sampleIdx);
+  string getRawFeatureData(const size_t featureIdx, const num_t data);
+
+  string dataToRaw(const size_t featureIdx, const num_t data);
 
   inline void getRandomData(const size_t featureIdx, num_t& data) {data = features_[featureIdx].data[randomInteger_() % sampleHeaders_.size() ]; }
   inline size_t getRandomIndex(const size_t n) { return( randomInteger_() % n ); }
 
-  map<string,num_t> getDataMapping(const size_t featureIdx);
+  //map<string,num_t> getDataMapping(const size_t featureIdx);
+  //map<num_t,string> getDataBackMapping(const size_t featureIdx);
   
   //Generates a bootstrap sample from the real samples of featureIdx. Samples not in the bootstrap sample will be stored in oob_ics,
   //and the number of oob samples is stored in noob.

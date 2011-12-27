@@ -14,24 +14,19 @@ class Splitter {
 public:
 
   //Splitter();
-  Splitter(const string& splitterName, num_t splitLeftLeqValue);
-  Splitter(const string& splitterName, const set<num_t>& splitLeftValues, const set<num_t>& splitRightValues);
+  Splitter(const string& splitterName, const num_t splitLeftLeqValue);
+  Splitter(const string& splitterName, const set<string>& splitLeftValues, const set<string>& splitRightValues);
   Splitter(const Splitter& splitter);
 
   ~Splitter();
 
-  bool splitsLeft(num_t testValue);
-  bool splitsRight(num_t testValue);
+  bool splitsLeft(const num_t testValue);
+  bool splitsRight(const num_t testValue);
+
+  bool splitsLeft(const string& testValue);
+  bool splitsRight(const string& testValue);
 
   inline string name() { return(splitterName_); }
-
-  //void print();
-
-  /*
-    void reset();
-    void reset(const string& splitterName, num_t splitLeftLeqValue);
-    void reset(const string& splitterName, const set<num_t>& splitLeftValues, const set<num_t>& splitRightValues);
-  */
 
   void print();
 
@@ -45,8 +40,8 @@ private:
   string splitterName_;
 
   num_t splitLeftLeqValue_;
-  set<num_t> splitLeftValues_;
-  set<num_t> splitRightValues_;
+  set<string> splitLeftValues_;
+  set<string> splitRightValues_;
 
 };
 

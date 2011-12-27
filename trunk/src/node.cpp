@@ -61,7 +61,7 @@ void Node::setSplitter(size_t splitterIdx, const string& splitterName, num_t spl
 // !! Documentation: consider combining with the documentation in the header
 // !! file, fleshing it out a bit. Ideally, implementation notes should fall
 // !! here; notes on the abstraction should fall in the header file.
-void Node::setSplitter(size_t splitterIdx, const string& splitterName, const set<num_t>& leftSplitValues, const set<num_t>& rightSplitValues) {
+void Node::setSplitter(size_t splitterIdx, const string& splitterName, const set<string>& leftSplitValues, const set<string>& rightSplitValues) {
 
   if ( leftChild_ || rightChild_ ) {
     cerr << "Cannot set a splitter to a node twice!" << endl;
@@ -77,10 +77,10 @@ void Node::setSplitter(size_t splitterIdx, const string& splitterName, const set
 }
 
 
-Node* Node::percolateData(num_t value) {
+Node* Node::percolateData(const num_t data) {
 
-  if ( datadefs::isNAN( value ) ) {
-    cerr << "Node class does not accept NaNs to be percolated!" << endl;
+  if ( datadefs::isNAN( data ) ) {
+    cerr << "Node::percolateData(num_t) does not accept NaNs (" << data << ") to be percolated!" << endl;
     exit(1);
   }
 
@@ -90,12 +90,12 @@ Node* Node::percolateData(num_t value) {
   }
 
   // Return left child if splits left
-  if ( splitter_->splitsLeft( value ) ) {
+  if ( splitter_->splitsLeft( data ) ) {
     return( leftChild_ );
   }
 
   // Return right child if splits right
-  if ( splitter_->splitsRight( value ) ) {
+  if ( splitter_->splitsRight( data ) ) {
     return( rightChild_ );
   }
 
@@ -104,6 +104,35 @@ Node* Node::percolateData(num_t value) {
   return( this );
 
 }
+
+Node* Node::percolateData(const string& data) {
+
+  if ( datadefs::isNAN( data ) ) {
+    cerr << "Node::percolateData(string) does not accept NaNs (" << data << ") to be percolated!" << endl;
+    exit(1);
+  }
+
+  // Return this if the node doesn't have children ( == is a leaf node )
+  if ( !this->hasChildren() ) {
+    return( this );
+  }
+
+  // Return left child if splits left
+  if ( splitter_->splitsLeft( data ) ) {
+    return( leftChild_ );
+  }
+
+  // Return right child if splits right
+  if ( splitter_->splitsRight( data ) ) {
+    return( rightChild_ );
+  }
+
+  // Return this if splits neither left nor right, which can happen if
+  // the splitter is categorical
+  return( this );
+
+}
+
 
 Node* Node::leftChild() {
   return( leftChild_ );
@@ -364,9 +393,23 @@ bool Node::regularSplitterSeek(Treedata* treeData,
   }
 
   if ( treeData->isFeatureNumerical(splitFeatureIdx) ) {
+
     this->setSplitter(splitFeatureIdx,treeData->getFeatureName(splitFeatureIdx),splitValue);
+
   } else {
-    this->setSplitter(splitFeatureIdx,treeData->getFeatureName(splitFeatureIdx),splitValues_left,splitValues_right);
+    
+    set<string> rawSplitValues_left,rawSplitValues_right;
+
+    for ( set<num_t>::const_iterator it(splitValues_left.begin()); it != splitValues_left.end(); ++it ) {
+      rawSplitValues_left.insert( treeData->getRawFeatureData(splitFeatureIdx,*it) );
+    }
+
+    for ( set<num_t>::const_iterator it(splitValues_right.begin()); it != splitValues_right.end(); ++it ) {
+      rawSplitValues_right.insert( treeData->getRawFeatureData(splitFeatureIdx,*it) );
+    }
+
+    this->setSplitter(splitFeatureIdx,treeData->getFeatureName(splitFeatureIdx),rawSplitValues_left,rawSplitValues_right);
+
   }
 
   return(true);
