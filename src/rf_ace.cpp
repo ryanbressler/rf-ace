@@ -325,7 +325,7 @@ void executeRandomForest(Treedata& treedata,
 			 vector<num_t>& pValues,
 			 vector<num_t>& importanceValues);
 
-void printPredictionToFile(StochasticForest& SF, Treedata& treeData, const size_t targetIdx, const string& fileName);
+void printPredictionToFile(StochasticForest& SF, Treedata& treeData, const string& targetName, const string& fileName);
 
 void readFeatureMask(const string& fileName, const size_t nFeatures, vector<size_t>& keepFeatureIcs);
 
@@ -648,11 +648,11 @@ int main(const int argc, char* const argv[]) {
 	assert( treedata.getFeatureName(targetIdx) == gen_op.targetStr );
 	assert( treedata_test.getFeatureName(targetIdx) == gen_op.targetStr );
 	
-	printPredictionToFile(SF,treedata_test,targetIdx,gen_op.predictionOutput);
+	printPredictionToFile(SF,treedata_test,gen_op.targetStr,gen_op.predictionOutput);
 	
       } else {
 	
-	printPredictionToFile(SF,treedata,targetIdx,gen_op.predictionOutput);
+	printPredictionToFile(SF,treedata,gen_op.targetStr,gen_op.predictionOutput);
 	
       }
       
@@ -815,11 +815,11 @@ void executeRandomForest(Treedata& treedata,
   
 }
 
-void printPredictionToFile(StochasticForest& SF, Treedata& treeData, const size_t targetIdx, const string& fileName) {
+void printPredictionToFile(StochasticForest& SF, Treedata& treeData, const string& targetName, const string& fileName) {
   
   ofstream toPredictionFile(fileName.c_str());
 
-  string targetStr = treeData.getFeatureName(targetIdx);
+  size_t targetIdx = treeData.getFeatureIdx(targetName);
 
   if ( treeData.isFeatureNumerical(targetIdx)) {
     
@@ -828,18 +828,18 @@ void printPredictionToFile(StochasticForest& SF, Treedata& treeData, const size_
     SF.predict(prediction,confidence);
     
     for(size_t i = 0; i < prediction.size(); ++i) {
-      toPredictionFile << targetStr << "\t" << treeData.getSampleName(i) << "\t" << treeData.getRawFeatureData(targetIdx,i)
+      toPredictionFile << targetName << "\t" << treeData.getSampleName(i) << "\t" << treeData.getRawFeatureData(targetIdx,i)
 		       << "\t" << prediction[i] << "\t" << setprecision(3) << confidence[i] << endl;
     }
     
   } else {
-    
+
     vector<string> prediction;
     vector<num_t> confidence;
     SF.predict(prediction,confidence);
     
     for(size_t i = 0; i < prediction.size(); ++i) {
-      toPredictionFile << targetStr << "\t" << treeData.getSampleName(i) << "\t" << treeData.getRawFeatureData(targetIdx,i)
+      toPredictionFile << targetName << "\t" << treeData.getSampleName(i) << "\t" << treeData.getRawFeatureData(targetIdx,i)
                        << "\t" << prediction[i] << "\t" << setprecision(3) << confidence[i] << endl;
     }
     

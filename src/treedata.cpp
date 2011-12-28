@@ -496,11 +496,6 @@ bool Treedata::isFeatureNumerical(const size_t featureIdx) {
   return(features_[featureIdx].isNumerical);
 }
 
-//bool Treedata::isFeatureNumerical(const string& featureName) {
-//  return(features_[name2idx_[featureName]].isNumerical);
-//}
-
-
 size_t Treedata::nRealSamples(const size_t featureIdx) { 
   
   size_t nRealSamples;
@@ -523,10 +518,6 @@ size_t Treedata::nRealSamples(const size_t featureIdx1, const size_t featureIdx2
 size_t Treedata::nCategories(const size_t featureIdx) {
   return( features_[featureIdx].nCategories );
 }
-
-//size_t Treedata::nCategories(const string& featureName) {
-//  return( features_[name2idx_[featureName]].nCategories );
-//}
 
 size_t Treedata::nMaxCategories() {
 
@@ -694,17 +685,6 @@ void Treedata::getFilteredDataPair(const size_t featureIdx1, const size_t featur
 
 }
 
-/*
-  vector<num_t> Treedata::operator[](size_t featureIdx) {
-  return( features_[featureIdx].data );
-  }
-  
-  vector<num_t> Treedata::operator[](const string& featureName) {
-  return( features_[ name2idx_[featureName] ].data );
-  }
-*/
-
-
 string Treedata::getRawFeatureData(const size_t featureIdx, const size_t sampleIdx) {
 
   num_t data = features_[featureIdx].data[sampleIdx];
@@ -733,44 +713,3 @@ string Treedata::dataToRaw(const size_t featureIdx, const num_t data) {
   return( features_[featureIdx].backMapping[data] );
 }
 
-/*
-  map<string,num_t> Treedata::getDataMapping(const size_t featureIdx) {
-  
-  return( features_[featureIdx].mapping );
-  
-  }
-  
-  map<num_t,string> Treedata::getDataBackMapping(const size_t featureIdx) {
-  
-  return( features_[featureIdx].backMapping );
-  
-  }
-*/
-
-
-
-// DEPRECATED ??
-/*
-  void Treedata::impurity(vector<num_t>& data, bool isFeatureNumerical, num_t& impurity, size_t& nreal) {
-  
-  size_t n = data.size();
-  
-  
-  nreal = 0;
-  if(isFeatureNumerical) {
-  num_t mu = 0.0;
-  num_t se = 0.0;
-  for(size_t i = 0; i < n; ++i) {
-  datadefs::forward_sqerr(data[i],nreal,mu,se);  
-  }
-  impurity = se / nreal;
-  } else {
-  map<num_t,size_t> freq;
-  size_t sf = 0;
-  for(size_t i = 0; i < n; ++i) {
-  datadefs::forward_sqfreq(data[i],nreal,freq,sf);
-  }
-  impurity = 1.0 - 1.0 * sf / (nreal * nreal);
-  }
-  }
-*/
