@@ -615,7 +615,7 @@ int main(const int argc, char* const argv[]) {
 
     cout << "===> Growing GBT predictor... " << flush;
     
-    StochasticForest SF(&treedata,targetIdx,GBT_op.nTrees);
+    StochasticForest SF(&treedata,gen_op.targetStr,GBT_op.nTrees);
     SF.learnGBT(GBT_op.nMaxLeaves, GBT_op.shrinkage, GBT_op.subSampleSize);
     
     cout << "DONE" << endl;
@@ -757,7 +757,7 @@ void executeRandomForest(Treedata& treedata,
       useContrasts = false;
     }
 
-    StochasticForest SF(&treedata,targetIdx,RF_op.nTrees);
+    StochasticForest SF(&treedata,gen_op.targetStr,RF_op.nTrees);
     SF.learnRF(RF_op.mTry,RF_op.nMaxLeaves,RF_op.nodeSize,useContrasts);
     size_t nNodesInForest = SF.nNodes();
     nNodesInAllForests += nNodesInForest;
