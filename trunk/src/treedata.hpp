@@ -42,6 +42,7 @@ public:
   
   // Returns the number of categories a feature has
   size_t nCategories(const size_t featureIdx);
+  //size_t nCategories(const string& featureName);
 
   // Returns the number of categories of the feature with the highest cardinality
   size_t nMaxCategories();
@@ -56,11 +57,16 @@ public:
 
   void getFilteredDataPair(const size_t featureIdx1, const size_t featureIdx2, vector<size_t>& sampleIcs, vector<num_t>& featureData1, vector<num_t>& featureData2);
 
+  void getFilteredAndSortedDataPair(const size_t featureIdx1, const size_t featureIdx2, vector<size_t>& sampleIcs, vector<num_t>& featureData1, vector<num_t>& featureData2);
+
   //vector<num_t> operator[](size_t featureIdx);
   //vector<num_t> operator[](const string& featureName);
 
   string getRawFeatureData(const size_t featureIdx, const size_t sampleIdx);
   string getRawFeatureData(const size_t featureIdx, const num_t data);
+  
+  //string getRawFeatureData(const string& featureName, const size_t sampleIdx);
+  //string getRawFeatureData(const string& featureName, const num_t data);
 
   string dataToRaw(const size_t featureIdx, const num_t data);
 
@@ -80,7 +86,8 @@ public:
 
   void permuteContrasts();
 
-  bool isFeatureNumerical(size_t featureIdx);
+  bool isFeatureNumerical(const size_t featureIdx);
+  //bool isFeatureNumerical(const string& featureName);
 
   // DEPRECATED
   //void impurity(vector<num_t>& data, bool isFeatureNumerical, num_t& impurity, size_t& nreal);

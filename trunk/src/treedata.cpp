@@ -492,11 +492,13 @@ void Treedata::permuteContrasts() {
 
 }
 
-bool Treedata::isFeatureNumerical(size_t featureIdx) {
-
+bool Treedata::isFeatureNumerical(const size_t featureIdx) {
   return(features_[featureIdx].isNumerical);
-
 }
+
+//bool Treedata::isFeatureNumerical(const string& featureName) {
+//  return(features_[name2idx_[featureName]].isNumerical);
+//}
 
 
 size_t Treedata::nRealSamples(const size_t featureIdx) { 
@@ -519,10 +521,12 @@ size_t Treedata::nRealSamples(const size_t featureIdx1, const size_t featureIdx2
 }
 
 size_t Treedata::nCategories(const size_t featureIdx) {
-
   return( features_[featureIdx].nCategories );
-
 }
+
+//size_t Treedata::nCategories(const string& featureName) {
+//  return( features_[name2idx_[featureName]].nCategories );
+//}
 
 size_t Treedata::nMaxCategories() {
 

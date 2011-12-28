@@ -12,7 +12,7 @@ class StochasticForest {
 public:
 
   // !! Documentation: instruct the constructor to choose between the two forest implementations
-  StochasticForest(Treedata* treeData, const size_t targetIdx, const size_t nTrees);  
+  StochasticForest(Treedata* treeData, const string& targetName, const size_t nTrees);  
   ~StochasticForest();
 
   // !! Documentation: ... then, on the public side, learning would become collapsed into a single overloaded function learn(...)
@@ -75,8 +75,9 @@ private:
   Treedata* treeData_;
 
   //Chosen target to regress on
-  size_t targetIdx_;
-  
+  //size_t targetIdx_;
+  string targetName_;
+
   size_t nTrees_;
 
   //Root nodes for every tree
@@ -91,7 +92,7 @@ private:
   enum LearnedModel {NO_MODEL, RF_MODEL, GBT_MODEL};
   
   LearnedModel learnedModel_;
-  size_t numClasses_;
+  //size_t numClasses_;
   num_t shrinkage_;
 
   // This object generates a sequence that makes splitting data with categorical splitters fast
