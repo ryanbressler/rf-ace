@@ -27,12 +27,13 @@ public:
   ~Node();
 
   //Gets the splitter for the node
+  //inline string splitterName() { return( splitter_->name() ); }
   inline size_t splitterIdx() { return( splitterIdx_ ); }
 
   //Sets a splitter feature for the node.
   //NOTE: splitter can be assigned only once! Subsequent setter calls will raise an assertion failure.
-  void setSplitter(size_t splitterIdx, const string& splitterName, num_t splitLeftLeqValue);
-  void setSplitter(size_t splitterIdx, const string& splitterName, const set<string>& leftSplitValues, const set<string>& rightSplitValues);
+  void setSplitter(const size_t splitterIdx, const string& splitterName, num_t splitLeftLeqValue);
+  void setSplitter(const size_t splitterIdx, const string& splitterName, const set<string>& leftSplitValues, const set<string>& rightSplitValues);
 
   //Given a value, descends to either one of the child nodes, if existing, otherwise returns a pointer to the current node
   // TODO: get rid of these as there's too much redundancy hidden within
@@ -117,12 +118,6 @@ private:
                                set<num_t>& splitValues_left,
                                set<num_t>& splitValues_right,
                                num_t& splitFitness);
-
-  //num_t splitFitness(vector<num_t> const& data,
-  //                  bool const& isFeatureNumerical,
-  //                  size_t const& minSplit,
-  //                  vector<size_t> const& sampleIcs_left,
-  //                  vector<size_t> const& sampleIcs_right);
 
   //A recursive function that will accumulate the number of descendant nodes the current nodes has
   void recursiveNDescendantNodes(size_t& n);

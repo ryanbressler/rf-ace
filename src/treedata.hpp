@@ -5,6 +5,9 @@
 #ifndef TREEDATA_HPP
 #define TREEDATA_HPP
 
+//#define __IBMCPP_TR1__
+//#include <boost/unordered_map.hpp>
+
 #include <cstdlib>
 #include <map>
 #include <fstream>
@@ -61,8 +64,9 @@ public:
 
   string getRawFeatureData(const size_t featureIdx, const size_t sampleIdx);
   string getRawFeatureData(const size_t featureIdx, const num_t data);
+  vector<string> getRawFeatureData(const size_t featureIdx);
   
-  string dataToRaw(const size_t featureIdx, const num_t data);
+  //string dataToRaw(const size_t featureIdx, const num_t data);
 
   inline void getRandomData(const size_t featureIdx, num_t& data) {data = features_[featureIdx].data[randomInteger_() % sampleHeaders_.size() ]; }
   inline size_t getRandomIndex(const size_t n) { return( randomInteger_() % n ); }
@@ -79,25 +83,27 @@ public:
 
   bool isFeatureNumerical(const size_t featureIdx);
 
+  void replaceFeatureData(const size_t featureIdx, const vector<num_t>& featureData);
+  void replaceFeatureData(const size_t featureIdx, const vector<string>& rawFeatureData);
+
   //WILL DECOME DEPRECATED
-#ifndef TEST__  
-protected: 
-#endif
+  //#ifndef TEST__  
+  //protected: 
+  //#endif
 
   //WILL BECOME DEPRECATED
-  friend class StochasticForest;
+  //friend class StochasticForest;
 
 #ifndef TEST__
 private:
 #endif
 
-  
   struct Feature {
     vector<num_t> data;
     bool isNumerical;
     map<string,num_t> mapping;
     map<num_t,string> backMapping;
-    size_t nCategories;
+    //size_t nCategories;
     string name;
   };
   

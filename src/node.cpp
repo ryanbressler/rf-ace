@@ -43,7 +43,7 @@ void Node::deleteTree() {
 // !! Documentation: consider combining with the documentation in the header
 // !! file, fleshing it out a bit. Ideally, implementation notes should fall
 // !! here; notes on the abstraction should fall in the header file.
-void Node::setSplitter(size_t splitterIdx, const string& splitterName, num_t splitLeftLeqValue) {
+void Node::setSplitter(const size_t splitterIdx, const string& splitterName, num_t splitLeftLeqValue) {
   
   if ( leftChild_ || rightChild_ ) {
     cerr << "Cannot set a splitter to a node twice!" << endl;
@@ -61,7 +61,7 @@ void Node::setSplitter(size_t splitterIdx, const string& splitterName, num_t spl
 // !! Documentation: consider combining with the documentation in the header
 // !! file, fleshing it out a bit. Ideally, implementation notes should fall
 // !! here; notes on the abstraction should fall in the header file.
-void Node::setSplitter(size_t splitterIdx, const string& splitterName, const set<string>& leftSplitValues, const set<string>& rightSplitValues) {
+void Node::setSplitter(const size_t splitterIdx, const string& splitterName, const set<string>& leftSplitValues, const set<string>& rightSplitValues) {
 
   if ( leftChild_ || rightChild_ ) {
     cerr << "Cannot set a splitter to a node twice!" << endl;

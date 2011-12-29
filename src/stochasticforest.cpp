@@ -178,13 +178,12 @@ void StochasticForest::growNumericalGBT() {
 
   // Target for GBT is different for each tree
   // reference to the target column, will overwrite it
-  vector<num_t>& curTargetData = treeData_->features_[targetIdx].data; //// THIS WILL BECOME INVALID UPON REMOVAL OF FRIENDSHIP ASSIGNMENT IN TREEDATA ////
+  vector<num_t> curTargetData = trueTargetData; //treeData_->features_[targetIdx].data; //// THIS WILL BECOME INVALID UPON REMOVAL OF FRIENDSHIP ASSIGNMENT IN TREEDATA ////
 
   // Set the initial prediction to zero.
   vector<num_t> prediction(nSamples, 0.0);
 
   size_t nNodes;
-
 
   for ( size_t treeIdx = 0; treeIdx < nTrees_; ++treeIdx ) {
     // current target is the negative gradient of the loss function
@@ -192,6 +191,8 @@ void StochasticForest::growNumericalGBT() {
     for (size_t i = 0; i < nSamples; i++ ) {
       curTargetData[i] = trueTargetData[i] - prediction[i];
     }
+
+    treeData_->replaceFeatureData(targetIdx,curTargetData);
 
     // Grow a tree to predict the current target
     rootNodes_[treeIdx]->growTree(treeData_,
@@ -220,14 +221,14 @@ void StochasticForest::growNumericalGBT() {
   // GBT-forest is now done!
 
   // restore true target column
-  treeData_->features_[targetIdx].data = trueTargetData; //// THIS WILL BECOME INVALID UPON REMOVAL OF FRIENDSHIP ASSIGNMENT IN TREEDATA ////
+  //treeData_->features_[targetIdx].data = trueTargetData; //// THIS WILL BECOME INVALID UPON REMOVAL OF FRIENDSHIP ASSIGNMENT IN TREEDATA ////
+  treeData_->replaceFeatureData(targetIdx,trueTargetData);
 }
 
 // Grow a GBT "forest" for a categorical target variable
 void StochasticForest::growCategoricalGBT() {
   
   size_t targetIdx = treeData_->getFeatureIdx( targetName_ );
-
   size_t numClasses = treeData_->nCategories( targetIdx );
 
   //A function pointer to a function "gamma()" that is used to compute the node predictions with
@@ -237,16 +238,19 @@ void StochasticForest::growCategoricalGBT() {
   // We also know that it must be categorical.
   size_t nSamples = treeData_->nSamples();
   vector<num_t> trueTargetData = treeData_->getFeatureData(targetIdx);
+  vector<string> trueRawTargetData = treeData_->getRawFeatureData(targetIdx);
+  
+  //treeData_->replaceFeatureData(trueTargetData)
 
   // Target for GBT is different for each tree.
   // We use the original target column to save each temporary target.
   // Reference to the target column, will overwrite it:
-  vector<num_t>& curTargetData = treeData_->features_[targetIdx].data; //// THIS WILL BECOME INVALID UPON REMOVAL OF FRIENDSHIP ASSIGNMENT IN TREEDATA ////
+  vector<num_t> curTargetData = trueTargetData; //treeData_->getFeatureData(targetIdx); //treeData_->features_[targetIdx].data;
 
   // For categorical target variables, we predict each category probability separately.
   // This target is numerical, thus we need to change the target variable type to
   // numerical from categorical.
-  treeData_->features_[targetIdx].isNumerical = true; //// THIS WILL BECOME INVALID UPON REMOVAL OF FRIENDSHIP ASSIGNMENT IN TREEDATA ////
+  //treeData_->features_[targetIdx].isNumerical = true; //// THIS WILL BECOME INVALID UPON REMOVAL OF FRIENDSHIP ASSIGNMENT IN TREEDATA ////
 
   // Initialize class probability estimates and the predictions.
   // Note that dimensions in these two are reversed!
@@ -274,6 +278,9 @@ void StochasticForest::growCategoricalGBT() {
         curTargetData[i] = (k==trueTargetData[i]) - curProbability[i][k];
       }
 
+      // For each tree the target data becomes the recently computed residuals
+      treeData_->replaceFeatureData(targetIdx,curTargetData);
+
       // Grow a tree to predict the current target
       size_t treeIdx = m * numClasses + k; // tree index
       size_t nNodes;
@@ -294,10 +301,12 @@ void StochasticForest::growCategoricalGBT() {
     }
   }
 
+  treeData_->replaceFeatureData(targetIdx,trueRawTargetData);
+  
   // GBT-forest is now done!
   // restore the true target column and its true type
-  treeData_->features_[targetIdx].data = trueTargetData; //// THIS WILL BECOME INVALID UPON REMOVAL OF FRIENDSHIP ASSIGNMENT IN TREEDATA ////
-  treeData_->features_[targetIdx].isNumerical = false; //// THIS WILL BECOME INVALID UPON REMOVAL OF FRIENDSHIP ASSIGNMENT IN TREEDATA ////
+  //treeData_->features_[targetIdx].data = trueTargetData; //// THIS WILL BECOME INVALID UPON REMOVAL OF FRIENDSHIP ASSIGNMENT IN TREEDATA ////
+  //treeData_->features_[targetIdx].isNumerical = false; //// THIS WILL BECOME INVALID UPON REMOVAL OF FRIENDSHIP ASSIGNMENT IN TREEDATA ////
 }
 
 void StochasticForest::transformLogistic(const size_t numClasses, vector<num_t>& prediction, vector<num_t>& probability) {
@@ -559,7 +568,9 @@ void StochasticForest::percolateSampleIcsAtRandom(const size_t featureIdx, Node*
 void StochasticForest::percolateSampleIdx(const size_t sampleIdx, Node** nodep) {
 
   while ( (*nodep)->hasChildren() ) {
-    
+
+    //string featureNameNew = (*nodep)->splitterName();
+    //size_t featureIdxNew = treeData_->getFeatureIdx(featureNameNew);
     size_t featureIdxNew = (*nodep)->splitterIdx();
 
     num_t value = treeData_->getFeatureData(featureIdxNew,sampleIdx);
@@ -573,7 +584,7 @@ void StochasticForest::percolateSampleIdx(const size_t sampleIdx, Node** nodep) 
     if ( treeData_->isFeatureNumerical(featureIdxNew) ) {
       childNode = (*nodep)->percolateData(value);
     } else {
-      childNode = (*nodep)->percolateData(treeData_->dataToRaw(featureIdxNew,value));
+      childNode = (*nodep)->percolateData(treeData_->getRawFeatureData(featureIdxNew,value));
     }
    
     if ( childNode == *nodep ) {
@@ -590,6 +601,7 @@ void StochasticForest::percolateSampleIdxAtRandom(const size_t featureIdx, const
   
   while ( (*nodep)->hasChildren() ) {
 
+    //string featureNameNew = (*nodep)->splitterName();
     size_t featureIdxNew = (*nodep)->splitterIdx();
 
     num_t value = datadefs::NUM_NAN;
@@ -610,7 +622,7 @@ void StochasticForest::percolateSampleIdxAtRandom(const size_t featureIdx, const
     if ( treeData_->isFeatureNumerical(featureIdxNew) ) {
       childNode = (*nodep)->percolateData(value);
     } else {
-      childNode = (*nodep)->percolateData(treeData_->dataToRaw(featureIdxNew,value));
+      childNode = (*nodep)->percolateData(treeData_->getRawFeatureData(featureIdxNew,value));
     }
 
     if ( childNode == *nodep ) {

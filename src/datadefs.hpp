@@ -59,8 +59,8 @@ namespace datadefs {
 
   bool isInteger(const string& str, int& integer);
   
-  void strv2catv(vector<string>& strvec, vector<num_t>& catvec, map<string,num_t>& mapping, map<num_t,string>& backMapping);
-  void strv2numv(vector<string>& strvec, vector<num_t>& numvec);
+  void strv2catv(const vector<string>& strvec, vector<num_t>& catvec, map<string,num_t>& mapping, map<num_t,string>& backMapping);
+  void strv2numv(const vector<string>& strvec, vector<num_t>& numvec);
   num_t str2num(const string& str);
 
   string chomp(const string& str);

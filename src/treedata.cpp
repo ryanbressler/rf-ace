@@ -68,17 +68,17 @@ Treedata::Treedata(string fileName, char dataDelimiter, char headerDelimiter):
     features_[i].isNumerical = isFeatureNumerical[i];
     if(features_[i].isNumerical) {
       datadefs::strv2numv(rawMatrix[i],featureData);
-      features_[i].nCategories = 0;
+      //features_[i].nCategories = 0;
     } else {
       map<string,num_t> mapping;
       map<num_t,string> backMapping;
       datadefs::strv2catv(rawMatrix[i], featureData, mapping, backMapping);
       features_[i].mapping = mapping;
       features_[i].backMapping = backMapping;
-      map<num_t,size_t> freq;
-      size_t nReal;
-      datadefs::count_freq(featureData, freq, nReal);
-      features_[i].nCategories = freq.size();
+      //map<num_t,size_t> freq;
+      //size_t nReal;
+      //datadefs::count_freq(featureData, freq, nReal);
+      //features_[i].nCategories = freq.size();
     }
     features_[i].data = featureData;
   } 
@@ -421,35 +421,6 @@ size_t Treedata::getFeatureIdx(const string& featureName) {
   return( name2idx_[featureName] );
 }
 
-// WILL BECOME DEPRECATED
-/*
-  void Treedata::getMatchingTargetIdx(const string& targetStr, size_t& targetIdx) {
-  
-  bool isFoundAlready = false;
-  
-  for ( size_t featureIdx = 0; featureIdx < Treedata::nFeatures(); ++featureIdx ) {
-  
-  if ( features_[featureIdx].name == targetStr ) {
-  
-  if ( isFoundAlready ) {
-  cerr << "Multiple instances of the same target found in the data!" << endl;
-  assert(false);
-  }
-  
-  isFoundAlready = true;
-  targetIdx = featureIdx;
-  
-  }
-  }
-  
-  if ( !isFoundAlready ) {
-  cerr << "Feature '" << targetStr << "' not found. Quitting..." << endl;
-  exit(1);
-  }
-  
-  }
-*/
-
 string Treedata::getFeatureName(const size_t featureIdx) {
   return(features_[featureIdx].name);
 }
@@ -516,15 +487,15 @@ size_t Treedata::nRealSamples(const size_t featureIdx1, const size_t featureIdx2
 }
 
 size_t Treedata::nCategories(const size_t featureIdx) {
-  return( features_[featureIdx].nCategories );
+  return( features_[featureIdx].mapping.size() );
 }
 
 size_t Treedata::nMaxCategories() {
 
   size_t ret = 0;
   for( size_t i = 0; i < Treedata::nFeatures(); ++i ) {
-    if( ret < features_[i].nCategories ) {
-      ret = features_[i].nCategories;
+    if( ret < features_[i].mapping.size() ) {
+      ret = features_[i].mapping.size();
     }
   }
   
@@ -695,21 +666,66 @@ string Treedata::getRawFeatureData(const size_t featureIdx, const size_t sampleI
 
 string Treedata::getRawFeatureData(const size_t featureIdx, const num_t data) {
 
-  if(datadefs::isNAN(data)) {
-    return(datadefs::STR_NAN);
+  if ( datadefs::isNAN(data) ) {
+    return( datadefs::STR_NAN );
   } else {
-    if(features_[featureIdx].isNumerical) {
+    if ( features_[featureIdx].isNumerical ) {
       stringstream ss;
       ss << data;
-      return(ss.str());
+      return( ss.str() );
     } else {
-      //cout << data << " --> " << features_[featureIdx].backMapping[ data ] << endl;
-      return(features_[featureIdx].backMapping[ data ]);
+      return( features_[featureIdx].backMapping[data] );
     }
   }
 }
 
-string Treedata::dataToRaw(const size_t featureIdx, const num_t data) {
-  return( features_[featureIdx].backMapping[data] );
+vector<string> Treedata::getRawFeatureData(const size_t featureIdx) {
+  
+  vector<string> rawData( sampleHeaders_.size() );
+
+  for ( size_t i = 0; i < rawData.size(); ++i ) {
+    rawData[i] = this->getRawFeatureData(featureIdx,i);
+  }
+
+  return( rawData );
+
 }
+
+void Treedata::replaceFeatureData(const size_t featureIdx, const vector<num_t>& featureData) {
+
+  if(featureData.size() != features_[featureIdx].data.size() ) {
+    cerr << "Treedata::replaceFeatureData(num_t) -- data dimension mismatch" << endl;
+    exit(1);
+  }
+
+  // Since the data that was passed is numerical, we set isNumerical to true
+  features_[featureIdx].isNumerical = true;
+
+  // Data that is stored is directly the input data
+  features_[featureIdx].data = featureData;
+
+  // Since the data is not categorical, there's no need to provide mappings
+  features_[featureIdx].mapping.clear();
+  features_[featureIdx].backMapping.clear();
+
+}
+
+void Treedata::replaceFeatureData(const size_t featureIdx, const vector<string>& rawFeatureData) {
+
+  if(rawFeatureData.size() != features_[featureIdx].data.size() ) {
+    cerr << "Treedata::replaceFeatureData(string) -- data dimension mismatch" << endl;
+    exit(1);
+  }
+
+  // Since the data that was passed are string literals, we set isNumerical to false
+  features_[featureIdx].isNumerical = false;
+
+  // The string literal data needs some processing 
+  datadefs::strv2catv(rawFeatureData,
+		      features_[featureIdx].data,
+		      features_[featureIdx].mapping,
+		      features_[featureIdx].backMapping);
+}
+
+
 
