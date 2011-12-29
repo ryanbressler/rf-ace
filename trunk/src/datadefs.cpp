@@ -62,7 +62,7 @@ bool datadefs::isInteger(const string& str, int& integer) {
 /**
  * Convert a string vector into a category vector
  */
-void datadefs::strv2catv(vector<string>& strvec,
+void datadefs::strv2catv(const vector<string>& strvec,
                          vector<datadefs::num_t>& catvec, 
 			 map<string,num_t>& mapping,
 			 map<num_t,string>& backMapping) {
@@ -111,7 +111,7 @@ void datadefs::strv2catv(vector<string>& strvec,
 /**
  * Convert a string vector into a number vector
  */
-void datadefs::strv2numv(vector<string>& strvec,
+void datadefs::strv2numv(const vector<string>& strvec,
                          vector<datadefs::num_t>& numvec) {
   assert(strvec.size() == numvec.size());
   
