@@ -8,6 +8,7 @@
 #include <cstdlib>
 #include <vector>
 #include <set>
+#include <string>
 #include "datadefs.hpp"
 #include "treedata.hpp"
 #include "splitter.hpp"
