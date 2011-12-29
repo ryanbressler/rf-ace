@@ -761,7 +761,7 @@ void executeRandomForest(Treedata& treedata,
   vector<vector<num_t> > importanceMat(RF_op.nPerms);
 
   pValues.clear();
-  pValues.resize(treedata.nFeatures(),datadefs::NUM_NAN);
+  pValues.resize(treedata.nFeatures(),1.0);
   importanceValues.resize(treedata.nFeatures());
   size_t nNodesInAllForests = 0;
 

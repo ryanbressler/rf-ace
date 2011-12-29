@@ -123,6 +123,9 @@ private:
 
   //Permutes data.
   void permute(vector<num_t>& data);
+
+  // A helper function that creates sort indices for the feature for fast lookup
+  void updateSortOrder(const size_t featureIdx);
   
   template <typename T> void transpose(vector<vector<T> >& mat);
   
