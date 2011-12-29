@@ -62,25 +62,23 @@ Treedata::Treedata(string fileName, char dataDelimiter, char headerDelimiter):
     }
 
     name2idx_[featureHeaders[i]] = i;
-
-    vector<num_t> featureData( sampleHeaders_.size() );
     features_[i].name = featureHeaders[i];
     features_[i].isNumerical = isFeatureNumerical[i];
+
     if(features_[i].isNumerical) {
-      datadefs::strv2numv(rawMatrix[i],featureData);
-      //features_[i].nCategories = 0;
+
+      datadefs::strv2numv(rawMatrix[i],
+			  features_[i].data);
+
     } else {
-      map<string,num_t> mapping;
-      map<num_t,string> backMapping;
-      datadefs::strv2catv(rawMatrix[i], featureData, mapping, backMapping);
-      features_[i].mapping = mapping;
-      features_[i].backMapping = backMapping;
-      //map<num_t,size_t> freq;
-      //size_t nReal;
-      //datadefs::count_freq(featureData, freq, nReal);
-      //features_[i].nCategories = freq.size();
+
+      datadefs::strv2catv(rawMatrix[i], 
+			  features_[i].data, 
+			  features_[i].mapping, 
+			  features_[i].backMapping);
+
     }
-    features_[i].data = featureData;
+
   } 
   
   for(size_t i = nFeatures; i < 2*nFeatures; ++i) {

@@ -66,7 +66,9 @@ void datadefs::strv2catv(const vector<string>& strvec,
                          vector<datadefs::num_t>& catvec, 
 			 map<string,num_t>& mapping,
 			 map<num_t,string>& backMapping) {
-  assert(strvec.size() == catvec.size());
+  
+  size_t n = strvec.size();
+  catvec.resize(n);
 
   mapping.clear();
   backMapping.clear();
@@ -74,7 +76,7 @@ void datadefs::strv2catv(const vector<string>& strvec,
   num_t val = 0.0;
 
   //Map unique strings to values and store values in catvec as doubles 
-  for(size_t strIdx = 0; strIdx < strvec.size(); ++strIdx) {
+  for(size_t strIdx = 0; strIdx < n; ++strIdx) {
 
     //If the string is not NaN ...
     if(!datadefs::isNAN(strvec[strIdx])) {
@@ -113,9 +115,10 @@ void datadefs::strv2catv(const vector<string>& strvec,
  */
 void datadefs::strv2numv(const vector<string>& strvec,
                          vector<datadefs::num_t>& numvec) {
-  assert(strvec.size() == numvec.size());
-  
-  for(size_t strIdx = 0; strIdx < strvec.size(); ++strIdx) {
+  size_t n = strvec.size();
+  numvec.resize(n);
+
+  for(size_t strIdx = 0; strIdx < n; ++strIdx) {
     //cout << strIdx << ": \"" << strvec[strIdx] << "\"" << endl;
     if(!datadefs::isNAN(strvec[strIdx])) {
       numvec[strIdx] = str2num(strvec[strIdx]);
