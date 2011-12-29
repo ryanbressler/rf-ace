@@ -66,8 +66,6 @@ public:
   string getRawFeatureData(const size_t featureIdx, const num_t data);
   vector<string> getRawFeatureData(const size_t featureIdx);
   
-  //string dataToRaw(const size_t featureIdx, const num_t data);
-
   inline void getRandomData(const size_t featureIdx, num_t& data) {data = features_[featureIdx].data[randomInteger_() % sampleHeaders_.size() ]; }
   inline size_t getRandomIndex(const size_t n) { return( randomInteger_() % n ); }
   
@@ -86,14 +84,6 @@ public:
   void replaceFeatureData(const size_t featureIdx, const vector<num_t>& featureData);
   void replaceFeatureData(const size_t featureIdx, const vector<string>& rawFeatureData);
 
-  //WILL DECOME DEPRECATED
-  //#ifndef TEST__  
-  //protected: 
-  //#endif
-
-  //WILL BECOME DEPRECATED
-  //friend class StochasticForest;
-
 #ifndef TEST__
 private:
 #endif
@@ -103,11 +93,9 @@ private:
     bool isNumerical;
     map<string,num_t> mapping;
     map<num_t,string> backMapping;
-    //size_t nCategories;
     string name;
   };
   
-
   enum FileType {UNKNOWN, AFM, ARFF};
 
   void readFileType(string& fileName, FileType& fileType);
