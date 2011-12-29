@@ -52,11 +52,11 @@ void RootNodeTest::test_regressionTreeSplitting() {
   Node::Node* node1 = rootNode.rightChild_;
 
   // Set node0 (left child of rootnode)
-  set<num_t> splitValuesLeft;
-  splitValuesLeft.insert(0);
-  splitValuesLeft.insert(1);
-  set<num_t> splitValuesRight;
-  splitValuesRight.insert(2);
+  set<string> splitValuesLeft;
+  splitValuesLeft.insert("0");
+  splitValuesLeft.insert("1");
+  set<string> splitValuesRight;
+  splitValuesRight.insert("2");
   node0->setSplitter(1,"foo",splitValuesLeft,splitValuesRight);
   node0->trainPrediction_ = 4.0;
 
@@ -80,11 +80,11 @@ void RootNodeTest::test_regressionTreeSplitting() {
   // Set nodes 10 and 11
   node10->trainPrediction_ = 5.1;
   splitValuesLeft.clear();
-  splitValuesLeft.insert(2);
-  splitValuesLeft.insert(3);
+  splitValuesLeft.insert("2");
+  splitValuesLeft.insert("3");
   splitValuesRight.clear();
-  splitValuesRight.insert(0);
-  splitValuesRight.insert(1);
+  splitValuesRight.insert("0");
+  splitValuesRight.insert("1");
   node11->setSplitter(4,"foo",splitValuesLeft,splitValuesRight);
   node11->trainPrediction_ = 6.6;
 
