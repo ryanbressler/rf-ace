@@ -242,7 +242,7 @@ private:
 void printHeader() {
   cout << endl;
   cout << " ------------------------------------------------------- " << endl;
-  cout << "|  RF-ACE version:  0.9.7, December 27th, 2011          |" << endl;
+  cout << "|  RF-ACE version:  0.9.7, December 29th, 2011          |" << endl;
   cout << "|    Project page:  http://code.google.com/p/rf-ace     |" << endl;
   cout << "|     Report bugs:  timo.p.erkkila@tut.fi               |" << endl;                     
   cout << " ------------------------------------------------------- " << endl;
