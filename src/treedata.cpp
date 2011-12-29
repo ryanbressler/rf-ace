@@ -70,17 +70,21 @@ Treedata::Treedata(string fileName, char dataDelimiter, char headerDelimiter):
       datadefs::strv2numv(rawMatrix[i],
 			  features_[i].data);
 
-      features_[i].sortOrder.resize( sampleHeaders_.size() );
-      datadefs::range(features_[i].sortOrder);
+      this->updateSortOrder(i);
 
-      vector<pair<num_t,size_t> > pairedData;
-      datadefs::make_pairedv(features_[i].data,features_[i].sortOrder,pairedData);
-
-      pairedData.erase(remove_if(pairedData.begin(),pairedData.end(),&datadefs::pairedIsNAN), pairedData.end());
-
-      vector<num_t> foo;
-
-      datadefs::separate_pairedv(pairedData,foo,features_[i].sortOrder);
+      /*
+	features_[i].sortOrder.resize( sampleHeaders_.size() );
+	
+	vector<size_t> refIcs( sampleHeaders_.size() );
+	
+	vector<num_t> foo = features_[i].data;
+	bool isIncreasingOrder = true;      
+	datadefs::sortDataAndMakeRef(isIncreasingOrder,foo,refIcs);
+	
+	for( size_t j = 0; j < refIcs.size(); ++j ) {
+	features_[i].sortOrder[refIcs[j]] = j;
+	}
+      */
 
     } else {
 
@@ -92,8 +96,6 @@ Treedata::Treedata(string fileName, char dataDelimiter, char headerDelimiter):
 			  features_[i].backMapping);
 
     }
-
-    
 
   } 
   
@@ -182,6 +184,22 @@ void Treedata::keepFeatures(const vector<size_t>& featureIcs) {
     features_[ nFeaturesNew + i ] = featureCopy[ nFeaturesOld + featureIcs[i] ];
   }
   //nFeatures_ = nFeaturesNew;
+}
+
+void Treedata::updateSortOrder(const size_t featureIdx) {
+
+  features_[featureIdx].sortOrder.resize( sampleHeaders_.size() );
+
+  vector<size_t> refIcs( sampleHeaders_.size() );
+
+  vector<num_t> foo = features_[featureIdx].data;
+  bool isIncreasingOrder = true;
+  datadefs::sortDataAndMakeRef(isIncreasingOrder,foo,refIcs);
+
+  for( size_t i = 0; i < refIcs.size(); ++i ) {
+    features_[featureIdx].sortOrder[refIcs[i]] = i;
+  }
+
 }
 
 void Treedata::readFileType(string& fileName, FileType& fileType) {
@@ -718,6 +736,9 @@ void Treedata::replaceFeatureData(const size_t featureIdx, const vector<num_t>& 
   // Data that is stored is directly the input data
   features_[featureIdx].data = featureData;
 
+  // Update sort indices for fast lookup
+  this->updateSortOrder(featureIdx);
+
   // Since the data is not categorical, there's no need to provide mappings
   features_[featureIdx].mapping.clear();
   features_[featureIdx].backMapping.clear();
@@ -733,6 +754,9 @@ void Treedata::replaceFeatureData(const size_t featureIdx, const vector<string>&
 
   // Since the data that was passed are string literals, we set isNumerical to false
   features_[featureIdx].isNumerical = false;
+
+  // Categorical data does not need sorting, thus, it doesn't benefit from the sort indices either
+  features_[featureIdx].sortOrder.clear();
 
   // The string literal data needs some processing 
   datadefs::strv2catv(rawFeatureData,

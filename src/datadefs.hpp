@@ -178,16 +178,6 @@ namespace datadefs {
   }
 
   /**
-   * Checks if a data array contains at least one representation of NAN
-   */
-  /*
-    inline bool containsNAN(const vector<num_t>& data) {
-    for(size_t i = 0; i < data.size(); ++i) { if(data[i] != data[i]) return(true) }
-    return(false);
-    }
-  */
-
-  /**
      !! Document
      * Calculates the squared error, given x, n, mu, and standard error
      */
