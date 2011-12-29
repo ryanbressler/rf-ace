@@ -53,8 +53,8 @@ void Node::setSplitter(const size_t splitterIdx, const string& splitterName, num
   splitterIdx_ = splitterIdx;
   splitter_ = new Splitter(splitterName,splitLeftLeqValue);
 
-  leftChild_ = new Node;
-  rightChild_ = new Node;
+  leftChild_ = new Node();
+  rightChild_ = new Node();
 
 }
 
@@ -71,8 +71,8 @@ void Node::setSplitter(const size_t splitterIdx, const string& splitterName, con
   splitterIdx_ = splitterIdx;
   splitter_ = new Splitter(splitterName,leftSplitValues,rightSplitValues);
 
-  leftChild_ = new Node;
-  rightChild_ = new Node;
+  leftChild_ = new Node();
+  rightChild_ = new Node();
 
 }
 
