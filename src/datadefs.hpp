@@ -161,38 +161,31 @@ namespace datadefs {
    *  not-a-number. Returns true if this string exactly contains one of these
    *  representations; false otherwise.
    */
-  inline bool isNAN(
-    const string& str   /** Input string for processing, passed by reference */
-    ) {
-    
-    set<string>::const_iterator it(NANs.find(toUpperCase(str)));
-    if(it == NANs.end()) { return(false); } else { return(true); } 
+  inline bool isNAN(const string& str) {
+    return( NANs.find(toUpperCase(str)) != NANs.end() ? true : false );
   }
 
 
   /**
    * Performs an equivalence test to discern if this value is NAN.
    */
-  inline bool isNAN(
-    const num_t value   /** The given value for testing */
-    ) {
-    
-    if(value != value) { return(true); } else { return(false); }
+  inline bool isNAN(const num_t value) {
+    return( value != value ? true : false );
   }
 
+  inline bool pairedIsNAN(const pair<num_t,size_t>& value) {
+    return( value.first != value.first ? true : false );
+  }
 
   /**
    * Checks if a data array contains at least one representation of NAN
    */
-  inline bool containsNAN(
-    const vector<num_t>& data   /** The given data for detection */
-    ) {
-    
-    for(size_t i = 0; i < data.size(); ++i) {
-      if(data[i] != data[i]) { return(true); }
-    }
+  /*
+    inline bool containsNAN(const vector<num_t>& data) {
+    for(size_t i = 0; i < data.size(); ++i) { if(data[i] != data[i]) return(true) }
     return(false);
-  }
+    }
+  */
 
   /**
      !! Document
@@ -201,8 +194,7 @@ namespace datadefs {
   inline void forward_sqerr(const num_t& x_n,
                             size_t& n,
                             num_t& mu,
-                            num_t& se
-    ) {  
+                            num_t& se) {  
 
     if(datadefs::isNAN(x_n)) { return; }  // Check for NAN
     
@@ -311,8 +303,10 @@ namespace datadefs {
   template <typename T1,typename T2> void make_pairedv(vector<T1> const& v1,
                                                        vector<T2> const& v2,
                                                        vector<pair<T1,T2> >& p) {
-    assert(v1.size() == v2.size() && v2.size() == p.size());
-    for(size_t i = 0; i < p.size(); ++i) {
+    size_t n = v1.size();
+    assert(n == v2.size());
+    p.resize(n);
+    for(size_t i = 0; i < n; ++i) {
       p[i].first = v1[i]; p[i].second = v2[i];
     }
   }
@@ -325,8 +319,11 @@ namespace datadefs {
   template <typename T1,typename T2> void separate_pairedv(vector<pair<T1,T2> > const& p,
                                                            vector<T1>& v1,
                                                            vector<T2>& v2) {
-    assert(v1.size() == v2.size() && v2.size() == p.size());
-    for(size_t i = 0; i < p.size(); ++i) {
+    //assert(v1.size() == v2.size() && v2.size() == p.size());
+    size_t n = p.size();
+    v1.resize(n);
+    v2.resize(n);
+    for(size_t i = 0; i < n; ++i) {
       v1[i] = p[i].first;
       v2[i] = p[i].second;
     }

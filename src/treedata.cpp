@@ -46,10 +46,10 @@ Treedata::Treedata(string fileName, char dataDelimiter, char headerDelimiter):
     
   }      
   
-  if ( !datadefs::is_unique(featureHeaders) ) {
-    cerr << "Feature headers are not unique!" << endl;
-    assert(false);
-  }
+  //if ( !datadefs::is_unique(featureHeaders) ) {
+  //  cerr << "Feature headers are not unique!" << endl;
+  //  assert(false);
+  //}
 
   size_t nFeatures = featureHeaders.size();
   features_.resize(2*nFeatures);
@@ -70,7 +70,21 @@ Treedata::Treedata(string fileName, char dataDelimiter, char headerDelimiter):
       datadefs::strv2numv(rawMatrix[i],
 			  features_[i].data);
 
+      features_[i].sortOrder.resize( sampleHeaders_.size() );
+      datadefs::range(features_[i].sortOrder);
+
+      vector<pair<num_t,size_t> > pairedData;
+      datadefs::make_pairedv(features_[i].data,features_[i].sortOrder,pairedData);
+
+      pairedData.erase(remove_if(pairedData.begin(),pairedData.end(),&datadefs::pairedIsNAN), pairedData.end());
+
+      vector<num_t> foo;
+
+      datadefs::separate_pairedv(pairedData,foo,features_[i].sortOrder);
+
     } else {
+
+      features_[i].sortOrder.clear();
 
       datadefs::strv2catv(rawMatrix[i], 
 			  features_[i].data, 
@@ -78,6 +92,8 @@ Treedata::Treedata(string fileName, char dataDelimiter, char headerDelimiter):
 			  features_[i].backMapping);
 
     }
+
+    
 
   } 
   

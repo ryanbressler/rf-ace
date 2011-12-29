@@ -79,10 +79,10 @@ void Node::setSplitter(const size_t splitterIdx, const string& splitterName, con
 
 Node* Node::percolateData(const num_t data) {
 
-  if ( datadefs::isNAN( data ) ) {
-    cerr << "Node::percolateData(num_t) does not accept NaNs (" << data << ") to be percolated!" << endl;
-    exit(1);
-  }
+  //if ( datadefs::isNAN( data ) ) {
+  //  cerr << "Node::percolateData(num_t) does not accept NaNs (" << data << ") to be percolated!" << endl;
+  //  exit(1);
+  //}
 
   // Return this if the node doesn't have children ( == is a leaf node )
   if ( !this->hasChildren() ) {
@@ -100,17 +100,17 @@ Node* Node::percolateData(const num_t data) {
   }
 
   // Return this if splits neither left nor right, which can happen if 
-  // the splitter is categorical
+  // the splitter is categorical or data is NaN
   return( this );
 
 }
 
 Node* Node::percolateData(const string& data) {
 
-  if ( datadefs::isNAN( data ) ) {
-    cerr << "Node::percolateData(string) does not accept NaNs (" << data << ") to be percolated!" << endl;
-    exit(1);
-  }
+  //if ( datadefs::isNAN( data ) ) {
+  //  cerr << "Node::percolateData(string) does not accept NaNs (" << data << ") to be percolated!" << endl;
+  //  exit(1);
+  //}
 
   // Return this if the node doesn't have children ( == is a leaf node )
   if ( !this->hasChildren() ) {

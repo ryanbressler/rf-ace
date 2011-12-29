@@ -90,6 +90,7 @@ private:
 
   struct Feature {
     vector<num_t> data;
+    vector<size_t> sortOrder;
     bool isNumerical;
     map<string,num_t> mapping;
     map<num_t,string> backMapping;
