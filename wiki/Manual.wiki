@@ -64,7 +64,11 @@ bin/rf_ace -h
 }}}
 to bring up help, describing all the required and optional arguments one can set for RF-ACE analysis.
 
-= Association analysis =
+= Parameters =
+
+
+
+= Examples =
 
 {{{
 bin/rf_ace -I data.afm -i N:target -O associations.tsv
