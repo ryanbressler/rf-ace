@@ -89,7 +89,7 @@ Forest output file
 === `-M / --fmask` ===              
 Feature mask input file. String of ones and zeroes, zeroes indicating removal of the feature in the matrix
 
-=== `-D / --data_delim`          
+=== `-D / --data_delim` ===         
 Data delimiter (default \t)
 
 === `-H / --head_delim` ===         
