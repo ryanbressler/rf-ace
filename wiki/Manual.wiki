@@ -1,6 +1,6 @@
 #summary Manual pages.
 
-*The manual pages have been written on the basis of RF-ACE verson 0.9.6*
+*The manual pages have been written on the basis of RF-ACE verson 0.9.7*
 
 = Description =
 
@@ -65,6 +65,71 @@ bin/rf_ace -h
 to bring up help, describing all the required and optional arguments one can set for RF-ACE analysis.
 
 = Parameters =
+=== `-I / --traindata` ===           
+Train data input file, associations will be sought from this data. Supported formats: AFM and ARFF
+
+=== `-i / --target` ===
+Target, specified as integer or string that is to be matched with the content of input
+
+=== `-O / --associations` ===        
+Association output file
+
+=== `-T / --testdata` ===           
+Test data input file, predictions will be made from this data
+
+=== `-P / --predictions` ===        
+Prediction output file
+
+=== `-L / --log` ===                 
+Log output file
+
+=== `-F / --forest`===              
+Forest output file
+
+=== `-M / --fmask` ===              
+Feature mask input file. String of ones and zeroes, zeroes indicating removal of the feature in the matrix
+
+=== `-D / --data_delim`          
+Data delimiter (default \t)
+
+=== `-H / --head_delim` ===         
+Header delimiter that separates the N and C symbols in feature headers from the rest (default :)
+
+=== `-N / --noFilter` ===           
+Set this flag if you want to omit applying feature filtering with RFs
+
+== Random Forest ==
+=== `-n / --RF_ntrees` ===          
+Number of trees per RF (default 100)
+
+=== `-m / --RF_mtry` ===            
+Number of randomly drawn features per node split (default floor(0.1*nFeatures))
+
+=== `-a / --RF_maxleaves` ===       
+Maximum number of leaves per tree (default 100)
+
+=== `-s / --RF_nodesize` ===        
+Minimum number of train samples per node, affects tree depth (default 5)
+
+=== `-p / --RF_nperms` ===          
+Number of Random Forests (default 20)
+
+== Feature Filter ==
+=== `-t / --pthreshold` ===         
+p-value threshold below which associations are listed (default 0.1)
+
+== Gradient Boosting Trees ==
+=== `-r / --GBT_ntrees` ===         
+Number of trees in the GBT (default 100)
+
+=== `-l / --GBT_maxleaves` ===      
+Maximum number of leaves per tree (default 6)
+
+=== `-z / --GBT_shrinkage` ===      
+Shrinkage applied to evolving the residual (default 0.1)
+
+=== `-u / --GBT_samplesize` ===     
+Sample size fraction for training the trees (default 0.5)
 
 
 
@@ -74,7 +139,6 @@ to bring up help, describing all the required and optional arguments one can set
 bin/rf_ace -I data.afm -i N:target -O associations.tsv
 }}}
 
-= Data prediction =
 {{{
 bin/rf_ace -I data.afm -i N:target -P predictions.tsv
 }}}
