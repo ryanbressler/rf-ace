@@ -36,9 +36,12 @@ Treedata::Treedata(string fileName, char dataDelimiter, char headerDelimiter):
     
   } else if(fileType == ARFF) {
     
+    //sampleHeaders_.clear();
+    //sampleHeaders_.resize(rawMatrix[0].size(),"NO_SAMPLE_ID");
+    Treedata::readARFF(featurestream,rawMatrix,featureHeaders,isFeatureNumerical);
+
     sampleHeaders_.clear();
     sampleHeaders_.resize(rawMatrix[0].size(),"NO_SAMPLE_ID");
-    Treedata::readARFF(featurestream,rawMatrix,featureHeaders,isFeatureNumerical);
     
   } else {
     
@@ -71,20 +74,6 @@ Treedata::Treedata(string fileName, char dataDelimiter, char headerDelimiter):
 			  features_[i].data);
 
       this->updateSortOrder(i);
-
-      /*
-	features_[i].sortOrder.resize( sampleHeaders_.size() );
-	
-	vector<size_t> refIcs( sampleHeaders_.size() );
-	
-	vector<num_t> foo = features_[i].data;
-	bool isIncreasingOrder = true;      
-	datadefs::sortDataAndMakeRef(isIncreasingOrder,foo,refIcs);
-	
-	for( size_t j = 0; j < refIcs.size(); ++j ) {
-	features_[i].sortOrder[refIcs[j]] = j;
-	}
-      */
 
     } else {
 
@@ -664,7 +653,11 @@ vector<num_t> Treedata::getFeatureData(size_t featureIdx, const vector<size_t>& 
 
 }
 
-void Treedata::getFilteredDataPair(const size_t featureIdx1, const size_t featureIdx2, vector<size_t>& sampleIcs, vector<num_t>& featureData1, vector<num_t>& featureData2) {
+void Treedata::getFilteredDataPair(const size_t featureIdx1, 
+				   const size_t featureIdx2, 
+				   vector<size_t>& sampleIcs, 
+				   vector<num_t>& featureData1, 
+				   vector<num_t>& featureData2) {
 
   size_t n = sampleIcs.size();
   featureData1.resize(n);
@@ -685,6 +678,208 @@ void Treedata::getFilteredDataPair(const size_t featureIdx1, const size_t featur
   featureData1.resize(nReal);
   featureData2.resize(nReal);
   sampleIcs.resize(nReal);
+
+}
+
+void Treedata::getFilteredAndSortedDataPair(const size_t targetIdx, 
+					    const size_t featureIdx, 
+					    vector<size_t>& sampleIcs, 
+					    vector<num_t>& targetData, 
+					    vector<num_t>& featureData) {
+
+  if ( !features_[featureIdx].isNumerical ) {
+    cerr << "Treedata::getFilteredAndSortedDataPair() -- cannot perform for CATEGORICAL features" << endl;
+    exit(1);
+  }
+
+  targetData.clear();
+  //targetData.resize( sampleHeaders_.size(), datadefs::NUM_NAN );
+  featureData.clear();
+  //featureData.resize( sampleHeaders_.size(), datadefs::NUM_NAN );
+
+  //vector<size_t> sampleIcsCopy( sampleHeaders_.size() );
+  //size_t maxPos = 0;
+
+  // A map: sortOrderKey -> (sampleIdx,times)
+  map<size_t,pair<size_t,size_t> > mapOrder;
+  
+  // Count the number of real samples
+  size_t nReal = 0;
+
+  // Go through all sample indices
+  for ( vector<size_t>::const_iterator it(sampleIcs.begin()); it != sampleIcs.end(); ++it ) {
+    
+    // Extract the target and feature values for the index
+    num_t tVal = features_[targetIdx].data[*it];
+    num_t fVal = features_[featureIdx].data[*it];
+
+    // If the data are non-NA...
+    if ( !datadefs::isNAN(tVal) && !datadefs::isNAN(fVal) ) {
+    
+      // Accumulate real data counter
+      ++nReal;
+
+      // Extract the ordered position of the sample
+      size_t pos = features_[featureIdx].sortOrder[*it];
+    
+      // If the position is unused in the map...
+      if ( mapOrder.find(pos) == mapOrder.end() ) {
+	 
+	// Add the ordered position, the original sample index, 
+	// and initialize the sample counter to 1
+	pair<size_t,size_t> foo(*it,1);
+	mapOrder.insert(pair<size_t,pair<size_t,size_t> >(pos,foo));
+      } else {
+
+	// Otherwise accumulate the sample counter by one
+	++mapOrder[pos].second;
+      }
+    }
+  }
+
+  targetData.resize(nReal);
+  featureData.resize(nReal);
+  sampleIcs.resize(nReal);
+
+  size_t i = 0;
+  
+  for ( map<size_t,pair<size_t,size_t> >::const_iterator it(mapOrder.begin()); it != mapOrder.end(); ++it ) {
+    
+    for ( size_t j = 0; j < it->second.second; ++j ) {
+      sampleIcs[i] = it->second.first;
+      targetData[i] = features_[targetIdx].data[it->second.first];
+      featureData[i] = features_[featureIdx].data[it->second.first];
+      ++i;
+    }
+  }
+
+  assert(i == nReal);
+
+  /*
+    size_t nReal = 0;
+    for ( size_t i = 0; i < maxPos; ++i ) {
+    if ( !datadefs::isNAN(featureData[i]) ) {
+    featureData[nReal] = featureData[i];
+    targetData[nReal] = targetData[i];
+    sampleIcsCopy[nReal] = sampleIcsCopy[i];
+    ++nReal;
+    }
+    }
+  */
+
+  //cout << " " << 1.0*nReal/maxPos; 
+
+  /*
+    sampleIcs = sampleIcsCopy;
+    sampleIcs.resize(nReal);
+    featureData.resize(nReal);
+    targetData.resize(nReal);
+  */
+
+}
+
+void Treedata::getFilteredAndSortedDataPair2(const size_t targetIdx,
+					     const size_t featureIdx,
+					     vector<size_t>& sampleIcs,
+					     vector<num_t>& targetData,
+					     vector<num_t>& featureData) {
+
+  if ( !features_[featureIdx].isNumerical ) {
+    cerr << "Treedata::getFilteredAndSortedDataPair() -- cannot perform for CATEGORICAL features" << endl;
+    exit(1);
+  }
+
+  size_t n = sampleHeaders_.size();
+  size_t s = sampleIcs.size();
+
+  vector<num_t> targetDataCopy(n);
+  vector<num_t> featureDataCopy(n);
+  vector<size_t> sampleIcsCopy(n);
+  vector<size_t> multiplicity(n, 0);
+
+  //vector<size_t> sampleIcsCopy(  );
+  size_t minPos = n;
+  size_t maxPos = 0;
+
+  // Count the number of real samples
+  size_t nReal = 0;
+
+  // Go through all sample indices
+  for ( size_t i = 0; i < s; ++i ) {
+
+    size_t ii = sampleIcs[i];
+
+    // Extract the target and feature values for the index
+    num_t tVal = features_[targetIdx].data[ii];
+    num_t fVal = features_[featureIdx].data[ii];
+
+    // If the data are non-NA...
+    if ( !datadefs::isNAN(tVal) && !datadefs::isNAN(fVal) ) {
+
+      // Accumulate real data counter
+      ++nReal;
+
+      // Extract the ordered position of the sample
+      size_t pos = features_[featureIdx].sortOrder[ii];
+      ++multiplicity[pos];
+
+      if ( multiplicity[pos] == 1 ) {
+	featureDataCopy[pos] = fVal;
+	targetDataCopy[pos] = tVal;
+	sampleIcsCopy[pos] = ii;
+
+	if ( pos > maxPos ) {
+	  maxPos = pos;
+	}
+
+	if ( pos < minPos ) {
+	  minPos = pos;
+	}
+
+      }
+      
+    }
+  }
+
+  featureData.resize(nReal);
+  targetData.resize(nReal);
+  sampleIcs.resize(nReal);
+
+  size_t iter = 0;
+  for ( size_t i = minPos; i <= maxPos; ++i ) {
+    for ( size_t j = 0; j < multiplicity[i]; ++j ) {
+      featureData[iter] = featureDataCopy[i];
+      targetData[iter] = targetDataCopy[i];
+      sampleIcs[iter] = sampleIcsCopy[i];
+      ++iter;
+    }
+  }
+
+  assert(nReal == iter);
+ 
+}
+
+void Treedata::getFilteredAndSortedDataPair3(const size_t targetIdx,
+                                             const size_t featureIdx,
+                                             vector<size_t>& sampleIcs,
+                                             vector<num_t>& targetData,
+                                             vector<num_t>& featureData) {
+
+
+  featureData = this->getFeatureData(featureIdx,sampleIcs);
+  //targetData = this->getFeatureData(targetIdx,sampleIcs);
+
+  bool isIncreasingOrder = true;
+  vector<size_t> refIcs;
+
+  datadefs::sortDataAndMakeRef(isIncreasingOrder,featureData,refIcs);
+
+  for ( size_t i = 0; i < refIcs.size(); ++i ) {
+    sampleIcs[i] = sampleIcs[refIcs[i]];
+  }
+  sampleIcs.resize(refIcs.size());
+
+  targetData = this->getFeatureData(targetIdx,sampleIcs);
 
 }
 

@@ -42,41 +42,38 @@ void splitterTest::test_NumericalSplitterSplitsLeftAndRight() {
 void splitterTest::test_CategoricalSplitterSplitsLeftAndRight() {
 
   
-  set<num_t> splitValuesLeft;
-  splitValuesLeft.insert(0);
-  splitValuesLeft.insert(1);
-  splitValuesLeft.insert(3);
+  set<string> splitValuesLeft;
+  splitValuesLeft.insert("0");
+  splitValuesLeft.insert("1");
+  splitValuesLeft.insert("3");
   
   // NOTE: value 4 is missing from the union of left and right split sets
   
-  set<num_t> splitValuesRight;
-  splitValuesRight.insert(2);
-  splitValuesRight.insert(5);
+  set<string> splitValuesRight;
+  splitValuesRight.insert("2");
+  splitValuesRight.insert("5");
   
   Splitter::Splitter splitter("foo",splitValuesLeft,splitValuesRight);
   
   CPPUNIT_ASSERT( splitter.splitterName_ == "foo" );
   CPPUNIT_ASSERT( splitter.name() == "foo" );
     
-  CPPUNIT_ASSERT( splitter.splitsLeft(0) );
-  CPPUNIT_ASSERT( splitter.splitsLeft(1) );
-  CPPUNIT_ASSERT( splitter.splitsLeft(3) );
+  CPPUNIT_ASSERT( splitter.splitsLeft("0") );
+  CPPUNIT_ASSERT( splitter.splitsLeft("1") );
+  CPPUNIT_ASSERT( splitter.splitsLeft("3") );
   
-  CPPUNIT_ASSERT( !splitter.splitsLeft(2) );
-  CPPUNIT_ASSERT( !splitter.splitsLeft(5) );
+  CPPUNIT_ASSERT( !splitter.splitsLeft("2") );
+  CPPUNIT_ASSERT( !splitter.splitsLeft("5") );
   
-  CPPUNIT_ASSERT( !splitter.splitsRight(0) );
-  CPPUNIT_ASSERT( !splitter.splitsRight(1) );
-  CPPUNIT_ASSERT( !splitter.splitsRight(3) );
+  CPPUNIT_ASSERT( !splitter.splitsRight("0") );
+  CPPUNIT_ASSERT( !splitter.splitsRight("1") );
+  CPPUNIT_ASSERT( !splitter.splitsRight("3") );
   
-  CPPUNIT_ASSERT( splitter.splitsRight(2) );
-  CPPUNIT_ASSERT( splitter.splitsRight(5) );
+  CPPUNIT_ASSERT( splitter.splitsRight("2") );
+  CPPUNIT_ASSERT( splitter.splitsRight("5") );
     
-  CPPUNIT_ASSERT( !splitter.splitsLeft(4) );
-  CPPUNIT_ASSERT( !splitter.splitsRight(4) );
-  
-
-  
+  CPPUNIT_ASSERT( !splitter.splitsLeft("4") );
+  CPPUNIT_ASSERT( !splitter.splitsRight("4") );
   
 }
 

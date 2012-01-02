@@ -430,6 +430,12 @@ void Node::numericalFeatureSplit(Treedata* treedata,
   vector<num_t> tv,fv;
 
   sampleIcs_left.clear();
+
+  //treedata->getFilteredAndSortedDataPair3(targetIdx,featureIdx,sampleIcs_right,tv,fv);
+
+  //datadefs::print(tv);
+  //datadefs::print(fv);
+
   treedata->getFilteredDataPair(targetIdx,featureIdx,sampleIcs_right,tv,fv);
 
   size_t n_tot = tv.size();

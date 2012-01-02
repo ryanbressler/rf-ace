@@ -60,7 +60,24 @@ public:
 
   void getFilteredDataPair(const size_t featureIdx1, const size_t featureIdx2, vector<size_t>& sampleIcs, vector<num_t>& featureData1, vector<num_t>& featureData2);
 
-  void getFilteredAndSortedDataPair(const size_t featureIdx1, const size_t featureIdx2, vector<size_t>& sampleIcs, vector<num_t>& featureData1, vector<num_t>& featureData2);
+  void getFilteredAndSortedDataPair(const size_t targetIdx, 
+				    const size_t featureIdx, 
+				    vector<size_t>& sampleIcs, 
+				    vector<num_t>& targetData, 
+				    vector<num_t>& featureData);
+
+  void getFilteredAndSortedDataPair2(const size_t targetIdx,
+				     const size_t featureIdx,
+				     vector<size_t>& sampleIcs,
+				     vector<num_t>& targetData,
+				     vector<num_t>& featureData);
+  
+  void getFilteredAndSortedDataPair3(const size_t targetIdx,
+                                     const size_t featureIdx,
+                                     vector<size_t>& sampleIcs,
+                                     vector<num_t>& targetData,
+                                     vector<num_t>& featureData);
+
 
   string getRawFeatureData(const size_t featureIdx, const size_t sampleIdx);
   string getRawFeatureData(const size_t featureIdx, const num_t data);

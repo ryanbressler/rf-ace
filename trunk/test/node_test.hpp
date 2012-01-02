@@ -292,11 +292,10 @@ void NodeTest::test_categoricalFeatureSplit() {
 
   Treedata treedata("test_2by10_featurerows_matrix.tsv",'\t',':');
 
-  size_t featureIdx1 = 0;
-  size_t featureIdx2 = 1;
+  size_t featureIdx = 0;
 
-  size_t targetIdx1 = 2;
-  size_t targetIdx2 = 3;
+  size_t targetIdx1 = 1; 
+  size_t targetIdx2 = 2;
 
   Node node;
   PartitionSequence PS(n);
@@ -309,12 +308,12 @@ void NodeTest::test_categoricalFeatureSplit() {
   vector<size_t> sampleIcs_right(n);
   datadefs::range(sampleIcs_right);
   
-  set<string> splitValues_left,splitValues_right;
+  set<num_t> splitValues_left,splitValues_right;
   datadefs::num_t splitFitness;
   
   node.categoricalFeatureSplit(&treedata,
 			       targetIdx1,
-			       featureIdx1,
+			       featureIdx,
 			       GI,
 			       sampleIcs_left,
 			       sampleIcs_right,
@@ -331,7 +330,17 @@ void NodeTest::test_categoricalFeatureSplit() {
   //datadefs::print<num_t>(treedata.getFeatureData(targetIdx,sampleIcs_left));
   //datadefs::print<num_t>(treedata.getFeatureData(targetIdx,sampleIcs_right));
   
-  Splitter::Splitter splitter("foo",splitValues_left,splitValues_right);
+  set<string> rawSplitValues_left,rawSplitValues_right;
+
+  for(set<num_t>::const_iterator it(splitValues_left.begin()); it != splitValues_left.end(); ++it ) {
+    rawSplitValues_left.insert(treedata.getRawFeatureData(featureIdx,*it));
+  }
+  
+  for(set<num_t>::const_iterator it(splitValues_right.begin()); it != splitValues_right.end(); ++it ) {
+    rawSplitValues_right.insert(treedata.getRawFeatureData(featureIdx,*it));
+  }
+
+  Splitter::Splitter splitter("foo",rawSplitValues_left,rawSplitValues_right);
   
   CPPUNIT_ASSERT( sampleIcs_left.size() == sampleIcs_right.size() );
   
@@ -344,76 +353,62 @@ void NodeTest::test_categoricalFeatureSplit() {
   //cout << iter << endl;
   
   for(size_t i = 0; i < sampleIcs_left.size(); ++i ) {
-    CPPUNIT_ASSERT( treedata.getRawFeatureData(targetIdx,sampleIcs_left[i]) == "1" );
-    CPPUNIT_ASSERT( treedata.getRawFeatureData(targetIdx,sampleIcs_right[i]) == "2" );
+    CPPUNIT_ASSERT( treedata.getRawFeatureData(targetIdx1,sampleIcs_left[i]) == "2" );
+    CPPUNIT_ASSERT( treedata.getRawFeatureData(targetIdx1,sampleIcs_right[i]) == "1" );
   }
   
   //cout << splitFitness << endl;
   
   CPPUNIT_ASSERT( fabs(splitFitness - 1) < datadefs::EPS );
+   
+  sampleIcs_left.clear();
+  sampleIcs_right.resize(n);
+  datadefs::range(sampleIcs_right);
   
-  
-  for ( size_t i = 0; i < treedata.nSamples() / 2 ; ++i ) {
-    //treedata.features_[featureIdx].data[ 2 * i ] = static_cast<num_t>( i );
-    //treedata.features_[featureIdx].data[ 2 * i + 1 ] = static_cast<num_t>( i );
+  splitValues_left.clear();
+  splitValues_right.clear();
+  //datadefs::num_t splitFitness;
 
-    if ( i == 0 || i == 1 ) {
-      treedata.features_[targetIdx].data[ 2 * i ] = 1;
-      treedata.features_[targetIdx].data[ 2 * i + 1 ] = 2;
-    } else {
-      treedata.features_[targetIdx].data[ 2 * i ] = 0;
-      treedata.features_[targetIdx].data[ 2 * i + 1 ] = 0;
-    }
+  node.categoricalFeatureSplit(&treedata,
+			       targetIdx2,
+			       featureIdx,
+			       GI,
+			       sampleIcs_left,
+			       sampleIcs_right,
+			       splitValues_left,
+			       splitValues_right,
+			       splitFitness);
+  
+  //Splitter::Splitter splitter;
+  //CPPUNIT_ASSERT( splitter.splitterType_ == Splitter::NO_SPLITTER );
+
+  rawSplitValues_left.clear();
+  rawSplitValues_right.clear();
+
+  for(set<num_t>::const_iterator it(splitValues_left.begin()); it != splitValues_left.end(); ++it ) {
+    rawSplitValues_left.insert(treedata.getRawFeatureData(featureIdx,*it));
   }
 
-  iter = 0;
-  while ( iter < 2 ) {
-    if ( iter == 0 ) {
-      treedata.features_[targetIdx].isNumerical = false;
-    } else {
-      treedata.features_[targetIdx].isNumerical = true;
-    }
- 
-    vector<size_t> sampleIcs_left(0);
-    vector<size_t> sampleIcs_right(n);
-    datadefs::range(sampleIcs_right);
-
-    set<datadefs::num_t> splitValues_left,splitValues_right;
-    datadefs::num_t splitFitness;
-
-    node.categoricalFeatureSplit(&treedata,
-                                 targetIdx,
-                                 featureIdx,
-                                 GI,
-                                 sampleIcs_left,
-                                 sampleIcs_right,
-                                 splitValues_left,
-                                 splitValues_right,
-                                 splitFitness);
-    
-    //Splitter::Splitter splitter;
-    //CPPUNIT_ASSERT( splitter.splitterType_ == Splitter::NO_SPLITTER );
-
-    Splitter::Splitter splitter("foo",splitValues_left,splitValues_right);
-
-    CPPUNIT_ASSERT( splitter.splitterType_ == Splitter::CATEGORICAL_SPLITTER );
-
-    CPPUNIT_ASSERT( sampleIcs_left.size() == 4 );
-    CPPUNIT_ASSERT( sampleIcs_right.size() == 6 );
-    CPPUNIT_ASSERT( splitter.splitsLeft(0) );
-    CPPUNIT_ASSERT( splitter.splitsLeft(1) );
-    
-    if ( iter == 0 ) {
-      CPPUNIT_ASSERT( fabs( splitFitness - 0.642857142857143 ) < 1e-10 );
-    } else {
-      CPPUNIT_ASSERT( fabs(splitFitness - 0.843750000000000 ) < 1e-10 );
-    }
-     
-    //splitter.reset();
-    //CPPUNIT_ASSERT( splitter.splitterType_ == Splitter::NO_SPLITTER );
-
-    ++iter;
+  for(set<num_t>::const_iterator it(splitValues_right.begin()); it != splitValues_right.end(); ++it ) {
+    rawSplitValues_right.insert(treedata.getRawFeatureData(featureIdx,*it));
   }
+
+  
+  Splitter::Splitter splitter2("foo",rawSplitValues_left,rawSplitValues_right);
+  
+  CPPUNIT_ASSERT( splitter2.splitterType_ == Splitter::CATEGORICAL_SPLITTER );
+  
+  CPPUNIT_ASSERT( sampleIcs_left.size() == 4 );
+  CPPUNIT_ASSERT( sampleIcs_right.size() == 6 );
+  CPPUNIT_ASSERT( splitter2.splitsLeft("1") );
+  CPPUNIT_ASSERT( splitter2.splitsLeft("2") );
+  
+  //if ( iter == 0 ) {
+  CPPUNIT_ASSERT( fabs( splitFitness - 0.642857142857143 ) < 1e-10 );
+  //} else {
+  //CPPUNIT_ASSERT( fabs(splitFitness - 0.843750000000000 ) < 1e-10 );
+  //}
+  
 }
 
 //void NodeTest::test_splitFitness() { 
