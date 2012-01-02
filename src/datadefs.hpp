@@ -173,6 +173,17 @@ namespace datadefs {
     return( value != value ? true : false );
   }
 
+  /**
+   * Checks if a data array contains at least one representation of NAN
+   */
+  inline bool containsNAN(const vector<num_t>& data) {
+    
+    for(size_t i = 0; i < data.size(); ++i) {
+      if(data[i] != data[i]) { return(true); }
+    }
+    return(false);
+  }
+
   inline bool pairedIsNAN(const pair<num_t,size_t>& value) {
     return( value.first != value.first ? true : false );
   }
