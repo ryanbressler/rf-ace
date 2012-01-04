@@ -58,25 +58,32 @@ public:
   num_t getFeatureData(const size_t featureIdx, const size_t sampleIdx);
   vector<num_t> getFeatureData(const size_t featureIdx, const vector<size_t>& sampleIcs);
 
-  void getFilteredDataPair(const size_t featureIdx1, const size_t featureIdx2, vector<size_t>& sampleIcs, vector<num_t>& featureData1, vector<num_t>& featureData2);
+  vector<num_t> getFilteredFeatureData(const size_t featureIdx,
+				       vector<size_t>& sampleIcs);
 
-  void getFilteredAndSortedDataPair(const size_t targetIdx, 
-				    const size_t featureIdx, 
-				    vector<size_t>& sampleIcs, 
-				    vector<num_t>& targetData, 
-				    vector<num_t>& featureData);
+  void getFilteredFeatureDataPair(const size_t featureIdx1, 
+				  const size_t featureIdx2, 
+				  vector<size_t>& sampleIcs, 
+				  vector<num_t>& featureData1, 
+				  vector<num_t>& featureData2);
 
-  void getFilteredAndSortedDataPair2(const size_t targetIdx,
-				     const size_t featureIdx,
-				     vector<size_t>& sampleIcs,
-				     vector<num_t>& targetData,
-				     vector<num_t>& featureData);
+  void getFilteredAndSortedFeatureDataPair(const size_t targetIdx, 
+					   const size_t featureIdx, 
+					   vector<size_t>& sampleIcs, 
+					   vector<num_t>& targetData, 
+					   vector<num_t>& featureData);
+
+  void getFilteredAndSortedFeatureDataPair2(const size_t targetIdx,
+					    const size_t featureIdx,
+					    vector<size_t>& sampleIcs,
+					    vector<num_t>& targetData,
+					    vector<num_t>& featureData);
   
-  void getFilteredAndSortedDataPair3(const size_t targetIdx,
-                                     const size_t featureIdx,
-                                     vector<size_t>& sampleIcs,
-                                     vector<num_t>& targetData,
-                                     vector<num_t>& featureData);
+  void getFilteredAndSortedFeatureDataPair3(const size_t targetIdx,
+					    const size_t featureIdx,
+					    vector<size_t>& sampleIcs,
+					    vector<num_t>& targetData,
+					    vector<num_t>& featureData);
 
 
   string getRawFeatureData(const size_t featureIdx, const size_t sampleIdx);

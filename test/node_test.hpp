@@ -234,7 +234,7 @@ void NodeTest::test_cleanPairVectorFromNANs() {
 
 void NodeTest::test_numericalFeatureSplit() { 
 
-  Treedata treedata("test_2by8_featurerows_matrix.tsv",'\t',':');
+  Treedata treedata("test_2by8_numerical_matrix.tsv",'\t',':');
 
   CPPUNIT_ASSERT( treedata.getFeatureName(0) == "N:F1" );
   CPPUNIT_ASSERT( treedata.getFeatureName(1) == "N:F2" );
@@ -290,7 +290,7 @@ void NodeTest::test_categoricalFeatureSplit() {
 
   size_t n = 10;
 
-  Treedata treedata("test_2by10_featurerows_matrix.tsv",'\t',':');
+  Treedata treedata("test_3by10_categorical_matrix.tsv",'\t',':');
 
   size_t featureIdx = 0;
 
@@ -353,9 +353,12 @@ void NodeTest::test_categoricalFeatureSplit() {
   //cout << iter << endl;
   
   for(size_t i = 0; i < sampleIcs_left.size(); ++i ) {
-    CPPUNIT_ASSERT( treedata.getRawFeatureData(targetIdx1,sampleIcs_left[i]) == "2" );
-    CPPUNIT_ASSERT( treedata.getRawFeatureData(targetIdx1,sampleIcs_right[i]) == "1" );
+    //cout << " " << treedata.getRawFeatureData(targetIdx1,sampleIcs_left[i]); 
+    CPPUNIT_ASSERT( treedata.getRawFeatureData(targetIdx1,sampleIcs_left[i]) == "1" );
+    CPPUNIT_ASSERT( treedata.getRawFeatureData(targetIdx1,sampleIcs_right[i]) == "0" );
   }
+
+  //cout << endl;
   
   //cout << splitFitness << endl;
   

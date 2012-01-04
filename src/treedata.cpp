@@ -653,11 +653,36 @@ vector<num_t> Treedata::getFeatureData(size_t featureIdx, const vector<size_t>& 
 
 }
 
-void Treedata::getFilteredDataPair(const size_t featureIdx1, 
-				   const size_t featureIdx2, 
-				   vector<size_t>& sampleIcs, 
-				   vector<num_t>& featureData1, 
-				   vector<num_t>& featureData2) {
+vector<num_t> Treedata::getFilteredFeatureData(const size_t featureIdx,
+					       vector<size_t>& sampleIcs) {
+
+  size_t n = sampleIcs.size();
+
+  vector<num_t> featureData(n);
+
+  size_t nReal = 0;
+
+  for ( size_t i = 0; i < n; ++i ) {
+    size_t idx = sampleIcs[i];
+    num_t value = features_[featureIdx].data[idx];
+    if ( !datadefs::isNAN(value) ) {
+      featureData[nReal] = value;
+      sampleIcs[nReal] = idx;
+      ++nReal;
+    }
+  }
+  sampleIcs.resize(nReal);
+  featureData.resize(nReal);
+
+  return(featureData);
+
+}
+
+void Treedata::getFilteredFeatureDataPair(const size_t featureIdx1, 
+					  const size_t featureIdx2, 
+					  vector<size_t>& sampleIcs, 
+					  vector<num_t>& featureData1, 
+					  vector<num_t>& featureData2) {
 
   size_t n = sampleIcs.size();
   featureData1.resize(n);
@@ -681,11 +706,11 @@ void Treedata::getFilteredDataPair(const size_t featureIdx1,
 
 }
 
-void Treedata::getFilteredAndSortedDataPair(const size_t targetIdx, 
-					    const size_t featureIdx, 
-					    vector<size_t>& sampleIcs, 
-					    vector<num_t>& targetData, 
-					    vector<num_t>& featureData) {
+void Treedata::getFilteredAndSortedFeatureDataPair(const size_t targetIdx, 
+						   const size_t featureIdx, 
+						   vector<size_t>& sampleIcs, 
+						   vector<num_t>& targetData, 
+						   vector<num_t>& featureData) {
 
   if ( !features_[featureIdx].isNumerical ) {
     cerr << "Treedata::getFilteredAndSortedDataPair() -- cannot perform for CATEGORICAL features" << endl;
@@ -778,11 +803,11 @@ void Treedata::getFilteredAndSortedDataPair(const size_t targetIdx,
 
 }
 
-void Treedata::getFilteredAndSortedDataPair2(const size_t targetIdx,
-					     const size_t featureIdx,
-					     vector<size_t>& sampleIcs,
-					     vector<num_t>& targetData,
-					     vector<num_t>& featureData) {
+void Treedata::getFilteredAndSortedFeatureDataPair2(const size_t targetIdx,
+						    const size_t featureIdx,
+						    vector<size_t>& sampleIcs,
+						    vector<num_t>& targetData,
+						    vector<num_t>& featureData) {
 
   if ( !features_[featureIdx].isNumerical ) {
     cerr << "Treedata::getFilteredAndSortedDataPair() -- cannot perform for CATEGORICAL features" << endl;
@@ -859,11 +884,11 @@ void Treedata::getFilteredAndSortedDataPair2(const size_t targetIdx,
  
 }
 
-void Treedata::getFilteredAndSortedDataPair3(const size_t targetIdx,
-                                             const size_t featureIdx,
-                                             vector<size_t>& sampleIcs,
-                                             vector<num_t>& targetData,
-                                             vector<num_t>& featureData) {
+void Treedata::getFilteredAndSortedFeatureDataPair3(const size_t targetIdx,
+						    const size_t featureIdx,
+						    vector<size_t>& sampleIcs,
+						    vector<num_t>& targetData,
+						    vector<num_t>& featureData) {
 
 
   featureData = this->getFeatureData(featureIdx,sampleIcs);
@@ -874,8 +899,10 @@ void Treedata::getFilteredAndSortedDataPair3(const size_t targetIdx,
 
   datadefs::sortDataAndMakeRef(isIncreasingOrder,featureData,refIcs);
 
+  vector<size_t> sampleIcsCopy = sampleIcs;
+
   for ( size_t i = 0; i < refIcs.size(); ++i ) {
-    sampleIcs[i] = sampleIcs[refIcs[i]];
+    sampleIcs[i] = sampleIcsCopy[refIcs[i]];
   }
   sampleIcs.resize(refIcs.size());
 

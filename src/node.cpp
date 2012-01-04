@@ -133,6 +133,29 @@ Node* Node::percolateData(const string& data) {
 
 }
 
+Node* Node::percolateData(Treedata* treeData, const size_t sampleIdx) {
+  
+  Node* nodep(this);
+
+  this->percolateData(treeData,sampleIdx,&nodep);
+
+  return( nodep );
+
+}
+
+void Node::percolateData(Treedata* treeData, const size_t sampleIdx, Node** nodep) {
+
+  if( !this->hasChildren() ) {
+    *nodep = this;
+  } else if ( splitter_->splitsLeft(treeData,sampleIdx) ) {
+    leftChild_->percolateData(treeData,sampleIdx,&leftChild_);
+  } else if ( splitter_->splitsRight(treeData,sampleIdx) ) {
+    rightChild_->percolateData(treeData,sampleIdx,&rightChild_);
+  } else {
+    *nodep = this;
+  }
+
+}
 
 Node* Node::leftChild() {
   return( leftChild_ );
@@ -431,14 +454,15 @@ void Node::numericalFeatureSplit(Treedata* treedata,
 
   sampleIcs_left.clear();
 
-  //treedata->getFilteredAndSortedDataPair3(targetIdx,featureIdx,sampleIcs_right,tv,fv);
+  treedata->getFilteredAndSortedFeatureDataPair3(targetIdx,featureIdx,sampleIcs_right,tv,fv);
 
   //datadefs::print(tv);
   //datadefs::print(fv);
 
-  treedata->getFilteredDataPair(targetIdx,featureIdx,sampleIcs_right,tv,fv);
+  //treedata->getFilteredFeatureDataPair(targetIdx,featureIdx,sampleIcs_right,tv,fv);
+  //vector<num_t> fv = treedata->getFilteredFeatureData(featureIdx,sampleIcs_right);
 
-  size_t n_tot = tv.size();
+  size_t n_tot = fv.size();
   size_t n_right = n_tot;
   size_t n_left = 0;
 
@@ -448,15 +472,19 @@ void Node::numericalFeatureSplit(Treedata* treedata,
   }
 
   //Make reference indices that define the sorting wrt. feature
-  bool isIncreasingOrder = true;
+  //bool isIncreasingOrder = true;
 
   //Sort feature vector and collect reference indices
-  vector<size_t> refIcs;
-  datadefs::sortDataAndMakeRef(isIncreasingOrder,fv,refIcs);
+  //vector<size_t> refIcs;
+  //datadefs::sortDataAndMakeRef(isIncreasingOrder,fv,refIcs);
+
+  //datadefs::sortFromRef<size_t>(sampleIcs_right,refIcs);
+
+  //vector<num_t> tv = treedata->getFeatureData(targetIdx,sampleIcs_right);
 
   //Use the reference indices to sort sample indices
-  datadefs::sortFromRef<num_t>(tv,refIcs);
-  datadefs::sortFromRef<size_t>(sampleIcs_right,refIcs);
+  //datadefs::sortFromRef<num_t>(tv,refIcs);
+  //datadefs::sortFromRef<size_t>(sampleIcs_right,refIcs);
 
   int bestSplitIdx = -1;
   
@@ -541,7 +569,7 @@ void Node::categoricalFeatureSplit(Treedata* treedata,
   vector<num_t> tv,fv;
 
   sampleIcs_left.clear();
-  treedata->getFilteredDataPair(targetIdx,featureIdx,sampleIcs_right,tv,fv);
+  treedata->getFilteredFeatureDataPair(targetIdx,featureIdx,sampleIcs_right,tv,fv);
 
   // Map all feature categories to the corresponding samples and represent it as map. The map is used to assign samples to left and right branches
   map<num_t,vector<size_t> > fmap_right;

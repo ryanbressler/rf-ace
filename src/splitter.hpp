@@ -5,6 +5,8 @@
 #include <string>
 
 #include "datadefs.hpp"
+#include "treedata.hpp"
+
 
 using namespace std;
 using datadefs::num_t;
@@ -25,6 +27,10 @@ public:
 
   bool splitsLeft(const string& testValue);
   bool splitsRight(const string& testValue);
+
+  bool splitsLeft(Treedata* treeData, const size_t sampleIdx);
+  bool splitsRight(Treedata* treeData, const size_t sampleIdx);
+
 
   inline string name() { return(splitterName_); }
 
@@ -47,3 +53,5 @@ private:
 
 
 #endif
+
+//  LocalWords:  hpp
