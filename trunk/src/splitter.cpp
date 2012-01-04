@@ -35,7 +35,7 @@ Splitter::Splitter(const Splitter& splitter) {
 
 
 Splitter::~Splitter() {
-
+  /* Empty destructor */
 }
 
 bool Splitter::splitsLeft(const num_t testValue) {
@@ -94,6 +94,30 @@ bool Splitter::splitsRight(const string& testValue) {
     return( true );
   } else {
     return( false );
+  }
+
+}
+
+bool Splitter::splitsLeft(Treedata* treeData, const size_t sampleIdx) {
+  
+  size_t featureIdx = treeData->getFeatureIdx(splitterName_);
+
+  if ( treeData->isFeatureNumerical(featureIdx) ) {
+    return( this->splitsLeft(treeData->getFeatureData(featureIdx,sampleIdx)));
+  } else {
+    return( this->splitsLeft(treeData->getRawFeatureData(featureIdx,sampleIdx)));
+  }
+
+}
+
+bool Splitter::splitsRight(Treedata* treeData, const size_t sampleIdx) {
+
+  size_t featureIdx = treeData->getFeatureIdx(splitterName_);
+
+  if ( treeData->isFeatureNumerical(featureIdx) ) {
+    return( this->splitsRight(treeData->getFeatureData(featureIdx,sampleIdx)));
+  } else {
+    return( this->splitsRight(treeData->getRawFeatureData(featureIdx,sampleIdx)));
   }
 
 }

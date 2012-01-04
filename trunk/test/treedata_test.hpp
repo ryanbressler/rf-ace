@@ -55,7 +55,7 @@ void treeDataTest::tearDown() {}
 
 void treeDataTest::test_name2idxMap() {
 
-  string fileName = "test_6by10_featurerows_matrix.tsv";
+  string fileName = "test_6by10_mixed_matrix.tsv";
 
   Treedata::Treedata treeData(fileName,'\t',':');
 
@@ -90,20 +90,18 @@ void treeDataTest::test_name2idxMap() {
   CPPUNIT_ASSERT( treeData.name2idx_["C:F5_CONTRAST"] == 10 );
   CPPUNIT_ASSERT( treeData.name2idx_["N:F6_CONTRAST"] == 11 );
   
-  
-
 }
 
 void treeDataTest::test_getFeatureData() {
 
-  Treedata treedata("test_2by8_featurerows_matrix.tsv",'\t',':');
+  Treedata treedata("test_2by8_numerical_matrix.tsv",'\t',':');
 
   vector<size_t> sampleIcs(8);
   datadefs::range(sampleIcs);
 
   vector<num_t> v1,v2;
 
-  treedata.getFilteredDataPair(0,1,sampleIcs,v1,v2);
+  treedata.getFilteredFeatureDataPair(0,1,sampleIcs,v1,v2);
 
   
 
@@ -111,7 +109,7 @@ void treeDataTest::test_getFeatureData() {
 
 void treeDataTest::test_updateSortOrder() {
 
-  Treedata treedata("test_6by10_featurerows_matrix.tsv",'\t',':');
+  Treedata treedata("test_6by10_mixed_matrix.tsv",'\t',':');
   
   /*
     N:F1    nA      8.5     3.4     7.2     5       6       7       11      9       NA
@@ -168,7 +166,7 @@ void treeDataTest::test_updateSortOrder() {
 
 void treeDataTest::test_getFilteredAndSortedDataPair2() {
 
-  string fileName = "test_6by10_featurerows_matrix.tsv";
+  string fileName = "test_6by10_mixed_matrix.tsv";
 
   Treedata::Treedata treeData(fileName,'\t',':');
 
@@ -186,7 +184,7 @@ void treeDataTest::test_getFilteredAndSortedDataPair2() {
     N:F6    9       8       7       9       8       7       3       2       1.0     99.23
   */
 
-  treeData.getFilteredAndSortedDataPair2(0,1,sampleIcs,tv,fv);
+  treeData.getFilteredAndSortedFeatureDataPair2(0,1,sampleIcs,tv,fv);
 
   CPPUNIT_ASSERT( sampleIcs.size() == 5 );
   CPPUNIT_ASSERT( sampleIcs[0] == 1 );
@@ -232,7 +230,7 @@ void treeDataTest::test_getFilteredAndSortedDataPair2() {
     N:F6    9       8       7       9       8       7       3       2       1.0     99.23
   */
 
-  treeData.getFilteredAndSortedDataPair2(5,0,sampleIcs,tv,fv);
+  treeData.getFilteredAndSortedFeatureDataPair2(5,0,sampleIcs,tv,fv);
 
   //datadefs::print(sampleIcs);
 
