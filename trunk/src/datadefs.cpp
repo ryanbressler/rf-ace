@@ -763,7 +763,7 @@ vector<datadefs::num_t> datadefs::trim(const vector<datadefs::num_t>& x) {
 
   size_t nRetained = 0;
   for(size_t i = 0; i < x.size(); ++i) {
-    if( !datadefs::isNAN(x[i]) && fabs(x[i]) > datadefs::EPS) {
+    if( !datadefs::isNAN(x[i]) ) {
       trimmed[nRetained] = x[i];
       ++nRetained;
     }

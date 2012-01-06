@@ -19,7 +19,7 @@ using datadefs::num_t;
 
 const bool   GENERAL_DEFAULT_PRINT_HELP = false;
 const bool   GENERAL_DEFAULT_NO_PREDICTION = false; // TEMPORARY VARIABLE
-const num_t  GENERAL_DEFAULT_P_VALUE_THRESHOLD = 0.10;
+const num_t  GENERAL_DEFAULT_P_VALUE_THRESHOLD = 0.05;
 const bool   GENERAL_DEFAULT_NO_FILTER = false;
 const char   GENERAL_DEFAULT_DATA_DELIMITER = '\t';
 const char   GENERAL_DEFAULT_HEADER_DELIMITER = ':';
@@ -239,14 +239,14 @@ private:
 };
 
 
-void printHeader() {
-  cout << endl;
-  cout << " ------------------------------------------------------- " << endl;
-  cout << "|  RF-ACE version:  0.9.7, December 29th, 2011          |" << endl;
-  cout << "|    Project page:  http://code.google.com/p/rf-ace     |" << endl;
-  cout << "|     Report bugs:  timo.p.erkkila@tut.fi               |" << endl;                     
-  cout << " ------------------------------------------------------- " << endl;
-  cout << endl;
+void printHeader(ostream& output) {
+  output << endl;
+  output << " ------------------------------------------------------- " << endl;
+  output << "|  RF-ACE version:  0.9.7, December 29th, 2011          |" << endl;
+  output << "|    Project page:  http://code.google.com/p/rf-ace     |" << endl;
+  output << "|     Report bugs:  timo.p.erkkila@tut.fi               |" << endl;                     
+  output << " ------------------------------------------------------- " << endl;
+  output << endl;
   
 }
 
@@ -348,7 +348,7 @@ int main(const int argc, char* const argv[]) {
   GBT_options GBT_op;
 
   // Print the intro header
-  printHeader();
+  printHeader(cout);
 
   // With no input arguments the help is printed
   if(argc == 1) {
@@ -729,6 +729,14 @@ int main(const int argc, char* const argv[]) {
     
     toAssociationFile.close();
   }
+
+  if ( logOutputExists ) {
+    
+    ofstream toLogFile(gen_op.logOutput.c_str());
+
+    printHeader(toLogFile);
+
+  }
   
   cout << 1.0 * ( clock() - clockStart ) / CLOCKS_PER_SEC << " seconds elapsed." << endl << endl;
   
@@ -800,17 +808,20 @@ void executeRandomForest(Treedata& treedata,
       for(size_t featureIdx = treedata.nFeatures(); featureIdx < 2*treedata.nFeatures(); ++featureIdx) {
 	cVector[featureIdx - treedata.nFeatures()] = importanceMat[permIdx][featureIdx];
       }
+      size_t nReal;
+      datadefs::mean(cVector,cSample[permIdx],nReal);
+      assert( nReal == cVector.size() );
       //datadefs::print(cVector);
-      vector<num_t> trimmedCVector = datadefs::trim(cVector);
-      if ( trimmedCVector.size() > 0 ) {
-	datadefs::percentile(trimmedCVector,0.95,cSample[permIdx]);
-      } else {
-	cSample[permIdx] = 0.0;
-      }
+      //vector<num_t> trimmedCVector = datadefs::trim(cVector);
+      //if ( trimmedCVector.size() > 0 ) {
+	//datadefs::percentile(trimmedCVector,0.95,cSample[permIdx]);
+      //} else {
+      //	cSample[permIdx] = 0.0;
+      //}
       //cout << " " << cSample[permIdx];
     }
     //cout << endl;
-    //datadefs::print(cSample);
+    datadefs::print(cSample);
     
     //cout << "cSample created." << endl;
     

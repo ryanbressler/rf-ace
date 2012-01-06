@@ -714,9 +714,9 @@ vector<num_t> StochasticForest::featureImportance() {
   
   for ( size_t featureIdx = 0; featureIdx < nAllFeatures; ++featureIdx ) {
     
-    if ( fabs( importance[featureIdx] ) < datadefs::EPS ) {
-      importance[featureIdx] = datadefs::NUM_NAN;
-    } else {
+    if ( meanTreeImpurity  > datadefs::EPS ) {
+      //importance[featureIdx] = datadefs::NUM_NAN;
+      //} else {
       importance[featureIdx] /= ( nOobSamples * meanTreeImpurity );
     }
     //cout << "I(" << treeData_->getFeatureName(featureIdx) << ") = " << importance[featureIdx] << endl;
