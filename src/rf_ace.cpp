@@ -736,6 +736,8 @@ int main(const int argc, char* const argv[]) {
 
     printHeader(toLogFile);
 
+    toLogFile.close();
+
   }
   
   cout << 1.0 * ( clock() - clockStart ) / CLOCKS_PER_SEC << " seconds elapsed." << endl << endl;
@@ -821,7 +823,7 @@ void executeRandomForest(Treedata& treedata,
       //cout << " " << cSample[permIdx];
     }
     //cout << endl;
-    datadefs::print(cSample);
+    //datadefs::print(cSample);
     
     //cout << "cSample created." << endl;
     
