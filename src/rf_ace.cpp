@@ -471,13 +471,17 @@ int main(const int argc, char* const argv[]) {
   } 
   
   // Perform masking, if requested
-  vector<size_t> maskFeatureIcs;
+  vector<string> keepFeatureNames;
   if ( maskInputExists ) {
+    
+    cerr << "Masking is not working at the moment" << endl;
+    exit(1);
+    
     cout << "Reading masking file '" << gen_op.featureMaskInput << "', please wait... " << flush;
-    readFeatureMask(gen_op.featureMaskInput,treedata.nFeatures(),maskFeatureIcs);
+    //readFeatureMask(gen_op.featureMaskInput,treedata.nFeatures(),maskFeatureIcs);
     cout << "DONE" << endl;
-    cout << "Applying feature mask, removing " << treedata.nFeatures() - maskFeatureIcs.size() << " / " << treedata.nFeatures() << " features, please wait... " << flush;
-    treedata.keepFeatures(maskFeatureIcs);
+    cout << "Applying feature mask, removing " << treedata.nFeatures() - keepFeatureNames.size() << " / " << treedata.nFeatures() << " features, please wait... " << flush;
+    treedata.keepFeatures(keepFeatureNames);
     cout << "DONE" << endl;
   }
   cout << endl;
@@ -582,7 +586,8 @@ int main(const int argc, char* const argv[]) {
   ////////////////////////////////////////////////////////////////////////     
   vector<num_t> pValues; //(treedata.nFeatures());
   vector<num_t> importanceValues; //(treedata.nFeatures());
-  vector<size_t> significantFeatureIcs;
+  vector<string> featureNames;
+  
   if ( !gen_op.noFilter ) {
     //vector<num_t> pValues; //(treedata.nFeatures());
     //vector<num_t> importanceValues; //(treedata.nFeatures());
@@ -597,11 +602,7 @@ int main(const int argc, char* const argv[]) {
     cout << "===> Filtering features... " << flush;
     
     size_t nFeatures = treedata.nFeatures();
-    
-    //Store removed features and their indices here, just in case
-    vector<string> removedFeatures;
-    vector<size_t> removedFeatureIcs;
-    
+        
     size_t nSignificantFeatures = 0;
     
     // Go through each feature, and keep those having p-value higher than the threshold. 
@@ -609,30 +610,65 @@ int main(const int argc, char* const argv[]) {
     for ( size_t featureIdx = 0; featureIdx < nFeatures; ++featureIdx ) {
       
       if ( featureIdx == targetIdx || pValues[featureIdx] <= gen_op.pValueThreshold ) {
-	significantFeatureIcs.push_back(featureIdx);
+	featureNames.push_back(treedata.getFeatureName(featureIdx));
 	pValues[nSignificantFeatures] = pValues[featureIdx];
 	importanceValues[nSignificantFeatures] = importanceValues[featureIdx];
 	++nSignificantFeatures;
-      } else {
-	removedFeatureIcs.push_back(featureIdx);
-	removedFeatures.push_back(treedata.getFeatureName(featureIdx));
-      }
+      } 
     }
     
     // Resize containers
-    treedata.keepFeatures( significantFeatureIcs );
+    treedata.keepFeatures( featureNames );
     pValues.resize( nSignificantFeatures );
     importanceValues.resize ( nSignificantFeatures );
     
     targetIdx = treedata.getFeatureIdx(gen_op.targetStr);
     assert( gen_op.targetStr == treedata.getFeatureName(targetIdx) );
   
+    if( associationOutputExists ) {
+
+      ofstream toAssociationFile(gen_op.associationOutput.c_str());
+      toAssociationFile.precision(8);
+
+      vector<size_t> refIcs( treedata.nFeatures() );
+      bool isIncreasingOrder = true;
+      datadefs::sortDataAndMakeRef(isIncreasingOrder,pValues,refIcs);
+      datadefs::sortFromRef<num_t>(importanceValues,refIcs);
+      //datadefs::sortFromRef<string>(featureNames,refIcs);
+
+      assert( gen_op.targetStr == treedata.getFeatureName(targetIdx) );
+
+      for ( size_t i = 0; i < refIcs.size(); ++i ) {
+	size_t featureIdx = refIcs[i];
+
+	if ( pValues[i] > gen_op.pValueThreshold ) {
+	  continue;
+	}
+
+	if ( featureIdx == targetIdx ) {
+	  continue;
+	}
+
+	num_t log10p = log10(pValues[i]);
+	if ( log10p < -30.0 ) {
+	  log10p = -30.0;
+	}
+
+	toAssociationFile << fixed << gen_op.targetStr.c_str() << "\t" << treedata.getFeatureName(featureIdx).c_str()
+			  << "\t" << log10p << "\t" << importanceValues[i] << "\t"
+			  << treedata.pearsonCorrelation(targetIdx,featureIdx) << "\t" << treedata.nRealSamples(targetIdx,featureIdx) << endl;
+      }
+
+      toAssociationFile.close();
+    }
+    
+    
     // Print some statistics
     // NOTE: we're subtracting the target from the total head count, that's why we need to subtract by 1
     cout << "DONE, " << treedata.nFeatures() - 1 << " / " << nAllFeatures  - 1 << " features ( "
 	 << 100.0 * ( treedata.nFeatures() - 1 ) / ( nAllFeatures - 1 ) << " % ) left " << endl;
   }  
-
+  
 
   ///////////////////////////////////////////////////////////////////////////
   //  STEP 3 ( OPTIONAL ) -- DATA PREDICTION WITH GRADIENT BOOSTING TREES  //
@@ -660,17 +696,6 @@ int main(const int argc, char* const argv[]) {
       if ( testInputExists ) {
 	
 	Treedata treedata_test(gen_op.testInput,gen_op.dataDelimiter,gen_op.headerDelimiter);
-	if ( maskInputExists ) {
-	  treedata_test.keepFeatures(maskFeatureIcs);
-	}
-	treedata_test.keepFeatures(significantFeatureIcs);
-	
-	// Some assertions to make sure both treedata and treedata_test contain the same information
-	for ( size_t i = 0; i < treedata.nFeatures(); ++i ) {
-	  assert( treedata_test.getFeatureName(i) == treedata.getFeatureName(i) );
-	}
-	assert( treedata.getFeatureName(targetIdx) == gen_op.targetStr );
-	assert( treedata_test.getFeatureName(targetIdx) == gen_op.targetStr );
 	
 	printPredictionToFile(SF,treedata_test,gen_op.targetStr,gen_op.predictionOutput);
 	
@@ -684,62 +709,17 @@ int main(const int argc, char* const argv[]) {
       
     }
     
-    //cout << "DONE" << endl; 
   }
   cout << endl;
   
-  if( associationOutputExists ) {
-    
-    ofstream toAssociationFile(gen_op.associationOutput.c_str());
-    toAssociationFile.precision(8);
-
-    vector<size_t> refIcs( treedata.nFeatures() );
-    bool isIncreasingOrder = true;
-    datadefs::sortDataAndMakeRef(isIncreasingOrder,pValues,refIcs); // BUG
-    datadefs::sortFromRef<num_t>(importanceValues,refIcs);
-    //targetIdx = refIcs[targetIdx];
-    
-    assert( gen_op.targetStr == treedata.getFeatureName(targetIdx) );
-    
-    for ( size_t i = 0; i < refIcs.size(); ++i ) {
-      size_t featureIdx = refIcs[i];
-      
-      if ( pValues[i] > gen_op.pValueThreshold ) {
-	continue;
-      }
-      
-      if ( featureIdx == targetIdx ) {
-	continue;
-      }
-      
-      //if ( RF_op.nPerms > 1 ) {
-      
-      num_t log10p = log10(pValues[i]);
-      if ( log10p < -30.0 ) {
-	log10p = -30.0;
-      }
-      
-      toAssociationFile << fixed << gen_op.targetStr.c_str() << "\t" << treedata.getFeatureName(featureIdx).c_str() 
-			<< "\t" << log10p << "\t" << importanceValues[i] << "\t"
-			<< treedata.pearsonCorrelation(targetIdx,featureIdx) << "\t" << treedata.nRealSamples(targetIdx,featureIdx) << endl;
-      //} else {
-      //toAssociationFile << fixed << gen_op.targetStr.c_str() << "\t" << treedata.getFeatureName(featureIdx).c_str() 
-      //		  << "\tNA\t" << importanceValues[i] << "\t"
-      //		  << treedata.pearsonCorrelation(targetIdx,featureIdx) << "\t" << treedata.nRealSamples(targetIdx,featureIdx) << endl;
-      //}    
-    }
-    
-    toAssociationFile.close();
-  }
-
   if ( logOutputExists ) {
     
     ofstream toLogFile(gen_op.logOutput.c_str());
-
+    
     printHeader(toLogFile);
-
+    
     toLogFile.close();
-
+    
   }
   
   cout << 1.0 * ( clock() - clockStart ) / CLOCKS_PER_SEC << " seconds elapsed." << endl << endl;
@@ -887,6 +867,9 @@ void printPredictionToFile(StochasticForest& SF, Treedata& treeData, const strin
 }
 
 void readFeatureMask(const string& fileName, const size_t nFeatures, vector<size_t>& keepFeatureIcs) {
+
+  cerr << "Feature mask is currently out-of-use" << endl;
+  exit(1);
 
   ifstream featurestream;
   featurestream.open(fileName.c_str());
