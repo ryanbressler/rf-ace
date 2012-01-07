@@ -13,6 +13,7 @@ class treeDataTest : public CppUnit::TestFixture {
   CPPUNIT_TEST( test_getFeatureData );
   CPPUNIT_TEST( test_updateSortOrder );
   CPPUNIT_TEST( test_getFilteredAndSortedDataPair2 );
+  CPPUNIT_TEST( test_parseARFF );
   CPPUNIT_TEST_SUITE_END();
   
 public:
@@ -23,6 +24,7 @@ public:
   void test_getFeatureData();
   void test_updateSortOrder();
   void test_getFilteredAndSortedDataPair2();
+  void test_parseARFF();
 };
 
 void treeDataTest::setUp() {}
@@ -267,6 +269,110 @@ void treeDataTest::test_getFilteredAndSortedDataPair2() {
 
 }
 
+void treeDataTest::test_parseARFF() {
+  
+  Treedata treeData("test_5by10_numeric_matrix.arff",'\t',':');
+
+  /*
+    0.8147, 1.0000,  0.0596, 0.9160, 6.0000
+    0.9058, 2.0000,  0.6820, 0.0012, 14.0000
+    0.1270, 3.0000,  0.0424, 0.4624, 24.0000
+    0.9134, 4.0000,  0.0714, 0.4243, 36.0000
+    0.6324, 5.0000,  ?,      0.4609, 50.0000
+    0.0975, 6.0000,  0.0967, 0.7702, 66.0000
+    0.2785, 7.0000,  0.8181, 0.3225, 84.0000
+    0.5469, ?,       0.8175, 0.7847, 104.0000
+    0.9575, 9.0000,  0.7224, 0.4714, 126.0000
+    0.9649, 10.0000, 0.1499, 0.0358, 150.0000
+  */
+
+  CPPUNIT_ASSERT( treeData.nFeatures() == 5 );
+  CPPUNIT_ASSERT( treeData.nSamples() == 10 );
+
+  CPPUNIT_ASSERT( treeData.nRealSamples(0) == 10 );
+  CPPUNIT_ASSERT( treeData.nRealSamples(1) == 9 );
+  CPPUNIT_ASSERT( treeData.nRealSamples(2) == 9 );
+  CPPUNIT_ASSERT( treeData.nRealSamples(3) == 10 );
+  CPPUNIT_ASSERT( treeData.nRealSamples(4) == 10 );
+
+  CPPUNIT_ASSERT( treeData.nRealSamples(0,1) == 9 );
+  CPPUNIT_ASSERT( treeData.nRealSamples(1,2) == 8 );
+
+  CPPUNIT_ASSERT( treeData.getFeatureName(0) == "x1" );
+  CPPUNIT_ASSERT( treeData.getFeatureName(1) == "x2" );
+  CPPUNIT_ASSERT( treeData.getFeatureName(2) == "x3" );
+  CPPUNIT_ASSERT( treeData.getFeatureName(3) == "x4" );
+  CPPUNIT_ASSERT( treeData.getFeatureName(4) == "y"  );
+
+  CPPUNIT_ASSERT( fabs( treeData.getFeatureData(0,0) - 0.8147 ) < datadefs::EPS );
+  CPPUNIT_ASSERT( fabs( treeData.getFeatureData(0,1) - 0.9058 ) < datadefs::EPS );
+  CPPUNIT_ASSERT( fabs( treeData.getFeatureData(0,2) - 0.1270 ) < datadefs::EPS );
+  CPPUNIT_ASSERT( fabs( treeData.getFeatureData(0,3) - 0.9134 ) < datadefs::EPS );
+  CPPUNIT_ASSERT( fabs( treeData.getFeatureData(0,4) - 0.6324 ) < datadefs::EPS );
+  CPPUNIT_ASSERT( fabs( treeData.getFeatureData(0,5) - 0.0975 ) < datadefs::EPS );
+  CPPUNIT_ASSERT( fabs( treeData.getFeatureData(0,6) - 0.2785 ) < datadefs::EPS );
+  CPPUNIT_ASSERT( fabs( treeData.getFeatureData(0,7) - 0.5469 ) < datadefs::EPS );
+  CPPUNIT_ASSERT( fabs( treeData.getFeatureData(0,8) - 0.9575 ) < datadefs::EPS );
+  CPPUNIT_ASSERT( fabs( treeData.getFeatureData(0,9) - 0.9649 ) < datadefs::EPS );
+
+  CPPUNIT_ASSERT( fabs( treeData.getFeatureData(1,0) - 1.0000 ) < datadefs::EPS );
+  CPPUNIT_ASSERT( fabs( treeData.getFeatureData(1,1) - 2.0000 ) < datadefs::EPS );
+  CPPUNIT_ASSERT( fabs( treeData.getFeatureData(1,2) - 3.0000 ) < datadefs::EPS );
+  CPPUNIT_ASSERT( fabs( treeData.getFeatureData(1,3) - 4.0000 ) < datadefs::EPS );
+  CPPUNIT_ASSERT( fabs( treeData.getFeatureData(1,4) - 5.0000 ) < datadefs::EPS );
+  CPPUNIT_ASSERT( fabs( treeData.getFeatureData(1,5) - 6.0000 ) < datadefs::EPS );
+  CPPUNIT_ASSERT( fabs( treeData.getFeatureData(1,6) - 7.0000 ) < datadefs::EPS );
+  CPPUNIT_ASSERT( datadefs::isNAN(treeData.getFeatureData(1,7)) );
+  CPPUNIT_ASSERT( fabs( treeData.getFeatureData(1,8) - 9.0000 ) < datadefs::EPS );
+  CPPUNIT_ASSERT( fabs( treeData.getFeatureData(1,9) - 10.0000 ) < datadefs::EPS );
+
+  /*
+    0.8147, 1.0000,  0.0596, 0.9160, 6.0000
+    0.9058, 2.0000,  0.6820, 0.0012, 14.0000
+    0.1270, 3.0000,  0.0424, 0.4624, 24.0000
+    0.9134, 4.0000,  0.0714, 0.4243, 36.0000
+    0.6324, 5.0000,  ?,      0.4609, 50.0000
+    0.0975, 6.0000,  0.0967, 0.7702, 66.0000
+    0.2785, 7.0000,  0.8181, 0.3225, 84.0000
+    0.5469, ?,       0.8175, 0.7847, 104.0000
+    0.9575, 9.0000,  0.7224, 0.4714, 126.0000
+    0.9649, 10.0000, 0.1499, 0.0358, 150.0000
+  */
+
+  CPPUNIT_ASSERT( fabs( treeData.getFeatureData(2,0) - 0.0596 ) < datadefs::EPS );
+  CPPUNIT_ASSERT( fabs( treeData.getFeatureData(2,1) - 0.6820 ) < datadefs::EPS );
+  CPPUNIT_ASSERT( fabs( treeData.getFeatureData(2,2) - 0.0424 ) < datadefs::EPS );
+  CPPUNIT_ASSERT( fabs( treeData.getFeatureData(2,3) - 0.0714 ) < datadefs::EPS );
+  CPPUNIT_ASSERT( datadefs::isNAN(treeData.getFeatureData(2,4)) );
+  CPPUNIT_ASSERT( fabs( treeData.getFeatureData(2,5) - 0.0967 ) < datadefs::EPS );
+  CPPUNIT_ASSERT( fabs( treeData.getFeatureData(2,6) - 0.8181 ) < datadefs::EPS );
+  CPPUNIT_ASSERT( fabs( treeData.getFeatureData(2,7) - 0.8175 ) < datadefs::EPS );
+  CPPUNIT_ASSERT( fabs( treeData.getFeatureData(2,8) - 0.7224 ) < datadefs::EPS );
+  CPPUNIT_ASSERT( fabs( treeData.getFeatureData(2,9) - 0.1499 ) < datadefs::EPS );
+
+  CPPUNIT_ASSERT( fabs( treeData.getFeatureData(3,0) - 0.9160 ) < datadefs::EPS );
+  CPPUNIT_ASSERT( fabs( treeData.getFeatureData(3,1) - 0.0012 ) < datadefs::EPS );
+  CPPUNIT_ASSERT( fabs( treeData.getFeatureData(3,2) - 0.4624 ) < datadefs::EPS );
+  CPPUNIT_ASSERT( fabs( treeData.getFeatureData(3,3) - 0.4243 ) < datadefs::EPS );
+  CPPUNIT_ASSERT( fabs( treeData.getFeatureData(3,4) - 0.4609 ) < datadefs::EPS );
+  CPPUNIT_ASSERT( fabs( treeData.getFeatureData(3,5) - 0.7702 ) < datadefs::EPS );
+  CPPUNIT_ASSERT( fabs( treeData.getFeatureData(3,6) - 0.3225 ) < datadefs::EPS );
+  CPPUNIT_ASSERT( fabs( treeData.getFeatureData(3,7) - 0.7847 ) < datadefs::EPS );
+  CPPUNIT_ASSERT( fabs( treeData.getFeatureData(3,8) - 0.4714 ) < datadefs::EPS );
+  CPPUNIT_ASSERT( fabs( treeData.getFeatureData(3,9) - 0.0358 ) < datadefs::EPS );
+
+  CPPUNIT_ASSERT( fabs( treeData.getFeatureData(4,0) - 6.0000 ) < datadefs::EPS );
+  CPPUNIT_ASSERT( fabs( treeData.getFeatureData(4,1) - 14.0000 ) < datadefs::EPS );
+  CPPUNIT_ASSERT( fabs( treeData.getFeatureData(4,2) - 24.0000 ) < datadefs::EPS );
+  CPPUNIT_ASSERT( fabs( treeData.getFeatureData(4,3) - 36.0000 ) < datadefs::EPS );
+  CPPUNIT_ASSERT( fabs( treeData.getFeatureData(4,4) - 50.0000 ) < datadefs::EPS );
+  CPPUNIT_ASSERT( fabs( treeData.getFeatureData(4,5) - 66.0000 ) < datadefs::EPS );
+  CPPUNIT_ASSERT( fabs( treeData.getFeatureData(4,6) - 84.0000 ) < datadefs::EPS );
+  CPPUNIT_ASSERT( fabs( treeData.getFeatureData(4,7) - 104.0000 ) < datadefs::EPS );
+  CPPUNIT_ASSERT( fabs( treeData.getFeatureData(4,8) - 126.0000 ) < datadefs::EPS );
+  CPPUNIT_ASSERT( fabs( treeData.getFeatureData(4,9) - 150.0000 ) < datadefs::EPS );
+
+}
 
 // Registers the fixture into the test 'registry'
 CPPUNIT_TEST_SUITE_REGISTRATION( treeDataTest ); 

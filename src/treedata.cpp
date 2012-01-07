@@ -36,10 +36,7 @@ Treedata::Treedata(string fileName, char dataDelimiter, char headerDelimiter):
     
   } else if(fileType == ARFF) {
     
-    //sampleHeaders_.clear();
-    //sampleHeaders_.resize(rawMatrix[0].size(),"NO_SAMPLE_ID");
     Treedata::readARFF(featurestream,rawMatrix,featureHeaders,isFeatureNumerical);
-
     sampleHeaders_.clear();
     sampleHeaders_.resize(rawMatrix[0].size(),"NO_SAMPLE_ID");
     
@@ -48,11 +45,6 @@ Treedata::Treedata(string fileName, char dataDelimiter, char headerDelimiter):
     Treedata::readAFM(featurestream,rawMatrix,featureHeaders,sampleHeaders_,isFeatureNumerical);
     
   }      
-  
-  //if ( !datadefs::is_unique(featureHeaders) ) {
-  //  cerr << "Feature headers are not unique!" << endl;
-  //  assert(false);
-  //}
 
   size_t nFeatures = featureHeaders.size();
   features_.resize(2*nFeatures);
@@ -64,6 +56,8 @@ Treedata::Treedata(string fileName, char dataDelimiter, char headerDelimiter):
       exit(1);
     }
 
+    //name2idxHashTest_[featureHeaders[i]] = i;
+    //cout << " " << name2idxHashTest_[featureHeaders[i]];
     name2idx_[featureHeaders[i]] = i;
     features_[i].name = featureHeaders[i];
     features_[i].isNumerical = isFeatureNumerical[i];
@@ -88,6 +82,8 @@ Treedata::Treedata(string fileName, char dataDelimiter, char headerDelimiter):
 
   } 
   
+  //cout << endl;
+
   for(size_t i = nFeatures; i < 2*nFeatures; ++i) {
     features_[i] = features_[ i - nFeatures ];
     string contrastName = features_[ i - nFeatures ].name;
