@@ -11,7 +11,7 @@
 #include <cstdlib>
 #include <map>
 #include <fstream>
-#include <tr1/unordered_map>
+//#include <tr1/unordered_map>
 
 #include "datadefs.hpp"
 #include "mtrand.h"
@@ -161,7 +161,7 @@ private:
 
   map<string,size_t> name2idx_;
 
-  map<string,size_t> name2idxHashTest_;
+  //map<string,size_t> name2idxHashTest_;
 
   MTRand_int32 randomInteger_;
 };
