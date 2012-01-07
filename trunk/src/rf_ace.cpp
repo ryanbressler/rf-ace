@@ -419,10 +419,12 @@ int main(const int argc, char* const argv[]) {
     return EXIT_FAILURE;
   }
 
-  if ( testInputExists ) {
+  /*
+    if ( testInputExists ) {
     cerr << "Test input file support is currently lacking. Future updates will bring it back up." << endl;
     exit(1);
-  }
+    }
+  */
 
   // Print help and exit if target index is not specified
   if ( !targetExists ) {
@@ -442,10 +444,12 @@ int main(const int argc, char* const argv[]) {
     exit(1);
   }
 
-  if ( testInputExists ) {
+  /*
+    if ( testInputExists ) {
     cerr << "Prediction with test data is temporarily out-of-use! (You can still grow the predictor with training data.) Quitting..." << endl;
     exit(1);
-  }
+    }
+  */
 
   // Read train data into Treedata object
   cout << "Reading file '" << gen_op.trainInput << "', please wait... " << flush;
@@ -652,8 +656,6 @@ int main(const int argc, char* const argv[]) {
       
       cout << "===> Making predictions..." << flush;
       
-
-
       // TODO: rf_ace.cpp: test input handling is still malfunctioning!
       if ( testInputExists ) {
 	
@@ -860,7 +862,7 @@ void printPredictionToFile(StochasticForest& SF, Treedata& treeData, const strin
     
     vector<num_t> prediction;
     vector<num_t> confidence;
-    SF.predict(prediction,confidence);
+    SF.predict(&treeData,prediction,confidence);
     
     for(size_t i = 0; i < prediction.size(); ++i) {
       toPredictionFile << targetName << "\t" << treeData.getSampleName(i) << "\t" << treeData.getRawFeatureData(targetIdx,i)
@@ -871,7 +873,7 @@ void printPredictionToFile(StochasticForest& SF, Treedata& treeData, const strin
 
     vector<string> prediction;
     vector<num_t> confidence;
-    SF.predict(prediction,confidence);
+    SF.predict(&treeData,prediction,confidence);
     
     for(size_t i = 0; i < prediction.size(); ++i) {
       toPredictionFile << targetName << "\t" << treeData.getSampleName(i) << "\t" << treeData.getRawFeatureData(targetIdx,i)
