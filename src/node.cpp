@@ -148,9 +148,11 @@ void Node::percolateData(Treedata* treeData, const size_t sampleIdx, Node** node
   if( !this->hasChildren() ) {
     *nodep = this;
   } else if ( splitter_->splitsLeft(treeData,sampleIdx) ) {
-    leftChild_->percolateData(treeData,sampleIdx,&leftChild_);
+    *nodep = leftChild_;
+    leftChild_->percolateData(treeData,sampleIdx,nodep);
   } else if ( splitter_->splitsRight(treeData,sampleIdx) ) {
-    rightChild_->percolateData(treeData,sampleIdx,&rightChild_);
+    *nodep = rightChild_;
+    rightChild_->percolateData(treeData,sampleIdx,nodep);
   } else {
     *nodep = this;
   }

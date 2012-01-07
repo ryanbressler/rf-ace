@@ -417,6 +417,74 @@ void StochasticForest::predict(vector<num_t>& prediction, vector<num_t>& confide
 
 }
 
+void StochasticForest::predict(Treedata* treeData, vector<string>& categoryPrediction, vector<num_t>& confidence) {
+
+  size_t targetIdx = treeData->getFeatureIdx( targetName_ );
+  size_t nSamples = treeData->nSamples();
+  size_t numClasses = treeData->nCategories( targetIdx );
+
+  // For classification, each "tree" is actually numClasses_ trees in a row, each predicting the probability of its own class.
+  size_t numIterations = nTrees_ / numClasses;
+
+  // Vector storing the transformed probabilities for each class prediction
+  vector<num_t> prediction( numClasses );
+
+  // Vector storing true probabilities for each class prediction
+  vector<num_t> probPrediction( numClasses );
+
+  categoryPrediction.resize( nSamples );
+  confidence.resize( nSamples );
+
+  // For each sample we need to produce predictions for each class.
+  for ( size_t i = 0; i < nSamples; i++ ) {
+
+    for (size_t k = 0; k < numClasses; ++k) {
+
+      // Initialize the prediction
+      prediction[k] = 0.0;
+
+      // We go through
+      for(size_t m = 0; m < numIterations; ++m) {
+
+        // Tree index
+        size_t t =  m * numClasses + k;
+
+        // Shrinked shift towards the new prediction
+        prediction[k] = prediction[k] + shrinkage_ * rootNodes_[t]->percolateData(treeData,i)->getTrainPrediction(); //predictSampleByTree(i, t);
+
+      }
+    }
+
+    // ... find index of maximum prediction, this is the predicted category
+    vector<num_t>::iterator maxProb = max_element( prediction.begin(), prediction.end() );
+    num_t maxProbCategory = 1.0*(maxProb - prediction.begin());
+
+    categoryPrediction[i] = treeData_->getRawFeatureData(targetIdx,maxProbCategory); //backMapping[ maxProbCategory ]; // classes are 0,1,2,...
+
+    StochasticForest::transformLogistic(numClasses, prediction, probPrediction); // predictions-to-probabilities
+
+    vector<num_t>::iterator largestElementIt = max_element(probPrediction.begin(),probPrediction.end());
+    confidence[i] = *largestElementIt;
+  }
+
+}
+
+void StochasticForest::predict(Treedata* treeData, vector<num_t>& prediction, vector<num_t>& confidence) {
+ 
+  size_t nSamples = treeData->nSamples();
+  prediction.resize(nSamples);
+  confidence.resize(nSamples);
+
+  for (size_t i=0; i<nSamples; i++) {
+    prediction[i] = 0;
+    for(size_t t = 0; t < nTrees_; ++t) {
+      prediction[i] = prediction[i] + shrinkage_ * rootNodes_[t]->percolateData(treeData,i)->getTrainPrediction(); //predictSampleByTree(i, t);
+    }
+
+  }
+ 
+}
+
 void StochasticForest::predictWithCategoricalRF(vector<string>& categoryPrediction) {
 
   cerr << "Prediction with RF isn't yet working" << endl;
@@ -497,15 +565,13 @@ void StochasticForest::predictWithNumericalGBT(vector<num_t>& prediction, vector
   prediction.resize(nSamples);
   confidence.resize(nSamples);
 
-  //cout << "Predicting "<<nSamples<<" samples. Target="<<targetIdx_<<endl;
   for (size_t i=0; i<nSamples; i++) {
     prediction[i] = 0;
     for(size_t t = 0; t < nTrees_; ++t) {
       prediction[i] = prediction[i] + shrinkage_ * predictSampleByTree(i, t);
     }
-    // diagnostic print out the true and the prediction
-    //cout << i << "\t" << treeData_->features_[targetIdx_].data[i] << "\t" << prediction[i] <<endl; //// THIS WILL BECOME INVALID UPON REMOVAL OF FRIENDSHIP ASSIGNMENT IN TREEDATA ////
-	}
+
+  }
 }
 
 
