@@ -24,12 +24,12 @@ public:
 
   // Initializes the object and reads in a data matrix
   Treedata(string fileName, char dataDelimiter, char headerDelimiter);
-  Treedata(Treedata& treedata);
-  Treedata(Treedata& treedata, const vector<size_t>& featureIcs);
+  //Treedata(Treedata& treedata);
+  //Treedata(Treedata& treedata, const vector<size_t>& featureIcs);
   ~Treedata();
   
-  void keepFeatures(const vector<size_t>& featureIcs);
-
+  void keepFeatures(vector<string> featureNames);
+  
   size_t nFeatures();
 
   num_t pearsonCorrelation(size_t featureidx1, size_t featureidx2);
