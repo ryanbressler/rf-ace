@@ -368,36 +368,50 @@ void StochasticForest::predict(Treedata* treeData, vector<string>& categoryPredi
   categoryPrediction.resize( nSamples );
   confidence.resize( nSamples );
 
-  // For each sample we need to produce predictions for each class.
-  for ( size_t i = 0; i < nSamples; i++ ) {
-
-    for (size_t k = 0; k < numClasses; ++k) {
-
-      // Initialize the prediction
-      prediction[k] = 0.0;
-
-      // We go through
-      for(size_t m = 0; m < numIterations; ++m) {
-
-        // Tree index
-        size_t t =  m * numClasses + k;
-
-        // Shrinked shift towards the new prediction
-        prediction[k] = prediction[k] + shrinkage_ * rootNodes_[t]->percolateData(treeData,i)->getTrainPrediction(); //predictSampleByTree(i, t);
-
+  if ( learnedModel_ == GBT_MODEL ) {
+    
+    // For each sample we need to produce predictions for each class.
+    for ( size_t i = 0; i < nSamples; i++ ) {
+      
+      for (size_t k = 0; k < numClasses; ++k) {
+	
+	// Initialize the prediction
+	prediction[k] = 0.0;
+	
+	// We go through
+	for(size_t m = 0; m < numIterations; ++m) {
+	  
+	  // Tree index
+	  size_t t =  m * numClasses + k;
+	  
+	  // Shrinked shift towards the new prediction
+	  prediction[k] = prediction[k] + shrinkage_ * rootNodes_[t]->percolateData(treeData,i)->getTrainPrediction(); //predictSampleByTree(i, t);
+	  
+	}
       }
+      
+      // ... find index of maximum prediction, this is the predicted category
+      vector<num_t>::iterator maxProb = max_element( prediction.begin(), prediction.end() );
+      num_t maxProbCategory = 1.0*(maxProb - prediction.begin());
+      
+      categoryPrediction[i] = treeData->getRawFeatureData(targetIdx,maxProbCategory); //backMapping[ maxProbCategory ]; // classes are 0,1,2,...
+      
+      StochasticForest::transformLogistic(numClasses, prediction, probPrediction); // predictions-to-probabilities
+      
+      vector<num_t>::iterator largestElementIt = max_element(probPrediction.begin(),probPrediction.end());
+      confidence[i] = *largestElementIt;
     }
 
-    // ... find index of maximum prediction, this is the predicted category
-    vector<num_t>::iterator maxProb = max_element( prediction.begin(), prediction.end() );
-    num_t maxProbCategory = 1.0*(maxProb - prediction.begin());
+  } else if ( learnedModel_ == RF_MODEL ) {
+    
+    cerr << "StochasticForest::predict(string) -- implementation for predicting with RFs missing" << endl;
+    exit(1);
 
-    categoryPrediction[i] = treeData->getRawFeatureData(targetIdx,maxProbCategory); //backMapping[ maxProbCategory ]; // classes are 0,1,2,...
+  } else {
 
-    StochasticForest::transformLogistic(numClasses, prediction, probPrediction); // predictions-to-probabilities
+    cerr << "StochasticForest::predict(string) -- no model to predict with" << endl;
+    exit(1);
 
-    vector<num_t>::iterator largestElementIt = max_element(probPrediction.begin(),probPrediction.end());
-    confidence[i] = *largestElementIt;
   }
 
 }
@@ -408,11 +422,24 @@ void StochasticForest::predict(Treedata* treeData, vector<num_t>& prediction, ve
   prediction.resize(nSamples);
   confidence.resize(nSamples);
 
-  for (size_t i=0; i<nSamples; i++) {
-    prediction[i] = 0;
-    for(size_t t = 0; t < nTrees_; ++t) {
-      prediction[i] = prediction[i] + shrinkage_ * rootNodes_[t]->percolateData(treeData,i)->getTrainPrediction();
+  if ( learnedModel_ == GBT_MODEL ) {
+
+    for ( size_t i = 0; i < nSamples; i++ ) {
+      prediction[i] = 0;
+      for ( size_t t = 0; t < nTrees_; ++t) {
+	prediction[i] = prediction[i] + shrinkage_ * rootNodes_[t]->percolateData(treeData,i)->getTrainPrediction();
+      }
+      
     }
+  } else if ( learnedModel_ == RF_MODEL ) {
+
+    cerr << "StochasticForest::predict(num) -- implementation for predicting with RFs missing" << endl;
+    exit(1);
+
+  } else {
+
+    cerr << "StochasticForest::predict(num) -- no model to predict with" << endl;
+    exit(1);
 
   }
  
