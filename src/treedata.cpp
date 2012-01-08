@@ -105,61 +105,12 @@ Treedata::Treedata(string fileName, char dataDelimiter, char headerDelimiter):
 
 }
 
-
-/*
-  Treedata::Treedata(Treedata& treedata):
-  features_(0),
-  sampleHeaders_(0) {
-  
-  time_t now;
-  time(&now);
-  unsigned int seed = clock() + now;
-  randomInteger_.seed(seed);
-  
-  dataDelimiter_ = treedata.dataDelimiter_;
-  headerDelimiter_ = treedata.headerDelimiter_;
-  features_ = treedata.features_;
-  sampleHeaders_ = treedata.sampleHeaders_;
-  name2idx_ = treedata.name2idx_;
-  
-  }
-  
-*/
-
-/*
-  Treedata::Treedata(Treedata& treedata, const vector<size_t>& featureIcs):
-  features_(0),
-  sampleHeaders_(0) {
-  
-  time_t now;
-  time(&now);
-  unsigned int seed = clock() + now;
-  randomInteger_.seed(seed);
-  
-  size_t nFeaturesNew = featureIcs.size();
-  
-  // We'll leave room for the contrasts
-  features_.resize(2*nFeaturesNew);
-  for(size_t i = 0; i < nFeaturesNew; ++i) {
-  features_[i] = treedata.features_[ featureIcs[i] ];
-  features_[i + nFeaturesNew] = treedata.features_[ featureIcs[i] + treedata.nFeatures() ];
-  }
-  
-  dataDelimiter_ = treedata.dataDelimiter_;
-  headerDelimiter_ = treedata.headerDelimiter_;
-  
-  sampleHeaders_ = treedata.sampleHeaders_;
-  name2idx_ = treedata.name2idx_;
-  
-  }
-*/
-
 Treedata::~Treedata() {
+  /* Empty destructor */
 }
 
 void Treedata::keepFeatures(vector<string> featureNames) {
   
-  size_t nFeaturesOld = Treedata::nFeatures();
   size_t nFeaturesNew = featureNames.size();
   
   vector<Feature> featureCopy = features_;
@@ -192,9 +143,6 @@ void Treedata::keepFeatures(vector<string> featureNames) {
     name2idx_[ featureName ] = nFeaturesNew + i; 
   }
   
-  //name2idx_ = name2idxCopy;
-
-  //nFeatures_ = nFeaturesNew;
 }
 
 void Treedata::updateSortOrder(const size_t featureIdx) {

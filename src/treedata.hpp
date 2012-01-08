@@ -24,8 +24,7 @@ public:
 
   // Initializes the object and reads in a data matrix
   Treedata(string fileName, char dataDelimiter, char headerDelimiter);
-  //Treedata(Treedata& treedata);
-  //Treedata(Treedata& treedata, const vector<size_t>& featureIcs);
+
   ~Treedata();
   
   void keepFeatures(vector<string> featureNames);

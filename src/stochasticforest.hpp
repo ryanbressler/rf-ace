@@ -29,10 +29,7 @@ public:
   
   //Calculates the feature importance scores for real and contrast features
   vector<num_t> featureImportance();
-  
-  void predict(vector<string>& prediction, vector<num_t>& confidence);
-  void predict(vector<num_t>& prediction, vector<num_t>& confidence);
-  
+    
   void predict(Treedata* treeData, vector<string>& categoryPrediction, vector<num_t>& confidence);
   void predict(Treedata* treeData, vector<num_t>& prediction, vector<num_t>& confidence);
 
@@ -55,12 +52,6 @@ private:
   num_t predictSampleByTree(size_t sampleIdx, size_t treeIdx);
   vector<num_t> predictDatasetByTree(size_t treeIdx);
 
-  void predictWithCategoricalRF(vector<string>& categoryPrediction);
-  void predictWithNumericalRF(vector<num_t>& prediction);
-
-  void predictWithCategoricalGBT(vector<string>& categoryPrediction, vector<num_t>& confidence);
-  void predictWithNumericalGBT(vector<num_t>& prediction, vector<num_t>& confidence);
-
   //Percolates samples along the trees, starting from the rootNode. Spits out a map<> that ties the percolated train samples to the leaf nodes
   void percolateSampleIcs(Node* rootNode, const vector<size_t>& sampleIcs, map<Node*,vector<size_t> >& trainIcs);
   void percolateSampleIcsAtRandom(const size_t featureIdx, Node* rootNode, const vector<size_t>& sampleIcs, map<Node*,vector<size_t> >& trainIcs);
@@ -75,7 +66,6 @@ private:
   Treedata* treeData_;
 
   //Chosen target to regress on
-  //size_t targetIdx_;
   string targetName_;
 
   size_t nTrees_;
