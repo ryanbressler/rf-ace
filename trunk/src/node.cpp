@@ -201,10 +201,10 @@ void Node::recursiveNDescendantNodes(size_t& n) {
  */
 void Node::print(string& traversal, ofstream& toFile) {
 
-  toFile << "NODE [" << traversal << "] PRED. = " << setprecision(3) << trainPrediction_;
+  toFile << "NODE=" << traversal << ",PRED=" << setprecision(3) << trainPrediction_;
 
   if ( !this->hasChildren() ) {
-    toFile << "\tLEAF" << endl;
+    //toFile << "\tLEAF" << endl;
     return;
   }
 
@@ -227,8 +227,8 @@ void Node::print(string& traversal, ofstream& toFile) {
   }
 
   // TODO: Node::print() needs to be completed
-  toFile << "\t[" << traversalLeft << "](" << setprecision(3) << leftChild_->getTrainPrediction() << ") <==> [" << traversalRight << "](" 
-	 << setprecision(3) << rightChild_->getTrainPrediction() << ")\tSPLITTER = " << splitter_->name() << endl;
+  toFile << ",L_PRED=" << setprecision(3) << leftChild_->getTrainPrediction() << ",R_PRED=" 
+	 << setprecision(3) << rightChild_->getTrainPrediction() << ",SPLITTER=" << splitter_->name() << endl;
 
   if ( !isLeftNodeLeaf ) {
     leftChild_->print(traversalLeft,toFile);
@@ -242,7 +242,6 @@ void Node::print(string& traversal, ofstream& toFile) {
 void Node::print(ofstream& toFile) {
   
   string traversal("");
-
   this->print(traversal,toFile);
 
 }
