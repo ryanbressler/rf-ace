@@ -49,6 +49,14 @@ void StochasticForest::printToFile(const string& fileName) {
   // Open stream for writing
   ofstream toFile( fileName.c_str() );
 
+  if ( learnedModel_ == GBT_MODEL ) {
+    toFile << "FOREST=GBT";
+  } else if ( learnedModel_ == RF_MODEL ) {
+    toFile << "FOREST=RF"; 
+  }
+
+  toFile << ",TARGET=" << targetName_ << endl;
+
   // Save each tree in the forest
   for ( size_t treeIdx = 0; treeIdx < rootNodes_.size(); ++treeIdx ) {
     toFile << endl << "TREE " << treeIdx << endl;
@@ -66,6 +74,8 @@ void StochasticForest::learnRF(const size_t mTry,
 			       const size_t nMaxLeaves,
 			       const size_t nodeSize,
 			       const bool useContrasts) {
+
+  shrinkage_ = 1 / nTrees_;
 
   if(useContrasts) {
     treeData_->permuteContrasts();
@@ -422,25 +432,12 @@ void StochasticForest::predict(Treedata* treeData, vector<num_t>& prediction, ve
   prediction.resize(nSamples);
   confidence.resize(nSamples);
 
-  if ( learnedModel_ == GBT_MODEL ) {
-
-    for ( size_t i = 0; i < nSamples; i++ ) {
-      prediction[i] = 0;
-      for ( size_t t = 0; t < nTrees_; ++t) {
-	prediction[i] = prediction[i] + shrinkage_ * rootNodes_[t]->percolateData(treeData,i)->getTrainPrediction();
-      }
-      
+  for ( size_t i = 0; i < nSamples; i++ ) {
+    prediction[i] = 0;
+    for ( size_t t = 0; t < nTrees_; ++t) {
+      prediction[i] = prediction[i] + shrinkage_ * rootNodes_[t]->percolateData(treeData,i)->getTrainPrediction();
     }
-  } else if ( learnedModel_ == RF_MODEL ) {
-
-    cerr << "StochasticForest::predict(num) -- implementation for predicting with RFs missing" << endl;
-    exit(1);
-
-  } else {
-
-    cerr << "StochasticForest::predict(num) -- no model to predict with" << endl;
-    exit(1);
-
+    
   }
  
 }
