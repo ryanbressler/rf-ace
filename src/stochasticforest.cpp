@@ -459,7 +459,7 @@ void StochasticForest::predict(Treedata* treeData, vector<string>& categoryPredi
     vector<num_t>::iterator maxProb = max_element( prediction.begin(), prediction.end() );
     num_t maxProbCategory = 1.0*(maxProb - prediction.begin());
 
-    categoryPrediction[i] = treeData_->getRawFeatureData(targetIdx,maxProbCategory); //backMapping[ maxProbCategory ]; // classes are 0,1,2,...
+    categoryPrediction[i] = treeData->getRawFeatureData(targetIdx,maxProbCategory); //backMapping[ maxProbCategory ]; // classes are 0,1,2,...
 
     StochasticForest::transformLogistic(numClasses, prediction, probPrediction); // predictions-to-probabilities
 
