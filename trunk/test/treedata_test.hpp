@@ -14,6 +14,7 @@ class treeDataTest : public CppUnit::TestFixture {
   CPPUNIT_TEST( test_updateSortOrder );
   CPPUNIT_TEST( test_getFilteredAndSortedDataPair2 );
   CPPUNIT_TEST( test_parseARFF );
+  CPPUNIT_TEST( test_keepFeatures );
   CPPUNIT_TEST_SUITE_END();
   
 public:
@@ -25,6 +26,7 @@ public:
   void test_updateSortOrder();
   void test_getFilteredAndSortedDataPair2();
   void test_parseARFF();
+  void test_keepFeatures();
 };
 
 void treeDataTest::setUp() {}
@@ -371,6 +373,32 @@ void treeDataTest::test_parseARFF() {
   CPPUNIT_ASSERT( fabs( treeData.getFeatureData(4,7) - 104.0000 ) < datadefs::EPS );
   CPPUNIT_ASSERT( fabs( treeData.getFeatureData(4,8) - 126.0000 ) < datadefs::EPS );
   CPPUNIT_ASSERT( fabs( treeData.getFeatureData(4,9) - 150.0000 ) < datadefs::EPS );
+
+}
+
+void treeDataTest::test_keepFeatures() {
+  
+  Treedata treedata("test_6by10_mixed_matrix.tsv",'\t',':');
+
+  // Feature names in the matrix are N:F1 N:F2 C:F3 N:F4 C:F5 N:F6
+
+  vector<string> keepFeatureNames;
+  keepFeatureNames.push_back("N:F2");
+  keepFeatureNames.push_back("C:F5");
+
+  treedata.keepFeatures(keepFeatureNames);
+
+  CPPUNIT_ASSERT( treedata.nFeatures() == keepFeatureNames.size() );
+  CPPUNIT_ASSERT( treedata.nSamples() == 10 );
+
+  // Internally, treedata also stores the contrasts, doubling the number of features
+  CPPUNIT_ASSERT( treedata.name2idx_.size() == 2*treedata.nFeatures() );
+
+  for ( size_t i = 0; i < treedata.nFeatures(); ++i ) {
+    string featureName = treedata.getFeatureName(i);
+    CPPUNIT_ASSERT( featureName.append("_CONTRAST") == treedata.getFeatureName( treedata.nFeatures() + i ));
+  }
+ 
 
 }
 

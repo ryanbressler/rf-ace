@@ -178,7 +178,8 @@ void Treedata::keepFeatures(vector<string> featureNames) {
       exit(1);
     }
 
-    features_[i] = featureCopy[ name2idxCopy[featureName] ];
+    features_[ i ] = featureCopy[ name2idxCopy[featureName] ];
+    name2idx_[ featureName ] = i;
 
     featureName.append("_CONTRAST");
 
@@ -188,9 +189,10 @@ void Treedata::keepFeatures(vector<string> featureNames) {
     }
 
     features_[ nFeaturesNew + i ] = featureCopy[ name2idxCopy[featureName] ];
+    name2idx_[ featureName ] = nFeaturesNew + i; 
   }
   
-  name2idx_ = name2idxCopy;
+  //name2idx_ = name2idxCopy;
 
   //nFeatures_ = nFeaturesNew;
 }

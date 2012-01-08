@@ -690,10 +690,10 @@ int main(const int argc, char* const argv[]) {
 
     if ( predictionOutputExists ) {
       
-      cout << "===> Making predictions..." << flush;
-      
       // TODO: rf_ace.cpp: test input handling is still malfunctioning!
       if ( testInputExists ) {
+
+	cout << "===> Making predictions with test data..." << flush;
 	
 	Treedata treedata_test(gen_op.testInput,gen_op.dataDelimiter,gen_op.headerDelimiter);
 	
@@ -701,6 +701,8 @@ int main(const int argc, char* const argv[]) {
 	
       } else {
 	
+	cout << "===> Making predictions with train data..." << flush;
+
 	printPredictionToFile(SF,treedata,gen_op.targetStr,gen_op.predictionOutput);
 	
       }
