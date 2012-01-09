@@ -593,6 +593,7 @@ vector<num_t> StochasticForest::featureImportance() {
 
   //Each feature, either real or contrast, will have a slot into which the importance value will be put.
   vector<num_t> importance( nAllFeatures, 0.0 );
+  vector<bool> hasImportance( nAllFeatures, false );
   size_t nOobSamples = 0; // !! Potentially Unintentional Humor: "Noob". That is actually intentional. :)
   
   size_t nContrastsInForest = 0;
@@ -633,10 +634,9 @@ vector<num_t> StochasticForest::featureImportance() {
       StochasticForest::percolateSampleIcsAtRandom(featureIdx,rootNodes_[treeIdx],oobMatrix_[treeIdx],trainIcs);
       num_t permutedTreeImpurity;
       StochasticForest::treeImpurity(trainIcs,permutedTreeImpurity);
-      //if ( fabs( treeImpurity ) > datadefs::EPS) {
+
       importance[featureIdx] += nNewOobSamples * (permutedTreeImpurity - treeImpurity);
-      //}
-      //cout << treeData_->getFeatureName(featureIdx) << " += " << importance[featureIdx] << endl;
+      hasImportance[featureIdx] = true;
     }
       
   }
@@ -647,9 +647,9 @@ vector<num_t> StochasticForest::featureImportance() {
   
   for ( size_t featureIdx = 0; featureIdx < nAllFeatures; ++featureIdx ) {
     
-    if ( meanTreeImpurity  > datadefs::EPS ) {
-      //importance[featureIdx] = datadefs::NUM_NAN;
-      //} else {
+    if ( !hasImportance[featureIdx] || fabs(meanTreeImpurity) < datadefs::EPS ) {
+      importance[featureIdx] = datadefs::NUM_NAN;
+    } else {
       importance[featureIdx] /= ( nOobSamples * meanTreeImpurity );
     }
     //cout << "I(" << treeData_->getFeatureName(featureIdx) << ") = " << importance[featureIdx] << endl;
