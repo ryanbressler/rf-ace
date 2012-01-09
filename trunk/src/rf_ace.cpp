@@ -242,7 +242,7 @@ private:
 void printHeader(ostream& output) {
   output << endl;
   output << " ------------------------------------------------------- " << endl;
-  output << "|  RF-ACE version:  0.9.7, December 29th, 2011          |" << endl;
+  output << "|  RF-ACE version:  0.9.8, January 9th, 2011            |" << endl;
   output << "|    Project page:  http://code.google.com/p/rf-ace     |" << endl;
   output << "|     Report bugs:  timo.p.erkkila@tut.fi               |" << endl;                     
   output << " ------------------------------------------------------- " << endl;
@@ -795,8 +795,9 @@ void executeRandomForest(Treedata& treedata,
 	cVector[featureIdx - treedata.nFeatures()] = importanceMat[permIdx][featureIdx];
       }
       size_t nReal;
+      //vector<num_t> trimmedCVector = datadefs::trim(cVector);
       datadefs::mean(cVector,cSample[permIdx],nReal);
-      assert( nReal == cVector.size() );
+      //assert( nReal );
       //datadefs::print(cVector);
       //vector<num_t> trimmedCVector = datadefs::trim(cVector);
       //if ( trimmedCVector.size() > 0 ) {
