@@ -1,0 +1,5 @@
+	S1	S2	S3	S4	S5	S6	S7	S8	S9	S10
+N:F0	na	5.1	nA	3.8	4.2	1.4	8.2	9.1	4.5	na
+N:F1	4.2	5.2	7.2	3.9	4.3	1.5	8.3	9.2	4.6	NAN
+N:F2	4.2	nan	nan	6.1	1.4	7.3	7.3	0.2	na	naN
+N:F3	nan	nan	nan	nan	nan	nan	nan	nan	nan	nan
