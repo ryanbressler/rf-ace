@@ -8,220 +8,90 @@
 #include <cmath>
 #include <stdio.h>
 #include <iomanip>
+#include <algorithm>
 
 #include "argparse.hpp"
 #include "stochasticforest.hpp"
 #include "treedata.hpp"
 #include "datadefs.hpp"
+#include "options.hpp"
+#include "statistics.hpp"
 
 using namespace std;
+using namespace options;
+using namespace statistics;
 using datadefs::num_t;
 
-const bool   GENERAL_DEFAULT_PRINT_HELP = false;
-const bool   GENERAL_DEFAULT_NO_PREDICTION = false; // TEMPORARY VARIABLE
-const num_t  GENERAL_DEFAULT_P_VALUE_THRESHOLD = 0.05;
-const bool   GENERAL_DEFAULT_NO_FILTER = false;
-const char   GENERAL_DEFAULT_DATA_DELIMITER = '\t';
-const char   GENERAL_DEFAULT_HEADER_DELIMITER = ':';
-
-const size_t RF_DEFAULT_N_TREES = 1000; // zero means it will be estimated from the data by default
-const size_t RF_DEFAULT_M_TRY = 0; // same here ...
-const size_t RF_DEFAULT_N_MAX_LEAVES = 100;
-const size_t RF_DEFAULT_NODE_SIZE = 3; // ... and here
-const size_t RF_DEFAULT_N_PERMS = 20;
-
-const size_t GBT_DEFAULT_N_TREES = 100;
-const size_t GBT_DEFAULT_N_MAX_LEAVES = 6;
-const num_t  GBT_DEFAULT_SHRINKAGE = 0.1;
-const num_t  GBT_DEFAULT_SUB_SAMPLE_SIZE = 0.5;
-
-struct General_options {
-
-  bool   printHelp;
-  string printHelp_s;
-  string printHelp_l;
-
-  string trainInput;
-  string trainInput_s;
-  string trainInput_l;
-
-  string associationOutput;
-  string associationOutput_s;
-  string associationOutput_l;
-
-  string targetStr;
-  string targetStr_s;
-  string targetStr_l;
-
-  string featureMaskInput;
-  string featureMaskInput_s;
-  string featureMaskInput_l;
-
-  string testInput;
-  string testInput_s;
-  string testInput_l;
-
-  string predictionOutput;
-  string predictionOutput_s;
-  string predictionOutput_l;
-
-  string logOutput;
-  string logOutput_s;
-  string logOutput_l;
-
-  string forestOutput;
-  string forestOutput_s;
-  string forestOutput_l;
+/*
+  struct RF_statistics {
   
-  num_t  pValueThreshold;
-  string pValueThreshold_s;
-  string pValueThreshold_l;
+  vector<vector<num_t> > importanceMat;
+  vector<vector<num_t> > contrastImportanceMat;
   
-  char   dataDelimiter;
-  string dataDelimiter_s;
-  string dataDelimiter_l;
+  num_t meanNodesPerTree;
+  num_t stdNodesPerTree;
 
-  char   headerDelimiter;
-  string headerDelimiter_s;
-  string headerDelimiter_l;
+  num_t meanNodesCreatedPerSecond;
 
-  bool   noFilter;
-  string noFilter_s;
-  string noFilter_l;
+  num_t meanContrastNodesPerTree;
+  num_t stdContrastNodesPerTree;
+
+  num_t meanTimePerForest;
+  num_t stdTimePerForest;
+
+  RF_statistics():
+  importanceMat(0),
+  contrastImportanceMat(0),
   
-  General_options():
-    printHelp(GENERAL_DEFAULT_PRINT_HELP),
-    printHelp_s("h"),
-    printHelp_l("help"),    
-    
-    trainInput(""),
-    trainInput_s("I"),
-    trainInput_l("traindata"),
-    
-    associationOutput(""),
-    associationOutput_s("O"),
-    associationOutput_l("associations"),
-    
-    targetStr(""),
-    targetStr_s("i"),
-    targetStr_l("target"),
-
-    featureMaskInput(""),
-    featureMaskInput_s("M"),
-    featureMaskInput_l("fmask"),
-    
-    testInput(""),
-    testInput_s("T"),
-    testInput_l("testdata"),
-
-    predictionOutput(""),
-    predictionOutput_s("P"),
-    predictionOutput_l("predictions"),
+  meanNodesPerTree(datadefs::NUM_NAN),
+  stdNodesPerTree(datadefs::NUM_NAN),
   
-    logOutput(""),
-    logOutput_s("L"),
-    logOutput_l("log"),
-
-    forestOutput(""),
-    forestOutput_s("F"),
-    forestOutput_l("forest"),
-
-    pValueThreshold(GENERAL_DEFAULT_P_VALUE_THRESHOLD),
-    pValueThreshold_s("t"),
-    pValueThreshold_l("pthreshold"),
-
-    dataDelimiter(GENERAL_DEFAULT_DATA_DELIMITER),
-    dataDelimiter_s("D"),
-    dataDelimiter_l("data_delim"),
-
-    headerDelimiter(GENERAL_DEFAULT_HEADER_DELIMITER),
-    headerDelimiter_s("H"),
-    headerDelimiter_l("head_delim"),
-
-    noFilter(GENERAL_DEFAULT_NO_FILTER),
-    noFilter_s("N"),
-    noFilter_l("noFilter") {}
-};
-
-struct RF_options {
-    
-  size_t nTrees;
-  string nTrees_s;
-  string nTrees_l;
+  meanNodesCreatedPerSecond(datadefs::NUM_NAN),
   
-  size_t mTry;
-  string mTry_s;
-  string mTry_l;
-
-  size_t nMaxLeaves;
-  string nMaxLeaves_s;
-  string nMaxLeaves_l;
-
-  size_t nodeSize;
-  string nodeSize_s;
-  string nodeSize_l;
-
-  size_t nPerms;
-  string nPerms_s;
-  string nPerms_l;
-
-  RF_options():
-    nTrees(RF_DEFAULT_N_TREES),
-    nTrees_s("n"),
-    nTrees_l("RF_ntrees"),
-    
-    mTry(RF_DEFAULT_M_TRY),
-    mTry_s("m"),
-    mTry_l("RF_mtry"),
-
-    nMaxLeaves(RF_DEFAULT_N_MAX_LEAVES),
-    nMaxLeaves_s("a"),
-    nMaxLeaves_l("RF_maxleaves"),
-
-    nodeSize(RF_DEFAULT_NODE_SIZE),
-    nodeSize_s("s"),
-    nodeSize_l("RF_nodesize"),
-
-    nPerms(RF_DEFAULT_N_PERMS),
-    nPerms_s("p"),
-    nPerms_l("RF_nperms") {}
-};
-
-struct GBT_options {
-
-  size_t nTrees;
-  string nTrees_s;
-  string nTrees_l;
+  meanContrastNodesPerTree(datadefs::NUM_NAN),
+  stdContrastNodesPerTree(datadefs::NUM_NAN),
   
-  size_t nMaxLeaves;
-  string nMaxLeaves_s;
-  string nMaxLeaves_l;
+  meanTimePerForest(datadefs::NUM_NAN),
+  stdTimePerForest(datadefs::NUM_NAN) {}
   
-  num_t shrinkage;
-  string shrinkage_s;
-  string shrinkage_l;
+  void print(ofstream& toFile) {
   
-  num_t subSampleSize;
-  string subSampleSize_s;
-  string subSampleSize_l;
-
-  GBT_options():    
-    nTrees(GBT_DEFAULT_N_TREES),
-    nTrees_s("r"),
-    nTrees_l("GBT_ntrees"),
-    
-    nMaxLeaves(GBT_DEFAULT_N_MAX_LEAVES),
-    nMaxLeaves_s("l"),
-    nMaxLeaves_l("GBT_maxleaves"),
-    
-    shrinkage(GBT_DEFAULT_SHRINKAGE),
-    shrinkage_s("z"),
-    shrinkage_l("GBT_shrinkage"),
-
-    subSampleSize(GBT_DEFAULT_SUB_SAMPLE_SIZE),
-    subSampleSize_s("u"),
-    subSampleSize_l("GBT_samplesize") {}
-};
+  size_t nPerms = importanceMat.size();
+  
+  assert( nPerms == contrastImportanceMat.size() );
+  
+  vector<num_t> importanceVec( nPerms );
+  vector<num_t> contrastImportanceVec( nPerms );
+  
+  size_t nReal;
+  for ( size_t permIdx = 0; permIdx < nPerms; ++permIdx ) {
+  datadefs::mean(importanceMat[permIdx],importanceVec[permIdx],nReal);
+  datadefs::mean(contrastImportanceMat[permIdx],contrastImportanceVec[permIdx],nReal);
+  }
+  
+  num_t meanImportance;
+  num_t meanContrastImportance;
+  
+  num_t stdImportance;
+  num_t stdContrastImportance;
+  
+  datadefs::sqerr(importanceVec,meanImportance,stdImportance,nReal);
+  stdImportance = sqrtf(stdImportance) / nReal;
+  
+  datadefs::sqerr(contrastImportanceVec,meanContrastImportance,stdContrastImportance,nReal);
+  stdContrastImportance = sqrtf(stdContrastImportance) / nReal;
+  
+  
+  toFile << "Random Forest statistics" << endl
+  << "------------------------" << endl
+  << "-- MEAN          IMPORTANCE = " << meanImportance << endl
+  << "-- STD           IMPORTANCE = " << stdImportance << endl
+  << "-- MEAN CONTRAST IMPORTANCE = " << meanContrastImportance << endl
+  << "-- STD  CONTRAST IMPORTANCE = " << stdContrastImportance << endl;
+  }
+  
+  };
+*/
 
 class Progress {
 public:
@@ -250,90 +120,17 @@ void printHeader(ostream& output) {
   
 }
 
-void printHelp(const General_options& geno, const RF_options& rfo, const GBT_options& gbto) {
-
-  size_t maxwidth = 20;
-  cout << endl;
-  
-  cout << "REQUIRED ARGUMENTS:" << endl;
-  cout << " -" << geno.trainInput_s << " / --" << geno.trainInput_l << setw( maxwidth - geno.trainInput_l.size() )
-       << " " << "Train data input file, associations will be sought from this data. Supported formats: AFM and ARFF" << endl;
-  cout << " -" << geno.targetStr_s << " / --" << geno.targetStr_l << setw( maxwidth - geno.targetStr_l.size() )
-       << " " << "Target, specified as integer or string that is to be matched with the content of input" << endl;
-  cout << endl;
-
-  cout << "OPTIONAL ARGUMENTS:" << endl;
-  cout << " -" << geno.associationOutput_s << " / --" << geno.associationOutput_l << setw( maxwidth - geno.associationOutput_l.size() )
-       << " " << "Association output file" << endl;
-  cout << " -" << geno.testInput_s << " / --" << geno.testInput_l << setw( maxwidth - geno.testInput_l.size() )
-       << " " << "Test data input file, predictions will be made from this data" << endl;
-  cout << " -" << geno.predictionOutput_s << " / --" << geno.predictionOutput_l << setw( maxwidth - geno.predictionOutput_l.size() )
-       << " " << "Prediction output file" << endl;  
-  cout << " -" << geno.logOutput_s << " / --" << geno.logOutput_l << setw( maxwidth - geno.logOutput_l.size() )
-       << " " << "Log output file" << endl;
-  cout << " -" << geno.forestOutput_s << " / --" << geno.forestOutput_l << setw( maxwidth - geno.forestOutput_l.size() )
-       << " " << "Forest output file" << endl;
-  cout << " -" << geno.featureMaskInput_s << " / --" << geno.featureMaskInput_l << setw( maxwidth - geno.featureMaskInput_l.size() )
-       << " " << "Feature mask input file. String of ones and zeroes, zeroes indicating removal of the feature in the matrix" << endl;
-  cout << " -" << geno.dataDelimiter_s << " / --" << geno.dataDelimiter_l << setw( maxwidth - geno.dataDelimiter_l.size() )
-       << " " << "Data delimiter (default \\t)" << endl;
-  cout << " -" << geno.headerDelimiter_s << " / --" << geno.headerDelimiter_l << setw( maxwidth - geno.headerDelimiter_l.size() )
-       << " " << "Header delimiter that separates the N and C symbols in feature headers from the rest (default " << GENERAL_DEFAULT_HEADER_DELIMITER << ")" << endl;
-  cout << " -" << geno.noFilter_s << " / --" << geno.noFilter_l << setw( maxwidth - geno.noFilter_l.size() )
-       << " " << "Set this flag if you want to omit applying feature filtering with RFs" << endl;
-  cout << endl;
-  
-  cout << "OPTIONAL ARGUMENTS -- RANDOM FOREST:" << endl;
-  cout << " -" << rfo.nTrees_s << " / --" << rfo.nTrees_l << setw( maxwidth - rfo.nTrees_l.size() )
-       << " " << "Number of trees per RF (default 100)" << endl;
-  cout << " -" << rfo.mTry_s << " / --" << rfo.mTry_l << setw( maxwidth - rfo.mTry_l.size() )
-       << " " << "Number of randomly drawn features per node split (default floor(0.1*nFeatures))" << endl;
-  cout << " -" << rfo.nMaxLeaves_s << " / --" << rfo.nMaxLeaves_l << setw( maxwidth - rfo.nMaxLeaves_l.size() )
-       << " " << "Maximum number of leaves per tree (default " << RF_DEFAULT_N_MAX_LEAVES << ")" << endl;
-  cout << " -" << rfo.nodeSize_s << " / --" << rfo.nodeSize_l << setw( maxwidth - rfo.nodeSize_l.size() )
-       << " " << "Minimum number of train samples per node, affects tree depth (default 5)" << endl;
-  cout << " -" << rfo.nPerms_s << " / --" << rfo.nPerms_l << setw( maxwidth - rfo.nPerms_l.size() ) 
-       << " " << "Number of Random Forests (default " << RF_DEFAULT_N_PERMS << ")" << endl;
-  cout << endl;
-
-  cout << "OPTIONAL ARGUMENTS -- FEATURE FILTER:" << endl;
-  cout << " -" << geno.pValueThreshold_s << " / --" << geno.pValueThreshold_l << setw( maxwidth - geno.pValueThreshold_l.size() )
-       << " " << "p-value threshold below which associations are listed (default "
-       << GENERAL_DEFAULT_P_VALUE_THRESHOLD << ")" << endl;
-  cout << endl;
-  
-  cout << "OPTIONAL ARGUMENTS -- GRADIENT BOOSTING TREES:" << endl;
-  cout << " -" << gbto.nTrees_s << " / --" << gbto.nTrees_l << setw( maxwidth - gbto.nTrees_l.size() ) 
-       << " " << "Number of trees in the GBT (default " << GBT_DEFAULT_N_TREES << ")" << endl; 
-  cout << " -" << gbto.nMaxLeaves_s << " / --" << gbto.nMaxLeaves_l << setw( maxwidth - gbto.nMaxLeaves_l.size() ) 
-       << " " << "Maximum number of leaves per tree (default " << GBT_DEFAULT_N_MAX_LEAVES << ")" << endl;
-  cout << " -" << gbto.shrinkage_s << " / --" << gbto.shrinkage_l << setw( maxwidth - gbto.shrinkage_l.size() ) 
-       << " " << "Shrinkage applied to evolving the residual (default " << GBT_DEFAULT_SHRINKAGE << ")" << endl;
-  cout << " -" << gbto.subSampleSize_s << " / --" << gbto.subSampleSize_l << setw( maxwidth - gbto.subSampleSize_l.size() ) 
-       << " " << "Sample size fraction for training the trees (default " << GBT_DEFAULT_SUB_SAMPLE_SIZE << ")" << endl;
-  cout << endl;
-  
-  cout << "EXAMPLES:" << endl;
-  cout << endl;
-
-  cout << "List features associated with feature called \"C:AFFECTION\":" << endl;
-  cout << "bin/rf_ace --traindata featurematrix.afm --target C:AFFECTION --associations associations.tsv" << endl << endl;
-
-  cout << "Train the model for \"C:AFFECTION\" with \"original.afm\", and predict new data for \"C:AFFECTION\" with \"newdata.afm\":" << endl;
-  cout << "bin/rf_ace --traindata original.afm --target C:AFFECTION --testdata newdata.afm --predictions.tsv" << endl << endl;
-}
-
 void printHelpHint() {
   cout << endl;
   cout << "To get started, type \"-h\" or \"--help\"" << endl;
 }
 
-void executeRandomForest(Treedata& treedata,
-			 const size_t targetIdx,
-			 const RF_options& RF_op,
-			 const General_options& gen_op,
-			 vector<num_t>& pValues,
-			 vector<num_t>& importanceValues);
+RF_statistics executeRandomForest(Treedata& treedata,
+				  const size_t targetIdx,
+				  const RF_options& RF_op,
+				  const General_options& gen_op,
+				  vector<num_t>& pValues,
+				  vector<num_t>& importanceValues);
 
 void printPredictionToFile(StochasticForest& SF, Treedata& treeData, const string& targetName, const string& fileName);
 
@@ -345,6 +142,8 @@ int main(const int argc, char* const argv[]) {
   // Structs that store all the user-specified command-line arguments
   General_options gen_op;
   RF_options RF_op; 
+  RF_statistics RF_stat;
+
   GBT_options GBT_op;
 
   // Print the intro header
@@ -592,7 +391,7 @@ int main(const int argc, char* const argv[]) {
     //vector<num_t> pValues; //(treedata.nFeatures());
     //vector<num_t> importanceValues; //(treedata.nFeatures());
     cout << "===> Uncovering associations... " << flush;
-    executeRandomForest(treedata,targetIdx,RF_op,gen_op,pValues,importanceValues);
+    RF_stat = executeRandomForest(treedata,targetIdx,RF_op,gen_op,pValues,importanceValues);
     cout << "DONE" << endl;
     
     /////////////////////////////////////////////////
@@ -719,6 +518,8 @@ int main(const int argc, char* const argv[]) {
     ofstream toLogFile(gen_op.logOutput.c_str());
     
     printHeader(toLogFile);
+
+    RF_stat.print(toLogFile);
     
     toLogFile.close();
     
@@ -745,14 +546,18 @@ int main(const int argc, char* const argv[]) {
 }
 
 
-void executeRandomForest(Treedata& treedata,
-			 const size_t targetIdx,
-			 const RF_options& RF_op,
-			 const General_options& gen_op,
-			 vector<num_t>& pValues,
-			 vector<num_t>& importanceValues) {
+RF_statistics executeRandomForest(Treedata& treedata,
+				  const size_t targetIdx,
+				  const RF_options& RF_op,
+				  const General_options& gen_op,
+				  vector<num_t>& pValues,
+				  vector<num_t>& importanceValues) {
+
+  RF_statistics RF_stat;
   
-  vector<vector<num_t> > importanceMat(RF_op.nPerms);
+  vector<vector<num_t> >         importanceMat( RF_op.nPerms, vector<num_t>(treedata.nFeatures()) );
+  vector<vector<num_t> > contrastImportanceMat( RF_op.nPerms, vector<num_t>(treedata.nFeatures()) );
+
 
   pValues.clear();
   pValues.resize(treedata.nFeatures(),1.0);
@@ -777,7 +582,11 @@ void executeRandomForest(Treedata& treedata,
     SF.learnRF(RF_op.mTry,RF_op.nMaxLeaves,RF_op.nodeSize,useContrasts);
     size_t nNodesInForest = SF.nNodes();
     nNodesInAllForests += nNodesInForest;
-    importanceMat[permIdx] = SF.featureImportance();
+    
+    importanceValues = SF.featureImportance();
+
+    copy(importanceValues.begin(),importanceValues.begin()+treedata.nFeatures(),importanceMat[permIdx].begin());
+    copy(importanceValues.begin()+treedata.nFeatures(),importanceValues.begin()+2*treedata.nFeatures(),contrastImportanceMat[permIdx].begin());
     
     //printf("  RF %i: %i nodes (avg. %6.3f nodes/tree)\n",permIdx+1,static_cast<int>(nNodesInForest),1.0*nNodesInForest/RF_op.nTrees);
     
@@ -791,24 +600,24 @@ void executeRandomForest(Treedata& treedata,
     vector<num_t> cSample(RF_op.nPerms);
     for(size_t permIdx = 0; permIdx < RF_op.nPerms; ++permIdx) {
       vector<num_t> cVector(treedata.nFeatures());
-      for(size_t featureIdx = treedata.nFeatures(); featureIdx < 2*treedata.nFeatures(); ++featureIdx) {
-	cVector[featureIdx - treedata.nFeatures()] = importanceMat[permIdx][featureIdx];
+      for(size_t featureIdx = 0; featureIdx < treedata.nFeatures(); ++featureIdx) {
+	cVector[featureIdx] = contrastImportanceMat[permIdx][featureIdx];
       }
-      size_t nReal;
-      //vector<num_t> trimmedCVector = datadefs::trim(cVector);
-      datadefs::mean(cVector,cSample[permIdx],nReal);
+      //size_t nReal;
+      vector<num_t> trimmedCVector = datadefs::trim(cVector);
+      //datadefs::mean(cVector,cSample[permIdx],nReal);
       //assert( nReal );
       //datadefs::print(cVector);
       //vector<num_t> trimmedCVector = datadefs::trim(cVector);
-      //if ( trimmedCVector.size() > 0 ) {
-	//datadefs::percentile(trimmedCVector,0.95,cSample[permIdx]);
-      //} else {
-      //	cSample[permIdx] = 0.0;
-      //}
+      if ( trimmedCVector.size() > 0 ) {
+	datadefs::percentile(trimmedCVector,0.95,cSample[permIdx]);
+      } else {
+      	cSample[permIdx] = datadefs::NUM_NAN;
+      }
       //cout << " " << cSample[permIdx];
     }
     //cout << endl;
-    //datadefs::print(cSample);
+    //RF_stat.contrastImportanceSample = cSample;
     
     //cout << "cSample created." << endl;
     
@@ -823,15 +632,20 @@ void executeRandomForest(Treedata& treedata,
       }
       
       //datadefs::print(fSample);
-      datadefs::ttest(fSample,cSample,pValues[featureIdx]);
+      datadefs::ttest(fSample,cSample,pValues[featureIdx]);      
       datadefs::mean(fSample,importanceValues[featureIdx],nRealSamples);
-      //cout << "t-test ready for feature idx " << featureIdx << endl;
+      
     }
   } else {
     importanceValues = importanceMat[0];
   }
   
+  RF_stat.importanceMat = importanceMat;
+  RF_stat.contrastImportanceMat = contrastImportanceMat;
+
   importanceValues.resize(treedata.nFeatures());
+
+  return( RF_stat );
   
 }
 
