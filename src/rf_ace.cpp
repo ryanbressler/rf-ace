@@ -23,23 +23,6 @@ using namespace options;
 using namespace statistics;
 using datadefs::num_t;
 
-/*
-  class Progress {
-  public:
-  Progress(): width_(3) { cout << setw(width_) << "0" << "%" << flush; }
-  ~Progress() { reset(); }
-  
-  void update(const num_t fraction) { reset(); cout << setw(width_) << static_cast<size_t>(fraction*100) << "%" << flush; }
-  
-  private:
-  
-  void reset() { for(size_t i = 0; i <= width_; ++i) { cout << "\b"; } }
-  
-  size_t width_;
-  
-  };
-*/
-
 void printHeader(ostream& output) {
   output << endl;
   output << " ------------------------------------------------------- " << endl;
@@ -413,7 +396,7 @@ int main(const int argc, char* const argv[]) {
     cout << "DONE" << endl;
 
     if( forestOutputExists ) {
-      cout << "===> Writing predictor to file..." << flush;
+      cout << "===> Writing predictor to file... " << flush;
       SF.printToFile( gen_op.forestOutput );
       cout << "DONE" << endl;
     }
@@ -423,7 +406,7 @@ int main(const int argc, char* const argv[]) {
       // TODO: rf_ace.cpp: test input handling is still malfunctioning!
       if ( testInputExists ) {
 
-	cout << "===> Making predictions with test data..." << flush;
+	cout << "===> Making predictions with test data... " << flush;
 	
 	Treedata treedata_test(gen_op.testInput,gen_op.dataDelimiter,gen_op.headerDelimiter);
 	
@@ -431,7 +414,7 @@ int main(const int argc, char* const argv[]) {
 	
       } else {
 	
-	cout << "===> Making predictions with train data..." << flush;
+	cout << "===> Making predictions with train data... " << flush;
 
 	printPredictionToFile(SF,treedata,gen_op.targetStr,gen_op.predictionOutput);
 	
@@ -485,20 +468,18 @@ RF_statistics executeRandomForest(Treedata& treedata,
 				  vector<num_t>& importanceValues) {
 
   RF_statistics RF_stat;
+  RF_stat.nodeMat.resize(RF_op.nPerms,vector<size_t>(RF_op.nTrees));
   
   vector<vector<num_t> >         importanceMat( RF_op.nPerms, vector<num_t>(treedata.nFeatures()) );
   vector<vector<num_t> > contrastImportanceMat( RF_op.nPerms, vector<num_t>(treedata.nFeatures()) );
 
-
   pValues.clear();
   pValues.resize(treedata.nFeatures(),1.0);
   importanceValues.resize(treedata.nFeatures());
-  size_t nNodesInAllForests = 0;
 
   Progress progress;
+  clock_t clockStart( clock() );
   for(int permIdx = 0; permIdx < static_cast<int>(RF_op.nPerms); ++permIdx) {
-    //cout << "  RF " << permIdx + 1 << ": ";
-    //Treedata td_thread = treedata;
 
     progress.update(1.0*permIdx/RF_op.nPerms);
   
@@ -511,20 +492,17 @@ RF_statistics executeRandomForest(Treedata& treedata,
 
     StochasticForest SF(&treedata,gen_op.targetStr,RF_op.nTrees);
     SF.learnRF(RF_op.mTry,RF_op.nMaxLeaves,RF_op.nodeSize,useContrasts);
-    size_t nNodesInForest = SF.nNodes();
-    nNodesInAllForests += nNodesInForest;
+     
+    for ( size_t treeIdx = 0; treeIdx < RF_op.nTrees; ++treeIdx ) {
+      RF_stat.nodeMat[permIdx][treeIdx] = SF.nNodes(treeIdx);
+    }
     
     importanceValues = SF.featureImportance();
 
     copy(importanceValues.begin(),importanceValues.begin()+treedata.nFeatures(),importanceMat[permIdx].begin());
     copy(importanceValues.begin()+treedata.nFeatures(),importanceValues.begin()+2*treedata.nFeatures(),contrastImportanceMat[permIdx].begin());
     
-    //printf("  RF %i: %i nodes (avg. %6.3f nodes/tree)\n",permIdx+1,static_cast<int>(nNodesInForest),1.0*nNodesInForest/RF_op.nTrees);
-    
-    progress.update( 1.0 * ( 1 + permIdx ) / RF_op.nPerms );
   }
-
-  //cout << "Entering t-test..." << endl;
 
   if(RF_op.nPerms > 1) {
     
@@ -575,6 +553,8 @@ RF_statistics executeRandomForest(Treedata& treedata,
   RF_stat.contrastImportanceMat = contrastImportanceMat;
 
   importanceValues.resize(treedata.nFeatures());
+
+  RF_stat.executionTime = 1.0 * ( clock() - clockStart ) / CLOCKS_PER_SEC;
 
   return( RF_stat );
   

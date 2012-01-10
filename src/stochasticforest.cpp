@@ -662,10 +662,14 @@ vector<num_t> StochasticForest::featureImportance() {
 size_t StochasticForest::nNodes() {
   size_t nNodes = 0;
   for(size_t treeIdx = 0; treeIdx < rootNodes_.size(); ++treeIdx) {
-    nNodes += rootNodes_[treeIdx]->nNodes();
+    nNodes += this->nNodes(treeIdx);
   }
   
   return(nNodes);
+}
+
+size_t StochasticForest::nNodes(const size_t treeIdx) {
+  return( rootNodes_[treeIdx]->nNodes() );
 }
 
 vector<size_t> StochasticForest::featureFrequency() {

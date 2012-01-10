@@ -16,10 +16,9 @@ namespace statistics {
     vector<vector<num_t> > importanceMat;
     vector<vector<num_t> > contrastImportanceMat;
     
-    num_t meanNodesPerTree;
-    num_t stdNodesPerTree;
+    vector<vector<size_t> > nodeMat;
     
-    num_t meanNodesCreatedPerSecond;
+    num_t executionTime;
     
     num_t meanContrastNodesPerTree;
     num_t stdContrastNodesPerTree;
@@ -31,10 +30,9 @@ namespace statistics {
       importanceMat(0),
       contrastImportanceMat(0),
       
-      meanNodesPerTree(NUM_NAN),
-      stdNodesPerTree(NUM_NAN),
+      nodeMat(0),
       
-      meanNodesCreatedPerSecond(NUM_NAN),
+      executionTime(0.0),
       
       meanContrastNodesPerTree(NUM_NAN),
       stdContrastNodesPerTree(NUM_NAN),
@@ -44,18 +42,31 @@ namespace statistics {
     
     void print(ofstream& toFile) {
       
+      assert( nodeMat.size() > 0 );
+
       size_t nPerms = importanceMat.size();
-      
+      size_t nTrees = nodeMat[0].size();
+
       assert( nPerms == contrastImportanceMat.size() );
+      assert( nPerms == nodeMat.size() );
 
       vector<num_t> importanceVec( nPerms );
       vector<num_t> contrastImportanceVec( nPerms );
+      
+      size_t nNodes = 0;
 
       size_t nReal;
       for ( size_t permIdx = 0; permIdx < nPerms; ++permIdx ) {
 	datadefs::mean(importanceMat[permIdx],importanceVec[permIdx],nReal);
 	datadefs::mean(contrastImportanceMat[permIdx],contrastImportanceVec[permIdx],nReal);
+	for ( size_t treeIdx = 0; treeIdx < nodeMat[permIdx].size(); ++treeIdx ) {
+	  nNodes += nodeMat[permIdx][treeIdx];
+	}
       }
+
+      num_t meanNodesPerTree = 1.0 * nNodes / ( nPerms * nTrees );
+
+      num_t meanNodesPerSecond = 1.0 * nNodes / executionTime;
 
       num_t meanImportance;
       num_t meanContrastImportance;
@@ -69,13 +80,16 @@ namespace statistics {
       datadefs::sqerr(contrastImportanceVec,meanContrastImportance,stdContrastImportance,nReal);
       stdContrastImportance = sqrtf(stdContrastImportance) / nReal;
 
-
       toFile << "Random Forest statistics" << endl
 	     << "------------------------" << endl
-	     << "-- MEAN          IMPORTANCE = " << meanImportance << endl
-	     << "-- STD           IMPORTANCE = " << stdImportance << endl
+	     << "--          MEAN IMPORTANCE = " << meanImportance << endl
+	     << "--           STD IMPORTANCE = " << stdImportance << endl
 	     << "-- MEAN CONTRAST IMPORTANCE = " << meanContrastImportance << endl
-	     << "-- STD  CONTRAST IMPORTANCE = " << stdContrastImportance << endl;
+	     << "--  STD CONTRAST IMPORTANCE = " << stdContrastImportance << endl
+	     << "--      MEAN NODES PER TREE = " << meanNodesPerTree << endl
+	     << "--    MEAN NODES PER SECOND = " << meanNodesPerSecond << endl;
+      
+
     }
     
     
