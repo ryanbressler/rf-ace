@@ -28,6 +28,7 @@ public:
   ~Treedata();
   
   void keepFeatures(vector<string> featureNames);
+  void removeFeatures(vector<string> featureNames);
   
   size_t nFeatures();
 

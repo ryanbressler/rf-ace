@@ -145,6 +145,10 @@ void Treedata::keepFeatures(vector<string> featureNames) {
   
 }
 
+void Treedata::removeFeatures(vector<string> featureNames) {
+  cerr << "Treedata::removeFeatures() -- lacks implementation" << endl;
+}
+
 void Treedata::updateSortOrder(const size_t featureIdx) {
 
   features_[featureIdx].sortOrder.resize( sampleHeaders_.size() );

@@ -42,9 +42,13 @@ namespace options {
     string targetStr_s;
     string targetStr_l;
     
-    string featureMaskInput;
-    string featureMaskInput_s;
-    string featureMaskInput_l;
+    string whiteListInput;
+    string whiteListInput_s;
+    string whiteListInput_l;
+
+    string blackListInput;
+    string blackListInput_s;
+    string blackListInput_l;
     
     string testInput;
     string testInput_s;
@@ -95,10 +99,14 @@ namespace options {
       targetStr_s("i"),
       targetStr_l("target"),
       
-      featureMaskInput(""),
-      featureMaskInput_s("M"),
-      featureMaskInput_l("fmask"),
+      whiteListInput(""),
+      whiteListInput_s("W"),
+      whiteListInput_l("whitelist"),
       
+      blackListInput(""),
+      blackListInput_s("B"),
+      blackListInput_l("blacklist"),
+
       testInput(""),
       testInput_s("T"),
       testInput_l("testdata"),
@@ -235,8 +243,10 @@ namespace options {
 	 << " " << "Log output file" << endl;
     cout << " -" << geno.forestOutput_s << " / --" << geno.forestOutput_l << setw( maxwidth - geno.forestOutput_l.size() )
 	 << " " << "Forest output file" << endl;
-    cout << " -" << geno.featureMaskInput_s << " / --" << geno.featureMaskInput_l << setw( maxwidth - geno.featureMaskInput_l.size() )
-	 << " " << "Feature mask input file. String of ones and zeroes, zeroes indicating removal of the feature in the matrix" << endl;
+    cout << " -" << geno.whiteListInput_s << " / --" << geno.whiteListInput_l << setw( maxwidth - geno.whiteListInput_l.size() )
+	 << " " << "White list of features to be included in the input file(s)." << endl;
+    cout << " -" << geno.blackListInput_s << " / --" << geno.blackListInput_l << setw( maxwidth - geno.blackListInput_l.size() )
+         << " " << "Black list of features to be excluded from the input file(s)." << endl;
     cout << " -" << geno.dataDelimiter_s << " / --" << geno.dataDelimiter_l << setw( maxwidth - geno.dataDelimiter_l.size() )
 	 << " " << "Data delimiter (default \\t)" << endl;
     cout << " -" << geno.headerDelimiter_s << " / --" << geno.headerDelimiter_l << setw( maxwidth - geno.headerDelimiter_l.size() )
