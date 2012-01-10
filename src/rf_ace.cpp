@@ -26,7 +26,7 @@ using datadefs::num_t;
 void printHeader(ostream& output) {
   output << endl;
   output << " ------------------------------------------------------- " << endl;
-  output << "|  RF-ACE version:  0.9.8, January 10th, 2011           |" << endl;
+  output << "|  RF-ACE version:  0.9.8, January 10th, 2012           |" << endl;
   output << "|    Project page:  http://code.google.com/p/rf-ace     |" << endl;
   output << "|     Report bugs:  timo.p.erkkila@tut.fi               |" << endl;                     
   output << " ------------------------------------------------------- " << endl;
@@ -48,7 +48,7 @@ RF_statistics executeRandomForest(Treedata& treedata,
 
 void printPredictionToFile(StochasticForest& SF, Treedata& treeData, const string& targetName, const string& fileName);
 
-void readFeatureMask(const string& fileName, const size_t nFeatures, vector<size_t>& keepFeatureIcs);
+vector<string> readFeatureMask(const string& fileName);
 
 
 int main(const int argc, char* const argv[]) {
@@ -77,7 +77,8 @@ int main(const int argc, char* const argv[]) {
   parser.getArgument<string>(gen_op.trainInput_s, gen_op.trainInput_l, gen_op.trainInput); 
   parser.getArgument<string>(gen_op.targetStr_s, gen_op.targetStr_l, gen_op.targetStr); 
   parser.getArgument<string>(gen_op.associationOutput_s, gen_op.associationOutput_l, gen_op.associationOutput);
-  parser.getArgument<string>(gen_op.featureMaskInput_s, gen_op.featureMaskInput_l, gen_op.featureMaskInput);
+  parser.getArgument<string>(gen_op.whiteListInput_s, gen_op.whiteListInput_l, gen_op.whiteListInput);
+  parser.getArgument<string>(gen_op.blackListInput_s, gen_op.blackListInput_l, gen_op.blackListInput);
   parser.getArgument<string>(gen_op.testInput_s, gen_op.testInput_l, gen_op.testInput);
   parser.getArgument<string>(gen_op.predictionOutput_s, gen_op.predictionOutput_l, gen_op.predictionOutput);
   parser.getArgument<string>(gen_op.logOutput_s,gen_op.logOutput_l,gen_op.logOutput);
@@ -116,7 +117,9 @@ int main(const int argc, char* const argv[]) {
   }
   
   // Extract some handy boolean flags from the options
-  bool maskInputExists = gen_op.featureMaskInput != "";
+  bool whiteListInputExists = gen_op.whiteListInput != "";
+  bool blackListInputExists = gen_op.blackListInput != "";
+  //bool maskInputExists = whiteListInputExists || blackListInputExists;
   bool trainInputExists = gen_op.trainInput != "";
   bool testInputExists = gen_op.testInput != "";
   bool targetExists = gen_op.targetStr != "";
@@ -131,13 +134,6 @@ int main(const int argc, char* const argv[]) {
     printHelpHint();
     return EXIT_FAILURE;
   }
-
-  /*
-    if ( testInputExists ) {
-    cerr << "Test input file support is currently lacking. Future updates will bring it back up." << endl;
-    exit(1);
-    }
-  */
 
   // Print help and exit if target index is not specified
   if ( !targetExists ) {
@@ -156,13 +152,6 @@ int main(const int argc, char* const argv[]) {
     cerr << "Cannot generate associations ( -O / --associations ) when filtering is turned OFF ( --noFilter flag raised )" << endl;
     exit(1);
   }
-
-  /*
-    if ( testInputExists ) {
-    cerr << "Prediction with test data is temporarily out-of-use! (You can still grow the predictor with training data.) Quitting..." << endl;
-    exit(1);
-    }
-  */
 
   // Read train data into Treedata object
   cout << "Reading file '" << gen_op.trainInput << "', please wait... " << flush;
@@ -184,17 +173,26 @@ int main(const int argc, char* const argv[]) {
   } 
   
   // Perform masking, if requested
-  vector<string> keepFeatureNames;
-  if ( maskInputExists ) {
+  if ( whiteListInputExists ) {
     
-    cerr << "Masking is not working at the moment" << endl;
-    exit(1);
+    //cerr << "Masking is not working at the moment" << endl;
+    //exit(1);
     
-    cout << "Reading masking file '" << gen_op.featureMaskInput << "', please wait... " << flush;
-    //readFeatureMask(gen_op.featureMaskInput,treedata.nFeatures(),maskFeatureIcs);
+    cout << "Reading whitelist '" << gen_op.whiteListInput << "', please wait... " << flush;
+    vector<string> whiteFeatureNames = readFeatureMask(gen_op.whiteListInput);
     cout << "DONE" << endl;
-    cout << "Applying feature mask, removing " << treedata.nFeatures() - keepFeatureNames.size() << " / " << treedata.nFeatures() << " features, please wait... " << flush;
-    treedata.keepFeatures(keepFeatureNames);
+    cout << "Applying feature mask, removing " << treedata.nFeatures() - whiteFeatureNames.size() << " / " << treedata.nFeatures() << " features, please wait... " << flush;
+    treedata.keepFeatures(whiteFeatureNames);
+    cout << "DONE" << endl;
+  } else if ( blackListInputExists ) {
+    cerr << "Blacklisting is not working at the moment" << endl;
+    exit(1);
+
+    cout << "Reading blacklist '" << gen_op.blackListInput << "', please wait... " << flush;
+    vector<string> blackFeatureNames = readFeatureMask(gen_op.blackListInput);
+    cout << "DONE" << endl;
+    cout << "Applying blacklist, removing " << treedata.nFeatures() - blackFeatureNames.size() << " / " << treedata.nFeatures() << " features, please wait... " << flush;
+    treedata.removeFeatures(blackFeatureNames);
     cout << "DONE" << endl;
   }
   cout << endl;
@@ -594,32 +592,24 @@ void printPredictionToFile(StochasticForest& SF, Treedata& treeData, const strin
    
 }
 
-void readFeatureMask(const string& fileName, const size_t nFeatures, vector<size_t>& keepFeatureIcs) {
-
-  cerr << "Feature mask is currently out-of-use" << endl;
-  exit(1);
+vector<string> readFeatureMask(const string& fileName) {
 
   ifstream featurestream;
   featurestream.open(fileName.c_str());
   assert(featurestream.good());
   
-  string maskAsStr;
-  getline(featurestream,maskAsStr);
+  string newFeature;
+
+  set<string> featureMaskSet;
+  vector<string> featureMaskVec;
   
-  assert(maskAsStr.size() == nFeatures);
-
-  keepFeatureIcs.clear();
-
-  for(size_t featureIdx = 0; featureIdx < nFeatures; ++featureIdx) {
-
-    if ( maskAsStr[featureIdx] == '1' ) {
-      keepFeatureIcs.push_back(featureIdx);
-    } else if ( maskAsStr[featureIdx] != '0' ) { 
-      cerr << "Mask file formatted incorrectly, must contain only 0's and 1's" << endl;
-      assert(false);
+  while ( getline(featurestream,newFeature) ) {
+    if ( featureMaskSet.find(newFeature) == featureMaskSet.end() ) {
+      featureMaskSet.insert(newFeature);
+      featureMaskVec.push_back(newFeature);
     }
-    
   }
 
+  return( featureMaskVec );
 }
 
