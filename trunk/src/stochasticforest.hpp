@@ -35,6 +35,7 @@ public:
 
   //Counts the number of nodes in the forest
   size_t nNodes();
+  size_t nNodes(const size_t treeIdx);
 
   void printToFile(const string& fileName);
 
