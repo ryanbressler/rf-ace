@@ -14,6 +14,7 @@ class treeDataTest : public CppUnit::TestFixture {
   CPPUNIT_TEST( test_updateSortOrder );
   CPPUNIT_TEST( test_getFilteredAndSortedDataPair2 );
   CPPUNIT_TEST( test_parseARFF );
+  CPPUNIT_TEST( test_parseARFF_extended ); 
   CPPUNIT_TEST( test_keepFeatures );
   CPPUNIT_TEST_SUITE_END();
   
@@ -26,6 +27,7 @@ public:
   void test_updateSortOrder();
   void test_getFilteredAndSortedDataPair2();
   void test_parseARFF();
+  void test_parseARFF_extended();
   void test_keepFeatures();
 };
 
@@ -373,6 +375,12 @@ void treeDataTest::test_parseARFF() {
   CPPUNIT_ASSERT( fabs( treeData.getFeatureData(4,7) - 104.0000 ) < datadefs::EPS );
   CPPUNIT_ASSERT( fabs( treeData.getFeatureData(4,8) - 126.0000 ) < datadefs::EPS );
   CPPUNIT_ASSERT( fabs( treeData.getFeatureData(4,9) - 150.0000 ) < datadefs::EPS );
+
+}
+
+void treeDataTest::test_parseARFF_extended() {
+
+  Treedata treeData("test_12by21_categorical_matrix.arff",'\t',':');
 
 }
 
