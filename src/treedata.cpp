@@ -326,11 +326,13 @@ void Treedata::readARFF(ifstream& featurestream, vector<vector<string> >& rawMat
       continue;  
     }
 
+    string rowU = datadefs::toUpperCase(row);
+
     //Read relation
-    if(!hasRelation && row.compare(0,9,"@relation") == 0) {
+    if(!hasRelation && rowU.compare(0,9,"@RELATION") == 0) {
       hasRelation = true;
       //cout << "found relation header: " << row << endl;
-    } else if(row.compare(0,10,"@attribute") == 0) {    //Read attribute 
+    } else if ( rowU.compare(0,10,"@ATTRIBUTE") == 0) {    //Read attribute 
       string attributeName = "";
       bool isNumerical;
       ++nFeatures;
@@ -339,7 +341,7 @@ void Treedata::readARFF(ifstream& featurestream, vector<vector<string> >& rawMat
       featureHeaders.push_back(attributeName);
       isFeatureNumerical.push_back(isNumerical);
 
-    } else if(!hasData && row.compare(0,5,"@data") == 0) {    //Read data header 
+    } else if(!hasData && rowU.compare(0,5,"@DATA") == 0) {    //Read data header 
 
       hasData = true;
       //cout << "found data header:" << row << endl;
