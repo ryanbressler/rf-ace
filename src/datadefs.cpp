@@ -775,23 +775,3 @@ vector<datadefs::num_t> datadefs::trim(const vector<datadefs::num_t>& x) {
   return(trimmed);
 }
 
-// !! Documentation: computes the percentile for the value x, given an alpha
-// !! score and "prc." I have no idea what "prc" means, here.
-void datadefs::percentile(vector<datadefs::num_t> x, 
-                          const datadefs::num_t alpha, 
-                          datadefs::num_t& prc) {
-
-  sort(x.begin(),x.end());
-  
-  datadefs::num_t k((x.size()-1) * alpha);
-  num_t f = floor(k);
-  num_t c = ceil(k);
-    
-  if(fabs(f - c) < datadefs::EPS) {
-    prc = x[static_cast<size_t>(k)];
-  } else {
-    num_t d0 = x[static_cast<size_t>(f)] * (c - k);
-    num_t d1 = x[static_cast<size_t>(c)] * (k - f);
-    prc = d0+d1;
-  }
-}

@@ -39,6 +39,35 @@ namespace statistics {
       
       meanTimePerForest(NUM_NAN),
       stdTimePerForest(NUM_NAN) {}
+
+    void printContrastImportance(ofstream& toFile) {
+      
+      size_t nFeatures = contrastImportanceMat[0].size();
+      size_t nPerms = contrastImportanceMat.size();
+
+      for ( size_t featureIdx = 0; featureIdx < nFeatures; ++featureIdx ) {
+	
+	vector<num_t> fSample( nPerms );
+
+	for( size_t permIdx = 0; permIdx < nPerms; ++permIdx ) {
+	  fSample[permIdx] = contrastImportanceMat[permIdx][featureIdx];
+	}
+
+	size_t nReal = 0;
+	num_t mu = 0.0;
+
+	datadefs::mean(fSample,mu,nReal);
+
+	if ( nReal == 0 ) {
+	  mu = datadefs::NUM_NAN;
+	}
+
+	toFile << mu << endl;
+        
+      }
+
+
+    }
     
     void print(ofstream& toFile) {
       
@@ -82,12 +111,14 @@ namespace statistics {
 
       toFile << "Random Forest statistics" << endl
 	     << "------------------------" << endl
-	     << "--          MEAN IMPORTANCE = " << meanImportance << endl
-	     << "--           STD IMPORTANCE = " << stdImportance << endl
-	     << "-- MEAN CONTRAST IMPORTANCE = " << meanContrastImportance << endl
-	     << "--  STD CONTRAST IMPORTANCE = " << stdContrastImportance << endl
-	     << "--      MEAN NODES PER TREE = " << meanNodesPerTree << endl
-	     << "--    MEAN NODES PER SECOND = " << meanNodesPerSecond << endl;
+	     << "-- NUMBER OF TREES PER FOREST = " << nTrees << endl
+	     << "--          NUMBER OF FORESTS = " << nPerms << endl
+	     << "--            MEAN IMPORTANCE = " << meanImportance << endl
+	     << "--             STD IMPORTANCE = " << stdImportance << endl
+	     << "--   MEAN CONTRAST IMPORTANCE = " << meanContrastImportance << endl
+	     << "--    STD CONTRAST IMPORTANCE = " << stdContrastImportance << endl
+	     << "--        MEAN NODES PER TREE = " << meanNodesPerTree << endl
+	     << "--      MEAN NODES PER SECOND = " << meanNodesPerSecond << endl;
       
 
     }

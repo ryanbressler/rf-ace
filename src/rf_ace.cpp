@@ -17,6 +17,7 @@
 #include "options.hpp"
 #include "statistics.hpp"
 #include "progress.hpp"
+#include "math.hpp"
 
 using namespace std;
 using namespace options;
@@ -428,11 +429,12 @@ int main(const int argc, char* const argv[]) {
   if ( logOutputExists ) {
     
     ofstream toLogFile(gen_op.logOutput.c_str());
-    
     printHeader(toLogFile);
-
     RF_stat.print(toLogFile);
-    
+    toLogFile.close();
+
+    toLogFile.open("contrasts.tsv");
+    RF_stat.printContrastImportance(toLogFile);
     toLogFile.close();
     
   }
@@ -517,7 +519,7 @@ RF_statistics executeRandomForest(Treedata& treedata,
       //datadefs::print(cVector);
       //vector<num_t> trimmedCVector = datadefs::trim(cVector);
       if ( trimmedCVector.size() > 0 ) {
-	datadefs::percentile(trimmedCVector,0.95,cSample[permIdx]);
+	cSample[permIdx] = math::percentile(trimmedCVector,0.95);
       } else {
       	cSample[permIdx] = datadefs::NUM_NAN;
       }

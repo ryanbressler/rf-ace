@@ -257,13 +257,13 @@ namespace options {
 
     cout << "OPTIONAL ARGUMENTS -- RANDOM FOREST:" << endl;
     cout << " -" << rfo.nTrees_s << " / --" << rfo.nTrees_l << setw( maxwidth - rfo.nTrees_l.size() )
-	 << " " << "Number of trees per RF (default 100)" << endl;
+	 << " " << "Number of trees per RF (default " << RF_DEFAULT_N_TREES << ")" << endl;
     cout << " -" << rfo.mTry_s << " / --" << rfo.mTry_l << setw( maxwidth - rfo.mTry_l.size() )
 	 << " " << "Number of randomly drawn features per node split (default floor(0.1*nFeatures))" << endl;
     cout << " -" << rfo.nMaxLeaves_s << " / --" << rfo.nMaxLeaves_l << setw( maxwidth - rfo.nMaxLeaves_l.size() )
 	 << " " << "Maximum number of leaves per tree (default " << RF_DEFAULT_N_MAX_LEAVES << ")" << endl;
     cout << " -" << rfo.nodeSize_s << " / --" << rfo.nodeSize_l << setw( maxwidth - rfo.nodeSize_l.size() )
-	 << " " << "Minimum number of train samples per node, affects tree depth (default 5)" << endl;
+	 << " " << "Minimum number of train samples per node, affects tree depth (default " << RF_DEFAULT_NODE_SIZE << ")" << endl;
     cout << " -" << rfo.nPerms_s << " / --" << rfo.nPerms_l << setw( maxwidth - rfo.nPerms_l.size() )
 	 << " " << "Number of Random Forests (default " << RF_DEFAULT_N_PERMS << ")" << endl;
     cout << endl;

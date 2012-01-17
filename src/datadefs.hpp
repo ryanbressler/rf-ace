@@ -136,7 +136,7 @@ namespace datadefs {
 
   //void print(const vector<num_t>& x);
 
-  void percentile(vector<num_t> x, const num_t alpha, num_t& prc);
+  //void percentile(vector<num_t> x, const num_t alpha, num_t& prc);
 
   
   ////////////////////////////////////////////////////////////
