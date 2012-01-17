@@ -467,8 +467,8 @@ RF_statistics executeRandomForest(Treedata& treedata,
 				  vector<num_t>& pValues,
 				  vector<num_t>& importanceValues) {
 
-  RF_statistics RF_stat;
-  RF_stat.nodeMat.resize(RF_op.nPerms,vector<size_t>(RF_op.nTrees));
+  //RF_statistics RF_stat;
+  vector<vector<size_t> > nodeMat(RF_op.nPerms,vector<size_t>(RF_op.nTrees));
   
   vector<vector<num_t> >         importanceMat( RF_op.nPerms, vector<num_t>(treedata.nFeatures()) );
   vector<vector<num_t> > contrastImportanceMat( RF_op.nPerms, vector<num_t>(treedata.nFeatures()) );
@@ -494,7 +494,7 @@ RF_statistics executeRandomForest(Treedata& treedata,
     SF.learnRF(RF_op.mTry,RF_op.nMaxLeaves,RF_op.nodeSize,useContrasts);
      
     for ( size_t treeIdx = 0; treeIdx < RF_op.nTrees; ++treeIdx ) {
-      RF_stat.nodeMat[permIdx][treeIdx] = SF.nNodes(treeIdx);
+      nodeMat[permIdx][treeIdx] = SF.nNodes(treeIdx);
     }
     
     importanceValues = SF.featureImportance();
@@ -549,12 +549,11 @@ RF_statistics executeRandomForest(Treedata& treedata,
     importanceValues = importanceMat[0];
   }
   
-  RF_stat.importanceMat = importanceMat;
-  RF_stat.contrastImportanceMat = contrastImportanceMat;
+  RF_statistics RF_stat(importanceMat,contrastImportanceMat,nodeMat);
 
   importanceValues.resize(treedata.nFeatures());
 
-  RF_stat.executionTime = 1.0 * ( clock() - clockStart ) / CLOCKS_PER_SEC;
+  //RF_stat.executionTime = 1.0 * ( clock() - clockStart ) / CLOCKS_PER_SEC;
 
   return( RF_stat );
   

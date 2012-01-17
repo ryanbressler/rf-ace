@@ -1,5 +1,9 @@
+#ifndef STATISTICS_HPP
+#define STATISTICS_HPP
+
 #include <cstdlib>
 #include <iostream>
+#include <fstream>
 #include <vector>
 #include <cassert>
 
@@ -11,46 +15,24 @@ using datadefs::NUM_NAN;
 
 namespace statistics {
   
-  struct RF_statistics {
+  class RF_statistics {
     
-    vector<vector<num_t> > importanceMat;
-    vector<vector<num_t> > contrastImportanceMat;
-    
-    vector<vector<size_t> > nodeMat;
-    
-    num_t executionTime;
-    
-    num_t meanContrastNodesPerTree;
-    num_t stdContrastNodesPerTree;
-    
-    num_t meanTimePerForest;
-    num_t stdTimePerForest;
-    
-    RF_statistics():
-      importanceMat(0),
-      contrastImportanceMat(0),
-      
-      nodeMat(0),
-      
-      executionTime(0.0),
-      
-      meanContrastNodesPerTree(NUM_NAN),
-      stdContrastNodesPerTree(NUM_NAN),
-      
-      meanTimePerForest(NUM_NAN),
-      stdTimePerForest(NUM_NAN) {}
+  public:
+
+    RF_statistics();
+    RF_statistics(vector<vector<num_t> > importanceMat, vector<vector<num_t> > contrastImportanceMat, vector<vector<size_t> > nodeMat);
 
     void printContrastImportance(ofstream& toFile) {
       
-      size_t nFeatures = contrastImportanceMat[0].size();
-      size_t nPerms = contrastImportanceMat.size();
+      size_t nFeatures = contrastImportanceMat_[0].size();
+      size_t nPerms = contrastImportanceMat_.size();
 
       for ( size_t featureIdx = 0; featureIdx < nFeatures; ++featureIdx ) {
 	
 	vector<num_t> fSample( nPerms );
 
 	for( size_t permIdx = 0; permIdx < nPerms; ++permIdx ) {
-	  fSample[permIdx] = contrastImportanceMat[permIdx][featureIdx];
+	  fSample[permIdx] = contrastImportanceMat_[permIdx][featureIdx];
 	}
 
 	size_t nReal = 0;
@@ -71,13 +53,13 @@ namespace statistics {
     
     void print(ofstream& toFile) {
       
-      assert( nodeMat.size() > 0 );
+      assert( nodeMat_.size() > 0 );
 
-      size_t nPerms = importanceMat.size();
-      size_t nTrees = nodeMat[0].size();
+      size_t nPerms = importanceMat_.size();
+      size_t nTrees = nodeMat_[0].size();
 
-      assert( nPerms == contrastImportanceMat.size() );
-      assert( nPerms == nodeMat.size() );
+      assert( nPerms == contrastImportanceMat_.size() );
+      assert( nPerms == nodeMat_.size() );
 
       vector<num_t> importanceVec( nPerms );
       vector<num_t> contrastImportanceVec( nPerms );
@@ -86,10 +68,10 @@ namespace statistics {
 
       size_t nReal;
       for ( size_t permIdx = 0; permIdx < nPerms; ++permIdx ) {
-	datadefs::mean(importanceMat[permIdx],importanceVec[permIdx],nReal);
-	datadefs::mean(contrastImportanceMat[permIdx],contrastImportanceVec[permIdx],nReal);
-	for ( size_t treeIdx = 0; treeIdx < nodeMat[permIdx].size(); ++treeIdx ) {
-	  nNodes += nodeMat[permIdx][treeIdx];
+	datadefs::mean(importanceMat_[permIdx],importanceVec[permIdx],nReal);
+	datadefs::mean(contrastImportanceMat_[permIdx],contrastImportanceVec[permIdx],nReal);
+	for ( size_t treeIdx = 0; treeIdx < nodeMat_[permIdx].size(); ++treeIdx ) {
+	  nNodes += nodeMat_[permIdx][treeIdx];
 	}
       }
 
@@ -122,7 +104,25 @@ namespace statistics {
       
 
     }
+
+  private:
+
+    vector<vector<num_t> > importanceMat_;
+    vector<vector<num_t> > contrastImportanceMat_;
+
+    vector<vector<size_t> > nodeMat_;
+
+    num_t executionTime;
+
+    num_t meanContrastNodesPerTree;
+    num_t stdContrastNodesPerTree;
+
+    num_t meanTimePerForest;
+    num_t stdTimePerForest;
     
     
   };
 }
+
+
+#endif
