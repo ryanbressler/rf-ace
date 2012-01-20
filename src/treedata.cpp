@@ -109,10 +109,41 @@ Treedata::~Treedata() {
   /* Empty destructor */
 }
 
-void Treedata::keepFeatures(vector<string> featureNames) {
+void Treedata::whiteList(const vector<string>& featureNames ) {
   
-  size_t nFeaturesNew = featureNames.size();
+  vector<bool> keepFeatureIcs(this->nFeatures(),false);
+
+  for ( size_t i = 0; i < featureNames.size(); ++i ) {
+    keepFeatureIcs[this->getFeatureIdx(featureNames[i])] = true;
+  }
+
+  this->whiteList(keepFeatureIcs);
+
+}
+
+void Treedata::blackList(const vector<string>& featureNames ) {
   
+  vector<bool> keepFeatureIcs(this->nFeatures(),true);
+  
+  for ( size_t i = 0; i < featureNames.size(); ++i ) {
+    keepFeatureIcs[this->getFeatureIdx(featureNames[i])] = false;
+  }
+  
+  this->whiteList(keepFeatureIcs);
+
+}
+
+void Treedata::whiteList(const vector<bool>& keepFeatureIcs) {
+  
+  assert( keepFeatureIcs.size() == this->nFeatures() );
+  
+  size_t nFeaturesNew = 0;
+  for ( size_t i = 0; i < keepFeatureIcs.size(); ++i ) {
+    if ( keepFeatureIcs[i] ) {
+      ++nFeaturesNew;
+    }
+  }
+
   vector<Feature> featureCopy = features_;
   features_.resize(2*nFeaturesNew);
 
@@ -120,17 +151,23 @@ void Treedata::keepFeatures(vector<string> featureNames) {
 
   name2idx_.clear();
 
-  for(size_t i = 0; i < nFeaturesNew; ++i) {
+  size_t nFeatures = keepFeatureIcs.size();
+  size_t iter = 0;
+  for ( size_t i = 0; i < nFeatures; ++i ) {
 
-    string featureName = featureNames[i];
+    if ( !keepFeatureIcs[i] ) {
+      continue;
+    }
+    
+    string featureName = featureCopy[i].name;
 
     if ( name2idxCopy.find(featureName) == name2idxCopy.end() ) {
       cerr << "Treedata::keepFeatures() -- feature '" << featureName << "' does not exist" << endl;
       exit(1);
     }
 
-    features_[ i ] = featureCopy[ name2idxCopy[featureName] ];
-    name2idx_[ featureName ] = i;
+    features_[ iter ] = featureCopy[ name2idxCopy[featureName] ];
+    name2idx_[ featureName ] = iter;
 
     featureName.append("_CONTRAST");
 
@@ -139,14 +176,16 @@ void Treedata::keepFeatures(vector<string> featureNames) {
       exit(1);
     }
 
-    features_[ nFeaturesNew + i ] = featureCopy[ name2idxCopy[featureName] ];
-    name2idx_[ featureName ] = nFeaturesNew + i; 
-  }
-  
-}
+    features_[ nFeaturesNew + iter ] = featureCopy[ name2idxCopy[featureName] ];
+    name2idx_[ featureName ] = nFeaturesNew + iter; 
 
-void Treedata::removeFeatures(vector<string> featureNames) {
-  cerr << "Treedata::removeFeatures() -- lacks implementation" << endl;
+    ++iter;
+
+  }
+
+  assert( iter == nFeaturesNew );
+  assert( 2*iter == features_.size() );
+  
 }
 
 void Treedata::updateSortOrder(const size_t featureIdx) {

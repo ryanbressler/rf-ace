@@ -182,17 +182,17 @@ int main(const int argc, char* const argv[]) {
     vector<string> whiteFeatureNames = readFeatureMask(gen_op.whiteListInput);
     cout << "DONE" << endl;
     cout << "Applying feature mask, removing " << treedata.nFeatures() - whiteFeatureNames.size() << " / " << treedata.nFeatures() << " features, please wait... " << flush;
-    treedata.keepFeatures(whiteFeatureNames);
+    treedata.whiteList(whiteFeatureNames);
     cout << "DONE" << endl;
   } else if ( blackListInputExists ) {
-    cerr << "Blacklisting is not working at the moment" << endl;
-    exit(1);
+    //cerr << "Blacklisting is not working at the moment" << endl;
+    //exit(1);
 
     cout << "Reading blacklist '" << gen_op.blackListInput << "', please wait... " << flush;
     vector<string> blackFeatureNames = readFeatureMask(gen_op.blackListInput);
     cout << "DONE" << endl;
     cout << "Applying blacklist, removing " << treedata.nFeatures() - blackFeatureNames.size() << " / " << treedata.nFeatures() << " features, please wait... " << flush;
-    treedata.removeFeatures(blackFeatureNames);
+    treedata.blackList(blackFeatureNames);
     cout << "DONE" << endl;
   }
   cout << endl;
@@ -329,7 +329,7 @@ int main(const int argc, char* const argv[]) {
     }
     
     // Resize containers
-    treedata.keepFeatures( featureNames );
+    treedata.whiteList( featureNames );
     pValues.resize( nSignificantFeatures );
     importanceValues.resize ( nSignificantFeatures );
     
