@@ -27,9 +27,10 @@ public:
 
   ~Treedata();
   
-  void keepFeatures(vector<string> featureNames);
-  void removeFeatures(vector<string> featureNames);
-  
+  void whiteList(const vector<string>& featureNames);
+  void blackList(const vector<string>& featureNames);
+  void whiteList(const vector<bool>& featureIcs);
+
   size_t nFeatures();
 
   num_t pearsonCorrelation(size_t featureidx1, size_t featureidx2);

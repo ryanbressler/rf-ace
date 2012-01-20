@@ -712,11 +712,13 @@ datadefs::num_t datadefs::erf(datadefs::num_t x) {
 // !! Correctness: this method isn't currently implemented. Consider a more
 // !! meaningful exception than an assertion error, which will be silently
 // !! compiled out if debugging is not enabled.
-void datadefs::spearman_correlation(vector<datadefs::num_t> const& x,
-                                    vector<datadefs::num_t> const& y,
-                                    datadefs::num_t& corr) {
+/*
+  void datadefs::spearman_correlation(vector<datadefs::num_t> const& x,
+  vector<datadefs::num_t> const& y,
+  datadefs::num_t& corr) {
   assert(false);
-}
+  }
+*/
 
 // !! Documentation: Pearson product-moment correlation coefficient
 // !! (http://en.wikipedia.org/wiki/Pearson_product-moment_correlation_coefficient)

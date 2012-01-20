@@ -16,6 +16,7 @@ class treeDataTest : public CppUnit::TestFixture {
   CPPUNIT_TEST( test_parseARFF );
   CPPUNIT_TEST( test_parseARFF_extended ); 
   CPPUNIT_TEST( test_keepFeatures );
+  CPPUNIT_TEST( test_removeFeatures );
   CPPUNIT_TEST_SUITE_END();
   
 public:
@@ -29,6 +30,7 @@ public:
   void test_parseARFF();
   void test_parseARFF_extended();
   void test_keepFeatures();
+  void test_removeFeatures();
 };
 
 void treeDataTest::setUp() {}
@@ -394,7 +396,11 @@ void treeDataTest::test_keepFeatures() {
   keepFeatureNames.push_back("N:F2");
   keepFeatureNames.push_back("C:F5");
 
-  treedata.keepFeatures(keepFeatureNames);
+  treedata.whiteList(keepFeatureNames);
+
+  size_t featureIdx;
+  featureIdx = treedata.getFeatureIdx("N:F2");
+  featureIdx = treedata.getFeatureIdx("C:F5");
 
   CPPUNIT_ASSERT( treedata.nFeatures() == keepFeatureNames.size() );
   CPPUNIT_ASSERT( treedata.nSamples() == 10 );
@@ -409,6 +415,41 @@ void treeDataTest::test_keepFeatures() {
  
 
 }
+
+void treeDataTest::test_removeFeatures() {
+
+  Treedata treedata("test_6by10_mixed_matrix.tsv",'\t',':');
+
+  // Feature names in the matrix are N:F1 N:F2 C:F3 N:F4 C:F5 N:F6
+
+  vector<string> removeFeatureNames;
+  removeFeatureNames.push_back("N:F2");
+  removeFeatureNames.push_back("C:F5");
+  
+  size_t nFeaturesOld = treedata.nFeatures();
+
+  treedata.blackList(removeFeatureNames);
+
+  size_t featureIdx;
+  featureIdx = treedata.getFeatureIdx("N:F1");
+  featureIdx = treedata.getFeatureIdx("C:F3");
+  featureIdx = treedata.getFeatureIdx("N:F4");
+  featureIdx = treedata.getFeatureIdx("N:F6");
+
+  CPPUNIT_ASSERT( treedata.nFeatures() == nFeaturesOld - removeFeatureNames.size() );
+  CPPUNIT_ASSERT( treedata.nSamples() == 10 );
+
+  // Internally, treedata also stores the contrasts, doubling the number of features
+  CPPUNIT_ASSERT( treedata.name2idx_.size() == 2*treedata.nFeatures() );
+
+  for ( size_t i = 0; i < treedata.nFeatures(); ++i ) {
+    string featureName = treedata.getFeatureName(i);
+    CPPUNIT_ASSERT( featureName.append("_CONTRAST") == treedata.getFeatureName( treedata.nFeatures() + i ));
+  }
+
+
+}
+
 
 // Registers the fixture into the test 'registry'
 CPPUNIT_TEST_SUITE_REGISTRATION( treeDataTest ); 

@@ -123,9 +123,11 @@ namespace datadefs {
 
   num_t erf(num_t x);
 
-  void spearman_correlation(vector<num_t> const& x, 
-                            vector<num_t> const& y,
-                            num_t& corr);
+  /*
+    void spearman_correlation(vector<num_t> const& x, 
+    vector<num_t> const& y,
+    num_t& corr);
+  */
 
   void pearson_correlation(vector<num_t> const& x,
                            vector<num_t> const& y,
