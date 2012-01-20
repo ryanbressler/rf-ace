@@ -54,7 +54,7 @@ public:
 
   void deleteTree();
 
-  size_t nNodes();
+  //size_t nNodes();
 
   void print(ofstream& toFile);
   void print(string& traversal, ofstream& toFile);
@@ -88,7 +88,7 @@ protected:
                           const vector<size_t>& sampleIcs,
                           const GrowInstructions& GI,
                           set<size_t>& featuresInTree,
-                          size_t& nNodes);
+                          size_t* nNodes);
 
   bool regularSplitterSeek(Treedata* treeData,
 			   const size_t targetIdx,
@@ -124,7 +124,7 @@ private:
                                num_t& splitFitness);
 
   //A recursive function that will accumulate the number of descendant nodes the current nodes has
-  void recursiveNDescendantNodes(size_t& n);
+  //void recursiveNDescendantNodes(size_t& n);
 
   size_t splitterIdx_;
   Splitter* splitter_;

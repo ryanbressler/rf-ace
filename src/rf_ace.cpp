@@ -41,7 +41,6 @@ void printHelpHint() {
 }
 
 RF_statistics executeRandomForest(Treedata& treedata,
-				  const size_t targetIdx,
 				  const RF_options& RF_op,
 				  const General_options& gen_op,
 				  vector<num_t>& pValues,
@@ -304,7 +303,7 @@ int main(const int argc, char* const argv[]) {
     //vector<num_t> pValues; //(treedata.nFeatures());
     //vector<num_t> importanceValues; //(treedata.nFeatures());
     cout << "===> Uncovering associations... " << flush;
-    RF_stat = executeRandomForest(treedata,targetIdx,RF_op,gen_op,pValues,importanceValues);
+    RF_stat = executeRandomForest(treedata,RF_op,gen_op,pValues,importanceValues);
     cout << "DONE" << endl;
     
     /////////////////////////////////////////////////
@@ -461,7 +460,6 @@ int main(const int argc, char* const argv[]) {
 
 
 RF_statistics executeRandomForest(Treedata& treedata,
-				  const size_t targetIdx,
 				  const RF_options& RF_op,
 				  const General_options& gen_op,
 				  vector<num_t>& pValues,
@@ -549,11 +547,9 @@ RF_statistics executeRandomForest(Treedata& treedata,
     importanceValues = importanceMat[0];
   }
   
-  RF_statistics RF_stat(importanceMat,contrastImportanceMat,nodeMat);
+  RF_statistics RF_stat(importanceMat,contrastImportanceMat,nodeMat, 1.0 * ( clock() - clockStart ) / CLOCKS_PER_SEC );
 
   importanceValues.resize(treedata.nFeatures());
-
-  //RF_stat.executionTime = 1.0 * ( clock() - clockStart ) / CLOCKS_PER_SEC;
 
   return( RF_stat );
   
