@@ -12,7 +12,9 @@ RootNode::RootNode(bool sampleWithReplacement,
                    bool useContrasts,
                    size_t numClasses,
 		   PartitionSequence* partitionSequence):
-  Node() {
+  Node(),
+  nNodes_(0) {
+
   GI_.sampleWithReplacement = sampleWithReplacement;
   GI_.sampleSizeFraction = sampleSizeFraction;
   GI_.maxNodesToStop = maxNodesToStop;
@@ -91,10 +93,17 @@ void RootNode::growTree(Treedata* treeData,
     cout << " ]" << endl << endl;
   }
 
-  nNodes = 1;
+  //nNodes = 1;
   featuresInTree.clear();
 
   //Start the recursive node splitting from the root node. This will generate the tree.
-  this->recursiveNodeSplit(treeData,targetIdx,bootstrapIcs,GI_,featuresInTree,nNodes);
+  nNodes_ = 1;
+  this->recursiveNodeSplit(treeData,targetIdx,bootstrapIcs,GI_,featuresInTree,&nNodes_);
   
+  nNodes = nNodes_;
+
+}
+
+size_t RootNode::nNodes() {
+  return( nNodes_ );
 }

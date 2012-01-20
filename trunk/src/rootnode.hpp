@@ -28,7 +28,11 @@ public:
                 set<size_t>& featuresInTree,
                 size_t& nNodes);
   
+  size_t nNodes();
+
 private:
+
+  size_t nNodes_;
 
   GrowInstructions GI_;
 

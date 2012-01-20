@@ -4,6 +4,7 @@
 #include "node.hpp"
 
 Node::Node():
+  splitterIdx_(0),
   splitter_(NULL),
   //isTrainPredictionSet_(false),
   trainPrediction_(datadefs::NUM_NAN),
@@ -173,27 +174,31 @@ Node* Node::rightChild() {
  * If called from the root node, will return the size of 
  * the whole tree.
  */
-size_t Node::nNodes() {
+/*
+  size_t Node::nNodes() {
   
   size_t n = 1;
   
   // Recursive call to dig out the number of descending nodes
   this->recursiveNDescendantNodes(n);
   return(n);
-}
+  }
+*/
 
 /**
  * Recursive function for actually counting the number of nodes
  */
-void Node::recursiveNDescendantNodes(size_t& n) {
+/*
+  void Node::recursiveNDescendantNodes(size_t& n) {
   if ( !this->hasChildren() ) {
-    return;
+  return;
   } else {
-    n += 2;
-    leftChild_->recursiveNDescendantNodes( n );
-    rightChild_->recursiveNDescendantNodes( n );
+  n += 2;
+  leftChild_->recursiveNDescendantNodes( n );
+  rightChild_->recursiveNDescendantNodes( n );
   }
-}
+  }
+*/
 
 
 /**
@@ -258,11 +263,11 @@ void Node::recursiveNodeSplit(Treedata* treeData,
                               const vector<size_t>& sampleIcs,
                               const GrowInstructions& GI,
                               set<size_t>& featuresInTree,
-                              size_t& nNodes) {
+                              size_t* nNodes) {
 
   size_t nSamples = sampleIcs.size();
 
-  if(nSamples < 2 * GI.minNodeSizeToStop || nNodes >= GI.maxNodesToStop) {
+  if(nSamples < 2 * GI.minNodeSizeToStop || *nNodes >= GI.maxNodesToStop) {
     //cout << "Too few samples to start with, quitting" << endl;
     vector<num_t> leafTrainData = treeData->getFeatureData(targetIdx,sampleIcs);
     //Node::setLeafTrainPrediction(leafTrainData,GI);
@@ -330,7 +335,7 @@ void Node::recursiveNodeSplit(Treedata* treeData,
   (this->*GI.leafPredictionFunction)(trainData,GI.numClasses);
 
   featuresInTree.insert(splitFeatureIdx);
-  nNodes += 2;
+  *nNodes += 2;
 
   leftChild_->recursiveNodeSplit(treeData,targetIdx,sampleIcs_left,GI,featuresInTree,nNodes);
   rightChild_->recursiveNodeSplit(treeData,targetIdx,sampleIcs_right,GI,featuresInTree,nNodes);
