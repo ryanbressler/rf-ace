@@ -27,7 +27,7 @@ using datadefs::num_t;
 void printHeader(ostream& output) {
   output << endl;
   output << " ------------------------------------------------------- " << endl;
-  output << "|  RF-ACE version:  0.9.8, January 10th, 2012           |" << endl;
+  output << "|  RF-ACE version:  0.9.9, January 20th, 2012           |" << endl;
   output << "|    Project page:  http://code.google.com/p/rf-ace     |" << endl;
   output << "|     Report bugs:  timo.p.erkkila@tut.fi               |" << endl;                     
   output << " ------------------------------------------------------- " << endl;
