@@ -1,3 +1,4 @@
+#include <sstream>
 #include "splitter.hpp"
 
 Splitter::Splitter(const string& splitterName,
@@ -121,3 +122,101 @@ bool Splitter::splitsRight(Treedata* treeData, const size_t sampleIdx) {
   }
 
 }
+
+string Splitter::type() {
+
+  switch ( splitterType_ ) {
+  case NUMERICAL_SPLITTER:
+    return("NUMERICAL");
+  case CATEGORICAL_SPLITTER:
+    return("CATEGORICAL");
+  case NO_SPLITTER:
+    return("");
+  }
+  
+  return("");
+
+}
+
+string Splitter::leftSplitValues() {
+  
+  stringstream ss;
+
+  ss << "{";
+
+  if ( splitterType_ == NUMERICAL_SPLITTER ) {
+    ss << "<" << splitLeftLeqValue_;
+  } else {
+
+    set<string>::const_iterator it(splitLeftValues_.begin());
+
+    if ( it != splitLeftValues_.end() ) {
+      ss << *it;
+      ++it;
+    }
+
+    for ( ; it != splitLeftValues_.end(); ++it ) {
+      ss << ":" << *it;
+    }
+
+  }
+  
+  ss << "}";
+
+  string str;
+
+  ss >> str;
+
+  return(str);
+}
+
+string Splitter::rightSplitValues() {
+
+  stringstream ss;
+
+  ss << "{";
+
+  if ( splitterType_ == NUMERICAL_SPLITTER ) {
+    ss << ">=" << splitLeftLeqValue_;
+  } else {
+
+    set<string>::const_iterator it(splitRightValues_.begin());
+    
+    if ( it != splitRightValues_.end() ) {
+      ss << *it;
+      ++it;
+    }
+    
+    for ( ; it != splitRightValues_.end(); ++it ) {
+      ss << ":" << *it;
+    }
+    
+  }
+  
+  ss << "}";
+  
+  string str;
+  
+  ss >> str;
+  
+  return(str);
+}
+
+
+string Splitter::print() {
+  
+  stringstream ss;
+
+  ss << "SPLITTER=" << this->name() 
+     << ",SPLITTERTYPE=" << this->type()
+     << ",LVALUES=" << this->leftSplitValues()
+     << ",RVALUES=" << this->rightSplitValues();
+
+  string str("");
+  
+  ss >> str;
+
+  return(str);
+
+}
+
