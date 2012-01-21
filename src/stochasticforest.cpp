@@ -108,17 +108,17 @@ void StochasticForest::learnRF(const size_t mTry,
 
     size_t nNodes;
 
-    RootNode::LeafPredictionFunctionType leafPredictionFunctionType;
+    RootNode::PredictionFunctionType predictionFunctionType;
 
     if(treeData_->isFeatureNumerical(targetIdx)) {
-      leafPredictionFunctionType = RootNode::LEAF_MEAN;
+      predictionFunctionType = RootNode::MEAN;
     } else {
-      leafPredictionFunctionType = RootNode::LEAF_MODE;
+      predictionFunctionType = RootNode::MODE;
     }
 
     rootNodes_[treeIdx]->growTree(treeData_,
 				  targetIdx,
-				  leafPredictionFunctionType,
+				  predictionFunctionType,
 				  oobMatrix_[treeIdx],
 				  featuresInForest_[treeIdx],
 				  nNodes);
@@ -180,7 +180,7 @@ void StochasticForest::growNumericalGBT() {
   size_t targetIdx = treeData_->getFeatureIdx( targetName_ );
   
   //A function pointer to a function "mean()" that is used to compute the node predictions with
-  RootNode::LeafPredictionFunctionType leafPredictionFunctionType = RootNode::LEAF_MEAN;
+  RootNode::PredictionFunctionType predictionFunctionType = RootNode::MEAN;
 
   size_t nSamples = treeData_->nSamples();
   // save a copy of the target column because it will be overwritten
@@ -207,7 +207,7 @@ void StochasticForest::growNumericalGBT() {
     // Grow a tree to predict the current target
     rootNodes_[treeIdx]->growTree(treeData_,
 				  targetIdx,
-				  leafPredictionFunctionType,
+				  predictionFunctionType,
 				  oobMatrix_[treeIdx],
 				  featuresInForest_[treeIdx],
 				  nNodes);
@@ -241,7 +241,7 @@ void StochasticForest::growCategoricalGBT() {
   size_t numClasses = treeData_->nCategories( targetIdx );
 
   //A function pointer to a function "gamma()" that is used to compute the node predictions with
-  RootNode::LeafPredictionFunctionType leafPredictionFunctionType = RootNode::LEAF_GAMMA;
+  RootNode::PredictionFunctionType predictionFunctionType = RootNode::GAMMA;
 
   // Save a copy of the target column because it will be overwritten later.
   // We also know that it must be categorical.
@@ -292,7 +292,7 @@ void StochasticForest::growCategoricalGBT() {
       size_t nNodes;
       rootNodes_[treeIdx]->growTree(treeData_,
 				    targetIdx,
-				    leafPredictionFunctionType,
+				    predictionFunctionType,
 				    oobMatrix_[treeIdx],
 				    featuresInForest_[treeIdx],
 				    nNodes);
