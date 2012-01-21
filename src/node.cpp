@@ -175,40 +175,21 @@ Node* Node::rightChild() {
 void Node::print(string& traversal, ofstream& toFile) {
 
   toFile << "NODE=" << traversal << ",PRED=" << setprecision(3) << trainPrediction_;
+    
+  if ( this->hasChildren() ) {
+    
+    toFile << "," << splitter_->print() << endl;
 
-  if ( !this->hasChildren() ) {
-    //toFile << "\tLEAF" << endl;
-    return;
-  }
-
-  string traversalLeft = traversal;
-  traversalLeft.append("L");
-  string traversalRight = traversal;
-  traversalRight.append("R");
-
-  bool isLeftNodeLeaf = false;
-  bool isRightNodeLeaf = false;
-
-  if ( !leftChild_->hasChildren() ) {
-    isLeftNodeLeaf = true;
-    traversalLeft.append("*");
-  }
-
-  if ( !rightChild_->hasChildren() ) {
-    isRightNodeLeaf = true;
-    traversalRight.append("*");
-  }
-
-  // TODO: Node::print() needs to be completed
-  toFile << ",L_PRED=" << setprecision(3) << leftChild_->getTrainPrediction() << ",R_PRED=" 
-	 << setprecision(3) << rightChild_->getTrainPrediction() << ",SPLITTER=" << splitter_->name() << endl;
-
-  if ( !isLeftNodeLeaf ) {
+    string traversalLeft = traversal;
+    traversalLeft.append("L");
+    string traversalRight = traversal;
+    traversalRight.append("R");
+    
     leftChild_->print(traversalLeft,toFile);
-  }
-
-  if ( !isRightNodeLeaf ) {
     rightChild_->print(traversalRight,toFile);
+
+  } else {
+   toFile << endl;
   }
 }
 

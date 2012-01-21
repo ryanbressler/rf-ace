@@ -3,6 +3,7 @@
 
 #include <set>
 #include <string>
+#include <fstream>
 
 #include "datadefs.hpp"
 #include "treedata.hpp"
@@ -33,8 +34,11 @@ public:
 
 
   inline string name() { return(splitterName_); }
+  string type();
+  string leftSplitValues();
+  string rightSplitValues();
 
-  void print();
+  string print();
 
 #ifndef TEST__
 private:
