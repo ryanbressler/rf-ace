@@ -169,38 +169,6 @@ Node* Node::rightChild() {
   return( rightChild_ );
 }
 
-/** 
- * Counts the number of (descending) nodes the tree has. 
- * If called from the root node, will return the size of 
- * the whole tree.
- */
-/*
-  size_t Node::nNodes() {
-  
-  size_t n = 1;
-  
-  // Recursive call to dig out the number of descending nodes
-  this->recursiveNDescendantNodes(n);
-  return(n);
-  }
-*/
-
-/**
- * Recursive function for actually counting the number of nodes
- */
-/*
-  void Node::recursiveNDescendantNodes(size_t& n) {
-  if ( !this->hasChildren() ) {
-  return;
-  } else {
-  n += 2;
-  leftChild_->recursiveNDescendantNodes( n );
-  rightChild_->recursiveNDescendantNodes( n );
-  }
-  }
-*/
-
-
 /**
  * Recursively prints a tree to a stream (file)
  */
@@ -270,11 +238,19 @@ void Node::recursiveNodeSplit(Treedata* treeData,
   if(nSamples < 2 * GI.minNodeSizeToStop || *nNodes >= GI.maxNodesToStop) {
     //cout << "Too few samples to start with, quitting" << endl;
     vector<num_t> leafTrainData = treeData->getFeatureData(targetIdx,sampleIcs);
-    //Node::setLeafTrainPrediction(leafTrainData,GI);
 
-    // !! Potential Crash: This is unsafe. Add asserts or runtime checks.
-    // !! Correctness: Violates the Principle of Least Knowledge. Refactor.
-    (this->*GI.leafPredictionFunction)(leafTrainData,GI.numClasses);
+    switch ( GI.predictionFunctionType ) {
+    case MEAN: 
+      this->leafMean(leafTrainData);
+      break;
+    case MODE:
+      this->leafMode(leafTrainData);
+      break;
+    case GAMMA:
+      this->leafGamma(leafTrainData,GI.numClasses);
+      break;
+    }
+
     return;
   }
   
@@ -321,18 +297,35 @@ void Node::recursiveNodeSplit(Treedata* treeData,
 
     vector<num_t> leafTrainData = treeData->getFeatureData(targetIdx,sampleIcs);
 
-    // !! Potential Crash: This is unsafe. Add asserts or runtime checks.
-    // !! Correctness: Violates the Principle of Least Knowledge. Refactor.
-    (this->*GI.leafPredictionFunction)(leafTrainData,GI.numClasses);
-    //cout << "Stopping tree generation after creation of " << nNodes << " nodes" << endl;
+    switch ( GI.predictionFunctionType ) {
+    case MEAN:
+      this->leafMean(leafTrainData);
+      break;
+    case MODE:
+      this->leafMode(leafTrainData);
+      break;
+    case GAMMA:
+      this->leafGamma(leafTrainData,GI.numClasses);
+      break;
+    }
+
     return;
   }
   
   vector<num_t> trainData = treeData->getFeatureData(targetIdx,sampleIcs);
 
-  // !! Potential Crash: This is unsafe. Add asserts or runtime checks.
-  // !! Correctness: Violates the Principle of Least Knowledge. Refactor.
-  (this->*GI.leafPredictionFunction)(trainData,GI.numClasses);
+  switch ( GI.predictionFunctionType ) {
+  case MEAN:
+    this->leafMean(trainData);
+    break;
+  case MODE:
+    this->leafMode(trainData);
+    break;
+  case GAMMA:
+    this->leafGamma(trainData,GI.numClasses);
+    break;
+  }
+
 
   featuresInTree.insert(splitFeatureIdx);
   *nNodes += 2;
@@ -776,7 +769,7 @@ void Node::categoricalFeatureSplit(Treedata* treedata,
 
 }
 
-void Node::leafMean(const vector<datadefs::num_t>& data, const size_t numClasses) {
+void Node::leafMean(const vector<datadefs::num_t>& data) {
   
   if ( !datadefs::isNAN(trainPrediction_) ) {
     cerr << "Tried to set node prediction twice!" << endl;
@@ -795,7 +788,7 @@ void Node::leafMean(const vector<datadefs::num_t>& data, const size_t numClasses
 
 }
 
-void Node::leafMode(const vector<datadefs::num_t>& data, const size_t numClasses) {
+void Node::leafMode(const vector<datadefs::num_t>& data) {
 
   if ( !datadefs::isNAN(trainPrediction_) ) {
     cerr << "Tried to set node prediction twice!" << endl;
@@ -811,7 +804,6 @@ void Node::leafMode(const vector<datadefs::num_t>& data, const size_t numClasses
   datadefs::count_freq(data,freq,n);
   map<num_t,size_t>::iterator it(max_element(freq.begin(),freq.end(),datadefs::freqIncreasingOrder()));
   trainPrediction_ = it->first;
-  //isTrainPredictionSet_ = true;
 
 }
 
@@ -840,6 +832,5 @@ void Node::leafGamma(const vector<datadefs::num_t>& data, const size_t numClasse
   } else {
     trainPrediction_ = (numClasses - 1)*numerator / (numClasses * denominator);
   }
-  //isTrainPredictionSet_ = true;
 }
   

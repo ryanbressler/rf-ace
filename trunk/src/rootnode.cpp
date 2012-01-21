@@ -13,7 +13,7 @@ RootNode::RootNode(bool sampleWithReplacement,
                    size_t numClasses,
 		   PartitionSequence* partitionSequence):
   Node(),
-  nNodes_(0) {
+  nNodes_(1) {
 
   GI_.sampleWithReplacement = sampleWithReplacement;
   GI_.sampleSizeFraction = sampleSizeFraction;
@@ -36,22 +36,17 @@ RootNode::~RootNode() {
 void RootNode::growTree(Treedata* treeData,
                         const size_t targetIdx,
                         //void (*leafPredictionFunction)(const vector<num_t>&, const size_t),
-                        const LeafPredictionFunctionType leafPredictionFunctionType,
+                        const PredictionFunctionType predictionFunctionType,
                         vector<size_t>& oobIcs,
                         set<size_t>& featuresInTree,
                         size_t& nNodes) {
 
   if ( this->hasChildren() ) {
     this->deleteTree();
+    nNodes_ = 1;
   }
 
-  if ( leafPredictionFunctionType == LEAF_MEAN ) {
-    GI_.leafPredictionFunction = &RootNode::leafMean;
-  } else if ( leafPredictionFunctionType == LEAF_MODE ) {
-    GI_.leafPredictionFunction = &RootNode::leafMode;
-  } else {
-    GI_.leafPredictionFunction = &RootNode::leafGamma;
-  }
+  GI_.predictionFunctionType = predictionFunctionType;
 
   if ( false ) {
     cout << "Growing a tree: samplewithReplacement=" << GI_.sampleWithReplacement 
@@ -97,7 +92,6 @@ void RootNode::growTree(Treedata* treeData,
   featuresInTree.clear();
 
   //Start the recursive node splitting from the root node. This will generate the tree.
-  nNodes_ = 1;
   this->recursiveNodeSplit(treeData,targetIdx,bootstrapIcs,GI_,featuresInTree,&nNodes_);
   
   nNodes = nNodes_;

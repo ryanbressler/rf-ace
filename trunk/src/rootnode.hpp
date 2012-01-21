@@ -23,7 +23,7 @@ public:
 
   void growTree(Treedata* treeData,
                 const size_t targetIdx,
-                const LeafPredictionFunctionType leafPredictionFunctionType,
+                const PredictionFunctionType predictionFunctionType,
                 vector<size_t>& oobIcs,
                 set<size_t>& featuresInTree,
                 size_t& nNodes);

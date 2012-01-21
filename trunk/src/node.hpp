@@ -19,7 +19,7 @@ using datadefs::num_t;
 
 class Node;
 
-typedef void (Node::*LeafPredictionFunction)(const vector<num_t>&, const size_t);
+//typedef void (Node::*LeafPredictionFunction)(const vector<num_t>&, const size_t);
 
 class Node {
 public:
@@ -59,7 +59,7 @@ public:
   void print(ofstream& toFile);
   void print(string& traversal, ofstream& toFile);
 
-  enum LeafPredictionFunctionType { LEAF_MEAN, LEAF_MODE, LEAF_GAMMA };
+  enum PredictionFunctionType { MEAN, MODE, GAMMA };
 
 #ifndef TEST__
 protected:
@@ -73,14 +73,14 @@ protected:
     bool isRandomSplit;
     size_t nFeaturesForSplit;
     bool useContrasts;
-    LeafPredictionFunction leafPredictionFunction;
+    PredictionFunctionType predictionFunctionType;
     size_t numClasses;
     PartitionSequence* partitionSequence;
   };
 
   //Leaf prediction functions
-  void leafMean(const vector<num_t>& data, const size_t numClasses);
-  void leafMode(const vector<num_t>& data, const size_t numClasses);
+  void leafMean(const vector<num_t>& data);
+  void leafMode(const vector<num_t>& data);
   void leafGamma(const vector<num_t>& data, const size_t numClasses);
 
   void recursiveNodeSplit(Treedata* treeData,
