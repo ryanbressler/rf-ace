@@ -12,6 +12,7 @@ namespace options {
   const bool   GENERAL_DEFAULT_NO_FILTER = false;
   const char   GENERAL_DEFAULT_DATA_DELIMITER = '\t';
   const char   GENERAL_DEFAULT_HEADER_DELIMITER = ':';
+  const size_t GENERAL_DEFAULT_MIN_SAMPLES = 5;
   
   const size_t RF_DEFAULT_N_TREES = 1000; // zero means it will be estimated from the data by default
   const size_t RF_DEFAULT_M_TRY = 0; // same here ...
@@ -77,6 +78,10 @@ namespace options {
     char   headerDelimiter;
     string headerDelimiter_s;
     string headerDelimiter_l;
+
+    size_t pruneFeatures;
+    string pruneFeatures_s;
+    string pruneFeatures_l;
     
     bool   noFilter;
     string noFilter_s;
@@ -135,9 +140,13 @@ namespace options {
       headerDelimiter_s("H"),
       headerDelimiter_l("head_delim"),
       
+      pruneFeatures(GENERAL_DEFAULT_MIN_SAMPLES),
+      pruneFeatures_s("X"),
+      pruneFeatures_l("prune_features"),
+
       noFilter(GENERAL_DEFAULT_NO_FILTER),
       noFilter_s("N"),
-      noFilter_l("noFilter") {}
+      noFilter_l("no_filter") {}
   };
   
   struct RF_options {
@@ -251,6 +260,8 @@ namespace options {
 	 << " " << "Data delimiter (default \\t)" << endl;
     cout << " -" << geno.headerDelimiter_s << " / --" << geno.headerDelimiter_l << setw( maxwidth - geno.headerDelimiter_l.size() )
 	 << " " << "Header delimiter that separates the N and C symbols in feature headers from the rest (default " << GENERAL_DEFAULT_HEADER_DELIMITER << ")" << endl;
+    cout << " -" << geno.pruneFeatures_s << " / --" << geno.pruneFeatures_l << setw( maxwidth - geno.pruneFeatures_l.size() )
+	 << " " << "Features with less than n ( default " << GENERAL_DEFAULT_MIN_SAMPLES << " ) samples will be removed" << endl;
     cout << " -" << geno.noFilter_s << " / --" << geno.noFilter_l << setw( maxwidth - geno.noFilter_l.size() )
 	 << " " << "Set this flag if you want to omit applying feature filtering with RFs" << endl;
     cout << endl;

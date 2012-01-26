@@ -188,6 +188,29 @@ void Treedata::whiteList(const vector<bool>& keepFeatureIcs) {
   
 }
 
+void Treedata::pruneFeatures(const size_t minSamples) {
+  
+  size_t nFeatures = this->nFeatures();
+
+  vector<bool> keepFeatureIcs( nFeatures, true );
+
+  bool applyFiltering = false;
+
+  for ( size_t i = 0; i < nFeatures; ++i ) {
+    
+    if ( this->nRealSamples(i) < minSamples ) {
+      keepFeatureIcs[i] = false;
+      applyFiltering = true;
+    }
+
+  }
+
+  if ( applyFiltering ) {
+    this->whiteList(keepFeatureIcs);
+  }
+
+}
+
 void Treedata::updateSortOrder(const size_t featureIdx) {
 
   features_[featureIdx].sortOrder.resize( sampleHeaders_.size() );
