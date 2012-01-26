@@ -25,6 +25,7 @@ using namespace statistics;
 using datadefs::num_t;
 
 void printHeader(ostream& output) {
+
   output << endl;
   output << " ------------------------------------------------------- " << endl;
   output << "|  RF-ACE version:  0.9.9, January 20th, 2012           |" << endl;
@@ -87,6 +88,7 @@ int main(const int argc, char* const argv[]) {
   string dataDelimiter,headerDelimiter;
   parser.getArgument<string>(gen_op.dataDelimiter_s, gen_op.dataDelimiter_l, dataDelimiter);
   parser.getArgument<string>(gen_op.headerDelimiter_s, gen_op.headerDelimiter_l, headerDelimiter);
+  parser.getArgument<size_t>(gen_op.pruneFeatures_s, gen_op.pruneFeatures_l, gen_op.pruneFeatures);
   parser.getFlag(gen_op.noFilter_s, gen_op.noFilter_l, gen_op.noFilter);
   stringstream ss(dataDelimiter);
   ss >> gen_op.dataDelimiter;
@@ -174,28 +176,39 @@ int main(const int argc, char* const argv[]) {
   
   // Perform masking, if requested
   if ( whiteListInputExists ) {
-    
-    //cerr << "Masking is not working at the moment" << endl;
-    //exit(1);
-    
+        
     cout << "Reading whitelist '" << gen_op.whiteListInput << "', please wait... " << flush;
     vector<string> whiteFeatureNames = readFeatureMask(gen_op.whiteListInput);
     cout << "DONE" << endl;
-    cout << "Applying feature mask, removing " << treedata.nFeatures() - whiteFeatureNames.size() << " / " << treedata.nFeatures() << " features, please wait... " << flush;
+    cout << "Applying feature mask, removing " << treedata.nFeatures() - whiteFeatureNames.size() 
+	 << " / " << treedata.nFeatures() << " features, please wait... " << flush;
     treedata.whiteList(whiteFeatureNames);
     cout << "DONE" << endl;
   } else if ( blackListInputExists ) {
-    //cerr << "Blacklisting is not working at the moment" << endl;
-    //exit(1);
 
     cout << "Reading blacklist '" << gen_op.blackListInput << "', please wait... " << flush;
     vector<string> blackFeatureNames = readFeatureMask(gen_op.blackListInput);
     cout << "DONE" << endl;
-    cout << "Applying blacklist, removing " << treedata.nFeatures() - blackFeatureNames.size() << " / " << treedata.nFeatures() << " features, please wait... " << flush;
+    cout << "Applying blacklist, removing " << treedata.nFeatures() - blackFeatureNames.size() 
+	 << " / " << treedata.nFeatures() << " features, please wait... " << flush;
     treedata.blackList(blackFeatureNames);
     cout << "DONE" << endl;
   }
-  cout << endl;
+
+  if ( gen_op.pruneFeatures ) {
+
+    cout << "Pruning features with less than " << gen_op.pruneFeatures << " real samples... " << flush;
+    size_t nFeaturesOld = treedata.nFeatures();
+    treedata.pruneFeatures(gen_op.pruneFeatures);
+    cout << "DONE, " << nFeaturesOld - treedata.nFeatures() << " features ( "
+         << 100.0*( (nFeaturesOld - treedata.nFeatures()) / nFeaturesOld ) << "% ) pruned" << endl;
+
+  }
+  
+  if ( treedata.nFeatures() == 0 ) {
+    cerr << "All features were removed!" << endl;
+    exit(1);
+  }
 
   // After masking, it's safe to refer to features as indices 
   // TODO: rf_ace.cpp: this should be made obsolete; instead of indices, use the feature headers
@@ -295,13 +308,12 @@ int main(const int argc, char* const argv[]) {
   ////////////////////////////////////////////////////////////////////////
   //  STEP 1 -- MULTIVARIATE ASSOCIATIONS WITH RANDOM FOREST ENSEMBLES  //
   ////////////////////////////////////////////////////////////////////////     
-  vector<num_t> pValues; //(treedata.nFeatures());
-  vector<num_t> importanceValues; //(treedata.nFeatures());
+  vector<num_t> pValues; 
+  vector<num_t> importanceValues; 
   vector<string> featureNames;
   
   if ( !gen_op.noFilter ) {
-    //vector<num_t> pValues; //(treedata.nFeatures());
-    //vector<num_t> importanceValues; //(treedata.nFeatures());
+
     cout << "===> Uncovering associations... " << flush;
     RF_stat = executeRandomForest(treedata,RF_op,gen_op,pValues,importanceValues);
     cout << "DONE" << endl;
@@ -309,7 +321,7 @@ int main(const int argc, char* const argv[]) {
     /////////////////////////////////////////////////
     //  STEP 2 -- FEATURE FILTERING WITH P-VALUES  //
     /////////////////////////////////////////////////
-    //vector<size_t> significantFeatureIcs;
+
     cout << "===> Filtering features... " << flush;
     
     size_t nFeatures = treedata.nFeatures();
