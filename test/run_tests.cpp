@@ -4,6 +4,7 @@
 
 #include "argparse_test.hpp"
 #include "datadefs_test.hpp"
+#include "utils_test.hpp"
 #include "node_test.hpp"
 #include "rootnode_test.hpp"
 #include "stochasticforest_test.hpp"

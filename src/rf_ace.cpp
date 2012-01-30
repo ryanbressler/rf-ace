@@ -14,6 +14,7 @@
 #include "stochasticforest.hpp"
 #include "treedata.hpp"
 #include "datadefs.hpp"
+#include "utils.hpp"
 #include "options.hpp"
 #include "statistics.hpp"
 #include "progress.hpp"
@@ -40,6 +41,8 @@ void printHelpHint() {
   cout << endl;
   cout << "To get started, type \"-h\" or \"--help\"" << endl;
 }
+
+void pruneFeatures(Treedata& treeData, const General_options& gen_op);
 
 RF_statistics executeRandomForest(Treedata& treedata,
 				  const RF_options& RF_op,
@@ -189,7 +192,7 @@ int main(const int argc, char* const argv[]) {
     cout << "Reading blacklist '" << gen_op.blackListInput << "', please wait... " << flush;
     vector<string> blackFeatureNames = readFeatureMask(gen_op.blackListInput);
     cout << "DONE" << endl;
-    cout << "Applying blacklist, removing " << treedata.nFeatures() - blackFeatureNames.size() 
+    cout << "Applying blacklist, keeping " << treedata.nFeatures() - blackFeatureNames.size() 
 	 << " / " << treedata.nFeatures() << " features, please wait... " << flush;
     treedata.blackList(blackFeatureNames);
     cout << "DONE" << endl;
@@ -199,9 +202,9 @@ int main(const int argc, char* const argv[]) {
 
     cout << "Pruning features with less than " << gen_op.pruneFeatures << " real samples... " << flush;
     size_t nFeaturesOld = treedata.nFeatures();
-    treedata.pruneFeatures(gen_op.pruneFeatures);
+    pruneFeatures(treedata,gen_op);
     cout << "DONE, " << nFeaturesOld - treedata.nFeatures() << " features ( "
-         << 100.0*( (nFeaturesOld - treedata.nFeatures()) / nFeaturesOld ) << "% ) pruned" << endl;
+         << ( 100.0*(nFeaturesOld - treedata.nFeatures()) / nFeaturesOld ) << "% ) pruned" << endl;
 
   }
   
@@ -470,6 +473,23 @@ int main(const int argc, char* const argv[]) {
   return(EXIT_SUCCESS);
 }
 
+void pruneFeatures(Treedata& treeData, const General_options& gen_op) {
+
+  vector<string> featureNames;
+
+  size_t targetIdx = treeData.getFeatureIdx(gen_op.targetStr);
+
+  for ( size_t featureIdx = 0; featureIdx < treeData.nFeatures(); ++featureIdx ) {
+    
+    if ( treeData.nRealSamples(targetIdx,featureIdx) < gen_op.pruneFeatures ) {
+      featureNames.push_back(treeData.getFeatureName(featureIdx));
+    }
+
+  }
+  
+  treeData.blackList(featureNames);
+
+}
 
 RF_statistics executeRandomForest(Treedata& treedata,
 				  const RF_options& RF_op,
@@ -483,12 +503,16 @@ RF_statistics executeRandomForest(Treedata& treedata,
   vector<vector<num_t> >         importanceMat( RF_op.nPerms, vector<num_t>(treedata.nFeatures()) );
   vector<vector<num_t> > contrastImportanceMat( RF_op.nPerms, vector<num_t>(treedata.nFeatures()) );
 
+  size_t nFeatures = treedata.nFeatures();
+
   pValues.clear();
-  pValues.resize(treedata.nFeatures(),1.0);
-  importanceValues.resize(treedata.nFeatures());
+  pValues.resize(nFeatures,1.0);
+  importanceValues.resize(2*nFeatures);
 
   Progress progress;
   clock_t clockStart( clock() );
+  vector<num_t> cSample(RF_op.nPerms);
+
   for(int permIdx = 0; permIdx < static_cast<int>(RF_op.nPerms); ++permIdx) {
 
     progress.update(1.0*permIdx/RF_op.nPerms);
@@ -500,72 +524,60 @@ RF_statistics executeRandomForest(Treedata& treedata,
       useContrasts = false;
     }
 
+    // Initialize the Random Forest object
     StochasticForest SF(&treedata,gen_op.targetStr,RF_op.nTrees);
+
+    // Grow the Random Forest
     SF.learnRF(RF_op.mTry,RF_op.nMaxLeaves,RF_op.nodeSize,useContrasts);
-     
-    for ( size_t treeIdx = 0; treeIdx < RF_op.nTrees; ++treeIdx ) {
-      nodeMat[permIdx][treeIdx] = SF.nNodes(treeIdx);
-    }
-    
+
+    // Get the number of nodes in each tree in the forest
+    nodeMat[permIdx] = SF.nNodes();
+
+    // Compute importance scores for real and contrast features
     importanceValues = SF.featureImportance();
-
-    copy(importanceValues.begin(),importanceValues.begin()+treedata.nFeatures(),importanceMat[permIdx].begin());
-    copy(importanceValues.begin()+treedata.nFeatures(),importanceValues.begin()+2*treedata.nFeatures(),contrastImportanceMat[permIdx].begin());
     
+    // Get importance scores
+    copy(importanceValues.begin(), // Origin START
+	 importanceValues.begin() + nFeatures, // Origin END
+	 importanceMat[permIdx].begin()); // Destination START
+    
+    // Get contrast importance scores
+    copy(importanceValues.begin() + nFeatures, // Origin START
+	 importanceValues.begin() + 2*nFeatures, // Origin END
+	 contrastImportanceMat[permIdx].begin()); // Destination START
+    
+    cSample[permIdx] = math::percentile( utils::removeNANs( contrastImportanceMat[permIdx] ) , 0.95);
+
   }
-
-  if(RF_op.nPerms > 1) {
+  
+  for(size_t featureIdx = 0; featureIdx < treedata.nFeatures(); ++featureIdx) {
     
-    vector<num_t> cSample(RF_op.nPerms);
+    size_t nRealSamples;
+    vector<num_t> fSample(RF_op.nPerms);
+    
     for(size_t permIdx = 0; permIdx < RF_op.nPerms; ++permIdx) {
-      vector<num_t> cVector(treedata.nFeatures());
-      for(size_t featureIdx = 0; featureIdx < treedata.nFeatures(); ++featureIdx) {
-	cVector[featureIdx] = contrastImportanceMat[permIdx][featureIdx];
-      }
-      //size_t nReal;
-      vector<num_t> trimmedCVector = datadefs::trim(cVector);
-      //datadefs::mean(cVector,cSample[permIdx],nReal);
-      //assert( nReal );
-      //datadefs::print(cVector);
-      //vector<num_t> trimmedCVector = datadefs::trim(cVector);
-      if ( trimmedCVector.size() > 0 ) {
-	cSample[permIdx] = math::percentile(trimmedCVector,0.95);
-      } else {
-      	cSample[permIdx] = datadefs::NUM_NAN;
-      }
-      //cout << " " << cSample[permIdx];
+      fSample[permIdx] = importanceMat[permIdx][featureIdx];
     }
-    //cout << endl;
-    //RF_stat.contrastImportanceSample = cSample;
     
-    //cout << "cSample created." << endl;
+    pValues[featureIdx] = datadefs::ttest(fSample,cSample);
     
-    for(size_t featureIdx = 0; featureIdx < treedata.nFeatures(); ++featureIdx) {
-      
-      size_t nRealSamples;
-      vector<num_t> fSample(RF_op.nPerms);
-      //vector<num_t> cSample(op.nPerms);
-      for(size_t permIdx = 0; permIdx < RF_op.nPerms; ++permIdx) {
-        fSample[permIdx] = importanceMat[permIdx][featureIdx];
-        //cSample[permIdx] = importanceMat[permIdx][featureIdx + treedata.nFeatures()];
-      }
-      
-      //datadefs::print(fSample);
-      datadefs::ttest(fSample,cSample,pValues[featureIdx]);      
-      datadefs::mean(fSample,importanceValues[featureIdx],nRealSamples);
-      
+    if ( datadefs::isNAN( pValues[featureIdx] ) ) {
+      pValues[featureIdx] = 1.0;
     }
-  } else {
-    importanceValues = importanceMat[0];
+ 
+    datadefs::mean(fSample,importanceValues[featureIdx],nRealSamples);
+    
   }
   
   RF_statistics RF_stat(importanceMat,contrastImportanceMat,nodeMat, 1.0 * ( clock() - clockStart ) / CLOCKS_PER_SEC );
-
-  importanceValues.resize(treedata.nFeatures());
-
+  
+  importanceValues.resize( treedata.nFeatures() );
+  
   return( RF_stat );
   
 }
+
+
 
 void printPredictionToFile(StochasticForest& SF, Treedata& treeData, const string& targetName, const string& fileName) {
   

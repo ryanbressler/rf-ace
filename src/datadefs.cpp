@@ -509,9 +509,8 @@ void datadefs::range(vector<size_t>& ics) {
 // !! Spurious deprecation: this isn't used in the existing codebase, but it
 // !! has value within the API. Can we consider it "deprecated?"
 
-void datadefs::ttest(vector<datadefs::num_t> const& x, 
-                     vector<datadefs::num_t> const& y, 
-                     datadefs::num_t& pvalue) {
+datadefs::num_t datadefs::ttest(vector<datadefs::num_t> const& x, 
+				vector<datadefs::num_t> const& y) {
 
   // Sample mean and variance of x
   datadefs::num_t mean_x = 0;
@@ -519,14 +518,11 @@ void datadefs::ttest(vector<datadefs::num_t> const& x,
   size_t nreal_x = 0;
   datadefs::sqerr(x, mean_x, var_x, nreal_x);
 
-  if ( nreal_x == 0 ) {
-    pvalue = 1.0;
-    return;
+  if ( nreal_x < 2 ) {
+    return( datadefs::NUM_NAN );
   }
 
-  if ( nreal_x > 1 ) {
-    var_x /= (nreal_x - 1);
-  }
+  var_x /= (nreal_x - 1);
 
   // Sample mean and variance of y
   datadefs::num_t mean_y = 0;
@@ -534,27 +530,11 @@ void datadefs::ttest(vector<datadefs::num_t> const& x,
   size_t nreal_y = 0;
   datadefs::sqerr(y, mean_y, var_y, nreal_y);
    
-  if ( nreal_y == 0 ) {
-    pvalue = 0.0;
-    return;
+  if ( nreal_y < 2 ) {
+    return( datadefs::NUM_NAN );
   }
  
-  if ( nreal_y > 1 ) {
-    var_y /= (nreal_y - 1);
-  } 
-    
-  //assert(nreal_x == nreal_y);
-
-  if(var_x < datadefs::EPS && var_y < datadefs::EPS) {
-    if(fabs(mean_x - mean_y) < datadefs::EPS) {
-      pvalue = 0.5;
-    } else if(mean_x > mean_y) {
-      pvalue = 0.0;
-    } else {
-      pvalue = 1.0;
-    }
-    return;
-  }
+  var_y /= (nreal_y - 1);
 
   size_t v;
   datadefs::num_t sp,tvalue,ttrans;
@@ -562,11 +542,23 @@ void datadefs::ttest(vector<datadefs::num_t> const& x,
   v = nreal_x + nreal_y - 2;
   sp = sqrt(((nreal_x-1) * var_x + (nreal_y-1) * var_y) / v);
   tvalue = (mean_x - mean_y) / (sp * sqrt(1.0 / nreal_x + 1.0 / nreal_y));
-    
+  
+  if ( tvalue > 100 ) {
+    return( 0.0 );
+  } 
+  
+  if ( tvalue < -100 ) {
+    return( 1.0 );
+  } 
+
+  if ( fabs(tvalue) < datadefs::EPS ) {
+    return( 0.5 );
+  }
+  
   ttrans = (tvalue+sqrt(pow(tvalue,2) + v)) / (2 * sqrt(pow(tvalue,2) + v));
 
-  datadefs::regularized_betainc(ttrans,nreal_x - 1,pvalue);  
-  pvalue = 1-pvalue;
+  num_t integral = datadefs::regularized_betainc(ttrans,nreal_x - 1);  
+  return( 1 - integral );
 
 }
 
@@ -579,11 +571,10 @@ void datadefs::ttest(vector<datadefs::num_t> const& x,
 
 // !! Spurious deprecation: this isn't used in the existing codebase, but it
 // !! has value within the API. Can we consider it "deprecated?"
-void datadefs::regularized_betainc(const datadefs::num_t x,
-                                   const size_t a,
-                                   datadefs::num_t& ibval) {
+datadefs::num_t datadefs::regularized_betainc(const datadefs::num_t x,
+					      const size_t a) {
 
-  ibval = 0.0;
+  num_t ibval = 0.0;
   
   datadefs::num_t jfac = 1;
   for(size_t i = 1; i < a; ++i) {
@@ -607,6 +598,8 @@ void datadefs::regularized_betainc(const datadefs::num_t x,
   if(ibval > 1.0) {
     ibval = 1.0;
   }
+
+  return( ibval );
   
 }
 
@@ -757,23 +750,5 @@ void datadefs::pearson_correlation(vector<datadefs::num_t> const& x,
 
   corr /= sqrt(se_x*se_y);
 
-}
-
-vector<datadefs::num_t> datadefs::trim(const vector<datadefs::num_t>& x) {
-  
-  vector<datadefs::num_t> trimmed(x.size());
-
-  size_t nRetained = 0;
-  for(size_t i = 0; i < x.size(); ++i) {
-    if( !datadefs::isNAN(x[i]) ) {
-      trimmed[nRetained] = x[i];
-      ++nRetained;
-    }
-  }
-  trimmed.resize(nRetained);
-  if ( nRetained == 0 ) {
-    cout << "WARNING: trimmed vector has 0 length!" << endl;
-  }
-  return(trimmed);
 }
 

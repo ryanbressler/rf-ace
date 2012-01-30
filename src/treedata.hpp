@@ -31,11 +31,6 @@ public:
   void blackList(const vector<string>& featureNames);
   void whiteList(const vector<bool>& featureIcs);
 
-  // Removes features with less than "minSamples" real samples
-  void pruneFeatures(const size_t minSamples);
-
-  // TODO: pruneSamples()
-
   size_t nFeatures();
 
   num_t pearsonCorrelation(size_t featureidx1, size_t featureidx2);

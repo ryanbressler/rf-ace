@@ -80,11 +80,6 @@ void Node::setSplitter(const size_t splitterIdx, const string& splitterName, con
 
 Node* Node::percolateData(const num_t data) {
 
-  //if ( datadefs::isNAN( data ) ) {
-  //  cerr << "Node::percolateData(num_t) does not accept NaNs (" << data << ") to be percolated!" << endl;
-  //  exit(1);
-  //}
-
   // Return this if the node doesn't have children ( == is a leaf node )
   if ( !this->hasChildren() ) {
     return( this );
@@ -108,11 +103,6 @@ Node* Node::percolateData(const num_t data) {
 
 Node* Node::percolateData(const string& data) {
 
-  //if ( datadefs::isNAN( data ) ) {
-  //  cerr << "Node::percolateData(string) does not accept NaNs (" << data << ") to be percolated!" << endl;
-  //  exit(1);
-  //}
-
   // Return this if the node doesn't have children ( == is a leaf node )
   if ( !this->hasChildren() ) {
     return( this );
@@ -135,26 +125,34 @@ Node* Node::percolateData(const string& data) {
 }
 
 Node* Node::percolateData(Treedata* treeData, const size_t sampleIdx) {
-  
+
+  // Start percolating from this node
   Node* nodep(this);
 
+  // Percolate until stopped, at which point "nodep" stores the end-node
   this->percolateData(treeData,sampleIdx,&nodep);
 
+  // Return the end-node
   return( nodep );
 
 }
 
 void Node::percolateData(Treedata* treeData, const size_t sampleIdx, Node** nodep) {
 
+  
   if( !this->hasChildren() ) {
+    // If the node does not have children, set "nodep" to this and stop recursion
     *nodep = this;
   } else if ( splitter_->splitsLeft(treeData,sampleIdx) ) {
+    // Continue percolating left
     *nodep = leftChild_;
     leftChild_->percolateData(treeData,sampleIdx,nodep);
   } else if ( splitter_->splitsRight(treeData,sampleIdx) ) {
+    // Continue percolating right
     *nodep = rightChild_;
     rightChild_->percolateData(treeData,sampleIdx,nodep);
   } else {
+    // If no split can be made, set "nodep" to this and stop recursion
     *nodep = this;
   }
 
