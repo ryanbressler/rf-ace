@@ -34,8 +34,10 @@ public:
   void predict(Treedata* treeData, vector<num_t>& prediction, vector<num_t>& confidence);
 
   //Counts the number of nodes in the forest
-  size_t nNodes();
+  vector<size_t> nNodes();
   size_t nNodes(const size_t treeIdx);
+
+  size_t nTrees();
 
   void printToFile(const string& fileName);
 
@@ -83,7 +85,7 @@ private:
   enum LearnedModel {NO_MODEL, RF_MODEL, GBT_MODEL};
   
   LearnedModel learnedModel_;
-  //size_t numClasses_;
+
   num_t shrinkage_;
 
   // This object generates a sequence that makes splitting data with categorical splitters fast

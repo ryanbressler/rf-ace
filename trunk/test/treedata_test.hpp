@@ -8,11 +8,12 @@
 
 class treeDataTest : public CppUnit::TestFixture {
   CPPUNIT_TEST_SUITE( treeDataTest );
-  //CPPUNIT_TEST( test_bracketOperator );
+  //CPPUNIT_TEST( test_permuteContrasts );
   CPPUNIT_TEST( test_name2idxMap );
   CPPUNIT_TEST( test_getFeatureData );
   CPPUNIT_TEST( test_updateSortOrder );
-  CPPUNIT_TEST( test_getFilteredAndSortedDataPair2 );
+  CPPUNIT_TEST( test_getFilteredFeatureData );
+  CPPUNIT_TEST( test_getFilteredAndSortedFeatureDataPair2 );
   CPPUNIT_TEST( test_parseARFF );
   CPPUNIT_TEST( test_parseARFF_extended ); 
   CPPUNIT_TEST( test_keepFeatures );
@@ -22,11 +23,12 @@ class treeDataTest : public CppUnit::TestFixture {
 public:
   void setUp();
   void tearDown();
-  void test_bracketOperator();
+  void test_permuteContrasts();
   void test_name2idxMap();
   void test_getFeatureData();
   void test_updateSortOrder();
-  void test_getFilteredAndSortedDataPair2();
+  void test_getFilteredFeatureData();
+  void test_getFilteredAndSortedFeatureDataPair2();
   void test_parseARFF();
   void test_parseARFF_extended();
   void test_keepFeatures();
@@ -36,30 +38,49 @@ public:
 void treeDataTest::setUp() {}
 void treeDataTest::tearDown() {}
  
-/*
-  void treeDataTest::test_bracketOperator() {
+
+void treeDataTest::test_permuteContrasts() {
   
-  string fileName = "test_6by10_featurerows_matrix.tsv";
+  string fileName = "test_6by10_mixed_matrix.tsv";
   
   Treedata::Treedata treeData(fileName,'\t',':');
   
+  //treeData.permuteContrasts();
+
   CPPUNIT_ASSERT( treeData.features_.size() == 2*6 );
   
+  /*
+    N:F1    nA      8.5     3.4     7.2     5       6       7       11      9       NA
+    N:F2    2       3       4       5       6       NA      NA      9       nan     10
+    C:F3    NA      nA      naN     NaN     1       1       1       2       2       2
+    N:F4    10      9.9     8       7       6       5       4       3       2.4     1
+    C:F5    3       3       3       4       4       5       3       2       2       2
+    N:F6    9       8       7       9       8       7       3       2       1.0     99.23
+  */
   
-  for ( size_t i = 0; i < treeData.features_.size(); ++i ) {
-  vector<datadefs::num_t> data = treeData.getFeatureData(i);
-  for ( size_t j = 0; j < treeData.features_[0].data.size(); ++j ) {
-  if ( !datadefs::isNAN(data[j]) ) {
-  CPPUNIT_ASSERT( fabs(treeData[i][j] - data[j]) < datadefs::EPS );
-  vector<datadefs::num_t> foo = treeData[treeData.features_[i].name];
-  //cout << foo[j] << " vs " << data[j] << endl;
-  CPPUNIT_ASSERT( fabs(treeData[treeData.features_[i].name][j] - data[j]) < datadefs::EPS );
-  }
-  }
-  }
-  
-  }
-*/
+  CPPUNIT_ASSERT( treeData.nRealSamples(9) == 10 );
+  CPPUNIT_ASSERT( treeData.nRealSamples(10) == 10 );
+  CPPUNIT_ASSERT( treeData.nRealSamples(11) == 10 );
+
+  vector<num_t> featureData = treeData.getFeatureData(6);
+  CPPUNIT_ASSERT( treeData.nRealSamples(6) == 8 );
+  CPPUNIT_ASSERT( datadefs::isNAN(featureData[0]) );
+  CPPUNIT_ASSERT( datadefs::isNAN(featureData[9]) );
+
+  featureData = treeData.getFeatureData(7);
+  CPPUNIT_ASSERT( treeData.nRealSamples(7) == 7 );
+  CPPUNIT_ASSERT( datadefs::isNAN(featureData[5]) );
+  CPPUNIT_ASSERT( datadefs::isNAN(featureData[6]) );
+  CPPUNIT_ASSERT( datadefs::isNAN(featureData[8]) );
+
+  featureData = treeData.getFeatureData(8);
+  CPPUNIT_ASSERT( treeData.nRealSamples(8) == 6 );
+  CPPUNIT_ASSERT( datadefs::isNAN(featureData[0]) );
+  CPPUNIT_ASSERT( datadefs::isNAN(featureData[1]) );
+  CPPUNIT_ASSERT( datadefs::isNAN(featureData[2]) );
+  CPPUNIT_ASSERT( datadefs::isNAN(featureData[3]) );
+
+}
 
 void treeDataTest::test_name2idxMap() {
 
@@ -172,7 +193,90 @@ void treeDataTest::test_updateSortOrder() {
 
 }
 
-void treeDataTest::test_getFilteredAndSortedDataPair2() {
+void treeDataTest::test_getFilteredFeatureData() {
+
+  string fileName = "test_6by10_mixed_matrix.tsv";
+
+  Treedata::Treedata treeData(fileName,'\t',':');
+
+
+  /*
+    N:F1    nA      8.5     3.4     7.2     5       6       7       11      9       NA
+    N:F2    2       3       4       5       6       NA      NA      9       nan     10
+    C:F3    NA      nA      naN     NaN     1       1       1       2       2       2
+    N:F4    10      9.9     8       7       6       5       4       3       2.4     1
+    C:F5    3       3       3       4       4       5       3       2       2       2
+    N:F6    9       8       7       9       8       7       3       2       1.0     99.23
+  */
+  
+  vector<size_t> sampleIcs(10);
+  datadefs::range(sampleIcs);
+
+  vector<num_t> filteredData = treeData.getFilteredFeatureData(0,sampleIcs);
+
+  CPPUNIT_ASSERT( filteredData.size() == 8 );
+  CPPUNIT_ASSERT( fabs( filteredData[0] - 8.5 ) < datadefs::EPS );
+  CPPUNIT_ASSERT( fabs( filteredData[1] - 3.4 ) < datadefs::EPS );
+  CPPUNIT_ASSERT( fabs( filteredData[2] - 7.2 ) < datadefs::EPS );
+  CPPUNIT_ASSERT( fabs( filteredData[3] - 5 )   < datadefs::EPS );
+  CPPUNIT_ASSERT( fabs( filteredData[4] - 6 )   < datadefs::EPS );
+  CPPUNIT_ASSERT( fabs( filteredData[5] - 7 )   < datadefs::EPS );
+  CPPUNIT_ASSERT( fabs( filteredData[6] - 11 )  < datadefs::EPS );
+  CPPUNIT_ASSERT( fabs( filteredData[7] - 9 )   < datadefs::EPS );
+
+  CPPUNIT_ASSERT( sampleIcs.size() == 8 );
+  CPPUNIT_ASSERT( sampleIcs[0] == 1 );
+  CPPUNIT_ASSERT( sampleIcs[1] == 2 );
+  CPPUNIT_ASSERT( sampleIcs[2] == 3 );
+  CPPUNIT_ASSERT( sampleIcs[3] == 4 );
+  CPPUNIT_ASSERT( sampleIcs[4] == 5 );
+  CPPUNIT_ASSERT( sampleIcs[5] == 6 );
+  CPPUNIT_ASSERT( sampleIcs[6] == 7 );
+  CPPUNIT_ASSERT( sampleIcs[7] == 8 );
+
+  filteredData = treeData.getFilteredFeatureData(1,sampleIcs);
+
+  CPPUNIT_ASSERT( filteredData.size() == 5 );
+  CPPUNIT_ASSERT( fabs( filteredData[0] - 3 ) < datadefs::EPS );
+  CPPUNIT_ASSERT( fabs( filteredData[1] - 4 ) < datadefs::EPS );
+  CPPUNIT_ASSERT( fabs( filteredData[2] - 5 ) < datadefs::EPS );
+  CPPUNIT_ASSERT( fabs( filteredData[3] - 6 ) < datadefs::EPS );
+  CPPUNIT_ASSERT( fabs( filteredData[4] - 9 ) < datadefs::EPS );
+
+  CPPUNIT_ASSERT( sampleIcs.size() == 5 );
+  CPPUNIT_ASSERT( sampleIcs[0] == 1 );
+  CPPUNIT_ASSERT( sampleIcs[1] == 2 );
+  CPPUNIT_ASSERT( sampleIcs[2] == 3 );
+  CPPUNIT_ASSERT( sampleIcs[3] == 4 );
+  CPPUNIT_ASSERT( sampleIcs[4] == 7 );
+
+  sampleIcs[0] = 0;
+  sampleIcs[1] = 0;
+  sampleIcs[2] = 0;
+  sampleIcs[3] = 5;
+  sampleIcs[4] = 5;
+
+  filteredData = treeData.getFilteredFeatureData(0,sampleIcs);
+
+  CPPUNIT_ASSERT( filteredData.size() == 2 );
+  CPPUNIT_ASSERT( fabs( filteredData[0] - 6 ) < datadefs::EPS );
+  CPPUNIT_ASSERT( fabs( filteredData[1] - 6 ) < datadefs::EPS );
+
+  CPPUNIT_ASSERT( sampleIcs.size() == 2 );
+  CPPUNIT_ASSERT( sampleIcs[0] == 5 );
+  CPPUNIT_ASSERT( sampleIcs[1] == 5 );
+
+  filteredData = treeData.getFilteredFeatureData(1,sampleIcs);
+
+  CPPUNIT_ASSERT( filteredData.size() == 0 );
+  CPPUNIT_ASSERT( sampleIcs.size() == 0 );
+  
+ 
+
+
+}
+
+void treeDataTest::test_getFilteredAndSortedFeatureDataPair2() {
 
   string fileName = "test_6by10_mixed_matrix.tsv";
 

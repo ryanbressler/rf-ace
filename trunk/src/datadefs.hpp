@@ -123,35 +123,16 @@ namespace datadefs {
 
   num_t erf(num_t x);
 
-  /*
-    void spearman_correlation(vector<num_t> const& x, 
-    vector<num_t> const& y,
-    num_t& corr);
-  */
-
   void pearson_correlation(vector<num_t> const& x,
                            vector<num_t> const& y,
                            num_t& corr);
 
-
-  vector<num_t> trim(const vector<num_t>& x);
-
-  //void print(const vector<num_t>& x);
-
-  //void percentile(vector<num_t> x, const num_t alpha, num_t& prc);
-
-  
-  ////////////////////////////////////////////////////////////
-  // DEPRECATED METHOD DECLARATIONS
-  ////////////////////////////////////////////////////////////
-  void ttest(vector<num_t> const& x, 
-             vector<num_t> const& y, 
-             num_t& pvalue);
+  num_t ttest(vector<num_t> const& x, 
+	      vector<num_t> const& y);
 
 
-  void regularized_betainc(const num_t x, 
-                           const size_t a, 
-                           num_t& ibval);
+  num_t regularized_betainc(const num_t x, 
+			    const size_t a);
 
 
   

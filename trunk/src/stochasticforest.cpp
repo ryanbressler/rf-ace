@@ -433,10 +433,10 @@ void StochasticForest::predict(Treedata* treeData, vector<num_t>& prediction, ve
   prediction.resize(nSamples);
   confidence.resize(nSamples);
 
-  for ( size_t i = 0; i < nSamples; i++ ) {
-    prediction[i] = 0;
-    for ( size_t t = 0; t < nTrees_; ++t) {
-      prediction[i] = prediction[i] + shrinkage_ * rootNodes_[t]->percolateData(treeData,i)->getTrainPrediction();
+  for ( size_t sampleIdx = 0; sampleIdx < nSamples; ++sampleIdx ) {
+    prediction[sampleIdx] = 0;
+    for ( size_t treeIdx = 0; treeIdx < nTrees_; ++treeIdx) {
+      prediction[sampleIdx] = prediction[sampleIdx] + shrinkage_ * rootNodes_[treeIdx]->percolateData(treeData,sampleIdx)->getTrainPrediction();
     }
     
   }
@@ -501,17 +501,19 @@ void StochasticForest::percolateSampleIcsAtRandom(const size_t featureIdx, Node*
 
 void StochasticForest::percolateSampleIdx(const size_t sampleIdx, Node** nodep) {
 
+  // Keep percolating until we hit the leaf
   while ( (*nodep)->hasChildren() ) {
 
-    //string featureNameNew = (*nodep)->splitterName();
-    //size_t featureIdxNew = treeData_->getFeatureIdx(featureNameNew);
+    // Get the splitter feature index
     size_t featureIdxNew = (*nodep)->splitterIdx();
 
+    // Get the respective sample of the splitter feature
     num_t value = treeData_->getFeatureData(featureIdxNew,sampleIdx);
     
-    while ( datadefs::isNAN( value ) ) {
-      treeData_->getRandomData(featureIdxNew,value);
-    }
+    // 
+    //while ( datadefs::isNAN( value ) ) {
+    //  treeData_->getRandomData(featureIdxNew,value);
+    //}
     
     Node* childNode;
 
@@ -535,22 +537,25 @@ void StochasticForest::percolateSampleIdxAtRandom(const size_t featureIdx, const
   
   while ( (*nodep)->hasChildren() ) {
 
-    //string featureNameNew = (*nodep)->splitterName();
     size_t featureIdxNew = (*nodep)->splitterIdx();
 
     num_t value = datadefs::NUM_NAN;
 
     if(featureIdx == featureIdxNew) {
-      while(datadefs::isNAN(value)) {
-        treeData_->getRandomData(featureIdxNew,value);
-      }
+      //while(datadefs::isNAN(value)) {
+      treeData_->getRandomData(featureIdxNew,value);
+      //}
     } else {
       value = treeData_->getFeatureData(featureIdxNew,sampleIdx);
-      while ( datadefs::isNAN(value) ) {
-	treeData_->getRandomData(featureIdxNew,value);
-      }
     }
-
+    
+    //else {
+    // value = treeData_->getFeatureData(featureIdxNew,sampleIdx);
+    // while ( datadefs::isNAN(value) ) {
+    //	treeData_->getRandomData(featureIdxNew,value);
+    // }
+    //}
+    
     Node* childNode;
 
     if ( treeData_->isFeatureNumerical(featureIdxNew) ) {
@@ -597,7 +602,7 @@ vector<num_t> StochasticForest::featureImportance() {
   vector<bool> hasImportance( nAllFeatures, false );
   size_t nOobSamples = 0; // !! Potentially Unintentional Humor: "Noob". That is actually intentional. :)
   
-  size_t nContrastsInForest = 0;
+  //size_t nContrastsInForest = 0;
 
   num_t meanTreeImpurity = 0.0;
 
@@ -628,9 +633,9 @@ vector<num_t> StochasticForest::featureImportance() {
     for ( set<size_t>::const_iterator fit( tit->second.begin()); fit != tit->second.end(); ++fit ) {
       size_t featureIdx = *fit;
     
-      if ( featureIdx >= nRealFeatures ) {
-        ++nContrastsInForest;
-      }
+      //if ( featureIdx >= nRealFeatures ) {
+      //  ++nContrastsInForest;
+      //}
 
       StochasticForest::percolateSampleIcsAtRandom(featureIdx,rootNodes_[treeIdx],oobMatrix_[treeIdx],trainIcs);
       num_t permutedTreeImpurity;
@@ -660,15 +665,31 @@ vector<num_t> StochasticForest::featureImportance() {
 
 }
 
-size_t StochasticForest::nNodes() {
-  size_t nNodes = 0;
-  for(size_t treeIdx = 0; treeIdx < rootNodes_.size(); ++treeIdx) {
-    nNodes += this->nNodes(treeIdx);
+/**
+   Returns a vector of node counts in the trees of the forest
+*/
+vector<size_t> StochasticForest::nNodes() {
+  
+  // Get the number of trees
+  size_t nTrees = this->nTrees();
+
+  // Initialize the node count vector
+  vector<size_t> nNodes(nTrees) ;
+
+  // Loop through all trees
+  for(size_t treeIdx = 0; treeIdx < nTrees; ++treeIdx) {
+
+    // Get the node count for the tree
+    nNodes[treeIdx] = this->nNodes(treeIdx);
+
   }
   
-  return(nNodes);
+  return( nNodes );
 }
 
+/**
+   Returns the number of nodes in tree treeIdx
+*/
 size_t StochasticForest::nNodes(const size_t treeIdx) {
   return( rootNodes_[treeIdx]->nNodes() );
 }
@@ -679,6 +700,12 @@ vector<size_t> StochasticForest::featureFrequency() {
   return(frequency);
 }
 
+/**
+   Returns the number of trees in the forest
+*/
+size_t StochasticForest::nTrees() {
+  return( rootNodes_.size() );
+}
 
 void StochasticForest::treeImpurity(map<Node*,vector<size_t> >& trainIcs, 
 				    num_t& impurity) {

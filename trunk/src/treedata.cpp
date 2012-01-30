@@ -64,8 +64,7 @@ Treedata::Treedata(string fileName, char dataDelimiter, char headerDelimiter):
 
     if(features_[i].isNumerical) {
 
-      datadefs::strv2numv(rawMatrix[i],
-			  features_[i].data);
+      datadefs::strv2numv(rawMatrix[i],features_[i].data);
 
       this->updateSortOrder(i);
 
@@ -186,29 +185,6 @@ void Treedata::whiteList(const vector<bool>& keepFeatureIcs) {
   assert( iter == nFeaturesNew );
   assert( 2*iter == features_.size() );
   
-}
-
-void Treedata::pruneFeatures(const size_t minSamples) {
-  
-  size_t nFeatures = this->nFeatures();
-
-  vector<bool> keepFeatureIcs( nFeatures, true );
-
-  bool applyFiltering = false;
-
-  for ( size_t i = 0; i < nFeatures; ++i ) {
-    
-    if ( this->nRealSamples(i) < minSamples ) {
-      keepFeatureIcs[i] = false;
-      applyFiltering = true;
-    }
-
-  }
-
-  if ( applyFiltering ) {
-    this->whiteList(keepFeatureIcs);
-  }
-
 }
 
 void Treedata::updateSortOrder(const size_t featureIdx) {
@@ -520,8 +496,26 @@ void Treedata::print(const size_t featureIdx) {
 
 void Treedata::permuteContrasts() {
 
-  for(size_t i = Treedata::nFeatures(); i < 2*Treedata::nFeatures(); ++i) {
-    Treedata::permute(features_[i].data);
+  size_t nFeatures = this->nFeatures();
+  size_t nSamples = this->nSamples();
+
+  for ( size_t i = nFeatures; i < 2*nFeatures; ++i ) {
+    
+
+    vector<size_t> sampleIcs(nSamples);
+    datadefs::range(sampleIcs);
+
+    vector<num_t> filteredData = this->getFilteredFeatureData(i,sampleIcs);
+    
+    Treedata::permute(filteredData);
+
+    //datadefs::print(features_[i].data);
+
+    for ( size_t j = 0; j < sampleIcs.size(); ++j ) {
+      features_[i].data[ sampleIcs[j] ] = filteredData[j];
+    }
+
+    //datadefs::print(features_[i].data);
   }
 
 }
@@ -767,7 +761,7 @@ void Treedata::getFilteredAndSortedFeatureDataPair(const size_t targetIdx,
   //vector<size_t> sampleIcsCopy( sampleHeaders_.size() );
   //size_t maxPos = 0;
 
-  // A map: sortOrderKey -> (sampleIdx,times)
+  // A map: sortOrderKey -> (sampleIdx,multiplicity)
   map<size_t,pair<size_t,size_t> > mapOrder;
   
   // Count the number of real samples
@@ -781,7 +775,7 @@ void Treedata::getFilteredAndSortedFeatureDataPair(const size_t targetIdx,
     num_t fVal = features_[featureIdx].data[*it];
 
     // If the data are non-NA...
-    if ( !datadefs::isNAN(tVal) && !datadefs::isNAN(fVal) ) {
+    if ( !datadefs::isNAN(fVal) && !datadefs::isNAN(tVal) ) {
     
       // Accumulate real data counter
       ++nReal;
@@ -798,7 +792,7 @@ void Treedata::getFilteredAndSortedFeatureDataPair(const size_t targetIdx,
 	mapOrder.insert(pair<size_t,pair<size_t,size_t> >(pos,foo));
       } else {
 
-	// Otherwise accumulate the sample counter by one
+	// Otherwise accumulate multiplicity by one
 	++mapOrder[pos].second;
       }
     }
@@ -821,27 +815,6 @@ void Treedata::getFilteredAndSortedFeatureDataPair(const size_t targetIdx,
   }
 
   assert(i == nReal);
-
-  /*
-    size_t nReal = 0;
-    for ( size_t i = 0; i < maxPos; ++i ) {
-    if ( !datadefs::isNAN(featureData[i]) ) {
-    featureData[nReal] = featureData[i];
-    targetData[nReal] = targetData[i];
-    sampleIcsCopy[nReal] = sampleIcsCopy[i];
-    ++nReal;
-    }
-    }
-  */
-
-  //cout << " " << 1.0*nReal/maxPos; 
-
-  /*
-    sampleIcs = sampleIcsCopy;
-    sampleIcs.resize(nReal);
-    featureData.resize(nReal);
-    targetData.resize(nReal);
-  */
 
 }
 
