@@ -50,8 +50,9 @@ In fact any string, even including colons, spaces, and other special characters,
 Sample headers are not constrained, except that they must not contain preambles `N:`/`C:`/`B:`, being reserved for the feature headers. 
 
 == Attribute-Relation File Format (ARFF) ==
+When the feature matrix is as ARFF, the aforementioned constraints for feature headers do no longer apply, since the ARFF itself has an internal format for specifying feature type.
 
-[http://www.cs.waikato.ac.nz/~ml/weka/arff.html ARFF specification].      
+Read more about [http://www.cs.waikato.ac.nz/~ml/weka/arff.html ARFF specification].      
 
 = Help =
 The following examples follow Linux syntax. Type 
