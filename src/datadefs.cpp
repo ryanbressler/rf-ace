@@ -303,9 +303,9 @@ void datadefs::sortDataAndMakeRef(const bool isIncreasingOrder,
   pairedv.erase(remove_if(pairedv.begin(),pairedv.end(),&datadefs::pairedIsNAN), pairedv.end());
 
   if(isIncreasingOrder) {
-    sort(pairedv.begin(),pairedv.end(),datadefs::increasingOrder<num_t>());
+    sort(pairedv.begin(),pairedv.end(),datadefs::increasingOrder<size_t>());
   } else {
-    sort(pairedv.begin(),pairedv.end(),datadefs::decreasingOrder<num_t>());
+    sort(pairedv.begin(),pairedv.end(),datadefs::decreasingOrder<size_t>());
   }
 
   datadefs::separate_pairedv<num_t,size_t>(pairedv,data,refIcs);
