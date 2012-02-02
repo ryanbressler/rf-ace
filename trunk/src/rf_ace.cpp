@@ -52,7 +52,7 @@ RF_statistics executeRandomForest(Treedata& treedata,
 
 void printPredictionToFile(StochasticForest& SF, Treedata& treeData, const string& targetName, const string& fileName);
 
-vector<string> readFeatureMask(const string& fileName);
+set<string> readFeatureMask(Treedata& treeData, const string& fileName);
 
 
 int main(const int argc, char* const argv[]) {
@@ -181,7 +181,7 @@ int main(const int argc, char* const argv[]) {
   if ( whiteListInputExists ) {
         
     cout << "Reading whitelist '" << gen_op.whiteListInput << "', please wait... " << flush;
-    vector<string> whiteFeatureNames = readFeatureMask(gen_op.whiteListInput);
+    set<string> whiteFeatureNames = readFeatureMask(treedata,gen_op.whiteListInput);
     cout << "DONE" << endl;
     cout << "Applying feature mask, removing " << treedata.nFeatures() - whiteFeatureNames.size() 
 	 << " / " << treedata.nFeatures() << " features, please wait... " << flush;
@@ -190,7 +190,7 @@ int main(const int argc, char* const argv[]) {
   } else if ( blackListInputExists ) {
 
     cout << "Reading blacklist '" << gen_op.blackListInput << "', please wait... " << flush;
-    vector<string> blackFeatureNames = readFeatureMask(gen_op.blackListInput);
+    set<string> blackFeatureNames = readFeatureMask(treedata,gen_op.blackListInput);
     cout << "DONE" << endl;
     cout << "Applying blacklist, keeping " << treedata.nFeatures() - blackFeatureNames.size() 
 	 << " / " << treedata.nFeatures() << " features, please wait... " << flush;
@@ -313,7 +313,7 @@ int main(const int argc, char* const argv[]) {
   ////////////////////////////////////////////////////////////////////////     
   vector<num_t> pValues; 
   vector<num_t> importanceValues; 
-  vector<string> featureNames;
+  set<string> featureNames;
   
   if ( !gen_op.noFilter ) {
 
@@ -336,7 +336,7 @@ int main(const int argc, char* const argv[]) {
     for ( size_t featureIdx = 0; featureIdx < nFeatures; ++featureIdx ) {
       
       if ( featureIdx == targetIdx || pValues[featureIdx] <= gen_op.pValueThreshold ) {
-	featureNames.push_back(treedata.getFeatureName(featureIdx));
+	featureNames.insert(treedata.getFeatureName(featureIdx));
 	pValues[nSignificantFeatures] = pValues[featureIdx];
 	importanceValues[nSignificantFeatures] = importanceValues[featureIdx];
 	++nSignificantFeatures;
@@ -475,14 +475,14 @@ int main(const int argc, char* const argv[]) {
 
 void pruneFeatures(Treedata& treeData, const General_options& gen_op) {
 
-  vector<string> featureNames;
+  set<string> featureNames;
 
   size_t targetIdx = treeData.getFeatureIdx(gen_op.targetStr);
 
   for ( size_t featureIdx = 0; featureIdx < treeData.nFeatures(); ++featureIdx ) {
     
     if ( treeData.nRealSamples(targetIdx,featureIdx) < gen_op.pruneFeatures ) {
-      featureNames.push_back(treeData.getFeatureName(featureIdx));
+      featureNames.insert(treeData.getFeatureName(featureIdx));
     }
 
   }
@@ -613,7 +613,7 @@ void printPredictionToFile(StochasticForest& SF, Treedata& treeData, const strin
    
 }
 
-vector<string> readFeatureMask(const string& fileName) {
+set<string> readFeatureMask(Treedata& treeData, const string& fileName) {
 
   ifstream featurestream;
   featurestream.open(fileName.c_str());
@@ -622,15 +622,34 @@ vector<string> readFeatureMask(const string& fileName) {
   string newFeature;
 
   set<string> featureMaskSet;
-  vector<string> featureMaskVec;
+
+  getline(featurestream,newFeature);
   
-  while ( getline(featurestream,newFeature) ) {
-    if ( featureMaskSet.find(newFeature) == featureMaskSet.end() ) {
+  int integer;
+  if ( datadefs::isInteger(newFeature,integer) ) {
+
+    size_t foo = static_cast<size_t>(integer);
+    newFeature = treeData.getFeatureName(foo);
+
+    featureMaskSet.insert( newFeature );
+
+    while ( getline(featurestream,newFeature) ) {
+
+      stringstream ss(newFeature);
+      ss >> foo;
+      featureMaskSet.insert( treeData.getFeatureName(foo) );
+    }
+
+  } else {
+    
+    string newFeature;
+
+    featureMaskSet.insert( newFeature );
+    
+    while ( getline(featurestream,newFeature) ) {
       featureMaskSet.insert(newFeature);
-      featureMaskVec.push_back(newFeature);
     }
   }
-
-  return( featureMaskVec );
+  
+  return( featureMaskSet );
 }
-
