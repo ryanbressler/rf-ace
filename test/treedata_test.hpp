@@ -496,9 +496,9 @@ void treeDataTest::test_keepFeatures() {
 
   // Feature names in the matrix are N:F1 N:F2 C:F3 N:F4 C:F5 N:F6
 
-  vector<string> keepFeatureNames;
-  keepFeatureNames.push_back("N:F2");
-  keepFeatureNames.push_back("C:F5");
+  set<string> keepFeatureNames;
+  keepFeatureNames.insert("N:F2");
+  keepFeatureNames.insert("C:F5");
 
   treedata.whiteList(keepFeatureNames);
 
@@ -526,9 +526,9 @@ void treeDataTest::test_removeFeatures() {
 
   // Feature names in the matrix are N:F1 N:F2 C:F3 N:F4 C:F5 N:F6
 
-  vector<string> removeFeatureNames;
-  removeFeatureNames.push_back("N:F2");
-  removeFeatureNames.push_back("C:F5");
+  set<string> removeFeatureNames;
+  removeFeatureNames.insert("N:F2");
+  removeFeatureNames.insert("C:F5");
   
   size_t nFeaturesOld = treedata.nFeatures();
 

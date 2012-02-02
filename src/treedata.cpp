@@ -108,24 +108,24 @@ Treedata::~Treedata() {
   /* Empty destructor */
 }
 
-void Treedata::whiteList(const vector<string>& featureNames ) {
+void Treedata::whiteList(const set<string>& featureNames ) {
   
   vector<bool> keepFeatureIcs(this->nFeatures(),false);
 
-  for ( size_t i = 0; i < featureNames.size(); ++i ) {
-    keepFeatureIcs[this->getFeatureIdx(featureNames[i])] = true;
+  for ( set<string>::const_iterator it( featureNames.begin() ); it != featureNames.end(); ++it ) {
+    keepFeatureIcs[this->getFeatureIdx(*it)] = true;
   }
 
   this->whiteList(keepFeatureIcs);
 
 }
 
-void Treedata::blackList(const vector<string>& featureNames ) {
+void Treedata::blackList(const set<string>& featureNames ) {
   
   vector<bool> keepFeatureIcs(this->nFeatures(),true);
   
-  for ( size_t i = 0; i < featureNames.size(); ++i ) {
-    keepFeatureIcs[this->getFeatureIdx(featureNames[i])] = false;
+  for ( set<string>::const_iterator it( featureNames.begin() ); it != featureNames.end(); ++it ) {
+    keepFeatureIcs[this->getFeatureIdx(*it)] = false;
   }
   
   this->whiteList(keepFeatureIcs);

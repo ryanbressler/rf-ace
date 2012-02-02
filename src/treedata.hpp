@@ -27,8 +27,8 @@ public:
 
   ~Treedata();
   
-  void whiteList(const vector<string>& featureNames);
-  void blackList(const vector<string>& featureNames);
+  void whiteList(const set<string>& featureNames);
+  void blackList(const set<string>& featureNames);
   void whiteList(const vector<bool>& featureIcs);
 
   size_t nFeatures();
