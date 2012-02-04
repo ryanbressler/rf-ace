@@ -84,6 +84,17 @@ bin/rf_ace -h
 }}}
 to bring up help, describing all the required and optional arguments one can set for RF-ACE analysis.
 
+= Feature Selection = 
+RF-ACE performs feature selection for a given target and feature matrix as follows:
+{{{
+bin/rf_ace -I data.afm -i target -O associations.tsv
+}}}   
+The parameter `-I / --traindata` is used to specify the feature matrix, `-i / --target` to specify the target, and `-O / --associations` to specify the output file for associations. The format of the association list is as follows (one entry per line):
+{{{
+TARGET \t PREDICTOR \t LOG10(P-VALUE) \t IMPORTANCE \t CORRELATION \t NSAMPLES
+}}} 
+where `NSAMPLES` is the number of non-missing samples shared by the target and predictor.
+
 = Parameters =
 === `-I / --traindata` ===           
 Train data input file, associations will be sought from this data. Supported formats: AFM and ARFF
