@@ -95,6 +95,9 @@ TARGET \t PREDICTOR \t LOG10(P-VALUE) \t IMPORTANCE \t CORRELATION \t NSAMPLES
 }}} 
 where `NSAMPLES` is the number of non-missing samples shared by the target and predictor.
 
+== Specifying target as index ==
+It is possible to omit using the name of the feature as the argument for `-i / --target`, but instead give the target as an integer between `0,1,...,N-1`, where `N-1` is the number of features. The integer specifies the position in the feature matrix at which the target is located.
+
 = Parameters =
 === `-I / --traindata` ===           
 Train data input file, associations will be sought from this data. Supported formats: AFM and ARFF
