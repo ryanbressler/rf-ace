@@ -7,16 +7,16 @@ TESTFLAGS = -L/home/erkkila2/lib -lcppunit -ldl -pedantic -I/home/erkkila2/inclu
 MPFLAG = -fopenmp
 .PHONY: all test clean  # Squash directory checks for the usual suspects
 
-all: rf_ace
+all: rf-ace-filter
 
-rf_ace: $(SOURCEFILES)
-	$(COMPILER) $(CFLAGS) src/rf_ace.cpp $(SOURCEFILES) -o bin/rf_ace
+rf-ace-filter: $(SOURCEFILES)
+	$(COMPILER) $(CFLAGS) src/rf_ace_filter.cpp $(SOURCEFILES) -o bin/rf-ace-filter
 
 debug: $(SOURCEFILES)
-	$(COMPILER) $(CFLAGS) src/rf_ace.cpp $(SOURCEFILES) -o bin/rf_ace -ggdb
+	$(COMPILER) $(CFLAGS) src/rf_ace_filter.cpp $(SOURCEFILES) -o bin/rf-ace-filter -ggdb
 
 static: $(SOURCEFILES)
-	$(COMPILER) $(CFLAGS) src/rf_ace.cpp $(STATICFLAGS) $(SOURCEFILES) -o bin/rf_ace
+	$(COMPILER) $(CFLAGS) src/rf_ace_filter.cpp $(STATICFLAGS) $(SOURCEFILES) -o bin/rf-ace-filter
 
 #benchmark: src/benchmark.cpp $(SOURCEFILES)
 #	$(COMPILER) $(CFLAGS) src/benchmark.cpp $(SOURCEFILES) -o bin/benchmark
@@ -28,4 +28,4 @@ test: $(SOURCEFILES) $(TESTFILES)
 	rm -f bin/test; $(COMPILER) $(TESTFLAGS) test/run_tests.cpp $(SOURCEFILES) -o bin/test -ggdb; ./bin/test
 
 clean:
-	rm -rf bin/rf_ace bin/benchmark bin/GBT_benchmark bin/test bin/*.dSYM/ src/*.o
+	rm -rf bin/rf-ace-filter bin/benchmark bin/GBT_benchmark bin/test bin/*.dSYM/ src/*.o

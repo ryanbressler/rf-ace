@@ -170,7 +170,7 @@ public:
     return false;
   }
 
-  template <typename T> bool getArgument(string& shortName, string& longName, T& returnVal) {
+  template <typename T> bool getArgument(const string& shortName, const string& longName, T& returnVal) {
     return getArgument<T>(shortName.c_str(), longName.c_str(), returnVal);
   }
 
@@ -210,7 +210,7 @@ public:
     return false;
   }
 
-  bool getFlag(string& shortName, string& longName, bool& returnVal) {
+  bool getFlag(const string& shortName, const string& longName, bool& returnVal) {
     return getFlag(shortName.c_str(), longName.c_str(), returnVal);
   }
 
