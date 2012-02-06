@@ -1,11 +1,31 @@
 #include <cstdlib>
 #include <string>
+#include <sstream>
+#include <iostream>
+#include "argparse.hpp"
 #include "datadefs.hpp"
 
 using namespace std;
 using datadefs::num_t;
 
 namespace options {
+
+  void printHeader(ostream& output) {
+
+    output << endl;
+    output << " ------------------------------------------------------- " << endl;
+    output << "|  RF-ACE version:  0.9.9, February 2nd, 2012           |" << endl;
+    output << "|    Project page:  http://code.google.com/p/rf-ace     |" << endl;
+    output << "|     Report bugs:  timo.p.erkkila@tut.fi               |" << endl;
+    output << " ------------------------------------------------------- " << endl;
+    output << endl;
+  }
+
+  void printHelpHint() {
+    cout << endl;
+    cout << "To get started, type \"-h\" or \"--help\"" << endl;
+  }
+
   const bool   GENERAL_DEFAULT_PRINT_HELP = false;
   const bool   GENERAL_DEFAULT_NO_PREDICTION = false; // TEMPORARY VARIABLE
   const num_t  GENERAL_DEFAULT_P_VALUE_THRESHOLD = 0.05;
@@ -19,75 +39,142 @@ namespace options {
   const size_t RF_DEFAULT_N_MAX_LEAVES = 100;
   const size_t RF_DEFAULT_NODE_SIZE = 3; // ... and here
   const size_t RF_DEFAULT_N_PERMS = 20;
+  const num_t  RF_DEFAULT_P_VALUE_THRESHOLD = 0.05;
   
   const size_t GBT_DEFAULT_N_TREES = 100;
   const size_t GBT_DEFAULT_N_MAX_LEAVES = 6;
   const num_t  GBT_DEFAULT_SHRINKAGE = 0.1;
   const num_t  GBT_DEFAULT_SUB_SAMPLE_SIZE = 0.5;
-  
+
+  struct Filte_options {
+
+          size_t nTrees;
+    const string nTrees_s;
+    const string nTrees_l;
+
+          size_t mTry;
+    const string mTry_s;
+    const string mTry_l;
+
+          size_t nMaxLeaves;
+    const string nMaxLeaves_s;
+    const string nMaxLeaves_l;
+
+          size_t nodeSize;
+    const string nodeSize_s;
+    const string nodeSize_l;
+
+          size_t nPerms;
+    const string nPerms_s;
+    const string nPerms_l;
+
+    num_t pValueThreshold;
+    const string pValueThreshold_s;
+    const string pValueThreshold_l;
+
+    Filte_options(const int argc, char* const argv[]):
+    
+      nTrees(RF_DEFAULT_N_TREES),
+      nTrees_s("n"),
+      nTrees_l("RF_ntrees"),
+
+      mTry(RF_DEFAULT_M_TRY),
+      mTry_s("m"),
+      mTry_l("RF_mtry"),
+
+      nMaxLeaves(RF_DEFAULT_N_MAX_LEAVES),
+      nMaxLeaves_s("a"),
+      nMaxLeaves_l("RF_maxleaves"),
+
+      nodeSize(RF_DEFAULT_NODE_SIZE),
+      nodeSize_s("s"),
+      nodeSize_l("RF_nodesize"),
+
+      nPerms(RF_DEFAULT_N_PERMS),
+      nPerms_s("p"),
+      nPerms_l("RF_nperms"),
+
+      pValueThreshold(RF_DEFAULT_P_VALUE_THRESHOLD),
+      pValueThreshold_s("t"),
+      pValueThreshold_l("pthreshold") {
+
+      // Read the user parameters ...
+      ArgParse parser(argc,argv);
+
+      parser.getArgument<size_t>(nTrees_s,nTrees_l,nTrees);
+      parser.getArgument<size_t>(mTry_s, mTry_l, mTry);
+      parser.getArgument<size_t>(nMaxLeaves_s, nMaxLeaves_l, nMaxLeaves);
+      parser.getArgument<size_t>(nodeSize_s, nodeSize_l, nodeSize);
+      parser.getArgument<size_t>(nPerms_s, nPerms_l, nPerms);
+      parser.getArgument(pValueThreshold_s, pValueThreshold_l, pValueThreshold);
+
+    }
+
+  };
+
   struct General_options {
+            
+            bool printHelp;
+    const string printHelp_s;
+    const string printHelp_l;
     
-    bool   printHelp;
-    string printHelp_s;
-    string printHelp_l;
+          string trainInput;
+    const string trainInput_s;
+    const string trainInput_l;
     
-    string trainInput;
-    string trainInput_s;
-    string trainInput_l;
+          string associationOutput;
+    const string associationOutput_s;
+    const string associationOutput_l;
     
-    string associationOutput;
-    string associationOutput_s;
-    string associationOutput_l;
+          string targetStr;
+    const string targetStr_s;
+    const string targetStr_l;
     
-    string targetStr;
-    string targetStr_s;
-    string targetStr_l;
-    
-    string whiteListInput;
-    string whiteListInput_s;
-    string whiteListInput_l;
+          string whiteListInput;
+    const string whiteListInput_s;
+    const string whiteListInput_l;
 
-    string blackListInput;
-    string blackListInput_s;
-    string blackListInput_l;
+          string blackListInput;
+    const string blackListInput_s;
+    const string blackListInput_l;
     
-    string testInput;
-    string testInput_s;
-    string testInput_l;
+          string testInput;
+    const string testInput_s;
+    const string testInput_l;
     
-    string predictionOutput;
-    string predictionOutput_s;
-    string predictionOutput_l;
+          string predictionOutput;
+    const string predictionOutput_s;
+    const string predictionOutput_l;
     
-    string logOutput;
-    string logOutput_s;
-    string logOutput_l;
+          string logOutput;
+    const string logOutput_s;
+    const string logOutput_l;
     
-    string forestOutput;
-    string forestOutput_s;
-    string forestOutput_l;
+          string forestOutput;
+    const string forestOutput_s;
+    const string forestOutput_l;
     
-    num_t  pValueThreshold;
-    string pValueThreshold_s;
-    string pValueThreshold_l;
+           num_t pValueThreshold;
+    const string pValueThreshold_s;
+    const string pValueThreshold_l;
     
-    char   dataDelimiter;
-    string dataDelimiter_s;
-    string dataDelimiter_l;
+            char dataDelimiter;
+    const string dataDelimiter_s;
+    const string dataDelimiter_l;
     
-    char   headerDelimiter;
-    string headerDelimiter_s;
-    string headerDelimiter_l;
+            char headerDelimiter;
+    const string headerDelimiter_s;
+    const string headerDelimiter_l;
 
-    size_t pruneFeatures;
-    string pruneFeatures_s;
-    string pruneFeatures_l;
+          size_t pruneFeatures;
+    const string pruneFeatures_s;
+    const string pruneFeatures_l;
     
-    bool   noFilter;
-    string noFilter_s;
-    string noFilter_l;
+            bool noFilter;
+    const string noFilter_s;
+    const string noFilter_l;
     
-    General_options():
+    General_options(const int argc, char* const argv[]):
       printHelp(GENERAL_DEFAULT_PRINT_HELP),
       printHelp_s("h"),
       printHelp_l("help"),    
@@ -146,32 +233,67 @@ namespace options {
 
       noFilter(GENERAL_DEFAULT_NO_FILTER),
       noFilter_s("N"),
-      noFilter_l("no_filter") {}
+      noFilter_l("no_filter") {
+
+      // Read the user parameters ...
+      ArgParse parser(argc,argv);
+
+      // First read general options
+      parser.getFlag(printHelp_s, printHelp_l, printHelp);
+      parser.getArgument<string>(trainInput_s, trainInput_l, trainInput);
+      parser.getArgument<string>(targetStr_s, targetStr_l, targetStr);
+      parser.getArgument<string>(associationOutput_s, associationOutput_l, associationOutput);
+      parser.getArgument<string>(whiteListInput_s, whiteListInput_l, whiteListInput);
+      parser.getArgument<string>(blackListInput_s, blackListInput_l, blackListInput);
+      parser.getArgument<string>(testInput_s, testInput_l, testInput);
+      parser.getArgument<string>(predictionOutput_s, predictionOutput_l, predictionOutput);
+      parser.getArgument<string>(logOutput_s,logOutput_l,logOutput);
+      parser.getArgument<string>(forestOutput_s,forestOutput_l,forestOutput);
+      parser.getArgument<num_t>(pValueThreshold_s, pValueThreshold_l, pValueThreshold);
+      string dataDelimiter,headerDelimiter;
+      parser.getArgument<string>(dataDelimiter_s, dataDelimiter_l, dataDelimiter);
+      parser.getArgument<string>(headerDelimiter_s, headerDelimiter_l, headerDelimiter);
+      parser.getArgument<size_t>(pruneFeatures_s, pruneFeatures_l, pruneFeatures);
+      parser.getFlag(noFilter_s, noFilter_l, noFilter);
+      stringstream ss(dataDelimiter);
+      ss >> dataDelimiter;
+      //cout << dataDelimiter;
+
+      ss.clear();
+      ss.str("");
+      ss << headerDelimiter;
+      ss >> headerDelimiter;
+ 
+    }
   };
   
   struct RF_options {
     
-    size_t nTrees;
-    string nTrees_s;
-    string nTrees_l;
+          size_t nTrees;
+    const string nTrees_s;
+    const string nTrees_l;
     
-    size_t mTry;
-    string mTry_s;
-    string mTry_l;
+          size_t mTry;
+    const string mTry_s;
+    const string mTry_l;
     
-    size_t nMaxLeaves;
-    string nMaxLeaves_s;
-    string nMaxLeaves_l;
+          size_t nMaxLeaves;
+    const string nMaxLeaves_s;
+    const string nMaxLeaves_l;
     
-    size_t nodeSize;
-    string nodeSize_s;
-    string nodeSize_l;
+          size_t nodeSize;
+    const string nodeSize_s;
+    const string nodeSize_l;
     
-    size_t nPerms;
-    string nPerms_s;
-    string nPerms_l;
+          size_t nPerms;
+    const string nPerms_s;
+    const string nPerms_l;
+
+    num_t pValueThreshold;
+    const string pValueThreshold_s;
+    const string pValueThreshold_l;
     
-    RF_options():
+    RF_options(const int argc, char* const argv[]):
       nTrees(RF_DEFAULT_N_TREES),
       nTrees_s("n"),
       nTrees_l("RF_ntrees"),
@@ -190,28 +312,44 @@ namespace options {
       
       nPerms(RF_DEFAULT_N_PERMS),
       nPerms_s("p"),
-      nPerms_l("RF_nperms") {}
+      nPerms_l("RF_nperms"),
+
+      pValueThreshold(RF_DEFAULT_P_VALUE_THRESHOLD),
+      pValueThreshold_s("t"),
+      pValueThreshold_l("pthreshold") {
+      
+      // Read the user parameters ...
+      ArgParse parser(argc,argv);
+
+      parser.getArgument<size_t>(nTrees_s,nTrees_l,nTrees);
+      parser.getArgument<size_t>(mTry_s, mTry_l, mTry);
+      parser.getArgument<size_t>(nMaxLeaves_s, nMaxLeaves_l, nMaxLeaves);
+      parser.getArgument<size_t>(nodeSize_s, nodeSize_l, nodeSize);
+      parser.getArgument<size_t>(nPerms_s, nPerms_l, nPerms);
+      parser.getArgument(pValueThreshold_s, pValueThreshold_l, pValueThreshold);
+
+    }
   };
   
   struct GBT_options {
     
-    size_t nTrees;
-    string nTrees_s;
-    string nTrees_l;
+          size_t nTrees;
+    const string nTrees_s;
+    const string nTrees_l;
     
-    size_t nMaxLeaves;
-    string nMaxLeaves_s;
-    string nMaxLeaves_l;
+          size_t nMaxLeaves;
+    const string nMaxLeaves_s;
+    const string nMaxLeaves_l;
     
-    num_t shrinkage;
-    string shrinkage_s;
-    string shrinkage_l;
+           num_t shrinkage;
+    const string shrinkage_s;
+    const string shrinkage_l;
     
-    num_t subSampleSize;
-    string subSampleSize_s;
-    string subSampleSize_l;
+           num_t subSampleSize;
+    const string subSampleSize_s;
+    const string subSampleSize_l;
     
-    GBT_options():    
+    GBT_options(const int argc, char* const argv[]):    
       nTrees(GBT_DEFAULT_N_TREES),
       nTrees_s("r"),
       nTrees_l("GBT_ntrees"),
@@ -226,7 +364,17 @@ namespace options {
       
       subSampleSize(GBT_DEFAULT_SUB_SAMPLE_SIZE),
       subSampleSize_s("u"),
-      subSampleSize_l("GBT_samplesize") {}
+      subSampleSize_l("GBT_samplesize") {
+
+      // Read the user parameters ...
+      ArgParse parser(argc,argv);      
+      
+      parser.getArgument<size_t>(nTrees_s, nTrees_l, nTrees);
+      parser.getArgument<size_t>(nMaxLeaves_s, nMaxLeaves_l, nMaxLeaves);
+      parser.getArgument<num_t>(shrinkage_s, shrinkage_l, shrinkage);
+      parser.getArgument<num_t>(subSampleSize_s, subSampleSize_l, subSampleSize);
+      
+    }
   };
 
   void printHelp(const General_options& geno, const RF_options& rfo, const GBT_options& gbto) {

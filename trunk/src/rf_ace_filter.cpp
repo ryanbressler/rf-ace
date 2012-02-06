@@ -21,26 +21,9 @@
 #include "math.hpp"
 
 using namespace std;
-using namespace options;
 using namespace statistics;
+using namespace options;
 using datadefs::num_t;
-
-void printHeader(ostream& output) {
-
-  output << endl;
-  output << " ------------------------------------------------------- " << endl;
-  output << "|  RF-ACE version:  0.9.9, February 2nd, 2012           |" << endl;
-  output << "|    Project page:  http://code.google.com/p/rf-ace     |" << endl;
-  output << "|     Report bugs:  timo.p.erkkila@tut.fi               |" << endl;                     
-  output << " ------------------------------------------------------- " << endl;
-  output << endl;
-  
-}
-
-void printHelpHint() {
-  cout << endl;
-  cout << "To get started, type \"-h\" or \"--help\"" << endl;
-}
 
 void pruneFeatures(Treedata& treeData, const General_options& gen_op);
 
@@ -57,12 +40,14 @@ set<string> readFeatureMask(Treedata& treeData, const string& fileName);
 
 int main(const int argc, char* const argv[]) {
 
+  cout << endl << " * RF-ACE FILTER * " << endl;
+
   // Structs that store all the user-specified command-line arguments
-  General_options gen_op;
-  RF_options RF_op; 
+  General_options gen_op(argc,argv);
+  RF_options RF_op(argc,argv); 
   RF_statistics RF_stat;
 
-  GBT_options GBT_op;
+  GBT_options GBT_op(argc,argv);
 
   // Print the intro header
   printHeader(cout);
@@ -73,48 +58,6 @@ int main(const int argc, char* const argv[]) {
     return(EXIT_SUCCESS);
   }
 
-  // Read the user parameters ... 
-  ArgParse parser(argc,argv);
-  
-  // First read general options
-  parser.getFlag(gen_op.printHelp_s, gen_op.printHelp_l, gen_op.printHelp);
-  parser.getArgument<string>(gen_op.trainInput_s, gen_op.trainInput_l, gen_op.trainInput); 
-  parser.getArgument<string>(gen_op.targetStr_s, gen_op.targetStr_l, gen_op.targetStr); 
-  parser.getArgument<string>(gen_op.associationOutput_s, gen_op.associationOutput_l, gen_op.associationOutput);
-  parser.getArgument<string>(gen_op.whiteListInput_s, gen_op.whiteListInput_l, gen_op.whiteListInput);
-  parser.getArgument<string>(gen_op.blackListInput_s, gen_op.blackListInput_l, gen_op.blackListInput);
-  parser.getArgument<string>(gen_op.testInput_s, gen_op.testInput_l, gen_op.testInput);
-  parser.getArgument<string>(gen_op.predictionOutput_s, gen_op.predictionOutput_l, gen_op.predictionOutput);
-  parser.getArgument<string>(gen_op.logOutput_s,gen_op.logOutput_l,gen_op.logOutput);
-  parser.getArgument<string>(gen_op.forestOutput_s,gen_op.forestOutput_l,gen_op.forestOutput);
-  parser.getArgument<num_t>(gen_op.pValueThreshold_s, gen_op.pValueThreshold_l, gen_op.pValueThreshold);
-  string dataDelimiter,headerDelimiter;
-  parser.getArgument<string>(gen_op.dataDelimiter_s, gen_op.dataDelimiter_l, dataDelimiter);
-  parser.getArgument<string>(gen_op.headerDelimiter_s, gen_op.headerDelimiter_l, headerDelimiter);
-  parser.getArgument<size_t>(gen_op.pruneFeatures_s, gen_op.pruneFeatures_l, gen_op.pruneFeatures);
-  parser.getFlag(gen_op.noFilter_s, gen_op.noFilter_l, gen_op.noFilter);
-  stringstream ss(dataDelimiter);
-  ss >> gen_op.dataDelimiter;
-  //cout << gen_op.dataDelimiter;
-
-  ss.clear();
-  ss.str("");
-  ss << headerDelimiter;
-  ss >> gen_op.headerDelimiter;
-
-  // Then read Random Forest specific options
-  parser.getArgument<size_t>(RF_op.nTrees_s,RF_op.nTrees_l,RF_op.nTrees);
-  parser.getArgument<size_t>(RF_op.mTry_s, RF_op.mTry_l, RF_op.mTry); 
-  parser.getArgument<size_t>(RF_op.nMaxLeaves_s, RF_op.nMaxLeaves_l, RF_op.nMaxLeaves);
-  parser.getArgument<size_t>(RF_op.nodeSize_s, RF_op.nodeSize_l, RF_op.nodeSize); 
-  parser.getArgument<size_t>(RF_op.nPerms_s, RF_op.nPerms_l, RF_op.nPerms); 
-
-  // And last read Gradient Boosting Trees options
-  parser.getArgument<size_t>(GBT_op.nTrees_s, GBT_op.nTrees_l, GBT_op.nTrees);
-  parser.getArgument<size_t>(GBT_op.nMaxLeaves_s, GBT_op.nMaxLeaves_l, GBT_op.nMaxLeaves);
-  parser.getArgument<num_t>(GBT_op.shrinkage_s, GBT_op.shrinkage_l, GBT_op.shrinkage);
-  parser.getArgument<num_t>(GBT_op.subSampleSize_s, GBT_op.subSampleSize_l, GBT_op.subSampleSize);
-
   // See if the help flag was raised
   if(gen_op.printHelp) {
     printHelp(gen_op,RF_op,GBT_op);
@@ -124,14 +67,13 @@ int main(const int argc, char* const argv[]) {
   // Extract some handy boolean flags from the options
   bool whiteListInputExists = gen_op.whiteListInput != "";
   bool blackListInputExists = gen_op.blackListInput != "";
-  //bool maskInputExists = whiteListInputExists || blackListInputExists;
   bool trainInputExists = gen_op.trainInput != "";
-  bool testInputExists = gen_op.testInput != "";
+  //bool testInputExists = gen_op.testInput != "";
   bool targetExists = gen_op.targetStr != "";
-  bool predictionOutputExists = gen_op.predictionOutput != "";
+  //bool predictionOutputExists = gen_op.predictionOutput != "";
   bool associationOutputExists = gen_op.associationOutput != "";
   bool logOutputExists = gen_op.logOutput != "";
-  bool forestOutputExists = gen_op.forestOutput != "";
+  //bool forestOutputExists = gen_op.forestOutput != "";
 
   // Print help and exit if input file is not specified
   if ( !trainInputExists ) {
@@ -147,15 +89,10 @@ int main(const int argc, char* const argv[]) {
     return(EXIT_FAILURE);
   }
 
-  if ( !associationOutputExists && !predictionOutputExists && !forestOutputExists ) {
-    cerr << "Cannot do anything!" << endl;
+  if ( !associationOutputExists ) {
+    cerr << "You forgot to specify an output file for the associations!" << endl;
     printHelpHint();
     return(EXIT_FAILURE);
-  }
-
-  if ( associationOutputExists && gen_op.noFilter ) {
-    cerr << "Cannot generate associations ( -O / --associations ) when filtering is turned OFF ( --noFilter flag raised )" << endl;
-    exit(1);
   }
 
   // Read train data into Treedata object
@@ -257,14 +194,8 @@ int main(const int argc, char* const argv[]) {
        << "= " << gen_op.targetStr << " ( index " << targetIdx << " )" << endl;
   cout << "  --" << gen_op.associationOutput_l << setw( maxwidth - gen_op.associationOutput_l.size() ) << ""
        << "= "; if ( associationOutputExists ) { cout << gen_op.associationOutput << endl; } else { cout << "NOT SET" << endl; }
-  cout << "  --" << gen_op.testInput_l << setw( maxwidth - gen_op.testInput_l.size() ) << ""
-       << "= "; if( testInputExists ) { cout << gen_op.testInput << endl; } else { cout << "NOT SET" << endl; }
-  cout << "  --" << gen_op.predictionOutput_l << setw( maxwidth - gen_op.predictionOutput_l.size() ) << ""
-       << "= "; if( predictionOutputExists ) { cout << gen_op.predictionOutput << endl; } else { cout << "NOT SET" << endl; }
   cout << "  --" << gen_op.logOutput_l << setw( maxwidth - gen_op.logOutput_l.size() ) << ""
        << "= "; if( logOutputExists ) { cout << gen_op.logOutput << endl; } else { cout << "NOT SET" << endl; }
-  cout << "  --" << gen_op.forestOutput_l << setw( maxwidth - gen_op.forestOutput_l.size() ) << ""
-       << "= "; if( forestOutputExists ) { cout << gen_op.forestOutput << endl; } else { cout << "NOT SET" << endl; }
   cout << endl;
 
   cout << "Random Forest configuration:" << endl;
@@ -285,20 +216,6 @@ int main(const int argc, char* const argv[]) {
   cout << "  --pthresold" << setw(8) << "" << "= " << gen_op.pValueThreshold << endl;
   cout << endl;
 
-  bool growGBTPredictor = predictionOutputExists || forestOutputExists ;
-  if ( growGBTPredictor ) {
-    cout << "Gradient boosting tree configuration for prediction:" << endl;
-    cout << "  --" << GBT_op.nTrees_l << setw( maxwidth - GBT_op.nTrees_l.size() ) << ""
-         << "= " << GBT_op.nTrees << endl;
-    cout << "  --" << GBT_op.nMaxLeaves_l << setw( maxwidth - GBT_op.nMaxLeaves_l.size() ) << ""
-         << "= " << GBT_op.nMaxLeaves << endl;
-    cout << "  --" << GBT_op.shrinkage_l << setw( maxwidth - GBT_op.shrinkage_l.size() ) << ""
-         << "= " << GBT_op.shrinkage << endl;
-    cout << "  --" << GBT_op.subSampleSize_l << setw( maxwidth - GBT_op.subSampleSize_l.size() ) << ""
-         << "= " << GBT_op.subSampleSize << endl;
-    cout << endl;
-  }
-    
   //If the target has no real samples, the program will just exit
   if(nRealSamples == 0) {
     cout << "Target has no real samples. Quitting." << endl;
@@ -315,131 +232,83 @@ int main(const int argc, char* const argv[]) {
   vector<num_t> importanceValues; 
   set<string> featureNames;
   
-  if ( !gen_op.noFilter ) {
-
-    cout << "===> Uncovering associations... " << flush;
-    RF_stat = executeRandomForest(treedata,RF_op,gen_op,pValues,importanceValues);
-    cout << "DONE" << endl;
-    
-    /////////////////////////////////////////////////
-    //  STEP 2 -- FEATURE FILTERING WITH P-VALUES  //
-    /////////////////////////////////////////////////
-
-    cout << "===> Filtering features... " << flush;
-    
-    size_t nFeatures = treedata.nFeatures();
-        
-    size_t nSignificantFeatures = 0;
-    
-    // Go through each feature, and keep those having p-value higher than the threshold. 
-    // Save the kept and removed features, and remember to accumulate the counter
-    for ( size_t featureIdx = 0; featureIdx < nFeatures; ++featureIdx ) {
-      
-      if ( featureIdx == targetIdx || pValues[featureIdx] <= gen_op.pValueThreshold ) {
-	featureNames.insert(treedata.getFeatureName(featureIdx));
-	pValues[nSignificantFeatures] = pValues[featureIdx];
-	importanceValues[nSignificantFeatures] = importanceValues[featureIdx];
-	++nSignificantFeatures;
-      } 
-    }
-    
-    // Resize containers
-    treedata.whiteList( featureNames );
-    pValues.resize( nSignificantFeatures );
-    importanceValues.resize ( nSignificantFeatures );
-    
-    targetIdx = treedata.getFeatureIdx(gen_op.targetStr);
-    assert( gen_op.targetStr == treedata.getFeatureName(targetIdx) );
+  cout << "===> Uncovering associations... " << flush;
+  RF_stat = executeRandomForest(treedata,RF_op,gen_op,pValues,importanceValues);
+  cout << "DONE" << endl;
   
-    if( associationOutputExists ) {
-
-      ofstream toAssociationFile(gen_op.associationOutput.c_str());
-      toAssociationFile.precision(8);
-
-      vector<size_t> refIcs( treedata.nFeatures() );
-      bool isIncreasingOrder = true;
-      datadefs::sortDataAndMakeRef(isIncreasingOrder,pValues,refIcs);
-      datadefs::sortFromRef<num_t>(importanceValues,refIcs);
-      //datadefs::sortFromRef<string>(featureNames,refIcs);
-
-      assert( gen_op.targetStr == treedata.getFeatureName(targetIdx) );
-
-      for ( size_t i = 0; i < refIcs.size(); ++i ) {
-	size_t featureIdx = refIcs[i];
-
-	if ( pValues[i] > gen_op.pValueThreshold ) {
-	  continue;
-	}
-
-	if ( featureIdx == targetIdx ) {
-	  continue;
-	}
-
-	num_t log10p = log10(pValues[i]);
-	if ( log10p < -30.0 ) {
-	  log10p = -30.0;
-	}
-
-	toAssociationFile << fixed << gen_op.targetStr.c_str() << "\t" << treedata.getFeatureName(featureIdx).c_str()
-			  << "\t" << log10p << "\t" << importanceValues[i] << "\t"
-			  << treedata.pearsonCorrelation(targetIdx,featureIdx) << "\t" << treedata.nRealSamples(targetIdx,featureIdx) << endl;
-      }
-
-      toAssociationFile.close();
-    }
-    
-    
-    // Print some statistics
-    // NOTE: we're subtracting the target from the total head count, that's why we need to subtract by 1
-    cout << "DONE, " << treedata.nFeatures() - 1 << " / " << nAllFeatures  - 1 << " features ( "
-	 << 100.0 * ( treedata.nFeatures() - 1 ) / ( nAllFeatures - 1 ) << " % ) left " << endl;
-  }  
+  /////////////////////////////////////////////////
+  //  STEP 2 -- FEATURE FILTERING WITH P-VALUES  //
+  /////////////////////////////////////////////////
   
-
-  ///////////////////////////////////////////////////////////////////////////
-  //  STEP 3 ( OPTIONAL ) -- DATA PREDICTION WITH GRADIENT BOOSTING TREES  //
-  ///////////////////////////////////////////////////////////////////////////
-  if ( growGBTPredictor ) {      
-
-    cout << "===> Growing GBT predictor... " << flush;
+  cout << "===> Filtering features... " << flush;
+  
+  size_t nFeatures = treedata.nFeatures();
+  
+  size_t nSignificantFeatures = 0;
+  
+  // Go through each feature, and keep those having p-value higher than the threshold. 
+  // Save the kept and removed features, and remember to accumulate the counter
+  for ( size_t featureIdx = 0; featureIdx < nFeatures; ++featureIdx ) {
     
-    StochasticForest SF(&treedata,gen_op.targetStr,GBT_op.nTrees);
-    SF.learnGBT(GBT_op.nMaxLeaves, GBT_op.shrinkage, GBT_op.subSampleSize);
-    
-    cout << "DONE" << endl;
-
-    if( forestOutputExists ) {
-      cout << "===> Writing predictor to file... " << flush;
-      SF.printToFile( gen_op.forestOutput );
-      cout << "DONE" << endl;
-    }
-
-    if ( predictionOutputExists ) {
-      
-      // TODO: rf_ace.cpp: test input handling is still malfunctioning!
-      if ( testInputExists ) {
-
-	cout << "===> Making predictions with test data... " << flush;
-	
-	Treedata treedata_test(gen_op.testInput,gen_op.dataDelimiter,gen_op.headerDelimiter);
-	
-	printPredictionToFile(SF,treedata_test,gen_op.targetStr,gen_op.predictionOutput);
-	
-      } else {
-	
-	cout << "===> Making predictions with train data... " << flush;
-
-	printPredictionToFile(SF,treedata,gen_op.targetStr,gen_op.predictionOutput);
-	
-      }
-      
-      cout << "DONE" << endl;
-      
-    }
-    
+    if ( featureIdx == targetIdx || pValues[featureIdx] <= gen_op.pValueThreshold ) {
+      featureNames.insert(treedata.getFeatureName(featureIdx));
+      pValues[nSignificantFeatures] = pValues[featureIdx];
+      importanceValues[nSignificantFeatures] = importanceValues[featureIdx];
+      ++nSignificantFeatures;
+    } 
   }
-  cout << endl;
   
+  // Resize containers
+  treedata.whiteList( featureNames );
+  pValues.resize( nSignificantFeatures );
+  importanceValues.resize ( nSignificantFeatures );
+  
+  targetIdx = treedata.getFeatureIdx(gen_op.targetStr);
+  assert( gen_op.targetStr == treedata.getFeatureName(targetIdx) );
+  
+  if( associationOutputExists ) {
+    
+    ofstream toAssociationFile(gen_op.associationOutput.c_str());
+    toAssociationFile.precision(8);
+    
+    vector<size_t> refIcs( treedata.nFeatures() );
+    bool isIncreasingOrder = true;
+    datadefs::sortDataAndMakeRef(isIncreasingOrder,pValues,refIcs);
+    datadefs::sortFromRef<num_t>(importanceValues,refIcs);
+    //datadefs::sortFromRef<string>(featureNames,refIcs);
+    
+    assert( gen_op.targetStr == treedata.getFeatureName(targetIdx) );
+    
+    for ( size_t i = 0; i < refIcs.size(); ++i ) {
+      size_t featureIdx = refIcs[i];
+      
+      if ( pValues[i] > gen_op.pValueThreshold ) {
+	continue;
+      }
+      
+      if ( featureIdx == targetIdx ) {
+	continue;
+      }
+      
+      num_t log10p = log10(pValues[i]);
+      if ( log10p < -30.0 ) {
+	log10p = -30.0;
+      }
+      
+      toAssociationFile << fixed << gen_op.targetStr.c_str() << "\t" << treedata.getFeatureName(featureIdx).c_str()
+			<< "\t" << log10p << "\t" << importanceValues[i] << "\t"
+			<< treedata.pearsonCorrelation(targetIdx,featureIdx) << "\t" << treedata.nRealSamples(targetIdx,featureIdx) << endl;
+    }
+    
+    toAssociationFile.close();
+  }
+  
+  
+  // Print some statistics
+  // NOTE: we're subtracting the target from the total head count, that's why we need to subtract by 1
+  cout << "DONE, " << treedata.nFeatures() - 1 << " / " << nAllFeatures  - 1 << " features ( "
+       << 100.0 * ( treedata.nFeatures() - 1 ) / ( nAllFeatures - 1 ) << " % ) left " << endl;
+    
   if ( logOutputExists ) {
     
     ofstream toLogFile(gen_op.logOutput.c_str());
@@ -458,12 +327,6 @@ int main(const int argc, char* const argv[]) {
   if ( associationOutputExists ) {
     cout << "Association file '" << gen_op.associationOutput << "' created. Format:" << endl;
     cout << "TARGET   PREDICTOR   LOG10(P-VALUE)   IMPORTANCE   CORRELATION   NSAMPLES" << endl;
-    cout << endl;
-  }
-  
-  if ( predictionOutputExists ) {
-    cout << "Prediction file '" << gen_op.predictionOutput << "' created. Format:" << endl;
-    cout << "TARGET   SAMPLE_ID   DATA      PREDICTION   CONFIDENCE" << endl; 
     cout << endl;
   }
   

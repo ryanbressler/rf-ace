@@ -18,3 +18,5 @@ vector<num_t> utils::removeNANs(const vector<num_t>& x) {
 
   return(trimmed);
 }
+
+
