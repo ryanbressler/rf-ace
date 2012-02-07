@@ -25,18 +25,11 @@ using namespace statistics;
 using namespace options;
 using datadefs::num_t;
 
-void pruneFeatures(Treedata& treeData, const General_options& gen_op);
-
 RF_statistics executeRandomForest(Treedata& treedata,
-				  const RF_options& RF_op,
 				  const General_options& gen_op,
+				  const RF_options& RF_op,
 				  vector<num_t>& pValues,
 				  vector<num_t>& importanceValues);
-
-void printPredictionToFile(StochasticForest& SF, Treedata& treeData, const string& targetName, const string& fileName);
-
-set<string> readFeatureMask(Treedata& treeData, const string& fileName);
-
 
 int main(const int argc, char* const argv[]) {
 
@@ -47,36 +40,33 @@ int main(const int argc, char* const argv[]) {
   RF_options RF_op(argc,argv); 
   RF_statistics RF_stat;
 
-  GBT_options GBT_op(argc,argv);
-
   // Print the intro header
   printHeader(cout);
 
   // With no input arguments the help is printed
   if(argc == 1) {
-    printHelp(gen_op,RF_op,GBT_op);
+    gen_op.help();
+    RF_op.help();
     return(EXIT_SUCCESS);
   }
 
   // See if the help flag was raised
   if(gen_op.printHelp) {
-    printHelp(gen_op,RF_op,GBT_op);
+    gen_op.help();
+    RF_op.help();
     return(EXIT_SUCCESS);
   }
-  
+
   // Extract some handy boolean flags from the options
-  bool whiteListInputExists = gen_op.whiteListInput != "";
-  bool blackListInputExists = gen_op.blackListInput != "";
-  bool trainInputExists = gen_op.trainInput != "";
-  //bool testInputExists = gen_op.testInput != "";
+  bool whiteListInputExists = gen_op.whiteList != "";
+  bool blackListInputExists = gen_op.blackList != "";
+  bool inputExists = gen_op.input != "";
   bool targetExists = gen_op.targetStr != "";
-  //bool predictionOutputExists = gen_op.predictionOutput != "";
-  bool associationOutputExists = gen_op.associationOutput != "";
-  bool logOutputExists = gen_op.logOutput != "";
-  //bool forestOutputExists = gen_op.forestOutput != "";
+  bool outputExists = gen_op.output != "";
+  bool logExists = gen_op.log != "";
 
   // Print help and exit if input file is not specified
-  if ( !trainInputExists ) {
+  if ( !inputExists ) {
     cerr << "Input file not specified" << endl;
     printHelpHint();
     return EXIT_FAILURE;
@@ -89,15 +79,15 @@ int main(const int argc, char* const argv[]) {
     return(EXIT_FAILURE);
   }
 
-  if ( !associationOutputExists ) {
-    cerr << "You forgot to specify an output file for the associations!" << endl;
+  if ( !outputExists ) {
+    cerr << "You forgot to specify an output file!" << endl;
     printHelpHint();
     return(EXIT_FAILURE);
   }
 
   // Read train data into Treedata object
-  cout << "Reading file '" << gen_op.trainInput << "', please wait... " << flush;
-  Treedata treedata(gen_op.trainInput,gen_op.dataDelimiter,gen_op.headerDelimiter);
+  cout << "Reading file '" << gen_op.input << "', please wait... " << flush;
+  Treedata treedata(gen_op.input,gen_op.dataDelimiter,gen_op.headerDelimiter);
   cout << "DONE" << endl;
 
   // Check if the target is specified as an index
@@ -117,8 +107,8 @@ int main(const int argc, char* const argv[]) {
   // Perform masking, if requested
   if ( whiteListInputExists ) {
         
-    cout << "Reading whitelist '" << gen_op.whiteListInput << "', please wait... " << flush;
-    set<string> whiteFeatureNames = readFeatureMask(treedata,gen_op.whiteListInput);
+    cout << "Reading whitelist '" << gen_op.whiteList << "', please wait... " << flush;
+    set<string> whiteFeatureNames = utils::readFeatureMask(treedata,gen_op.whiteList);
     cout << "DONE" << endl;
     cout << "Applying feature mask, removing " << treedata.nFeatures() - whiteFeatureNames.size() 
 	 << " / " << treedata.nFeatures() << " features, please wait... " << flush;
@@ -126,8 +116,8 @@ int main(const int argc, char* const argv[]) {
     cout << "DONE" << endl;
   } else if ( blackListInputExists ) {
 
-    cout << "Reading blacklist '" << gen_op.blackListInput << "', please wait... " << flush;
-    set<string> blackFeatureNames = readFeatureMask(treedata,gen_op.blackListInput);
+    cout << "Reading blacklist '" << gen_op.blackList << "', please wait... " << flush;
+    set<string> blackFeatureNames = utils::readFeatureMask(treedata,gen_op.blackList);
     cout << "DONE" << endl;
     cout << "Applying blacklist, keeping " << treedata.nFeatures() - blackFeatureNames.size() 
 	 << " / " << treedata.nFeatures() << " features, please wait... " << flush;
@@ -139,7 +129,7 @@ int main(const int argc, char* const argv[]) {
 
     cout << "Pruning features with less than " << gen_op.pruneFeatures << " real samples... " << flush;
     size_t nFeaturesOld = treedata.nFeatures();
-    pruneFeatures(treedata,gen_op);
+    utils::pruneFeatures(treedata,gen_op.targetStr,gen_op.pruneFeatures);
     cout << "DONE, " << nFeaturesOld - treedata.nFeatures() << " features ( "
          << ( 100.0*(nFeaturesOld - treedata.nFeatures()) / nFeaturesOld ) << "% ) pruned" << endl;
 
@@ -188,14 +178,14 @@ int main(const int argc, char* const argv[]) {
        << "= '" << gen_op.dataDelimiter << "'" << endl;
   cout << "  --" << gen_op.headerDelimiter_l << setw( maxwidth - gen_op.headerDelimiter_l.size() ) << ""
        << "= '" << gen_op.headerDelimiter << "'" << endl;
-  cout << "  --" << gen_op.trainInput_l << setw( maxwidth - gen_op.trainInput_l.size() ) << ""
-       << "= " << gen_op.trainInput << endl;
+  cout << "  --" << gen_op.input_l << setw( maxwidth - gen_op.input_l.size() ) << ""
+       << "= " << gen_op.input << endl;
   cout << "  --" << gen_op.targetStr_l << setw( maxwidth - gen_op.targetStr_l.size() ) << ""
        << "= " << gen_op.targetStr << " ( index " << targetIdx << " )" << endl;
-  cout << "  --" << gen_op.associationOutput_l << setw( maxwidth - gen_op.associationOutput_l.size() ) << ""
-       << "= "; if ( associationOutputExists ) { cout << gen_op.associationOutput << endl; } else { cout << "NOT SET" << endl; }
-  cout << "  --" << gen_op.logOutput_l << setw( maxwidth - gen_op.logOutput_l.size() ) << ""
-       << "= "; if( logOutputExists ) { cout << gen_op.logOutput << endl; } else { cout << "NOT SET" << endl; }
+  cout << "  --" << gen_op.output_l << setw( maxwidth - gen_op.output_l.size() ) << ""
+       << "= "; if ( outputExists ) { cout << gen_op.output << endl; } else { cout << "NOT SET" << endl; }
+  cout << "  --" << gen_op.log_l << setw( maxwidth - gen_op.log_l.size() ) << ""
+       << "= "; if( logExists ) { cout << gen_op.log << endl; } else { cout << "NOT SET" << endl; }
   cout << endl;
 
   cout << "Random Forest configuration:" << endl;
@@ -213,7 +203,7 @@ int main(const int argc, char* const argv[]) {
   cout << "  --" << RF_op.nPerms_l << setw( maxwidth - RF_op.nPerms_l.size() ) << ""
        << "= " << RF_op.nPerms << endl;
   cout << "    test type" << setw(8) << "" << "= T-test" << endl;
-  cout << "  --pthresold" << setw(8) << "" << "= " << gen_op.pValueThreshold << endl;
+  cout << "  --pthresold" << setw(8) << "" << "= " << RF_op.pValueThreshold << endl;
   cout << endl;
 
   //If the target has no real samples, the program will just exit
@@ -233,7 +223,7 @@ int main(const int argc, char* const argv[]) {
   set<string> featureNames;
   
   cout << "===> Uncovering associations... " << flush;
-  RF_stat = executeRandomForest(treedata,RF_op,gen_op,pValues,importanceValues);
+  RF_stat = executeRandomForest(treedata,gen_op,RF_op,pValues,importanceValues);
   cout << "DONE" << endl;
   
   /////////////////////////////////////////////////
@@ -250,7 +240,7 @@ int main(const int argc, char* const argv[]) {
   // Save the kept and removed features, and remember to accumulate the counter
   for ( size_t featureIdx = 0; featureIdx < nFeatures; ++featureIdx ) {
     
-    if ( featureIdx == targetIdx || pValues[featureIdx] <= gen_op.pValueThreshold ) {
+    if ( featureIdx == targetIdx || pValues[featureIdx] <= RF_op.pValueThreshold ) {
       featureNames.insert(treedata.getFeatureName(featureIdx));
       pValues[nSignificantFeatures] = pValues[featureIdx];
       importanceValues[nSignificantFeatures] = importanceValues[featureIdx];
@@ -266,23 +256,22 @@ int main(const int argc, char* const argv[]) {
   targetIdx = treedata.getFeatureIdx(gen_op.targetStr);
   assert( gen_op.targetStr == treedata.getFeatureName(targetIdx) );
   
-  if( associationOutputExists ) {
+  if( outputExists ) {
     
-    ofstream toAssociationFile(gen_op.associationOutput.c_str());
+    ofstream toAssociationFile(gen_op.output.c_str());
     toAssociationFile.precision(8);
     
     vector<size_t> refIcs( treedata.nFeatures() );
     bool isIncreasingOrder = true;
     datadefs::sortDataAndMakeRef(isIncreasingOrder,pValues,refIcs);
     datadefs::sortFromRef<num_t>(importanceValues,refIcs);
-    //datadefs::sortFromRef<string>(featureNames,refIcs);
     
     assert( gen_op.targetStr == treedata.getFeatureName(targetIdx) );
     
     for ( size_t i = 0; i < refIcs.size(); ++i ) {
       size_t featureIdx = refIcs[i];
       
-      if ( pValues[i] > gen_op.pValueThreshold ) {
+      if ( pValues[i] > RF_op.pValueThreshold ) {
 	continue;
       }
       
@@ -309,9 +298,9 @@ int main(const int argc, char* const argv[]) {
   cout << "DONE, " << treedata.nFeatures() - 1 << " / " << nAllFeatures  - 1 << " features ( "
        << 100.0 * ( treedata.nFeatures() - 1 ) / ( nAllFeatures - 1 ) << " % ) left " << endl;
     
-  if ( logOutputExists ) {
+  if ( logExists ) {
     
-    ofstream toLogFile(gen_op.logOutput.c_str());
+    ofstream toLogFile(gen_op.log.c_str());
     printHeader(toLogFile);
     RF_stat.print(toLogFile);
     toLogFile.close();
@@ -324,8 +313,8 @@ int main(const int argc, char* const argv[]) {
   
   cout << 1.0 * ( clock() - clockStart ) / CLOCKS_PER_SEC << " seconds elapsed." << endl << endl;
   
-  if ( associationOutputExists ) {
-    cout << "Association file '" << gen_op.associationOutput << "' created. Format:" << endl;
+  if ( outputExists ) {
+    cout << "Association file '" << gen_op.output << "' created. Format:" << endl;
     cout << "TARGET   PREDICTOR   LOG10(P-VALUE)   IMPORTANCE   CORRELATION   NSAMPLES" << endl;
     cout << endl;
   }
@@ -336,27 +325,9 @@ int main(const int argc, char* const argv[]) {
   return(EXIT_SUCCESS);
 }
 
-void pruneFeatures(Treedata& treeData, const General_options& gen_op) {
-
-  set<string> featureNames;
-
-  size_t targetIdx = treeData.getFeatureIdx(gen_op.targetStr);
-
-  for ( size_t featureIdx = 0; featureIdx < treeData.nFeatures(); ++featureIdx ) {
-    
-    if ( treeData.nRealSamples(targetIdx,featureIdx) < gen_op.pruneFeatures ) {
-      featureNames.insert(treeData.getFeatureName(featureIdx));
-    }
-
-  }
-  
-  treeData.blackList(featureNames);
-
-}
-
 RF_statistics executeRandomForest(Treedata& treedata,
-				  const RF_options& RF_op,
 				  const General_options& gen_op,
+				  const RF_options& RF_op,
 				  vector<num_t>& pValues,
 				  vector<num_t>& importanceValues) {
 
@@ -441,78 +412,3 @@ RF_statistics executeRandomForest(Treedata& treedata,
 }
 
 
-
-void printPredictionToFile(StochasticForest& SF, Treedata& treeData, const string& targetName, const string& fileName) {
-  
-  ofstream toPredictionFile(fileName.c_str());
-
-  size_t targetIdx = treeData.getFeatureIdx(targetName);
-
-  if ( treeData.isFeatureNumerical(targetIdx)) {
-    
-    vector<num_t> prediction;
-    vector<num_t> confidence;
-    SF.predict(&treeData,prediction,confidence);
-    
-    for(size_t i = 0; i < prediction.size(); ++i) {
-      toPredictionFile << targetName << "\t" << treeData.getSampleName(i) << "\t" << treeData.getRawFeatureData(targetIdx,i)
-		       << "\t" << prediction[i] << "\t" << setprecision(3) << confidence[i] << endl;
-    }
-    
-  } else {
-
-    vector<string> prediction;
-    vector<num_t> confidence;
-    SF.predict(&treeData,prediction,confidence);
-    
-    for(size_t i = 0; i < prediction.size(); ++i) {
-      toPredictionFile << targetName << "\t" << treeData.getSampleName(i) << "\t" << treeData.getRawFeatureData(targetIdx,i)
-                       << "\t" << prediction[i] << "\t" << setprecision(3) << confidence[i] << endl;
-    }
-    
-  }
-
-  toPredictionFile.close();
-   
-}
-
-set<string> readFeatureMask(Treedata& treeData, const string& fileName) {
-
-  ifstream featurestream;
-  featurestream.open(fileName.c_str());
-  assert(featurestream.good());
-  
-  string newFeature;
-
-  set<string> featureMaskSet;
-
-  getline(featurestream,newFeature);
-  
-  int integer;
-  if ( datadefs::isInteger(newFeature,integer) ) {
-
-    size_t foo = static_cast<size_t>(integer);
-    newFeature = treeData.getFeatureName(foo);
-
-    featureMaskSet.insert( newFeature );
-
-    while ( getline(featurestream,newFeature) ) {
-
-      stringstream ss(newFeature);
-      ss >> foo;
-      featureMaskSet.insert( treeData.getFeatureName(foo) );
-    }
-
-  } else {
-    
-    string newFeature;
-
-    featureMaskSet.insert( newFeature );
-    
-    while ( getline(featurestream,newFeature) ) {
-      featureMaskSet.insert(newFeature);
-    }
-  }
-  
-  return( featureMaskSet );
-}
