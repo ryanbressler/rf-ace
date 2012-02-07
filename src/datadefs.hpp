@@ -63,7 +63,7 @@ namespace datadefs {
   void strv2numv(const vector<string>& strvec, vector<num_t>& numvec);
   num_t str2num(const string& str);
 
-  string chomp(const string& str);
+  //string chomp(const string& str);
 
   bool is_unique(const vector<string>& strvec);
 

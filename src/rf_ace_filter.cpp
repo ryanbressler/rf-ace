@@ -32,81 +32,48 @@ RF_statistics executeRandomForest(Treedata& treedata,
 				  vector<num_t>& importanceValues);
 
 int main(const int argc, char* const argv[]) {
-
+  
   cout << endl << " * RF-ACE FILTER * " << endl;
-
+  
   // Structs that store all the user-specified command-line arguments
   General_options gen_op(argc,argv);
   RF_options RF_op(argc,argv); 
   RF_statistics RF_stat;
-
+  
   // Print the intro header
   printHeader(cout);
-
+  
   // With no input arguments the help is printed
-  if(argc == 1) {
+  if(argc == 1 || gen_op.printHelp ) {
     gen_op.help();
     RF_op.help();
     return(EXIT_SUCCESS);
   }
-
-  // See if the help flag was raised
-  if(gen_op.printHelp) {
-    gen_op.help();
-    RF_op.help();
-    return(EXIT_SUCCESS);
-  }
-
-  // Extract some handy boolean flags from the options
-  bool whiteListInputExists = gen_op.whiteList != "";
-  bool blackListInputExists = gen_op.blackList != "";
-  bool inputExists = gen_op.input != "";
-  bool targetExists = gen_op.targetStr != "";
-  bool outputExists = gen_op.output != "";
-  bool logExists = gen_op.log != "";
-
-  // Print help and exit if input file is not specified
-  if ( !inputExists ) {
-    cerr << "Input file not specified" << endl;
-    printHelpHint();
-    return EXIT_FAILURE;
-  }
-
-  // Print help and exit if target index is not specified
-  if ( !targetExists ) {
-    cerr << "target(s) (-i/--target) not specified" << endl;
-    printHelpHint();
-    return(EXIT_FAILURE);
-  }
-
-  if ( !outputExists ) {
-    cerr << "You forgot to specify an output file!" << endl;
-    printHelpHint();
-    return(EXIT_FAILURE);
-  }
-
+  
+  validateOptions(gen_op);
+  
   // Read train data into Treedata object
   cout << "Reading file '" << gen_op.input << "', please wait... " << flush;
   Treedata treedata(gen_op.input,gen_op.dataDelimiter,gen_op.headerDelimiter);
   cout << "DONE" << endl;
-
+  
   // Check if the target is specified as an index
   int integer;
   if ( datadefs::isInteger(gen_op.targetStr,integer) ) {
-
+    
     if ( integer < 0 || integer >= static_cast<int>( treedata.nFeatures() ) ) {
       cerr << "Feature index (" << integer << ") must be within bounds 0 ... " << treedata.nFeatures() - 1 << endl;
       return EXIT_FAILURE;
     }
-
+    
     // Extract the name of the feature, as upon masking the indices will become rearranged
     gen_op.targetStr = treedata.getFeatureName(static_cast<size_t>(integer));
 
   } 
   
   // Perform masking, if requested
-  if ( whiteListInputExists ) {
-        
+  if ( gen_op.whiteList != "" ) {
+    
     cout << "Reading whitelist '" << gen_op.whiteList << "', please wait... " << flush;
     set<string> whiteFeatureNames = utils::readFeatureMask(treedata,gen_op.whiteList);
     cout << "DONE" << endl;
@@ -114,8 +81,8 @@ int main(const int argc, char* const argv[]) {
 	 << " / " << treedata.nFeatures() << " features, please wait... " << flush;
     treedata.whiteList(whiteFeatureNames);
     cout << "DONE" << endl;
-  } else if ( blackListInputExists ) {
-
+  } else if ( gen_op.blackList != "" ) {
+    
     cout << "Reading blacklist '" << gen_op.blackList << "', please wait... " << flush;
     set<string> blackFeatureNames = utils::readFeatureMask(treedata,gen_op.blackList);
     cout << "DONE" << endl;
@@ -124,26 +91,26 @@ int main(const int argc, char* const argv[]) {
     treedata.blackList(blackFeatureNames);
     cout << "DONE" << endl;
   }
-
+  
   if ( gen_op.pruneFeatures ) {
-
+    
     cout << "Pruning features with less than " << gen_op.pruneFeatures << " real samples... " << flush;
     size_t nFeaturesOld = treedata.nFeatures();
     utils::pruneFeatures(treedata,gen_op.targetStr,gen_op.pruneFeatures);
     cout << "DONE, " << nFeaturesOld - treedata.nFeatures() << " features ( "
          << ( 100.0*(nFeaturesOld - treedata.nFeatures()) / nFeaturesOld ) << "% ) pruned" << endl;
-
+    
   }
   
   if ( treedata.nFeatures() == 0 ) {
     cerr << "All features were removed!" << endl;
     exit(1);
   }
-
+  
   // After masking, it's safe to refer to features as indices 
   // TODO: rf_ace.cpp: this should be made obsolete; instead of indices, use the feature headers
   size_t targetIdx = treedata.getFeatureIdx(gen_op.targetStr);
-
+  
   //If default mTry is to be used...
   if ( RF_op.mTry == RF_DEFAULT_M_TRY ) {
     RF_op.mTry = static_cast<size_t>( 0.1*static_cast<num_t>(treedata.nFeatures()));
@@ -151,22 +118,22 @@ int main(const int argc, char* const argv[]) {
       RF_op.mTry = 2;
     }
   }
-
+  
   if(treedata.nFeatures() < RF_op.mTry) {
     cerr << "Not enough features (" << treedata.nFeatures()-1 << ") to test with mtry = "
          << RF_op.mTry << " features per split" << endl;
     return EXIT_FAILURE;
   }
-
+  
   if(treedata.nSamples() < 2 * RF_op.nodeSize) {
     cerr << "Not enough samples (" << treedata.nSamples() << ") to perform a single split" << endl;
     return EXIT_FAILURE;
   }
-
+  
   size_t nAllFeatures = treedata.nFeatures();
   size_t nRealSamples = treedata.nRealSamples(targetIdx);
   num_t realFraction = 1.0*nRealSamples / treedata.nSamples();
-
+  
   //Before number crunching, print values of parameters of RF-ACE
   int maxwidth = 17;
   cout << "General configuration:" << endl;
@@ -183,11 +150,11 @@ int main(const int argc, char* const argv[]) {
   cout << "  --" << gen_op.targetStr_l << setw( maxwidth - gen_op.targetStr_l.size() ) << ""
        << "= " << gen_op.targetStr << " ( index " << targetIdx << " )" << endl;
   cout << "  --" << gen_op.output_l << setw( maxwidth - gen_op.output_l.size() ) << ""
-       << "= "; if ( outputExists ) { cout << gen_op.output << endl; } else { cout << "NOT SET" << endl; }
+       << "= "; if ( gen_op.output != "" ) { cout << gen_op.output << endl; } else { cout << "NOT SET" << endl; }
   cout << "  --" << gen_op.log_l << setw( maxwidth - gen_op.log_l.size() ) << ""
-       << "= "; if( logExists ) { cout << gen_op.log << endl; } else { cout << "NOT SET" << endl; }
+       << "= "; if( gen_op.log != "" ) { cout << gen_op.log << endl; } else { cout << "NOT SET" << endl; }
   cout << endl;
-
+  
   cout << "Random Forest configuration:" << endl;
   cout << "  --" << RF_op.nTrees_l << setw( maxwidth - RF_op.nTrees_l.size() ) << ""
        << "= "; if(RF_op.nTrees == 0) { cout << "DEFAULT" << endl; } else { cout << RF_op.nTrees << endl; }
@@ -198,23 +165,23 @@ int main(const int argc, char* const argv[]) {
   cout << "  --" << RF_op.nodeSize_l << setw( maxwidth - RF_op.nodeSize_l.size() ) << ""
        << "= "; if(RF_op.nodeSize == 0) { cout << "DEFAULT" << endl; } else { cout << RF_op.nodeSize << endl; }
   cout << endl;
-
+  
   cout << "Significance analysis configuration:" << endl;
   cout << "  --" << RF_op.nPerms_l << setw( maxwidth - RF_op.nPerms_l.size() ) << ""
        << "= " << RF_op.nPerms << endl;
   cout << "    test type" << setw(8) << "" << "= T-test" << endl;
   cout << "  --pthresold" << setw(8) << "" << "= " << RF_op.pValueThreshold << endl;
   cout << endl;
-
+  
   //If the target has no real samples, the program will just exit
   if(nRealSamples == 0) {
     cout << "Target has no real samples. Quitting." << endl;
     return EXIT_SUCCESS;
   }
-
+  
   // Store the start time (in clock cycles) just before the analysis
   clock_t clockStart( clock() );
-      
+  
   ////////////////////////////////////////////////////////////////////////
   //  STEP 1 -- MULTIVARIATE ASSOCIATIONS WITH RANDOM FOREST ENSEMBLES  //
   ////////////////////////////////////////////////////////////////////////     
@@ -256,7 +223,7 @@ int main(const int argc, char* const argv[]) {
   targetIdx = treedata.getFeatureIdx(gen_op.targetStr);
   assert( gen_op.targetStr == treedata.getFeatureName(targetIdx) );
   
-  if( outputExists ) {
+  if( gen_op.output != "" ) {
     
     ofstream toAssociationFile(gen_op.output.c_str());
     toAssociationFile.precision(8);
@@ -297,14 +264,14 @@ int main(const int argc, char* const argv[]) {
   // NOTE: we're subtracting the target from the total head count, that's why we need to subtract by 1
   cout << "DONE, " << treedata.nFeatures() - 1 << " / " << nAllFeatures  - 1 << " features ( "
        << 100.0 * ( treedata.nFeatures() - 1 ) / ( nAllFeatures - 1 ) << " % ) left " << endl;
-    
-  if ( logExists ) {
+  
+  if ( gen_op.log != "" ) {
     
     ofstream toLogFile(gen_op.log.c_str());
     printHeader(toLogFile);
     RF_stat.print(toLogFile);
     toLogFile.close();
-
+    
     toLogFile.open("contrasts.tsv");
     RF_stat.printContrastImportance(toLogFile);
     toLogFile.close();
@@ -313,15 +280,12 @@ int main(const int argc, char* const argv[]) {
   
   cout << 1.0 * ( clock() - clockStart ) / CLOCKS_PER_SEC << " seconds elapsed." << endl << endl;
   
-  if ( outputExists ) {
-    cout << "Association file '" << gen_op.output << "' created. Format:" << endl;
-    cout << "TARGET   PREDICTOR   LOG10(P-VALUE)   IMPORTANCE   CORRELATION   NSAMPLES" << endl;
-    cout << endl;
-  }
-  
+  cout << "Association file created, format:" << endl;
+  cout << "TARGET   PREDICTOR   LOG10(P-VALUE)   IMPORTANCE   CORRELATION   NSAMPLES" << endl;
+  cout << endl;
   cout << "RF-ACE completed successfully." << endl;
   cout << endl;
-      
+  
   return(EXIT_SUCCESS);
 }
 
@@ -330,43 +294,43 @@ RF_statistics executeRandomForest(Treedata& treedata,
 				  const RF_options& RF_op,
 				  vector<num_t>& pValues,
 				  vector<num_t>& importanceValues) {
-
+  
   //RF_statistics RF_stat;
   vector<vector<size_t> > nodeMat(RF_op.nPerms,vector<size_t>(RF_op.nTrees));
   
   vector<vector<num_t> >         importanceMat( RF_op.nPerms, vector<num_t>(treedata.nFeatures()) );
   vector<vector<num_t> > contrastImportanceMat( RF_op.nPerms, vector<num_t>(treedata.nFeatures()) );
-
+  
   size_t nFeatures = treedata.nFeatures();
-
+  
   pValues.clear();
   pValues.resize(nFeatures,1.0);
   importanceValues.resize(2*nFeatures);
-
+  
   Progress progress;
   clock_t clockStart( clock() );
   vector<num_t> cSample(RF_op.nPerms);
-
-  for(int permIdx = 0; permIdx < static_cast<int>(RF_op.nPerms); ++permIdx) {
-
-    progress.update(1.0*permIdx/RF_op.nPerms);
   
+  for(int permIdx = 0; permIdx < static_cast<int>(RF_op.nPerms); ++permIdx) {
+    
+    progress.update(1.0*permIdx/RF_op.nPerms);
+    
     bool useContrasts;
     if(RF_op.nPerms > 1) {
       useContrasts = true;
     } else {
       useContrasts = false;
     }
-
+    
     // Initialize the Random Forest object
     StochasticForest SF(&treedata,gen_op.targetStr,RF_op.nTrees);
-
+    
     // Grow the Random Forest
     SF.learnRF(RF_op.mTry,RF_op.nMaxLeaves,RF_op.nodeSize,useContrasts);
-
+    
     // Get the number of nodes in each tree in the forest
     nodeMat[permIdx] = SF.nNodes();
-
+    
     // Compute importance scores for real and contrast features
     importanceValues = SF.featureImportance();
     
@@ -381,7 +345,7 @@ RF_statistics executeRandomForest(Treedata& treedata,
 	 contrastImportanceMat[permIdx].begin()); // Destination START
     
     cSample[permIdx] = math::percentile( utils::removeNANs( contrastImportanceMat[permIdx] ) , 0.95);
-
+    
   }
   
   for(size_t featureIdx = 0; featureIdx < treedata.nFeatures(); ++featureIdx) {
@@ -398,7 +362,7 @@ RF_statistics executeRandomForest(Treedata& treedata,
     if ( datadefs::isNAN( pValues[featureIdx] ) ) {
       pValues[featureIdx] = 1.0;
     }
- 
+    
     datadefs::mean(fSample,importanceValues[featureIdx],nRealSamples);
     
   }
@@ -410,5 +374,4 @@ RF_statistics executeRandomForest(Treedata& treedata,
   return( RF_stat );
   
 }
-
 

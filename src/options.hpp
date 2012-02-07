@@ -14,9 +14,11 @@ namespace options {
   void printHeader(ostream& output) {
 
     output << endl;
-    output << "   RF-ACE version:  0.9.9, February 2nd, 2012       " << endl;
-    output << "     Project page:  http://code.google.com/p/rf-ace " << endl;
-    output << "      Report bugs:  timo.p.erkkila@tut.fi           " << endl;
+    output << "-----------------------------------------------------" << endl;
+    output << "|  RF-ACE version:  0.9.9, February 2nd, 2012       |" << endl;
+    output << "|    Project page:  http://code.google.com/p/rf-ace |" << endl;
+    output << "|     Report bugs:  timo.p.erkkila@tut.fi           |" << endl;
+    output << "-----------------------------------------------------" << endl;
     output << endl;
   }
 
@@ -99,14 +101,14 @@ namespace options {
 
       cout << "REQUIRED ARGUMENTS:" << endl;
       cout << " -" << input_s << " / --" << input_l << setw( maxwidth - input_l.size() )
-           << " " << "Train data input file, associations will be sought from this data. Supported formats: AFM and ARFF" << endl;
+           << " " << "Input file" << endl;
       cout << " -" << targetStr_s << " / --" << targetStr_l << setw( maxwidth - targetStr_l.size() )
            << " " << "Target, specified as integer or string that is to be matched with the content of input" << endl;
-      cout << endl;
-
-      cout << "OPTIONAL ARGUMENTS:" << endl;
       cout << " -" << output_s << " / --" << output_l << setw( maxwidth - output_l.size() )
-           << " " << "Association output file" << endl;
+           << " " << "Output file" << endl;
+      cout << endl;
+      
+      cout << "OPTIONAL ARGUMENTS:" << endl;
       cout << " -" << log_s << " / --" << log_l << setw( maxwidth - log_l.size() )
            << " " << "Log output file" << endl;
       cout << " -" << whiteList_s << " / --" << whiteList_l << setw( maxwidth - whiteList_l.size() )
@@ -318,5 +320,29 @@ namespace options {
     cout << "bin/rf_ace --traindata original.afm --target C:AFFECTION --testdata newdata.afm --predictions.tsv" << endl << endl;
     }
   */
- 
+
+  void validateOptions(const General_options& gen_op) {
+    
+    // Print help and exit if input file is not specified
+    if ( gen_op.input == "" ) {
+      cerr << "Input file not specified" << endl;
+      printHelpHint();
+      exit(1);
+    }
+    
+    // Print help and exit if target index is not specified
+    if ( gen_op.targetStr == "" ) {
+      cerr << "target(s) (-i/--target) not specified" << endl;
+      printHelpHint();
+      exit(1);
+    }
+    
+    if ( gen_op.output == "" ) {
+      cerr << "You forgot to specify an output file!" << endl;
+      printHelpHint();
+      exit(1);
+    }
+
+  }
+  
 }
