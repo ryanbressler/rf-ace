@@ -7,10 +7,13 @@ TESTFLAGS = -L/home/erkkila2/lib -lcppunit -ldl -pedantic -I/home/erkkila2/inclu
 MPFLAG = -fopenmp
 .PHONY: all test clean  # Squash directory checks for the usual suspects
 
-all: rf-ace-filter
+all: rf-ace-filter rf-ace-build-predictor
 
 rf-ace-filter: $(SOURCEFILES)
 	$(COMPILER) $(CFLAGS) src/rf_ace_filter.cpp $(SOURCEFILES) -o bin/rf-ace-filter
+
+rf-ace-build-predictor: $(SOURCEFILES)
+	$(COMPILER) $(CFLAGS) src/rf_ace_build_predictor.cpp $(SOURCEFILES) -o bin/rf-ace-build-predictor
 
 debug: $(SOURCEFILES)
 	$(COMPILER) $(CFLAGS) src/rf_ace_filter.cpp $(SOURCEFILES) -o bin/rf-ace-filter -ggdb

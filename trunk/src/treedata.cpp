@@ -8,6 +8,8 @@
 #include <algorithm>
 #include <ctime>
 
+#include "utils.hpp"
+
 using namespace std;
 
 Treedata::Treedata(string fileName, char dataDelimiter, char headerDelimiter):
@@ -239,7 +241,7 @@ void Treedata::readAFM(ifstream& featurestream,
 
   //Next read the first row, which should contain the column headers
   getline(featurestream,row);
-  stringstream ss( datadefs::chomp(row) );
+  stringstream ss( utils::chomp(row) );
   bool isFeaturesAsRows = true;
   vector<string> columnHeaders;
   while ( getline(ss,field,dataDelimiter_) ) {
@@ -263,7 +265,7 @@ void Treedata::readAFM(ifstream& featurestream,
   //Go through the rest of the rows
   while ( getline(featurestream,row) ) {
 
-    row = datadefs::chomp(row);
+    row = utils::chomp(row);
 
     //Read row from the stream
     ss.clear();

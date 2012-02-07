@@ -21,16 +21,53 @@ vector<num_t> utils::removeNANs(const vector<num_t>& x) {
   return(trimmed);
 }
 
-set<string> utils::readFeatureMask(Treedata& treeData, const string& fileName) {
+// Makes a copy of the string, chomps, and returns
+string utils::chomp(const string& str) {
+  
+  // Chop at the first newline character, if it exists
+  int crIdx = str.find("\r");
+  int lfIdx = str.find("\n");
+  int terminatorIdx = crIdx;
+  if (lfIdx != -1 && lfIdx < crIdx) {
+    terminatorIdx = lfIdx;
+  }
+  
+  string ret(str);
+  
+  return( terminatorIdx != -1 ? ret.substr(0,terminatorIdx) : ret );
+}
 
+vector<string> utils::readListFromFile(const string& fileName, const char delimiter) {
+  
+  ifstream listStream;
+  listStream.open(fileName.c_str());
+  assert(listStream.good());
+  
+  string newItem("");
+  vector<string> items;
+  
+  while ( getline(listStream,newItem,delimiter) ) {
+    
+    newItem = utils::chomp(newItem);
+    
+    items.push_back(newItem);
+    
+  }
+
+  return( items );
+  
+}
+
+set<string> utils::readFeatureMask(Treedata& treeData, const string& fileName) {
+  
   ifstream featurestream;
   featurestream.open(fileName.c_str());
   assert(featurestream.good());
-
+  
   string newFeature;
-
+  
   set<string> featureMaskSet;
-
+  
   getline(featurestream,newFeature);
 
   int integer;

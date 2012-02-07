@@ -6,6 +6,9 @@
 #include<iostream>
 #include<limits>
 
+#include "datadefs.hpp"
+#include "utils.hpp" // This will be removed after all utilities currently under datadefs are properly relocated
+
 using namespace std;
 
 ////////////////////////////////////////////////////////////
@@ -129,20 +132,22 @@ void datadefs::strv2numv(const vector<string>& strvec,
 }
 
 // Makes a copy of the string, chomps, and returns
-string datadefs::chomp(const string& str) {
-
+/*
+  string datadefs::chomp(const string& str) {
+  
   // Chop at the first newline character, if it exists
   int crIdx = str.find("\r");
   int lfIdx = str.find("\n");
   int terminatorIdx = crIdx;
   if (lfIdx != -1 && lfIdx < crIdx) {
-    terminatorIdx = lfIdx;
+  terminatorIdx = lfIdx;
   }
-
+  
   string ret(str);
-
+  
   return( terminatorIdx != -1 ? ret.substr(0,terminatorIdx) : ret );
-}
+  }
+*/
 
 bool datadefs::is_unique(const vector<string>& strvec) {
 
@@ -169,7 +174,7 @@ datadefs::num_t datadefs::str2num(const string& str) {
 
   // Initialize and use the stringstream
   //stringstream ss(terminatorIdx != -1 ? str.substr(0,terminatorIdx) : str);
-  stringstream ss( datadefs::chomp(str) );
+  stringstream ss( utils::chomp(str) );
   datadefs::num_t ret;
   ss >> ret;
   
