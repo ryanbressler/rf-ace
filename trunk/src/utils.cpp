@@ -37,25 +37,31 @@ string utils::chomp(const string& str) {
   return( terminatorIdx != -1 ? ret.substr(0,terminatorIdx) : ret );
 }
 
-vector<string> utils::readListFromFile(const string& fileName, const char delimiter) {
-  
-  ifstream listStream;
-  listStream.open(fileName.c_str());
-  assert(listStream.good());
-  
+vector<string> utils::split(string str, const char delimiter) {
+  stringstream streamObj(str);
+  return( utils::split(streamObj,delimiter) );
+}
+
+vector<string> utils::split(istream& streamObj, const char delimiter) {
+
   string newItem("");
   vector<string> items;
-  
-  while ( getline(listStream,newItem,delimiter) ) {
-    
+
+  while ( getline(streamObj,newItem,delimiter) ) {
     newItem = utils::chomp(newItem);
-    
     items.push_back(newItem);
-    
   }
 
   return( items );
+
+}
+
+vector<string> utils::readListFromFile(const string& fileName, const char delimiter) {
   
+  ifstream streamObj( fileName.c_str() );
+  assert(streamObj.good());
+  
+  return( utils::split(streamObj,delimiter) );
 }
 
 set<string> utils::readFeatureMask(Treedata& treeData, const string& fileName) {

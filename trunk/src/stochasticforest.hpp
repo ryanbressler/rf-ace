@@ -8,6 +8,9 @@
 
 using namespace std;
 
+/*
+  TODO: inherit RF and GBT from this class, to simplify the structure
+*/
 class StochasticForest {
 public:
 
@@ -41,6 +44,8 @@ public:
   size_t nNodes(const size_t treeIdx);
 
   size_t nTrees();
+
+  inline string getTargetName() { return( targetName_ ); }
 
   void printToFile(const string& fileName);
 

@@ -6,6 +6,7 @@
 
 #include "stochasticforest.hpp"
 #include "datadefs.hpp"
+#include "utils.hpp"
 
 StochasticForest::StochasticForest(Treedata* treeData, const string& targetName, const size_t nTrees):
   treeData_(treeData),
@@ -42,10 +43,50 @@ StochasticForest::StochasticForest(const string& forestFile):
   
   string newLine("");
 
-  while ( getline(forestStream,newLine) ) {
-    /* IMPLEMENT */
-  }
+  // Verify that the saved model is of type GBT
+  getline(forestStream,newLine);
+  newLine = utils::chomp(newLine);
+  vector<string> items = utils::split(newLine,'=');
+  assert( items[0] == "FOREST" ); 
+  assert( items[1] == "GBT" );
+  assert( forestStream.good() );
 
+  // Extract the name of the target feature
+  getline(forestStream,newLine);
+  newLine = utils::chomp(newLine);
+  items = utils::split(newLine,'=');
+  assert( items[0] == "TARGET" );
+  targetName_ = items[1];
+  assert( forestStream.good() );
+
+  // Extract the amount of shrinkage per tree
+  getline(forestStream,newLine);
+  newLine = utils::chomp(newLine);
+  items = utils::split(newLine,'=');
+  assert( items[0] == "SHRINKAGE" );
+  shrinkage_ = datadefs::str2num(items[1]);
+  assert( forestStream.good() );
+
+  // Read the forest
+  while ( getline(forestStream,newLine) ) {
+
+    // remove trailing end-of-line characters
+    newLine = utils::chomp(newLine);
+
+    // Empty lines will be discarded
+    if ( newLine == "" ) {
+      continue;
+    }
+
+    if ( newLine.compare(0,5,"TREE=") ) { /* IMPLEMENTATION MISSNG */}
+
+    vector<string> items = utils::split(newLine,',');
+
+    if ( utils::split(items[0],'=')[0] == "TREE" ) {
+      datadefs::print( utils::split(items[0],'=') );
+    }
+  }
+  
 }
 
 StochasticForest::~StochasticForest() {
