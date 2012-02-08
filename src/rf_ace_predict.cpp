@@ -48,6 +48,11 @@ int main(const int argc, char* const argv[]) {
     return(EXIT_SUCCESS);
   }
 
+  cout << "===> Loading GBT predictor... " << flush;
+  StochasticForest SF(pred_op.forest);
+  gen_op.targetStr = SF.getTargetName();
+  cout << "DONE" << endl;
+
   options::validateOptions(gen_op);
 
   // Read data into Treedata object
@@ -55,21 +60,13 @@ int main(const int argc, char* const argv[]) {
   Treedata treedata(gen_op.input,gen_op.dataDelimiter,gen_op.headerDelimiter);
   cout << "DONE" << endl;
 
-  //rface::printGeneralSetup(treedata,gen_op);
+  rface::printGeneralSetup(treedata,gen_op);
     
   // Store the start time (in clock cycles) just before the analysis
   clock_t clockStart( clock() );
-      
-  cout << "===> Loading GBT predictor... " << flush;
-
-  StochasticForest SF(pred_op.forest);
-
-  cout << "DONE" << endl;
   
   cout << "===> Making predictions with test data... " << flush;
-  
-  //Treedata treedata_test(gen_op.input,gen_op.dataDelimiter,gen_op.headerDelimiter);
-  
+    
   printPredictionToFile(SF,treedata,gen_op.targetStr,gen_op.output);
     
   cout << "DONE" << endl;
