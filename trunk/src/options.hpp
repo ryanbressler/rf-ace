@@ -29,6 +29,23 @@ namespace options {
     cout << endl;
     cout << "To get started, type \"-h\" or \"--help\"" << endl;
   }
+  
+  void printFilterOverview() {
+    cout << "PROGRAM: RF-ACE-FILTER" << endl << endl;
+    cout << "Given target feature and input data, applies decision tree ensemble " << endl;
+    cout << "learning with RF-ACE to identify statistically significant predictors." << endl << endl;
+  }
+  
+  void printPredictorBuilderOverview() {
+    cout << "PROGRAM: RF-ACE PREDICTOR BUILDER" << endl << endl;
+    cout << "Given target feture and input data, build a Gradient Boosting Tree (GBT) " << endl;
+    cout << "predictor" << endl << endl;
+  }
+
+  void printPredictorOverview() {
+    cout << "PROGRAM: RF-ACE PREDICTOR" << endl << endl;
+    cout << "Makes predictions given a model and novel data." << endl << endl;
+  }
 
   const bool   GENERAL_DEFAULT_PRINT_HELP = false;
   const char   GENERAL_DEFAULT_DATA_DELIMITER = '\t';
@@ -159,12 +176,6 @@ namespace options {
       parser.getArgument(pValueThreshold_s, pValueThreshold_l, pValueThreshold);
       
     }
-
-    void overview() {
-      cout << "PROGRAM: RF-ACE-FILTER" << endl << endl;
-      cout << "Given target feature, applies decision tree ensemble learning with RF-ACE " << endl;
-      cout << "to identify statistically significant predictors." << endl;
-    }
     
     void help() {
       
@@ -207,21 +218,11 @@ namespace options {
     const string subSampleSize_l;
     
     GBT_options(const int argc, char* const argv[]):    
-      nTrees(GBT_DEFAULT_N_TREES),
-      nTrees_s("r"),
-      nTrees_l("GBT_ntrees"),
-      
-      nMaxLeaves(GBT_DEFAULT_N_MAX_LEAVES),
-      nMaxLeaves_s("l"),
-      nMaxLeaves_l("GBT_maxleaves"),
-      
-      shrinkage(GBT_DEFAULT_SHRINKAGE),
-      shrinkage_s("z"),
-      shrinkage_l("GBT_shrinkage"),
-      
-      subSampleSize(GBT_DEFAULT_SUB_SAMPLE_SIZE),
-      subSampleSize_s("u"),
-      subSampleSize_l("GBT_samplesize") {
+    
+      nTrees(GBT_DEFAULT_N_TREES),nTrees_s("r"),nTrees_l("GBT_ntrees"),
+      nMaxLeaves(GBT_DEFAULT_N_MAX_LEAVES),nMaxLeaves_s("l"),nMaxLeaves_l("GBT_maxleaves"),
+      shrinkage(GBT_DEFAULT_SHRINKAGE),shrinkage_s("z"),shrinkage_l("GBT_shrinkage"),
+      subSampleSize(GBT_DEFAULT_SUB_SAMPLE_SIZE),subSampleSize_s("u"),subSampleSize_l("GBT_samplesize") {
 
       // Read the user parameters ...
       ArgParse parser(argc,argv);      
@@ -246,7 +247,33 @@ namespace options {
 	   << " " << "Sample size fraction for training the trees (default " << GBT_DEFAULT_SUB_SAMPLE_SIZE << ")" << endl;
       cout << endl;
 
+    }
 
+  };
+
+  struct Predictor_options {
+
+    string forest;
+    const string forest_s;
+    const string forest_l;
+
+    Predictor_options(const int argc, char* const argv[]):
+      
+      forest(""),forest_s("F"),forest_l("forest") {
+
+      // Read the user parameters ...
+      ArgParse parser(argc,argv);
+
+      parser.getArgument<string>(forest_s, forest_l, forest);
+
+    }
+
+    void help() {
+
+      cout << "REQUIRED ARGUMENTS -- PREDICTOR:" << endl;
+      cout << " -" << forest_s << " / --" << forest_l << setw( maxWidth - forest_l.size() )
+           << " " << "Forest predictor stored in a .sf file" << endl;
+      cout << endl; 
     }
 
   };

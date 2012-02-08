@@ -13,7 +13,10 @@ public:
 
   // !! Documentation: instruct the constructor to choose between the two forest implementations
   StochasticForest(Treedata* treeData, const string& targetName, const size_t nTrees);  
+  StochasticForest(const string& forestFile);
+
   ~StochasticForest();
+
 
   // !! Documentation: ... then, on the public side, learning would become collapsed into a single overloaded function learn(...)
   void learnRF(const size_t mTry,
