@@ -1,3 +1,6 @@
+#ifndef OPTIONS_HPP
+#define OPTIONS_HPP
+
 #include <cstdlib>
 #include <string>
 #include <sstream>
@@ -346,3 +349,5 @@ namespace options {
   }
   
 }
+
+#endif
