@@ -60,7 +60,7 @@ void StochasticForest::printToFile(const string& fileName) {
 
   // Save each tree in the forest
   for ( size_t treeIdx = 0; treeIdx < rootNodes_.size(); ++treeIdx ) {
-    toFile << endl << "TREE " << treeIdx << endl;
+    toFile << endl << "TREE=" << treeIdx << endl;
     rootNodes_[treeIdx]->print(toFile);
   }
   

@@ -22,36 +22,35 @@
 #include "math.hpp"
 
 using namespace std;
-using namespace statistics;
-using namespace options;
+//using namespace statistics;
+//using namespace options;
 using datadefs::num_t;
 
-RF_statistics executeRandomForest(Treedata& treedata,
-				  const General_options& gen_op,
-				  const RF_options& RF_op,
-				  vector<num_t>& pValues,
-				  vector<num_t>& importanceValues);
+statistics::RF_statistics executeRandomForest(Treedata& treedata,
+					   const options::General_options& gen_op,
+					   const options::RF_options& RF_op,
+					   vector<num_t>& pValues,
+					   vector<num_t>& importanceValues);
 
 int main(const int argc, char* const argv[]) {
   
-  cout << endl << " * RF-ACE FILTER * " << endl;
-  
   // Structs that store all the user-specified command-line arguments
-  General_options gen_op(argc,argv);
-  RF_options RF_op(argc,argv); 
-  RF_statistics RF_stat;
+  options::General_options gen_op(argc,argv);
+  options::RF_options RF_op(argc,argv); 
+  statistics::RF_statistics RF_stat;
   
   // Print the intro header
-  printHeader(cout);
+  options::printHeader(cout);
   
   // With no input arguments the help is printed
   if(argc == 1 || gen_op.printHelp ) {
+    RF_op.overview();
     gen_op.help();
     RF_op.help();
     return(EXIT_SUCCESS);
   }
   
-  validateOptions(gen_op);
+  options::validateOptions(gen_op);
   
   // Read train data into Treedata object
   cout << "Reading file '" << gen_op.input << "', please wait... " << flush;
@@ -73,18 +72,13 @@ int main(const int argc, char* const argv[]) {
   } 
 
   rface::pruneFeatureSpace(treedata,gen_op);
-    
-  if ( treedata.nFeatures() == 0 ) {
-    cerr << "All features were removed!" << endl;
-    exit(1);
-  }
-  
+      
   // After masking, it's safe to refer to features as indices 
   // TODO: rf_ace.cpp: this should be made obsolete; instead of indices, use the feature headers
   size_t targetIdx = treedata.getFeatureIdx(gen_op.targetStr);
   
   //If default mTry is to be used...
-  if ( RF_op.mTry == RF_DEFAULT_M_TRY ) {
+  if ( RF_op.mTry == options::RF_DEFAULT_M_TRY ) {
     RF_op.mTry = static_cast<size_t>( 0.1*static_cast<num_t>(treedata.nFeatures()));
     if ( RF_op.mTry == 0 ) {
       RF_op.mTry = 2;
@@ -102,55 +96,9 @@ int main(const int argc, char* const argv[]) {
     return EXIT_FAILURE;
   }
   
-  size_t nAllFeatures = treedata.nFeatures();
-  size_t nRealSamples = treedata.nRealSamples(targetIdx);
-  num_t realFraction = 1.0*nRealSamples / treedata.nSamples();
-  
-  //Before number crunching, print values of parameters of RF-ACE
-  int maxwidth = 17;
-  cout << "General configuration:" << endl;
-  cout << "    nfeatures" << setw(8) << "" << "= " << nAllFeatures << endl;
-  cout << "    nsamples"  << setw(9) << "" << "= " << treedata.nRealSamples(targetIdx) << " / " << treedata.nSamples() << " ( " << 100.0 * ( 1 - realFraction ) << " % missing )" << endl; 
-  cout << "    tree type" << setw(8) << "" << "= ";
-  if(treedata.isFeatureNumerical(targetIdx)) { cout << "Regression CART" << endl; } else { cout << treedata.nCategories(targetIdx) << "-class CART" << endl; }
-  cout << "  --" << gen_op.dataDelimiter_l << setw( maxwidth - gen_op.dataDelimiter_l.size() ) << ""
-       << "= '" << gen_op.dataDelimiter << "'" << endl;
-  cout << "  --" << gen_op.headerDelimiter_l << setw( maxwidth - gen_op.headerDelimiter_l.size() ) << ""
-       << "= '" << gen_op.headerDelimiter << "'" << endl;
-  cout << "  --" << gen_op.input_l << setw( maxwidth - gen_op.input_l.size() ) << ""
-       << "= " << gen_op.input << endl;
-  cout << "  --" << gen_op.targetStr_l << setw( maxwidth - gen_op.targetStr_l.size() ) << ""
-       << "= " << gen_op.targetStr << " ( index " << targetIdx << " )" << endl;
-  cout << "  --" << gen_op.output_l << setw( maxwidth - gen_op.output_l.size() ) << ""
-       << "= "; if ( gen_op.output != "" ) { cout << gen_op.output << endl; } else { cout << "NOT SET" << endl; }
-  cout << "  --" << gen_op.log_l << setw( maxwidth - gen_op.log_l.size() ) << ""
-       << "= "; if( gen_op.log != "" ) { cout << gen_op.log << endl; } else { cout << "NOT SET" << endl; }
-  cout << endl;
-  
-  cout << "Random Forest configuration:" << endl;
-  cout << "  --" << RF_op.nTrees_l << setw( maxwidth - RF_op.nTrees_l.size() ) << ""
-       << "= "; if(RF_op.nTrees == 0) { cout << "DEFAULT" << endl; } else { cout << RF_op.nTrees << endl; }
-  cout << "  --" << RF_op.mTry_l << setw( maxwidth - RF_op.mTry_l.size() ) << ""
-       << "= "; if(RF_op.mTry == 0) { cout << "DEFAULT" << endl; } else { cout << RF_op.mTry << endl; }
-  cout << "  --" << RF_op.nMaxLeaves_l << setw( maxwidth - RF_op.nMaxLeaves_l.size() ) << ""
-       << "= " << RF_op.nMaxLeaves << endl;
-  cout << "  --" << RF_op.nodeSize_l << setw( maxwidth - RF_op.nodeSize_l.size() ) << ""
-       << "= "; if(RF_op.nodeSize == 0) { cout << "DEFAULT" << endl; } else { cout << RF_op.nodeSize << endl; }
-  cout << endl;
-  
-  cout << "Significance analysis configuration:" << endl;
-  cout << "  --" << RF_op.nPerms_l << setw( maxwidth - RF_op.nPerms_l.size() ) << ""
-       << "= " << RF_op.nPerms << endl;
-  cout << "    test type" << setw(8) << "" << "= T-test" << endl;
-  cout << "  --pthresold" << setw(8) << "" << "= " << RF_op.pValueThreshold << endl;
-  cout << endl;
-  
-  //If the target has no real samples, the program will just exit
-  if(nRealSamples == 0) {
-    cout << "Target has no real samples. Quitting." << endl;
-    return EXIT_SUCCESS;
-  }
-  
+  rface::printGeneralSetup(treedata,gen_op);
+  rface::printRFSetup(RF_op);
+      
   // Store the start time (in clock cycles) just before the analysis
   clock_t clockStart( clock() );
   
@@ -234,13 +182,13 @@ int main(const int argc, char* const argv[]) {
   
   // Print some statistics
   // NOTE: we're subtracting the target from the total head count, that's why we need to subtract by 1
-  cout << "DONE, " << treedata.nFeatures() - 1 << " / " << nAllFeatures  - 1 << " features ( "
-       << 100.0 * ( treedata.nFeatures() - 1 ) / ( nAllFeatures - 1 ) << " % ) left " << endl;
+  cout << "DONE, " << treedata.nFeatures() - 1 << " / " << nFeatures  - 1 << " features ( "
+       << 100.0 * ( treedata.nFeatures() - 1 ) / ( nFeatures - 1 ) << " % ) left " << endl;
   
   if ( gen_op.log != "" ) {
     
     ofstream toLogFile(gen_op.log.c_str());
-    printHeader(toLogFile);
+    options::printHeader(toLogFile);
     RF_stat.print(toLogFile);
     toLogFile.close();
     
@@ -261,11 +209,11 @@ int main(const int argc, char* const argv[]) {
   return(EXIT_SUCCESS);
 }
 
-RF_statistics executeRandomForest(Treedata& treedata,
-				  const General_options& gen_op,
-				  const RF_options& RF_op,
-				  vector<num_t>& pValues,
-				  vector<num_t>& importanceValues) {
+statistics::RF_statistics executeRandomForest(Treedata& treedata,
+					      const options::General_options& gen_op,
+					      const options::RF_options& RF_op,
+					      vector<num_t>& pValues,
+					      vector<num_t>& importanceValues) {
   
   //RF_statistics RF_stat;
   vector<vector<size_t> > nodeMat(RF_op.nPerms,vector<size_t>(RF_op.nTrees));
@@ -339,7 +287,7 @@ RF_statistics executeRandomForest(Treedata& treedata,
     
   }
   
-  RF_statistics RF_stat(importanceMat,contrastImportanceMat,nodeMat, 1.0 * ( clock() - clockStart ) / CLOCKS_PER_SEC );
+  statistics::RF_statistics RF_stat(importanceMat,contrastImportanceMat,nodeMat, 1.0 * ( clock() - clockStart ) / CLOCKS_PER_SEC );
   
   importanceValues.resize( treedata.nFeatures() );
   
