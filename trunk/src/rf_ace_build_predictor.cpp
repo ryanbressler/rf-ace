@@ -10,7 +10,8 @@
 #include <iomanip>
 #include <algorithm>
 
-#include "argparse.hpp"
+#include "rf_ace.hpp"
+//#include "argparse.hpp"
 #include "stochasticforest.hpp"
 #include "treedata.hpp"
 #include "datadefs.hpp"
@@ -69,36 +70,7 @@ int main(const int argc, char* const argv[]) {
 
   }
 
-  // Perform masking, if requested
-  if ( gen_op.whiteList != "" ) {
-
-    cout << "Reading whitelist '" << gen_op.whiteList << "', please wait... " << flush;
-    set<string> whiteFeatureNames = utils::readFeatureMask(treedata,gen_op.whiteList);
-    cout << "DONE" << endl;
-    cout << "Applying feature mask, removing " << treedata.nFeatures() - whiteFeatureNames.size()
-         << " / " << treedata.nFeatures() << " features, please wait... " << flush;
-    treedata.whiteList(whiteFeatureNames);
-    cout << "DONE" << endl;
-  } else if ( gen_op.blackList != "" ) {
-
-    cout << "Reading blacklist '" << gen_op.blackList << "', please wait... " << flush;
-    set<string> blackFeatureNames = utils::readFeatureMask(treedata,gen_op.blackList);
-    cout << "DONE" << endl;
-    cout << "Applying blacklist, keeping " << treedata.nFeatures() - blackFeatureNames.size()
-         << " / " << treedata.nFeatures() << " features, please wait... " << flush;
-    treedata.blackList(blackFeatureNames);
-    cout << "DONE" << endl;
-  }
-
-  if ( gen_op.pruneFeatures ) {
-
-    cout << "Pruning features with less than " << gen_op.pruneFeatures << " real samples... " << flush;
-    size_t nFeaturesOld = treedata.nFeatures();
-    utils::pruneFeatures(treedata,gen_op.targetStr,gen_op.pruneFeatures);
-    cout << "DONE, " << nFeaturesOld - treedata.nFeatures() << " features ( "
-         << ( 100.0*(nFeaturesOld - treedata.nFeatures()) / nFeaturesOld ) << "% ) pruned" << endl;
-
-  }
+  rface::pruneFeatureSpace(treedata,gen_op);
 
   if ( treedata.nFeatures() == 0 ) {
     cerr << "All features were removed!" << endl;
