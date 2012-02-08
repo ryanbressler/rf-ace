@@ -48,7 +48,7 @@ namespace options {
   const num_t  GBT_DEFAULT_SUB_SAMPLE_SIZE = 0.5;
 
   // Determines the amount of indentation in help print-outs
-  const size_t maxwidth = 20;
+  const size_t maxWidth = 20;
   
   struct General_options {
 
@@ -103,26 +103,26 @@ namespace options {
     void help() {
 
       cout << "REQUIRED ARGUMENTS:" << endl;
-      cout << " -" << input_s << " / --" << input_l << setw( maxwidth - input_l.size() )
-           << " " << "Input file" << endl;
-      cout << " -" << targetStr_s << " / --" << targetStr_l << setw( maxwidth - targetStr_l.size() )
+      cout << " -" << input_s << " / --" << input_l << setw( maxWidth - input_l.size() )
+           << " " << "Input data file, either AFM or ARFF" << endl;
+      cout << " -" << targetStr_s << " / --" << targetStr_l << setw( maxWidth - targetStr_l.size() )
            << " " << "Target, specified as integer or string that is to be matched with the content of input" << endl;
-      cout << " -" << output_s << " / --" << output_l << setw( maxwidth - output_l.size() )
+      cout << " -" << output_s << " / --" << output_l << setw( maxWidth - output_l.size() )
            << " " << "Output file" << endl;
       cout << endl;
       
       cout << "OPTIONAL ARGUMENTS:" << endl;
-      cout << " -" << log_s << " / --" << log_l << setw( maxwidth - log_l.size() )
+      cout << " -" << log_s << " / --" << log_l << setw( maxWidth - log_l.size() )
            << " " << "Log output file" << endl;
-      cout << " -" << whiteList_s << " / --" << whiteList_l << setw( maxwidth - whiteList_l.size() )
+      cout << " -" << whiteList_s << " / --" << whiteList_l << setw( maxWidth - whiteList_l.size() )
            << " " << "White list of features to be included in the input file(s)." << endl;
-      cout << " -" << blackList_s << " / --" << blackList_l << setw( maxwidth - blackList_l.size() )
+      cout << " -" << blackList_s << " / --" << blackList_l << setw( maxWidth - blackList_l.size() )
            << " " << "Black list of features to be excluded from the input file(s)." << endl;
-      cout << " -" << dataDelimiter_s << " / --" << dataDelimiter_l << setw( maxwidth - dataDelimiter_l.size() )
+      cout << " -" << dataDelimiter_s << " / --" << dataDelimiter_l << setw( maxWidth - dataDelimiter_l.size() )
            << " " << "Data delimiter (default \\t)" << endl;
-      cout << " -" << headerDelimiter_s << " / --" << headerDelimiter_l << setw( maxwidth - headerDelimiter_l.size() )
+      cout << " -" << headerDelimiter_s << " / --" << headerDelimiter_l << setw( maxWidth - headerDelimiter_l.size() )
            << " " << "Header delimiter that separates the N and C symbols in feature headers from the rest (default " << GENERAL_DEFAULT_HEADER_DELIMITER << ")" << endl;
-      cout << " -" << pruneFeatures_s << " / --" << pruneFeatures_l << setw( maxwidth - pruneFeatures_l.size() )
+      cout << " -" << pruneFeatures_s << " / --" << pruneFeatures_l << setw( maxWidth - pruneFeatures_l.size() )
            << " " << "Features with less than n ( default " << GENERAL_DEFAULT_MIN_SAMPLES << " ) samples will be removed" << endl;
       cout << endl;
 
@@ -159,21 +159,27 @@ namespace options {
       parser.getArgument(pValueThreshold_s, pValueThreshold_l, pValueThreshold);
       
     }
+
+    void overview() {
+      cout << "PROGRAM: RF-ACE-FILTER" << endl << endl;
+      cout << "Given target feature, applies decision tree ensemble learning with RF-ACE " << endl;
+      cout << "to identify statistically significant predictors." << endl;
+    }
     
     void help() {
       
       cout << "OPTIONAL ARGUMENTS -- RANDOM FOREST:" << endl;
-      cout << " -" << nTrees_s << " / --" << nTrees_l << setw( maxwidth - nTrees_l.size() )
+      cout << " -" << nTrees_s << " / --" << nTrees_l << setw( maxWidth - nTrees_l.size() )
 	   << " " << "Number of trees per RF (default " << RF_DEFAULT_N_TREES << ")" << endl;
-      cout << " -" << mTry_s << " / --" << mTry_l << setw( maxwidth - mTry_l.size() )
+      cout << " -" << mTry_s << " / --" << mTry_l << setw( maxWidth - mTry_l.size() )
 	   << " " << "Number of randomly drawn features per node split (default floor(0.1*nFeatures))" << endl;
-      cout << " -" << nMaxLeaves_s << " / --" << nMaxLeaves_l << setw( maxwidth - nMaxLeaves_l.size() )
+      cout << " -" << nMaxLeaves_s << " / --" << nMaxLeaves_l << setw( maxWidth - nMaxLeaves_l.size() )
 	   << " " << "Maximum number of leaves per tree (default " << RF_DEFAULT_N_MAX_LEAVES << ")" << endl;
-      cout << " -" << nodeSize_s << " / --" << nodeSize_l << setw( maxwidth - nodeSize_l.size() )
+      cout << " -" << nodeSize_s << " / --" << nodeSize_l << setw( maxWidth - nodeSize_l.size() )
 	   << " " << "Minimum number of train samples per node, affects tree depth (default " << RF_DEFAULT_NODE_SIZE << ")" << endl;
-      cout << " -" << nPerms_s << " / --" << nPerms_l << setw( maxwidth - nPerms_l.size() )
+      cout << " -" << nPerms_s << " / --" << nPerms_l << setw( maxWidth - nPerms_l.size() )
 	   << " " << "Number of Random Forests (default " << RF_DEFAULT_N_PERMS << ")" << endl;
-      cout << " -" << pValueThreshold_s << " / --" << pValueThreshold_l << setw( maxwidth - pValueThreshold_l.size() )
+      cout << " -" << pValueThreshold_s << " / --" << pValueThreshold_l << setw( maxWidth - pValueThreshold_l.size() )
 	   << " " << "p-value threshold below which associations are listed (default "
 	   << RF_DEFAULT_P_VALUE_THRESHOLD << ")" << endl;
       cout << endl;
@@ -230,13 +236,13 @@ namespace options {
     void help() {
       
       cout << "OPTIONAL ARGUMENTS -- GRADIENT BOOSTING TREES:" << endl;
-      cout << " -" << nTrees_s << " / --" << nTrees_l << setw( maxwidth - nTrees_l.size() )
+      cout << " -" << nTrees_s << " / --" << nTrees_l << setw( maxWidth - nTrees_l.size() )
 	   << " " << "Number of trees in the GBT (default " << GBT_DEFAULT_N_TREES << ")" << endl;
-      cout << " -" << nMaxLeaves_s << " / --" << nMaxLeaves_l << setw( maxwidth - nMaxLeaves_l.size() )
+      cout << " -" << nMaxLeaves_s << " / --" << nMaxLeaves_l << setw( maxWidth - nMaxLeaves_l.size() )
 	   << " " << "Maximum number of leaves per tree (default " << GBT_DEFAULT_N_MAX_LEAVES << ")" << endl;
-      cout << " -" << shrinkage_s << " / --" << shrinkage_l << setw( maxwidth - shrinkage_l.size() )
+      cout << " -" << shrinkage_s << " / --" << shrinkage_l << setw( maxWidth - shrinkage_l.size() )
 	   << " " << "Shrinkage applied to evolving the residual (default " << GBT_DEFAULT_SHRINKAGE << ")" << endl;
-      cout << " -" << subSampleSize_s << " / --" << subSampleSize_l << setw( maxwidth - subSampleSize_l.size() )
+      cout << " -" << subSampleSize_s << " / --" << subSampleSize_l << setw( maxWidth - subSampleSize_l.size() )
 	   << " " << "Sample size fraction for training the trees (default " << GBT_DEFAULT_SUB_SAMPLE_SIZE << ")" << endl;
       cout << endl;
 
@@ -244,85 +250,6 @@ namespace options {
     }
 
   };
-
-  /*
-    void printHelp(const General_options& geno, const RF_options& rfo, const GBT_options& gbto) {
-    
-    size_t maxwidth = 20;
-    cout << endl;
-    
-    cout << "REQUIRED ARGUMENTS:" << endl;
-    cout << " -" << input_s << " / --" << input_l << setw( maxwidth - input_l.size() )
-    << " " << "Train data input file, associations will be sought from this data. Supported formats: AFM and ARFF" << endl;
-    cout << " -" << targetStr_s << " / --" << targetStr_l << setw( maxwidth - targetStr_l.size() )
-    << " " << "Target, specified as integer or string that is to be matched with the content of input" << endl;
-    cout << endl;
-    
-    cout << "OPTIONAL ARGUMENTS:" << endl;
-    cout << " -" << output_s << " / --" << output_l << setw( maxwidth - output_l.size() )
-    << " " << "Association output file" << endl;
-    cout << " -" << testInput_s << " / --" << testInput_l << setw( maxwidth - testInput_l.size() )
-    << " " << "Test data input file, predictions will be made from this data" << endl;
-    cout << " -" << predictionOutput_s << " / --" << predictionOutput_l << setw( maxwidth - predictionOutput_l.size() )
-    << " " << "Prediction output file" << endl;
-    cout << " -" << log_s << " / --" << log_l << setw( maxwidth - log_l.size() )
-    << " " << "Log output file" << endl;
-    cout << " -" << forestOutput_s << " / --" << forestOutput_l << setw( maxwidth - forestOutput_l.size() )
-    << " " << "Forest output file" << endl;
-    cout << " -" << whiteList_s << " / --" << whiteList_l << setw( maxwidth - whiteList_l.size() )
-    << " " << "White list of features to be included in the input file(s)." << endl;
-    cout << " -" << blackList_s << " / --" << blackList_l << setw( maxwidth - blackList_l.size() )
-    << " " << "Black list of features to be excluded from the input file(s)." << endl;
-    cout << " -" << dataDelimiter_s << " / --" << dataDelimiter_l << setw( maxwidth - dataDelimiter_l.size() )
-    << " " << "Data delimiter (default \\t)" << endl;
-    cout << " -" << headerDelimiter_s << " / --" << headerDelimiter_l << setw( maxwidth - headerDelimiter_l.size() )
-    << " " << "Header delimiter that separates the N and C symbols in feature headers from the rest (default " << GENERAL_DEFAULT_HEADER_DELIMITER << ")" << endl;
-    cout << " -" << pruneFeatures_s << " / --" << pruneFeatures_l << setw( maxwidth - pruneFeatures_l.size() )
-    << " " << "Features with less than n ( default " << GENERAL_DEFAULT_MIN_SAMPLES << " ) samples will be removed" << endl;
-    cout << " -" << noFilter_s << " / --" << noFilter_l << setw( maxwidth - noFilter_l.size() )
-    << " " << "Set this flag if you want to omit applying feature filtering with RFs" << endl;
-    cout << endl;
-    
-    cout << "OPTIONAL ARGUMENTS -- RANDOM FOREST:" << endl;
-    cout << " -" << nTrees_s << " / --" << nTrees_l << setw( maxwidth - nTrees_l.size() )
-    << " " << "Number of trees per RF (default " << RF_DEFAULT_N_TREES << ")" << endl;
-    cout << " -" << mTry_s << " / --" << mTry_l << setw( maxwidth - mTry_l.size() )
-    << " " << "Number of randomly drawn features per node split (default floor(0.1*nFeatures))" << endl;
-    cout << " -" << nMaxLeaves_s << " / --" << nMaxLeaves_l << setw( maxwidth - nMaxLeaves_l.size() )
-    << " " << "Maximum number of leaves per tree (default " << RF_DEFAULT_N_MAX_LEAVES << ")" << endl;
-    cout << " -" << nodeSize_s << " / --" << nodeSize_l << setw( maxwidth - nodeSize_l.size() )
-    << " " << "Minimum number of train samples per node, affects tree depth (default " << RF_DEFAULT_NODE_SIZE << ")" << endl;
-    cout << " -" << nPerms_s << " / --" << nPerms_l << setw( maxwidth - nPerms_l.size() )
-    << " " << "Number of Random Forests (default " << RF_DEFAULT_N_PERMS << ")" << endl;
-    cout << endl;
-    
-    cout << "OPTIONAL ARGUMENTS -- FEATURE FILTER:" << endl;
-    cout << " -" << pValueThreshold_s << " / --" << pValueThreshold_l << setw( maxwidth - pValueThreshold_l.size() )
-    << " " << "p-value threshold below which associations are listed (default "
-    << GENERAL_DEFAULT_P_VALUE_THRESHOLD << ")" << endl;
-    cout << endl;
-    
-    cout << "OPTIONAL ARGUMENTS -- GRADIENT BOOSTING TREES:" << endl;
-    cout << " -" << nTrees_s << " / --" << nTrees_l << setw( maxwidth - nTrees_l.size() )
-    << " " << "Number of trees in the GBT (default " << GBT_DEFAULT_N_TREES << ")" << endl;
-    cout << " -" << nMaxLeaves_s << " / --" << nMaxLeaves_l << setw( maxwidth - nMaxLeaves_l.size() )
-    << " " << "Maximum number of leaves per tree (default " << GBT_DEFAULT_N_MAX_LEAVES << ")" << endl;
-    cout << " -" << shrinkage_s << " / --" << shrinkage_l << setw( maxwidth - shrinkage_l.size() )
-    << " " << "Shrinkage applied to evolving the residual (default " << GBT_DEFAULT_SHRINKAGE << ")" << endl;
-    cout << " -" << subSampleSize_s << " / --" << subSampleSize_l << setw( maxwidth - subSampleSize_l.size() )
-    << " " << "Sample size fraction for training the trees (default " << GBT_DEFAULT_SUB_SAMPLE_SIZE << ")" << endl;
-    cout << endl;
-    
-    cout << "EXAMPLES:" << endl;
-    cout << endl;
-    
-    cout << "List features associated with feature called \"C:AFFECTION\":" << endl;
-    cout << "bin/rf_ace --traindata featurematrix.afm --target C:AFFECTION --associations associations.tsv" << endl << endl;
-    
-    cout << "Train the model for \"C:AFFECTION\" with \"original.afm\", and predict new data for \"C:AFFECTION\" with \"newdata.afm\":" << endl;
-    cout << "bin/rf_ace --traindata original.afm --target C:AFFECTION --testdata newdata.afm --predictions.tsv" << endl << endl;
-    }
-  */
 
   void validateOptions(const General_options& gen_op) {
     

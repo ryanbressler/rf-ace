@@ -22,8 +22,8 @@
 #include "utils.hpp"
 
 using namespace std;
-using namespace options;
-using namespace statistics;
+//using namespace options;
+//using namespace statistics;
 using datadefs::num_t;
 
 
@@ -33,14 +33,12 @@ vector<string> readFeatureMask(const string& fileName);
 
 int main(const int argc, char* const argv[]) {
 
-  cout << endl << " * RF-ACE PREDICTOR BUILDER * " << endl;
-
   // Structs that store all the user-specified command-line arguments
-  General_options gen_op(argc,argv);
-  GBT_options GBT_op(argc,argv);
+  options::General_options gen_op(argc,argv);
+  options::GBT_options GBT_op(argc,argv);
 
   // Print the intro header
-  printHeader(cout);
+  options::printHeader(cout);
 
   // With no input arguments the help is printed
   if(argc == 1 || gen_op.printHelp ) {
@@ -49,7 +47,7 @@ int main(const int argc, char* const argv[]) {
     return(EXIT_SUCCESS);
   }
 
-  validateOptions(gen_op);
+  options::validateOptions(gen_op);
 
   // Read train data into Treedata object
   cout << "Reading file '" << gen_op.input << "', please wait... " << flush;
@@ -72,57 +70,14 @@ int main(const int argc, char* const argv[]) {
 
   rface::pruneFeatureSpace(treedata,gen_op);
 
-  if ( treedata.nFeatures() == 0 ) {
-    cerr << "All features were removed!" << endl;
-    exit(1);
-  }
+  rface::printGeneralSetup(treedata,gen_op);
+
+  rface::printGBTSetup(GBT_op);
 
   // After masking, it's safe to refer to features as indices 
   // TODO: rf_ace.cpp: this should be made obsolete; instead of indices, use the feature headers
-  size_t targetIdx = treedata.getFeatureIdx(gen_op.targetStr);
-
-  size_t nAllFeatures = treedata.nFeatures();
-  size_t nRealSamples = treedata.nRealSamples(targetIdx);
-  num_t realFraction = 1.0*nRealSamples / treedata.nSamples();
-
-  //Before number crunching, print values of parameters of RF-ACE
-  int maxwidth = 17;
-  cout << "General configuration:" << endl;
-  cout << "    nfeatures" << setw(8) << "" << "= " << nAllFeatures << endl;
-  cout << "    nsamples"  << setw(9) << "" << "= " << treedata.nRealSamples(targetIdx) << " / " << treedata.nSamples() << " ( " << 100.0 * ( 1 - realFraction ) << " % missing )" << endl;
-  cout << "    tree type" << setw(8) << "" << "= ";
-  if(treedata.isFeatureNumerical(targetIdx)) { cout << "Regression CART" << endl; } else { cout << treedata.nCategories(targetIdx) << "-class CART" << endl; }
-  cout << "  --" << gen_op.dataDelimiter_l << setw( maxwidth - gen_op.dataDelimiter_l.size() ) << ""
-       << "= '" << gen_op.dataDelimiter << "'" << endl;
-  cout << "  --" << gen_op.headerDelimiter_l << setw( maxwidth - gen_op.headerDelimiter_l.size() ) << ""
-       << "= '" << gen_op.headerDelimiter << "'" << endl;
-  cout << "  --" << gen_op.input_l << setw( maxwidth - gen_op.input_l.size() ) << ""
-       << "= " << gen_op.input << endl;
-  cout << "  --" << gen_op.targetStr_l << setw( maxwidth - gen_op.targetStr_l.size() ) << ""
-       << "= " << gen_op.targetStr << " ( index " << targetIdx << " )" << endl;
-  cout << "  --" << gen_op.output_l << setw( maxwidth - gen_op.output_l.size() ) << ""
-       << "= "; if ( gen_op.output != "" ) { cout << gen_op.output << endl; } else { cout << "NOT SET" << endl; }
-  cout << "  --" << gen_op.log_l << setw( maxwidth - gen_op.log_l.size() ) << ""
-       << "= "; if( gen_op.log != "" ) { cout << gen_op.log << endl; } else { cout << "NOT SET" << endl; }
-  cout << endl;
-
-  cout << "Gradient boosting tree configuration for prediction:" << endl;
-  cout << "  --" << GBT_op.nTrees_l << setw( maxwidth - GBT_op.nTrees_l.size() ) << ""
-       << "= " << GBT_op.nTrees << endl;
-  cout << "  --" << GBT_op.nMaxLeaves_l << setw( maxwidth - GBT_op.nMaxLeaves_l.size() ) << ""
-       << "= " << GBT_op.nMaxLeaves << endl;
-  cout << "  --" << GBT_op.shrinkage_l << setw( maxwidth - GBT_op.shrinkage_l.size() ) << ""
-       << "= " << GBT_op.shrinkage << endl;
-  cout << "  --" << GBT_op.subSampleSize_l << setw( maxwidth - GBT_op.subSampleSize_l.size() ) << ""
-       << "= " << GBT_op.subSampleSize << endl;
-  cout << endl;
+  //size_t targetIdx = treedata.getFeatureIdx(gen_op.targetStr);
     
-  //If the target has no real samples, the program will just exit
-  if(nRealSamples == 0) {
-    cout << "Target has no real samples. Quitting." << endl;
-    return EXIT_SUCCESS;
-  }
-
   // Store the start time (in clock cycles) just before the analysis
   clock_t clockStart( clock() );
       
@@ -140,7 +95,7 @@ int main(const int argc, char* const argv[]) {
   }
   
   
-  
+  // THIS CONTENT WILL BE MOVED TO THE PREDICTOR PROGRAM
   if ( false ) {
     
     cout << "===> Making predictions with test data... " << flush;
@@ -149,7 +104,9 @@ int main(const int argc, char* const argv[]) {
     
     printPredictionToFile(SF,treedata_test,gen_op.targetStr,gen_op.output);
     
-  } else {
+  } 
+
+  if ( false ) {
     
     cout << "===> Making predictions with train data... " << flush;
     
