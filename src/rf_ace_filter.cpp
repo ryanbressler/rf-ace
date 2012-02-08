@@ -44,7 +44,7 @@ int main(const int argc, char* const argv[]) {
   
   // With no input arguments the help is printed
   if(argc == 1 || gen_op.printHelp ) {
-    RF_op.overview();
+    options::printFilterOverview();
     gen_op.help();
     RF_op.help();
     return(EXIT_SUCCESS);

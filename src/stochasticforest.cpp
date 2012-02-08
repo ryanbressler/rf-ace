@@ -1,6 +1,7 @@
 #include <cmath>
 #include <ctime>
 #include <iostream>
+#include <fstream>
 #include <iomanip>
 
 #include "stochasticforest.hpp"
@@ -30,6 +31,21 @@ StochasticForest::StochasticForest(Treedata* treeData, const string& targetName,
     partitionSequence_ = new PartitionSequence( 1 );
   }
     
+}
+
+StochasticForest::StochasticForest(const string& forestFile):
+  treeData_(NULL),
+  partitionSequence_(NULL) {
+
+  ifstream forestStream( forestFile.c_str() );
+  assert(forestStream.good());
+  
+  string newLine("");
+
+  while ( getline(forestStream,newLine) ) {
+    /* IMPLEMENT */
+  }
+
 }
 
 StochasticForest::~StochasticForest() {
