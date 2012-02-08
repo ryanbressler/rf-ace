@@ -14,6 +14,8 @@ namespace utils {
   // Removes missing values from the provided data vector
   vector<num_t> removeNANs(const vector<num_t>& x);
 
+  int str2int(const string& str);
+
   // Chomps a string, i.e. removes all the trailing end-of-line characters
   string chomp(const string& str);
   

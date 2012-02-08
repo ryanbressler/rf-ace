@@ -57,7 +57,7 @@ private:
   void growCategoricalGBT();
 
   // TODO: StochasticForest::transformLogistic() should be moved elsewhere
-  void transformLogistic(const size_t numClasses, vector<num_t>& prediction, vector<num_t>& probability);
+  void transformLogistic(vector<num_t>& prediction, vector<num_t>& probability);
 
   // TODO: predictSampleByTree() and percolateSampleIdx families in StochasticForest need to be fused together 
   num_t predictSampleByTree(size_t sampleIdx, size_t treeIdx);
@@ -80,6 +80,8 @@ private:
   string targetName_;
 
   size_t nTrees_;
+
+  size_t nCategories_;
 
   //Root nodes for every tree
   vector<RootNode*> rootNodes_;

@@ -21,6 +21,16 @@ vector<num_t> utils::removeNANs(const vector<num_t>& x) {
   return(trimmed);
 }
 
+int utils::str2int(const string& str) {
+
+  stringstream ss( utils::chomp(str) );
+  int ret;
+  ss >> ret;
+
+  return( ret );
+
+}
+
 // Makes a copy of the string, chomps, and returns
 string utils::chomp(const string& str) {
   
