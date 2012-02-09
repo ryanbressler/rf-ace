@@ -1,6 +1,6 @@
 #summary Manual pages.
 
-*The manual pages have been written on the basis of RF-ACE verson 0.9.7*
+*The manual pages have been written on the basis of RF-ACE verson 0.9.9*
 
 = Description =
 
@@ -16,10 +16,6 @@ svn checkout http://rf-ace.googlecode.com/svn/trunk/ rf-ace
 Compiler makefiles for Linux (`Makefile`) and Visual Studio for Windows (`make.bat`) are provided in the package. In Linux, you can compile the program by typing 
 {{{
 make
-}}}
-or
-{{{
-make rf_ace
 }}}
 
 In Windows and using Visual Studio, first open up the Visual Studio terminal and execute either `make_win32.bat` or `make_win64.bat` by typing
@@ -73,21 +69,10 @@ When the feature matrix is as ARFF, the aforementioned constraints for feature h
 
 Read more about [http://www.cs.waikato.ac.nz/~ml/weka/arff.html ARFF specification].      
 
-= Help =
-The following examples follow Linux syntax. Type 
-{{{
-bin/rf_ace --help
-}}}
-or 
-{{{
-bin/rf_ace -h
-}}}
-to bring up help, describing all the required and optional arguments one can set for RF-ACE analysis.
-
-= Feature Selection = 
+= Feature Selection ( binary: rf-ace-filter )= 
 RF-ACE performs feature selection for a given target and feature matrix as follows:
 {{{
-bin/rf_ace -I data.afm -i target -O associations.tsv
+bin/rf-ace-filter -I data.afm -i target -O associations.tsv
 }}}   
 The parameter `-I / --traindata` is used to specify the feature matrix, `-i / --target` to specify the target, and `-O / --associations` to specify the output file for associations. The format of the association list is as follows (one entry per line):
 {{{
@@ -96,7 +81,14 @@ TARGET \t PREDICTOR \t LOG10(P-VALUE) \t IMPORTANCE \t CORRELATION \t NSAMPLES
 where `NSAMPLES` is the number of non-missing samples shared by the target and predictor.
 
 == Specifying target as index ==
-It is possible to omit using the name of the feature as the argument for `-i / --target`, but instead give the target as an integer between `0,1,...,N-1`, where `N-1` is the number of features. The integer specifies the position in the feature matrix at which the target is located.
+It is possible to omit using the name of the feature as the argument for `-i / --target`, but instead give the target as an integer between `0,1,...,N-1`, where `N-1` is the number of features. The integer specifies the position in the feature matrix at which the target is located ( assume 0 <= k <= N-1 ):
+{{{
+bin/rf-ace-filter -I data.afm -i k -O associations.tsv
+}}}
+
+= Building predictor ( binary: rf-ace-build-predictor )=
+
+= Predicting with novel data (binary: rf-ace-predict )=
 
 = Parameters =
 === `-I / --traindata` ===           
