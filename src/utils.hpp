@@ -19,8 +19,13 @@ namespace utils {
   // Chomps a string, i.e. removes all the trailing end-of-line characters
   string chomp(const string& str);
   
+  // Maps a delimited list of key-value pairs 
+  map<string,string> keys2vals(string str, 
+			       const char delimiter, 
+			       const char separator);
+  
   // Splits a delimited string
-  vector<string> split(string str, const char delimiter);
+  vector<string> split(const string str, const char delimiter);
 
   // Splits a delimited stream
   vector<string> split(istream& streamObj, const char delimiter);

@@ -47,7 +47,25 @@ string utils::chomp(const string& str) {
   return( terminatorIdx != -1 ? ret.substr(0,terminatorIdx) : ret );
 }
 
-vector<string> utils::split(string str, const char delimiter) {
+map<string,string> utils::keys2vals(const string str,
+				    const char delimiter,
+				    const char separator) {
+
+  map<string,string> ret;
+
+  vector<string> items = utils::split(str,delimiter);
+
+  for( size_t i = 0; i < items.size(); ++i ) {
+    vector<string> foo = utils::split(items[i],separator);
+    ret[foo[0]] = foo[1];
+  }
+
+  return( ret );
+
+}
+
+
+vector<string> utils::split(const string str, const char delimiter) {
   stringstream streamObj(str);
   return( utils::split(streamObj,delimiter) );
 }
@@ -103,7 +121,7 @@ set<string> utils::readFeatureMask(Treedata& treeData, const string& fileName) {
 
   } else {
 
-    string newFeature;
+    //string newFeature;
 
     featureMaskSet.insert( newFeature );
 

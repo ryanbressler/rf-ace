@@ -76,9 +76,9 @@ namespace rface {
     
     //Before number crunching, print values of parameters of RF-ACE
     cout << "General configuration:" << endl;
-    cout << "    nfeatures" << setw(8) << "" << "= " << nAllFeatures << endl;
-    cout << "    nsamples"  << setw(9) << "" << "= " << treeData.nRealSamples(targetIdx) << " / " << treeData.nSamples() << " ( " << 100.0 * ( 1 - realFraction ) << " % missing )" << endl;
-    cout << "    tree type" << setw(8) << "" << "= ";
+    cout << "    nfeatures" << setw(options::maxWidth-9) << "" << "= " << nAllFeatures << endl;
+    cout << "    nsamples"  << setw(options::maxWidth-8) << "" << "= " << treeData.nRealSamples(targetIdx) << " / " << treeData.nSamples() << " ( " << 100.0 * ( 1 - realFraction ) << " % missing )" << endl;
+    cout << "    tree type" << setw(options::maxWidth-9) << "" << "= ";
     if(treeData.isFeatureNumerical(targetIdx)) { cout << "Regression CART" << endl; } else { cout << treeData.nCategories(targetIdx) << "-class CART" << endl; }
     cout << "  --" << gen_op.dataDelimiter_l << setw( options::maxWidth - gen_op.dataDelimiter_l.size() ) << ""
 	 << "= '" << gen_op.dataDelimiter << "'" << endl;
