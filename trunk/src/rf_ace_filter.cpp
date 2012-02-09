@@ -121,28 +121,32 @@ int main(const int argc, char* const argv[]) {
   
   size_t nFeatures = treedata.nFeatures();
   
-  size_t nSignificantFeatures = 0;
+  //size_t nSignificantFeatures = 0;
   
   // Go through each feature, and keep those having p-value higher than the threshold. 
   // Save the kept and removed features, and remember to accumulate the counter
-  for ( size_t featureIdx = 0; featureIdx < nFeatures; ++featureIdx ) {
+  /*
+    for ( size_t featureIdx = 0; featureIdx < nFeatures; ++featureIdx ) {
     
     if ( featureIdx == targetIdx || pValues[featureIdx] <= RF_op.pValueThreshold ) {
-      featureNames.insert(treedata.getFeatureName(featureIdx));
-      pValues[nSignificantFeatures] = pValues[featureIdx];
-      importanceValues[nSignificantFeatures] = importanceValues[featureIdx];
-      ++nSignificantFeatures;
+    featureNames.insert(treedata.getFeatureName(featureIdx));
+    pValues[nSignificantFeatures] = pValues[featureIdx];
+    importanceValues[nSignificantFeatures] = importanceValues[featureIdx];
+    ++nSignificantFeatures;
     } 
-  }
+    }
+  */
   
   // Resize containers
-  treedata.whiteList( featureNames );
-  pValues.resize( nSignificantFeatures );
-  importanceValues.resize ( nSignificantFeatures );
+  //treedata.whiteList( featureNames );
+  //pValues.resize( nSignificantFeatures );
+  //importanceValues.resize ( nSignificantFeatures );
   
-  targetIdx = treedata.getFeatureIdx(gen_op.targetStr);
-  assert( gen_op.targetStr == treedata.getFeatureName(targetIdx) );
+  //targetIdx = treedata.getFeatureIdx(gen_op.targetStr);
+  //assert( gen_op.targetStr == treedata.getFeatureName(targetIdx) );
   
+  size_t nSignificantFeatures = 0;
+
   if( gen_op.output != "" ) {
     
     ofstream toAssociationFile(gen_op.output.c_str());
@@ -151,6 +155,8 @@ int main(const int argc, char* const argv[]) {
     vector<size_t> refIcs( treedata.nFeatures() );
     bool isIncreasingOrder = true;
     datadefs::sortDataAndMakeRef(isIncreasingOrder,pValues,refIcs);
+    assert( pValues.size() == refIcs.size() );
+    assert( treedata.nFeatures() == refIcs.size() );
     datadefs::sortFromRef<num_t>(importanceValues,refIcs);
     
     assert( gen_op.targetStr == treedata.getFeatureName(targetIdx) );
@@ -165,6 +171,8 @@ int main(const int argc, char* const argv[]) {
       if ( featureIdx == targetIdx ) {
 	continue;
       }
+
+      ++nSignificantFeatures;
       
       num_t log10p = log10(pValues[i]);
       if ( log10p < -30.0 ) {
@@ -180,10 +188,11 @@ int main(const int argc, char* const argv[]) {
   }
   
   
+  
   // Print some statistics
   // NOTE: we're subtracting the target from the total head count, that's why we need to subtract by 1
-  cout << "DONE, " << treedata.nFeatures() - 1 << " / " << nFeatures  - 1 << " features ( "
-       << 100.0 * ( treedata.nFeatures() - 1 ) / ( nFeatures - 1 ) << " % ) left " << endl;
+  cout << "DONE, " << nSignificantFeatures << " / " << nFeatures  - 1 << " features ( "
+       << 100.0 * nSignificantFeatures / ( nFeatures - 1 ) << " % ) left " << endl;
   
   if ( gen_op.log != "" ) {
     

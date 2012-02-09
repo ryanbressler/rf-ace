@@ -319,10 +319,9 @@ namespace datadefs {
    !! Correctness: this will fail if any of the contents of refIcs fall outside
        of the normal scope of vector<T>& data.
    */
-  template <typename T> void sortFromRef(
-    vector<T>& data,
-    vector<size_t> const& refIcs
-    ) {
+  template <typename T> void sortFromRef(vector<T>& data,
+					 vector<size_t> const& refIcs
+					 ) {
     assert(data.size() == refIcs.size());  
     vector<T> foo = data;
     int n = data.size();

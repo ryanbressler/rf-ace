@@ -69,23 +69,28 @@ public:
 				  vector<num_t>& featureData1, 
 				  vector<num_t>& featureData2);
 
-  void getFilteredAndSortedFeatureDataPair(const size_t targetIdx, 
-					   const size_t featureIdx, 
-					   vector<size_t>& sampleIcs, 
-					   vector<num_t>& targetData, 
-					   vector<num_t>& featureData);
-
-  void getFilteredAndSortedFeatureDataPair2(const size_t targetIdx,
-					    const size_t featureIdx,
-					    vector<size_t>& sampleIcs,
-					    vector<num_t>& targetData,
-					    vector<num_t>& featureData);
   
+  /*
+    void getFilteredAndSortedFeatureDataPair(const size_t targetIdx, 
+    const size_t featureIdx, 
+    vector<size_t>& sampleIcs, 
+    vector<num_t>& targetData, 
+    vector<num_t>& featureData);
+    
+    
+    void getFilteredAndSortedFeatureDataPair2(const size_t targetIdx,
+    const size_t featureIdx,
+    vector<size_t>& sampleIcs,
+    vector<num_t>& targetData,
+    vector<num_t>& featureData);
+  */    
+    
   void getFilteredAndSortedFeatureDataPair3(const size_t targetIdx,
 					    const size_t featureIdx,
 					    vector<size_t>& sampleIcs,
 					    vector<num_t>& targetData,
 					    vector<num_t>& featureData);
+  
 
 
   string getRawFeatureData(const size_t featureIdx, const size_t sampleIdx);
@@ -116,7 +121,7 @@ private:
 
   struct Feature {
     vector<num_t> data;
-    vector<size_t> sortOrder;
+    //vector<size_t> sortOrder;
     bool isNumerical;
     map<string,num_t> mapping;
     map<num_t,string> backMapping;
@@ -144,10 +149,10 @@ private:
   bool isValidCategoricalHeader(const string& str);
   bool isValidFeatureHeader(const string& str);
 
-  //NOTE: original contents in ics will be replaced.
+  // NOTE: original contents in ics will be replaced.
   void permute(vector<size_t>& ics);
 
-  //Permutes data.
+  // Permutes data.
   void permute(vector<num_t>& data);
 
   // A helper function that creates sort indices for the feature for fast lookup
@@ -165,6 +170,17 @@ private:
   //map<string,size_t> name2idxHashTest_;
 
   MTRand_int32 randomInteger_;
+
+  /*
+    void initTemp();
+    
+    struct Temp {
+    vector<num_t> featureDataCopy;
+    vector<num_t> targetDataCopy;
+    vector<size_t> sampleIcsCopy;
+    vector<size_t> multiplicity;
+    } temp_;
+  */
 };
 
 #endif
