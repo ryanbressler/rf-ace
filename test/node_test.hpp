@@ -272,6 +272,9 @@ void NodeTest::test_numericalFeatureSplit() {
 
   CPPUNIT_ASSERT( fabs(splitFitness - 0.530492285084497) < 1e-10 );
 
+  //datadefs::print(sampleIcs_left);
+  //datadefs::print(sampleIcs_right);
+
   CPPUNIT_ASSERT(sampleIcs_left.size() == 4);
   for(size_t i = 0; i < sampleIcs_left.size(); ++i) {
     size_t idx = sampleIcs_left[i];

@@ -28,7 +28,6 @@ public:
   ~Node();
 
   //Gets the splitter for the node
-  //inline string splitterName() { return( splitter_->name() ); }
   inline size_t splitterIdx() { return( splitterIdx_ ); }
 
   //Sets a splitter feature for the node.
@@ -54,8 +53,6 @@ public:
   Node* rightChild();
 
   void deleteTree();
-
-  //size_t nNodes();
 
   void print(ofstream& toFile);
   void print(string& traversal, ofstream& toFile);
@@ -124,16 +121,12 @@ private:
                                set<num_t>& splitValues_right,
                                num_t& splitFitness);
 
-  //A recursive function that will accumulate the number of descendant nodes the current nodes has
-  //void recursiveNDescendantNodes(size_t& n);
 
   size_t splitterIdx_;
   Splitter* splitter_;
 
   num_t trainPrediction_;
-  size_t nTestSamples_;
-  num_t testPredictionError_;
-    
+
   Node* leftChild_;
   Node* rightChild_;
 

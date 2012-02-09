@@ -6,11 +6,7 @@
 Node::Node():
   splitterIdx_(0),
   splitter_(NULL),
-  //isTrainPredictionSet_(false),
   trainPrediction_(datadefs::NUM_NAN),
-  nTestSamples_(0),
-  testPredictionError_(0.0),
-  //hasChildren_(false),
   leftChild_(NULL),
   rightChild_(NULL) {
   

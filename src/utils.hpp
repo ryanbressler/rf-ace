@@ -1,7 +1,12 @@
+#ifndef UTILS_HPP
+#define UTILS_HPP
+
 #include <vector>
 #include <set>
 #include <string>
 #include <istream>
+#include <algorithm>
+#include <cstdlib>
 #include "datadefs.hpp"
 #include "treedata.hpp"
 
@@ -39,5 +44,10 @@ namespace utils {
   // MAY BECOME OBSOLETE
   void pruneFeatures(Treedata& treeData, const string& targetName, const size_t minSamples);
 
+  void filterSort(const bool isIncreasingOrder,
+		  vector<num_t>& data,
+		  vector<size_t>& refIcs);
+  
 }
 
+#endif

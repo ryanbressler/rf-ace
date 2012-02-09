@@ -148,7 +148,7 @@ string Splitter::leftSplitValues() {
     ss << splitLeftLeqValue_;
   } else {
 
-    ss << "{";
+    //ss << "{";
 
     set<string>::const_iterator it(splitLeftValues_.begin());
 
@@ -161,7 +161,7 @@ string Splitter::leftSplitValues() {
       ss << ":" << *it;
     }
 
-    ss << "}";
+    //ss << "}";
 
   }
   
@@ -184,7 +184,7 @@ string Splitter::rightSplitValues() {
     ss << splitLeftLeqValue_;
   } else {
 
-    ss << "{";
+    //ss << "{";
 
     set<string>::const_iterator it(splitRightValues_.begin());
     
@@ -197,7 +197,7 @@ string Splitter::rightSplitValues() {
       ss << ":" << *it;
     }
 
-    ss << "}";
+    //ss << "}";
     
   }
   
@@ -218,7 +218,7 @@ string Splitter::print() {
   ss << "SPLITTER=" << this->name() 
      << ",SPLITTERTYPE=" << this->type()
      << ",LVALUES=" << this->leftSplitValues()
-     << ",RVALUES=" << this->rightSplitValues();
+     << ",RVALUES=" << this->rightSplitValues() << "";
 
   string str("");
   

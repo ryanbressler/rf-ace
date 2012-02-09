@@ -151,5 +151,35 @@ void utils::pruneFeatures(Treedata& treeData, const string& targetName, const si
 
 }
 
+void utils::filterSort(const bool isIncreasingOrder,
+		       vector<num_t>& data,
+		       vector<size_t>& refIcs) {
+  
+  //assert(v.size() == ref_ics.size());
+  vector<pair<num_t,size_t> > pairedv(data.size()); // !! Understandibility:
+  // !! consider a typedef
+  // !! pairedv, leaving the
+  // !! actual variable name
+  // !! as something more
+  // !! descriptive.
+  refIcs.resize(data.size()); // The actual allocation of refIcs is irrelevant;
+  //  its contained data will be flattened and
+  //  resized. Note that any values that are unsafe
+  //  for equals may cause an unintended memory leak.
+  datadefs::range(refIcs);
+  
+  datadefs::make_pairedv<num_t,size_t>(data,refIcs,pairedv);
+  
+  pairedv.erase(remove_if(pairedv.begin(),pairedv.end(),&datadefs::pairedIsNAN), pairedv.end());
+  
+  if(isIncreasingOrder) {
+    sort(pairedv.begin(),pairedv.end(),datadefs::increasingOrder<size_t>());
+  } else {
+    sort(pairedv.begin(),pairedv.end(),datadefs::decreasingOrder<size_t>());
+  }
+  
+  datadefs::separate_pairedv<num_t,size_t>(pairedv,data,refIcs);
+}
+
 
 

@@ -112,8 +112,8 @@ namespace rface {
     cout << "Significance analysis configuration:" << endl;
     cout << "  --" << RF_op.nPerms_l << setw( options::maxWidth - RF_op.nPerms_l.size() ) << ""
 	 << "= " << RF_op.nPerms << endl;
-    cout << "    test type" << setw(8) << "" << "= T-test" << endl;
-    cout << "  --pthresold" << setw(8) << "" << "= " << RF_op.pValueThreshold << endl;
+    cout << "    test type" << setw(options::maxWidth-9) << "" << "= T-test" << endl;
+    cout << "  --pthresold" << setw(options::maxWidth-9) << "" << "= " << RF_op.pValueThreshold << endl;
     cout << endl;
 
   }
