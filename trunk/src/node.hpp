@@ -44,6 +44,7 @@ public:
   Node* percolateData(Treedata* treeData, const size_t sampleIdx);
   void  percolateData(Treedata* treeData, const size_t sampleIdx, Node** nodep);
 
+  void setTrainPrediction(const num_t trainPrediction);
   num_t getTrainPrediction();
 
   //Logic test whether the node has children or not

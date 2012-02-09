@@ -142,11 +142,13 @@ string Splitter::leftSplitValues() {
   
   stringstream ss;
 
-  ss << "{";
+  //ss << "{";
 
   if ( splitterType_ == NUMERICAL_SPLITTER ) {
-    ss << "<" << splitLeftLeqValue_;
+    ss << splitLeftLeqValue_;
   } else {
+
+    ss << "{";
 
     set<string>::const_iterator it(splitLeftValues_.begin());
 
@@ -159,9 +161,11 @@ string Splitter::leftSplitValues() {
       ss << ":" << *it;
     }
 
+    ss << "}";
+
   }
   
-  ss << "}";
+  //ss << "}";
 
   string str;
 
@@ -174,11 +178,13 @@ string Splitter::rightSplitValues() {
 
   stringstream ss;
 
-  ss << "{";
+  // ss << "{";
 
   if ( splitterType_ == NUMERICAL_SPLITTER ) {
-    ss << ">=" << splitLeftLeqValue_;
+    ss << splitLeftLeqValue_;
   } else {
+
+    ss << "{";
 
     set<string>::const_iterator it(splitRightValues_.begin());
     
@@ -190,10 +196,12 @@ string Splitter::rightSplitValues() {
     for ( ; it != splitRightValues_.end(); ++it ) {
       ss << ":" << *it;
     }
+
+    ss << "}";
     
   }
   
-  ss << "}";
+  // ss << "}";
   
   string str;
   

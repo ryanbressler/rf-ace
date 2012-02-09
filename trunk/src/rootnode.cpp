@@ -3,6 +3,10 @@
 #include "rootnode.hpp"
 #include "datadefs.hpp"
 
+RootNode::RootNode(): 
+  Node(),
+  nNodes_(1) { /* EMPTY CONSTRUCTOR */ }
+
 RootNode::RootNode(bool sampleWithReplacement,
                    num_t sampleSizeFraction,
                    size_t maxNodesToStop,
@@ -26,12 +30,7 @@ RootNode::RootNode(bool sampleWithReplacement,
   GI_.partitionSequence = partitionSequence; 
 }
 
-
-RootNode::~RootNode() { 
-  /* Empty dtor */
-}
-
-
+RootNode::~RootNode() { /* EMPTY DESTRUCTOR */ }
 
 void RootNode::growTree(Treedata* treeData,
                         const size_t targetIdx,

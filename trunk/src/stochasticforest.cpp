@@ -43,49 +43,31 @@ StochasticForest::StochasticForest(const string& forestFile):
   assert(forestStream.good());
   
   string newLine("");
-
-  // Verify that the saved model is of type GBT
   getline(forestStream,newLine);
-  newLine = utils::chomp(newLine);
-  vector<string> items = utils::split(newLine,'=');
-  assert( items[0] == "FOREST" ); 
-  assert( items[1] == "GBT" );
-  assert( forestStream.good() );
 
-  // Extract the name of the target feature
-  getline(forestStream,newLine);
-  newLine = utils::chomp(newLine);
-  items = utils::split(newLine,'=');
-  assert( items[0] == "NTREES" );
-  nTrees_ = static_cast<size_t>( utils::str2int(items[1]) );
+  map<string,string> forestSetup = utils::keys2vals(newLine,',','=');
+
+  assert( forestSetup["FOREST"] == "GBT" );
+  learnedModel_ = GBT_MODEL;
+
+  assert( forestSetup.find("NTREES") != forestSetup.end() );
+  nTrees_ = static_cast<size_t>( utils::str2int(forestSetup["NTREES"]) );
   rootNodes_.resize(nTrees_);
-  assert( forestStream.good() );
 
-  // Extract the name of the target feature
-  getline(forestStream,newLine);
-  newLine = utils::chomp(newLine);
-  items = utils::split(newLine,'=');
-  assert( items[0] == "TARGET" );
-  targetName_ = items[1];
-  assert( forestStream.good() );
+  assert( forestSetup.find("TARGET") != forestSetup.end() );
+  targetName_ = forestSetup["TARGET"];
 
-  // Extract the name of the target feature
-  getline(forestStream,newLine);
-  newLine = utils::chomp(newLine);
-  items = utils::split(newLine,'=');
-  assert( items[0] == "NCATEGORIES" );
-  nCategories_ = static_cast<size_t>(utils::str2int(items[1]));
-  assert( forestStream.good() );
+  assert( forestSetup.find("NCATEGORIES") != forestSetup.end() );
+  nCategories_ = static_cast<size_t>(utils::str2int(forestSetup["NCATEGORIES"]));
 
-  // Extract the amount of shrinkage per tree
-  getline(forestStream,newLine);
-  newLine = utils::chomp(newLine);
-  items = utils::split(newLine,'=');
-  assert( items[0] == "SHRINKAGE" );
-  shrinkage_ = datadefs::str2num(items[1]);
+  assert( forestSetup.find("SHRINKAGE") != forestSetup.end() );
+  shrinkage_ = datadefs::str2num(forestSetup["SHRINKAGE"]);
+  
   assert( forestStream.good() );
+ 
+  int treeIdx = -1;
 
-  size_t nTreesRead = 0;
+  vector<map<string,Node*> > forestMap(nTrees_);
 
   // Read the forest
   while ( getline(forestStream,newLine) ) {
@@ -98,15 +80,53 @@ StochasticForest::StochasticForest(const string& forestFile):
       continue;
     }
 
-    if ( newLine.compare(0,5,"TREE=") ) { 
-      ++nTreesRead;
+    if ( newLine.compare(0,5,"TREE=") == 0 ) { 
+      ++treeIdx;
+      //cout << treeIdx << " vs " << newLine << " => " << utils::str2int(utils::split(newLine,'=')[1]) << endl;
+      assert( treeIdx == utils::str2int(utils::split(newLine,'=')[1]) );
+      continue;
     }
+        
+    //cout << newLine << endl;
 
-    vector<string> items = utils::split(newLine,',');
+    map<string,string> nodeMap = utils::keys2vals(newLine,',','=');
 
-    if ( utils::split(items[0],'=')[0] == "TREE" ) {
-      datadefs::print( utils::split(items[0],'=') );
+    // If the node is rootnode, we will create a new RootNode object and assign a reference to it in forestMap
+    if ( nodeMap["NODE"] == "*" ) {
+      rootNodes_[treeIdx] = new RootNode();
+      forestMap[treeIdx]["*"] = rootNodes_[treeIdx];
     }
+      
+    Node* nodep = forestMap[treeIdx][nodeMap["NODE"]];
+
+    // Set train prediction of the node
+    nodep->setTrainPrediction(datadefs::str2num(nodeMap["PRED"]));
+
+    //cout << " => stored in " << nodep << endl;
+    //cout << " => prediction " << nodep->getTrainPrediction() << " set" << endl;
+    
+    // If the node has a splitter...
+    if ( nodeMap.find("SPLITTER") != nodeMap.end() ) {
+      
+      // If the splitter is numerical...
+      if ( nodeMap["SPLITTERTYPE"] == "NUMERICAL" ) {
+	
+	nodep->setSplitter(0,nodeMap["SPLITTER"],datadefs::str2num(nodeMap["LVALUES"]));
+	
+	
+
+	//cout << " => generated new node " << nodeMap["NODE"]+"L" << " at address " << nodep->leftChild() << endl;
+	//cout << " => generated new node " << nodeMap["NODE"]+"R" << " at address " << nodep->rightChild() << endl;
+
+	forestMap[treeIdx][nodeMap["NODE"]+"L"] = nodep->leftChild();
+	forestMap[treeIdx][nodeMap["NODE"]+"R"] = nodep->rightChild();
+	
+      } else {
+	cerr << "StochasticForest::StochasticForest(forestFile) -- setting a categorical splitter has not been implemented" << endl;
+	exit(1);
+      }
+    }
+    
   }
   
 }
@@ -129,24 +149,22 @@ void StochasticForest::printToFile(const string& fileName) {
   ofstream toFile( fileName.c_str() );
 
   if ( learnedModel_ == GBT_MODEL ) {
-    toFile << "FOREST=GBT" << endl;
+    toFile << "FOREST=GBT";
   } else if ( learnedModel_ == RF_MODEL ) {
-    toFile << "FOREST=RF" << endl; 
+    toFile << "FOREST=RF"; 
   }
 
-  toFile << "NTREES=" << nTrees_ << endl;
-  toFile << "TARGET=" << targetName_ << endl;
-  toFile << "NCATEGORIES=" << nCategories_ << endl;
-  toFile << "SHRINKAGE=" << shrinkage_ << endl;
+  toFile << ",NTREES=" << nTrees_;
+  toFile << ",TARGET=" << targetName_;
+  toFile << ",NCATEGORIES=" << nCategories_;
+  toFile << ",SHRINKAGE=" << shrinkage_ << endl;
 
   // Save each tree in the forest
   for ( size_t treeIdx = 0; treeIdx < rootNodes_.size(); ++treeIdx ) {
-    toFile << endl << "TREE=" << treeIdx << endl;
+    toFile << "TREE=" << treeIdx << endl;
     rootNodes_[treeIdx]->print(toFile);
   }
   
-  // TODO: StcohasticForest::printToFile() must also print the forest parameters
-
   // Close stream
   toFile.close();
   
@@ -212,9 +230,6 @@ void StochasticForest::learnGBT(const size_t nMaxLeaves,
 				const num_t shrinkage, 
 				const num_t subSampleSize) {
 
-  //size_t targetIdx = treeData_->getFeatureIdx(targetName_);
-  //size_t numClasses = treeData_->nCategories(targetIdx);
-  
   shrinkage_ = shrinkage;
 
   if (nCategories_ > 0) {

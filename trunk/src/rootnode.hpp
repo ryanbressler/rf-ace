@@ -8,6 +8,7 @@
 class RootNode : public Node {
 public:
 
+  RootNode();
   
   RootNode(bool sampleWithReplacement,
            num_t sampleSizeFraction,

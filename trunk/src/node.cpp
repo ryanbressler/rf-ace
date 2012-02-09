@@ -46,7 +46,7 @@ void Node::deleteTree() {
 // !! here; notes on the abstraction should fall in the header file.
 void Node::setSplitter(const size_t splitterIdx, const string& splitterName, num_t splitLeftLeqValue) {
   
-  if ( leftChild_ || rightChild_ ) {
+  if ( this->hasChildren() ) {
     cerr << "Cannot set a splitter to a node twice!" << endl;
     exit(1);
   }
@@ -64,7 +64,7 @@ void Node::setSplitter(const size_t splitterIdx, const string& splitterName, num
 // !! here; notes on the abstraction should fall in the header file.
 void Node::setSplitter(const size_t splitterIdx, const string& splitterName, const set<string>& leftSplitValues, const set<string>& rightSplitValues) {
 
-  if ( leftChild_ || rightChild_ ) {
+  if ( this->hasChildren() ) {
     cerr << "Cannot set a splitter to a node twice!" << endl;
     exit(1);
   }
@@ -193,11 +193,14 @@ void Node::print(string& traversal, ofstream& toFile) {
 
 void Node::print(ofstream& toFile) {
   
-  string traversal("");
+  string traversal("*");
   this->print(traversal,toFile);
 
 }
 
+void Node::setTrainPrediction(const num_t trainPrediction) {
+  trainPrediction_ = trainPrediction;
+}
 
 // !! Documentation: just your usual accessor, returning a copy of
 // !! trainPrediction_.
