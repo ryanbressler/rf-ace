@@ -33,7 +33,7 @@ void RootNodeTest::test_regressionTreeSplitting() {
   size_t nFeaturesForSplit = 1;
   bool useContrasts = true;
   size_t numClasses = 0;
-  PartitionSequence::PartitionSequence* partitionSequence = new PartitionSequence(5);
+  PartitionSequence::PartitionSequence* partitionSequence = new PartitionSequence;
 
   RootNode::RootNode rootNode(sampleWithReplacement,
 			      sampleSizeFraction,

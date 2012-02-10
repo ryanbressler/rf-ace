@@ -10,7 +10,7 @@ class PartitionSequence {
 
 public:
 
-  PartitionSequence(const size_t nMaxLength);
+  PartitionSequence();
   ~PartitionSequence();
 
   bool isAdded(const size_t pos);
@@ -18,11 +18,16 @@ public:
 
 private:
 
-  typedef size_t graycode_t;
+  size_t grayCode(const size_t pos);
 
-  vector<graycode_t> graycode_;
-  vector<size_t> bitSequence_;
-  vector<bool> addBit_;
+  //typedef long int graycode_t;
+    
+  //unsigned bit_ : 1 << 63;
+  //unsigned isAdded_ : 1 << 63;
+    
+  //vector<graycode_t> graycode_;
+  // vector<size_t> bitSequence_;
+  // vector<bool> addBit_;
 
 };
 

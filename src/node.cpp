@@ -252,9 +252,11 @@ void Node::recursiveNodeSplit(Treedata* treeData,
     }
   } else {
     for(size_t i = 0; i < GI.nFeaturesForSplit; ++i) {
+      //cout << " " << i;
       featureSampleIcs[i] = i;
     }
   }
+  //cout << endl;
 
   vector<size_t> sampleIcs_left,sampleIcs_right;
 
@@ -543,10 +545,14 @@ void Node::categoricalFeatureSplit(Treedata* treedata,
 				   set<num_t>& splitValues_right,
                                    num_t& splitFitness) {
 
+  //cout << "Node::categoricalFeatureSplit() started..." << endl;
+
   vector<num_t> tv,fv;
 
   sampleIcs_left.clear();
   treedata->getFilteredFeatureDataPair(targetIdx,featureIdx,sampleIcs_right,tv,fv);
+
+  //cout << " ==> Data pair ( " << targetIdx << " <- " << featureIdx << " ) filtered" << endl;  
 
   // Map all feature categories to the corresponding samples and represent it as map. The map is used to assign samples to left and right branches
   map<num_t,vector<size_t> > fmap_right;
@@ -558,6 +564,12 @@ void Node::categoricalFeatureSplit(Treedata* treedata,
   datadefs::map_data(fv,fmap_right,n_tot);
   size_t n_right = n_tot;
   size_t n_left = 0;
+
+  //cout << " ==> Feature data mapped ( cardinality " << fmap_right.size() << " ): " << endl << " [ ";
+  //for ( map<num_t,vector<size_t> >::const_iterator it(fmap_right.begin()); it != fmap_right.end(); ++it ) {
+  //  cout << " " << it->first;
+  //}
+  //cout << " ]" << endl;
 
   if(n_tot < GI.minNodeSizeToStop) {
     splitFitness = datadefs::NUM_NAN;
@@ -572,11 +584,17 @@ void Node::categoricalFeatureSplit(Treedata* treedata,
     ++iter;
   }
 
+  assert( int2num.size() == fmap_right.size() );
+
+  //cout << " ==> int2num mapping done" << endl;
+
   // A variable to determine the index for the last sample in the partition sequence: lastSample = GI.partitionSequence->at(psMax)
   size_t psMax = 0;
   if ( fmap_right.size() > 2 ) {
-    psMax = ( 1 << (fmap_right.size() - 2) ); // 2^( fmap_right.size() - 2 )
+    psMax = ( 1 << (fmap_right.size() - 2) ) - 1; // 2^( fmap_right.size() - 2 )
   }
+
+  //cout << " ==> maximum length of the partitionsequence is " << psMax << endl;
 
   //cout << "Splitter has " << fmap_right.size() << " categories => psMax is " << psMax << endl;
 
@@ -606,6 +624,8 @@ void Node::categoricalFeatureSplit(Treedata* treedata,
       
 	//Take samples from right and put them left
 	map<num_t,vector<size_t> >::iterator it( fmap_right.find( int2num[ GI.partitionSequence->at(psIdx) ] ) );
+	//cout << "from right to left: psIdx = " << psIdx << ", PS(psIdx) = " << GI.partitionSequence->at(psIdx) << endl;
+	assert( it != fmap_right.end() );
 	for(size_t i = 0; i < it->second.size(); ++i) {
 	  //cout << " " << it->second[i];
 	  datadefs::forward_backward_sqerr(tv[ it->second[i] ],n_left,mu_left,se_left,n_right,mu_right,se_right);
@@ -622,7 +642,9 @@ void Node::categoricalFeatureSplit(Treedata* treedata,
 
         //Take samples from left back to right
 	map<num_t,vector<size_t> >::iterator it( fmap_left.find( int2num[ GI.partitionSequence->at(psIdx) ] ) );
-        for(size_t i = 0; i < it->second.size(); ++i) {
+	//cout << "from left to right: psIdx = " << psIdx << ", PS(psIdx) = " << GI.partitionSequence->at(psIdx) << endl;
+        assert( it != fmap_left.end() );
+	for(size_t i = 0; i < it->second.size(); ++i) {
 	  //cout << " " << it->second[i];
           //cout << tv[it->second[i]] << ": ";
           datadefs::forward_backward_sqerr(tv[ it->second[i] ],n_right,mu_right,se_right,n_left,mu_left,se_left);

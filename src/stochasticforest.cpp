@@ -27,11 +27,12 @@ StochasticForest::StochasticForest(Treedata* treeData, const string& targetName,
    *  treeData->nMaxCategories() - 1
    *
    */
-  if( treeData->nMaxCategories() >= 2 ) {
-    partitionSequence_ = new PartitionSequence( treeData_->nMaxCategories() - 1 );
-  } else {
-    partitionSequence_ = new PartitionSequence( 1 );
-  }
+  
+  //if( treeData->nMaxCategories() >= 1 ) {
+  partitionSequence_ = new PartitionSequence();
+  //} else {
+  //  partitionSequence_ = new PartitionSequence( 1 );
+  //}
     
 }
 
