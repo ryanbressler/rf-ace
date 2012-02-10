@@ -301,7 +301,7 @@ void NodeTest::test_categoricalFeatureSplit() {
   size_t targetIdx2 = 2;
 
   Node node;
-  PartitionSequence PS(n);
+  PartitionSequence PS;
 
   Node::GrowInstructions GI;
   GI.minNodeSizeToStop = 2;
