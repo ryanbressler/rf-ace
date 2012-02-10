@@ -27,9 +27,7 @@ using namespace std;
 using datadefs::num_t;
 
 
-void printPredictionToFile(StochasticForest& SF, Treedata& treeData, const string& targetName, const string& fileName);
-
-vector<string> readFeatureMask(const string& fileName);
+//vector<string> readFeatureMask(const string& fileName);
 
 int main(const int argc, char* const argv[]) {
 
@@ -94,27 +92,7 @@ int main(const int argc, char* const argv[]) {
     SF.printToFile( gen_op.output );
     cout << "DONE" << endl;
   }
-  
-  
-  // THIS CONTENT WILL BE MOVED TO THE PREDICTOR PROGRAM
-  if ( false ) {
     
-    cout << "===> Making predictions with test data... " << flush;
-    
-    Treedata treedata_test(gen_op.input,gen_op.dataDelimiter,gen_op.headerDelimiter);
-    
-    printPredictionToFile(SF,treedata_test,gen_op.targetStr,gen_op.output);
-    
-  } 
-
-  if ( false ) {
-    
-    cout << "===> Making predictions with train data... " << flush;
-    
-    printPredictionToFile(SF,treedata,gen_op.targetStr,gen_op.output);
-    
-  }
-  
   cout << "DONE" << endl;
   
   
@@ -151,38 +129,5 @@ int main(const int argc, char* const argv[]) {
   return(EXIT_SUCCESS);
 }
 
-void printPredictionToFile(StochasticForest& SF, Treedata& treeData, const string& targetName, const string& fileName) {
-
-  ofstream toPredictionFile(fileName.c_str());
-  
-  size_t targetIdx = treeData.getFeatureIdx(targetName);
-  
-  if ( treeData.isFeatureNumerical(targetIdx)) {
-    
-    vector<num_t> prediction;
-    vector<num_t> confidence;
-    SF.predict(&treeData,prediction,confidence);
-    
-    for(size_t i = 0; i < prediction.size(); ++i) {
-      toPredictionFile << targetName << "\t" << treeData.getSampleName(i) << "\t" << treeData.getRawFeatureData(targetIdx,i)
-		       << "\t" << prediction[i] << "\t" << setprecision(3) << confidence[i] << endl;
-    }
-    
-  } else {
-
-    vector<string> prediction;
-    vector<num_t> confidence;
-    SF.predict(&treeData,prediction,confidence);
-    
-    for(size_t i = 0; i < prediction.size(); ++i) {
-      toPredictionFile << targetName << "\t" << treeData.getSampleName(i) << "\t" << treeData.getRawFeatureData(targetIdx,i)
-                       << "\t" << prediction[i] << "\t" << setprecision(3) << confidence[i] << endl;
-    }
-    
-  }
-
-  toPredictionFile.close();
-   
-}
 
 

@@ -91,6 +91,12 @@ size_t PartitionSequence::at(const size_t pos) {
 
 }
 
+size_t PartitionSequence::upperLimit(const size_t nBits) {
+
+  return( nBits > 2 ? ( ( 1 << (nBits - 2) ) - 1 ) : 0 ); 
+
+}
+
 size_t PartitionSequence::grayCode(const size_t pos) {
 
   return( pos ^ (pos >> 1) );

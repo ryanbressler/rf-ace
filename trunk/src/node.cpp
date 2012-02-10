@@ -354,6 +354,8 @@ bool Node::regularSplitterSeek(Treedata* treeData,
     vector<size_t> newSampleIcs_left(0);
     vector<size_t> newSampleIcs_right = sampleIcs;
 
+    //cout << "Splitting with feature " << newSplitFeatureIdx << endl;
+
     if ( isFeatureNumerical ) {
       Node::numericalFeatureSplit(treeData,
 				  targetIdx,
@@ -545,64 +547,28 @@ void Node::categoricalFeatureSplit(Treedata* treedata,
 				   set<num_t>& splitValues_right,
                                    num_t& splitFitness) {
 
-  //cout << "Node::categoricalFeatureSplit() started..." << endl;
-
   vector<num_t> tv,fv;
 
   sampleIcs_left.clear();
   treedata->getFilteredFeatureDataPair(targetIdx,featureIdx,sampleIcs_right,tv,fv);
 
-  //cout << " ==> Data pair ( " << targetIdx << " <- " << featureIdx << " ) filtered" << endl;  
-
   // Map all feature categories to the corresponding samples and represent it as map. The map is used to assign samples to left and right branches
   map<num_t,vector<size_t> > fmap_right;
   map<num_t,vector<size_t> > fmap_left;
-  map<num_t,vector<size_t> > fmap_right_best;
-  map<num_t,vector<size_t> > fmap_left_best;
 
   size_t n_tot = 0;
   datadefs::map_data(fv,fmap_right,n_tot);
   size_t n_right = n_tot;
   size_t n_left = 0;
 
-  //cout << " ==> Feature data mapped ( cardinality " << fmap_right.size() << " ): " << endl << " [ ";
-  //for ( map<num_t,vector<size_t> >::const_iterator it(fmap_right.begin()); it != fmap_right.end(); ++it ) {
-  //  cout << " " << it->first;
-  //}
-  //cout << " ]" << endl;
-
   if(n_tot < GI.minNodeSizeToStop) {
-    splitFitness = datadefs::NUM_NAN;
+    splitFitness = 0.0;
     return;
   }
-  
-  map<size_t,num_t> int2num;
-  size_t iter = 0;
-  for ( map<num_t,vector<size_t> >::const_iterator it( fmap_right.begin() ); it != fmap_right.end(); ++it ) {
-    int2num.insert( pair<size_t,num_t>( iter, it->first ) );
-    //cout << iter << "->" << it->first << endl;
-    ++iter;
-  }
-
-  assert( int2num.size() == fmap_right.size() );
-
-  //cout << " ==> int2num mapping done" << endl;
-
-  // A variable to determine the index for the last sample in the partition sequence: lastSample = GI.partitionSequence->at(psMax)
-  size_t psMax = 0;
-  if ( fmap_right.size() > 2 ) {
-    psMax = ( 1 << (fmap_right.size() - 2) ) - 1; // 2^( fmap_right.size() - 2 )
-  }
-
-  //cout << " ==> maximum length of the partitionsequence is " << psMax << endl;
-
-  //cout << "Splitter has " << fmap_right.size() << " categories => psMax is " << psMax << endl;
 
   bool foundSplit = false;
 
   if ( treedata->isFeatureNumerical(targetIdx) ) {
-
-    //cout << "Target is numerical" << endl;
 
     num_t mu_right;
     num_t mu_left = 0.0;
@@ -613,64 +579,61 @@ void Node::categoricalFeatureSplit(Treedata* treedata,
     num_t se_best = se_right;
     num_t se_tot = se_right;
 
-    for ( size_t psIdx = 0; psIdx <= psMax; ++psIdx ) {
+    bool keepSplitting = true;
 
-      //cout << "psIdx = " << psIdx << " <= " << psMax << ", PS(psIdx) = " << GI.partitionSequence->at(psIdx) << " is thrown " << flush;
-            
-      // If the category is added from right to left
-      if ( GI.partitionSequence->isAdded(psIdx) ) {
+    while ( fmap_right.size() > 1 && keepSplitting ) {
 
-	//cout << "from right to left: ics [";
-      
-	//Take samples from right and put them left
-	map<num_t,vector<size_t> >::iterator it( fmap_right.find( int2num[ GI.partitionSequence->at(psIdx) ] ) );
-	//cout << "from right to left: psIdx = " << psIdx << ", PS(psIdx) = " << GI.partitionSequence->at(psIdx) << endl;
-	assert( it != fmap_right.end() );
-	for(size_t i = 0; i < it->second.size(); ++i) {
-	  //cout << " " << it->second[i];
+      map<num_t,vector<size_t> >::iterator it( fmap_right.begin() );
+
+      // We test each category one by one and see if the fitness becomes improved
+      while ( it != fmap_right.end() ) {
+
+        // Take samples from right and put them left
+        //cout << "from right to left: [";
+        for(size_t i = 0; i < it->second.size(); ++i) {
+          //cout << " " << it->second[i];
 	  datadefs::forward_backward_sqerr(tv[ it->second[i] ],n_left,mu_left,se_left,n_right,mu_right,se_right);
-	  //cout << n_left << "\t" << n_right << "\t" << se_left << "\t" << se_right << endl;
-	}
-	//cout << " ]" << endl;
-
-	fmap_left.insert( *it );
-	fmap_right.erase( it->first );
-
-      } else {
-	
-	//cout << "from left to right: ics [";
-
-        //Take samples from left back to right
-	map<num_t,vector<size_t> >::iterator it( fmap_left.find( int2num[ GI.partitionSequence->at(psIdx) ] ) );
-	//cout << "from left to right: psIdx = " << psIdx << ", PS(psIdx) = " << GI.partitionSequence->at(psIdx) << endl;
-        assert( it != fmap_left.end() );
-	for(size_t i = 0; i < it->second.size(); ++i) {
-	  //cout << " " << it->second[i];
-          //cout << tv[it->second[i]] << ": ";
-          datadefs::forward_backward_sqerr(tv[ it->second[i] ],n_right,mu_right,se_right,n_left,mu_left,se_left);
-          //cout << n_left << "\t" << n_right << "\t" << se_left << "\t" << se_right << endl;
         }
-	//cout << " ]" << endl;
+        //cout << " ]" << endl;
 
-	fmap_right.insert( *it );
-	fmap_left.erase( it->first );
+        //If the fitness becomes improved, make the proposed change, otherwise move samples back
+        if ( se_left+se_right < se_best ) { //&& n_left >= GI.minNodeSizeToStop && n_right >= GI.minNodeSizeToStop )
+
+          se_best = se_left + se_right;
+
+          fmap_left.insert( *it );
+          fmap_right.erase( it->first );
+
+	  foundSplit = true;
+
+          break;
+
+        } else {
+
+          //Take samples from left and put them right
+          //cout << "From left to right: [";
+          for(size_t i = 0; i < it->second.size(); ++i) {
+            //cout << " " << it->second[i];
+	    datadefs::forward_backward_sqerr(tv[ it->second[i] ],n_right,mu_right,se_right,n_left,mu_left,se_left);
+          }
+          //cout << " ]" << endl;
+
+        }
+
+        ++it;
+
+        if ( it == fmap_right.end() ) {
+          keepSplitting = false;
+        }
 
       }
 
-      if ( se_left+se_right < se_best && n_left >= GI.minNodeSizeToStop && n_right >= GI.minNodeSizeToStop ) {
-	foundSplit = true;
-	fmap_left_best = fmap_left;
-	fmap_right_best = fmap_right;
-	se_best = se_left + se_right;
-      }
     }
 
-    splitFitness = ( se_tot - se_best ) / se_tot;
+    splitFitness = ( se_left + se_right ) / se_tot;
 
   } else {
 
-    //cout << "Target is categorical" << endl;
-    
     map<num_t,size_t> freq_left,freq_right;
     size_t sf_left = 0;
     size_t sf_right;
@@ -680,61 +643,63 @@ void Node::categoricalFeatureSplit(Treedata* treedata,
     num_t sf_tot = sf_right;
     num_t nsf_best = 1.0 * sf_right / n_right;
     
-    for ( size_t psIdx = 0; psIdx <= psMax; ++psIdx ) {
-
-      //cout << "psIdx = " << psIdx << ", PS(psIdx) = " << GI.partitionSequence->at(psIdx) << " is thrown " << flush;
+    bool keepSplitting = true;
+    
+    while ( fmap_right.size() > 1 && keepSplitting ) {
       
-      // If the samples corresponding to the next shifted category is from right to left 
-      if ( GI.partitionSequence->isAdded(psIdx) ) {
+      map<num_t,vector<size_t> >::iterator it( fmap_right.begin() );
+      
+      // We test each category one by one and see if the fitness becomes improved
+      while ( it != fmap_right.end() ) {
 	
-	//cout << "from right to left: ics [";
-
 	// Take samples from right and put them left
-	map<num_t,vector<size_t> >::iterator it( fmap_right.find( int2num[ GI.partitionSequence->at(psIdx) ] ) );
+	//cout << "from right to left: [";
 	for(size_t i = 0; i < it->second.size(); ++i) {
-	  //cout << " " << tv[it->second[i]];
 	  //cout << " " << it->second[i];
 	  datadefs::forward_backward_sqfreq(tv[ it->second[i] ],n_left,freq_left,sf_left,n_right,freq_right,sf_right);
-	  //cout << "<-" << tv[it->second[i]] << "   :" << n_left << "," << n_right << "," << sf_left << "," << sf_right << endl;
 	}
 	//cout << " ]" << endl;
-
-	fmap_left.insert( *it );
-        fmap_right.erase( it->first );
 	
-      } else {
+	//If the fitness becomes improved, make the proposed change, otherwise move samples back
+	if ( 1.0*n_right*sf_left + n_left*sf_right > n_left*n_right*nsf_best ) { //&& n_left >= GI.minNodeSizeToStop && n_right >= GI.minNodeSizeToStop )
+	  
+	  nsf_best = 1.0*sf_left/n_left + 1.0*sf_right/n_right;
+	  // splitFitness = ( -1.0 * n_left*n_right*sf_tot + n_tot*n_right*sf_left + n_tot*n_left*sf_right ) / ( n_left*n_right * (1.0*n_tot*n_tot - sf_tot) );
+	  
+	  fmap_left.insert( *it );
+	  fmap_right.erase( it->first );
+	  
+	  foundSplit = true;
 
-	//cout << "from left to right: ics [";
-
-        //Take samples from left back to right
-	map<num_t,vector<size_t> >::iterator it( fmap_left.find( int2num[ GI.partitionSequence->at(psIdx) ] ) );
-        for(size_t i = 0; i < it->second.size(); ++i) {
-          //cout << " " << tv[it->second[i]];
-	  //cout << " " << it->second[i];
-          datadefs::forward_backward_sqfreq(tv[ it->second[i] ],n_right,freq_right,sf_right,n_left,freq_left,sf_left);
-          //cout << "  " << tv[it->second[i]] << "-> :" << n_left << "," << n_right << "," << sf_left << "," << sf_right << endl;
-        }
-        //cout << " ]" << endl;
-
-	fmap_right.insert( *it );
-        fmap_left.erase( it->first );
-
+	  break;
+	  
+	} else {
+	  
+	  //Take samples from left and put them right
+	  //cout << "From left to right: [";
+	  for(size_t i = 0; i < it->second.size(); ++i) {
+	    //cout << " " << it->second[i];
+	    datadefs::forward_backward_sqfreq(tv[ it->second[i] ],n_right,freq_right,sf_right,n_left,freq_left,sf_left);
+	  }
+	  //cout << " ]" << endl;
+	  
+	}
+	
+	++it;
+	
+	if ( it == fmap_right.end() ) {
+	  keepSplitting = false;
+	}
+	
       }
-      
-      if ( 1.0*n_right*sf_left + n_left*sf_right > n_left*n_right*nsf_best && n_left >= GI.minNodeSizeToStop && n_right >= GI.minNodeSizeToStop ) {
-	foundSplit = true;
-	fmap_left_best = fmap_left;
-	fmap_right_best = fmap_right;
-	nsf_best = 1.0*sf_left/n_left + 1.0*sf_right/n_right;
-	splitFitness = ( -1.0 * n_left*n_right*sf_tot + n_tot*n_right*sf_left + n_tot*n_left*sf_right ) / ( n_left*n_right * (1.0*n_tot*n_tot - sf_tot) );
-      }
-            
+
     }
-    //cout << n_left << "," << sf_left << " <-> " << n_right << "," << "," << sf_right << endl;
-    //splitFitness = ( -1.0 * n_left*n_right*sf_tot + n_tot*n_right*sf_left + n_tot*n_left*sf_right ) / ( n_left*n_right * (1.0*n_tot*n_tot - sf_tot) );
-  }
-  
-  if(!foundSplit) {
+
+    splitFitness = ( -1.0 * n_left*n_right*sf_tot + n_tot*n_right*sf_left + n_tot*n_left*sf_right ) / ( n_left*n_right * (1.0*n_tot*n_tot - sf_tot) );
+    
+  } 
+
+  if( !foundSplit ) {
     splitFitness = 0.0;
     return;
   }
@@ -746,8 +711,8 @@ void Node::categoricalFeatureSplit(Treedata* treedata,
   splitValues_left.clear();
 
   // Then populate the left side (sample indices and split values)
-  iter = 0;
-  for ( map<num_t,vector<size_t> >::const_iterator it(fmap_left_best.begin()); it != fmap_left_best.end(); ++it ) {
+  size_t iter = 0;
+  for ( map<num_t,vector<size_t> >::const_iterator it(fmap_left.begin()); it != fmap_left.end(); ++it ) {
     for ( size_t i = 0; i < it->second.size(); ++i ) {
       sampleIcs_left[iter] = sampleIcs[it->second[i]];
       ++iter;
@@ -758,7 +723,7 @@ void Node::categoricalFeatureSplit(Treedata* treedata,
 
   // Last populate the right side (sample indices and split values) 
   iter = 0;
-  for ( map<num_t,vector<size_t> >::const_iterator it(fmap_right_best.begin()); it != fmap_right_best.end(); ++it ) {
+  for ( map<num_t,vector<size_t> >::const_iterator it(fmap_right.begin()); it != fmap_right.end(); ++it ) {
     for ( size_t i = 0; i < it->second.size(); ++i ) {
       sampleIcs_right[iter] = sampleIcs[it->second[i]];
       ++iter;
@@ -768,6 +733,7 @@ void Node::categoricalFeatureSplit(Treedata* treedata,
   sampleIcs_right.resize(iter);
 
 }
+
 
 void Node::leafMean(const vector<datadefs::num_t>& data) {
   

@@ -47,6 +47,20 @@ string utils::chomp(const string& str) {
   return( terminatorIdx != -1 ? ret.substr(0,terminatorIdx) : ret );
 }
 
+set<string> utils::keys(const string str, const char delimiter) {
+
+  set<string> ret;
+
+  vector<string> items = utils::split(str,delimiter);
+
+  for ( size_t i = 0; i < items.size(); ++i ) {
+    ret.insert(items[i]);
+  }
+  
+  return( ret );
+
+}
+
 map<string,string> utils::keys2vals(const string str,
 				    const char delimiter,
 				    const char separator) {

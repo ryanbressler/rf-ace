@@ -36,8 +36,8 @@ StochasticForest::StochasticForest(Treedata* treeData, const string& targetName,
     
 }
 
-StochasticForest::StochasticForest(const string& forestFile):
-  treeData_(NULL),
+StochasticForest::StochasticForest(Treedata* treeData, const string& forestFile):
+  treeData_(treeData),
   partitionSequence_(NULL) {
 
   ifstream forestStream( forestFile.c_str() );
@@ -102,30 +102,29 @@ StochasticForest::StochasticForest(const string& forestFile):
 
     // Set train prediction of the node
     nodep->setTrainPrediction(datadefs::str2num(nodeMap["PRED"]));
-
-    //cout << " => stored in " << nodep << endl;
-    //cout << " => prediction " << nodep->getTrainPrediction() << " set" << endl;
     
     // If the node has a splitter...
     if ( nodeMap.find("SPLITTER") != nodeMap.end() ) {
       
+      size_t featureIdx = treeData_->getFeatureIdx(nodeMap["SPLITTER"]);
+
       // If the splitter is numerical...
       if ( nodeMap["SPLITTERTYPE"] == "NUMERICAL" ) {
-	
-	nodep->setSplitter(0,nodeMap["SPLITTER"],datadefs::str2num(nodeMap["LVALUES"]));
-	
-	
-
-	//cout << " => generated new node " << nodeMap["NODE"]+"L" << " at address " << nodep->leftChild() << endl;
-	//cout << " => generated new node " << nodeMap["NODE"]+"R" << " at address " << nodep->rightChild() << endl;
-
-	forestMap[treeIdx][nodeMap["NODE"]+"L"] = nodep->leftChild();
-	forestMap[treeIdx][nodeMap["NODE"]+"R"] = nodep->rightChild();
+       
+	nodep->setSplitter(featureIdx,nodeMap["SPLITTER"],datadefs::str2num(nodeMap["LVALUES"]));
 	
       } else {
-	cerr << "StochasticForest::StochasticForest(forestFile) -- setting a categorical splitter has not been implemented" << endl;
-	exit(1);
+
+	set<string> splitLeftValues = utils::keys(nodeMap["LVALUES"],':');
+	set<string> splitRightValues = utils::keys(nodeMap["RVALUES"],':');
+
+	nodep->setSplitter(featureIdx,nodeMap["SPLITTER"],splitLeftValues,splitRightValues);
+      
       }
+
+      forestMap[treeIdx][nodeMap["NODE"]+"L"] = nodep->leftChild();
+      forestMap[treeIdx][nodeMap["NODE"]+"R"] = nodep->rightChild();
+
     }
     
   }
@@ -395,6 +394,8 @@ void StochasticForest::growCategoricalGBT() {
 				    featuresInForest_[treeIdx],
 				    nNodes);
 
+      //cout << "Tree " << treeIdx << " ready, predicting OOB samples..." << endl;
+
       // What kind of a prediction does the new tree produce
       // out of the whole training data set?
       curPrediction[k] = StochasticForest::predictDatasetByTree(treeIdx);
@@ -458,10 +459,10 @@ vector<num_t> StochasticForest::predictDatasetByTree(size_t treeIdx) {
   return( prediction );
 }
 
-void StochasticForest::predict(Treedata* treeData, vector<string>& categoryPrediction, vector<num_t>& confidence) {
+void StochasticForest::predict(vector<string>& categoryPrediction, vector<num_t>& confidence) {
 
-  size_t targetIdx = treeData->getFeatureIdx( targetName_ );
-  size_t nSamples = treeData->nSamples();
+  size_t targetIdx = treeData_->getFeatureIdx( targetName_ );
+  size_t nSamples = treeData_->nSamples();
   //size_t numClasses = treeData->nCategories( targetIdx );
 
   // For classification, each "tree" is actually numClasses_ trees in a row, each predicting the probability of its own class.
@@ -493,7 +494,7 @@ void StochasticForest::predict(Treedata* treeData, vector<string>& categoryPredi
 	  size_t t =  m * nCategories_ + k;
 	  
 	  // Shrinked shift towards the new prediction
-	  prediction[k] = prediction[k] + shrinkage_ * rootNodes_[t]->percolateData(treeData,i)->getTrainPrediction(); //predictSampleByTree(i, t);
+	  prediction[k] = prediction[k] + shrinkage_ * predictSampleByTree(i, t);
 	  
 	}
       }
@@ -502,7 +503,7 @@ void StochasticForest::predict(Treedata* treeData, vector<string>& categoryPredi
       vector<num_t>::iterator maxProb = max_element( prediction.begin(), prediction.end() );
       num_t maxProbCategory = 1.0*(maxProb - prediction.begin());
       
-      categoryPrediction[i] = treeData->getRawFeatureData(targetIdx,maxProbCategory); //backMapping[ maxProbCategory ]; // classes are 0,1,2,...
+      categoryPrediction[i] = treeData_->getRawFeatureData(targetIdx,maxProbCategory); //backMapping[ maxProbCategory ]; // classes are 0,1,2,...
       
       StochasticForest::transformLogistic(prediction, probPrediction); // predictions-to-probabilities
       
@@ -524,16 +525,16 @@ void StochasticForest::predict(Treedata* treeData, vector<string>& categoryPredi
 
 }
 
-void StochasticForest::predict(Treedata* treeData, vector<num_t>& prediction, vector<num_t>& confidence) {
+void StochasticForest::predict(vector<num_t>& prediction, vector<num_t>& confidence) {
  
-  size_t nSamples = treeData->nSamples();
+  size_t nSamples = treeData_->nSamples();
   prediction.resize(nSamples);
   confidence.resize(nSamples);
 
   for ( size_t sampleIdx = 0; sampleIdx < nSamples; ++sampleIdx ) {
     prediction[sampleIdx] = 0;
     for ( size_t treeIdx = 0; treeIdx < nTrees_; ++treeIdx) {
-      prediction[sampleIdx] = prediction[sampleIdx] + shrinkage_ * rootNodes_[treeIdx]->percolateData(treeData,sampleIdx)->getTrainPrediction();
+      prediction[sampleIdx] = prediction[sampleIdx] + shrinkage_ * predictSampleByTree(sampleIdx, treeIdx); // rootNodes_[treeIdx]->percolateData(treeData,sampleIdx)->getTrainPrediction();
     }
     
   }
