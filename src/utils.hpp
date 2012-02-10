@@ -23,6 +23,8 @@ namespace utils {
 
   // Chomps a string, i.e. removes all the trailing end-of-line characters
   string chomp(const string& str);
+
+  set<string> keys(const string str, const char delimiter);
   
   // Maps a delimited list of key-value pairs 
   map<string,string> keys2vals(string str, 

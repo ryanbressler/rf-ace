@@ -48,17 +48,18 @@ int main(const int argc, char* const argv[]) {
     return(EXIT_SUCCESS);
   }
 
+  // Read data into Treedata object
+  cout << "Reading file '" << gen_op.input << "', please wait... " << flush;
+  Treedata treedata(gen_op.input,gen_op.dataDelimiter,gen_op.headerDelimiter);
+  cout << "DONE" << endl;
+
   cout << "===> Loading GBT predictor... " << flush;
-  StochasticForest SF(pred_op.forest);
+  StochasticForest SF(&treedata,pred_op.forest);
   gen_op.targetStr = SF.getTargetName();
   cout << "DONE" << endl;
 
   options::validateOptions(gen_op);
 
-  // Read data into Treedata object
-  cout << "Reading file '" << gen_op.input << "', please wait... " << flush;
-  Treedata treedata(gen_op.input,gen_op.dataDelimiter,gen_op.headerDelimiter);
-  cout << "DONE" << endl;
 
   rface::printGeneralSetup(treedata,gen_op);
     
@@ -97,7 +98,7 @@ void printPredictionToFile(StochasticForest& SF, Treedata& treeData, const strin
     
     vector<num_t> prediction;
     vector<num_t> confidence;
-    SF.predict(&treeData,prediction,confidence);
+    SF.predict(prediction,confidence);
     
     for(size_t i = 0; i < prediction.size(); ++i) {
       toPredictionFile << targetName << "\t" << treeData.getSampleName(i) << "\t" << treeData.getRawFeatureData(targetIdx,i)
@@ -108,7 +109,7 @@ void printPredictionToFile(StochasticForest& SF, Treedata& treeData, const strin
 
     vector<string> prediction;
     vector<num_t> confidence;
-    SF.predict(&treeData,prediction,confidence);
+    SF.predict(prediction,confidence);
     
     for(size_t i = 0; i < prediction.size(); ++i) {
       toPredictionFile << targetName << "\t" << treeData.getSampleName(i) << "\t" << treeData.getRawFeatureData(targetIdx,i)

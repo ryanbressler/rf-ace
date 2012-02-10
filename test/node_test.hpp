@@ -328,10 +328,10 @@ void NodeTest::test_categoricalFeatureSplit() {
   //datadefs::print<num_t>(splitValues_right);
   //datadefs::print<size_t>(sampleIcs_left);
   //datadefs::print<size_t>(sampleIcs_right);
-  //datadefs::print<num_t>(treedata[targetIdx]);
-  //datadefs::print<num_t>(treedata[featureIdx]);
-  //datadefs::print<num_t>(treedata.getFeatureData(targetIdx,sampleIcs_left));
-  //datadefs::print<num_t>(treedata.getFeatureData(targetIdx,sampleIcs_right));
+  //datadefs::print<num_t>(treedata.getFeatureData(targetIdx1));
+  //datadefs::print<num_t>(treedata.getFeatureData(featureIdx));
+  //datadefs::print<num_t>(treedata.getFeatureData(targetIdx1,sampleIcs_left));
+  //datadefs::print<num_t>(treedata.getFeatureData(targetIdx1,sampleIcs_right));
   
   set<string> rawSplitValues_left,rawSplitValues_right;
 

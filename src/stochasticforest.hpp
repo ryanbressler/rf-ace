@@ -16,7 +16,7 @@ public:
 
   // !! Documentation: instruct the constructor to choose between the two forest implementations
   StochasticForest(Treedata* treeData, const string& targetName, const size_t nTrees);  
-  StochasticForest(const string& forestFile);
+  StochasticForest(Treedata* treeData, const string& forestFile);
 
   ~StochasticForest();
 
@@ -36,8 +36,8 @@ public:
   //Calculates the feature importance scores for real and contrast features
   vector<num_t> featureImportance();
     
-  void predict(Treedata* treeData, vector<string>& categoryPrediction, vector<num_t>& confidence);
-  void predict(Treedata* treeData, vector<num_t>& prediction, vector<num_t>& confidence);
+  void predict(vector<string>& categoryPrediction, vector<num_t>& confidence);
+  void predict(vector<num_t>& prediction, vector<num_t>& confidence);
 
   //Counts the number of nodes in the forest
   vector<size_t> nNodes();
