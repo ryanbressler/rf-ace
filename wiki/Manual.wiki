@@ -26,7 +26,15 @@ or
 {{{
 make_win64
 }}}
-Simple as that! If you feel lucky, check for compiled binaries at the [http://code.google.com/p/rf-ace/downloads/list download page]. 
+Simple as that! You should now have the following binaries:
+
+  * `rf-ace-filter`
+  * `rf-ace-build-predictor`
+  * `rf-ace-predict` 
+
+If you feel lucky, check for compiled binaries at the [http://code.google.com/p/rf-ace/downloads/list download page]. 
+
+
 
 = Supported data formats =
 RF-ACE currently supports two file formats, Annotated Feature Matrix (AFM) and Attribute-Relation File Format (ARFF).
