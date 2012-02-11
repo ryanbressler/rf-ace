@@ -27,10 +27,11 @@ using namespace std;
 using datadefs::num_t;
 
 statistics::RF_statistics executeRandomForest(Treedata& treedata,
-					   const options::General_options& gen_op,
-					   const options::RF_options& RF_op,
-					   vector<num_t>& pValues,
-					   vector<num_t>& importanceValues);
+					      const options::General_options& gen_op,
+					      const options::RF_options& RF_op,
+					      const size_t mTry,
+					      vector<num_t>& pValues,
+					      vector<num_t>& importanceValues);
 
 int main(const int argc, char* const argv[]) {
   
@@ -77,17 +78,20 @@ int main(const int argc, char* const argv[]) {
   // TODO: rf_ace.cpp: this should be made obsolete; instead of indices, use the feature headers
   size_t targetIdx = treedata.getFeatureIdx(gen_op.targetStr);
   
-  //If default mTry is to be used...
-  if ( RF_op.mTry == options::RF_DEFAULT_M_TRY ) {
-    RF_op.mTry = static_cast<size_t>( 0.1*static_cast<num_t>(treedata.nFeatures()));
-    if ( RF_op.mTry == 0 ) {
-      RF_op.mTry = 2;
-    }
+  if ( RF_op.mTryFraction <= 0.0 || RF_op.mTryFraction >= 1.0 ) {
+    cerr << "mTry needs to be between (0,1)!" << endl;
+    return EXIT_FAILURE;
   }
-  
-  if(treedata.nFeatures() < RF_op.mTry) {
+
+  size_t mTry = static_cast<size_t>( RF_op.mTryFraction*static_cast<num_t>(treedata.nFeatures()));
+
+  if ( mTry == 0 ) {
+    mTry = 1;
+  }
+
+  if(treedata.nFeatures() < mTry) {
     cerr << "Not enough features (" << treedata.nFeatures()-1 << ") to test with mtry = "
-         << RF_op.mTry << " features per split" << endl;
+         << mTry << " features per split" << endl;
     return EXIT_FAILURE;
   }
   
@@ -110,7 +114,7 @@ int main(const int argc, char* const argv[]) {
   set<string> featureNames;
   
   cout << "===> Uncovering associations... " << flush;
-  RF_stat = executeRandomForest(treedata,gen_op,RF_op,pValues,importanceValues);
+  RF_stat = executeRandomForest(treedata,gen_op,RF_op,mTry,pValues,importanceValues);
   cout << "DONE" << endl;
   
   /////////////////////////////////////////////////
@@ -120,31 +124,7 @@ int main(const int argc, char* const argv[]) {
   cout << "===> Filtering features... " << flush;
   
   size_t nFeatures = treedata.nFeatures();
-  
-  //size_t nSignificantFeatures = 0;
-  
-  // Go through each feature, and keep those having p-value higher than the threshold. 
-  // Save the kept and removed features, and remember to accumulate the counter
-  /*
-    for ( size_t featureIdx = 0; featureIdx < nFeatures; ++featureIdx ) {
     
-    if ( featureIdx == targetIdx || pValues[featureIdx] <= RF_op.pValueThreshold ) {
-    featureNames.insert(treedata.getFeatureName(featureIdx));
-    pValues[nSignificantFeatures] = pValues[featureIdx];
-    importanceValues[nSignificantFeatures] = importanceValues[featureIdx];
-    ++nSignificantFeatures;
-    } 
-    }
-  */
-  
-  // Resize containers
-  //treedata.whiteList( featureNames );
-  //pValues.resize( nSignificantFeatures );
-  //importanceValues.resize ( nSignificantFeatures );
-  
-  //targetIdx = treedata.getFeatureIdx(gen_op.targetStr);
-  //assert( gen_op.targetStr == treedata.getFeatureName(targetIdx) );
-  
   size_t nSignificantFeatures = 0;
 
   if( gen_op.output != "" ) {
@@ -221,6 +201,7 @@ int main(const int argc, char* const argv[]) {
 statistics::RF_statistics executeRandomForest(Treedata& treedata,
 					      const options::General_options& gen_op,
 					      const options::RF_options& RF_op,
+					      const size_t mTry,
 					      vector<num_t>& pValues,
 					      vector<num_t>& importanceValues) {
   
@@ -255,7 +236,7 @@ statistics::RF_statistics executeRandomForest(Treedata& treedata,
     StochasticForest SF(&treedata,gen_op.targetStr,RF_op.nTrees);
     
     // Grow the Random Forest
-    SF.learnRF(RF_op.mTry,RF_op.nMaxLeaves,RF_op.nodeSize,useContrasts);
+    SF.learnRF(mTry,RF_op.nMaxLeaves,RF_op.nodeSize,useContrasts);
     
     // Get the number of nodes in each tree in the forest
     nodeMat[permIdx] = SF.nNodes();
