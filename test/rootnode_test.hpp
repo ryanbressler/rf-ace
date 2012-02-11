@@ -33,7 +33,7 @@ void RootNodeTest::test_regressionTreeSplitting() {
   size_t nFeaturesForSplit = 1;
   bool useContrasts = true;
   size_t numClasses = 0;
-  PartitionSequence::PartitionSequence* partitionSequence = new PartitionSequence;
+  //PartitionSequence::PartitionSequence* partitionSequence = new PartitionSequence;
 
   RootNode::RootNode rootNode(sampleWithReplacement,
 			      sampleSizeFraction,
@@ -42,8 +42,7 @@ void RootNodeTest::test_regressionTreeSplitting() {
 			      isRandomSplit,
 			      nFeaturesForSplit,
 			      useContrasts,
-			      numClasses,
-			      partitionSequence);
+			      numClasses);
 
   // Split the rootnode
   rootNode.setSplitter(1,"foo",1.1);
@@ -109,7 +108,7 @@ void RootNodeTest::test_regressionTreeSplitting() {
 
   
 
-  delete partitionSequence;
+  //delete partitionSequence;
 
 }
 

@@ -430,18 +430,13 @@ void Node::numericalFeatureSplit(Treedata* treedata,
                                  num_t& splitValue,
                                  num_t& splitFitness) {
 
+  splitFitness = datadefs::NUM_NAN;
 
   vector<num_t> tv,fv;
 
   sampleIcs_left.clear();
 
   treedata->getFilteredAndSortedFeatureDataPair3(targetIdx,featureIdx,sampleIcs_right,tv,fv);
-
-  //datadefs::print(tv);
-  //datadefs::print(fv);
-
-  //treedata->getFilteredFeatureDataPair(targetIdx,featureIdx,sampleIcs_right,tv,fv);
-  //vector<num_t> fv = treedata->getFilteredFeatureData(featureIdx,sampleIcs_right);
 
   size_t n_tot = fv.size();
   size_t n_right = n_tot;
@@ -451,21 +446,6 @@ void Node::numericalFeatureSplit(Treedata* treedata,
     splitFitness = datadefs::NUM_NAN;
     return;
   }
-
-  //Make reference indices that define the sorting wrt. feature
-  //bool isIncreasingOrder = true;
-
-  //Sort feature vector and collect reference indices
-  //vector<size_t> refIcs;
-  //datadefs::sortDataAndMakeRef(isIncreasingOrder,fv,refIcs);
-
-  //datadefs::sortFromRef<size_t>(sampleIcs_right,refIcs);
-
-  //vector<num_t> tv = treedata->getFeatureData(targetIdx,sampleIcs_right);
-
-  //Use the reference indices to sort sample indices
-  //datadefs::sortFromRef<num_t>(tv,refIcs);
-  //datadefs::sortFromRef<size_t>(sampleIcs_right,refIcs);
 
   int bestSplitIdx = -1;
   
@@ -518,7 +498,7 @@ void Node::numericalFeatureSplit(Treedata* treedata,
   }
 
   if(bestSplitIdx == -1) {
-    splitFitness = 0.0;
+    //cout << "N : " << n_left << " <-> " << n_right << " : fitness " << splitFitness << endl;
     return;
   }
 
@@ -534,6 +514,8 @@ void Node::numericalFeatureSplit(Treedata* treedata,
 
   assert(n_left + n_right == n_tot);
 
+  //cout << "N : " << n_left << " <-> " << n_right << " : fitness " << splitFitness << endl;
+
 }
 
 // !! Inadequate Abstraction: Refactor me.
@@ -547,10 +529,16 @@ void Node::categoricalFeatureSplit(Treedata* treedata,
 				   set<num_t>& splitValues_right,
                                    num_t& splitFitness) {
 
+  splitFitness = datadefs::NUM_NAN;
+
   vector<num_t> tv,fv;
+
+  //cout << " -- sampleIcs_right.size() = " << sampleIcs_right.size();
 
   sampleIcs_left.clear();
   treedata->getFilteredFeatureDataPair(targetIdx,featureIdx,sampleIcs_right,tv,fv);
+
+  //cout << " => " << sampleIcs_right.size() << endl;
 
   // Map all feature categories to the corresponding samples and represent it as map. The map is used to assign samples to left and right branches
   map<num_t,vector<size_t> > fmap_right;
@@ -562,11 +550,13 @@ void Node::categoricalFeatureSplit(Treedata* treedata,
   size_t n_left = 0;
 
   if(n_tot < GI.minNodeSizeToStop) {
-    splitFitness = 0.0;
     return;
   }
 
-  bool foundSplit = false;
+  size_t nCategories = fmap_right.size();
+  size_t nCategoriesMoved = 0; 
+
+  bool keepSplitting = true;
 
   if ( treedata->isFeatureNumerical(targetIdx) ) {
 
@@ -579,9 +569,7 @@ void Node::categoricalFeatureSplit(Treedata* treedata,
     num_t se_best = se_right;
     num_t se_tot = se_right;
 
-    bool keepSplitting = true;
-
-    while ( fmap_right.size() > 1 && keepSplitting ) {
+    while ( nCategoriesMoved < nCategories - 1 && keepSplitting ) {
 
       map<num_t,vector<size_t> >::iterator it( fmap_right.begin() );
 
@@ -597,14 +585,16 @@ void Node::categoricalFeatureSplit(Treedata* treedata,
         //cout << " ]" << endl;
 
         //If the fitness becomes improved, make the proposed change, otherwise move samples back
-        if ( se_left+se_right < se_best ) { //&& n_left >= GI.minNodeSizeToStop && n_right >= GI.minNodeSizeToStop )
-
-          se_best = se_left + se_right;
+        if ( se_left + se_right < se_best ) { //&& n_left >= GI.minNodeSizeToStop && n_right >= GI.minNodeSizeToStop )
 
           fmap_left.insert( *it );
           fmap_right.erase( it->first );
 
-	  foundSplit = true;
+	  ++nCategoriesMoved;
+
+	  se_best = se_left + se_right;
+
+	  splitFitness = ( se_tot - se_best ) / se_tot;
 
           break;
 
@@ -622,15 +612,14 @@ void Node::categoricalFeatureSplit(Treedata* treedata,
 
         ++it;
 
-        if ( it == fmap_right.end() ) {
+        if ( it == fmap_right.end() || nCategories == 2 ) {
           keepSplitting = false;
+	  break;
         }
 
       }
 
     }
-
-    splitFitness = ( se_left + se_right ) / se_tot;
 
   } else {
 
@@ -643,12 +632,10 @@ void Node::categoricalFeatureSplit(Treedata* treedata,
     num_t sf_tot = sf_right;
     num_t nsf_best = 1.0 * sf_right / n_right;
     
-    bool keepSplitting = true;
-    
-    while ( fmap_right.size() > 1 && keepSplitting ) {
+    while ( nCategoriesMoved < nCategories - 1 && keepSplitting ) {
       
       map<num_t,vector<size_t> >::iterator it( fmap_right.begin() );
-      
+
       // We test each category one by one and see if the fitness becomes improved
       while ( it != fmap_right.end() ) {
 	
@@ -665,11 +652,13 @@ void Node::categoricalFeatureSplit(Treedata* treedata,
 	  
 	  nsf_best = 1.0*sf_left/n_left + 1.0*sf_right/n_right;
 	  // splitFitness = ( -1.0 * n_left*n_right*sf_tot + n_tot*n_right*sf_left + n_tot*n_left*sf_right ) / ( n_left*n_right * (1.0*n_tot*n_tot - sf_tot) );
-	  
+
 	  fmap_left.insert( *it );
 	  fmap_right.erase( it->first );
 	  
-	  foundSplit = true;
+	  ++nCategoriesMoved;
+
+	  splitFitness = ( -1.0 * n_left*n_right*sf_tot + n_tot*n_right*sf_left + n_tot*n_left*sf_right ) / ( n_left*n_right * (1.0*n_tot*n_tot - sf_tot) );
 
 	  break;
 	  
@@ -686,31 +675,33 @@ void Node::categoricalFeatureSplit(Treedata* treedata,
 	}
 	
 	++it;
-	
-	if ( it == fmap_right.end() ) {
-	  keepSplitting = false;
-	}
+
+	if ( it == fmap_right.end() || nCategories == 2 ) {
+          keepSplitting = false;
+          break;
+        }
+
 	
       }
 
     }
-
-    splitFitness = ( -1.0 * n_left*n_right*sf_tot + n_tot*n_right*sf_left + n_tot*n_left*sf_right ) / ( n_left*n_right * (1.0*n_tot*n_tot - sf_tot) );
     
   } 
 
-  if( !foundSplit ) {
-    splitFitness = 0.0;
+  //cout << "C " << nCategoriesMoved << ": " << n_left << " <-> " << n_right << " : fitness " << splitFitness << endl;
+
+  if( nCategoriesMoved == 0 || n_left < GI.minNodeSizeToStop || n_right < GI.minNodeSizeToStop ) {
     return;
   }
 
   // Assign samples and categories on the left. First store the original sample indices 
   vector<size_t> sampleIcs = sampleIcs_right;
 
-  sampleIcs_left.resize(n_tot);
-  splitValues_left.clear();
+  assert( n_left + n_right == n_tot );
 
   // Then populate the left side (sample indices and split values)
+  sampleIcs_left.resize(n_left);
+  splitValues_left.clear();
   size_t iter = 0;
   for ( map<num_t,vector<size_t> >::const_iterator it(fmap_left.begin()); it != fmap_left.end(); ++it ) {
     for ( size_t i = 0; i < it->second.size(); ++i ) {
@@ -719,9 +710,12 @@ void Node::categoricalFeatureSplit(Treedata* treedata,
     }
     splitValues_left.insert( it->first );
   }
-  sampleIcs_left.resize(iter);
+  assert( iter == n_left);
+  assert( splitValues_left.size() == fmap_left.size() );
 
   // Last populate the right side (sample indices and split values) 
+  sampleIcs_right.resize(n_right);
+  splitValues_right.clear();
   iter = 0;
   for ( map<num_t,vector<size_t> >::const_iterator it(fmap_right.begin()); it != fmap_right.end(); ++it ) {
     for ( size_t i = 0; i < it->second.size(); ++i ) {
@@ -730,7 +724,8 @@ void Node::categoricalFeatureSplit(Treedata* treedata,
     }
     splitValues_right.insert( it->first );
   }
-  sampleIcs_right.resize(iter);
+  assert( iter == n_right );
+  assert( splitValues_right.size() == fmap_right.size() );
 
 }
 

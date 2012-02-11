@@ -29,7 +29,7 @@ StochasticForest::StochasticForest(Treedata* treeData, const string& targetName,
    */
   
   //if( treeData->nMaxCategories() >= 1 ) {
-  partitionSequence_ = new PartitionSequence();
+  //partitionSequence_ = new PartitionSequence();
   //} else {
   //  partitionSequence_ = new PartitionSequence( 1 );
   //}
@@ -37,8 +37,7 @@ StochasticForest::StochasticForest(Treedata* treeData, const string& targetName,
 }
 
 StochasticForest::StochasticForest(Treedata* treeData, const string& forestFile):
-  treeData_(treeData),
-  partitionSequence_(NULL) {
+  treeData_(treeData) {
 
   ifstream forestStream( forestFile.c_str() );
   assert(forestStream.good());
@@ -136,7 +135,7 @@ StochasticForest::~StochasticForest() {
     delete rootNodes_[treeIdx];
   }
 
-  delete partitionSequence_;
+  //delete partitionSequence_;
 
 }
 
@@ -203,8 +202,7 @@ void StochasticForest::learnRF(const size_t mTry,
                                        isRandomSplit,
                                        nFeaturesForSplit,
                                        useContrasts,
-                                       nCategories_,
-				       partitionSequence_);
+                                       nCategories_);
 
     size_t nNodes;
 
@@ -260,8 +258,7 @@ void StochasticForest::learnGBT(const size_t nMaxLeaves,
                                        isRandomSplit,
                                        nFeaturesForSplit,
                                        useContrasts,
-                                       nCategories_,
-				       partitionSequence_);
+                                       nCategories_);
   }
     
   if ( nCategories_ == 0 ) {

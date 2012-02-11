@@ -17,8 +17,7 @@ public:
            bool isRandomSplit,
            size_t nFeaturesForSplit,
            bool useContrasts,
-           size_t numClasses,
-	   PartitionSequence* partitionSequence);
+           size_t numClasses);
 
   ~RootNode();
 

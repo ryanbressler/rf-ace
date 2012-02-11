@@ -73,7 +73,7 @@ protected:
     bool useContrasts;
     PredictionFunctionType predictionFunctionType;
     size_t numClasses;
-    PartitionSequence* partitionSequence;
+    //PartitionSequence* partitionSequence;
   };
 
   //Leaf prediction functions

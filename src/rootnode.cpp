@@ -14,8 +14,7 @@ RootNode::RootNode(bool sampleWithReplacement,
                    bool isRandomSplit,
                    size_t nFeaturesForSplit,
                    bool useContrasts,
-                   size_t numClasses,
-		   PartitionSequence* partitionSequence):
+                   size_t numClasses):
   Node(),
   nNodes_(1) {
 
@@ -26,8 +25,7 @@ RootNode::RootNode(bool sampleWithReplacement,
   GI_.isRandomSplit = isRandomSplit;
   GI_.nFeaturesForSplit = nFeaturesForSplit;
   GI_.useContrasts = useContrasts;
-  GI_.numClasses = numClasses;
-  GI_.partitionSequence = partitionSequence; 
+  GI_.numClasses = numClasses; 
 }
 
 RootNode::~RootNode() { /* EMPTY DESTRUCTOR */ }

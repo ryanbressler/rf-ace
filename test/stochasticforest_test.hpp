@@ -33,7 +33,7 @@ void StochasticForestTest::test_treeDataPercolation() {
   size_t nFeaturesForSplit = 1;
   bool useContrasts = true;
   size_t numClasses = 0;
-  PartitionSequence::PartitionSequence PS;
+  //PartitionSequence::PartitionSequence PS;
 
   RootNode::RootNode* rootNode = new RootNode(sampleWithReplacement,
 					      sampleSizeFraction,
@@ -42,8 +42,7 @@ void StochasticForestTest::test_treeDataPercolation() {
 					      isRandomSplit,
 					      nFeaturesForSplit,
 					      useContrasts,
-					      numClasses,
-					      &PS);
+					      numClasses);
 
   
   //Node::Node* node = new Node;
