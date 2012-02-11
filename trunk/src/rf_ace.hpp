@@ -101,8 +101,8 @@ namespace rface {
     cout << "Random Forest configuration:" << endl;
     cout << "  --" << RF_op.nTrees_l << setw( options::maxWidth - RF_op.nTrees_l.size() ) << ""
 	 << "= "; if(RF_op.nTrees == 0) { cout << "DEFAULT" << endl; } else { cout << RF_op.nTrees << endl; }
-    cout << "  --" << RF_op.mTry_l << setw( options::maxWidth - RF_op.mTry_l.size() ) << ""
-	 << "= "; if(RF_op.mTry == 0) { cout << "DEFAULT" << endl; } else { cout << RF_op.mTry << endl; }
+    cout << "  --" << RF_op.mTryFraction_l << setw( options::maxWidth - RF_op.mTryFraction_l.size() ) << ""
+	 << "= " << RF_op.mTryFraction << endl;
     cout << "  --" << RF_op.nMaxLeaves_l << setw( options::maxWidth - RF_op.nMaxLeaves_l.size() ) << ""
 	 << "= " << RF_op.nMaxLeaves << endl;
     cout << "  --" << RF_op.nodeSize_l << setw( options::maxWidth - RF_op.nodeSize_l.size() ) << ""

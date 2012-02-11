@@ -18,7 +18,7 @@ namespace options {
 
     output << endl;
     output << "-----------------------------------------------------" << endl;
-    output << "|  RF-ACE version:  0.9.9, February 2nd, 2012       |" << endl;
+    output << "|  RF-ACE version:  1.0, February 11th, 2012        |" << endl;
     output << "|    Project page:  http://code.google.com/p/rf-ace |" << endl;
     output << "|     Report bugs:  timo.p.erkkila@tut.fi           |" << endl;
     output << "-----------------------------------------------------" << endl;
@@ -52,10 +52,10 @@ namespace options {
   const char   GENERAL_DEFAULT_HEADER_DELIMITER = ':';
   const size_t GENERAL_DEFAULT_MIN_SAMPLES = 5;
   
-  const size_t RF_DEFAULT_N_TREES = 1000; // zero means it will be estimated from the data by default
-  const size_t RF_DEFAULT_M_TRY = 0; // same here ...
+  const size_t RF_DEFAULT_N_TREES = 100; // zero means it will be estimated from the data by default
+  const num_t  RF_DEFAULT_M_TRY_FRACTION = 0.1; // same here ...
   const size_t RF_DEFAULT_N_MAX_LEAVES = 100;
-  const size_t RF_DEFAULT_NODE_SIZE = 3; // ... and here
+  const size_t RF_DEFAULT_NODE_SIZE = 5; // ... and here
   const size_t RF_DEFAULT_N_PERMS = 20;
   const num_t  RF_DEFAULT_P_VALUE_THRESHOLD = 0.05;
   
@@ -150,16 +150,16 @@ namespace options {
   struct RF_options {
     
     size_t nTrees; const string nTrees_s; const string nTrees_l;
-    size_t mTry; const string mTry_s; const string mTry_l;
+    num_t  mTryFraction; const string mTryFraction_s; const string mTryFraction_l;
     size_t nMaxLeaves; const string nMaxLeaves_s; const string nMaxLeaves_l;
     size_t nodeSize; const string nodeSize_s; const string nodeSize_l;
     size_t nPerms; const string nPerms_s; const string nPerms_l;
-    num_t pValueThreshold; const string pValueThreshold_s; const string pValueThreshold_l;
+    num_t  pValueThreshold; const string pValueThreshold_s; const string pValueThreshold_l;
     
     RF_options(const int argc, char* const argv[]):
       
       nTrees(RF_DEFAULT_N_TREES),nTrees_s("n"),nTrees_l("RF_ntrees"),
-      mTry(RF_DEFAULT_M_TRY),mTry_s("m"),mTry_l("RF_mtry"),
+      mTryFraction(RF_DEFAULT_M_TRY_FRACTION),mTryFraction_s("m"),mTryFraction_l("RF_mtry"),
       nMaxLeaves(RF_DEFAULT_N_MAX_LEAVES),nMaxLeaves_s("a"),nMaxLeaves_l("RF_maxleaves"),
       nodeSize(RF_DEFAULT_NODE_SIZE),nodeSize_s("s"),nodeSize_l("RF_nodesize"),
       nPerms(RF_DEFAULT_N_PERMS),nPerms_s("p"),nPerms_l("RF_nperms"),
@@ -169,7 +169,7 @@ namespace options {
       ArgParse parser(argc,argv);
             
       parser.getArgument<size_t>(nTrees_s,nTrees_l,nTrees);
-      parser.getArgument<size_t>(mTry_s, mTry_l, mTry);
+      parser.getArgument<num_t>(mTryFraction_s, mTryFraction_l, mTryFraction);
       parser.getArgument<size_t>(nMaxLeaves_s, nMaxLeaves_l, nMaxLeaves);
       parser.getArgument<size_t>(nodeSize_s, nodeSize_l, nodeSize);
       parser.getArgument<size_t>(nPerms_s, nPerms_l, nPerms);
@@ -182,8 +182,8 @@ namespace options {
       cout << "OPTIONAL ARGUMENTS -- RANDOM FOREST:" << endl;
       cout << " -" << nTrees_s << " / --" << nTrees_l << setw( maxWidth - nTrees_l.size() )
 	   << " " << "Number of trees per RF (default " << RF_DEFAULT_N_TREES << ")" << endl;
-      cout << " -" << mTry_s << " / --" << mTry_l << setw( maxWidth - mTry_l.size() )
-	   << " " << "Number of randomly drawn features per node split (default floor(0.1*nFeatures))" << endl;
+      cout << " -" << mTryFraction_s << " / --" << mTryFraction_l << setw( maxWidth - mTryFraction_l.size() )
+	   << " " << "Fraction of randomly drawn features per node split (default " << 100.0 * RF_DEFAULT_M_TRY_FRACTION << "%)" << endl;
       cout << " -" << nMaxLeaves_s << " / --" << nMaxLeaves_l << setw( maxWidth - nMaxLeaves_l.size() )
 	   << " " << "Maximum number of leaves per tree (default " << RF_DEFAULT_N_MAX_LEAVES << ")" << endl;
       cout << " -" << nodeSize_s << " / --" << nodeSize_l << setw( maxWidth - nodeSize_l.size() )
