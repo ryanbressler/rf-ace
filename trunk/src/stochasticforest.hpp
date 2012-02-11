@@ -99,7 +99,7 @@ private:
   num_t shrinkage_;
 
   // This object generates a sequence that makes splitting data with categorical splitters fast
-  PartitionSequence *partitionSequence_;
+  //PartitionSequence *partitionSequence_;
 
 };
 
