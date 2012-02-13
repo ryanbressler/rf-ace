@@ -49,6 +49,8 @@ public:
   // Returns the number of categories a feature has
   size_t nCategories(const size_t featureIdx);
 
+  string featureSupport(const size_t featureIdx);
+
   // Returns the number of categories of the feature with the highest cardinality
   size_t nMaxCategories();
 

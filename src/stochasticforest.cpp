@@ -19,20 +19,6 @@ StochasticForest::StochasticForest(Treedata* treeData, const string& targetName,
   featuresInForest_.clear();
 
   learnedModel_ = NO_MODEL;
-
-  /* PartitionSequence stores the optimal binary split strategy for data with nMaxCategories 
-   * as a Gray Code sequence. It is assumed that the two disjoint partitions are interchangeable,
-   * thus, the sequence has length of
-   * 
-   *  treeData->nMaxCategories() - 1
-   *
-   */
-  
-  //if( treeData->nMaxCategories() >= 1 ) {
-  //partitionSequence_ = new PartitionSequence();
-  //} else {
-  //  partitionSequence_ = new PartitionSequence( 1 );
-  //}
     
 }
 
@@ -153,9 +139,12 @@ void StochasticForest::printToFile(const string& fileName) {
     toFile << "FOREST=RF"; 
   }
 
+  size_t targetIdx = treeData_->getFeatureIdx(targetName_);
+
   toFile << ",NTREES=" << nTrees_;
   toFile << ",TARGET=" << targetName_;
   toFile << ",NCATEGORIES=" << nCategories_;
+  toFile << ",SUPPORT=" << treeData_->featureSupport(targetIdx);
   toFile << ",SHRINKAGE=" << shrinkage_ << endl;
 
   // Save each tree in the forest

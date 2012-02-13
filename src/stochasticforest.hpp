@@ -14,8 +14,10 @@ using namespace std;
 class StochasticForest {
 public:
 
-  // !! Documentation: instruct the constructor to choose between the two forest implementations
+  // Grow a forest based on data
   StochasticForest(Treedata* treeData, const string& targetName, const size_t nTrees);  
+  
+  // Load an existing forest
   StochasticForest(Treedata* treeData, const string& forestFile);
 
   ~StochasticForest();
