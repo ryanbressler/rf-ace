@@ -586,6 +586,48 @@ size_t Treedata::nMaxCategories() {
 
 }
 
+string Treedata::featureSupport(const size_t featureIdx) {
+  
+  string support;
+
+ 
+  if ( this->isFeatureNumerical(featureIdx) ) {
+    
+    num_t minVal = datadefs::NUM_INF;
+    num_t maxVal = -1.0*datadefs::NUM_INF;
+    
+    for ( size_t i = 0; i < this->nSamples(); ++i ) {
+      
+      num_t x = features_[featureIdx].data[i];
+
+      if ( x < minVal ) {
+	minVal = x;
+      } else if ( x > maxVal ) {
+	maxVal = x;
+      }
+
+    }
+
+    stringstream ss("");
+    ss << minVal << ":" << maxVal;
+    ss >> support;
+
+  } else {
+
+    map<num_t,string>::const_iterator it( features_[featureIdx].backMapping.begin() );
+    support.append(it->second);
+    ++it;
+
+    for ( ; it != features_[featureIdx].backMapping.end(); ++it ) {
+      support.append(":"+it->second);
+    }
+
+  }
+
+  return( support );
+
+}
+
 template <typename T> void Treedata::transpose(vector<vector<T> >& mat) {
 
   vector<vector<T> > foo = mat;

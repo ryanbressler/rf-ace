@@ -37,6 +37,9 @@ namespace datadefs {
                                      *   and http://www.mathworks.com/help/techdoc/ref/eps.html
                                      *   for discussion
                                      */
+  
+  extern const num_t NUM_INF;       /** Numeric representation of positive infinity */
+
   extern const num_t A;             /** Numeric constant used to estimate the
                                      *   error function of a normal distribution,
                                      *   with properties given here:
