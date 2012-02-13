@@ -121,6 +121,19 @@ private:
                                set<num_t>& splitValues_right,
                                num_t& splitFitness);
 
+  inline num_t getSplitFitness(const size_t n_left, 
+			       const size_t sf_left,
+			       const size_t n_right,
+			       const size_t sf_right,
+			       const size_t n_tot,
+			       const num_t sf_tot) {
+    
+    return( ( -1.0*n_left*n_right*sf_tot + 
+	       1.0*n_tot*n_right*sf_left + 
+	       1.0*n_tot*n_left*sf_right ) / 
+	    ( 1.0*n_left*n_right * (1.0*n_tot*n_tot - 1.0*sf_tot) ) ); }
+
+
 
   size_t splitterIdx_;
   Splitter* splitter_;

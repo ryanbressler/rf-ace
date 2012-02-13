@@ -420,6 +420,19 @@ bool Node::regularSplitterSeek(Treedata* treeData,
 
 }
 
+/*
+  inline num_t getSplitFitness(const size_t n_left,
+  const size_t sf_left,
+  const size_t n_right,
+  const size_t sf_right,
+  const size_t n_tot,
+  const num_t sf_tot) {
+  
+  return( ( -1.0*n_left*n_right*sf_tot + 1.0*n_tot*n_right*sf_left + 1.0*n_tot*n_left*sf_right ) / ( 1.0*n_left*n_right * (1.0*n_tot*n_tot - 1.0*sf_tot) ) ); 
+  
+  }
+*/
+
 // !! Correctness, Inadequate Abstraction: kill this method with fire. Refactor, REFACTOR, _*REFACTOR*_.
 void Node::numericalFeatureSplit(Treedata* treedata,
 				 const size_t targetIdx,
@@ -487,10 +500,11 @@ void Node::numericalFeatureSplit(Treedata* treedata,
     size_t idx = 0;
     while(n_left < n_tot - GI.minNodeSizeToStop) {
       datadefs::forward_backward_sqfreq(tv[idx],n_left,freq_left,sf_left,n_right,freq_right,sf_right);
-      if(1.0 * n_right * sf_left + 1.0 * n_left * sf_right > n_left * n_right * nsf_best && n_left >= GI.minNodeSizeToStop) {
+      if(1.0*n_right*sf_left + 1.0*n_left*sf_right > n_left*n_right*nsf_best && n_left >= GI.minNodeSizeToStop) {
         bestSplitIdx = idx;
-        nsf_best = 1.0 * sf_left / n_left + 1.0 * sf_right / n_right;
-	splitFitness = ( -1.0 * n_left*n_right*sf_tot + n_tot*n_right*sf_left + n_tot*n_left*sf_right ) / ( n_left*n_right * (1.0*n_tot*n_tot - sf_tot) );
+        nsf_best = 1.0*sf_left / n_left + 1.0*sf_right / n_right;
+	splitFitness = this->getSplitFitness(n_left,sf_left,n_right,sf_right,n_tot,sf_tot);
+	//splitFitness = ( -1.0 * n_left*n_right*sf_tot + 1.0*n_tot*n_right*sf_left + 1.0*n_tot*n_left*sf_right ) / ( 1.0*n_left*n_right * (1.0*n_tot*n_tot - 1.0*sf_tot) );
       }
       ++idx;
     }
@@ -648,7 +662,7 @@ void Node::categoricalFeatureSplit(Treedata* treedata,
 	//cout << " ]" << endl;
 	
 	//If the fitness becomes improved, make the proposed change, otherwise move samples back
-	if ( 1.0*n_right*sf_left + n_left*sf_right > n_left*n_right*nsf_best ) { //&& n_left >= GI.minNodeSizeToStop && n_right >= GI.minNodeSizeToStop )
+	if ( 1.0*n_right*sf_left + 1.0*n_left*sf_right > 1.0*n_left*n_right*nsf_best ) { //&& n_left >= GI.minNodeSizeToStop && n_right >= GI.minNodeSizeToStop )
 	  
 	  nsf_best = 1.0*sf_left/n_left + 1.0*sf_right/n_right;
 	  // splitFitness = ( -1.0 * n_left*n_right*sf_tot + n_tot*n_right*sf_left + n_tot*n_left*sf_right ) / ( n_left*n_right * (1.0*n_tot*n_tot - sf_tot) );
@@ -658,7 +672,8 @@ void Node::categoricalFeatureSplit(Treedata* treedata,
 	  
 	  ++nCategoriesMoved;
 
-	  splitFitness = ( -1.0 * n_left*n_right*sf_tot + n_tot*n_right*sf_left + n_tot*n_left*sf_right ) / ( n_left*n_right * (1.0*n_tot*n_tot - sf_tot) );
+	  splitFitness = this->getSplitFitness(n_left,sf_left,n_right,sf_right,n_tot,sf_tot); 
+	  //( -1.0 * n_left*n_right*sf_tot + n_tot*n_right*sf_left + n_tot*n_left*sf_right ) / ( n_left*n_right * (1.0*n_tot*n_tot - sf_tot) );
 
 	  break;
 	  
