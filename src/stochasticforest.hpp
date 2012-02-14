@@ -80,10 +80,11 @@ private:
 
   //Chosen target to regress on
   string targetName_;
+  vector<string> targetSupport_;
 
   size_t nTrees_;
 
-  size_t nCategories_;
+  //size_t nCategories_;
 
   //Root nodes for every tree
   vector<RootNode*> rootNodes_;

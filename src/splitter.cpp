@@ -158,7 +158,7 @@ string Splitter::leftSplitValues() {
     }
 
     for ( ; it != splitLeftValues_.end(); ++it ) {
-      ss << ":" << *it;
+      ss << "," << *it;
     }
 
     //ss << "}";
@@ -215,10 +215,10 @@ string Splitter::print() {
   
   stringstream ss;
 
-  ss << "SPLITTER=" << this->name() 
+  ss << "SPLITTER=" << "\"" << this->name() << "\"" 
      << ",SPLITTERTYPE=" << this->type()
-     << ",LVALUES=" << this->leftSplitValues()
-     << ",RVALUES=" << this->rightSplitValues() << "";
+     << ",LVALUES=" << "\"" << this->leftSplitValues() << "\""
+     << ",RVALUES=" << "\"" << this->rightSplitValues() << "\"";
 
   string str("");
   
