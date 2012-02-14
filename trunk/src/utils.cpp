@@ -47,7 +47,7 @@ string utils::chomp(const string& str) {
   return( terminatorIdx != -1 ? ret.substr(0,terminatorIdx) : ret );
 }
 
-set<string> utils::keys(const string str, const char delimiter) {
+set<string> utils::keys(const string& str, const char delimiter) {
 
   set<string> ret;
 
@@ -61,25 +61,85 @@ set<string> utils::keys(const string str, const char delimiter) {
 
 }
 
-map<string,string> utils::keys2vals(const string str,
-				    const char delimiter,
-				    const char separator) {
+/*
+  map<string,string> utils::keys2vals(const string& str,
+  const char delimiter,
+  const char separator) {
+  
+  map<string,string> ret;
+  
+  vector<string> items = utils::split(str,delimiter);
+  
+  for( size_t i = 0; i < items.size(); ++i ) {
+  vector<string> foo = utils::split(items[i],separator);
+  ret[foo[0]] = foo[1];
+  }
+  
+  return( ret );
+  
+  }
+*/
+
+map<string,string> utils::parse(const string& str,
+				const char delimiter,
+				const char separator,
+				const char comment) {
+
+  stringstream streamObj(str);
+
+  return( utils::parse(streamObj,delimiter,separator,comment) );
+
+}
+
+map<string,string> utils::parse(istream& streamObj,
+				const char delimiter,
+				const char separator,
+				const char comment) {
 
   map<string,string> ret;
 
-  vector<string> items = utils::split(str,delimiter);
+  string key;
 
-  for( size_t i = 0; i < items.size(); ++i ) {
-    vector<string> foo = utils::split(items[i],separator);
-    ret[foo[0]] = foo[1];
+  while ( !streamObj.eof() ) {
+
+    // Parse the key
+    getline(streamObj,key,separator);
+    assert( streamObj.good() );
+    assert( !streamObj.eof() );
+    
+    // Peek the next characeter and check if it's a comment 
+    if ( streamObj.peek() == comment ) {
+
+      // ignore the comment character...
+      streamObj.ignore();
+
+      // ... and get the value for the key
+      getline(streamObj,ret[key],comment);
+
+      assert( ret.find(key) != ret.end() );
+
+      // If the next character is a delimiter, ignore it
+      if ( streamObj.peek() == delimiter ) {
+	streamObj.ignore();
+      } 
+
+    } else {
+      
+      // Without the comment character we just read until the next delimiter
+      getline(streamObj,ret[key],delimiter);
+      
+    }
+ 
   }
-
+  
+  // The possible carriage return and end-of-line characters need to be removed
+  ret[key] = utils::chomp(ret[key]);
+    
   return( ret );
 
 }
 
-
-vector<string> utils::split(const string str, const char delimiter) {
+vector<string> utils::split(const string& str, const char delimiter) {
   stringstream streamObj(str);
   return( utils::split(streamObj,delimiter) );
 }
@@ -104,6 +164,25 @@ vector<string> utils::readListFromFile(const string& fileName, const char delimi
   assert(streamObj.good());
   
   return( utils::split(streamObj,delimiter) );
+}
+
+
+string utils::join(const vector<string>& items, const char delimiter) {
+
+  string ret("");
+
+  if ( items.size() == 0 ) {
+    return( ret );
+  }
+
+  ret = items[0];
+
+  for( size_t i = 1; i < items.size(); ++i ) {
+    ret.append(delimiter+items[i]);
+  }
+
+  return( ret );
+
 }
 
 set<string> utils::readFeatureMask(Treedata& treeData, const string& fileName) {

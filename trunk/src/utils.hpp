@@ -24,21 +24,29 @@ namespace utils {
   // Chomps a string, i.e. removes all the trailing end-of-line characters
   string chomp(const string& str);
 
-  set<string> keys(const string str, const char delimiter);
+  set<string> keys(const string& str, const char delimiter);
   
-  // Maps a delimited list of key-value pairs 
-  map<string,string> keys2vals(string str, 
-			       const char delimiter, 
-			       const char separator);
+  // A sophisticated parser that extracts a key-value pairs from a string
+  map<string,string> parse(const string& str, 
+			   const char delimiter, 
+			   const char separator, 
+			   const char comment);
+
+  map<string,string> parse(istream& streamObj,
+			   const char delimiter,
+			   const char separator,
+			   const char comment);
   
   // Splits a delimited string
-  vector<string> split(const string str, const char delimiter);
+  vector<string> split(const string& str, const char delimiter);
 
   // Splits a delimited stream
   vector<string> split(istream& streamObj, const char delimiter);
 
   // Reads a list of items from a file
   vector<string> readListFromFile(const string& fileName, const char delimiter);
+
+  string join(const vector<string>& items, const char delimiter);
 
   // WILL BECOME OBSOLETE
   set<string> readFeatureMask(Treedata& treeData, const string& fileName);
