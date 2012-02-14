@@ -78,7 +78,7 @@ int main(const int argc, char* const argv[]) {
   
   
   cout << "Prediction file '" << gen_op.output << "' created. Format:" << endl;
-  cout << "TARGET   SAMPLE_ID   DATA      PREDICTION   CONFIDENCE" << endl; 
+  cout << "TARGET   SAMPLE_ID     PREDICTION    CONFIDENCE" << endl; 
   cout << endl;
   
   
@@ -92,17 +92,16 @@ void printPredictionToFile(StochasticForest& SF, Treedata& treeData, const strin
 
   ofstream toPredictionFile(fileName.c_str());
   
-  size_t targetIdx = treeData.getFeatureIdx(targetName);
+  //size_t targetIdx = treeData.getFeatureIdx(targetName);
   
-  if ( treeData.isFeatureNumerical(targetIdx)) {
+  if ( SF.isTargetNumerical() ) {
     
     vector<num_t> prediction;
     vector<num_t> confidence;
     SF.predict(prediction,confidence);
     
     for(size_t i = 0; i < prediction.size(); ++i) {
-      toPredictionFile << targetName << "\t" << treeData.getSampleName(i) << "\t" << treeData.getRawFeatureData(targetIdx,i)
-		       << "\t" << prediction[i] << "\t" << setprecision(3) << confidence[i] << endl;
+      toPredictionFile << targetName << "\t" << treeData.getSampleName(i) << "\t" << prediction[i] << "\t" << setprecision(3) << confidence[i] << endl;
     }
     
   } else {
@@ -112,8 +111,7 @@ void printPredictionToFile(StochasticForest& SF, Treedata& treeData, const strin
     SF.predict(prediction,confidence);
     
     for(size_t i = 0; i < prediction.size(); ++i) {
-      toPredictionFile << targetName << "\t" << treeData.getSampleName(i) << "\t" << treeData.getRawFeatureData(targetIdx,i)
-                       << "\t" << prediction[i] << "\t" << setprecision(3) << confidence[i] << endl;
+      toPredictionFile << targetName << "\t" << treeData.getSampleName(i) << "\t" << prediction[i] << "\t" << setprecision(3) << confidence[i] << endl;
     }
     
   }
