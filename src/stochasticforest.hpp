@@ -48,7 +48,8 @@ public:
   size_t nTrees();
 
   inline string getTargetName() { return( targetName_ ); }
-
+  inline bool isTargetNumerical() { return( targetSupport_.size() == 0 ? true : false ); }
+  
   void printToFile(const string& fileName);
 
 #ifndef TEST__

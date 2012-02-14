@@ -457,9 +457,9 @@ vector<num_t> StochasticForest::predictDatasetByTree(size_t treeIdx) {
 
 void StochasticForest::predict(vector<string>& categoryPrediction, vector<num_t>& confidence) {
 
-  size_t targetIdx = treeData_->getFeatureIdx( targetName_ );
+  //size_t targetIdx = treeData_->getFeatureIdx( targetName_ );
   size_t nSamples = treeData_->nSamples();
-  size_t nCategories = treeData_->nCategories( targetIdx );
+  size_t nCategories = targetSupport_.size(); //treeData_->nCategories( targetIdx );
 
   // For classification, each "tree" is actually numClasses_ trees in a row, each predicting the probability of its own class.
   size_t numIterations = nTrees_ / nCategories;
