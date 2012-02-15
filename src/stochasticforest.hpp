@@ -24,14 +24,14 @@ public:
 
 
   // !! Documentation: ... then, on the public side, learning would become collapsed into a single overloaded function learn(...)
-  void learnRF(const size_t mTry,
+  void learnRF(const num_t  mTryFraction,
 	       const size_t nMaxLeaves,
 	       const size_t nodeSize,
-	       const bool useContrasts);
+	       const bool   useContrasts);
 
   void learnGBT(const size_t nMaxLeaves,
-		const num_t shrinkage,
-		const num_t subSampleSize);
+		const num_t  shrinkage,
+		const num_t  subSampleSize);
   
   vector<size_t> featureFrequency();
   

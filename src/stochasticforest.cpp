@@ -164,10 +164,10 @@ void StochasticForest::printToFile(const string& fileName) {
   
 }
 
-void StochasticForest::learnRF(const size_t mTry, 
+void StochasticForest::learnRF(const num_t  mTryFraction, 
 			       const size_t nMaxLeaves,
 			       const size_t nodeSize,
-			       const bool useContrasts) {
+			       const bool   useContrasts) {
 
   shrinkage_ = 1 / nTrees_;
 
@@ -183,8 +183,12 @@ void StochasticForest::learnRF(const size_t mTry,
   size_t maxNodesToStop = 2 * nMaxLeaves - 1;
   size_t minNodeSizeToStop = nodeSize;
   bool isRandomSplit = true;
-  size_t nFeaturesForSplit = mTry;
-  
+  size_t nFeaturesForSplit = static_cast<size_t>( mTryFraction*static_cast<num_t>( treeData_->nFeatures() ) );
+
+  if ( nFeaturesForSplit == 0 ) {
+    nFeaturesForSplit = 1;
+  }
+
   size_t targetIdx = treeData_->getFeatureIdx( targetName_ );
   size_t nCategories = targetSupport_.size();
 

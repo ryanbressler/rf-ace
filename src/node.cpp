@@ -169,7 +169,7 @@ Node* Node::rightChild() {
 void Node::print(string& traversal, ofstream& toFile) {
 
   toFile << "NODE=" << traversal << ",PRED=" << setprecision(3) << trainPrediction_;
-    
+  
   if ( this->hasChildren() ) {
     
     toFile << "," << splitter_->print() << endl;

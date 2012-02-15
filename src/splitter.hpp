@@ -32,9 +32,11 @@ public:
   bool splitsLeft(Treedata* treeData, const size_t sampleIdx);
   bool splitsRight(Treedata* treeData, const size_t sampleIdx);
 
-
-  inline string name() { return(splitterName_); }
+  inline string name() { return( splitterName_ ); }
+  //inline bool isNumerical() { return( splitterType_ == NUMERICAL_SPLITTER ? true : false ); }
+  
   string type();
+  
   string leftSplitValues();
   string rightSplitValues();
 
