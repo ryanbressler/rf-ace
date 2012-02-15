@@ -32,21 +32,21 @@ namespace options {
   
   void printFilterOverview() {
     cout << "PROGRAM: RF-ACE-FILTER" << endl << endl;
-    cout << "Given target feature and input data, applies decision tree ensemble " << endl;
-    cout << "learning with RF-ACE to identify statistically significant predictors." << endl << endl;
+    cout << " Given target feature and input data, applies decision tree ensemble " << endl;
+    cout << " learning with RF-ACE to identify statistically significant predictors." << endl << endl;
   }
   
   void printPredictorBuilderOverview() {
     cout << "PROGRAM: RF-ACE PREDICTOR BUILDER" << endl << endl;
-    cout << "Given target feture and input data, build a Gradient Boosting Tree (GBT) " << endl;
-    cout << "predictor" << endl << endl;
+    cout << " Given target feture and input data, builds a Random Forest (RF) or "
+	 << " Gradient Boosting Tree (GBT) predictor" << endl << endl;
   }
-
+  
   void printPredictorOverview() {
     cout << "PROGRAM: RF-ACE PREDICTOR" << endl << endl;
-    cout << "Makes predictions given a model and novel data." << endl << endl;
+    cout << " Makes predictions given a model and novel data." << endl << endl;
   }
-
+  
   const bool   GENERAL_DEFAULT_PRINT_HELP = false;
   const char   GENERAL_DEFAULT_DATA_DELIMITER = '\t';
   const char   GENERAL_DEFAULT_HEADER_DELIMITER = ':';
@@ -278,6 +278,25 @@ namespace options {
 
   };
 
+  struct PredictorBuilder_options {
+
+    bool isGBT; string isGBT_s; string isGBT_l;
+    bool isRF; string isRF_s; string isRF_l;
+    
+    PredictorBuilder_options(const int argc, char* const argv[]):
+      
+      isGBT(false), isGBT_s("G"), isGBT_l("GBT"),
+      isRF(false), isRF_s("R"), isRF_l("RF") {
+     
+      ArgParse parser(argc,argv);
+
+      parser.getFlag(isGBT_s, isGBT_l, isGBT);
+      parser.getFlag(isRF_s,  isRF_l,  isRF);
+ 
+    }
+
+  };
+
   void validateOptions(const General_options& gen_op) {
     
     // Print help and exit if input file is not specified
@@ -297,6 +316,28 @@ namespace options {
     if ( gen_op.output == "" ) {
       cerr << "You forgot to specify an output file!" << endl;
       printHelpHint();
+      exit(1);
+    }
+
+  }
+
+  void validateOptions(const RF_options& RF_op) {
+
+    if ( RF_op.mTryFraction <= 0.0 || RF_op.mTryFraction >= 1.0 ) {
+      cerr << "mTry needs to be between (0,1)!" << endl;
+      exit(1);
+    }
+      
+  }
+  
+  void validateOptions(PredictorBuilder_options& PB_op) {
+
+    if ( ! ( PB_op.isGBT || PB_op.isRF ) ) {
+      PB_op.isGBT = true;
+    } 
+
+    if ( PB_op.isRF && PB_op.isGBT ) {
+      cerr << "You cannot choose both RF and GBT for predictor building" << endl;
       exit(1);
     }
 
