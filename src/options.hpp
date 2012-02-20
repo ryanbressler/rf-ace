@@ -295,6 +295,16 @@ namespace options {
  
     }
 
+    void help() {
+
+      cout << "OPTIONAL ARGUMENTS -- PREDICTOR BUILDER:" << endl;
+      cout << " -" << isGBT_s << " / --" << isGBT_l << setw( maxWidth - isGBT_l.size() )
+           << " " << "Set this flag if you prefer GBT as the predictor model (default)" << endl;
+      cout << " -" << isRF_s << " / --" << isRF_l << setw( maxWidth - isRF_l.size() )
+           << " " << "Set this flag if you prefer RF as the predictor model" << endl;
+      cout << endl;
+    }
+
   };
 
   void validateOptions(const General_options& gen_op) {

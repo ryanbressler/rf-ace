@@ -349,8 +349,6 @@ void NodeTest::test_categoricalFeatureSplit() {
   
   CPPUNIT_ASSERT( splitter.splitsLeft("0") );
   CPPUNIT_ASSERT( splitter.splitsLeft("1") );
-  CPPUNIT_ASSERT( splitter.splitsLeft("2") );
-  CPPUNIT_ASSERT( splitter.splitsLeft("3") );
   CPPUNIT_ASSERT( splitter.splitsLeft("4") );
 
   //cout << iter << endl;
@@ -385,8 +383,14 @@ void NodeTest::test_categoricalFeatureSplit() {
 			       splitValues_right,
 			       splitFitness);
   
-  //Splitter::Splitter splitter;
-  //CPPUNIT_ASSERT( splitter.splitterType_ == Splitter::NO_SPLITTER );
+  //datadefs::print<num_t>(splitValues_left);
+  //datadefs::print<num_t>(splitValues_right);
+  //datadefs::print<size_t>(sampleIcs_left);
+  //datadefs::print<size_t>(sampleIcs_right);
+  //datadefs::print<num_t>(treedata.getFeatureData(targetIdx2));
+  //datadefs::print<num_t>(treedata.getFeatureData(featureIdx));
+  //datadefs::print<num_t>(treedata.getFeatureData(targetIdx2,sampleIcs_left));
+  //datadefs::print<num_t>(treedata.getFeatureData(targetIdx2,sampleIcs_right));
 
   rawSplitValues_left.clear();
   rawSplitValues_right.clear();
@@ -406,8 +410,9 @@ void NodeTest::test_categoricalFeatureSplit() {
   
   CPPUNIT_ASSERT( sampleIcs_left.size() == 4 );
   CPPUNIT_ASSERT( sampleIcs_right.size() == 6 );
+  CPPUNIT_ASSERT( splitter2.splitsLeft("0") );
   CPPUNIT_ASSERT( splitter2.splitsLeft("1") );
-  CPPUNIT_ASSERT( splitter2.splitsLeft("2") );
+
   
   //if ( iter == 0 ) {
   CPPUNIT_ASSERT( fabs( splitFitness - 0.642857142857143 ) < 1e-10 );

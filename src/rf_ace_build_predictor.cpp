@@ -44,14 +44,9 @@ int main(const int argc, char* const argv[]) {
   if(argc == 1 || gen_op.printHelp ) {
     options::printPredictorBuilderOverview();
     gen_op.help();
-    
-    if ( PB_op.isGBT ) {
-      GBT_op.help();
-    }
-    
-    if ( PB_op.isRF ) {
-      RF_op.help();
-    }
+    GBT_op.help();
+    RF_op.help();
+    PB_op.help();
 
     return(EXIT_SUCCESS);
   }
@@ -82,7 +77,7 @@ int main(const int argc, char* const argv[]) {
 
   rface::printGeneralSetup(treedata,gen_op);
 
-  rface::printGBTSetup(GBT_op);
+  //rface::printGBTSetup(GBT_op);
 
   // After masking, it's safe to refer to features as indices 
   // TODO: rf_ace.cpp: this should be made obsolete; instead of indices, use the feature headers
@@ -91,28 +86,33 @@ int main(const int argc, char* const argv[]) {
   // Store the start time (in clock cycles) just before the analysis
   clock_t clockStart( clock() );
       
-  cout << "===> Growing GBT predictor... " << flush;
+  //cout << "===> Growing GBT predictor... " << flush;
   
-  StochasticForest SF(&treedata,gen_op.targetStr,GBT_op.nTrees);
+  //StochasticForest SF(&treedata,gen_op.targetStr,GBT_op.nTrees);
   
   if ( PB_op.isGBT ) {
+    rface::printGBTSetup(GBT_op);
+    cout << "===> Growing GBT predictor... " << flush;  
+    StochasticForest SF(&treedata,gen_op.targetStr,GBT_op.nTrees);
     SF.learnGBT(GBT_op.nMaxLeaves, GBT_op.shrinkage, GBT_op.subSampleSize);
+    cout << "DONE" << endl;
+    cout << "===> Writing predictor to file... " << flush;
+    SF.printToFile( gen_op.output );
   }
   
   if ( PB_op.isRF ) {
+    rface::printRFSetup(RF_op);
+    cout << "===> Growing RF predictor... " << flush;
     bool useContrasts = false;
+    StochasticForest SF(&treedata,gen_op.targetStr,RF_op.nTrees);
     SF.learnRF(RF_op.mTryFraction,RF_op.nMaxLeaves,RF_op.nodeSize,useContrasts);
+    cout << "DONE" << endl;
+    cout << "===> Writing predictor to file... " << flush;
+    SF.printToFile( gen_op.output );
   }
 
   cout << "DONE" << endl;
-  
-
-  cout << "===> Writing predictor to file... " << flush;
-  SF.printToFile( gen_op.output );
-  cout << "DONE" << endl;
-    
   cout << endl;
-  
   cout << 1.0 * ( clock() - clockStart ) / CLOCKS_PER_SEC << " seconds elapsed." << endl << endl;
     
   cout << "RF-ACE-BUILD-PREDICTOR completed successfully." << endl;
