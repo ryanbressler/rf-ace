@@ -53,10 +53,10 @@ int main(const int argc, char* const argv[]) {
   Treedata treedata(gen_op.input,gen_op.dataDelimiter,gen_op.headerDelimiter);
   cout << "DONE" << endl;
 
-  cout << "===> Loading GBT predictor... " << flush;
+  cout << "===> Loading predictor... " << flush;
   StochasticForest SF(&treedata,pred_op.forest);
   gen_op.targetStr = SF.getTargetName();
-  cout << "DONE" << endl;
+  cout << "DONE -- predictor is " << SF.type() << endl;
 
   options::validateOptions(gen_op);
 

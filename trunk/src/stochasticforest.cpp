@@ -35,8 +35,15 @@ StochasticForest::StochasticForest(Treedata* treeData, const string& forestFile)
 
   map<string,string> forestSetup = utils::parse(newLine,',','=','"');
 
-  assert( forestSetup["FOREST"] == "GBT" );
-  learnedModel_ = GBT_MODEL;
+  //assert( forestSetup["FOREST"] == "GBT" );
+  if ( forestSetup["FOREST"] == "GBT" ) {
+    learnedModel_ = GBT_MODEL;
+  } else if ( forestSetup["FOREST"] == "RF" ) {
+    learnedModel_ = RF_MODEL;
+  } else {
+    cerr << "Unknown forest type: " << forestSetup["FOREST"] << endl;
+    exit(1);
+  }
 
   assert( forestSetup.find("NTREES") != forestSetup.end() );
   nTrees_ = static_cast<size_t>( utils::str2int(forestSetup["NTREES"]) );
@@ -45,12 +52,8 @@ StochasticForest::StochasticForest(Treedata* treeData, const string& forestFile)
   assert( forestSetup.find("TARGET") != forestSetup.end() );
   targetName_ = forestSetup["TARGET"];
 
-  //assert( forestSetup.find("NCATEGORIES") != forestSetup.end() );
-  //nCategories_ = static_cast<size_t>(utils::str2int(forestSetup["NCATEGORIES"]));
-
   assert( forestSetup.find("CATEGORIES") != forestSetup.end() );
   targetSupport_ = utils::split(forestSetup["CATEGORIES"],',');
-  //assert( targetSupport_.size() == static_cast<size_t>(utils::str2int(forestSetup["NCATEGORIES"])) );
 
   assert( forestSetup.find("SHRINKAGE") != forestSetup.end() );
   shrinkage_ = datadefs::str2num(forestSetup["SHRINKAGE"]);
@@ -169,7 +172,7 @@ void StochasticForest::learnRF(const num_t  mTryFraction,
 			       const size_t nodeSize,
 			       const bool   useContrasts) {
 
-  shrinkage_ = 1 / nTrees_;
+  shrinkage_ = 1.0 / nTrees_;
 
   if(useContrasts) {
     treeData_->permuteContrasts();
@@ -438,7 +441,7 @@ num_t StochasticForest::predictSampleByTree(size_t sampleIdx, size_t treeIdx) {
   // Root of current tree
   Node* currentNode = rootNodes_[treeIdx];
   
-  StochasticForest::percolateSampleIdx(sampleIdx, &currentNode);
+  this->percolateSampleIdx(sampleIdx, &currentNode);
   
   return( currentNode->getTrainPrediction() );
 }  
@@ -452,7 +455,7 @@ vector<num_t> StochasticForest::predictDatasetByTree(size_t treeIdx) {
 
   // predict for all samples
   for ( size_t sampleIdx = 0; sampleIdx < nSamples; ++sampleIdx) {
-    prediction[sampleIdx] = StochasticForest::predictSampleByTree(sampleIdx, treeIdx);
+    prediction[sampleIdx] = this->predictSampleByTree(sampleIdx, treeIdx);
     // cout << "Sample " << i << ", prediction " << curPrediction[i]  << endl;
   }
 
@@ -465,20 +468,20 @@ void StochasticForest::predict(vector<string>& categoryPrediction, vector<num_t>
   size_t nSamples = treeData_->nSamples();
   size_t nCategories = targetSupport_.size(); //treeData_->nCategories( targetIdx );
 
-  // For classification, each "tree" is actually numClasses_ trees in a row, each predicting the probability of its own class.
-  size_t numIterations = nTrees_ / nCategories;
-
-  // Vector storing the transformed probabilities for each class prediction
-  vector<num_t> prediction( nCategories );
-
-  // Vector storing true probabilities for each class prediction
-  vector<num_t> probPrediction( nCategories );
-
   categoryPrediction.resize( nSamples );
   confidence.resize( nSamples );
 
   if ( learnedModel_ == GBT_MODEL ) {
     
+    // For classification, each "tree" is actually numClasses_ trees in a row, each predicting the probability of its own class.
+    size_t numIterations = nTrees_ / nCategories;
+
+    // Vector storing the transformed probabilities for each class prediction
+    vector<num_t> prediction( nCategories );
+
+    // Vector storing true probabilities for each class prediction
+    vector<num_t> probPrediction( nCategories );
+
     // For each sample we need to produce predictions for each class.
     for ( size_t i = 0; i < nSamples; i++ ) {
       
@@ -494,7 +497,7 @@ void StochasticForest::predict(vector<string>& categoryPrediction, vector<num_t>
 	  size_t t =  m * nCategories + k;
 	  
 	  // Shrinked shift towards the new prediction
-	  prediction[k] = prediction[k] + shrinkage_ * predictSampleByTree(i, t);
+	  prediction[k] = prediction[k] + shrinkage_ * this->predictSampleByTree(i, t);
 	  
 	}
       }
@@ -513,12 +516,49 @@ void StochasticForest::predict(vector<string>& categoryPrediction, vector<num_t>
     }
 
   } else if ( learnedModel_ == RF_MODEL ) {
-    
-    cerr << "StochasticForest::predict(string) -- implementation for predicting with RFs missing" << endl;
-    exit(1);
+
+    for ( size_t i = 0; i < nSamples; ++i ) {
+      
+      // This container stores the categories and their frequencies
+      map<string,size_t> catFrequency;
+
+      for ( size_t t = 0; t < nTrees_; ++t ) {
+	
+	// Extract predicted category
+	string newCategory = targetSupport_[static_cast<size_t>(this->predictSampleByTree(i, t))];
+	
+	// If category has been seen already, increment frequency by one
+	if ( catFrequency.find(newCategory) != catFrequency.end() ) {
+	  ++catFrequency[newCategory];
+	} else {
+	  
+	  // Otherwise assign frequency to 1
+	  catFrequency[newCategory] = 1;
+
+	}
+      }
+
+      // There can be less, but no more categories represented in the support than in the data
+      assert( catFrequency.size() <= nCategories );
+
+      // Initialize confidence to 0.0
+      confidence[i] = 0.0;
+      
+      // Loop through the categories that have predictions
+      for ( map<string,size_t>::const_iterator it( catFrequency.begin() ); it != catFrequency.end(); ++it ) {
+	
+	// If the prediction has higher prediction than the previous best, switch  
+	if ( it->second > confidence[i]*nTrees_ ) {
+	  categoryPrediction[i] = it->first;
+	  confidence[i] = static_cast<num_t>(it->second) / nTrees_;
+	}
+      }
+
+    }
 
   } else {
 
+    // This should never happen
     cerr << "StochasticForest::predict(string) -- no model to predict with" << endl;
     exit(1);
 
@@ -611,16 +651,20 @@ void StochasticForest::percolateSampleIdx(const size_t sampleIdx, Node** nodep) 
     
     Node* childNode;
 
+    // Precolate the value, and as a result get a pointer to a child node
     if ( treeData_->isFeatureNumerical(featureIdxNew) ) {
       childNode = (*nodep)->percolateData(value);
     } else {
       childNode = (*nodep)->percolateData(treeData_->getRawFeatureData(featureIdxNew,value));
     }
    
+    // However, if percolation could not be done 
+    // (previously unobserved category or missing value), it's time to exit the loop
     if ( childNode == *nodep ) {
       break;
     }
 
+    // Update the pointer and continue percolating
     *nodep = childNode;
 
   }
@@ -749,6 +793,17 @@ vector<num_t> StochasticForest::featureImportance() {
   return(importance);
 
 }
+
+string StochasticForest::type() { 
+  if ( learnedModel_ == GBT_MODEL ) { 
+    return("GBT"); 
+  } else if ( learnedModel_ == RF_MODEL )  {
+    return("RF");
+  } else {
+    return("NO_MODEL");
+  }
+}
+
 
 /**
    Returns a vector of node counts in the trees of the forest

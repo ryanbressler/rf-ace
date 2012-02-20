@@ -50,6 +50,8 @@ public:
   inline string getTargetName() { return( targetName_ ); }
   inline bool isTargetNumerical() { return( targetSupport_.size() == 0 ? true : false ); }
   
+  string type();
+
   void printToFile(const string& fileName);
 
 #ifndef TEST__
@@ -85,8 +87,6 @@ private:
 
   size_t nTrees_;
 
-  //size_t nCategories_;
-
   //Root nodes for every tree
   vector<RootNode*> rootNodes_;
 
@@ -101,9 +101,6 @@ private:
   LearnedModel learnedModel_;
 
   num_t shrinkage_;
-
-  // This object generates a sequence that makes splitting data with categorical splitters fast
-  //PartitionSequence *partitionSequence_;
 
 };
 

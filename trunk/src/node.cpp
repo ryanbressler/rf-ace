@@ -490,33 +490,32 @@ void Node::numericalFeatureSplit(Treedata* treedata,
       if(1.0*n_right*sf_left + 1.0*n_left*sf_right > n_left*n_right*nsf_best && n_left >= GI.minNodeSizeToStop) {
         bestSplitIdx = idx;
         nsf_best = 1.0*sf_left / n_left + 1.0*sf_right / n_right;
-	splitFitness = this->getSplitFitness(n_left,sf_left,n_right,sf_right,n_tot,sf_tot);
-	//splitFitness = ( -1.0 * n_left*n_right*sf_tot + 1.0*n_tot*n_right*sf_left + 1.0*n_tot*n_left*sf_right ) / ( 1.0*n_left*n_right * (1.0*n_tot*n_tot - 1.0*sf_tot) );
       }
       ++idx;
     }
-    //splitFitness = ( -1.0 * n_left*n_right*sf_tot + n_tot*n_right*sf_left + n_tot*n_left*sf_right ) / ( n_left*n_right * (1.0*n_tot*n_tot - sf_tot) );
+    splitFitness = this->getSplitFitness(n_left,sf_left,n_right,sf_right,n_tot,sf_tot);
   }
-
+  
   if(bestSplitIdx == -1) {
     //cout << "N : " << n_left << " <-> " << n_right << " : fitness " << splitFitness << endl;
+    splitFitness = datadefs::NUM_NAN;
     return;
   }
-
+  
   splitValue = fv[bestSplitIdx];
   n_left = bestSplitIdx + 1;
   sampleIcs_left.resize(n_left);
-
+  
   for(size_t i = 0; i < n_left; ++i) {
     sampleIcs_left[i] = sampleIcs_right[i];
   }
   sampleIcs_right.erase(sampleIcs_right.begin(),sampleIcs_right.begin() + n_left);
   n_right = sampleIcs_right.size();
-
+  
   assert(n_left + n_right == n_tot);
-
+  
   //cout << "N : " << n_left << " <-> " << n_right << " : fitness " << splitFitness << endl;
-
+  
 }
 
 // !! Inadequate Abstraction: Refactor me.
@@ -531,9 +530,9 @@ void Node::categoricalFeatureSplit(Treedata* treedata,
                                    num_t& splitFitness) {
 
   splitFitness = datadefs::NUM_NAN;
-
+  
   vector<num_t> tv,fv;
-
+  
   //cout << " -- sampleIcs_right.size() = " << sampleIcs_right.size();
 
   sampleIcs_left.clear();
@@ -554,11 +553,6 @@ void Node::categoricalFeatureSplit(Treedata* treedata,
     return;
   }
 
-  size_t nCategories = fmap_right.size();
-  size_t nCategoriesMoved = 0; 
-
-  bool keepSplitting = true;
-
   if ( treedata->isFeatureNumerical(targetIdx) ) {
 
     num_t mu_right;
@@ -569,14 +563,16 @@ void Node::categoricalFeatureSplit(Treedata* treedata,
     assert(n_tot == n_right);
     num_t se_best = se_right;
     num_t se_tot = se_right;
-
-    while ( nCategoriesMoved < nCategories - 1 && keepSplitting ) {
-
-      map<num_t,vector<size_t> >::iterator it( fmap_right.begin() );
-
+    
+    while ( fmap_right.size() > 1 ) { //nCategoriesMoved < nCategories - 1 ) {
+      
+      map<num_t,vector<size_t> >::iterator it_best( fmap_right.end() );
+      
       // We test each category one by one and see if the fitness becomes improved
-      while ( it != fmap_right.end() ) {
+      for ( map<num_t,vector<size_t> >::iterator it( fmap_right.begin() ); it != fmap_right.end() ; ++it ) {
 
+	//cout << "Testing to split with feature '" << treedata->getRawFeatureData(featureIdx,it->first) << "'" << endl;
+	
         // Take samples from right and put them left
         //cout << "from right to left: [";
         for(size_t i = 0; i < it->second.size(); ++i) {
@@ -584,46 +580,52 @@ void Node::categoricalFeatureSplit(Treedata* treedata,
 	  datadefs::forward_backward_sqerr(tv[ it->second[i] ],n_left,mu_left,se_left,n_right,mu_right,se_right);
         }
         //cout << " ]" << endl;
-
-        //If the fitness becomes improved, make the proposed change, otherwise move samples back
+	
+        //If the split reduces impurity even further, save the point
         if ( se_left + se_right < se_best ) { //&& n_left >= GI.minNodeSizeToStop && n_right >= GI.minNodeSizeToStop )
-
-          fmap_left.insert( *it );
-          fmap_right.erase( it->first );
-
-	  ++nCategoriesMoved;
-
+	  
+	  //cout << " => BETTER" << endl;
+	  it_best = it;
 	  se_best = se_left + se_right;
-
-	  splitFitness = ( se_tot - se_best ) / se_tot;
-
-          break;
-
-        } else {
-
-          //Take samples from left and put them right
-          //cout << "From left to right: [";
-          for(size_t i = 0; i < it->second.size(); ++i) {
-            //cout << " " << it->second[i];
-	    datadefs::forward_backward_sqerr(tv[ it->second[i] ],n_right,mu_right,se_right,n_left,mu_left,se_left);
-          }
-          //cout << " ]" << endl;
-
-        }
-
-        ++it;
-
-        if ( it == fmap_right.end() || nCategories == 2 ) {
-          keepSplitting = false;
-	  break;
-        }
-
+	}
+	
+	//Take samples from left and put them right
+	//cout << "From left to right: [";
+	for(size_t i = 0; i < it->second.size(); ++i) {
+	  //cout << " " << it->second[i];
+	  datadefs::forward_backward_sqerr(tv[ it->second[i] ],n_right,mu_right,se_right,n_left,mu_left,se_left);
+	}
+	//cout << " ]" << endl;
+	
       }
+      
+      // After testing all categories,
+      // if we couldn't find any split that would reduce impurity,
+      // we'll exit the loop
+      if ( it_best == fmap_right.end() ) {
+	//cout << " -- STOP --" << endl;
+	break;
+      }
+
+      //cout << " => Splitting with '" << it_best->first << "'" << endl;
+
+      // Otherwise move samples from right to left
+      for(size_t i = 0; i < it_best->second.size(); ++i) {
+	//cout << " " << it->second[i];
+	datadefs::forward_backward_sqerr(tv[ it_best->second[i] ],n_left,mu_left,se_left,n_right,mu_right,se_right);
+      }
+
+      // Update the maps
+      fmap_left.insert( *it_best );
+      fmap_right.erase( it_best->first );
 
     }
 
+    // Calculate the final split fitness
+    splitFitness = ( se_tot - se_best ) / se_tot;    
+    
   } else {
-
+    
     map<num_t,size_t> freq_left,freq_right;
     size_t sf_left = 0;
     size_t sf_right;
@@ -633,12 +635,15 @@ void Node::categoricalFeatureSplit(Treedata* treedata,
     num_t sf_tot = sf_right;
     num_t nsf_best = 1.0 * sf_right / n_right;
     
-    while ( nCategoriesMoved < nCategories - 1 && keepSplitting ) {
+    while ( fmap_right.size() > 1 ) {
       
-      map<num_t,vector<size_t> >::iterator it( fmap_right.begin() );
+      map<num_t,vector<size_t> >::iterator it_best( fmap_right.end() );
+      //cout << "There are " << fmap_right.size() << " categories on right" << endl;
 
       // We test each category one by one and see if the fitness becomes improved
-      while ( it != fmap_right.end() ) {
+      for ( map<num_t,vector<size_t> >::iterator it( fmap_right.begin() ); it != fmap_right.end() ; ++it ) {
+
+	//cout << "Testing to split with feature '" << treedata->getRawFeatureData(featureIdx,it->first) << "'" << endl;
 	
 	// Take samples from right and put them left
 	//cout << "from right to left: [";
@@ -648,51 +653,57 @@ void Node::categoricalFeatureSplit(Treedata* treedata,
 	}
 	//cout << " ]" << endl;
 	
-	//If the fitness becomes improved, make the proposed change, otherwise move samples back
+	//cout << "Testing to split with feature '" << treedata->getRawFeatureData(featureIdx,it->first) << "': nsf = " << 1.0*sf_left/n_left + 1.0*sf_right/n_right << endl;
+
+	//If the impurity becomes reduced even further, save the point
 	if ( 1.0*n_right*sf_left + 1.0*n_left*sf_right > 1.0*n_left*n_right*nsf_best ) { //&& n_left >= GI.minNodeSizeToStop && n_right >= GI.minNodeSizeToStop )
-	  
+	
 	  nsf_best = 1.0*sf_left/n_left + 1.0*sf_right/n_right;
-	  // splitFitness = ( -1.0 * n_left*n_right*sf_tot + n_tot*n_right*sf_left + n_tot*n_left*sf_right ) / ( n_left*n_right * (1.0*n_tot*n_tot - sf_tot) );
-
-	  fmap_left.insert( *it );
-	  fmap_right.erase( it->first );
-	  
-	  ++nCategoriesMoved;
-
-	  splitFitness = this->getSplitFitness(n_left,sf_left,n_right,sf_right,n_tot,sf_tot); 
-	  //( -1.0 * n_left*n_right*sf_tot + n_tot*n_right*sf_left + n_tot*n_left*sf_right ) / ( n_left*n_right * (1.0*n_tot*n_tot - sf_tot) );
-
-	  break;
-	  
-	} else {
-	  
-	  //Take samples from left and put them right
-	  //cout << "From left to right: [";
-	  for(size_t i = 0; i < it->second.size(); ++i) {
-	    //cout << " " << it->second[i];
-	    datadefs::forward_backward_sqfreq(tv[ it->second[i] ],n_right,freq_right,sf_right,n_left,freq_left,sf_left);
-	  }
-	  //cout << " ]" << endl;
-	  
+	  it_best = it;
+	  //cout << "nsf_best is now " << nsf_best << endl;
 	}
 	
-	++it;
-
-	if ( it == fmap_right.end() || nCategories == 2 ) {
-          keepSplitting = false;
-          break;
-        }
-
+	// Take samples from left and put them right
+	//cout << "From left to right: [";
+	for(size_t i = 0; i < it->second.size(); ++i) {
+	  //cout << " " << it->second[i];
+	  datadefs::forward_backward_sqfreq(tv[ it->second[i] ],n_right,freq_right,sf_right,n_left,freq_left,sf_left);
+	}
+	//cout << " ]" << endl;
 	
       }
+      
+      // After testing all categories,
+      // if we couldn't find any split that would reduce impurity,
+      // we'll exit the loop      
+      if ( it_best == fmap_right.end() ) {
+	//cout << " -- STOP --" << endl;
+	break;
+      }
+      
+      //cout << " => Splitting with '" << treedata->getRawFeatureData(featureIdx,it_best->first) << "'" << endl;
 
+      // Take samples from right and put them left
+      for(size_t i = 0; i < it_best->second.size(); ++i) {
+        //cout << " " << it->second[i];
+	datadefs::forward_backward_sqfreq(tv[ it_best->second[i] ],n_left,freq_left,sf_left,n_right,freq_right,sf_right);
+      }
+      
+      // Update the maps
+      fmap_left.insert( *it_best );
+      fmap_right.erase( it_best->first );
+      
     }
+    
+    // Calculate the final split fitness
+    splitFitness = this->getSplitFitness(n_left,sf_left,n_right,sf_right,n_tot,sf_tot);
     
   } 
 
   //cout << "C " << nCategoriesMoved << ": " << n_left << " <-> " << n_right << " : fitness " << splitFitness << endl;
 
-  if( nCategoriesMoved == 0 || n_left < GI.minNodeSizeToStop || n_right < GI.minNodeSizeToStop ) {
+  if( n_left < GI.minNodeSizeToStop || n_right < GI.minNodeSizeToStop ) {
+    splitFitness = datadefs::NUM_NAN;
     return;
   }
 
