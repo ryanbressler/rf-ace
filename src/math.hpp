@@ -9,8 +9,9 @@ using datadefs::num_t;
 
 
 namespace math {
-  
-  num_t percentile(vector<num_t> x, const num_t alpha);
+
+  // Returns the p'th percentile of the data vector x
+  num_t percentile(vector<num_t> x, const num_t p);
     
 }
   

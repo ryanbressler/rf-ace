@@ -235,34 +235,52 @@ statistics::RF_statistics executeRandomForest(Treedata& treedata,
     copy(importanceValues.begin() + nFeatures, // Origin START
 	 importanceValues.begin() + 2*nFeatures, // Origin END
 	 contrastImportanceMat[permIdx].begin()); // Destination START
-    
+   
+    // Store the new percentile value in the vector cSample
     cSample[permIdx] = math::percentile( utils::removeNANs( contrastImportanceMat[permIdx] ) , 0.95);
     
   }
   
+  // Remove possible NANs from the contrast sample
+  cSample = utils::removeNANs(cSample);
+
+  // Notify if the sample size of the null distribution is very low
+  if ( cSample.size() < 5 ) {
+    cout << " ( there are just " << cSample.size() << " samples from the null distribution )" << endl;
+  }
+
+  // Loop through each feature and calculate p-value for each
   for(size_t featureIdx = 0; featureIdx < treedata.nFeatures(); ++featureIdx) {
     
     size_t nRealSamples;
     vector<num_t> fSample(RF_op.nPerms);
     
+    // Extract the sample for the real feature
     for(size_t permIdx = 0; permIdx < RF_op.nPerms; ++permIdx) {
       fSample[permIdx] = importanceMat[permIdx][featureIdx];
     }
     
+    // Perform t-test against the contrast sample
     pValues[featureIdx] = datadefs::ttest(fSample,cSample);
     
+    // If for some reason the t-test returns NAN, turn that into 1
+    // NOTE: 1 is better number than NAN when sorting
     if ( datadefs::isNAN( pValues[featureIdx] ) ) {
       pValues[featureIdx] = 1.0;
     }
     
+    // Calculate mean importace score from the sample
     datadefs::mean(fSample,importanceValues[featureIdx],nRealSamples);
     
   }
   
+  // Store statistics of the run in an object
   statistics::RF_statistics RF_stat(importanceMat,contrastImportanceMat,nodeMat, 1.0 * ( clock() - clockStart ) / CLOCKS_PER_SEC );
   
+  // Resize importance value container to proper dimensions
   importanceValues.resize( treedata.nFeatures() );
   
+  // Return statistics
   return( RF_stat );
   
 }

@@ -1,24 +1,33 @@
-#include <sstream>
-
 #include "utils.hpp"
 
-vector<num_t> utils::removeNANs(const vector<num_t>& x) {
+#include <sstream>
+#include <algorithm>
 
-  vector<num_t> trimmed(x.size());
+// Returns a copy of input vector x with NAN-entries removed
+// NOTE: is just a wrapper of the algorithm "remove_if"
+vector<num_t> utils::removeNANs(vector<num_t> x) {
 
-  size_t nRetained = 0;
-  for(size_t i = 0; i < x.size(); ++i) {
+  //vector<num_t> trimmed = x.size());
+
+  x.erase( remove_if(x.begin(),x.end(),&datadefs::isNAN), x.end() );
+
+  /*
+    size_t nRetained = 0;
+    for(size_t i = 0; i < x.size(); ++i) {
     if( !datadefs::isNAN(x[i]) ) {
-      trimmed[nRetained] = x[i];
-      ++nRetained;
+    trimmed[nRetained] = x[i];
+    ++nRetained;
     }
-  }
-  trimmed.resize(nRetained);
-  if ( nRetained == 0 ) {
+    }
+    trimmed.resize(nRetained);
+    if ( nRetained == 0 ) {
     cout << "utils::removeNANs() -- data has 0 real values!" << endl;
-  }
+    }
+    
+    return(trimmed);
+  */
 
-  return(trimmed);
+  return( x );
 }
 
 int utils::str2int(const string& str) {
@@ -60,25 +69,6 @@ set<string> utils::keys(const string& str, const char delimiter) {
   return( ret );
 
 }
-
-/*
-  map<string,string> utils::keys2vals(const string& str,
-  const char delimiter,
-  const char separator) {
-  
-  map<string,string> ret;
-  
-  vector<string> items = utils::split(str,delimiter);
-  
-  for( size_t i = 0; i < items.size(); ++i ) {
-  vector<string> foo = utils::split(items[i],separator);
-  ret[foo[0]] = foo[1];
-  }
-  
-  return( ret );
-  
-  }
-*/
 
 map<string,string> utils::parse(const string& str,
 				const char delimiter,

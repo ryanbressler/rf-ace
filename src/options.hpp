@@ -18,7 +18,7 @@ namespace options {
 
     output << endl;
     output << "-----------------------------------------------------" << endl;
-    output << "|  RF-ACE version:  1.0, February 14th, 2012        |" << endl;
+    output << "|  RF-ACE version:  1.0.1, February 21st, 2012      |" << endl;
     output << "|    Project page:  http://code.google.com/p/rf-ace |" << endl;
     output << "|     Report bugs:  timo.p.erkkila@tut.fi           |" << endl;
     output << "-----------------------------------------------------" << endl;
