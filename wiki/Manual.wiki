@@ -93,95 +93,11 @@ TARGET \t PREDICTOR \t LOG10(P-VALUE) \t IMPORTANCE \t CORRELATION \t NSAMPLES
 }}} 
 where `NSAMPLES` is the number of non-missing samples shared by the target and predictor.
 
-== Specifying target as index ==
 It is possible to omit using the name of the feature as the argument for `-i / --target`, but instead give the target as an integer between `0,1,...,N-1`, where `N-1` is the number of features. The integer specifies the position in the feature matrix at which the target is located ( assume 0 <= k <= N-1 ):
 {{{
 bin/rf-ace-filter -I data.afm -i k -O associations.tsv
 }}}
 
-= Building predictor ( binary: rf-ace-build-predictor )=
+== `rf-ace-build-predictor` ==
 
-= Predicting with novel data (binary: rf-ace-predict )=
-
-= Parameters =
-=== `-I / --traindata` ===           
-Train data input file, associations will be sought from this data. Supported formats: AFM and ARFF
-
-=== `-i / --target` ===
-Target, specified as integer or string that is to be matched with the content of input
-
-=== `-O / --associations` ===        
-Association output file
-
-=== `-T / --testdata` ===           
-Test data input file, predictions will be made from this data
-
-=== `-P / --predictions` ===        
-Prediction output file
-
-=== `-L / --log` ===                 
-Log output file
-
-=== `-F / --forest`===              
-Forest output file
-
-=== `-M / --fmask` ===              
-Feature mask input file. String of ones and zeroes, zeroes indicating removal of the feature in the matrix
-
-=== `-D / --data_delim` ===         
-Data delimiter (default \t)
-
-=== `-H / --head_delim` ===         
-Header delimiter that separates the N and C symbols in feature headers from the rest (default :)
-
-=== `-N / --noFilter` ===           
-Set this flag if you want to omit applying feature filtering with RFs
-
-== Random Forest ==
-=== `-n / --RF_ntrees` ===          
-Number of trees per RF (default 100)
-
-=== `-m / --RF_mtry` ===            
-Number of randomly drawn features per node split (default floor(0.1*nFeatures))
-
-=== `-a / --RF_maxleaves` ===       
-Maximum number of leaves per tree (default 100)
-
-=== `-s / --RF_nodesize` ===        
-Minimum number of train samples per node, affects tree depth (default 5)
-
-=== `-p / --RF_nperms` ===          
-Number of Random Forests (default 20)
-
-== Feature Filter ==
-=== `-t / --pthreshold` ===         
-p-value threshold below which associations are listed (default 0.1)
-
-== Gradient Boosting Trees ==
-=== `-r / --GBT_ntrees` ===         
-Number of trees in the GBT (default 100)
-
-=== `-l / --GBT_maxleaves` ===      
-Maximum number of leaves per tree (default 6)
-
-=== `-z / --GBT_shrinkage` ===      
-Shrinkage applied to evolving the residual (default 0.1)
-
-=== `-u / --GBT_samplesize` ===     
-Sample size fraction for training the trees (default 0.5)
-
-
-
-= Examples =
-
-{{{
-bin/rf_ace -I data.afm -i N:target -O associations.tsv
-}}}
-
-{{{
-bin/rf_ace -I data.afm -i N:target -P predictions.tsv
-}}}
-
-{{{
-bin/rf_ace -I data.afm -i N:target -F gbt.sf -P predictions.tsv
-}}}
+== `rf-ace-predict` ==
