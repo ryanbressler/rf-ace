@@ -5,7 +5,7 @@
 #include <set>
 #include <string>
 #include <istream>
-#include <algorithm>
+//#include <algorithm>
 #include <cstdlib>
 #include "datadefs.hpp"
 #include "treedata.hpp"
@@ -17,7 +17,7 @@ using datadefs::num_t;
 namespace utils {
 
   // Removes missing values from the provided data vector
-  vector<num_t> removeNANs(const vector<num_t>& x);
+  vector<num_t> removeNANs(vector<num_t> x);
 
   int str2int(const string& str);
 

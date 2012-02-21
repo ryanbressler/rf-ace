@@ -12,6 +12,11 @@
 
 using namespace std;
 
+/**
+   Reads a data file into a Treedata object. The data file can be either AFM or ARFF
+   NOTE: dataDelimiter and headerDelimiter are used only when the format is AFM, for 
+   ARFF default delimiter (comma) is used 
+*/
 Treedata::Treedata(string fileName, char dataDelimiter, char headerDelimiter):
   dataDelimiter_(dataDelimiter),
   headerDelimiter_(headerDelimiter),
@@ -26,56 +31,89 @@ Treedata::Treedata(string fileName, char dataDelimiter, char headerDelimiter):
     exit(1);
   }
 
+  // Interprets file type from the content of the file
   FileType fileType = UNKNOWN;
   Treedata::readFileType(fileName,fileType);
 
+  // Reads raw data matrix from the input file
+  // NOTE: should be optimized to scale for large data sets
   vector<vector<string> > rawMatrix;
   vector<string> featureHeaders;
   vector<bool> isFeatureNumerical;
   if(fileType == AFM) {
     
-    Treedata::readAFM(featurestream,rawMatrix,featureHeaders,sampleHeaders_,isFeatureNumerical);
+    // Reads from the AFM stream and inserts 
+    // data to the following arguments
+    Treedata::readAFM(featurestream,
+		      rawMatrix,
+		      featureHeaders,
+		      sampleHeaders_,
+		      isFeatureNumerical);
     
   } else if(fileType == ARFF) {
     
-    Treedata::readARFF(featurestream,rawMatrix,featureHeaders,isFeatureNumerical);
+    // Reads from the ARFF stream and inserts 
+    // data to the following arguments
+    Treedata::readARFF(featurestream,
+		       rawMatrix,
+		       featureHeaders,
+		       isFeatureNumerical);
+
+    // ARFF doesn't contain sample headers 
     sampleHeaders_.clear();
-    sampleHeaders_.resize(rawMatrix[0].size(),"NO_SAMPLE_ID");
+    sampleHeaders_.resize(rawMatrix[0].size(),
+			  "NO_SAMPLE_ID");
     
   } else {
     
-    Treedata::readAFM(featurestream,rawMatrix,featureHeaders,sampleHeaders_,isFeatureNumerical);
+    // By default, reads from the AFM stream and inserts
+    // data to the following arguments
+    Treedata::readAFM(featurestream,
+		      rawMatrix,
+		      featureHeaders,
+		      sampleHeaders_,
+		      isFeatureNumerical);
     
   }      
 
+  // Extract the number of features 
   size_t nFeatures = featureHeaders.size();
+
+  // Resize the feature data container to fit the 
+  // original AND contrast features ( so 2*nFeatures )
   features_.resize(2*nFeatures);
 
+  // Start reading data to the final container "features_"
   for(size_t i = 0; i < nFeatures; ++i) {
     
+    // We require that no two features have identical header
     if( name2idx_.find(featureHeaders[i]) != name2idx_.end() ) {
       cerr << "Duplicate feature header '" << featureHeaders[i] << "' found!" << endl;
       exit(1);
     }
 
-    //name2idxHashTest_[featureHeaders[i]] = i;
-    //cout << " " << name2idxHashTest_[featureHeaders[i]];
+    // Map the i'th feature header to integer i
+    // NOTE: could be replaced with a hash table
     name2idx_[featureHeaders[i]] = i;
+
+    // Get name for the i'th feature
     features_[i].name = featureHeaders[i];
+
+    // Get type for the i'th feature
     features_[i].isNumerical = isFeatureNumerical[i];
 
     if(features_[i].isNumerical) {
 
-      datadefs::strv2numv(rawMatrix[i],features_[i].data);
-
-      // SORT ORDER UPDATE
-      //this->updateSortOrder(i);
+      // If type is numerical, read the raw data as numbers
+      datadefs::strv2numv(rawMatrix[i],
+			  features_[i].data);
 
     } else {
 
-      // SORT ORDER UPDATE
-      //features_[i].sortOrder.clear();
-
+      // If type is categorical, read the raw data as string literals
+      // NOTE: mapping and backMapping store the information how to translate
+      //       the raw data (string literals) to the internal format (numbers) 
+      //       and back
       datadefs::strv2catv(rawMatrix[i], 
 			  features_[i].data, 
 			  features_[i].mapping, 
@@ -84,9 +122,8 @@ Treedata::Treedata(string fileName, char dataDelimiter, char headerDelimiter):
     }
 
   } 
-  
-  //cout << endl;
-
+ 
+  // Generate contrast features
   for(size_t i = nFeatures; i < 2*nFeatures; ++i) {
     features_[i] = features_[ i - nFeatures ];
     string contrastName = features_[ i - nFeatures ].name;
@@ -100,26 +137,11 @@ Treedata::Treedata(string fileName, char dataDelimiter, char headerDelimiter):
   unsigned int seed = clock() + now;
   randomInteger_.seed(seed);
 
-  //cout << "permuting contrasts..." << endl;
 
+  // Permute contrasts, so that the data becomes just noise
   this->permuteContrasts();
-  //this->initTemp();
-
-  //cout << "done permuting" << endl;
 
 }
-
-/*
-  void Treedata::initTemp() {
-  
-  size_t n = this->nSamples();
-  
-  temp_.featureDataCopy.resize(n);
-  temp_.targetDataCopy.resize(n);
-  temp_.sampleIcsCopy.resize(n);
-  temp_.multiplicity.resize(n);
-  }
-*/
 
 Treedata::~Treedata() {
   /* Empty destructor */

@@ -83,7 +83,7 @@ void datadefs::strv2catv(const vector<string>& strvec,
   for(size_t strIdx = 0; strIdx < n; ++strIdx) {
 
     //If the string is not NaN ...
-    if(!datadefs::isNAN(strvec[strIdx])) {
+    if(!datadefs::isNAN_STR(strvec[strIdx])) {
       map<string,num_t>::iterator it;
 
       //Try to find the string in the map. If it's not found, extend the map...
@@ -124,31 +124,13 @@ void datadefs::strv2numv(const vector<string>& strvec,
 
   for(size_t strIdx = 0; strIdx < n; ++strIdx) {
     //cout << strIdx << ": \"" << strvec[strIdx] << "\"" << endl;
-    if(!datadefs::isNAN(strvec[strIdx])) {
+    if(!datadefs::isNAN_STR(strvec[strIdx])) {
       numvec[strIdx] = str2num(strvec[strIdx]);
     } else {
       numvec[strIdx] = datadefs::NUM_NAN;
     }
   }
 }
-
-// Makes a copy of the string, chomps, and returns
-/*
-  string datadefs::chomp(const string& str) {
-  
-  // Chop at the first newline character, if it exists
-  int crIdx = str.find("\r");
-  int lfIdx = str.find("\n");
-  int terminatorIdx = crIdx;
-  if (lfIdx != -1 && lfIdx < crIdx) {
-  terminatorIdx = lfIdx;
-  }
-  
-  string ret(str);
-  
-  return( terminatorIdx != -1 ? ret.substr(0,terminatorIdx) : ret );
-  }
-*/
 
 bool datadefs::is_unique(const vector<string>& strvec) {
 
@@ -685,13 +667,6 @@ void datadefs::utest(vector<datadefs::num_t> const& x,
 // !! Documentation: computes the error function for the given value
 datadefs::num_t datadefs::erf(datadefs::num_t x) {  
 
-  // !! TODO: determine if raising an AssertionError or explicit exception is
-  //     appropriate here.
-  //assert(!datadefs::isNAN(x));
-  //if (datadefs::isNAN(x)) {
-  //  throw ERRNO_INVALID_ARGUMENT;
-  //}
-  
   num_t x2 = x*x;
 
   num_t sgn;
@@ -704,20 +679,6 @@ datadefs::num_t datadefs::erf(datadefs::num_t x) {
   return( sgn*sqrt(1.0 - exp(-x2*(4.0/datadefs::PI+datadefs::A*x2) / (1+datadefs::A*x2))) ); 
 
 }
-
-// !! Documentation: Spearman's rank correlation coefficient
-// !! (http://en.wikipedia.org/wiki/Spearman's_rank_correlation_coefficient)
-
-// !! Correctness: this method isn't currently implemented. Consider a more
-// !! meaningful exception than an assertion error, which will be silently
-// !! compiled out if debugging is not enabled.
-/*
-  void datadefs::spearman_correlation(vector<datadefs::num_t> const& x,
-  vector<datadefs::num_t> const& y,
-  datadefs::num_t& corr) {
-  assert(false);
-  }
-*/
 
 // !! Documentation: Pearson product-moment correlation coefficient
 // !! (http://en.wikipedia.org/wiki/Pearson_product-moment_correlation_coefficient)
