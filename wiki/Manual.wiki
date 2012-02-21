@@ -33,16 +33,17 @@ Simple as that! You should now have the following binaries:
   * extracts p-values for associations
   * can be used for dimensionality reduction in subsequent prediction
 *`rf-ace-build-predictor`* 
-  * 
+  * builds either a GBT (default) or RF predictor based on input data
+  * stores the predictor forest as a forest file (.sf)
 *`rf-ace-predict`* 
-  * 
+  * makes predictions with novel data, given a predictor (.sf)
 
 If you feel lucky, check for compiled binaries at the [http://code.google.com/p/rf-ace/downloads/list download page]. 
 
 = Supported data formats =
 RF-ACE currently supports two file formats, Annotated Feature Matrix (AFM) and Attribute-Relation File Format (ARFF).
 
-== Annotated Feature Matrix (AFM) ==
+* Annotated Feature Matrix (AFM) *
 
 Annotated Feature Matrix represents the data as a tab-delimited table, where both columns and rows contain headers describing the samples and features. Based on the headers, the AFM reader is able to discern the right orientation (features as rows or columns in the matrix) of the matrix. Namely AFM feature headers must encode whether the feature is (`N`)umerical, (`C`)ategorical, or (`B`)inary, followed by colon and the actual name of the feature as follows:
 
@@ -75,10 +76,11 @@ N:F6	9	8	7	9	8	7	3	2	1.0	99.23
 
 
 
-== Attribute-Relation File Format (ARFF) ==
+* Attribute-Relation File Format (ARFF) *
 When the feature matrix is as ARFF, the aforementioned constraints for feature headers do no longer apply, since the ARFF itself has an internal format for specifying feature type.
 
 Read more about [http://www.cs.waikato.ac.nz/~ml/weka/arff.html ARFF specification].      
+
 
 = Examples = 
 
