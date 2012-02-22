@@ -847,13 +847,13 @@ void DataDefsTest::test_pearson_correlation() {
 void DataDefsTest::test_isNAN() {
 
   // Test for isNAN(&string)
-  CPPUNIT_ASSERT(datadefs::isNAN("NA"));
-  CPPUNIT_ASSERT(datadefs::isNAN("NAN"));
-  CPPUNIT_ASSERT(datadefs::isNAN("?"));
+  CPPUNIT_ASSERT(datadefs::isNAN_STR("NA"));
+  CPPUNIT_ASSERT(datadefs::isNAN_STR("NAN"));
+  CPPUNIT_ASSERT(datadefs::isNAN_STR("?"));
 
-  CPPUNIT_ASSERT(!datadefs::isNAN("2"));
-  CPPUNIT_ASSERT(!datadefs::isNAN("@data"));
-  CPPUNIT_ASSERT(!datadefs::isNAN("NAte"));
+  CPPUNIT_ASSERT(!datadefs::isNAN_STR("2"));
+  CPPUNIT_ASSERT(!datadefs::isNAN_STR("@data"));
+  CPPUNIT_ASSERT(!datadefs::isNAN_STR("NAte"));
 
   // Test for isNAN(num_t)
   

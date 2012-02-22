@@ -325,38 +325,44 @@ bool Node::regularSplitterSeek(Treedata* treeData,
 			       vector<size_t>& sampleIcs_right,
 			       num_t& splitFitness) {
   
-  num_t splitValue = datadefs::NUM_NAN;
-  set<num_t> splitValues_left,splitValues_right;
-  
+  // This many features will be tested for splitting the data
   size_t nFeaturesForSplit = featureSampleIcs.size();
-  splitFeatureIdx = nFeaturesForSplit;
-  //splitFitness = 0.0;
   
-  num_t newSplitFitness;
-  num_t newSplitValue;
-  set<num_t> newSplitValues_left, newSplitValues_right;
+  // These containers store all the temporary data for all candidate splitters
+  //vector<vector<size_t> > newSampleIcs_left( nFeaturesForSplit, vector<size_t>(0) );
+  //vector<vector<size_t> > newSampleIcs_right( nFeaturesForSplit, sampleIcs );
+  //vector<num_t> newSplitFitness( nFeaturesForSplit, 0.0 );
 
+  num_t splitValue = datadefs::NUM_NAN;
+  set<num_t> splitValues_left; 
+  set<num_t> splitValues_right;
+
+  // Initialize split fitness to lowest possible value
   splitFitness = 0.0;
-  
+
+  // Loop through candidate splitters
   for ( size_t i = 0; i < nFeaturesForSplit; ++i ) {
     
-    //vector<num_t> newSplitFeatureData;
+    // Get split feature index
     size_t newSplitFeatureIdx = featureSampleIcs[i];
+
+    // Get type of the splitter
     bool isFeatureNumerical = treeData->isFeatureNumerical(newSplitFeatureIdx);
 
-    //Neither the real nor the contrast feature can appear in the tree as splitter
+    //If the splitter equals to the target feature, skip splitting
     if ( newSplitFeatureIdx == targetIdx ) {
       continue;
     }
 
-    // vector<num_t> featureData = treeData->getFeatureData(newSplitFeatureIdx,sampleIcs);
-
     vector<size_t> newSampleIcs_left(0);
     vector<size_t> newSampleIcs_right = sampleIcs;
-
-    //cout << "Splitting with feature " << newSplitFeatureIdx << endl;
+    num_t newSplitValue;
+    set<num_t> newSplitValues_left;
+    set<num_t> newSplitValues_right;
+    num_t newSplitFitness = 0.0;
 
     if ( isFeatureNumerical ) {
+
       Node::numericalFeatureSplit(treeData,
 				  targetIdx,
 				  newSplitFeatureIdx,
@@ -366,6 +372,7 @@ bool Node::regularSplitterSeek(Treedata* treeData,
 				  newSplitValue,
 				  newSplitFitness);
     } else {
+
       Node::categoricalFeatureSplit(treeData,
 				    targetIdx,
 				    newSplitFeatureIdx,
@@ -392,16 +399,20 @@ bool Node::regularSplitterSeek(Treedata* treeData,
 
   }
   
-  if ( splitFeatureIdx == nFeaturesForSplit ) {
+  // If none of the splitter candidates worked as a splitter
+  if ( fabs(splitFitness) < datadefs::EPS ) {
     return(false);
   }
-
+  
   if ( treeData->isFeatureNumerical(splitFeatureIdx) ) {
 
     this->setSplitter(splitFeatureIdx,treeData->getFeatureName(splitFeatureIdx),splitValue);
 
   } else {
     
+    //splitValues_left = newSplitValues_left[splitFeatureIdx];
+    //splitValues_right = newSplitValues_right[splitFeatureIdx];
+
     set<string> rawSplitValues_left,rawSplitValues_right;
 
     for ( set<num_t>::const_iterator it(splitValues_left.begin()); it != splitValues_left.end(); ++it ) {
@@ -430,7 +441,7 @@ void Node::numericalFeatureSplit(Treedata* treedata,
                                  num_t& splitValue,
                                  num_t& splitFitness) {
 
-  splitFitness = datadefs::NUM_NAN;
+  //splitFitness = datadefs::NUM_NAN;
 
   vector<num_t> tv,fv;
 
@@ -529,8 +540,7 @@ void Node::categoricalFeatureSplit(Treedata* treedata,
 				   set<num_t>& splitValues_right,
                                    num_t& splitFitness) {
 
-  splitFitness = datadefs::NUM_NAN;
-  
+
   vector<num_t> tv,fv;
   
   //cout << " -- sampleIcs_right.size() = " << sampleIcs_right.size();
@@ -549,7 +559,8 @@ void Node::categoricalFeatureSplit(Treedata* treedata,
   size_t n_right = n_tot;
   size_t n_left = 0;
 
-  if(n_tot < GI.minNodeSizeToStop) {
+  if(n_tot < 2 * GI.minNodeSizeToStop) {
+    splitFitness = datadefs::NUM_NAN;
     return;
   }
 
