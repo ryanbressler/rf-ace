@@ -2,6 +2,7 @@
 #include<cassert>
 #include<iomanip>
 #include "node.hpp"
+#include "math.hpp"
 
 Node::Node():
   splitterIdx_(0),
@@ -460,30 +461,74 @@ void Node::numericalFeatureSplit(Treedata* treedata,
 
   int bestSplitIdx = -1;
   
-  //If the target is numerical, we use the iterative squared error formula to update impurity scores while we traverse "right"
+  //If the target is numerical, we use the incremental squared error formula
   if ( treedata->isFeatureNumerical(targetIdx) ) {
+
+    // We start with one sample on the left branch
+    size_t n = 1;
+    num_t mu_left = tv[0];
+    vector<num_t> se_left(n_tot, 0.0);
+
+    // Add one sample at a time, from left to right, while updating the 
+    // mean and squared error
+    // NOTE1: leftmost sample has been added already, so we start i from 1
+    // NOTE2: rightmost sample needs to be included since we want to compute
+    //        squared error for the whole data vector ( i.e. se_tot )
+    for( size_t i = 1; i < n_tot; ++i ) {
+
+      // We need to manually transfer the previous squared error to the 
+      // present slot
+      se_left[i] = se_left[i-1];
+
+      // This function takes n'th data point tv[i] from left to right
+      // and updates the mean and squared error
+      math::incrementSquaredError(tv[i],++n,mu_left,se_left[i]);
+    }
+
+    // Make sure we accumulated the right number of samples
+    assert( n == n_tot );
+
+    // Make sure the squared error didn't become corrupted by NANs
+    assert( !datadefs::isNAN(se_left.back()) );
+
+    // Total squared error now equals to the squared error of left branch
+    // wince all samples were taken to the left one by one
+    num_t se_tot = se_left.back();
+
+    // The best squared error is set to the worst case
+    num_t se_best = se_left.back();
+
+    // Now it's time to start adding samples from right to left
+    // NOTE: it's intentional to set n to 0
+    n = 0;
     num_t mu_right = 0.0;
     num_t se_right = 0.0;
-    num_t mu_left = 0.0;
-    num_t se_left = 0.0;
-    num_t se_best = 0.0;
-    num_t se_tot = 0.0;
+    
+    // Add samples one by one from right to left until we hit the 
+    // minimum allowed size of the branch
+    for( int i = n_tot-1; i > static_cast<int>(GI.minNodeSizeToStop); --i ) {
+      
+      // Add n'th sample tv[i] from right to left and update 
+      // mean and squared error
+      math::incrementSquaredError(tv[i],++n,mu_right,se_right);
+ 
+      // If the split point "i-1" yields a better split than the previous one,
+      // update se_best and bestSplitIdx
+      if ( se_left[i-1] + se_right < se_best ) {
 
-    datadefs::sqerr(tv,mu_right,se_right,n_right);
-    assert(n_tot == n_right);
-    se_best = se_right;
-    se_tot = se_right;
-
-    size_t idx = 0;
-    while(n_left < n_tot - GI.minNodeSizeToStop) {
-      datadefs::forward_backward_sqerr(tv[idx],n_left,mu_left,se_left,n_right,mu_right,se_right);
-      if( se_left + se_right < se_best && n_left >= GI.minNodeSizeToStop) {
-        bestSplitIdx = idx;
-        se_best = se_left + se_right;
+	bestSplitIdx = i-1;
+	se_best = se_left[i-1] + se_right;
+	
       }
-      ++idx;
+      
     }
+    
+    // Make sure there were no NANs to corrupt the results
+    assert( !datadefs::isNAN(se_right) );
+  
+    // Calculate split fitness
     splitFitness = (se_tot - se_best) / se_tot;
+  
   } else { //Otherwise we use the iterative gini index formula to update impurity scores while we traverse "right"
     map<num_t,size_t> freq_left;
     map<num_t,size_t> freq_right;
