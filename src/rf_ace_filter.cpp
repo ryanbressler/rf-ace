@@ -237,7 +237,7 @@ statistics::RF_statistics executeRandomForest(Treedata& treedata,
 	 contrastImportanceMat[permIdx].begin()); // Destination START
    
     // Store the new percentile value in the vector cSample
-    cSample[permIdx] = math::percentile( utils::removeNANs( contrastImportanceMat[permIdx] ) , 0.95);
+    cSample[permIdx] = math::percentile( utils::removeNANs( contrastImportanceMat[permIdx] ) , 0.5);
     
   }
   
@@ -246,7 +246,8 @@ statistics::RF_statistics executeRandomForest(Treedata& treedata,
 
   // Notify if the sample size of the null distribution is very low
   if ( cSample.size() < 5 ) {
-    cout << " ( there are just " << cSample.size() << " samples from the null distribution )" << endl;
+    cerr << " Too few samples drawn ( " << cSample.size() << " < 5 ) from the null distribution. Consider adding more permutations. Quitting..." << endl;
+    exit(1);
   }
 
   // Loop through each feature and calculate p-value for each
@@ -259,12 +260,24 @@ statistics::RF_statistics executeRandomForest(Treedata& treedata,
     for(size_t permIdx = 0; permIdx < RF_op.nPerms; ++permIdx) {
       fSample[permIdx] = importanceMat[permIdx][featureIdx];
     }
-    
-    // Perform t-test against the contrast sample
-    pValues[featureIdx] = datadefs::ttest(fSample,cSample);
-    
-    // If for some reason the t-test returns NAN, turn that into 1
-    // NOTE: 1 is better number than NAN when sorting
+
+    // Remove missing values
+    fSample = utils::removeNANs(fSample);
+
+    // If sample size is too small, assign p-value to 1.0
+    if ( fSample.size() < 5 ) {
+
+      pValues[featureIdx] = 1.0;
+
+    } else {
+      
+      // Perform t-test against the contrast sample
+      pValues[featureIdx] = datadefs::ttest(fSample,cSample);
+      
+    }
+
+    // If for some reason the t-test returns NAN, turn that into 1.0
+    // NOTE: 1.0 is better number than NAN when sorting
     if ( datadefs::isNAN( pValues[featureIdx] ) ) {
       pValues[featureIdx] = 1.0;
     }
