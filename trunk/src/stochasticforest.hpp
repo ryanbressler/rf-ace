@@ -69,14 +69,14 @@ private:
   vector<num_t> predictDatasetByTree(size_t treeIdx);
 
   //Percolates samples along the trees, starting from the rootNode. Spits out a map<> that ties the percolated train samples to the leaf nodes
-  void percolateSampleIcs(Node* rootNode, const vector<size_t>& sampleIcs, map<Node*,vector<size_t> >& trainIcs);
-  void percolateSampleIcsAtRandom(const size_t featureIdx, Node* rootNode, const vector<size_t>& sampleIcs, map<Node*,vector<size_t> >& trainIcs);
+  map<Node*,vector<size_t> > percolateSampleIcs(Node* rootNode, const vector<size_t>& sampleIcs);
+  map<Node*,vector<size_t> > percolateSampleIcsAtRandom(const size_t featureIdx, Node* rootNode, const vector<size_t>& sampleIcs);
   
   void percolateSampleIdx(const size_t sampleIdx, Node** nodep);
   void percolateSampleIdxAtRandom(const size_t featureIdx, const size_t sampleIdx, Node** nodep);
 
-  //Given the map<>, generated with the percolation functions, a tree impurity score is outputted
-  void treeImpurity(map<Node*,vector<size_t> >& trainIcs, num_t& impurity);
+  // Calculates prediction error across the nodes provided in the input map<> 
+  num_t predictionError(const map<Node*,vector<size_t> >& trainIcs);
 
   //Pointer to treeData_ object, stores all the feature data with which the trees are grown (i.e. training data)
   Treedata* treeData_;

@@ -24,14 +24,6 @@ namespace math {
 				    num_t& mu,
 				    num_t& se) {
     
-    // Increment sample count by one
-    //++n; 
-    
-    // If n overflows, an error will be raised
-    //if (n == 0) { 
-    //  throw ERRNO_NUMERIC_OVERFLOW; 
-    //}
-
     // Save the current mean
     num_t mu_old = mu;
     

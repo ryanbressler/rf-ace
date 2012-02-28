@@ -582,28 +582,24 @@ void StochasticForest::predict(vector<num_t>& prediction, vector<num_t>& confide
  
 }
 
-void StochasticForest::percolateSampleIcs(Node* rootNode, const vector<size_t>& sampleIcs, map<Node*,vector<size_t> >& trainIcs) {
+map<Node*,vector<size_t> > StochasticForest::percolateSampleIcs(Node* rootNode, const vector<size_t>& sampleIcs) {
   
-  trainIcs.clear();
-  
-  for(size_t i = 0; i < sampleIcs.size(); ++i) {
-    //cout << " " << i << " / " << sampleIcs.size() << endl; 
+  // This horrible construct stores information about which
+  // nodes in the tree contain which training samples
+  map<Node*,vector<size_t> > trainIcs;
+
+  // Loop through all train sample indices
+  for(vector<size_t>::const_iterator it( sampleIcs.begin() ); it != sampleIcs.end(); ++it) {
+
+    // Initialize a pointer to the root node
     Node* nodep(rootNode);
-    size_t sampleIdx = sampleIcs[i];
-    StochasticForest::percolateSampleIdx(sampleIdx,&nodep);
-    map<Node*,vector<size_t> >::iterator it(trainIcs.find(nodep));
-    if(it == trainIcs.end()) {
-      Node* foop(nodep);
-      vector<size_t> foo(1);
-      foo[0] = sampleIdx;
-      trainIcs.insert(pair<Node*,vector<size_t> >(foop,foo));
-    } else {
-      trainIcs[it->first].push_back(sampleIdx);
-    }
-      
+
+    this->percolateSampleIdx(*it,&nodep);
+
+    trainIcs[nodep].push_back(*it);
+
   }
-  
-  
+    
   if(false) {
     cout << "Train samples percolated accordingly:" << endl;
     size_t iter = 0;
@@ -615,27 +611,31 @@ void StochasticForest::percolateSampleIcs(Node* rootNode, const vector<size_t>& 
       cout << endl;
     }
   }
+
+  return( trainIcs );
+
 }
 
-void StochasticForest::percolateSampleIcsAtRandom(const size_t featureIdx, Node* rootNode, const vector<size_t>& sampleIcs, map<Node*,vector<size_t> >& trainIcs) {
+map<Node*,vector<size_t> > StochasticForest::percolateSampleIcsAtRandom(const size_t featureIdx, Node* rootNode, const vector<size_t>& sampleIcs) {
 
-  trainIcs.clear();
+  // This horrible construct stores information about which 
+  // nodes in the tree contain which training samples
+  map<Node*,vector<size_t> > trainIcs;
 
-  for(size_t i = 0; i < sampleIcs.size(); ++i) {
+  // Loop through all train sample indices
+  for(vector<size_t>::const_iterator it( sampleIcs.begin() ); it != sampleIcs.end(); ++it) {
+
+    // Initialize a pointer to the root node
     Node* nodep(rootNode);
-    size_t sampleIdx = sampleIcs[i];
-    StochasticForest::percolateSampleIdxAtRandom(featureIdx,sampleIdx,&nodep);
-    map<Node*,vector<size_t> >::iterator it(trainIcs.find(nodep));
-    if(it == trainIcs.end()) {
-      Node* foop(nodep);
-      vector<size_t> foo(1);
-      foo[0] = sampleIdx;
-      trainIcs.insert(pair<Node*,vector<size_t> >(foop,foo));
-    } else {
-      trainIcs[it->first].push_back(sampleIdx);
-    }
 
+    this->percolateSampleIdxAtRandom(featureIdx,*it,&nodep);
+    
+    trainIcs[nodep].push_back(*it);
+    
   }
+
+  return( trainIcs );
+
 }
 
 void StochasticForest::percolateSampleIdx(const size_t sampleIdx, Node** nodep) {
@@ -718,8 +718,6 @@ void StochasticForest::percolateSampleIdxAtRandom(const size_t featureIdx, const
 //    big impact, thus, relative increase of disagreement will be high.  
 vector<num_t> StochasticForest::featureImportance() {
 
-  //cout << "StochasticForest::featureImportance()..." << endl;
-
   // The number of real features in the data matrix...
   size_t nRealFeatures = treeData_->nFeatures();
 
@@ -731,66 +729,46 @@ vector<num_t> StochasticForest::featureImportance() {
   vector<bool> hasImportance( nAllFeatures, false );
   size_t nOobSamples = 0; // !! Potentially Unintentional Humor: "Noob". That is actually intentional. :)
   
-  //size_t nContrastsInForest = 0;
-
-  num_t meanTreeImpurity = 0.0;
+  num_t meanTreePredictionError = 0.0;
 
   // The random forest object stores the mapping from trees to features it contains, which makes
   // the subsequent computations void of unnecessary looping
   for ( map<size_t, set<size_t> >::const_iterator tit(featuresInForest_.begin()); tit != featuresInForest_.end(); ++tit ) {
     size_t treeIdx = tit->first;
       
-    //cout << "looping through tree " << treeIdx << " / " << featuresInForest_.size() << endl;
-
     size_t nNewOobSamples = oobMatrix_[treeIdx].size(); 
     nOobSamples += nNewOobSamples;
 
-    map<Node*,vector<size_t> > trainIcs;
-    StochasticForest::percolateSampleIcs(rootNodes_[treeIdx],oobMatrix_[treeIdx],trainIcs);
-    
-    //cout << "sample ics percolated" << endl;
+    map<Node*,vector<size_t> > trainIcs = this->percolateSampleIcs(rootNodes_[treeIdx],oobMatrix_[treeIdx]);
 
-    num_t treeImpurity;
-    StochasticForest::treeImpurity(trainIcs,treeImpurity);
+    num_t treePredictionError = this->predictionError(trainIcs);
 
     // Accumulate tree impurity
-    meanTreeImpurity += treeImpurity / nTrees_;
-
-    //cout << " " << meanTreeImpurity;
+    meanTreePredictionError += treePredictionError / nTrees_;
 
     // Loop through all features in the tree
     for ( set<size_t>::const_iterator fit( tit->second.begin()); fit != tit->second.end(); ++fit ) {
       size_t featureIdx = *fit;
     
-      //if ( featureIdx >= nRealFeatures ) {
-      //  ++nContrastsInForest;
-      //}
+      trainIcs = this->percolateSampleIcsAtRandom(featureIdx,rootNodes_[treeIdx],oobMatrix_[treeIdx]);
+      num_t permutedTreePredictionError = this->predictionError(trainIcs);
 
-      StochasticForest::percolateSampleIcsAtRandom(featureIdx,rootNodes_[treeIdx],oobMatrix_[treeIdx],trainIcs);
-      num_t permutedTreeImpurity;
-      StochasticForest::treeImpurity(trainIcs,permutedTreeImpurity);
-
-      importance[featureIdx] += nNewOobSamples * (permutedTreeImpurity - treeImpurity);
+      importance[featureIdx] += nNewOobSamples * (permutedTreePredictionError - treePredictionError);
       hasImportance[featureIdx] = true;
     }
       
   }
-
-  //cout << endl;
-
-  //cout << nContrastsInForest << " contrasts in forest. Mean tree impurity " << meanTreeImpurity << endl;
   
   for ( size_t featureIdx = 0; featureIdx < nAllFeatures; ++featureIdx ) {
     
-    if ( !hasImportance[featureIdx] || fabs(meanTreeImpurity) < datadefs::EPS ) {
+    if ( !hasImportance[featureIdx] || fabs(meanTreePredictionError) < datadefs::EPS ) {
       importance[featureIdx] = datadefs::NUM_NAN;
     } else {
-      importance[featureIdx] /= ( nOobSamples * meanTreeImpurity );
+      importance[featureIdx] /= ( nOobSamples * meanTreePredictionError );
     }
-    //cout << "I(" << treeData_->getFeatureName(featureIdx) << ") = " << importance[featureIdx] << endl;
   }
 
-  return(importance);
+  return( importance );
 
 }
 
@@ -847,39 +825,64 @@ size_t StochasticForest::nTrees() {
   return( rootNodes_.size() );
 }
 
-void StochasticForest::treeImpurity(map<Node*,vector<size_t> >& trainIcs, 
-				    num_t& impurity) {
+num_t StochasticForest::predictionError(const map<Node*,vector<size_t> >& trainIcs) {
 
+  // Get index point to the target in treeData_
   size_t targetIdx = treeData_->getFeatureIdx( targetName_ );
 
-  impurity = 0.0;
-  size_t n_tot = 0;
+  // Initialize oobError to 0.0
+  num_t predictionError = 0.0;
 
+  // Count total number of samples
+  size_t nSamples = 0;
+
+  // Get the type of the target
   bool isTargetNumerical = treeData_->isFeatureNumerical(targetIdx);
 
-  for(map<Node*,vector<size_t> >::iterator it(trainIcs.begin()); it != trainIcs.end(); ++it) {
+  // Loop through all nodes that have samples assigned to them
+  for(map<Node*,vector<size_t> >::const_iterator it(trainIcs.begin()); it != trainIcs.end(); ++it) {
 
+    // Get target data
+    // NOTE1: it->second points to the data indices
+    // NOTE2: we happen to know that the indices do not point to data with NANs, which is why
+    //        we don't have to make explicit NAN-checks either
     vector<num_t> targetData = treeData_->getFeatureData(targetIdx,it->second);
+    
+    // Get node prediction
+    // NOTE: it->first points to the node
     num_t nodePrediction = it->first->getTrainPrediction();
-    num_t nodeImpurity = 0;
+    
+    // Number of percolateds sample in node
     size_t nSamplesInNode = targetData.size();
 
+    // Depending on the type of the target, different error calculation equation is used
     if(isTargetNumerical) {
+
+      // Use squared error formula
       for(size_t i = 0; i < nSamplesInNode; ++i) {
-        nodeImpurity += pow(nodePrediction - targetData[i],2);
+        predictionError += pow(nodePrediction - targetData[i],2);
       }
 
     } else {
+      
+      // Use fraction of misprediction formula
       for(size_t i = 0; i < nSamplesInNode; ++i) {
-        nodeImpurity += nodePrediction != targetData[i]; 
+        predictionError += nodePrediction != targetData[i]; 
       }
     }
 
-    n_tot += nSamplesInNode;
-    impurity += nSamplesInNode * nodeImpurity;
+    // Accumulate total sample counter
+    nSamples += nSamplesInNode;
+
   }
 
-  if(n_tot > 0) {
-    impurity /= n_tot;
+  // Get mean
+  if(nSamples > 0) {
+    predictionError /= nSamples;
+  } else {
+    predictionError = datadefs::NUM_NAN;
   }
+
+  return( predictionError );
+
 }
