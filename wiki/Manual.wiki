@@ -86,7 +86,7 @@ Read more about [http://www.cs.waikato.ac.nz/~ml/weka/arff.html ARFF specificati
 = Identify important features from data using RF-ACE = 
 RF-ACE performs feature selection for a given target and feature matrix using the `rf-ace-filter` sub-program as follows:
 {{{
-  bin/rf-ace-filter -I data.arff -i target -O associations.tsv
+bin/rf-ace-filter -I data.arff -i target -O associations.tsv
 }}}   
 The parameter `-I / --traindata` is used to specify the feature matrix, `-i / --target` to specify the target, and `-O / --associations` to specify the output file for associations. The format of the association list is as follows (one entry per row):
 {{{
@@ -115,6 +115,19 @@ bin/rf-ace-filter -I data.arff -i target -O associations.tsv -p 50
 }}}
 In many circumstances, however, it is not recommended to reduce the number of permutations; consider `20` to be the lower limit at which the statistical test behaves robustly across wide range of situations. If RF-ACE recognizes the number of permutations is not sufficient for the t-test, an error will be raised and the program exits; increasing the number of permutations for the t-test will most likely remedy the issue.
 
+== Trimming feature space ==
+`rf-ace-filter` provides a suite of tools to remove features from the candidate list of predictors under specified conditions. 
+=== Removing features with too few samples overlapping with the target ===
+As the input data can be sparse, and depending on which target has been selected, it may become favorable to remove features that are too sparse for reliable analysis. By default `rf-ace-filter` removes features with less than `5` non-missing samples shared by the feature and target, but which can be set to any other value using the parameter `-X / --pruneFeatures` like so:
+{{{
+bin/rf-ace-filter -I data.arff -i target -O associations.tsv -X 60
+}}}
+which would thus cause features with less than `60` intersecting non-missing samples to be removed from analysis.
+=== Blacklisting features ===
+In some cases the input data contains features that for some reason are not suited for as predictors, but whose explicit removal from the input data may be unfavorable. If that is the case, then one can invoke the blacklisting parameter `-B / --blacklist` like so:
+{{{
+bin/rf-ace-filter -I data.arff -i target -O associations.tsv -B blacklist.txt
+}}} 
 
 == `rf-ace-build-predictor` ==
 
