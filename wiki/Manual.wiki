@@ -83,10 +83,8 @@ When the feature matrix is as ARFF, the aforementioned constraints for feature h
 Read more about [http://www.cs.waikato.ac.nz/~ml/weka/arff.html ARFF specification].      
 
 
-= Examples = 
-
-== `rf-ace-filter` ==
-RF-ACE performs feature selection for a given target and feature matrix as follows:
+= Identify important features from data = 
+RF-ACE performs feature selection for a given target and feature matrix using the `rf-ace-filter` sub-program as follows:
 {{{
 bin/rf-ace-filter -I data.afm -i target -O associations.tsv
 }}}   
@@ -94,7 +92,10 @@ The parameter `-I / --traindata` is used to specify the feature matrix, `-i / --
 {{{
 TARGET \t PREDICTOR \t LOG10(P-VALUE) \t IMPORTANCE \t CORRELATION \t NSAMPLES
 }}} 
-where `NSAMPLES` is the number of non-missing samples shared by the target and predictor.
+where `NSAMPLES` is the number of non-missing samples shared by the target and predictor. There will be one such entry (row) per each identified, statistically significant association. By default `rf-ace-filter` assigns the threshold to `0.05`, but which can be manually tuned by the `-t / --pthreshold` parameter like so:
+{{{
+bin/rf-ace-filter -I data.afm -i target -O associations.tsv -t 0.001
+}}}
 
 It is possible to omit using the name of the feature as the argument for `-i / --target`, but instead give the target as an integer between `0,1,...,N-1`, where `N-1` is the number of features. The integer specifies the position in the feature matrix at which the target is located ( assume 0 <= k <= N-1 ):
 {{{
