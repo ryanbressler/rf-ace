@@ -1,6 +1,6 @@
 #summary Manual pages.
 
-*The manual pages have been written on the basis of RF-ACE verson 1.0*
+*The manual pages have been written on the basis of RF-ACE version 1.0*
 
 = Description =
 
@@ -109,6 +109,12 @@ It is thus possible to get the complete association list, sorted with respect to
 {{{
 bin/rf-ace-filter -I data.arff -i target -O associations.tsv -t 1.0
 }}}  
+If you would like to have more permutations (default `20`) sampled for the t-test, you can do that using the parameter `-p / --nperms` like so:
+{{{
+bin/rf-ace-filter -I data.arff -i target -O associations.tsv -p 50
+}}}
+In many circumstances, however, it is not recommended to reduce the number of permutations; consider `20` to be the lower limit at which the statistical test behaves robustly across wide range of situations. If RF-ACE recognizes the number of permutations is not sufficient for the t-test, an error will be raised and the program exits; increasing the number of permutations for the t-test will most likely remedy the issue.
+
 
 == `rf-ace-build-predictor` ==
 
