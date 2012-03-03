@@ -98,19 +98,7 @@ namespace datadefs {
               size_t& sqFreq, 
               size_t& nRealValues);
 
-  void forward_sqfreq(const num_t x_n,
-                      size_t& n,
-                      map<num_t,size_t>& freq,
-                      size_t& sqFreq);
-  
-  void forward_backward_sqfreq(const num_t x_n,
-                               size_t& n_left,
-                               map<num_t,size_t>& freq_left,
-                               size_t& sf_left,
-                               size_t& n_right,
-                               map<num_t,size_t>& freq_right,
-                               size_t& sf_right);
-  
+
   void range(vector<size_t>& ics);
   void sortDataAndMakeRef(const bool isIncreasingOrder, vector<num_t>& data, vector<size_t>& refIcs);
 
@@ -167,77 +155,6 @@ namespace datadefs {
   inline bool pairedIsNAN(const pair<num_t,size_t>& value) {
     return( value.first != value.first ? true : false );
   }
-
-  /**
-     !! Document
-     * Calculates the squared error, given x, n, mu, and standard error
-     */
-  inline void forward_sqerr(const num_t& x_n,
-                            size_t& n,
-                            num_t& mu,
-                            num_t& se) {  
-
-    if(datadefs::isNAN(x_n)) { return; }  // Check for NAN
-    
-    ++n; if (n == 0) { throw ERRNO_NUMERIC_OVERFLOW; }
-    num_t mu_old = mu;
-    mu += (x_n - mu) / n;
-    
-    //If there are already at least two data points, squared error can be calculated, otherwise assign se_left := 0.0
-    if(n > 1) {
-      se += (x_n - mu) * (x_n - mu_old);
-    } else {
-      
-      se = 0.0; /** Implementation note: this may spuriously invoke on
-                     overflow. size_t is assumed to always be unsigned in
-                     accordance with the 1999 ISO C standard (C99). */
-    }
-  } 
-
-  /**
-     !! Document
-     * Calculates the squared error from both supplied branches, x and each
-     *  branch's respective n, mu, and standard error.
-     */
-  inline void forward_backward_sqerr(const num_t& x_n,
-                                     size_t& n_left,
-                                     num_t& mu_left,
-                                     num_t& se_left,
-                                     size_t& n_right,
-                                     num_t& mu_right,
-                                     num_t& se_right) {
-    
-    if(datadefs::isNAN(x_n)) { return; }  // Check for NAN
-    
-    //assert(n_right > 0);
-    ++n_left;   if (n_left == 0)                        { throw ERRNO_NUMERIC_OVERFLOW; }
-    --n_right;  if (n_right == static_cast<size_t>(-1)) { throw ERRNO_NUMERIC_UNDERFLOW; }
-    
-    // As long as there are at least two data points on the "right" branch,
-    //  squared error can be calculated, otherwise assign se_right := 0.0
-    
-    if(n_right > 1) {
-      datadefs::num_t mu_old = mu_right;
-      mu_right -= (x_n - mu_right) / n_right;
-      se_right -= (x_n - mu_right) * (x_n - mu_old);
-    } else if(n_right == 1) {
-      mu_right -= (x_n - mu_right) / n_right;
-      se_right = 0.0;
-    } else {
-      mu_right = 0.0;
-      se_right = 0.0;
-    }
-    
-    // Add x_n to "left" and update mean and squared error
-    datadefs::num_t mu_old = mu_left;
-    mu_left += (x_n - mu_left) / n_left;
-    
-    // If there are already at least two data points on the "left" branch,
-    //  squared error can be calculated, otherwise assign se_left := 0.0
-    
-    if(n_left > 1) { se_left += (x_n - mu_left) * (x_n - mu_old); } else { se_left = 0.0; }
-  }
-
   
   /**
    * A comparator functor that can be passed to STL::sort. Assumes that one is

@@ -394,95 +394,6 @@ void datadefs::sqfreq(vector<datadefs::num_t> const& data,
   // !! sqFreq by reference, without returning any additional information.
 }
 
-// !! Correctness: mutates freq and sqFreq, does not supply an explicit
-// !! contract for these values.
-
-// !! Correctness: this isn't actually a squaring of the frequencies! This
-// !! should probably be named better.
-
-// !! Documentation: I have no idea what this is supposedly doing.
-/*
-  void datadefs::forward_sqfreq(const datadefs::num_t x_n,
-  size_t& n,
-  map<datadefs::num_t,size_t>& freq,
-  size_t& sqFreq) {
-  
-  if(datadefs::isNAN(x_n)) { // !! Correctness: implicit check for NAN
-  return;
-  }
-  
-  ++n; if (n == 0) { throw ERRNO_NUMERIC_OVERFLOW; }
-  
-  //cout << "sf_old=" << sf;
-  //Check if the value already exists
-  map<datadefs::num_t,size_t>::const_iterator it(freq.find(x_n));
-  if(it == freq.end()) {
-  //cout << "sf_old=" << sf;
-  sqFreq += 1;
-  //cout << "  sf_new=" << sf << endl;
-  
-  //If not, add a new category and set its frequency to 1...
-  freq.insert(pair<datadefs::num_t,size_t>(x_n,1));
-  
-  } else {
-  sqFreq += 2*freq[x_n] + 1;
-  ++freq[x_n];
-  }
-  //cout << "  sf_new=" << sf << endl;
-  
-  }
-*/
-
-// !! Correctness: mutates a whole lot of its inputs, does not supply any
-// !! explicit contract for this behavior.
-
-// !! Correctness: this isn't actually a squaring of the frequencies! This
-// !! should probably be named better.
-
-// !! Documentation: I have no idea what this is supposedly doing.
-/*
-  void datadefs::forward_backward_sqfreq(const datadefs::num_t x_n,
-  size_t& n_left,
-  map<datadefs::num_t,size_t>& freq_left, 
-  size_t& sf_left,
-  size_t& n_right,
-  map<datadefs::num_t,size_t>& freq_right,
-  size_t& sf_right) {
-  
-  if(datadefs::isNAN(x_n)) {
-  return;
-  }
-  
-  //assert(n_right > 0);
-  ++n_left;   if (n_left == 0)                        { throw ERRNO_NUMERIC_OVERFLOW; }
-  --n_right;  if (n_right == static_cast<size_t>(-1)) { throw ERRNO_NUMERIC_UNDERFLOW; }
-  
-  //Check if the value already exists on left
-  map<datadefs::num_t,size_t>::const_iterator it(freq_left.find(x_n));
-  if(it == freq_left.end()) {
-  sf_left += 1;
-  
-  //If not, add a new category and set its frequency to 1...
-  freq_left.insert(pair<datadefs::num_t,size_t>(x_n,1));
-  
-  } else {
-  sf_left += 2*freq_left[x_n] + 1;
-  ++freq_left[x_n];
-  }
-  
-  it = freq_right.find(x_n);
-  assert(it != freq_right.end());
-  assert(freq_right[x_n] > 0);
-  
-  sf_right -= 2*freq_right[x_n] - 1;
-  --freq_right[x_n];
-  
-  if(freq_right[x_n] == 0) {
-  freq_right.erase(x_n);
-  }  
-  }
-*/
-
 // !! Documentation: this is just a drop-in replacement for Python's range()
 // !! function, hinted by the size of the input vector. It mutates ics,
 // !! specifying a 0-based range in all cases, and could be made more robust if
@@ -493,14 +404,8 @@ void datadefs::range(vector<size_t>& ics) {
   }
 }
 
-//DEPRECATED
-
 // !! Documentation: performs a T-test on the input. It should be readily
 // !! apparent why this exists,
-
-// !! Spurious deprecation: this isn't used in the existing codebase, but it
-// !! has value within the API. Can we consider it "deprecated?"
-
 datadefs::num_t datadefs::ttest(vector<datadefs::num_t> const& x, 
 				vector<datadefs::num_t> const& y) {
 

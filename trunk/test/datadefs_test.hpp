@@ -27,8 +27,8 @@ class DataDefsTest : public CppUnit::TestFixture {
   CPPUNIT_TEST( test_map_data );
   CPPUNIT_TEST( test_gini );
   CPPUNIT_TEST( test_sqfreq );
-  CPPUNIT_TEST( test_forward_sqfreq );
-  CPPUNIT_TEST( test_forward_backward_sqfreq );
+  //CPPUNIT_TEST( test_forward_sqfreq );
+  //CPPUNIT_TEST( test_forward_backward_sqfreq );
   CPPUNIT_TEST( test_range );
   CPPUNIT_TEST( test_sortDataAndMakeRef );
   CPPUNIT_TEST( test_utest );
@@ -36,8 +36,8 @@ class DataDefsTest : public CppUnit::TestFixture {
   CPPUNIT_TEST( test_pearson_correlation );
   CPPUNIT_TEST( test_isNAN );
   CPPUNIT_TEST( test_containsNAN );
-  CPPUNIT_TEST( test_forward_sqerr );
-  CPPUNIT_TEST( test_forward_backward_sqerr );
+  //CPPUNIT_TEST( test_forward_sqerr );
+  //CPPUNIT_TEST( test_forward_backward_sqerr );
   CPPUNIT_TEST( test_increasingOrderOperator );
   CPPUNIT_TEST( test_decreasingOrderOperator );
   CPPUNIT_TEST( test_freqIncreasingOrderOperator );
@@ -72,8 +72,8 @@ public:
   void test_map_data();
   void test_gini();
   void test_sqfreq();
-  void test_forward_sqfreq();
-  void test_forward_backward_sqfreq();
+  //void test_forward_sqfreq();
+  //void test_forward_backward_sqfreq();
   void test_range();
   void test_sortDataAndMakeRef();
   void test_ttest();
@@ -85,8 +85,8 @@ public:
   void test_percentile();
   void test_isNAN();
   void test_containsNAN();
-  void test_forward_sqerr();
-  void test_forward_backward_sqerr();
+  //void test_forward_sqerr();
+  //void test_forward_backward_sqerr();
   void test_increasingOrderOperator();
   void test_decreasingOrderOperator();
   void test_freqIncreasingOrderOperator();
@@ -525,152 +525,6 @@ void DataDefsTest::test_sqfreq() {
   CPPUNIT_ASSERT(nRealValues == 0);
 }
 
-void DataDefsTest::test_forward_sqfreq() {
-  
-  vector<datadefs::num_t> data; 
-  map<datadefs::num_t,size_t> freq;
-  size_t sqFreq;
-  size_t nRealValues;
-  datadefs::num_t x_n;
-  size_t n;
-  for (int i = 0; i < 50; ++i) {
-    data.push_back(static_cast<datadefs::num_t>(i));
-  }
-  data.push_back(0.0);
-  
-  x_n = 50; n = 50;
-  datadefs::sqfreq(data, freq, sqFreq, nRealValues);
-  datadefs::forward_sqfreq(x_n, n, freq, sqFreq);
-  CPPUNIT_ASSERT(n == 51);
-  CPPUNIT_ASSERT(freq.size() == 51);
-  CPPUNIT_ASSERT(sqFreq == 54);
-
-  // Ensure NaN repudiation
-  //  !! TODO Eventually, this should be replaced with error code validation. 
-  x_n = datadefs::NUM_NAN; n = 0;
-  datadefs::forward_sqfreq(x_n, n, freq, sqFreq);
-
-  // Nothing should have changed
-  CPPUNIT_ASSERT(n == 0);
-  CPPUNIT_ASSERT(freq.size() == 51);
-  CPPUNIT_ASSERT(sqFreq == 54);
-  
-  // Ensure standard error is zeroed in the case of an unusable value for n
-  x_n = 3.1415; n = 0; 
-  datadefs::forward_sqfreq(x_n, n, freq, sqFreq);
-  CPPUNIT_ASSERT(n == 1); // Incremented
-  CPPUNIT_ASSERT(freq.size() == 52);
-  CPPUNIT_ASSERT(sqFreq == 55);
-  
-  // Ensure standard error is zeroed in the case of an unusable value for n
-  x_n = 10; n = 0; 
-  datadefs::forward_sqfreq(x_n, n, freq, sqFreq);
-  CPPUNIT_ASSERT(n == 1); // Incremented
-  CPPUNIT_ASSERT(freq.size() == 52);
-  CPPUNIT_ASSERT(sqFreq == 58);
-
-  try {
-    x_n = 3.1415; n = static_cast<size_t>(-1); 
-    datadefs::forward_sqfreq(x_n, n, freq, sqFreq);
-    CPPUNIT_FAIL("datadefs::forward_sqfreq didn't throw any exception; expected 'ERRNO_NUMERIC_OVERFLOW'");
-  } catch (int e) {  // Ensure standard error is zeroed in the case of an
-                     // unusable value for n
-    CPPUNIT_ASSERT(e == ERRNO_NUMERIC_OVERFLOW);
-    CPPUNIT_ASSERT(n == 0);
-
-    // Nothing else should have changed
-    CPPUNIT_ASSERT(freq.size() == 52);
-    CPPUNIT_ASSERT(sqFreq == 58);
-  }
-}
-
-void DataDefsTest::test_forward_backward_sqfreq() {
-
-  vector<datadefs::num_t> data; 
-  map<datadefs::num_t,size_t> freq_left;
-  size_t sf_left;
-  map<datadefs::num_t,size_t> freq_right;
-  size_t sf_right; 
-  size_t nRealValues;
-  datadefs::num_t x_n;
-  size_t n_left;
-  size_t n_right;
-  for (int i = 0; i < 50; ++i) {
-    data.push_back(static_cast<datadefs::num_t>(i));
-  }
-  data.push_back(0.0);
-   
-  datadefs::sqfreq(data, freq_left, sf_left, nRealValues);
-  datadefs::sqfreq(data, freq_right, sf_right, nRealValues);
-  CPPUNIT_ASSERT(freq_left.size() == 50); 
-  CPPUNIT_ASSERT(sf_left == 53);
-  CPPUNIT_ASSERT(freq_right.size() == 50); 
-  CPPUNIT_ASSERT(sf_right == 53);
-  
-  // Ensure NaN repudiation
-  //  !! TODO Eventually, this should be replaced with error code validation. 
-  x_n = datadefs::NUM_NAN;
-   n_left = 50; n_right = 50;
-  datadefs::forward_backward_sqfreq(x_n, n_left, freq_left, sf_left, n_right, freq_right, sf_right);
-  
-  // Nothing should have changed
-  CPPUNIT_ASSERT(n_left == 50);
-  CPPUNIT_ASSERT(n_right == 50);
-  CPPUNIT_ASSERT(freq_left.size() == 50); 
-  CPPUNIT_ASSERT(sf_left == 53);
-  CPPUNIT_ASSERT(freq_right.size() == 50); 
-  CPPUNIT_ASSERT(sf_right == 53);
-
-  x_n = 10; n_left = 50; n_right = 50;
-  datadefs::forward_backward_sqfreq(x_n, n_left, freq_left, sf_left, n_right, freq_right, sf_right);
-
-  CPPUNIT_ASSERT(n_left == 51); // Incremented
-  CPPUNIT_ASSERT(freq_left.size() == 50);
-  CPPUNIT_ASSERT(sf_left == 56);
-  CPPUNIT_ASSERT(n_right == 49); // Decremented
-  CPPUNIT_ASSERT(freq_right.size() == 49);
-  CPPUNIT_ASSERT(sf_right == 52);
-  
-  try {
-   x_n = 3.1415;
-    n_left = static_cast<size_t>(-1); n_right = 0; // Note: n_right would
-                                                        // underflow if we
-                                                        // didn't bomb out on
-                                                        // the overflow first.
-    datadefs::forward_backward_sqfreq(x_n, n_left, freq_left, sf_left, n_right, freq_right, sf_right);
-    CPPUNIT_FAIL("datadefs::forward_backward_sqfreq didn't throw any exception; expected 'ERRNO_NUMERIC_OVERFLOW'");
-  } catch (int e) {  // Ensure standard error is zeroed in the case of an
-                     // unusable value for n
-    CPPUNIT_ASSERT(e == ERRNO_NUMERIC_OVERFLOW);
-    CPPUNIT_ASSERT(n_left == 0); // Overflow
-
-    // Nothing else should have changed
-    CPPUNIT_ASSERT(freq_left.size() == 50);
-    CPPUNIT_ASSERT(sf_left == 56);
-    CPPUNIT_ASSERT(n_right == 0);
-    CPPUNIT_ASSERT(freq_right.size() == 49);
-    CPPUNIT_ASSERT(sf_right == 52);
-  }
-
-  try {
-   x_n = 3.1415;
-    n_left = 1; n_right = 0; 
-    datadefs::forward_backward_sqfreq(x_n, n_left, freq_left, sf_left, n_right, freq_right, sf_right);
-    CPPUNIT_FAIL("datadefs::forward_backward_sqfreq didn't throw any exception; expected 'ERRNO_NUMERIC_UNDERFLOW'");
-  } catch (int e) {  // Ensure standard error is zeroed in the case of an
-                     // unusable value for n
-    CPPUNIT_ASSERT(e == ERRNO_NUMERIC_UNDERFLOW);
-    CPPUNIT_ASSERT(n_right == static_cast<size_t>(-1)); // Underflow
-    CPPUNIT_ASSERT(n_left == 2); // Incremented
-
-    // Nothing else should have changed
-    CPPUNIT_ASSERT(freq_left.size() == 50);
-    CPPUNIT_ASSERT(sf_left == 56);
-    CPPUNIT_ASSERT(freq_right.size() == 49);
-    CPPUNIT_ASSERT(sf_right == 52);
-  }
-}
-
 void DataDefsTest::test_range() {
   vector<size_t> data(50,0);
 
@@ -905,170 +759,6 @@ void DataDefsTest::test_containsNAN() {
   vector<datadefs::num_t> empty;
   CPPUNIT_ASSERT(!datadefs::containsNAN(empty));
   
-}
-
-void DataDefsTest::test_forward_sqerr() {
-  datadefs::num_t x_n;
-  size_t n;
-  datadefs::num_t mu;
-  datadefs::num_t se;
-
-  // Ensure NaN repudiation
-  //  !! TODO Eventually, this should be replaced with error code validation. 
-  x_n = datadefs::NUM_NAN; n = 0; mu = 0.0; se = 0.0;
-  datadefs::forward_sqerr(x_n, n, mu, se);
-
-  // Nothing should have changed
-  CPPUNIT_ASSERT(n == 0);
-  CPPUNIT_ASSERT(mu == 0.0); 
-  CPPUNIT_ASSERT(se == 0.0);
-
-  // Ensure standard error is zeroed in the case of an unusable value for n
-  x_n = 3.1415; n = 0; mu = 0.1337; se = 0.7331;
-  datadefs::forward_sqerr(x_n, n, mu, se);
-
-  CPPUNIT_ASSERT(n == 1); // Incremented
-  CPPUNIT_ASSERT(fabs(mu - 3.1415) < datadefs::EPS); // mu += (x_n - mu) / n;
-  CPPUNIT_ASSERT(se == 0.0);    // if no asserts thrown and !(n > 1), se = 0.0
-
-  try {
-    x_n = 3.1415; n = static_cast<size_t>(-1); mu = 0.1337; se = 0.7331;
-    datadefs::forward_sqerr(x_n, n, mu, se);
-    CPPUNIT_FAIL("datadefs::forward_sqerr didn't throw any exception; expected 'ERRNO_NUMERIC_OVERFLOW'");
-  } catch (int e) {  // Ensure standard error is zeroed in the case of an
-                     // unusable value for n
-    CPPUNIT_ASSERT(e == ERRNO_NUMERIC_OVERFLOW);
-    CPPUNIT_ASSERT(n == 0); // Overflow
-
-    // Nothing else should have changed
-
-    CPPUNIT_ASSERT(mu == 0.1337);
-    CPPUNIT_ASSERT(se == 0.7331);
-  }
-
-  x_n = 3.1415; n = 2; mu = 0.1337; se = 0.7331;
-  datadefs::forward_sqerr(x_n, n, mu, se);
-
-  CPPUNIT_ASSERT(n == 3); // Incremented
-  CPPUNIT_ASSERT(fabs(mu - 1.136299999999999865707422941341064870357513427734375)
-                  < datadefs::EPS); // mu += (x_n - mu) / n;
-  CPPUNIT_ASSERT(fabs(se - 6.76434056000000172303998624556697905063629150390625)
-                 < datadefs::EPS); // se += (x_n - mu) * (x_n - mu_old); 
-}
-
-void DataDefsTest::test_forward_backward_sqerr() {
-  datadefs::num_t x_n;
-  size_t n_left;
-  datadefs::num_t mu_left;
-  datadefs::num_t se_left;
-  size_t n_right;
-  datadefs::num_t mu_right;
-  datadefs::num_t se_right;
-
-  // Ensure NaN repudiation
-  //  !! TODO Eventually, this should be replaced with error code validation. 
-  x_n = datadefs::NUM_NAN;
-   n_left = 0; mu_left = 0.0; se_left = 0.0;
-   n_right = 0; mu_right = 0.0; se_right = 0.0;
-   
-  datadefs::forward_backward_sqerr(x_n, n_left, mu_left, se_left, n_right, mu_right, se_right);
-
-  // Nothing should have changed
-  CPPUNIT_ASSERT(n_left == 0);
-  CPPUNIT_ASSERT(mu_left == 0.0); 
-  CPPUNIT_ASSERT(se_left == 0.0);
-  CPPUNIT_ASSERT(n_right == 0);
-  CPPUNIT_ASSERT(mu_right == 0.0); 
-  CPPUNIT_ASSERT(se_right == 0.0);
-
-  // Ensure standard error for both sides is zeroed in the case of an unusable value for n
-  x_n = 3.1415;
-   n_left = 0; mu_left = 0.1337; se_left = 0.7331;
-   n_right = 1; mu_right = 0.9773; se_right = 0.3779;
-   
-  datadefs::forward_backward_sqerr(x_n, n_left, mu_left, se_left, n_right, mu_right, se_right);
-
-  CPPUNIT_ASSERT(n_left == 1); // Incremented
-  CPPUNIT_ASSERT(fabs(mu_left - 3.1415) < datadefs::EPS); // mu_left += (x_n - mu_left) / n_left;
-  CPPUNIT_ASSERT(se_left == 0.0);  // if no asserts thrown and !(n > 1), se_left = 0.0
-  CPPUNIT_ASSERT(n_right == 0); // Decremented
-  CPPUNIT_ASSERT(mu_right == 0.0); // if no asserts thrown and n == 0,
-                                   //  mu_right = 0.0
-  CPPUNIT_ASSERT(se_right == 0.0); // if no asserts thrown and !(n > 1),
-                                   //  se_right = 0.0
-
-  x_n = 3.1415;
-   n_left = 0; mu_left = 0.1337; se_left = 0.7331;
-   n_right = 2; mu_right = 0.9773; se_right = 0.3779;
-
-  datadefs::forward_backward_sqerr(x_n, n_left, mu_left, se_left, n_right, mu_right, se_right);
-
-  CPPUNIT_ASSERT(n_left == 1); // Incremented
-  CPPUNIT_ASSERT(fabs(mu_left - 3.1415) < datadefs::EPS); // mu_left += (x_n - mu_left) / n_left;
-  CPPUNIT_ASSERT(se_left == 0.0);  // if no asserts thrown and !(n > 1), se_left = 0.0
-  CPPUNIT_ASSERT(n_right == 1); // Decremented
-  CPPUNIT_ASSERT(fabs(mu_right + 1.186900000000000066080474425689317286014556884765625)
-                 < datadefs::EPS); // mu_right += (x_n - mu_right) / n_right;
-  CPPUNIT_ASSERT(se_right == 0.0); // if no asserts thrown and !(n > 1),
-                                   //  se_right = 0.0 
-
-  try {
-   x_n = 3.1415;
-    n_left = static_cast<size_t>(-1); mu_left = 0.1337; se_left = 0.7331;
-    n_right = 0; mu_right = 0.9773; se_right = 0.3779; // Note: n_right would
-                                                        // underflow if we
-                                                        // didn't bomb out on
-                                                        // the overflow first.
-    datadefs::forward_backward_sqerr(x_n, n_left, mu_left, se_left, n_right, mu_right, se_right);
-    CPPUNIT_FAIL("datadefs::forward_backward_sqerr didn't throw any exception; expected 'ERRNO_NUMERIC_OVERFLOW'");
-  } catch (int e) {  // Ensure standard error is zeroed in the case of an
-                     // unusable value for n
-    CPPUNIT_ASSERT(e == ERRNO_NUMERIC_OVERFLOW);
-    CPPUNIT_ASSERT(n_left == 0); // Overflow
-
-    // Nothing else should have changed
-    CPPUNIT_ASSERT(mu_left == 0.1337);
-    CPPUNIT_ASSERT(se_left == 0.7331);
-    CPPUNIT_ASSERT(n_right == 0);
-    CPPUNIT_ASSERT(mu_right == 0.9773);
-    CPPUNIT_ASSERT(se_right == 0.3779);
-  }
-
-  try {
-   x_n = 3.1415;
-    n_left = 1; mu_left = 0.1337; se_left = 0.7331;
-    n_right = 0; mu_right = 0.9773; se_right = 0.3779;
-    datadefs::forward_backward_sqerr(x_n, n_left, mu_left, se_left, n_right, mu_right, se_right);
-    CPPUNIT_FAIL("datadefs::forward_backward_sqerr didn't throw any exception; expected 'ERRNO_NUMERIC_UNDERFLOW'");
-  } catch (int e) {  // Ensure standard error is zeroed in the case of an
-                     // unusable value for n
-    CPPUNIT_ASSERT(e == ERRNO_NUMERIC_UNDERFLOW);
-    CPPUNIT_ASSERT(n_right == static_cast<size_t>(-1)); // Underflow
-    CPPUNIT_ASSERT(n_left == 2); // Incremented
-
-    // Nothing else should have changed
-    CPPUNIT_ASSERT(mu_left == 0.1337);
-    CPPUNIT_ASSERT(se_left == 0.7331);
-    CPPUNIT_ASSERT(mu_right == 0.9773);
-    CPPUNIT_ASSERT(se_right == 0.3779);
-  }
-
-  x_n = 3.1415;
-   n_left = 2; mu_left = 0.1337; se_left = 0.7331;
-   n_right = 4; mu_right = 0.9773; se_right = 0.3779; 
-
-  datadefs::forward_backward_sqerr(x_n, n_left, mu_left, se_left, n_right, mu_right, se_right);
-
-  CPPUNIT_ASSERT(n_left == 3); // Incremented
-  CPPUNIT_ASSERT(fabs(mu_left - 1.136299999999999865707422941341064870357513427734375)
-                  < datadefs::EPS); // mu_left += (x_n - mu_left) / n_left;
-  CPPUNIT_ASSERT(fabs(se_left - 6.76434056000000172303998624556697905063629150390625)
-                 < datadefs::EPS);  // se_left += (x_n - mu_left) * (x_n - mu_old);
-  CPPUNIT_ASSERT(n_right == 3); // Decremented
-  CPPUNIT_ASSERT(fabs(mu_right - 0.25589999999999990532018045996665023267269134521484375) 
-                  < datadefs::EPS); // mu_right += (x_n - mu_right) / n_right;
-  CPPUNIT_ASSERT(fabs(se_right + 5.8671155200000004725779945147223770618438720703125)
-                 < datadefs::EPS);  // se_right += (x_n - mu_right) * (x_n - mu_old);
 }
 
 void DataDefsTest::test_increasingOrderOperator() {
