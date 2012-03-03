@@ -435,8 +435,8 @@ void Treedata::readARFF(ifstream& featurestream, vector<vector<string> >& rawMat
 
       hasData = true;
       //cout << "found data header:" << row << endl;
-    } else {      //If none of the earlier branches matched, we have a problem
-      cerr << "incorrectly formatted ARFF file" << endl;
+    } else {      //If none of the earlier branches matched, we have a problem 
+      cerr << "incorrectly formatted ARFF row '" << row << "'" << endl;
       assert(false);
     }
   }
@@ -454,7 +454,8 @@ void Treedata::parseARFFattribute(const string& str, string& attributeName, bool
   getline(ss,attributeType);
 
   //string prefix;
-  if(datadefs::toUpperCase(attributeType) == "NUMERIC" || datadefs::toUpperCase(attributeType) == "REAL" ) {
+  if(datadefs::toUpperCase(attributeType) == "NUMERIC" ||
+     datadefs::toUpperCase(attributeType) == "REAL" ) {
     isFeatureNumerical = true;
   } else {
     isFeatureNumerical = false;

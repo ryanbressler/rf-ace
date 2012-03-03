@@ -74,6 +74,28 @@ namespace math {
     }
   */
 
+  inline void incrementSquaredFrequency(const num_t x_n,
+					map<num_t,size_t>& freq,
+					size_t& sqFreq) {
+
+
+    // Check if the value already exists
+    map<num_t,size_t>::const_iterator it(freq.find(x_n));
+    if(it == freq.end()) {
+
+      sqFreq += 1;
+      freq[x_n] = 1;
+
+    } else {
+
+      sqFreq += 2*freq[x_n] + 1;
+      ++freq[x_n];
+
+    }
+
+
+  }
+
 
 }
   
