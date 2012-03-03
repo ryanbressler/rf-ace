@@ -530,26 +530,71 @@ void Node::numericalFeatureSplit(Treedata* treedata,
     splitFitness = (se_tot - se_best) / se_tot;
   
   } else { //Otherwise we use the iterative gini index formula to update impurity scores while we traverse "right"
+
+    // We start with one sample on the left branch
+    size_t n_left = 1;
     map<num_t,size_t> freq_left;
+    freq_left[ tv[0] ] = 1;
+    vector<size_t> sf_left(n_tot, 0);
+    sf_left[0] = 1;
+
+    // Add one sample at a time, from left to right, while updating the
+    // squared frequency
+    // NOTE1: leftmost sample has been added already, so we start i from 1
+    // NOTE2: rightmost sample needs to be included since we want to compute
+    //        squared error for the whole data vector ( i.e. sf_tot )
+    for( size_t i = 1; i < n_tot; ++i ) {
+
+      // We need to manually transfer the previous squared frequency to the
+      // present slot
+      sf_left[i] = sf_left[i-1];
+
+      // This function takes n'th data point tv[i] from left to right
+      // and updates the squared frequency
+      math::incrementSquaredFrequency(tv[i],freq_left,sf_left[i]);
+      ++n_left;
+    }
+
+    // Make sure we accumulated the right number of samples
+    assert( n_left == n_tot );
+
+    // Make sure the squared frequency didn't become corrupted by NANs
+    //assert( !datadefs::isNAN(sf_left.back()) );
+
+    // Total squared frequency now equals to the squared frequency of left branch
+    // wince all samples were taken to the left one by one
+    size_t sf_tot = sf_left.back();
+
+    // The best normalized squared frequency is set to the worst case
+    num_t nsf_best = sf_left.back() / n_left;
+
+    // Now it's time to start adding samples from right to left
+    // NOTE: it's intentional to set n_right to 0
+    size_t n_right = 0;
     map<num_t,size_t> freq_right;
-    size_t sf_left = 0;
     size_t sf_right = 0;
 
-    datadefs::sqfreq(tv,freq_right,sf_right,n_right);
-    num_t sf_tot = sf_right;
-    num_t nsf_best = 1.0 * sf_right / n_right;
-    assert(n_tot == n_right);
+    // Add samples one by one from right to left until we hit the
+    // minimum allowed size of the branch
+    for( int i = n_tot-1; i > static_cast<int>(GI.minNodeSizeToStop); --i ) {
 
-    size_t idx = 0;
-    while(n_left < n_tot - GI.minNodeSizeToStop) {
-      datadefs::forward_backward_sqfreq(tv[idx],n_left,freq_left,sf_left,n_right,freq_right,sf_right);
-      if(1.0*n_right*sf_left + 1.0*n_left*sf_right > n_left*n_right*nsf_best && n_left >= GI.minNodeSizeToStop) {
-        bestSplitIdx = idx;
-        nsf_best = 1.0*sf_left / n_left + 1.0*sf_right / n_right;
+      // Add n'th sample tv[i] from right to left and update
+      // mean and squared frequency
+      math::incrementSquaredFrequency(tv[i],freq_right,sf_right);
+      ++n_right;
+      --n_left;
+
+      // If the split point "i-1" yields a better split than the previous one,
+      // update se_best and bestSplitIdx
+      if(1.0*n_right*sf_left[i-1] + 1.0*n_left*sf_right > n_left*n_right*nsf_best && n_left >= GI.minNodeSizeToStop) {
+        bestSplitIdx = i-1;
+        nsf_best = 1.0*sf_left[i-1] / n_left + 1.0*sf_right / n_right;
+	splitFitness = this->getSplitFitness(n_left,sf_left[i-1],n_right,sf_right,n_tot,sf_tot);
       }
-      ++idx;
+
+
     }
-    splitFitness = this->getSplitFitness(n_left,sf_left,n_right,sf_right,n_tot,sf_tot);
+
   }
   
   if(bestSplitIdx == -1) {
@@ -688,7 +733,7 @@ void Node::categoricalFeatureSplit(Treedata* treedata,
     datadefs::sqfreq(tv,freq_right,sf_right,n_right);
     assert(n_tot == n_right);
     
-    num_t sf_tot = sf_right;
+    size_t sf_tot = sf_right;
     num_t nsf_best = 1.0 * sf_right / n_right;
     
     while ( fmap_right.size() > 1 ) {

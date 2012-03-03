@@ -126,7 +126,7 @@ private:
 			       const size_t n_right,
 			       const size_t sf_right,
 			       const size_t n_tot,
-			       const num_t sf_tot) {
+			       const size_t sf_tot) {
     
     return( ( -1.0*n_left*n_right*sf_tot + 
 	       1.0*n_tot*n_right*sf_left + 
