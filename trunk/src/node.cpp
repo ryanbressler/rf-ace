@@ -749,8 +749,17 @@ void Node::categoricalFeatureSplit(Treedata* treedata,
 	// Take samples from right and put them left
 	//cout << "from right to left: [";
 	for(size_t i = 0; i < it->second.size(); ++i) {
+	  
+	  // Add sample to left
+	  ++n_left;
+	  math::incrementSquaredFrequency(tv[ it->second[i] ], freq_left, sf_left);
+
+	  // Remove sample from right
+	  --n_right;
+	  math::decrementSquaredFrequency(tv[ it->second[i] ], freq_right, sf_right);
+
 	  //cout << " " << it->second[i];
-	  datadefs::forward_backward_sqfreq(tv[ it->second[i] ],n_left,freq_left,sf_left,n_right,freq_right,sf_right);
+	  //datadefs::forward_backward_sqfreq(tv[ it->second[i] ],n_left,freq_left,sf_left,n_right,freq_right,sf_right);
 	}
 	//cout << " ]" << endl;
 	
@@ -767,8 +776,16 @@ void Node::categoricalFeatureSplit(Treedata* treedata,
 	// Take samples from left and put them right
 	//cout << "From left to right: [";
 	for(size_t i = 0; i < it->second.size(); ++i) {
-	  //cout << " " << it->second[i];
-	  datadefs::forward_backward_sqfreq(tv[ it->second[i] ],n_right,freq_right,sf_right,n_left,freq_left,sf_left);
+	  
+	  // Add sample to right
+	  ++n_right;
+	  math::incrementSquaredFrequency(tv[ it->second[i] ], freq_right, sf_right);
+
+	  // Remove sample from left
+	  --n_left;
+	  math::decrementSquaredFrequency(tv[ it->second[i] ], freq_left, sf_left);
+
+	  //datadefs::forward_backward_sqfreq(tv[ it->second[i] ],n_right,freq_right,sf_right,n_left,freq_left,sf_left);
 	}
 	//cout << " ]" << endl;
 	
@@ -786,8 +803,16 @@ void Node::categoricalFeatureSplit(Treedata* treedata,
 
       // Take samples from right and put them left
       for(size_t i = 0; i < it_best->second.size(); ++i) {
-        //cout << " " << it->second[i];
-	datadefs::forward_backward_sqfreq(tv[ it_best->second[i] ],n_left,freq_left,sf_left,n_right,freq_right,sf_right);
+        
+	// Add sample to left
+	++n_left;
+	math::incrementSquaredFrequency(tv[ it_best->second[i] ], freq_left, sf_left);
+	
+	// Remove sample from right
+	--n_right;
+	math::decrementSquaredFrequency(tv[ it_best->second[i] ], freq_right, sf_right);
+	
+	//datadefs::forward_backward_sqfreq(tv[ it_best->second[i] ],n_left,freq_left,sf_left,n_right,freq_right,sf_right);
       }
       
       // Update the maps
