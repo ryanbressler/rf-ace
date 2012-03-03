@@ -678,7 +678,16 @@ void Node::categoricalFeatureSplit(Treedata* treedata,
         //cout << "from right to left: [";
         for(size_t i = 0; i < it->second.size(); ++i) {
           //cout << " " << it->second[i];
-	  datadefs::forward_backward_sqerr(tv[ it->second[i] ],n_left,mu_left,se_left,n_right,mu_right,se_right);
+	  
+	  // Add sample to left
+	  ++n_left;
+	  math::incrementSquaredError(tv[ it->second[i] ], n_left, mu_left, se_left);
+
+	  // Remove sample from right
+	  --n_right;
+	  math::decrementSquaredError(tv[ it->second[i] ], n_right, mu_right, se_right);
+
+	  //datadefs::forward_backward_sqerr(tv[ it->second[i] ],n_left,mu_left,se_left,n_right,mu_right,se_right);
         }
         //cout << " ]" << endl;
 	
@@ -694,7 +703,16 @@ void Node::categoricalFeatureSplit(Treedata* treedata,
 	//cout << "From left to right: [";
 	for(size_t i = 0; i < it->second.size(); ++i) {
 	  //cout << " " << it->second[i];
-	  datadefs::forward_backward_sqerr(tv[ it->second[i] ],n_right,mu_right,se_right,n_left,mu_left,se_left);
+	  
+	  // Add sample to right
+	  ++n_right;
+	  math::incrementSquaredError(tv[ it->second[i] ], n_right, mu_right, se_right);
+
+	  // Remove sample from left
+	  --n_left;
+	  math::decrementSquaredError(tv[ it->second[i] ], n_left, mu_left, se_left);
+
+	  //datadefs::forward_backward_sqerr(tv[ it->second[i] ],n_right,mu_right,se_right,n_left,mu_left,se_left);
 	}
 	//cout << " ]" << endl;
 	
@@ -713,7 +731,16 @@ void Node::categoricalFeatureSplit(Treedata* treedata,
       // Otherwise move samples from right to left
       for(size_t i = 0; i < it_best->second.size(); ++i) {
 	//cout << " " << it->second[i];
-	datadefs::forward_backward_sqerr(tv[ it_best->second[i] ],n_left,mu_left,se_left,n_right,mu_right,se_right);
+
+	// Add sample to left
+	++n_left;
+	math::incrementSquaredError(tv[ it_best->second[i] ], n_left, mu_left, se_left);
+
+	// Remove sample from right
+	--n_right;
+	math::decrementSquaredError(tv[ it_best->second[i] ], n_right, mu_right, se_right);
+
+	//datadefs::forward_backward_sqerr(tv[ it_best->second[i] ],n_left,mu_left,se_left,n_right,mu_right,se_right);
       }
 
       // Update the maps
