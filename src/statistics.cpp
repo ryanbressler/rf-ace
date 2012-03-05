@@ -1,4 +1,6 @@
 #include "statistics.hpp"
+#include "utils.hpp"
+#include "math.hpp"
 
 statistics::RF_statistics::RF_statistics() {
 
@@ -62,10 +64,9 @@ void statistics::RF_statistics::print(ofstream& toFile) {
 
   size_t nNodes = 0;
 
-  size_t nReal;
   for ( size_t permIdx = 0; permIdx < nPerms; ++permIdx ) {
-    datadefs::mean(importanceMat_[permIdx],importanceVec[permIdx],nReal);
-    datadefs::mean(contrastImportanceMat_[permIdx],contrastImportanceVec[permIdx],nReal);
+    importanceVec[permIdx] = math::mean( utils::removeNANs(importanceMat_[permIdx]) );
+    contrastImportanceVec[permIdx] = math::mean( utils::removeNANs(contrastImportanceMat_[permIdx]) );
     for ( size_t treeIdx = 0; treeIdx < nodeMat_[permIdx].size(); ++treeIdx ) {
       nNodes += nodeMat_[permIdx][treeIdx];
     }
@@ -81,11 +82,14 @@ void statistics::RF_statistics::print(ofstream& toFile) {
   num_t stdImportance;
   num_t stdContrastImportance;
 
-  datadefs::sqerr(importanceVec,meanImportance,stdImportance,nReal);
-  stdImportance = sqrtf(stdImportance) / nReal;
+  importanceVec = utils::removeNANs(importanceVec);
+  contrastImportanceVec = utils::removeNANs(contrastImportanceVec);
 
-  datadefs::sqerr(contrastImportanceVec,meanContrastImportance,stdContrastImportance,nReal);
-  stdContrastImportance = sqrtf(stdContrastImportance) / nReal;
+  math::squaredError(importanceVec,meanImportance,stdImportance);
+  stdImportance = sqrtf(stdImportance) / importanceVec.size();
+
+  math::squaredError(contrastImportanceVec,meanContrastImportance,stdContrastImportance);
+  stdContrastImportance = sqrtf(stdContrastImportance) / contrastImportanceVec.size();
 
   toFile << "Random Forest statistics" << endl
 	 << "------------------------" << endl

@@ -73,10 +73,10 @@ namespace datadefs {
 
   void cardinality(const vector<num_t>& data, size_t& cardinality);
 
-  void sqerr(vector<num_t> const& data, 
-             num_t& mu, 
-             num_t& se,
-             size_t& nreal);      
+  //void sqerr(vector<num_t> const& data, 
+  //         num_t& mu, 
+  //          num_t& se,
+  //          size_t& nreal);      
 
   void countRealValues(vector<num_t> const& data, size_t& nRealValues);
 
@@ -93,34 +93,20 @@ namespace datadefs {
   void gini(map<num_t,size_t> const& cat2freq,
             num_t& giniIndex);
 
-  void sqfreq(vector<num_t> const& data, 
-              map<num_t,size_t>& freq, 
-              size_t& sqFreq, 
-              size_t& nRealValues);
-
+  /*
+    void sqfreq(vector<num_t> const& data, 
+    map<num_t,size_t>& freq, 
+    size_t& sqFreq, 
+    size_t& nRealValues);
+  */
 
   void range(vector<size_t>& ics);
   void sortDataAndMakeRef(const bool isIncreasingOrder, vector<num_t>& data, vector<size_t>& refIcs);
 
-  void utest(vector<num_t> const& x,
-             vector<num_t> const& y,
-             num_t& pvalue);
+  //void pearson_correlation(vector<num_t> const& x,
+  //                        vector<num_t> const& y,
+  //                        num_t& corr);
 
-  num_t erf(num_t x);
-
-  void pearson_correlation(vector<num_t> const& x,
-                           vector<num_t> const& y,
-                           num_t& corr);
-
-  num_t ttest(vector<num_t> const& x, 
-	      vector<num_t> const& y);
-
-
-  num_t regularized_betainc(const num_t x, 
-			    const size_t a);
-
-
-  
   ////////////////////////////////////////////////////////////
   // INLINE METHOD DEFINITIONS
   ////////////////////////////////////////////////////////////

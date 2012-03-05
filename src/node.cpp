@@ -656,16 +656,23 @@ void Node::categoricalFeatureSplit(Treedata* treedata,
 
   if ( treedata->isFeatureNumerical(targetIdx) ) {
 
-    num_t mu_right;
+    num_t mu_right = 0.0;
     num_t mu_left = 0.0;
-    num_t se_right;
+    num_t se_right = 0.0;
     num_t se_left = 0.0;
-    datadefs::sqerr(tv,mu_right,se_right,n_right);
+
+    math::squaredError(tv,mu_right,se_right);
+
+    //    for ( size_t i = 0; i < n_tot; ++i ) {
+    // math::incrementSquaredError(tv[i],i+1,mu_right,se_right);
+    //}
+
+    //    datadefs::sqerr(tv,mu_right,se_right,n_right);
     assert(n_tot == n_right);
     num_t se_best = se_right;
     num_t se_tot = se_right;
     
-    while ( fmap_right.size() > 1 ) { //nCategoriesMoved < nCategories - 1 ) {
+    while ( fmap_right.size() > 1 ) {
       
       map<num_t,vector<size_t> >::iterator it_best( fmap_right.end() );
       
@@ -687,7 +694,6 @@ void Node::categoricalFeatureSplit(Treedata* treedata,
 	  --n_right;
 	  math::decrementSquaredError(tv[ it->second[i] ], n_right, mu_right, se_right);
 
-	  //datadefs::forward_backward_sqerr(tv[ it->second[i] ],n_left,mu_left,se_left,n_right,mu_right,se_right);
         }
         //cout << " ]" << endl;
 	
@@ -712,7 +718,6 @@ void Node::categoricalFeatureSplit(Treedata* treedata,
 	  --n_left;
 	  math::decrementSquaredError(tv[ it->second[i] ], n_left, mu_left, se_left);
 
-	  //datadefs::forward_backward_sqerr(tv[ it->second[i] ],n_right,mu_right,se_right,n_left,mu_left,se_left);
 	}
 	//cout << " ]" << endl;
 	
@@ -726,8 +731,6 @@ void Node::categoricalFeatureSplit(Treedata* treedata,
 	break;
       }
 
-      //cout << " => Splitting with '" << it_best->first << "'" << endl;
-
       // Otherwise move samples from right to left
       for(size_t i = 0; i < it_best->second.size(); ++i) {
 	//cout << " " << it->second[i];
@@ -740,7 +743,6 @@ void Node::categoricalFeatureSplit(Treedata* treedata,
 	--n_right;
 	math::decrementSquaredError(tv[ it_best->second[i] ], n_right, mu_right, se_right);
 
-	//datadefs::forward_backward_sqerr(tv[ it_best->second[i] ],n_left,mu_left,se_left,n_right,mu_right,se_right);
       }
 
       // Update the maps
@@ -756,8 +758,13 @@ void Node::categoricalFeatureSplit(Treedata* treedata,
     
     map<num_t,size_t> freq_left,freq_right;
     size_t sf_left = 0;
-    size_t sf_right;
-    datadefs::sqfreq(tv,freq_right,sf_right,n_right);
+    size_t sf_right = 0;
+
+    for( size_t i = 0; i < n_tot; ++i ) {
+      math::incrementSquaredFrequency(tv[i], freq_right, sf_right);
+    }
+
+    //datadefs::sqfreq(tv,freq_right,sf_right,n_right);
     assert(n_tot == n_right);
     
     size_t sf_tot = sf_right;
@@ -785,13 +792,9 @@ void Node::categoricalFeatureSplit(Treedata* treedata,
 	  --n_right;
 	  math::decrementSquaredFrequency(tv[ it->second[i] ], freq_right, sf_right);
 
-	  //cout << " " << it->second[i];
-	  //datadefs::forward_backward_sqfreq(tv[ it->second[i] ],n_left,freq_left,sf_left,n_right,freq_right,sf_right);
 	}
 	//cout << " ]" << endl;
 	
-	//cout << "Testing to split with feature '" << treedata->getRawFeatureData(featureIdx,it->first) << "': nsf = " << 1.0*sf_left/n_left + 1.0*sf_right/n_right << endl;
-
 	//If the impurity becomes reduced even further, save the point
 	if ( 1.0*n_right*sf_left + 1.0*n_left*sf_right > 1.0*n_left*n_right*nsf_best ) { //&& n_left >= GI.minNodeSizeToStop && n_right >= GI.minNodeSizeToStop )
 	
@@ -812,7 +815,6 @@ void Node::categoricalFeatureSplit(Treedata* treedata,
 	  --n_left;
 	  math::decrementSquaredFrequency(tv[ it->second[i] ], freq_left, sf_left);
 
-	  //datadefs::forward_backward_sqfreq(tv[ it->second[i] ],n_right,freq_right,sf_right,n_left,freq_left,sf_left);
 	}
 	//cout << " ]" << endl;
 	
@@ -825,8 +827,6 @@ void Node::categoricalFeatureSplit(Treedata* treedata,
 	//cout << " -- STOP --" << endl;
 	break;
       }
-      
-      //cout << " => Splitting with '" << treedata->getRawFeatureData(featureIdx,it_best->first) << "'" << endl;
 
       // Take samples from right and put them left
       for(size_t i = 0; i < it_best->second.size(); ++i) {
@@ -839,7 +839,6 @@ void Node::categoricalFeatureSplit(Treedata* treedata,
 	--n_right;
 	math::decrementSquaredFrequency(tv[ it_best->second[i] ], freq_right, sf_right);
 	
-	//datadefs::forward_backward_sqfreq(tv[ it_best->second[i] ],n_left,freq_left,sf_left,n_right,freq_right,sf_right);
       }
       
       // Update the maps
@@ -852,8 +851,6 @@ void Node::categoricalFeatureSplit(Treedata* treedata,
     splitFitness = this->getSplitFitness(n_left,sf_left,n_right,sf_right,n_tot,sf_tot);
     
   } 
-
-  //cout << "C " << nCategoriesMoved << ": " << n_left << " <-> " << n_right << " : fitness " << splitFitness << endl;
 
   if( n_left < GI.minNodeSizeToStop || n_right < GI.minNodeSizeToStop ) {
     splitFitness = datadefs::NUM_NAN;

@@ -16,6 +16,66 @@ namespace math {
   */
   num_t percentile(vector<num_t> x, const num_t p);
 
+  /**
+     Error function
+     NOTE: see http://en.wikipedia.org/wiki/Error_function
+  */
+  num_t erf(num_t x);
+
+  /**
+     Two-sample t-test
+     NOTE: see http://en.wikipedia.org/wiki/Student's_t-test
+  */
+  num_t ttest(const vector<num_t>& x,
+              const vector<num_t>& y);
+
+  /**
+     Regularized incomplete Beta function
+     NOTE: see http://en.wikipedia.org/wiki/Beta_function
+  */
+  num_t regularizedIncompleteBeta(const num_t x,
+				  const num_t a,
+				  const num_t b);
+
+
+  
+  num_t pearsonCorrelation(const vector<num_t>& x,
+			   const vector<num_t>& y);
+
+  inline num_t mean(const vector<num_t>& x) {
+
+    if ( x.size() == 0 ) {
+      return( datadefs::NUM_NAN );
+    }
+
+    num_t mu = 0.0;
+
+    for(size_t i = 0; i < x.size(); ++i) {
+	mu += x[i];
+    }
+
+    return( mu / x.size() );
+    
+  }
+  
+  inline void squaredError(const vector<num_t>& x,
+			   num_t& mu,
+			   num_t& se) {
+
+    if( x.size() == 0 ) {
+      mu = datadefs::NUM_NAN;
+      se = datadefs::NUM_NAN;
+      return;
+    }
+
+    mu = math::mean(x);
+    
+    se = 0.0;
+    for(size_t i = 0; i < x.size(); ++i) { 
+      se += pow(x[i] - mu,2);
+    }
+  }
+
 
   /**
      Updates the mean and squared error by ADDING x_n to the set
