@@ -9,6 +9,7 @@
 #include <ctime>
 
 #include "utils.hpp"
+#include "math.hpp"
 
 using namespace std;
 
@@ -495,10 +496,16 @@ size_t Treedata::nSamples() {
 }
 
 // WILL BECOME DEPRECATED
-num_t Treedata::pearsonCorrelation(size_t featureidx1, size_t featureidx2) {
-  num_t r;
-  datadefs::pearson_correlation(features_[featureidx1].data,features_[featureidx2].data,r);
-  return(r);
+num_t Treedata::pearsonCorrelation(size_t featureIdx1, size_t featureIdx2) {
+  
+  vector<num_t> featureData1,featureData2;
+  vector<size_t> sampleIcs( this->nSamples() );
+
+  datadefs::range(sampleIcs);
+
+  this->getFilteredFeatureDataPair(featureIdx1,featureIdx2,sampleIcs,featureData1,featureData2);
+
+  return( math::pearsonCorrelation(featureData1,featureData2) );
 }
 
 size_t Treedata::getFeatureIdx(const string& featureName) {

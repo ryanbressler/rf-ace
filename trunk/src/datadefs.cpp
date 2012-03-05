@@ -232,20 +232,22 @@ void datadefs::cardinality(const vector<datadefs::num_t>& data, size_t& cardinal
  * Calculates the squared error
  !! Possible duplication: how does this differ with similar inline methods in datadefs.hpp?
 */
-void datadefs::sqerr(vector<datadefs::num_t> const& data, 
-                     datadefs::num_t& mu, 
-                     datadefs::num_t& se,
-                     size_t& nRealValues) {
-    
+/*
+  void datadefs::sqerr(vector<datadefs::num_t> const& data, 
+  datadefs::num_t& mu, 
+  datadefs::num_t& se,
+  size_t& nRealValues) {
+  
   datadefs::mean(data,mu,nRealValues);
   
   se = 0.0;
   for(size_t i = 0; i < data.size(); ++i) {
-    if(!datadefs::isNAN(data[i])) {
-      se += pow(data[i] - mu,2);
-    }
+  if(!datadefs::isNAN(data[i])) {
+  se += pow(data[i] - mu,2);
   }
-}
+  }
+  }
+*/
 
 /**
  * Count all values that aren't transfinite
@@ -380,19 +382,21 @@ void datadefs::map_data(vector<datadefs::num_t> const& data,
 
 // !! Documentation: summation function featuring the squared representation of
 // !! each frequency. This should be documented.
-void datadefs::sqfreq(vector<datadefs::num_t> const& data, 
-                      map<datadefs::num_t,size_t>& freq, 
-                      size_t& sqFreq, 
-                      size_t& nRealValues) {
+/*
+  void datadefs::sqfreq(vector<datadefs::num_t> const& data, 
+  map<datadefs::num_t,size_t>& freq, 
+  size_t& sqFreq, 
+  size_t& nRealValues) {
   sqFreq = 0;
   datadefs::count_freq(data,freq,nRealValues);
   for(map<datadefs::num_t,size_t>::const_iterator it(freq.begin()); it != freq.end(); ++it) {
-    size_t freq_new = it->second;
-    sqFreq += freq_new * freq_new;
+  size_t freq_new = it->second;
+  sqFreq += freq_new * freq_new;
   }
   // !! Correctness: this doesn't actually return anything. Instead, it mutates
   // !! sqFreq by reference, without returning any additional information.
-}
+  }
+*/
 
 // !! Documentation: this is just a drop-in replacement for Python's range()
 // !! function, hinted by the size of the input vector. It mutates ics,
@@ -404,227 +408,44 @@ void datadefs::range(vector<size_t>& ics) {
   }
 }
 
-// !! Documentation: performs a T-test on the input. It should be readily
-// !! apparent why this exists,
-datadefs::num_t datadefs::ttest(vector<datadefs::num_t> const& x, 
-				vector<datadefs::num_t> const& y) {
-
-  // Sample mean and variance of x
-  datadefs::num_t mean_x = 0;
-  datadefs::num_t var_x = 0;
-  size_t nreal_x = 0;
-  datadefs::sqerr(x, mean_x, var_x, nreal_x);
-
-  if ( nreal_x < 2 ) {
-    return( datadefs::NUM_NAN );
-  }
-
-  var_x /= (nreal_x - 1);
-
-  // Sample mean and variance of y
-  datadefs::num_t mean_y = 0;
-  datadefs::num_t var_y = 0;
-  size_t nreal_y = 0;
-  datadefs::sqerr(y, mean_y, var_y, nreal_y);
-   
-  if ( nreal_y < 2 ) {
-    return( datadefs::NUM_NAN );
-  }
- 
-  var_y /= (nreal_y - 1);
-
-  size_t v;
-  datadefs::num_t sp,tvalue,ttrans;
-    
-  v = nreal_x + nreal_y - 2;
-  sp = sqrt(((nreal_x-1) * var_x + (nreal_y-1) * var_y) / v);
-  tvalue = (mean_x - mean_y) / (sp * sqrt(1.0 / nreal_x + 1.0 / nreal_y));
-  
-  if ( tvalue > 100 ) {
-    return( 0.0 );
-  } 
-  
-  if ( tvalue < -100 ) {
-    return( 1.0 );
-  } 
-
-  if ( fabs(tvalue) < datadefs::EPS ) {
-    return( 0.5 );
-  }
-  
-  ttrans = (tvalue+sqrt(pow(tvalue,2) + v)) / (2 * sqrt(pow(tvalue,2) + v));
-
-  num_t integral = datadefs::regularized_betainc(ttrans,nreal_x - 1);  
-  return( 1 - integral );
-
-}
-
-//DEPRECATED
-
-// !! Documentation: regularized beta function; not sure what the "inc" means
-// !! in context, though. Is this part of an implementation of regularized beta
-// !! functions, but lacking in additional functionality that exists outside of
-// !! this method.
-
-// !! Spurious deprecation: this isn't used in the existing codebase, but it
-// !! has value within the API. Can we consider it "deprecated?"
-datadefs::num_t datadefs::regularized_betainc(const datadefs::num_t x,
-					      const size_t a) {
-
-  num_t ibval = 0.0;
-  
-  datadefs::num_t jfac = 1;
-  for(size_t i = 1; i < a; ++i) {
-    jfac += log(static_cast<datadefs::num_t>(i));
-  }
-  
-  datadefs::num_t kfac = 1;
-  for(size_t i = a+1; i < 2*a; ++i) {
-    kfac += log(static_cast<datadefs::num_t>(i));
-  }
-  
-  for(size_t i = a; i < 2*a; ++i) {
-    jfac += log(static_cast<datadefs::num_t>(i));
-    kfac += log(static_cast<datadefs::num_t>(2*a - i));
-    datadefs::num_t temp = kfac - jfac + i*log(x) + (2*a-1-i)*log(1-x);
-    ibval += exp(temp);
-      
-    //cout << jfac << "\t" << kfac << "\t" << ibval << endl;
-  }
-
-  if(ibval > 1.0) {
-    ibval = 1.0;
-  }
-
-  return( ibval );
-  
-}
-
-// !! Documentation: performs a U-test across the input.
-
-// !! Correctness: contains checks for "NAN" that alter the control flow of
-// !!  this function. Consider a more meaningful sentinel and better handling
-// !!  for NaN, as the presence of such greatly increases the returned p-value.
-
-// !! Legibility: this function contains nested control flow that isn't immediately
-// !! obvious to the reader. Consider refactoring.
-
-// A modified implementation of the original u-test. This version accumulates the u-score if
-// 
-//   x > y
-//   OR 
-//   y is NaN
-//
-// x accumulates sample if 
-// 
-//   x is not NaN
-//
-// y accumulates sample ALWAYS, regardless of its value
-//
-// After accumulation of the u-score the p-value is computed with the normal approximation, 
-// which is accurate if the sample size is large enough
-
-void datadefs::utest(vector<datadefs::num_t> const& x,
-                     vector<datadefs::num_t> const& y,
-                     datadefs::num_t& pvalue) {
-  
-  num_t uvalue = 0.0;
-  size_t m = 0;
-  size_t n = y.size();
-  
-  for ( size_t i = 0; i < x.size(); ++i ) {
-    
-    if ( !datadefs::isNAN(x[i]) ) {
-
-      // If x is non-NaN, accumulate sample size
-      ++m;
-
-      // If x is negative, don't accumulate the U-statistic
-      //if ( x[i] < 0.0 ) {
-      //	continue;
-      //}
-
-      // For nonnegative x, test each y
-      for ( size_t j = 0; j < y.size(); ++j ) {
-        
-	// If y is NaN or x is greater than y, accumulate the U-statistic by 1.0
-        if ( datadefs::isNAN(y[j]) ) {
-	  uvalue += 1.0;
-	} else if ( x[i] > y[j] ) {
-	  uvalue += 1.0;
-	} else if ( x[i] == y[j] ) {
-	  uvalue += 0.5; // In case of a tie, accumulate by 0.5
-	}
-	
-      }
-    }
-  }
-
-  // If x has no real values, return NaN
-  if ( m == 0 ) {
-    pvalue = datadefs::NUM_NAN;
-    return;
-  }
-
-  num_t mu = 1.0 * m * n / 2.0;
-  num_t s = sqrt( 1.0 * m * n * ( n + m + 1 ) / 12.0 );
-  
-  pvalue = 1.0 - 0.5 * ( 1 + datadefs::erf( (uvalue - mu) / (s * sqrt(2.0)) ) );
-  //cout << uvalue << " " << mu << " " << s << " " << pvalue << endl;
-}
-
-// !! Documentation: computes the error function for the given value
-datadefs::num_t datadefs::erf(datadefs::num_t x) {  
-
-  num_t x2 = x*x;
-
-  num_t sgn;
-  if(x < 0.0) {
-    sgn = -1.0;
-  } else {
-    sgn = 1.0;
-  }
-
-  return( sgn*sqrt(1.0 - exp(-x2*(4.0/datadefs::PI+datadefs::A*x2) / (1+datadefs::A*x2))) ); 
-
-}
 
 // !! Documentation: Pearson product-moment correlation coefficient
 // !! (http://en.wikipedia.org/wiki/Pearson_product-moment_correlation_coefficient)
 
 // !! Consistency: outputs NaN if x.size() == y.size() && y.size() == 0
-
-void datadefs::pearson_correlation(vector<datadefs::num_t> const& x,
-                                   vector<datadefs::num_t> const& y,
-                                   datadefs::num_t& corr) {
-
+/*
+  void datadefs::pearson_correlation(vector<datadefs::num_t> const& x,
+  vector<datadefs::num_t> const& y,
+  datadefs::num_t& corr) {
+  
   corr = 0.0;
-
+  
   datadefs::num_t mu_x,se_x,mu_y,se_y;
   size_t nreal_x,nreal_y;
-
+  
   vector<datadefs::num_t> x_real;
   vector<datadefs::num_t> y_real;
-
+  
   size_t n = x.size();
   assert(n == y.size());
   
   for(size_t i = 0; i < n; ++i) {
-    if(!datadefs::isNAN(x[i]) && !datadefs::isNAN(y[i])) {
-      x_real.push_back(x[i]);
-      y_real.push_back(y[i]);
-    }
+  if(!datadefs::isNAN(x[i]) && !datadefs::isNAN(y[i])) {
+  x_real.push_back(x[i]);
+  y_real.push_back(y[i]);
   }
-
+  }
+  
   datadefs::sqerr(x_real,mu_x,se_x,nreal_x);
   datadefs::sqerr(y_real,mu_y,se_y,nreal_y);
   assert(nreal_x == nreal_y);
   
   for(size_t i = 0; i < nreal_x; ++i) {
-    corr += ( x_real[i] - mu_x ) * ( y_real[i] - mu_y ); 
+  corr += ( x_real[i] - mu_x ) * ( y_real[i] - mu_y ); 
   }
-
+  
   corr /= sqrt(se_x*se_y);
-
-}
+  
+  }
+*/
 

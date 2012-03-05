@@ -247,7 +247,7 @@ statistics::RF_statistics executeRandomForest(Treedata& treedata,
   // Notify if the sample size of the null distribution is very low
   if ( cSample.size() < 5 ) {
     cerr << " Too few samples drawn ( " << cSample.size() << " < 5 ) from the null distribution. Consider adding more permutations. Quitting..." << endl;
-    exit(1);
+    exit(0);
   }
 
   // Loop through each feature and calculate p-value for each
@@ -272,7 +272,7 @@ statistics::RF_statistics executeRandomForest(Treedata& treedata,
     } else {
       
       // Perform t-test against the contrast sample
-      pValues[featureIdx] = datadefs::ttest(fSample,cSample);
+      pValues[featureIdx] = math::ttest(fSample,cSample);
       
     }
 
