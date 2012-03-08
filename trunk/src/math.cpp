@@ -107,14 +107,16 @@ num_t math::ttest(const vector<num_t>& x,
 
   // If tvalue is negligible to v, ttrans will become close to one, which would
   // yield inaccurate estimates for the regularized incomplete beta function
-  if ( ttrans < 0.05 ) {
-    cout << "woops" << endl;
-    return( 0.5 );
-  }
+  //if ( ttrans < 0.05 ) {
+    //cout << "woops" << endl;
+    //return( 0.5 );
+  // }
 
   // Approximate regularized incomplete beta function
   num_t integral = math::regularizedIncompleteBeta(ttrans, v/2, 0.5);
   
+  // We need to be careful about which way to calculate the integral so that it represents 
+  // the tail of the t-distribution. The sign of the tvalue hints which way to integrate
   if ( tvalue > 0.0 ) {
     return( integral / 2 );
   } else {
@@ -123,6 +125,10 @@ num_t math::ttest(const vector<num_t>& x,
 
 }
 
+/**
+   Odd factors for the infinite continued fraction representation of the 
+   regularized incomplete beta function
+*/
 num_t dO(const num_t m, 
 	 const num_t x, 
 	 const num_t a, 
@@ -130,6 +136,10 @@ num_t dO(const num_t m,
   return( -1.0*(a+m)*(a+b+m)*x / ( (a+2*m)*(a+2*m+1) ) );
 }
 
+/**
+   Even factors for the infinite continued fraction representation of the
+   regularized incomplete beta function
+*/
 num_t dE(const num_t m, 
 	 const num_t x, 
 	 const num_t a, 
@@ -137,6 +147,10 @@ num_t dE(const num_t m,
   return( m*(b-m)*x / ((a+2*m-1)*(a+2*m)) );
 }
 
+/**
+   Beta function, implemented as function of log-gamma functions implemented 
+   in cmath library
+*/
 num_t beta(const num_t a, const num_t b) {
   return( exp( lgamma(a) + lgamma(b) - lgamma(a+b) ) );
 }
@@ -149,58 +163,21 @@ num_t math::regularizedIncompleteBeta(const num_t x,
 				      const num_t a,
 				      const num_t b) {
 
-  size_t i = 100;
+  // Number of factors in the infinite continued fraction representation
+  size_t i = 50;
 
-  num_t foo = 1; // + dE(m,x,a,b) / ( 1 + dO(m,x,a,b) );
+  num_t continuedFraction = 1; 
 
+  // Accumulate the continued fraction
   while ( i >= 1 ) {
     num_t m = static_cast<num_t>(i);
-    foo = 1 + dE(m,x,a,b) / ( 1 + dO(m,x,a,b) / foo );
+    continuedFraction = 1 + dE(m,x,a,b) / ( 1 + dO(m,x,a,b) / continuedFraction );
     --i;
   }
   
-  return( pow(x,a)*pow(1-x,b)/a/beta(a,b)/(1+dO(0,x,a,b)/foo) );
-
-  //return( pow(x,a)*pow(1-x,b)/a/beta(a,b)*1/(1+ dO(0,x,a,b)/(1+ dE(1,x,a,b)/(1+ dO(1,x,a,b)/(1+ dE(2,x,a,b)/(1+ dO(2,x,a,b)))))) );
+  return( pow(x,a)*pow(1-x,b) / ( a * beta(a,b) * ( 1 + dO(0,x,a,b) / continuedFraction ) ) );
 
 }
-
-/*
-  num_t math::regularizedIncompleteBeta(const num_t x,
-  const size_t a,
-  const size_t b) {
-  
-  num_t ibval = 0.0;
-  
-  size_t ab = a + b;
-  
-  num_t jfac = 0.0;
-  for(size_t i = 2; i < a; ++i) {
-  jfac += log(static_cast<num_t>(i));
-  }
-  
-  num_t kfac = 0.0;
-  for(size_t i = a+1; i < ab; ++i) {
-  kfac += log(static_cast<num_t>(i));
-  }
-  
-  for(size_t i = a; i < ab; ++i) {
-  jfac += log(static_cast<num_t>(i));
-  kfac += log(static_cast<num_t>(ab - i));
-  num_t temp = kfac - jfac + i*log(x) + (ab-1-i)*log(1-x);
-  ibval += exp(temp);
-  
-  //cout << jfac << "\t" << kfac << "\t" << ibval << endl;
-  }
-  
-  if(ibval > 1.0) {
-  ibval = 1.0;
-  }
-  
-  return( ibval );
-  
-  }
-*/
 
 num_t math::erf(const num_t x) {
 
