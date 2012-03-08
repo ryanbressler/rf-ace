@@ -138,8 +138,8 @@ int main(const int argc, char* const argv[]) {
       ++nSignificantFeatures;
       
       num_t log10p = log10(pValues[i]);
-      if ( log10p < -30.0 ) {
-	log10p = -30.0;
+      if ( log10p < log10(datadefs::EPS) ) {
+	log10p = log10(datadefs::EPS);
       }
       
       toAssociationFile << fixed << gen_op.targetStr.c_str() << "\t" << treedata.getFeatureName(featureIdx).c_str()
