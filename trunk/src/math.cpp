@@ -64,10 +64,12 @@ num_t math::ttest(const vector<num_t>& x,
   size_t n_x = x.size();
   math::squaredError(x, mean_x, var_x);
 
+  // If sample size is too small, we exit
   if ( n_x < 2 ) {
     return( datadefs::NUM_NAN );
   }
 
+  // Normalize squared error to get unbiased variance estimate
   var_x /= (n_x - 1);
 
   // Sample mean and variance of y
@@ -76,43 +78,39 @@ num_t math::ttest(const vector<num_t>& x,
   size_t n_y = y.size();
   math::squaredError(y, mean_y, var_y);
 
+  // If sample size is too small, we exit
   if ( n_y < 2 ) {
     return( datadefs::NUM_NAN );
   }
 
+  // Normalize squared error to get unbiased variance estimate
   var_y /= (n_y - 1);
 
-  size_t v;
-  num_t sp,tvalue,ttrans;
+  // Degrees of freedom
+  size_t v = n_x + n_y - 2;
 
-  v = n_x + n_y - 2;
-  sp = sqrt(((n_x-1) * var_x + (n_y-1) * var_y) / v);
-  tvalue = (mean_x - mean_y) / (sp * sqrt(1.0 / n_x + 1.0 / n_y));
+  // Pooled standard deviation
+  num_t sp = sqrt(((n_x-1) * var_x + (n_y-1) * var_y) / v);
 
-  if ( tvalue > 100 ) {
-    return( 0.0 );
+  // If pooled standard deviation is zero...
+  if ( fabs(sp) < datadefs::EPS ) {
+    if ( mean_x > mean_y ) {
+      return( datadefs::EPS ); // ... and x larger than y => p = EPS 
+    } else if ( fabs( mean_x - mean_y ) < datadefs::EPS ) {
+      return( 0.5 ); // ... and x and y almost equal => p = 0.5
+    } else {
+      return( 1.0 ); // ... and x smaller than y => p = 1.0
+    }
   }
 
-  if ( tvalue < -100 ) {
-    return( 1.0 );
-  }
+  // T-test statistic
+  num_t tvalue = (mean_x - mean_y) / (sp * sqrt(1.0 / n_x + 1.0 / n_y));
 
-  if ( fabs(tvalue) < datadefs::EPS ) {
-    return( 0.5 );
-  }
-
-  ttrans = v / ( pow(tvalue,2) + v ); 
+  // Transformed t-test statistic
+  num_t ttrans = v / ( pow(tvalue,2) + v ); 
   
-  //ttrans = (tvalue+sqrt(pow(tvalue,2) + v)) / (2 * sqrt(pow(tvalue,2) + v));
-
-  // If tvalue is negligible to v, ttrans will become close to one, which would
-  // yield inaccurate estimates for the regularized incomplete beta function
-  //if ( ttrans < 0.05 ) {
-    //cout << "woops" << endl;
-    //return( 0.5 );
-  // }
-
-  // Approximate regularized incomplete beta function
+  // Calculate the tail integral of the t-test as
+  // regularized incomplete beta function
   num_t integral = math::regularizedIncompleteBeta(ttrans, v/2, 0.5);
   
   // We need to be careful about which way to calculate the integral so that it represents 
