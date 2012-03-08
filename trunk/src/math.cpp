@@ -1,4 +1,5 @@
 #include <algorithm>
+#include "gamma.hpp"
 #include "math.hpp"
 
 /**
@@ -150,7 +151,7 @@ num_t dE(const num_t m,
    in cmath library
 */
 num_t beta(const num_t a, const num_t b) {
-  return( exp( lgamma(a) + lgamma(b) - lgamma(a+b) ) );
+  return( exp( LogGamma(a) + LogGamma(b) - LogGamma(a+b) ) );
 }
 
 // http://en.wikipedia.org/wiki/Beta_function
