@@ -110,10 +110,24 @@ num_t math::ttest(const vector<num_t>& x,
   // Transformed t-test statistic
   num_t ttrans = v / ( pow(tvalue,2) + v ); 
   
-  // Calculate the tail integral of the t-test as
-  // regularized incomplete beta function
-  num_t integral = math::regularizedIncompleteBeta(ttrans, v/2, 0.5);
-  
+  // This variable will store the integral of the tail of the t-distribution
+  num_t integral;
+
+  // When ttrans > 0.9, we need to recast the integration in order to retain
+  // accuracy. In other words we make use of the following identity:
+  //
+  // I(x,a,b) = 1 - I(1-x,b,a)
+  if ( ttrans > 0.9 ) {
+
+    // Calculate I(x,a,b) as 1 - I(1-x,b,a)
+    integral = 1 - math::regularizedIncompleteBeta(1 - ttrans, 0.5, v/2);
+
+  } else {
+
+    // Calculate I(x,a,b) directly
+    integral = math::regularizedIncompleteBeta(ttrans, v/2, 0.5);
+  }
+
   // We need to be careful about which way to calculate the integral so that it represents 
   // the tail of the t-distribution. The sign of the tvalue hints which way to integrate
   if ( tvalue > 0.0 ) {
