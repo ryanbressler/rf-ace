@@ -602,7 +602,7 @@ map<Node*,vector<size_t> > StochasticForest::percolateSampleIcsByTree(const vect
 
   }
     
-  if(true) {
+  if(false) {
     cout << "Train samples percolated accordingly:" << endl;
     size_t iter = 0;
     for(map<Node*,vector<size_t> >::const_iterator it(trainIcs.begin()); it != trainIcs.end(); ++it, ++iter) {
