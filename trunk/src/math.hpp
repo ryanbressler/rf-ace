@@ -2,8 +2,10 @@
 #define MATH_HPP
 
 #include <vector>
+#include <map>
 #include "datadefs.hpp"
 #include "errno.hpp"
+
 
 using namespace std;
 using datadefs::num_t;
@@ -57,6 +59,33 @@ namespace math {
     return( mu / x.size() );
     
   }
+
+  template<typename T>
+  map<T,size_t> frequency(const vector<T>& x) {
+    map<T,size_t> freq;
+    for(size_t i = 0; i < x.size(); ++i) {
+      if( freq.find(x[i]) == freq.end() ) {
+	freq[ x[i] ] = 1;
+      } else {
+	++freq[ x[i] ];
+      }
+    } 
+    return( freq );
+  }
+
+  template<typename T>
+  T mode(const vector<T>& x) {
+    map<T,size_t> freq = frequency<T>(x);
+    typename map<T,size_t>::const_iterator maxElement( freq.begin() );
+    for ( typename map<T,size_t>::const_iterator it(freq.begin()); it != freq.end(); ++it ) {
+      if ( it->second > maxElement->second ) {
+	maxElement = it;
+      }
+    }
+    return( maxElement->first );
+  }
+  
+  num_t gamma(const vector<num_t>& x, const size_t nCategories); 
   
   inline void squaredError(const vector<num_t>& x,
 			   num_t& mu,

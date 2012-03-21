@@ -11,7 +11,6 @@
 #include <algorithm>
 
 #include "rf_ace.hpp"
-//#include "argparse.hpp"
 #include "stochasticforest.hpp"
 #include "treedata.hpp"
 #include "datadefs.hpp"
@@ -22,10 +21,7 @@
 #include "utils.hpp"
 
 using namespace std;
-//using namespace options;
-//using namespace statistics;
 using datadefs::num_t;
-
 
 void printPredictionToFile(StochasticForest& SF, Treedata& treeData, const string& targetName, const string& fileName);
 
@@ -58,7 +54,7 @@ int main(const int argc, char* const argv[]) {
   gen_op.targetStr = SF.getTargetName();
   cout << "DONE -- predictor is " << SF.type() << endl;
 
-  options::validateOptions(gen_op);
+  gen_op.validate();
 
 
   rface::printGeneralSetup(treedata,gen_op);

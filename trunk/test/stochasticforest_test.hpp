@@ -117,14 +117,11 @@ void StochasticForestTest::test_treeDataPercolation() {
   StochasticForest::StochasticForest SF(&treeData,treeData.getFeatureName(5),1);
   SF.rootNodes_[0] = rootNode;
   
-  // A pointer initialization to the rootnode
-  Node::Node* nodep(rootNode);
-  SF.percolateSampleIdx(0,&nodep);
+  Node::Node* nodep( SF.percolateSampleIdxByTree(0,0) );
   CPPUNIT_ASSERT( nodep == node00 );
   CPPUNIT_ASSERT( fabs( nodep->getTrainPrediction() - 3.9 ) < datadefs::EPS );
   
-  nodep = rootNode;
-  SF.percolateSampleIdx(1,&nodep);
+  nodep = SF.percolateSampleIdxByTree(1,0);
   CPPUNIT_ASSERT( nodep == node011 );
   CPPUNIT_ASSERT( fabs( nodep->getTrainPrediction() - 4.3 ) < datadefs::EPS );
   

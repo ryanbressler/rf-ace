@@ -162,7 +162,7 @@ num_t dE(const num_t m,
 
 /**
    Beta function, implemented as function of log-gamma functions implemented 
-   in cmath library
+   in "gamma.hpp"
 */
 num_t beta(const num_t a, const num_t b) {
   return( exp( LogGamma(a) + LogGamma(b) - LogGamma(a+b) ) );
@@ -231,5 +231,27 @@ num_t math::pearsonCorrelation(const vector<num_t>& x,
 
   return( corr / sqrt(se_x*se_y) );
 
+}
+
+num_t math::gamma(const vector<num_t>& x, const size_t nCategories) {
+  
+  size_t n = x.size();
+  assert(n > 0);
+  
+  num_t numerator = 0.0;
+  num_t denominator = 0.0;
+  
+  for (size_t i = 0; i < n; ++i) {
+    num_t abs_data_i = fabs( x[i] );
+    denominator += abs_data_i * (1.0 - abs_data_i);
+    numerator   += x[i];
+  }
+  
+  if ( fabs(denominator) <= datadefs::EPS ) {
+    return( datadefs::LOG_OF_MAX_NUM * numerator );
+  } else {
+    return( 1.0*(nCategories - 1)*numerator / (1.0*nCategories*denominator) );
+  }
+  
 }
 

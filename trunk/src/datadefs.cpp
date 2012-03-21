@@ -305,32 +305,36 @@ void datadefs::sortDataAndMakeRef(const bool isIncreasingOrder,
  * Gini coefficient (see: http://en.wikipedia.org/wiki/Gini_coefficient)
  !! Documentation
 */
-void datadefs::gini(vector<datadefs::num_t> const& data,
-                    datadefs::num_t& giniIndex,
-                    size_t& nRealValues) {
+/*
+  void datadefs::gini(vector<datadefs::num_t> const& data,
+  datadefs::num_t& giniIndex,
+  size_t& nRealValues) {
   map<datadefs::num_t,size_t> freq;
   datadefs::count_freq(data,freq,nRealValues);
   datadefs::gini(freq,giniIndex);
-}
+  }
+*/
 
 /**
  * Gini coefficient (see: http://en.wikipedia.org/wiki/Gini_coefficient)
  !! Documentation
 */
-void datadefs::gini(map<datadefs::num_t,size_t> const& cat2freq, 
-                    datadefs::num_t& giniIndex) {
+/*
+  void datadefs::gini(map<datadefs::num_t,size_t> const& cat2freq, 
+  datadefs::num_t& giniIndex) {
   giniIndex = 0.0;
   size_t n = 0;
   map<datadefs::num_t,size_t>::const_iterator it;
   for(it = cat2freq.begin(); it != cat2freq.end(); ++it) {
-    size_t freq_new = it->second;
-    giniIndex += freq_new * freq_new;
-    n += freq_new;
+  size_t freq_new = it->second;
+  giniIndex += freq_new * freq_new;
+  n += freq_new;
   }
   if(n) {
-    giniIndex = 1 - giniIndex / ( n*n );
+  giniIndex = 1 - giniIndex / ( n*n );
   }
-}
+  }
+*/
 
 
 /**
@@ -339,22 +343,24 @@ void datadefs::gini(map<datadefs::num_t,size_t> const& cat2freq,
    !! sounds like an innocuous accessor that counts the elements in a given
    !! collection of descriptive type "freq".
 */
-void datadefs::count_freq(vector<datadefs::num_t> const& data, map<datadefs::num_t,size_t>& cat2freq, size_t& nRealValues) {
+/*
+  void datadefs::count_freq(vector<datadefs::num_t> const& data, map<datadefs::num_t,size_t>& cat2freq, size_t& nRealValues) {
   cat2freq.clear();
   map<datadefs::num_t,size_t>::const_iterator it;
   nRealValues = 0;
   for(size_t i = 0; i < data.size(); ++i) {
-    if(!datadefs::isNAN(data[i])) {
-      ++nRealValues;
-      it = cat2freq.find(data[i]);
-      if(it == cat2freq.end()) {
-        cat2freq.insert(pair<datadefs::num_t,size_t>(data[i],1));
-      } else {
-        ++cat2freq[data[i]];
-      }
-    }
+  if(!datadefs::isNAN(data[i])) {
+  ++nRealValues;
+  it = cat2freq.find(data[i]);
+  if(it == cat2freq.end()) {
+  cat2freq.insert(pair<datadefs::num_t,size_t>(data[i],1));
+  } else {
+  ++cat2freq[data[i]];
   }
-}
+  }
+  }
+  }
+*/
 
 /**
    !! Documentation
@@ -380,24 +386,6 @@ void datadefs::map_data(vector<datadefs::num_t> const& data,
   }
 }
 
-// !! Documentation: summation function featuring the squared representation of
-// !! each frequency. This should be documented.
-/*
-  void datadefs::sqfreq(vector<datadefs::num_t> const& data, 
-  map<datadefs::num_t,size_t>& freq, 
-  size_t& sqFreq, 
-  size_t& nRealValues) {
-  sqFreq = 0;
-  datadefs::count_freq(data,freq,nRealValues);
-  for(map<datadefs::num_t,size_t>::const_iterator it(freq.begin()); it != freq.end(); ++it) {
-  size_t freq_new = it->second;
-  sqFreq += freq_new * freq_new;
-  }
-  // !! Correctness: this doesn't actually return anything. Instead, it mutates
-  // !! sqFreq by reference, without returning any additional information.
-  }
-*/
-
 // !! Documentation: this is just a drop-in replacement for Python's range()
 // !! function, hinted by the size of the input vector. It mutates ics,
 // !! specifying a 0-based range in all cases, and could be made more robust if
@@ -407,45 +395,3 @@ void datadefs::range(vector<size_t>& ics) {
     ics[i] = i;
   }
 }
-
-
-// !! Documentation: Pearson product-moment correlation coefficient
-// !! (http://en.wikipedia.org/wiki/Pearson_product-moment_correlation_coefficient)
-
-// !! Consistency: outputs NaN if x.size() == y.size() && y.size() == 0
-/*
-  void datadefs::pearson_correlation(vector<datadefs::num_t> const& x,
-  vector<datadefs::num_t> const& y,
-  datadefs::num_t& corr) {
-  
-  corr = 0.0;
-  
-  datadefs::num_t mu_x,se_x,mu_y,se_y;
-  size_t nreal_x,nreal_y;
-  
-  vector<datadefs::num_t> x_real;
-  vector<datadefs::num_t> y_real;
-  
-  size_t n = x.size();
-  assert(n == y.size());
-  
-  for(size_t i = 0; i < n; ++i) {
-  if(!datadefs::isNAN(x[i]) && !datadefs::isNAN(y[i])) {
-  x_real.push_back(x[i]);
-  y_real.push_back(y[i]);
-  }
-  }
-  
-  datadefs::sqerr(x_real,mu_x,se_x,nreal_x);
-  datadefs::sqerr(y_real,mu_y,se_y,nreal_y);
-  assert(nreal_x == nreal_y);
-  
-  for(size_t i = 0; i < nreal_x; ++i) {
-  corr += ( x_real[i] - mu_x ) * ( y_real[i] - mu_y ); 
-  }
-  
-  corr /= sqrt(se_x*se_y);
-  
-  }
-*/
-

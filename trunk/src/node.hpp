@@ -76,11 +76,6 @@ protected:
     //PartitionSequence* partitionSequence;
   };
 
-  //Leaf prediction functions
-  void leafMean(const vector<num_t>& data);
-  void leafMode(const vector<num_t>& data);
-  void leafGamma(const vector<num_t>& data, const size_t numClasses);
-
   void recursiveNodeSplit(Treedata* treeData,
                           const size_t targetIdx,
                           const vector<size_t>& sampleIcs,

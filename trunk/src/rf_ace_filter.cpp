@@ -50,8 +50,8 @@ int main(const int argc, char* const argv[]) {
     return(EXIT_SUCCESS);
   }
   
-  options::validateOptions(gen_op);
-  options::validateOptions(RF_op);
+  gen_op.validate();
+  RF_op.validate();
 
   // Read train data into Treedata object
   cout << "Reading file '" << gen_op.input << "', please wait... " << flush;
@@ -137,21 +137,15 @@ int main(const int argc, char* const argv[]) {
 
       ++nSignificantFeatures;
       
-      num_t log10p = log10(pValues[i]);
-      if ( log10p < log10(datadefs::EPS) ) {
-	log10p = log10(datadefs::EPS);
-      }
-      
       toAssociationFile << fixed << gen_op.targetStr.c_str() << "\t" << treedata.getFeatureName(featureIdx).c_str()
-			<< "\t" << log10p << "\t" << importanceValues[i] << "\t"
+			<< "\t" << log10(pValues[i]) << "\t" << importanceValues[i] << "\t"
 			<< treedata.pearsonCorrelation(targetIdx,featureIdx) << "\t" << treedata.nRealSamples(targetIdx,featureIdx) << endl;
     }
     
     toAssociationFile.close();
   }
   
-  
-  
+   
   // Print some statistics
   // NOTE: we're subtracting the target from the total head count, that's why we need to subtract by 1
   cout << "DONE, " << nSignificantFeatures << " / " << nFeatures  - 1 << " features ( "
@@ -222,20 +216,10 @@ statistics::RF_statistics executeRandomForest(Treedata& treedata,
     
     // Get the number of nodes in each tree in the forest
     nodeMat[permIdx] = SF.nNodes();
-    
-    // Compute importance scores for real and contrast features
-    importanceValues = SF.featureImportance();
-    
-    // Get importance scores
-    copy(importanceValues.begin(), // Origin START
-	 importanceValues.begin() + nFeatures, // Origin END
-	 importanceMat[permIdx].begin()); // Destination START
-    
-    // Get contrast importance scores
-    copy(importanceValues.begin() + nFeatures, // Origin START
-	 importanceValues.begin() + 2*nFeatures, // Origin END
-	 contrastImportanceMat[permIdx].begin()); // Destination START
-   
+        
+    importanceMat[permIdx] = SF.importanceValues();
+    contrastImportanceMat[permIdx] = SF.contrastImportanceValues();
+
     // Store the new percentile value in the vector cSample
     cSample[permIdx] = math::percentile( utils::removeNANs( contrastImportanceMat[permIdx] ) , 0.5);
     
