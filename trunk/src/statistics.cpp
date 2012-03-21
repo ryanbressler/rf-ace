@@ -33,14 +33,7 @@ void statistics::RF_statistics::printContrastImportance(ofstream& toFile) {
       fSample[permIdx] = contrastImportanceMat_[permIdx][featureIdx];
     }
 
-    size_t nReal = 0;
-    num_t mu = 0.0;
-
-    datadefs::mean(fSample,mu,nReal);
-
-    if ( nReal == 0 ) {
-      mu = datadefs::NUM_NAN;
-    }
+    num_t mu = math::mean( utils::removeNANs(fSample) );
 
     toFile << mu << endl;
 

@@ -237,7 +237,6 @@ statistics::RF_statistics executeRandomForest(Treedata& treedata,
   // Loop through each feature and calculate p-value for each
   for(size_t featureIdx = 0; featureIdx < treedata.nFeatures(); ++featureIdx) {
     
-    size_t nRealSamples;
     vector<num_t> fSample(RF_op.nPerms);
     
     // Extract the sample for the real feature
@@ -267,7 +266,7 @@ statistics::RF_statistics executeRandomForest(Treedata& treedata,
     }
     
     // Calculate mean importace score from the sample
-    datadefs::mean(fSample,importanceValues[featureIdx],nRealSamples);
+    importanceValues[featureIdx] = math::mean(fSample);
     
   }
   
