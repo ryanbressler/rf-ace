@@ -83,7 +83,7 @@ int main(const int argc, char* const argv[]) {
     cout << "===> Writing predictor to file... " << flush;
     SF.printToFile( gen_op.output );
     cout << "DONE" << endl << endl;
-    cout << "OOB error = " << SF.oobError() << endl;
+    cout << "OOB error = " << SF.oobError();
   }
 
   if ( PB_op.isRF ) {
@@ -96,12 +96,21 @@ int main(const int argc, char* const argv[]) {
     cout << "===> Writing predictor to file... " << flush;
     SF.printToFile( gen_op.output );
     cout << "DONE" << endl << endl;
-    cout << "OOB error = " << SF.oobError() << endl;
+    cout << "OOB error = " << SF.oobError();
   }
 
+  size_t targetIdx = treedata.getFeatureIdx(gen_op.targetStr);
+  vector<num_t> data = utils::removeNANs(treedata.getFeatureData(targetIdx));
+  if ( treedata.isFeatureNumerical(targetIdx) ) {
+    cout << " NULL error = " << math::squaredError(data) / data.size() << endl;
+  } else {
+    map<num_t,size_t> freq = math::frequency(data);
+    cout << " NULL error = " << 1.0 * freq[ math::mode<num_t>(data) ] / data.size() << endl;
+  }
+  
   cout << endl;
   cout << 1.0 * ( clock() - clockStart ) / CLOCKS_PER_SEC << " seconds elapsed." << endl << endl;
-    
+  
   cout << "RF-ACE-BUILD-PREDICTOR completed successfully." << endl;
   cout << endl;
   

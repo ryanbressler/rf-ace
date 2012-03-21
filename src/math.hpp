@@ -87,24 +87,9 @@ namespace math {
   
   num_t gamma(const vector<num_t>& x, const size_t nCategories); 
   
-  inline void squaredError(const vector<num_t>& x,
-			   num_t& mu,
-			   num_t& se) {
-
-    if( x.size() == 0 ) {
-      mu = datadefs::NUM_NAN;
-      se = datadefs::NUM_NAN;
-      return;
-    }
-
-    mu = math::mean(x);
-    
-    se = 0.0;
-    for(size_t i = 0; i < x.size(); ++i) { 
-      se += pow(x[i] - mu,2);
-    }
-  }
-
+  num_t squaredError(const vector<num_t>& x);
+  
+  num_t squaredError(const vector<num_t>& x, const num_t mu); 
 
   /**
      Updates the mean and squared error by ADDING x_n to the set

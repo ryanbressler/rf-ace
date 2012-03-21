@@ -195,9 +195,11 @@ void Node::print(ofstream& toFile) {
 
 }
 
+
 void Node::setTrainPrediction(const num_t trainPrediction) {
   trainPrediction_ = trainPrediction;
 }
+
 
 // !! Documentation: just your usual accessor, returning a copy of
 // !! trainPrediction_.
@@ -216,11 +218,11 @@ void Node::recursiveNodeSplit(Treedata* treeData,
 
   vector<num_t> trainData = treeData->getFeatureData(targetIdx,sampleIcs);
   if ( GI.predictionFunctionType == MEAN ) {
-    trainPrediction_ = math::mean(trainData);
+    this->setTrainPrediction( math::mean(trainData) );
   } else if ( GI.predictionFunctionType == MODE ) {
-    trainPrediction_ = math::mode<num_t>(trainData);
+    this->setTrainPrediction( math::mode<num_t>(trainData) );
   } else if ( GI.predictionFunctionType == GAMMA ) {
-    trainPrediction_ = math::gamma(trainData,GI.numClasses);
+    this->setTrainPrediction( math::gamma(trainData,GI.numClasses) );
   } else {
     cerr << "Node::recursiveNodeSplit() -- unknown prediction function!" << endl;
     exit(1);
@@ -628,19 +630,14 @@ void Node::categoricalFeatureSplit(Treedata* treedata,
 
   if ( treedata->isFeatureNumerical(targetIdx) ) {
 
-    num_t mu_right = 0.0;
+    num_t mu_right = math::mean(tv);
+    num_t se_right = math::squaredError(tv,mu_right);
+
     num_t mu_left = 0.0;
-    num_t se_right = 0.0;
     num_t se_left = 0.0;
 
-    math::squaredError(tv,mu_right,se_right);
-
-    //    for ( size_t i = 0; i < n_tot; ++i ) {
-    // math::incrementSquaredError(tv[i],i+1,mu_right,se_right);
-    //}
-
-    //    datadefs::sqerr(tv,mu_right,se_right,n_right);
     assert(n_tot == n_right);
+
     num_t se_best = se_right;
     num_t se_tot = se_right;
     

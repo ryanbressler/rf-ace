@@ -38,7 +38,7 @@ namespace options {
   
   void printPredictorBuilderOverview() {
     cout << "PROGRAM: RF-ACE PREDICTOR BUILDER" << endl << endl;
-    cout << " Given target feture and input data, builds a Random Forest (RF) or "
+    cout << " Given target feature and input data, builds a Random Forest (RF) or "
 	 << " Gradient Boosting Tree (GBT) predictor" << endl << endl;
   }
   
@@ -344,7 +344,7 @@ namespace options {
     void validate() {
 
       if ( ! ( isGBT || isRF ) ) {
-	isGBT = true;
+	isRF = true;
       }
 
       if ( isRF && isGBT ) {
