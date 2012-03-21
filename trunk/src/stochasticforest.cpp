@@ -580,7 +580,7 @@ void StochasticForest::predict(vector<num_t>& prediction, vector<num_t>& confide
   for ( size_t sampleIdx = 0; sampleIdx < nSamples; ++sampleIdx ) {
     prediction[sampleIdx] = 0;
     for ( size_t treeIdx = 0; treeIdx < nTrees_; ++treeIdx) {
-      prediction[sampleIdx] = prediction[sampleIdx] + shrinkage_ * predictSampleByTree(sampleIdx, treeIdx); // rootNodes_[treeIdx]->percolateData(treeData,sampleIdx)->getTrainPrediction();
+      prediction[sampleIdx] = prediction[sampleIdx] + shrinkage_ * predictSampleByTree(sampleIdx, treeIdx);
     }
     
   }

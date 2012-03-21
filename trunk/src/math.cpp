@@ -60,10 +60,9 @@ num_t math::ttest(const vector<num_t>& x,
 		  const vector<num_t>& y) {
 
   // Sample mean and variance of x
-  num_t mean_x = 0;
-  num_t var_x = 0;
+  num_t mean_x = math::mean(x);
+  num_t var_x = math::squaredError(x);
   size_t n_x = x.size();
-  math::squaredError(x, mean_x, var_x);
 
   // If sample size is too small, we exit
   if ( n_x < 2 ) {
@@ -74,10 +73,9 @@ num_t math::ttest(const vector<num_t>& x,
   var_x /= (n_x - 1);
 
   // Sample mean and variance of y
-  num_t mean_y = 0;
-  num_t var_y = 0;
+  num_t mean_y = math::mean(y);
+  num_t var_y = math::squaredError(y);
   size_t n_y = y.size();
-  math::squaredError(y, mean_y, var_y);
 
   // If sample size is too small, we exit
   if ( n_y < 2 ) {
@@ -220,11 +218,11 @@ num_t math::pearsonCorrelation(const vector<num_t>& x,
 
   num_t corr = 0.0;
   
-  num_t mu_x,se_x,mu_y,se_y;
+  num_t mu_x = math::mean(x);
+  num_t se_x = math::squaredError(x);
+  num_t mu_y = math::mean(y);
+  num_t se_y = math::squaredError(y);
   
-  math::squaredError(x,mu_x,se_x);
-  math::squaredError(y,mu_y,se_y);
-
   for(size_t i = 0; i < n; ++i) {
     corr += ( x[i] - mu_x ) * ( y[i] - mu_y );
   }
@@ -252,6 +250,29 @@ num_t math::gamma(const vector<num_t>& x, const size_t nCategories) {
   } else {
     return( 1.0*(nCategories - 1)*numerator / (1.0*nCategories*denominator) );
   }
+  
+}
+
+num_t math::squaredError(const vector<num_t>& x, const num_t mu) {
+
+  if ( x.size() == 0 ) {
+    return( datadefs::NUM_NAN );
+  }
+  
+  num_t se = 0.0;
+  
+  for(size_t i = 0; i < x.size(); ++i) {
+    se += pow(x[i] - mu,2);
+  }
+  
+  return( se );
+}
+
+num_t math::squaredError(const vector<num_t>& x) {
+
+  num_t mu = math::mean(x);
+  
+  return( squaredError(x,mu) );
   
 }
 

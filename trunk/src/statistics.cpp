@@ -69,20 +69,14 @@ void statistics::RF_statistics::print(ofstream& toFile) {
 
   num_t meanNodesPerSecond = 1.0 * nNodes / executionTime_;
 
-  num_t meanImportance;
-  num_t meanContrastImportance;
-
-  num_t stdImportance;
-  num_t stdContrastImportance;
-
   importanceVec = utils::removeNANs(importanceVec);
   contrastImportanceVec = utils::removeNANs(contrastImportanceVec);
 
-  math::squaredError(importanceVec,meanImportance,stdImportance);
-  stdImportance = sqrtf(stdImportance) / importanceVec.size();
+  num_t meanImportance = math::mean(importanceVec);
+  num_t meanContrastImportance = math::mean(contrastImportanceVec);
 
-  math::squaredError(contrastImportanceVec,meanContrastImportance,stdContrastImportance);
-  stdContrastImportance = sqrtf(stdContrastImportance) / contrastImportanceVec.size();
+  num_t stdImportance = sqrtf( math::squaredError(importanceVec) ) / importanceVec.size();
+  num_t stdContrastImportance = sqrtf( math::squaredError(contrastImportanceVec) ) / contrastImportanceVec.size();
 
   toFile << "Random Forest statistics" << endl
 	 << "------------------------" << endl

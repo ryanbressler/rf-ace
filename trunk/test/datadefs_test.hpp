@@ -19,7 +19,7 @@ class DataDefsTest : public CppUnit::TestFixture {
   CPPUNIT_TEST( test_strv2catv );
   CPPUNIT_TEST( test_strv2numv );
   CPPUNIT_TEST( test_str2num );
-  CPPUNIT_TEST( test_mean );
+  //CPPUNIT_TEST( test_mean );
   CPPUNIT_TEST( test_cardinality );
   //CPPUNIT_TEST( test_sqerr );
   CPPUNIT_TEST( test_countRealValues );
@@ -64,7 +64,7 @@ public:
   void test_strv2catv();
   void test_strv2numv();
   void test_str2num();
-  void test_mean();
+  //void test_mean();
   void test_cardinality();
   //void test_sqerr();
   void test_countRealValues();
@@ -170,52 +170,6 @@ void DataDefsTest::test_str2num() {
   // CPPUNIT_ASSERT(datadefs::str2num(h) == 0.0);
 }
 
-void DataDefsTest::test_mean() {
-  vector<datadefs::num_t> data;
-  datadefs::num_t mu;
-  size_t nRealValues;
-
-  for (int i = 0; i < 50; ++i) {
-    data.push_back(static_cast<datadefs::num_t>(i));
-  }
-
-  // Spuriously assign the values of mu and nRealValues, since they'll be
-  //  flattened during function invocation
-  mu = -1.0; 
-  nRealValues = static_cast<size_t>(-1);
-  
-  datadefs::mean(data, mu, nRealValues);
-  CPPUNIT_ASSERT(mu == 24.5);
-  CPPUNIT_ASSERT(nRealValues == 50);
-
-  // Our data vector is defined as const in our signature. Since we're not
-  //  testing edge cases of non-trivial memory corruption, we ignore it here.
-
-  // Interleave the original input with NaNs; verify we get the same results
-  for (int i = 0; i < 50; ++i) {
-    data.insert(data.begin() + (i*2), datadefs::NUM_NAN);
-  }
-
-  mu = -1.0; 
-  nRealValues = static_cast<size_t>(-1);
-
-  datadefs::mean(data, mu, nRealValues);
-  CPPUNIT_ASSERT(mu == 24.5);
-  CPPUNIT_ASSERT(nRealValues == 50);
-  
-  // Ensure a vector containing only NaNs is handled properly
-  data.clear();
-  for (int i = 0; i < 50; ++i) {
-    data.push_back(datadefs::NUM_NAN);
-  }
-
-  mu = -1.0; 
-  nRealValues = static_cast<size_t>(-1);
-
-  datadefs::mean(data, mu, nRealValues);
-  CPPUNIT_ASSERT(mu == 0.0);
-  CPPUNIT_ASSERT(nRealValues == 0);
-}
 
 void DataDefsTest::test_cardinality() {
   vector<datadefs::num_t> data;
