@@ -60,54 +60,18 @@ namespace datadefs {
   void strv2numv(const vector<string>& strvec, vector<num_t>& numvec);
   num_t str2num(const string& str);
 
-  //string chomp(const string& str);
-
   bool is_unique(const vector<string>& strvec);
-
-  //void mean(vector<num_t> const& data, num_t& mu, size_t& nreal);
-
-  // Newly added function set which used in calculating leaf node predictions
-  void mean(vector<num_t> const& data, num_t& mu, size_t& numClasses);
-  //void mode(const vector<num_t>& data, num_t& mode, const size_t numClasses);
-  //void gamma(const vector<num_t>& data, num_t& gamma, const size_t numClasses);
 
   void cardinality(const vector<num_t>& data, size_t& cardinality);
 
-  //void sqerr(vector<num_t> const& data, 
-  //         num_t& mu, 
-  //          num_t& se,
-  //          size_t& nreal);      
-
   void countRealValues(vector<num_t> const& data, size_t& nRealValues);
-
-  //void count_freq(vector<num_t> const& data, map<num_t,size_t>& cat2freq, size_t& nRealValues);
 
   void map_data(vector<num_t> const& data, 
                 map<num_t,vector<size_t> >& datamap,
                 size_t& nRealValues);
 
-  /*
-    void gini(vector<num_t> const& data,
-    num_t& giniIndex,
-    size_t& nRealValues);
-    
-    void gini(map<num_t,size_t> const& cat2freq,
-    num_t& giniIndex);
-  */
-
-  /*
-    void sqfreq(vector<num_t> const& data, 
-    map<num_t,size_t>& freq, 
-    size_t& sqFreq, 
-    size_t& nRealValues);
-  */
-
   void range(vector<size_t>& ics);
   void sortDataAndMakeRef(const bool isIncreasingOrder, vector<num_t>& data, vector<size_t>& refIcs);
-
-  //void pearson_correlation(vector<num_t> const& x,
-  //                        vector<num_t> const& y,
-  //                        num_t& corr);
 
   ////////////////////////////////////////////////////////////
   // INLINE METHOD DEFINITIONS

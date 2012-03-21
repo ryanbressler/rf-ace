@@ -176,42 +176,7 @@ datadefs::num_t datadefs::str2num(const string& str) {
   }
   return(ret);
 }
-
-/**
- * Takes the arithmetic mean of a vector of input values
- !! Side effects: mutates nRealValues and mu regardless of the final
- result. This applies to most methods defined in RF-ACE, actually.
-
- !! Error sieve: silently ignores NaN
-
- !! Consistency: consider replacing "mu" with "mean" in the function signature
-     to make this consistent with the mode and gamma values. Yes, mu is the
-     common first-order notation for the mean, but explicitly calling it out
-     is more expressive.
-
- !! Consistency: what's the meaningful difference (pun!) between this and the
-     now-since-commented-out datadefs::mean? This reads like a function derived
-     from shotgun debugging.
-
-
-*/
-void datadefs::mean(vector<datadefs::num_t> const& data, datadefs::num_t& mu, size_t& nRealValues) {
- 
-  mu = 0.0;
-  nRealValues = 0;
- 
-  for(size_t i = 0; i < data.size(); ++i) {
-    if(!datadefs::isNAN(data[i])) {
-      ++nRealValues;
-      mu += data[i];
-    }
-  }
-
-  if(nRealValues > 0) {
-    mu /= nRealValues;
-  }
-}
-
+  
 /**
  * Determines the cardinality of a given input data set
  !! Input sanitization: contains no checks for NaN.
@@ -227,27 +192,6 @@ void datadefs::cardinality(const vector<datadefs::num_t>& data, size_t& cardinal
   cardinality = categories.size();
 
 }
-
-/**
- * Calculates the squared error
- !! Possible duplication: how does this differ with similar inline methods in datadefs.hpp?
-*/
-/*
-  void datadefs::sqerr(vector<datadefs::num_t> const& data, 
-  datadefs::num_t& mu, 
-  datadefs::num_t& se,
-  size_t& nRealValues) {
-  
-  datadefs::mean(data,mu,nRealValues);
-  
-  se = 0.0;
-  for(size_t i = 0; i < data.size(); ++i) {
-  if(!datadefs::isNAN(data[i])) {
-  se += pow(data[i] - mu,2);
-  }
-  }
-  }
-*/
 
 /**
  * Count all values that aren't transfinite
@@ -300,67 +244,6 @@ void datadefs::sortDataAndMakeRef(const bool isIncreasingOrder,
 
   datadefs::separate_pairedv<num_t,size_t>(pairedv,data,refIcs);
 }
-
-/**
- * Gini coefficient (see: http://en.wikipedia.org/wiki/Gini_coefficient)
- !! Documentation
-*/
-/*
-  void datadefs::gini(vector<datadefs::num_t> const& data,
-  datadefs::num_t& giniIndex,
-  size_t& nRealValues) {
-  map<datadefs::num_t,size_t> freq;
-  datadefs::count_freq(data,freq,nRealValues);
-  datadefs::gini(freq,giniIndex);
-  }
-*/
-
-/**
- * Gini coefficient (see: http://en.wikipedia.org/wiki/Gini_coefficient)
- !! Documentation
-*/
-/*
-  void datadefs::gini(map<datadefs::num_t,size_t> const& cat2freq, 
-  datadefs::num_t& giniIndex) {
-  giniIndex = 0.0;
-  size_t n = 0;
-  map<datadefs::num_t,size_t>::const_iterator it;
-  for(it = cat2freq.begin(); it != cat2freq.end(); ++it) {
-  size_t freq_new = it->second;
-  giniIndex += freq_new * freq_new;
-  n += freq_new;
-  }
-  if(n) {
-  giniIndex = 1 - giniIndex / ( n*n );
-  }
-  }
-*/
-
-
-/**
-   !! Documentation
-   !! Critical mutator of the cat2freq map. This should be renamed; count_freq
-   !! sounds like an innocuous accessor that counts the elements in a given
-   !! collection of descriptive type "freq".
-*/
-/*
-  void datadefs::count_freq(vector<datadefs::num_t> const& data, map<datadefs::num_t,size_t>& cat2freq, size_t& nRealValues) {
-  cat2freq.clear();
-  map<datadefs::num_t,size_t>::const_iterator it;
-  nRealValues = 0;
-  for(size_t i = 0; i < data.size(); ++i) {
-  if(!datadefs::isNAN(data[i])) {
-  ++nRealValues;
-  it = cat2freq.find(data[i]);
-  if(it == cat2freq.end()) {
-  cat2freq.insert(pair<datadefs::num_t,size_t>(data[i],1));
-  } else {
-  ++cat2freq[data[i]];
-  }
-  }
-  }
-  }
-*/
 
 /**
    !! Documentation
