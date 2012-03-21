@@ -214,22 +214,22 @@ void Node::recursiveNodeSplit(Treedata* treeData,
 
   size_t nSamples = sampleIcs.size();
 
+  vector<num_t> trainData = treeData->getFeatureData(targetIdx,sampleIcs);
+  if ( GI.predictionFunctionType == MEAN ) {
+    trainPrediction_ = math::mean(trainData);
+  } else if ( GI.predictionFunctionType == MODE ) {
+    trainPrediction_ = math::mode<num_t>(trainData);
+  } else if ( GI.predictionFunctionType == GAMMA ) {
+    trainPrediction_ = math::gamma(trainData,GI.numClasses);
+  } else {
+    cerr << "Node::recursiveNodeSplit() -- unknown prediction function!" << endl;
+    exit(1);
+  }
+  
+  assert( !datadefs::isNAN(trainPrediction_) );
+  
   if(nSamples < 2 * GI.minNodeSizeToStop || *nNodes >= GI.maxNodesToStop) {
     //cout << "Too few samples to start with, quitting" << endl;
-    vector<num_t> leafTrainData = treeData->getFeatureData(targetIdx,sampleIcs);
-
-    switch ( GI.predictionFunctionType ) {
-    case MEAN: 
-      this->leafMean(leafTrainData);
-      break;
-    case MODE:
-      this->leafMode(leafTrainData);
-      break;
-    case GAMMA:
-      this->leafGamma(leafTrainData,GI.numClasses);
-      break;
-    }
-
     return;
   }
   
@@ -258,7 +258,7 @@ void Node::recursiveNodeSplit(Treedata* treeData,
     }
   }
   //cout << endl;
-
+  
   vector<size_t> sampleIcs_left,sampleIcs_right;
 
   size_t splitFeatureIdx;
@@ -273,44 +273,14 @@ void Node::recursiveNodeSplit(Treedata* treeData,
 					      sampleIcs_left,
 					      sampleIcs_right,
 					      splitFitness);
-  
+        
   if ( !foundSplit ) {
-
-    vector<num_t> leafTrainData = treeData->getFeatureData(targetIdx,sampleIcs);
-
-    switch ( GI.predictionFunctionType ) {
-    case MEAN:
-      this->leafMean(leafTrainData);
-      break;
-    case MODE:
-      this->leafMode(leafTrainData);
-      break;
-    case GAMMA:
-      this->leafGamma(leafTrainData,GI.numClasses);
-      break;
-    }
-
     return;
   }
   
-  vector<num_t> trainData = treeData->getFeatureData(targetIdx,sampleIcs);
-
-  switch ( GI.predictionFunctionType ) {
-  case MEAN:
-    this->leafMean(trainData);
-    break;
-  case MODE:
-    this->leafMode(trainData);
-    break;
-  case GAMMA:
-    this->leafGamma(trainData,GI.numClasses);
-    break;
-  }
-
-
   featuresInTree.insert(splitFeatureIdx);
   *nNodes += 2;
-
+  
   leftChild_->recursiveNodeSplit(treeData,targetIdx,sampleIcs_left,GI,featuresInTree,nNodes);
   rightChild_->recursiveNodeSplit(treeData,targetIdx,sampleIcs_right,GI,featuresInTree,nNodes);
   
@@ -329,11 +299,6 @@ bool Node::regularSplitterSeek(Treedata* treeData,
   // This many features will be tested for splitting the data
   size_t nFeaturesForSplit = featureSampleIcs.size();
   
-  // These containers store all the temporary data for all candidate splitters
-  //vector<vector<size_t> > newSampleIcs_left( nFeaturesForSplit, vector<size_t>(0) );
-  //vector<vector<size_t> > newSampleIcs_right( nFeaturesForSplit, sampleIcs );
-  //vector<num_t> newSplitFitness( nFeaturesForSplit, 0.0 );
-
   num_t splitValue = datadefs::NUM_NAN;
   set<num_t> splitValues_left; 
   set<num_t> splitValues_right;
@@ -469,7 +434,7 @@ void Node::numericalFeatureSplit(Treedata* treedata,
     num_t mu_left = tv[0];
     vector<num_t> se_left(n_tot, 0.0);
 
-    // Add one sample at a time, from left to right, while updating the 
+    // Add one sample at a time, from right to left, while updating the 
     // mean and squared error
     // NOTE1: leftmost sample has been added already, so we start i from 1
     // NOTE2: rightmost sample needs to be included since we want to compute
@@ -480,7 +445,7 @@ void Node::numericalFeatureSplit(Treedata* treedata,
       // present slot
       se_left[i] = se_left[i-1];
 
-      // This function takes n'th data point tv[i] from left to right
+      // This function takes n'th data point tv[i] from right to left
       // and updates the mean and squared error
       math::incrementSquaredError(tv[i],++n,mu_left,se_left[i]);
     }
@@ -498,20 +463,25 @@ void Node::numericalFeatureSplit(Treedata* treedata,
     // The best squared error is set to the worst case
     num_t se_best = se_left.back();
 
-    // Now it's time to start adding samples from right to left
+    // Now it's time to start adding samples from left to right
     // NOTE: it's intentional to set n to 0
     n = 0;
     num_t mu_right = 0.0;
     num_t se_right = 0.0;
     
-    // Add samples one by one from right to left until we hit the 
+    // Add samples one by one from left to right until we hit the 
     // minimum allowed size of the branch
-    for( int i = n_tot-1; i > static_cast<int>(GI.minNodeSizeToStop); --i ) {
+    for( int i = n_tot-1; i >= static_cast<int>(GI.minNodeSizeToStop); --i ) {
       
-      // Add n'th sample tv[i] from right to left and update 
+      // Add n'th sample tv[i] from left to right and update 
       // mean and squared error
       math::incrementSquaredError(tv[i],++n,mu_right,se_right);
  
+      // If the sample is repeated and we can continue, continue
+      if ( i-1 >= static_cast<int>(GI.minNodeSizeToStop) && tv[i-1] == tv[i] ) {
+	continue;
+      }
+
       // If the split point "i-1" yields a better split than the previous one,
       // update se_best and bestSplitIdx
       if ( se_left[i-1] + se_right < se_best ) {
@@ -529,7 +499,7 @@ void Node::numericalFeatureSplit(Treedata* treedata,
     // Calculate split fitness
     splitFitness = (se_tot - se_best) / se_tot;
   
-  } else { //Otherwise we use the iterative gini index formula to update impurity scores while we traverse "right"
+  } else { // Otherwise we use the iterative gini index formula to update impurity scores while we traverse "right"
 
     // We start with one sample on the left branch
     size_t n_left = 1;
@@ -538,7 +508,7 @@ void Node::numericalFeatureSplit(Treedata* treedata,
     vector<size_t> sf_left(n_tot, 0);
     sf_left[0] = 1;
 
-    // Add one sample at a time, from left to right, while updating the
+    // Add one sample at a time, from right to left, while updating the
     // squared frequency
     // NOTE1: leftmost sample has been added already, so we start i from 1
     // NOTE2: rightmost sample needs to be included since we want to compute
@@ -549,7 +519,7 @@ void Node::numericalFeatureSplit(Treedata* treedata,
       // present slot
       sf_left[i] = sf_left[i-1];
 
-      // This function takes n'th data point tv[i] from left to right
+      // This function takes n'th data point tv[i] from right to left
       // and updates the squared frequency
       math::incrementSquaredFrequency(tv[i],freq_left,sf_left[i]);
       ++n_left;
@@ -558,11 +528,8 @@ void Node::numericalFeatureSplit(Treedata* treedata,
     // Make sure we accumulated the right number of samples
     assert( n_left == n_tot );
 
-    // Make sure the squared frequency didn't become corrupted by NANs
-    //assert( !datadefs::isNAN(sf_left.back()) );
-
     // Total squared frequency now equals to the squared frequency of left branch
-    // wince all samples were taken to the left one by one
+    // since all samples were taken to the left one by one
     size_t sf_tot = sf_left.back();
 
     // The best normalized squared frequency is set to the worst case
@@ -574,15 +541,20 @@ void Node::numericalFeatureSplit(Treedata* treedata,
     map<num_t,size_t> freq_right;
     size_t sf_right = 0;
 
-    // Add samples one by one from right to left until we hit the
+    // Add samples one by one from left to right until we hit the
     // minimum allowed size of the branch
-    for( int i = n_tot-1; i > static_cast<int>(GI.minNodeSizeToStop); --i ) {
+    for( int i = n_tot-1; i >= static_cast<int>(GI.minNodeSizeToStop); --i ) {
 
       // Add n'th sample tv[i] from right to left and update
       // mean and squared frequency
       math::incrementSquaredFrequency(tv[i],freq_right,sf_right);
       ++n_right;
       --n_left;
+
+      // If we have repeated samples and can continue, continue
+      if ( i-1 > static_cast<int>(GI.minNodeSizeToStop) && tv[i-1] == tv[i] ) {
+	continue;
+      }
 
       // If the split point "i-1" yields a better split than the previous one,
       // update se_best and bestSplitIdx
@@ -892,69 +864,74 @@ void Node::categoricalFeatureSplit(Treedata* treedata,
 
 }
 
-
-void Node::leafMean(const vector<datadefs::num_t>& data) {
+/*
+  void Node::leafMean(const vector<datadefs::num_t>& data) {
   
   if ( !datadefs::isNAN(trainPrediction_) ) {
-    cerr << "Tried to set node prediction twice!" << endl;
-    exit(1);
+  cerr << "Tried to set node prediction twice!" << endl;
+  exit(1);
   }
-
+  
   size_t n = data.size();
   assert(n > 0);
   trainPrediction_ = 0.0;
-
+  
   for(size_t i = 0; i < data.size(); ++i) {
-    trainPrediction_ += data[i];
+  trainPrediction_ += data[i];
   }
-
+  
   trainPrediction_ /= n;
-
-}
-
-void Node::leafMode(const vector<datadefs::num_t>& data) {
-
-  if ( !datadefs::isNAN(trainPrediction_) ) {
-    cerr << "Tried to set node prediction twice!" << endl;
-    exit(1);
+  
   }
+*/
 
+/*
+  void Node::leafMode(const vector<datadefs::num_t>& data) {
+  
+  if ( !datadefs::isNAN(trainPrediction_) ) {
+  cerr << "Tried to set node prediction twice!" << endl;
+  exit(1);
+  }
+  
   size_t n = data.size();
   assert(n > 0);
   trainPrediction_ = 0.0;
-
+  
   map<num_t,size_t> freq;
   
   datadefs::count_freq(data,freq,n);
   map<num_t,size_t>::iterator it(max_element(freq.begin(),freq.end(),datadefs::freqIncreasingOrder()));
   trainPrediction_ = it->first;
-
-}
+  
+  }
+*/
 
 // !! Document
-void Node::leafGamma(const vector<datadefs::num_t>& data, const size_t numClasses) {
-
+/*
+  void Node::leafGamma(const vector<datadefs::num_t>& data, const size_t numClasses) {
+  
   if ( !datadefs::isNAN(trainPrediction_) ) {
-    cerr << "Tried to set node prediction twice!" << endl;
-    exit(1);
+  cerr << "Tried to set node prediction twice!" << endl;
+  exit(1);
   }
-
+  
   size_t n = data.size();
   assert(n > 0);
   trainPrediction_ = 0.0;
-
+  
   num_t numerator = 0.0;
   num_t denominator = 0.0;
-
+  
   for (size_t i = 0; i < n; ++i) {
-    num_t abs_data_i = fabs( data[i] );
-    denominator += abs_data_i * (1.0 - abs_data_i);
-    numerator   += data[i];
+  num_t abs_data_i = fabs( data[i] );
+  denominator += abs_data_i * (1.0 - abs_data_i);
+  numerator   += data[i];
   }
   if ( fabs(denominator) <= datadefs::EPS ) {
-    trainPrediction_ = datadefs::LOG_OF_MAX_NUM * numerator;
+  trainPrediction_ = datadefs::LOG_OF_MAX_NUM * numerator;
   } else {
-    trainPrediction_ = (numClasses - 1)*numerator / (numClasses * denominator);
+  trainPrediction_ = (numClasses - 1)*numerator / (numClasses * denominator);
   }
-}
+  }
+*/
   

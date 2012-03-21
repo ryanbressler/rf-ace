@@ -52,10 +52,11 @@ namespace options {
   const char   GENERAL_DEFAULT_HEADER_DELIMITER = ':';
   const size_t GENERAL_DEFAULT_MIN_SAMPLES = 5;
   
-  const size_t RF_DEFAULT_N_TREES = 100; // zero means it will be estimated from the data by default
-  const num_t  RF_DEFAULT_M_TRY_FRACTION = 0.1; // same here ...
+  const size_t RF_DEFAULT_N_TREES = 100; 
+  const num_t  RF_DEFAULT_M_TRY_FRACTION = 0.1; 
   const size_t RF_DEFAULT_N_MAX_LEAVES = 100;
-  const size_t RF_DEFAULT_NODE_SIZE = 5; // ... and here
+  const size_t RF_DEFAULT_NODE_SIZE = 5; 
+
   const size_t RF_DEFAULT_N_PERMS = 20;
   const num_t  RF_DEFAULT_P_VALUE_THRESHOLD = 0.05;
   
@@ -144,6 +145,31 @@ namespace options {
       cout << endl;
 
     }
+
+    void validate() {
+
+      // Print help and exit if input file is not specified
+      if ( input == "" ) {
+	cerr << "Input file not specified" << endl;
+	printHelpHint();
+	exit(1);
+      }
+
+      // Print help and exit if target index is not specified
+      if ( targetStr == "" ) {
+	cerr << "target(s) ( -" << targetStr_s << " / --" << targetStr_l << " ) not specified" << endl;
+	printHelpHint();
+	exit(1);
+      }
+
+      if ( output == "" ) {
+	cerr << "You forgot to specify an output file!" << endl;
+	printHelpHint();
+	exit(1);
+      }
+
+    }
+
     
   };
     
@@ -158,11 +184,11 @@ namespace options {
     
     RF_options(const int argc, char* const argv[]):
       
-      nTrees(RF_DEFAULT_N_TREES),nTrees_s("n"),nTrees_l("RF_ntrees"),
-      mTryFraction(RF_DEFAULT_M_TRY_FRACTION),mTryFraction_s("m"),mTryFraction_l("RF_mtry"),
-      nMaxLeaves(RF_DEFAULT_N_MAX_LEAVES),nMaxLeaves_s("a"),nMaxLeaves_l("RF_maxleaves"),
-      nodeSize(RF_DEFAULT_NODE_SIZE),nodeSize_s("s"),nodeSize_l("RF_nodesize"),
-      nPerms(RF_DEFAULT_N_PERMS),nPerms_s("p"),nPerms_l("RF_nperms"),
+      nTrees(RF_DEFAULT_N_TREES),nTrees_s("n"),nTrees_l("ntrees"),
+      mTryFraction(RF_DEFAULT_M_TRY_FRACTION),mTryFraction_s("m"),mTryFraction_l("mtry"),
+      nMaxLeaves(RF_DEFAULT_N_MAX_LEAVES),nMaxLeaves_s("a"),nMaxLeaves_l("nmaxleaves"),
+      nodeSize(RF_DEFAULT_NODE_SIZE),nodeSize_s("s"),nodeSize_l("nodesize"),
+      nPerms(RF_DEFAULT_N_PERMS),nPerms_s("p"),nPerms_l("nperms"),
       pValueThreshold(RF_DEFAULT_P_VALUE_THRESHOLD),pValueThreshold_s("t"),pValueThreshold_l("pthreshold") {
       
       // Read the user parameters ...
@@ -196,6 +222,16 @@ namespace options {
       cout << endl;
 
     }
+
+    void validate() {
+
+      if ( mTryFraction <= 0.0 || mTryFraction >= 1.0 ) {
+	cerr << "mTry needs to be between (0,1)!" << endl;
+	exit(1);
+      }
+
+    }
+
     
   };
   
@@ -219,10 +255,10 @@ namespace options {
     
     GBT_options(const int argc, char* const argv[]):    
     
-      nTrees(GBT_DEFAULT_N_TREES),nTrees_s("r"),nTrees_l("GBT_ntrees"),
-      nMaxLeaves(GBT_DEFAULT_N_MAX_LEAVES),nMaxLeaves_s("l"),nMaxLeaves_l("GBT_maxleaves"),
-      shrinkage(GBT_DEFAULT_SHRINKAGE),shrinkage_s("z"),shrinkage_l("GBT_shrinkage"),
-      subSampleSize(GBT_DEFAULT_SUB_SAMPLE_SIZE),subSampleSize_s("u"),subSampleSize_l("GBT_samplesize") {
+      nTrees(GBT_DEFAULT_N_TREES),nTrees_s("n"),nTrees_l("ntrees"),
+      nMaxLeaves(GBT_DEFAULT_N_MAX_LEAVES),nMaxLeaves_s("a"),nMaxLeaves_l("nmaxleaves"),
+      shrinkage(GBT_DEFAULT_SHRINKAGE),shrinkage_s("z"),shrinkage_l("shrinkage"),
+      subSampleSize(GBT_DEFAULT_SUB_SAMPLE_SIZE),subSampleSize_s("u"),subSampleSize_l("subsamplesize") {
 
       // Read the user parameters ...
       ArgParse parser(argc,argv);      
@@ -305,54 +341,23 @@ namespace options {
       cout << endl;
     }
 
+    void validate() {
+
+      if ( ! ( isGBT || isRF ) ) {
+	isGBT = true;
+      }
+
+      if ( isRF && isGBT ) {
+	cerr << "You cannot choose both RF and GBT for predictor building" << endl;
+	exit(1);
+      }
+
+    }
+
+
   };
 
-  void validateOptions(const General_options& gen_op) {
     
-    // Print help and exit if input file is not specified
-    if ( gen_op.input == "" ) {
-      cerr << "Input file not specified" << endl;
-      printHelpHint();
-      exit(1);
-    }
-    
-    // Print help and exit if target index is not specified
-    if ( gen_op.targetStr == "" ) {
-      cerr << "target(s) (-i/--target) not specified" << endl;
-      printHelpHint();
-      exit(1);
-    }
-    
-    if ( gen_op.output == "" ) {
-      cerr << "You forgot to specify an output file!" << endl;
-      printHelpHint();
-      exit(1);
-    }
-
-  }
-
-  void validateOptions(const RF_options& RF_op) {
-
-    if ( RF_op.mTryFraction <= 0.0 || RF_op.mTryFraction >= 1.0 ) {
-      cerr << "mTry needs to be between (0,1)!" << endl;
-      exit(1);
-    }
-      
-  }
-  
-  void validateOptions(PredictorBuilder_options& PB_op) {
-
-    if ( ! ( PB_op.isGBT || PB_op.isRF ) ) {
-      PB_op.isGBT = true;
-    } 
-
-    if ( PB_op.isRF && PB_op.isGBT ) {
-      cerr << "You cannot choose both RF and GBT for predictor building" << endl;
-      exit(1);
-    }
-
-  }
-  
 }
 
 #endif

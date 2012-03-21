@@ -80,18 +80,20 @@ namespace datadefs {
 
   void countRealValues(vector<num_t> const& data, size_t& nRealValues);
 
-  void count_freq(vector<num_t> const& data, map<num_t,size_t>& cat2freq, size_t& nRealValues);
+  //void count_freq(vector<num_t> const& data, map<num_t,size_t>& cat2freq, size_t& nRealValues);
 
   void map_data(vector<num_t> const& data, 
                 map<num_t,vector<size_t> >& datamap,
                 size_t& nRealValues);
 
-  void gini(vector<num_t> const& data,
-            num_t& giniIndex,
-            size_t& nRealValues);
-
-  void gini(map<num_t,size_t> const& cat2freq,
-            num_t& giniIndex);
+  /*
+    void gini(vector<num_t> const& data,
+    num_t& giniIndex,
+    size_t& nRealValues);
+    
+    void gini(map<num_t,size_t> const& cat2freq,
+    num_t& giniIndex);
+  */
 
   /*
     void sqfreq(vector<num_t> const& data, 

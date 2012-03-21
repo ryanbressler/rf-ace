@@ -23,9 +23,9 @@ class DataDefsTest : public CppUnit::TestFixture {
   CPPUNIT_TEST( test_cardinality );
   //CPPUNIT_TEST( test_sqerr );
   CPPUNIT_TEST( test_countRealValues );
-  CPPUNIT_TEST( test_count_freq );
+  //CPPUNIT_TEST( test_count_freq );
   CPPUNIT_TEST( test_map_data );
-  CPPUNIT_TEST( test_gini );
+  //CPPUNIT_TEST( test_gini );
   //CPPUNIT_TEST( test_sqfreq );
   //CPPUNIT_TEST( test_forward_sqfreq );
   //CPPUNIT_TEST( test_forward_backward_sqfreq );
@@ -68,9 +68,9 @@ public:
   void test_cardinality();
   //void test_sqerr();
   void test_countRealValues();
-  void test_count_freq();
+  //void test_count_freq();
   void test_map_data();
-  void test_gini();
+  //void test_gini();
   //void test_sqfreq();
   //void test_forward_sqfreq();
   //void test_forward_backward_sqfreq();
@@ -284,48 +284,6 @@ void DataDefsTest::test_countRealValues() {
   CPPUNIT_ASSERT(nRealValues == 0);
 }
 
-// !! TODO: make this test slightly more robust.
-void DataDefsTest::test_count_freq() {
-  vector<datadefs::num_t> data;
-  map<datadefs::num_t,size_t> cat2freq;
-  size_t nRealValues = static_cast<size_t>(-1);
-  for (int i = 0; i < 50; ++i) {
-    data.push_back(static_cast<datadefs::num_t>(i));
-  }
-  data.push_back(0.0);
-  
-  datadefs::count_freq(data, cat2freq, nRealValues);
-  CPPUNIT_ASSERT(cat2freq.size() == 50);
-  CPPUNIT_ASSERT(nRealValues == 51);
-  
-  // Our data vector is defined as const in our signature. Since we're not
-  //  testing edge cases of non-trivial memory corruption, we ignore it here.
-  
-  // Interleave the original input with NaNs; verify we get the same results
-  for (int i = 0; i < 50; ++i) {
-    data.insert(data.begin() + (i*2), datadefs::NUM_NAN);
-  }
-
-  cat2freq.clear();
-  nRealValues = static_cast<size_t>(-1);
-
-  datadefs::count_freq(data, cat2freq, nRealValues);
-  CPPUNIT_ASSERT(cat2freq.size() == 50);
-  CPPUNIT_ASSERT(nRealValues == 51);
-  
-  // Ensure a vector containing only NaNs is handled as expected
-  data.clear();
-  for (int i = 0; i < 50; ++i) {
-    data.push_back(datadefs::NUM_NAN);
-  }
-
-  cat2freq.clear();
-  nRealValues = static_cast<size_t>(-1); 
-  
-  datadefs::count_freq(data, cat2freq, nRealValues);
-  CPPUNIT_ASSERT(cat2freq.size() == 0);
-  CPPUNIT_ASSERT(nRealValues == 0);
-}
 
 // !! TODO: make this test more robust
 void DataDefsTest::test_map_data() {
@@ -364,74 +322,6 @@ void DataDefsTest::test_map_data() {
   datadefs::map_data(data, datamap, nRealValues);
   CPPUNIT_ASSERT(datamap.size() == 0);
   CPPUNIT_ASSERT(nRealValues == 0);
-}
-
-void DataDefsTest::test_gini() {
-  vector<datadefs::num_t> data;
-  datadefs::num_t giniIndex; // I dream of gini.
-                             //  </obligatoryFunnyComment>
-  size_t nRealValues;
-  map<datadefs::num_t,size_t> cat2freq;
-
-  for (int i = 0; i < 50; ++i) {
-    data.push_back(static_cast<datadefs::num_t>(i));
-  }
-  data.push_back(0.0);
-
-  datadefs::gini(data, giniIndex, nRealValues);
-  CPPUNIT_ASSERT(fabs(giniIndex - 0.9796232218377547429355445274268276989459991455078125)
-                  < datadefs::EPS);
-  CPPUNIT_ASSERT(nRealValues == 51);
-  
-  datadefs::count_freq(data, cat2freq, nRealValues);
-  CPPUNIT_ASSERT(cat2freq.size() == 50);
-  CPPUNIT_ASSERT(nRealValues == 51);
-
-  datadefs::gini(cat2freq, giniIndex);
-  CPPUNIT_ASSERT(fabs(giniIndex - 0.9796232218377547429355445274268276989459991455078125)
-                  < datadefs::EPS);
-  
-  // Our data vector is defined as const in our signature. Since we're not
-  //  testing edge cases of non-trivial memory corruption, we ignore it here.
-  
-  // Interleave the original input with NaNs; verify we get the same results
-  for (int i = 0; i < 50; ++i) {
-    data.insert(data.begin() + (i*2), datadefs::NUM_NAN);
-  }
-
-  nRealValues = static_cast<size_t>(-1);
-  datadefs::gini(data, giniIndex, nRealValues);
-  CPPUNIT_ASSERT(fabs(giniIndex - 0.9796232218377547429355445274268276989459991455078125)
-                  < datadefs::EPS);
-  CPPUNIT_ASSERT(nRealValues == 51);
-  
-  datadefs::count_freq(data, cat2freq, nRealValues);
-  CPPUNIT_ASSERT(cat2freq.size() == 50);
-  CPPUNIT_ASSERT(nRealValues == 51);
-
-  datadefs::gini(cat2freq, giniIndex);
-  CPPUNIT_ASSERT(fabs(giniIndex - 0.9796232218377547429355445274268276989459991455078125)
-                  < datadefs::EPS);
-  
-  // Ensure a vector containing only NaNs is handled as expected
-  data.clear();
-  for (int i = 0; i < 50; ++i) {
-    data.push_back(datadefs::NUM_NAN);
-  }
-
-  nRealValues = static_cast<size_t>(-1); 
-  datadefs::gini(data, giniIndex, nRealValues);
-  CPPUNIT_ASSERT(giniIndex == 0.0);
-  CPPUNIT_ASSERT(nRealValues == 0);
-  
-  datadefs::count_freq(data, cat2freq, nRealValues);
-  CPPUNIT_ASSERT(cat2freq.size() == 0);
-  CPPUNIT_ASSERT(nRealValues == 0);
-
-  datadefs::gini(cat2freq, giniIndex);
-  CPPUNIT_ASSERT(giniIndex == 0.0);
-
-  
 }
 
 void DataDefsTest::test_range() {

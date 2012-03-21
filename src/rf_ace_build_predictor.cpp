@@ -11,7 +11,6 @@
 #include <algorithm>
 
 #include "rf_ace.hpp"
-//#include "argparse.hpp"
 #include "stochasticforest.hpp"
 #include "treedata.hpp"
 #include "datadefs.hpp"
@@ -22,12 +21,7 @@
 #include "utils.hpp"
 
 using namespace std;
-//using namespace options;
-//using namespace statistics;
 using datadefs::num_t;
-
-
-//vector<string> readFeatureMask(const string& fileName);
 
 int main(const int argc, char* const argv[]) {
 
@@ -44,6 +38,7 @@ int main(const int argc, char* const argv[]) {
   if(argc == 1 || gen_op.printHelp ) {
     options::printPredictorBuilderOverview();
     gen_op.help();
+    PB_op.help();
     GBT_op.help();
     RF_op.help();
     PB_op.help();
@@ -51,8 +46,8 @@ int main(const int argc, char* const argv[]) {
     return(EXIT_SUCCESS);
   }
 
-  options::validateOptions(gen_op);
-  options::validateOptions(PB_op);
+  gen_op.validate();
+  PB_op.validate();
   
   // Read train data into Treedata object
   cout << "Reading file '" << gen_op.input << "', please wait... " << flush;
@@ -74,22 +69,11 @@ int main(const int argc, char* const argv[]) {
   }
   
   rface::pruneFeatureSpace(treedata,gen_op);
-
   rface::printGeneralSetup(treedata,gen_op);
-
-  //rface::printGBTSetup(GBT_op);
-
-  // After masking, it's safe to refer to features as indices 
-  // TODO: rf_ace.cpp: this should be made obsolete; instead of indices, use the feature headers
-  //size_t targetIdx = treedata.getFeatureIdx(gen_op.targetStr);
     
   // Store the start time (in clock cycles) just before the analysis
   clock_t clockStart( clock() );
-      
-  //cout << "===> Growing GBT predictor... " << flush;
-  
-  //StochasticForest SF(&treedata,gen_op.targetStr,GBT_op.nTrees);
-  
+        
   if ( PB_op.isGBT ) {
     rface::printGBTSetup(GBT_op);
     cout << "===> Growing GBT predictor... " << flush;  
@@ -98,8 +82,10 @@ int main(const int argc, char* const argv[]) {
     cout << "DONE" << endl;
     cout << "===> Writing predictor to file... " << flush;
     SF.printToFile( gen_op.output );
+    cout << "DONE" << endl << endl;
+    cout << "OOB error = " << SF.oobError() << endl;
   }
-  
+
   if ( PB_op.isRF ) {
     rface::printRFSetup(RF_op);
     cout << "===> Growing RF predictor... " << flush;
@@ -109,9 +95,10 @@ int main(const int argc, char* const argv[]) {
     cout << "DONE" << endl;
     cout << "===> Writing predictor to file... " << flush;
     SF.printToFile( gen_op.output );
+    cout << "DONE" << endl << endl;
+    cout << "OOB error = " << SF.oobError() << endl;
   }
 
-  cout << "DONE" << endl;
   cout << endl;
   cout << 1.0 * ( clock() - clockStart ) / CLOCKS_PER_SEC << " seconds elapsed." << endl << endl;
     

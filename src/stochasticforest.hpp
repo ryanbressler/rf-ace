@@ -22,7 +22,6 @@ public:
 
   ~StochasticForest();
 
-
   // !! Documentation: ... then, on the public side, learning would become collapsed into a single overloaded function learn(...)
   void learnRF(const num_t  mTryFraction,
 	       const size_t nMaxLeaves,
@@ -33,10 +32,11 @@ public:
 		const num_t  shrinkage,
 		const num_t  subSampleSize);
   
-  vector<size_t> featureFrequency();
+  map<size_t,map<size_t,size_t> > featureFrequency();
   
-  //Calculates the feature importance scores for real and contrast features
-  vector<num_t> featureImportance();
+  vector<num_t> importanceValues();
+  vector<num_t> contrastImportanceValues();
+  num_t oobError();
     
   void predict(vector<string>& categoryPrediction, vector<num_t>& confidence);
   void predict(vector<num_t>& prediction, vector<num_t>& confidence);
@@ -69,14 +69,16 @@ private:
   vector<num_t> predictDatasetByTree(size_t treeIdx);
 
   //Percolates samples along the trees, starting from the rootNode. Spits out a map<> that ties the percolated train samples to the leaf nodes
-  map<Node*,vector<size_t> > percolateSampleIcs(Node* rootNode, const vector<size_t>& sampleIcs);
-  map<Node*,vector<size_t> > percolateSampleIcsAtRandom(const size_t featureIdx, Node* rootNode, const vector<size_t>& sampleIcs);
+  map<Node*,vector<size_t> > percolateSampleIcsByTree(const vector<size_t>& sampleIcs, const size_t treeIdx);
+  map<Node*,vector<size_t> > percolateSampleIcsByTreeAtRandom(const size_t featureIdx, const vector<size_t>& sampleIcs, const size_t treeIdx);
   
-  void percolateSampleIdx(const size_t sampleIdx, Node** nodep);
-  void percolateSampleIdxAtRandom(const size_t featureIdx, const size_t sampleIdx, Node** nodep);
+  Node* percolateSampleIdxByTree(const size_t sampleIdx, const size_t treeIdx);
+  Node* percolateSampleIdxByTreeAtRandom(const size_t featureIdx, const size_t sampleIdx, const size_t treeIdx);
 
   // Calculates prediction error across the nodes provided in the input map<> 
   num_t predictionError(const map<Node*,vector<size_t> >& trainIcs);
+  
+  void updateImportanceValues();
 
   //Pointer to treeData_ object, stores all the feature data with which the trees are grown (i.e. training data)
   Treedata* treeData_;
@@ -90,18 +92,20 @@ private:
   //Root nodes for every tree
   vector<RootNode*> rootNodes_;
 
-  //A helper variable that stores all splitter features. This will make impurity calculation faster
+  vector<num_t> importanceValues_;
+  vector<num_t> contrastImportanceValues_;
+  num_t oobError_;
+
+  // Maps a tree to the set of features existing in the tree
   map<size_t, set<size_t> > featuresInForest_;
 
   //Out-of-box samples for each tree
   vector<vector<size_t> > oobMatrix_;
 
-  enum LearnedModel {NO_MODEL, RF_MODEL, GBT_MODEL};
+  enum LearnedModel { NO_MODEL, RF, GBT } learnedModel_;
   
-  LearnedModel learnedModel_;
-
   num_t shrinkage_;
-
+  
 };
 
 #endif
