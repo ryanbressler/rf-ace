@@ -3,6 +3,7 @@
 
 #include <cstdlib>
 #include <iostream>
+#include <fstream>
 #include <set>
 #include <string>
 #include <vector>
@@ -57,8 +58,16 @@ namespace rface {
     }
 
     if ( treeData.nFeatures() == 0 ) {
-      cerr << "All features were removed!" << endl;
-      exit(1);
+      cout << "All features were removed!" << endl;
+
+      ofstream toLogFile(gen_op.log.c_str());
+
+      toLogFile << "All features were removed!" << endl;
+
+      toLogFile.close();
+
+      exit(0);
+
     }
     
   }
