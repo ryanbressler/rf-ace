@@ -30,9 +30,9 @@ vector<string> readFeatureMask(const string& fileName);
 int main(const int argc, char* const argv[]) {
 
   // Structs that store all the user-specified command-line arguments
-  options::General_options gen_op(argc,argv);
-  options::Predictor_options pred_op(argc,argv);
-
+  options::General_options gen_op; gen_op.loadUserParams(argc,argv);
+  options::Predictor_options pred_op; pred_op.loadUserParams(argc,argv);
+  
   // Print the intro header
   options::printHeader(cout);
 
@@ -46,25 +46,27 @@ int main(const int argc, char* const argv[]) {
 
   // Read data into Treedata object
   cout << "Reading file '" << gen_op.input << "', please wait... " << flush;
-  Treedata treedata(gen_op.input,gen_op.dataDelimiter,gen_op.headerDelimiter);
+  Treedata treeData(gen_op.input,gen_op.dataDelimiter,gen_op.headerDelimiter,gen_op.seed);
   cout << "DONE" << endl;
 
   cout << "===> Loading predictor... " << flush;
-  StochasticForest SF(&treedata,pred_op.forest);
+  StochasticForest SF(&treeData,pred_op.forest);
   gen_op.targetStr = SF.getTargetName();
-  cout << "DONE -- predictor is " << SF.type() << endl;
+  cout << "DONE -- predictor is ";
+  if ( SF.type() == StochasticForest::RF ) {
+    cout << "RF" << endl;
+  } else {
+    cout << "GBT" << endl;
+  }
 
-  gen_op.validate();
-
-
-  rface::printGeneralSetup(treedata,gen_op);
+  rface::printGeneralSetup(treeData,gen_op);
     
   // Store the start time (in clock cycles) just before the analysis
   clock_t clockStart( clock() );
   
   cout << "===> Making predictions with test data... " << flush;
     
-  printPredictionToFile(SF,treedata,gen_op.targetStr,gen_op.output);
+  printPredictionToFile(SF,treeData,gen_op.targetStr,gen_op.output);
     
   cout << "DONE" << endl;
   

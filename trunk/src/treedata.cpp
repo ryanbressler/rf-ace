@@ -8,8 +8,8 @@
 #include <algorithm>
 #include <ctime>
 
-#include "utils.hpp"
 #include "math.hpp"
+#include "utils.hpp"
 
 using namespace std;
 
@@ -18,7 +18,7 @@ using namespace std;
    NOTE: dataDelimiter and headerDelimiter are used only when the format is AFM, for 
    ARFF default delimiter (comma) is used 
 */
-Treedata::Treedata(string fileName, char dataDelimiter, char headerDelimiter):
+Treedata::Treedata(string fileName, char dataDelimiter, char headerDelimiter, int seed):
   dataDelimiter_(dataDelimiter),
   headerDelimiter_(headerDelimiter),
   features_(0),
@@ -132,12 +132,12 @@ Treedata::Treedata(string fileName, char dataDelimiter, char headerDelimiter):
     name2idx_[contrastName] = i;
   }
 
-  // Initialize the Mersenne Twister RNG with the CPU cycle count as the seed
-  time_t now;
-  time(&now);
-  unsigned int seed = clock() + now;
-  randomInteger_.seed(seed);
-
+  // Initialize the Mersenne Twister random number generator
+  if ( seed < 0 ) {
+    seed = utils::generateSeed();
+  }
+  randomInteger_.seed( static_cast<unsigned int>(seed) );
+  
 
   // Permute contrasts, so that the data becomes just noise
   this->permuteContrasts();

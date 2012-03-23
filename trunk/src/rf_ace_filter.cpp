@@ -26,17 +26,19 @@ using namespace std;
 //using namespace options;
 using datadefs::num_t;
 
-statistics::RF_statistics executeRandomForest(Treedata& treedata,
+statistics::RF_statistics executeRandomForest(Treedata& treeData,
 					      const options::General_options& gen_op,
-					      const options::RF_options& RF_op,
+					      const options::StochasticForest_options& SF_op,
+					      const options::StatisticalTest_options& ST_op,
 					      vector<num_t>& pValues,
 					      vector<num_t>& importanceValues);
 
 int main(const int argc, char* const argv[]) {
   
   // Structs that store all the user-specified command-line arguments
-  options::General_options gen_op(argc,argv);
-  options::RF_options RF_op(argc,argv); 
+  options::General_options gen_op; gen_op.loadUserParams(argc,argv);
+  options::StochasticForest_options SF_op; SF_op.setRFDefaults(); SF_op.loadUserParams(argc,argv); 
+  options::StatisticalTest_options ST_op; ST_op.loadUserParams(argc,argv);
   statistics::RF_statistics RF_stat;
   
   // Print the intro header
@@ -46,45 +48,33 @@ int main(const int argc, char* const argv[]) {
   if(argc == 1 || gen_op.printHelp ) {
     options::printFilterOverview();
     gen_op.help();
-    RF_op.help();
+    SF_op.help();
+    ST_op.help();
     return(EXIT_SUCCESS);
   }
-  
-  gen_op.validate();
-  RF_op.validate();
+
+  rface::validateRequiredParameters(gen_op);
 
   // Read train data into Treedata object
   cout << "Reading file '" << gen_op.input << "', please wait... " << flush;
-  Treedata treedata(gen_op.input,gen_op.dataDelimiter,gen_op.headerDelimiter);
+  Treedata treeData(gen_op.input,gen_op.dataDelimiter,gen_op.headerDelimiter,gen_op.seed);
   cout << "DONE" << endl;
-  
-  // Check if the target is specified as an index
-  int integer;
-  if ( datadefs::isInteger(gen_op.targetStr,integer) ) {
-    
-    if ( integer < 0 || integer >= static_cast<int>( treedata.nFeatures() ) ) {
-      cerr << "Feature index (" << integer << ") must be within bounds 0 ... " << treedata.nFeatures() - 1 << endl;
-      return EXIT_FAILURE;
-    }
-    
-    // Extract the name of the feature, as upon masking the indices will become rearranged
-    gen_op.targetStr = treedata.getFeatureName(static_cast<size_t>(integer));
 
-  } 
-
-  rface::pruneFeatureSpace(treedata,gen_op);
+  rface::updateMTry(treeData,SF_op);
+  rface::updateTargetStr(treeData,gen_op);
+  rface::pruneFeatureSpace(treeData,gen_op);
       
   // After masking, it's safe to refer to features as indices 
   // TODO: rf_ace.cpp: this should be made obsolete; instead of indices, use the feature headers
-  size_t targetIdx = treedata.getFeatureIdx(gen_op.targetStr);
+  size_t targetIdx = treeData.getFeatureIdx(gen_op.targetStr);
     
-  if(treedata.nSamples() < 2 * RF_op.nodeSize) {
-    cerr << "Not enough samples (" << treedata.nSamples() << ") to perform a single split" << endl;
+  if(treeData.nSamples() < 2 * SF_op.nodeSize) {
+    cerr << "Not enough samples (" << treeData.nSamples() << ") to perform a single split" << endl;
     return EXIT_FAILURE;
   }
   
-  rface::printGeneralSetup(treedata,gen_op);
-  rface::printRFSetup(RF_op);
+  rface::printGeneralSetup(treeData,gen_op);
+  rface::printStochasticForestSetup(SF_op);
       
   // Store the start time (in clock cycles) just before the analysis
   clock_t clockStart( clock() );
@@ -97,7 +87,7 @@ int main(const int argc, char* const argv[]) {
   set<string> featureNames;
   
   cout << "===> Uncovering associations... " << flush;
-  RF_stat = executeRandomForest(treedata,gen_op,RF_op,pValues,importanceValues);
+  RF_stat = executeRandomForest(treeData,gen_op,SF_op,ST_op,pValues,importanceValues);
   cout << "DONE" << endl;
   
   /////////////////////////////////////////////////
@@ -106,7 +96,7 @@ int main(const int argc, char* const argv[]) {
   
   cout << "===> Filtering features... " << flush;
   
-  size_t nFeatures = treedata.nFeatures();
+  size_t nFeatures = treeData.nFeatures();
     
   size_t nSignificantFeatures = 0;
 
@@ -115,19 +105,19 @@ int main(const int argc, char* const argv[]) {
     ofstream toAssociationFile(gen_op.output.c_str());
     toAssociationFile.precision(8);
     
-    vector<size_t> refIcs( treedata.nFeatures() );
+    vector<size_t> refIcs( treeData.nFeatures() );
     bool isIncreasingOrder = true;
     datadefs::sortDataAndMakeRef(isIncreasingOrder,pValues,refIcs);
     assert( pValues.size() == refIcs.size() );
-    assert( treedata.nFeatures() == refIcs.size() );
+    assert( treeData.nFeatures() == refIcs.size() );
     datadefs::sortFromRef<num_t>(importanceValues,refIcs);
     
-    assert( gen_op.targetStr == treedata.getFeatureName(targetIdx) );
+    assert( gen_op.targetStr == treeData.getFeatureName(targetIdx) );
     
     for ( size_t i = 0; i < refIcs.size(); ++i ) {
       size_t featureIdx = refIcs[i];
       
-      if ( pValues[i] > RF_op.pValueThreshold ) {
+      if ( pValues[i] > ST_op.pValueThreshold ) {
 	continue;
       }
       
@@ -137,9 +127,9 @@ int main(const int argc, char* const argv[]) {
 
       ++nSignificantFeatures;
       
-      toAssociationFile << fixed << gen_op.targetStr.c_str() << "\t" << treedata.getFeatureName(featureIdx).c_str()
+      toAssociationFile << fixed << gen_op.targetStr.c_str() << "\t" << treeData.getFeatureName(featureIdx).c_str()
 			<< "\t" << log10(pValues[i]) << "\t" << importanceValues[i] << "\t"
-			<< treedata.pearsonCorrelation(targetIdx,featureIdx) << "\t" << treedata.nRealSamples(targetIdx,featureIdx) << endl;
+			<< treeData.pearsonCorrelation(targetIdx,featureIdx) << "\t" << treeData.nRealSamples(targetIdx,featureIdx) << endl;
     }
     
     toAssociationFile.close();
@@ -175,45 +165,55 @@ int main(const int argc, char* const argv[]) {
   return(EXIT_SUCCESS);
 }
 
-statistics::RF_statistics executeRandomForest(Treedata& treedata,
+statistics::RF_statistics executeRandomForest(Treedata& treeData,
 					      const options::General_options& gen_op,
-					      const options::RF_options& RF_op,
+					      const options::StochasticForest_options& SF_op,
+					      const options::StatisticalTest_options& ST_op,
 					      vector<num_t>& pValues,
 					      vector<num_t>& importanceValues) {
   
   //RF_statistics RF_stat;
-  vector<vector<size_t> > nodeMat(RF_op.nPerms,vector<size_t>(RF_op.nTrees));
+  vector<vector<size_t> > nodeMat(ST_op.nPerms,vector<size_t>(SF_op.nTrees));
   
-  vector<vector<num_t> >         importanceMat( RF_op.nPerms, vector<num_t>(treedata.nFeatures()) );
-  vector<vector<num_t> > contrastImportanceMat( RF_op.nPerms, vector<num_t>(treedata.nFeatures()) );
+  vector<vector<num_t> >         importanceMat( ST_op.nPerms, vector<num_t>(treeData.nFeatures()) );
+  vector<vector<num_t> > contrastImportanceMat( ST_op.nPerms, vector<num_t>(treeData.nFeatures()) );
   
-  size_t nFeatures = treedata.nFeatures();
+  size_t nFeatures = treeData.nFeatures();
   
   pValues.clear();
   pValues.resize(nFeatures,1.0);
   importanceValues.resize(2*nFeatures);
   
+  StochasticForest::Parameters parameters;
+  parameters.model = StochasticForest::RF;
+  parameters.inBoxFraction = 1.0;
+  parameters.sampleWithReplacement = true;
+  parameters.isRandomSplit = true;
+  parameters.nTrees       = SF_op.nTrees;
+  parameters.mTry         = SF_op.mTry;
+  parameters.nMaxLeaves   = SF_op.nMaxLeaves;
+  parameters.nodeSize     = SF_op.nodeSize;
+  parameters.useContrasts = true;
+  parameters.shrinkage    = SF_op.shrinkage;
+
+  if(ST_op.nPerms > 1) {
+    parameters.useContrasts = true;
+  } else {
+    parameters.useContrasts = false;
+  }
+
+
   Progress progress;
   clock_t clockStart( clock() );
-  vector<num_t> cSample(RF_op.nPerms);
+  vector<num_t> cSample(ST_op.nPerms);
   
-  for(int permIdx = 0; permIdx < static_cast<int>(RF_op.nPerms); ++permIdx) {
+  for(int permIdx = 0; permIdx < static_cast<int>(ST_op.nPerms); ++permIdx) {
     
-    progress.update(1.0*permIdx/RF_op.nPerms);
-    
-    bool useContrasts;
-    if(RF_op.nPerms > 1) {
-      useContrasts = true;
-    } else {
-      useContrasts = false;
-    }
+    progress.update(1.0*permIdx/ST_op.nPerms);
     
     // Initialize the Random Forest object
-    StochasticForest SF(&treedata,gen_op.targetStr,RF_op.nTrees);
-    
-    // Grow the Random Forest
-    SF.learnRF(RF_op.mTryFraction,RF_op.nMaxLeaves,RF_op.nodeSize,useContrasts);
-    
+    StochasticForest SF(&treeData,gen_op.targetStr,parameters);
+        
     // Get the number of nodes in each tree in the forest
     nodeMat[permIdx] = SF.nNodes();
         
@@ -235,12 +235,12 @@ statistics::RF_statistics executeRandomForest(Treedata& treedata,
   }
 
   // Loop through each feature and calculate p-value for each
-  for(size_t featureIdx = 0; featureIdx < treedata.nFeatures(); ++featureIdx) {
+  for(size_t featureIdx = 0; featureIdx < treeData.nFeatures(); ++featureIdx) {
     
-    vector<num_t> fSample(RF_op.nPerms);
+    vector<num_t> fSample(ST_op.nPerms);
     
     // Extract the sample for the real feature
-    for(size_t permIdx = 0; permIdx < RF_op.nPerms; ++permIdx) {
+    for(size_t permIdx = 0; permIdx < ST_op.nPerms; ++permIdx) {
       fSample[permIdx] = importanceMat[permIdx][featureIdx];
     }
 
@@ -274,10 +274,9 @@ statistics::RF_statistics executeRandomForest(Treedata& treedata,
   statistics::RF_statistics RF_stat(importanceMat,contrastImportanceMat,nodeMat, 1.0 * ( clock() - clockStart ) / CLOCKS_PER_SEC );
   
   // Resize importance value container to proper dimensions
-  importanceValues.resize( treedata.nFeatures() );
+  importanceValues.resize( treeData.nFeatures() );
   
   // Return statistics
   return( RF_stat );
   
 }
-

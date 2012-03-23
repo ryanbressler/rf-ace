@@ -62,7 +62,54 @@ namespace rface {
     }
     
   }
- 
+
+  void validateRequiredParameters(const options::General_options& gen_op) {
+
+    // Print help and exit if input file is not specified
+    if ( gen_op.input == "" ) {
+      cerr << "Input file not specified" << endl;
+      options::printHelpHint();
+      exit(1);
+    }
+
+    // Print help and exit if target index is not specified
+    if ( gen_op.targetStr == "" ) {
+      cerr << "target not specified" << endl;
+      options::printHelpHint();
+      exit(1);
+    }
+
+    if ( gen_op.output == "" ) {
+      cerr << "You forgot to specify an output file!" << endl;
+      options::printHelpHint();
+      exit(1);
+    }
+
+  }
+
+  void updateTargetStr(Treedata& treeData, options::General_options& gen_op) {
+
+    // Check if the target is specified as an index
+    int integer;
+    if ( datadefs::isInteger(gen_op.targetStr,integer) ) {
+      
+      if ( integer < 0 || integer >= static_cast<int>( treeData.nFeatures() ) ) {
+	cerr << "Feature index (" << integer << ") must be within bounds 0 ... " << treeData.nFeatures() - 1 << endl;
+	exit(1);
+      }
+      
+      // Extract the name of the feature, as upon masking the indices will become rearranged
+      gen_op.targetStr = treeData.getFeatureName(static_cast<size_t>(integer));
+      
+    }
+
+  }
+
+  void updateMTry(Treedata& treeData, options::StochasticForest_options& SF_op) {
+    if ( SF_op.mTry == options::RF_DEFAULT_M_TRY ) {
+      SF_op.mTry = static_cast<size_t>( floor(0.1*treeData.nFeatures()) );
+    }
+  }
 
   void printGeneralSetup(Treedata& treeData, const options::General_options& gen_op) {
     
@@ -92,45 +139,30 @@ namespace rface {
 	 << "= "; if ( gen_op.output != "" ) { cout << gen_op.output << endl; } else { cout << "NOT SET" << endl; }
     cout << "  --" << gen_op.log_l << setw( options::maxWidth - gen_op.log_l.size() ) << ""
 	 << "= "; if( gen_op.log != "" ) { cout << gen_op.log << endl; } else { cout << "NOT SET" << endl; }
+    cout << "  --" << gen_op.seed_l << setw( options::maxWidth - gen_op.seed_l.size() ) << ""
+	 << "= " << gen_op.seed << endl;
     cout << endl;
 
   }
 
-  void printRFSetup(const options::RF_options& RF_op) {
+  void printStochasticForestSetup(const options::StochasticForest_options& SF_op) {
 
-    cout << "Random Forest configuration:" << endl;
-    cout << "  --" << RF_op.nTrees_l << setw( options::maxWidth - RF_op.nTrees_l.size() ) << ""
-	 << "= "; if(RF_op.nTrees == 0) { cout << "DEFAULT" << endl; } else { cout << RF_op.nTrees << endl; }
-    cout << "  --" << RF_op.mTryFraction_l << setw( options::maxWidth - RF_op.mTryFraction_l.size() ) << ""
-	 << "= " << RF_op.mTryFraction << endl;
-    cout << "  --" << RF_op.nMaxLeaves_l << setw( options::maxWidth - RF_op.nMaxLeaves_l.size() ) << ""
-	 << "= " << RF_op.nMaxLeaves << endl;
-    cout << "  --" << RF_op.nodeSize_l << setw( options::maxWidth - RF_op.nodeSize_l.size() ) << ""
-	 << "= "; if(RF_op.nodeSize == 0) { cout << "DEFAULT" << endl; } else { cout << RF_op.nodeSize << endl; }
+    cout << "Stochastic Forest configuration:" << endl;
+    cout << "  --" << SF_op.nTrees_l << setw( options::maxWidth - SF_op.nTrees_l.size() ) << ""
+	 << "= "; if(SF_op.nTrees == 0) { cout << "DEFAULT" << endl; } else { cout << SF_op.nTrees << endl; }
+    cout << "  --" << SF_op.mTry_l << setw( options::maxWidth - SF_op.mTry_l.size() ) << ""
+	 << "= " << SF_op.mTry << endl;
+    cout << "  --" << SF_op.nMaxLeaves_l << setw( options::maxWidth - SF_op.nMaxLeaves_l.size() ) << ""
+	 << "= " << SF_op.nMaxLeaves << endl;
+    cout << "  --" << SF_op.nodeSize_l << setw( options::maxWidth - SF_op.nodeSize_l.size() ) << ""
+	 << "= "; if(SF_op.nodeSize == 0) { cout << "DEFAULT" << endl; } else { cout << SF_op.nodeSize << endl; }
+    cout << "  --" << SF_op.shrinkage_l << setw( options::maxWidth - SF_op.shrinkage_l.size() ) << ""
+         << "= " << SF_op.shrinkage << endl;
+    //cout << "  --" << SF_op.inBoxFraction_l << setw( options::maxWidth - SF_op.inBoxFraction_l.size() ) << ""
+    //     << "= " << SF_op.inBoxFraction << endl;
     cout << endl;
 
-    cout << "Significance analysis configuration:" << endl;
-    cout << "  --" << RF_op.nPerms_l << setw( options::maxWidth - RF_op.nPerms_l.size() ) << ""
-	 << "= " << RF_op.nPerms << endl;
-    cout << "    test type" << setw(options::maxWidth-9) << "" << "= T-test" << endl;
-    cout << "  --pthresold" << setw(options::maxWidth-9) << "" << "= " << RF_op.pValueThreshold << endl;
-    cout << endl;
 
-  }
-
-  void printGBTSetup(const options::GBT_options& GBT_op) {
-
-    cout << "Gradient boosting tree configuration for prediction:" << endl;
-    cout << "  --" << GBT_op.nTrees_l << setw( options::maxWidth - GBT_op.nTrees_l.size() ) << ""
-	 << "= " << GBT_op.nTrees << endl;
-    cout << "  --" << GBT_op.nMaxLeaves_l << setw( options::maxWidth - GBT_op.nMaxLeaves_l.size() ) << ""
-	 << "= " << GBT_op.nMaxLeaves << endl;
-    cout << "  --" << GBT_op.shrinkage_l << setw( options::maxWidth - GBT_op.shrinkage_l.size() ) << ""
-	 << "= " << GBT_op.shrinkage << endl;
-    cout << "  --" << GBT_op.subSampleSize_l << setw( options::maxWidth - GBT_op.subSampleSize_l.size() ) << ""
-	 << "= " << GBT_op.subSampleSize << endl;
-    cout << endl;
-    
   }
   
 }

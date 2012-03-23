@@ -61,7 +61,7 @@ num_t math::ttest(const vector<num_t>& x,
 
   // Sample mean and variance of x
   num_t mean_x = math::mean(x);
-  num_t var_x = math::squaredError(x);
+  num_t var_x = math::squaredError(x,mean_x);
   size_t n_x = x.size();
 
   // If sample size is too small, we exit
@@ -74,7 +74,7 @@ num_t math::ttest(const vector<num_t>& x,
 
   // Sample mean and variance of y
   num_t mean_y = math::mean(y);
-  num_t var_y = math::squaredError(y);
+  num_t var_y = math::squaredError(y,mean_y);
   size_t n_y = y.size();
 
   // If sample size is too small, we exit
@@ -219,9 +219,9 @@ num_t math::pearsonCorrelation(const vector<num_t>& x,
   num_t corr = 0.0;
   
   num_t mu_x = math::mean(x);
-  num_t se_x = math::squaredError(x);
+  num_t se_x = math::squaredError(x,mu_x);
   num_t mu_y = math::mean(y);
-  num_t se_y = math::squaredError(y);
+  num_t se_y = math::squaredError(y,mu_y);
   
   for(size_t i = 0; i < n; ++i) {
     corr += ( x[i] - mu_x ) * ( y[i] - mu_y );
