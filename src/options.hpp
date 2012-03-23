@@ -8,6 +8,7 @@
 #include "argparse.hpp"
 #include "datadefs.hpp"
 #include "treedata.hpp"
+#include "utils.hpp"
 
 using namespace std;
 using datadefs::num_t;
@@ -47,23 +48,38 @@ namespace options {
     cout << " Makes predictions given a model and novel data." << endl << endl;
   }
   
+  // Default general configuration
   const bool   GENERAL_DEFAULT_PRINT_HELP = false;
   const char   GENERAL_DEFAULT_DATA_DELIMITER = '\t';
   const char   GENERAL_DEFAULT_HEADER_DELIMITER = ':';
   const size_t GENERAL_DEFAULT_MIN_SAMPLES = 5;
-  
-  const size_t RF_DEFAULT_N_TREES = 100; 
-  const num_t  RF_DEFAULT_M_TRY_FRACTION = 0.1; 
-  const size_t RF_DEFAULT_N_MAX_LEAVES = 100;
-  const size_t RF_DEFAULT_NODE_SIZE = 5; 
+  const int    GENERAL_DEFAULT_SEED = -1;
 
-  const size_t RF_DEFAULT_N_PERMS = 20;
-  const num_t  RF_DEFAULT_P_VALUE_THRESHOLD = 0.05;
-  
+  // Statistical test default configuration
+  const size_t ST_DEFAULT_N_PERMS = 20;
+  const num_t  ST_DEFAULT_P_VALUE_THRESHOLD = 0.05;
+
+  // Random Forest default configuration
+  const size_t RF_DEFAULT_N_TREES = 100;
+  const size_t RF_DEFAULT_M_TRY = 0;
+  const size_t RF_DEFAULT_N_MAX_LEAVES = 100;
+  const size_t RF_DEFAULT_NODE_SIZE = 5;
+  const num_t  RF_DEFAULT_IN_BOX_FRACTION = 1.0;
+  const num_t  RF_DEFAULT_SAMPLE_WITH_REPLACEMENT = true;
+  const bool   RF_DEFAULT_USE_CONTRASTS = true;
+  const bool   RF_DEFAULT_IS_RANDOM_SPLIT = true;
+  const num_t  RF_DEFAULT_SHRINKAGE = 0.0;
+
+  // Gradient Boosting Trees default configuration
   const size_t GBT_DEFAULT_N_TREES = 100;
+  const size_t GBT_DEFAULT_M_TRY = 0;
   const size_t GBT_DEFAULT_N_MAX_LEAVES = 6;
+  const size_t GBT_DEFAULT_NODE_SIZE = 5;
+  const num_t  GBT_DEFAULT_IN_BOX_FRACTION = 0.5;
+  const num_t  GBT_DEFAULT_SAMPLE_WITH_REPLACEMENT = false;
+  const bool   GBT_DEFAULT_USE_CONTRASTS = false;
+  const bool   GBT_DEFAULT_IS_RANDOM_SPLIT = false;
   const num_t  GBT_DEFAULT_SHRINKAGE = 0.1;
-  const num_t  GBT_DEFAULT_SUB_SAMPLE_SIZE = 0.5;
 
   // Determines the amount of indentation in help print-outs
   const size_t maxWidth = 20;
@@ -80,9 +96,9 @@ namespace options {
     char dataDelimiter; const string dataDelimiter_s; const string dataDelimiter_l;
     char headerDelimiter; const string headerDelimiter_s; const string headerDelimiter_l;
     size_t pruneFeatures; const string pruneFeatures_s; const string pruneFeatures_l;
+    int seed; string seed_s; string seed_l;
 
-    General_options(const int argc, char* const argv[]):
-      
+    General_options():
       printHelp(GENERAL_DEFAULT_PRINT_HELP),printHelp_s("h"),printHelp_l("help"),
       input(""),input_s("I"),input_l("input"),
       output(""),output_s("O"),output_l("output"),
@@ -92,11 +108,14 @@ namespace options {
       log(""),log_s("L"),log_l("log"),
       dataDelimiter(GENERAL_DEFAULT_DATA_DELIMITER),dataDelimiter_s("D"),dataDelimiter_l("data_delim"),
       headerDelimiter(GENERAL_DEFAULT_HEADER_DELIMITER),headerDelimiter_s("H"),headerDelimiter_l("head_delim"),
-      pruneFeatures(GENERAL_DEFAULT_MIN_SAMPLES),pruneFeatures_s("X"),pruneFeatures_l("prune_features") {
-
+      pruneFeatures(GENERAL_DEFAULT_MIN_SAMPLES),pruneFeatures_s("X"),pruneFeatures_l("prune_features"),
+      seed(GENERAL_DEFAULT_SEED),seed_s("S"),seed_l("seed") {}
+    
+    void loadUserParams(const int argc, char* const argv[]) {
+      
       // Read the user parameters ...
       ArgParse parser(argc,argv);
-
+      
       parser.getFlag(printHelp_s, printHelp_l, printHelp);
       parser.getArgument<string>(input_s, input_l, input);
       parser.getArgument<string>(targetStr_s, targetStr_l, targetStr);
@@ -115,6 +134,13 @@ namespace options {
       ss.str("");
       ss << headerDelimiter;
       ss >> headerDelimiter;
+
+      parser.getArgument<int>(seed_s, seed_l, seed);
+      
+      // If no seed was provided, generate one
+      if ( seed == GENERAL_DEFAULT_SEED ) {
+	seed = utils::generateSeed();
+      }
       
     }
 
@@ -142,222 +168,213 @@ namespace options {
            << " " << "Header delimiter that separates the N and C symbols in feature headers from the rest (default " << GENERAL_DEFAULT_HEADER_DELIMITER << ")" << endl;
       cout << " -" << pruneFeatures_s << " / --" << pruneFeatures_l << setw( maxWidth - pruneFeatures_l.size() )
            << " " << "Features with less than n ( default " << GENERAL_DEFAULT_MIN_SAMPLES << " ) samples will be removed" << endl;
+      cout << " -" << seed_s << " / --" << seed_l << setw( maxWidth - seed_l.size() ) 
+	   << " " << "Seed (positive integer) for the Mersenne Twister random number generator" << endl;
       cout << endl;
 
     }
-
-    void validate() {
-
-      // Print help and exit if input file is not specified
-      if ( input == "" ) {
-	cerr << "Input file not specified" << endl;
-	printHelpHint();
-	exit(1);
-      }
-
-      // Print help and exit if target index is not specified
-      if ( targetStr == "" ) {
-	cerr << "target(s) ( -" << targetStr_s << " / --" << targetStr_l << " ) not specified" << endl;
-	printHelpHint();
-	exit(1);
-      }
-
-      if ( output == "" ) {
-	cerr << "You forgot to specify an output file!" << endl;
-	printHelpHint();
-	exit(1);
-      }
-
-    }
-
     
   };
-    
-  struct RF_options {
-    
-    size_t nTrees; const string nTrees_s; const string nTrees_l;
-    num_t  mTryFraction; const string mTryFraction_s; const string mTryFraction_l;
-    size_t nMaxLeaves; const string nMaxLeaves_s; const string nMaxLeaves_l;
-    size_t nodeSize; const string nodeSize_s; const string nodeSize_l;
-    size_t nPerms; const string nPerms_s; const string nPerms_l;
-    num_t  pValueThreshold; const string pValueThreshold_s; const string pValueThreshold_l;
-    
-    RF_options(const int argc, char* const argv[]):
-      
-      nTrees(RF_DEFAULT_N_TREES),nTrees_s("n"),nTrees_l("ntrees"),
-      mTryFraction(RF_DEFAULT_M_TRY_FRACTION),mTryFraction_s("m"),mTryFraction_l("mtry"),
-      nMaxLeaves(RF_DEFAULT_N_MAX_LEAVES),nMaxLeaves_s("a"),nMaxLeaves_l("nmaxleaves"),
-      nodeSize(RF_DEFAULT_NODE_SIZE),nodeSize_s("s"),nodeSize_l("nodesize"),
-      nPerms(RF_DEFAULT_N_PERMS),nPerms_s("p"),nPerms_l("nperms"),
-      pValueThreshold(RF_DEFAULT_P_VALUE_THRESHOLD),pValueThreshold_s("t"),pValueThreshold_l("pthreshold") {
-      
-      // Read the user parameters ...
+
+  struct StochasticForest_options {
+
+    size_t  nTrees; string nTrees_s; string nTrees_l;
+    size_t  mTry; string mTry_s; string mTry_l;
+    size_t  nMaxLeaves; string nMaxLeaves_s; string nMaxLeaves_l;
+    size_t  nodeSize; string nodeSize_s; string nodeSize_l;
+    //num_t   inBoxFraction; string inBoxFraction_s; string inBoxFraction_l;
+    //bool    sampleWithReplacement; string sampleWithReplacement_s; string sampleWithReplacement_l;
+    //bool    useContrasts; string useContrasts_s; string useContrasts_l;
+    //bool    isRandomSplit; string isRandomSplit_s; string isRandomSplit_l;
+    num_t   shrinkage; string shrinkage_s; string shrinkage_l;
+
+    StochasticForest_options():
+      nTrees_s("n"),nTrees_l("ntrees"),
+      mTry_s("m"),mTry_l("mtry"),
+      nMaxLeaves_s("a"),nMaxLeaves_l("nmaxleaves"),
+      nodeSize_s("s"),nodeSize_l("nodesize"),
+      //inBoxFraction_s("f"),inBoxFraction_l("inboxfraction"),
+      //sampleWithReplacement_s("w"),sampleWithReplacement_l("samplewithreplacement"),
+      //useContrasts_s("c"),useContrasts_l("usecontrasts"),
+      //isRandomSplit_s("r"),isRandomSplit_l("randomsplit"),
+      shrinkage_s("k"),shrinkage_l("shrinkage") { setRFDefaults(); }
+
+    void loadUserParams(const int argc, char* const argv[]) {
+
       ArgParse parser(argc,argv);
-            
-      parser.getArgument<size_t>(nTrees_s,nTrees_l,nTrees);
-      parser.getArgument<num_t>(mTryFraction_s, mTryFraction_l, mTryFraction);
-      parser.getArgument<size_t>(nMaxLeaves_s, nMaxLeaves_l, nMaxLeaves);
-      parser.getArgument<size_t>(nodeSize_s, nodeSize_l, nodeSize);
-      parser.getArgument<size_t>(nPerms_s, nPerms_l, nPerms);
-      parser.getArgument(pValueThreshold_s, pValueThreshold_l, pValueThreshold);
+
+      parser.getArgument<size_t>( "n", "ntrees",                nTrees );
+      parser.getArgument<size_t>( "m", "mtry",                  mTry );
+      parser.getArgument<size_t>( "a", "nmaxleaves",            nMaxLeaves );
+      parser.getArgument<size_t>( "s", "nodesize",              nodeSize );
+      //parser.getArgument<num_t>(  "f", "inboxfraction",         inBoxFraction );
+      //parser.getFlag(             "w", "samplewithreplacement", sampleWithReplacement );
+      //parser.getFlag(             "c", "useContrasts",          useContrasts );
+      //parser.getFlag(             "r", "randomsplit",           isRandomSplit );
+      parser.getArgument<num_t>(  "k", "shrinkage",             shrinkage );
       
     }
     
+    void setRFDefaults() {
+
+      nTrees                = RF_DEFAULT_N_TREES;
+      mTry                  = RF_DEFAULT_M_TRY;
+      nMaxLeaves            = RF_DEFAULT_N_MAX_LEAVES;
+      nodeSize              = RF_DEFAULT_NODE_SIZE;
+      //inBoxFraction         = RF_DEFAULT_IN_BOX_FRACTION;
+      //sampleWithReplacement = RF_DEFAULT_SAMPLE_WITH_REPLACEMENT;
+      //useContrasts          = RF_DEFAULT_USE_CONTRASTS;
+      //isRandomSplit         = RF_DEFAULT_IS_RANDOM_SPLIT;
+      shrinkage             = RF_DEFAULT_SHRINKAGE;
+
+    }
+
+    void setGBTDefaults() {
+
+      nTrees                = GBT_DEFAULT_N_TREES;
+      mTry                  = GBT_DEFAULT_M_TRY;
+      nMaxLeaves            = GBT_DEFAULT_N_MAX_LEAVES;
+      nodeSize              = GBT_DEFAULT_NODE_SIZE;
+      //inBoxFraction         = GBT_DEFAULT_IN_BOX_FRACTION;
+      //sampleWithReplacement = GBT_DEFAULT_SAMPLE_WITH_REPLACEMENT;
+      //useContrasts          = GBT_DEFAULT_USE_CONTRASTS;
+      //isRandomSplit         = GBT_DEFAULT_IS_RANDOM_SPLIT;
+      shrinkage             = GBT_DEFAULT_SHRINKAGE;
+
+    }
+
     void help() {
+      cout << "OPTIONAL ARGUMENTS -- STOCHASTIC FOREST:" << endl;
       
-      cout << "OPTIONAL ARGUMENTS -- RANDOM FOREST:" << endl;
       cout << " -" << nTrees_s << " / --" << nTrees_l << setw( maxWidth - nTrees_l.size() )
-	   << " " << "Number of trees per RF (default " << RF_DEFAULT_N_TREES << ")" << endl;
-      cout << " -" << mTryFraction_s << " / --" << mTryFraction_l << setw( maxWidth - mTryFraction_l.size() )
-	   << " " << "Fraction of randomly drawn features per node split (default " << 100.0 * RF_DEFAULT_M_TRY_FRACTION << "%)" << endl;
+           << " " << "Number of trees in the forest" << endl;
+      cout << " -" << mTry_s << " / --" << mTry_l << setw( maxWidth - mTry_l.size() )
+           << " " << "Fraction of randomly drawn features per node split" << endl;
       cout << " -" << nMaxLeaves_s << " / --" << nMaxLeaves_l << setw( maxWidth - nMaxLeaves_l.size() )
-	   << " " << "Maximum number of leaves per tree (default " << RF_DEFAULT_N_MAX_LEAVES << ")" << endl;
+           << " " << "Maximum number of leaves per tree" << endl;
       cout << " -" << nodeSize_s << " / --" << nodeSize_l << setw( maxWidth - nodeSize_l.size() )
-	   << " " << "Minimum number of train samples per node, affects tree depth (default " << RF_DEFAULT_NODE_SIZE << ")" << endl;
-      cout << " -" << nPerms_s << " / --" << nPerms_l << setw( maxWidth - nPerms_l.size() )
-	   << " " << "Number of Random Forests (default " << RF_DEFAULT_N_PERMS << ")" << endl;
-      cout << " -" << pValueThreshold_s << " / --" << pValueThreshold_l << setw( maxWidth - pValueThreshold_l.size() )
-	   << " " << "p-value threshold below which associations are listed (default "
-	   << RF_DEFAULT_P_VALUE_THRESHOLD << ")" << endl;
+           << " " << "Minimum number of train samples per node, affects tree depth" << endl;
+      //cout << " -" << inBoxFraction_s << " / --" << inBoxFraction_l << setw( maxWidth - inBoxFraction_l.size() )
+      //     << " " << "Fraction of bootstrap samples drawn for training" << endl;
+      cout << " -" << shrinkage_s << " / --" << shrinkage_l << setw( maxWidth - shrinkage_l.size() )
+           << " " << "[GBT only] Shrinkage applied to evolving the residual" << endl;
       cout << endl;
-
     }
-
-    void validate() {
-
-      if ( mTryFraction <= 0.0 || mTryFraction >= 1.0 ) {
-	cerr << "mTry needs to be between (0,1)!" << endl;
-	exit(1);
-      }
-
-    }
-
     
   };
   
-  struct GBT_options {
-    
-          size_t nTrees;
-    const string nTrees_s;
-    const string nTrees_l;
-    
-          size_t nMaxLeaves;
-    const string nMaxLeaves_s;
-    const string nMaxLeaves_l;
-    
-           num_t shrinkage;
-    const string shrinkage_s;
-    const string shrinkage_l;
-    
-           num_t subSampleSize;
-    const string subSampleSize_s;
-    const string subSampleSize_l;
-    
-    GBT_options(const int argc, char* const argv[]):    
-    
-      nTrees(GBT_DEFAULT_N_TREES),nTrees_s("n"),nTrees_l("ntrees"),
-      nMaxLeaves(GBT_DEFAULT_N_MAX_LEAVES),nMaxLeaves_s("a"),nMaxLeaves_l("nmaxleaves"),
-      shrinkage(GBT_DEFAULT_SHRINKAGE),shrinkage_s("z"),shrinkage_l("shrinkage"),
-      subSampleSize(GBT_DEFAULT_SUB_SAMPLE_SIZE),subSampleSize_s("u"),subSampleSize_l("subsamplesize") {
-
-      // Read the user parameters ...
-      ArgParse parser(argc,argv);      
-      
-      parser.getArgument<size_t>(nTrees_s, nTrees_l, nTrees);
-      parser.getArgument<size_t>(nMaxLeaves_s, nMaxLeaves_l, nMaxLeaves);
-      parser.getArgument<num_t>(shrinkage_s, shrinkage_l, shrinkage);
-      parser.getArgument<num_t>(subSampleSize_s, subSampleSize_l, subSampleSize);
-      
-    }
-
-    void help() {
-      
-      cout << "OPTIONAL ARGUMENTS -- GRADIENT BOOSTING TREES:" << endl;
-      cout << " -" << nTrees_s << " / --" << nTrees_l << setw( maxWidth - nTrees_l.size() )
-	   << " " << "Number of trees in the GBT (default " << GBT_DEFAULT_N_TREES << ")" << endl;
-      cout << " -" << nMaxLeaves_s << " / --" << nMaxLeaves_l << setw( maxWidth - nMaxLeaves_l.size() )
-	   << " " << "Maximum number of leaves per tree (default " << GBT_DEFAULT_N_MAX_LEAVES << ")" << endl;
-      cout << " -" << shrinkage_s << " / --" << shrinkage_l << setw( maxWidth - shrinkage_l.size() )
-	   << " " << "Shrinkage applied to evolving the residual (default " << GBT_DEFAULT_SHRINKAGE << ")" << endl;
-      cout << " -" << subSampleSize_s << " / --" << subSampleSize_l << setw( maxWidth - subSampleSize_l.size() )
-	   << " " << "Sample size fraction for training the trees (default " << GBT_DEFAULT_SUB_SAMPLE_SIZE << ")" << endl;
-      cout << endl;
-
-    }
-
-  };
-
   struct Predictor_options {
-
+    
     string forest;
     const string forest_s;
     const string forest_l;
-
-    Predictor_options(const int argc, char* const argv[]):
+    
+    Predictor_options():
+      forest(""),forest_s("F"),forest_l("forest") {}
+    
+    void loadUserParams(const int argc, char* const argv[]) {
       
-      forest(""),forest_s("F"),forest_l("forest") {
-
       // Read the user parameters ...
       ArgParse parser(argc,argv);
-
+      
       parser.getArgument<string>(forest_s, forest_l, forest);
-
+      
     }
-
+    
     void help() {
-
+      
       cout << "REQUIRED ARGUMENTS -- PREDICTOR:" << endl;
       cout << " -" << forest_s << " / --" << forest_l << setw( maxWidth - forest_l.size() )
            << " " << "Forest predictor stored in a .sf file" << endl;
       cout << endl; 
     }
-
+    
   };
-
+  
   struct PredictorBuilder_options {
-
+    
     bool isGBT; string isGBT_s; string isGBT_l;
     bool isRF; string isRF_s; string isRF_l;
     
-    PredictorBuilder_options(const int argc, char* const argv[]):
-      
+    PredictorBuilder_options():
       isGBT(false), isGBT_s("G"), isGBT_l("GBT"),
-      isRF(false), isRF_s("R"), isRF_l("RF") {
-     
+      isRF(false), isRF_s("R"), isRF_l("RF") {}
+    
+    void loadUserParams(const int argc, char* const argv[]) {
+      
       ArgParse parser(argc,argv);
-
+      
       parser.getFlag(isGBT_s, isGBT_l, isGBT);
       parser.getFlag(isRF_s,  isRF_l,  isRF);
- 
+
+      // If neither flags were raised, set default to RF
+      if ( ! ( isGBT || isRF ) ) {
+        isRF = true;
+      }
+
+      // Raise error if both flags were raised
+      if ( isRF && isGBT ) {
+        cerr << "You cannot choose both RF and GBT for predictor building" << endl;
+        exit(1);
+      }
+
     }
 
     void help() {
 
       cout << "OPTIONAL ARGUMENTS -- PREDICTOR BUILDER:" << endl;
       cout << " -" << isGBT_s << " / --" << isGBT_l << setw( maxWidth - isGBT_l.size() )
-           << " " << "Set this flag if you prefer GBT as the predictor model (default)" << endl;
+           << " " << "Set this flag if you prefer GBT as the predictor model" << endl;
       cout << " -" << isRF_s << " / --" << isRF_l << setw( maxWidth - isRF_l.size() )
-           << " " << "Set this flag if you prefer RF as the predictor model" << endl;
+           << " " << "Set this flag if you prefer RF as the predictor model (default)" << endl;
       cout << endl;
     }
 
-    void validate() {
+  };
 
-      if ( ! ( isGBT || isRF ) ) {
-	isRF = true;
+  struct StatisticalTest_options {
+
+    size_t nPerms; string nPerms_s; string nPerms_l;
+    num_t pValueThreshold; string pValueThreshold_s; string pValueThreshold_l;
+
+    StatisticalTest_options():
+    nPerms(ST_DEFAULT_N_PERMS), nPerms_s("p"), nPerms_l("nperms"),
+    pValueThreshold(ST_DEFAULT_P_VALUE_THRESHOLD), pValueThreshold_s("t"), pValueThreshold_l("pthreshold") {
+      
+    }
+
+    void loadUserParams(const int argc, char* const argv[]) {
+
+      ArgParse parser(argc,argv);
+
+      parser.getArgument<size_t>(nPerms_s, nPerms_l, nPerms);
+      parser.getArgument<num_t>(pValueThreshold_s,  pValueThreshold_l,  pValueThreshold);
+
+      if ( nPerms < 6 ) {
+	cerr << "Use more than 5 permutations in statistical test!" << endl;
+	exit(1);
       }
 
-      if ( isRF && isGBT ) {
-	cerr << "You cannot choose both RF and GBT for predictor building" << endl;
+      if ( pValueThreshold < 0.0 || pValueThreshold > 1.0 ) {
+	cerr << "P-value threshold in statistical test must be within 0...1" << endl;
 	exit(1);
       }
 
     }
-
-
-  };
-
     
+    void help() {
+      
+      cout << "OPTIONAL ARGUMENTS -- STATISTICAL TEST:" << endl;
+      cout << " -" << nPerms_s << " / --" << nPerms_l << setw( maxWidth - nPerms_l.size() )
+	   << " " << "Number of permutations in statistical test (default " << ST_DEFAULT_N_PERMS << ")" << endl;
+      cout << " -" << pValueThreshold_s << " / --" << pValueThreshold_l << setw( maxWidth - pValueThreshold_l.size() ) 
+	   << " " << "P-value threshold in statistical test (default " << ST_DEFAULT_P_VALUE_THRESHOLD << ")" << endl;
+      cout << endl;
+      
+    }
+    
+  };
+  
 }
 
 #endif

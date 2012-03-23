@@ -2,6 +2,18 @@
 
 #include <sstream>
 #include <algorithm>
+#include <ctime>
+
+
+int utils::generateSeed() {
+  
+  time_t now;
+  time(&now);
+  return( clock() + now );
+  
+}
+
+
 
 // Returns a copy of input vector x with NAN-entries removed
 // NOTE: is just a wrapper of the algorithm "remove_if"

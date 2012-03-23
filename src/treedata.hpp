@@ -5,13 +5,9 @@
 #ifndef TREEDATA_HPP
 #define TREEDATA_HPP
 
-//#define __IBMCPP_TR1__
-//#include <boost/unordered_map.hpp>
-
 #include <cstdlib>
 #include <map>
 #include <fstream>
-//#include <tr1/unordered_map>
 
 #include "datadefs.hpp"
 #include "mtrand.h"
@@ -23,7 +19,7 @@ class Treedata  {
 public:
 
   // Initializes the object and reads in a data matrix
-  Treedata(string fileName, char dataDelimiter, char headerDelimiter);
+  Treedata(string fileName, char dataDelimiter, char headerDelimiter, int seed = -1 );
 
   ~Treedata();
   
