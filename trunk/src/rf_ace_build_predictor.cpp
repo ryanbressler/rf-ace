@@ -35,10 +35,12 @@ int main(const int argc, char* const argv[]) {
 
   // With no input parameters or with help flag raised help is printed
   if(argc == 1 || gen_op.printHelp ) {
+
     options::printPredictorBuilderOverview();
     gen_op.help();
     PB_op.help();
     SF_op.help();
+    options::printPredictorBuilderExamples();
 
     return(EXIT_SUCCESS);
   }
@@ -115,10 +117,10 @@ int main(const int argc, char* const argv[]) {
   size_t targetIdx = treeData.getFeatureIdx(gen_op.targetStr);
   vector<num_t> data = utils::removeNANs(treeData.getFeatureData(targetIdx));
   if ( treeData.isFeatureNumerical(targetIdx) ) {
-    cout << " NULL error = " << math::squaredError(data) / data.size() << endl;
+    cout << " TOTAL error = " << math::squaredError(data) / data.size() << endl;
   } else {
     map<num_t,size_t> freq = math::frequency(data);
-    cout << " NULL error = " << 1.0 * freq[ math::mode<num_t>(data) ] / data.size() << endl;
+    cout << " TOTAL error = " << 1.0 * ( data.size() - freq[ math::mode<num_t>(data) ] ) / data.size() << endl;
   }
   
   cout << endl;

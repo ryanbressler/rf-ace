@@ -22,23 +22,39 @@ public:
   Treedata(string fileName, char dataDelimiter, char headerDelimiter, int seed = -1 );
 
   ~Treedata();
-  
+
+  // Takes a set of features that are to be retained in the Treedata object.
+  // Others will be removed.
   void whiteList(const set<string>& featureNames);
+
+  // Takes a set of features that are to be removed from the Treedata object.
+  // Others will be retained.
   void blackList(const set<string>& featureNames);
+
+  // Takes a boolean vector of flags that mark which feature is to be removed (0) and
+  // which to be retained (1) in the Treedata object.
   void whiteList(const vector<bool>& featureIcs);
 
+  // Returns the number of features
   size_t nFeatures();
 
+  // Calculates Pearson Correlation
+  // TODO: WILL BECOME OBSOLETE
   num_t pearsonCorrelation(size_t featureidx1, size_t featureidx2);
 
+  // Returns feature index, given the name
   size_t getFeatureIdx(const string& featureName);
+
+  // Returns feature name, given the index
   string getFeatureName(const size_t featureIdx);
+
+  // Returns sample name, given sample index
   string getSampleName(const size_t sampleIdx);
 
   // Returns the number of samples
   size_t nSamples();
 
-  // Returns the number of real samples the target (resp. any feature) has
+  // Returns the number of real samples the feature has
   size_t nRealSamples(const size_t featureIdx);
   size_t nRealSamples(const size_t featureIdx1, const size_t featureIdx2);
   

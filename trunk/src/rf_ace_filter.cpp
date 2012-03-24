@@ -50,6 +50,7 @@ int main(const int argc, char* const argv[]) {
     gen_op.help();
     SF_op.help();
     ST_op.help();
+    options::printFilterExamples();
     return(EXIT_SUCCESS);
   }
 
@@ -172,7 +173,6 @@ statistics::RF_statistics executeRandomForest(Treedata& treeData,
 					      vector<num_t>& pValues,
 					      vector<num_t>& importanceValues) {
   
-  //RF_statistics RF_stat;
   vector<vector<size_t> > nodeMat(ST_op.nPerms,vector<size_t>(SF_op.nTrees));
   
   vector<vector<num_t> >         importanceMat( ST_op.nPerms, vector<num_t>(treeData.nFeatures()) );

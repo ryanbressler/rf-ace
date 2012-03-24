@@ -5,6 +5,7 @@
 #include <set>
 #include <string>
 #include <istream>
+#include <sstream>
 #include <cstdlib>
 #include "datadefs.hpp"
 #include "treedata.hpp"
@@ -15,14 +16,12 @@ using datadefs::num_t;
 
 namespace utils {
 
-  
+  // Generate seeds for random number generators
   int generateSeed();
   
   // Removes missing values from the provided data vector
   vector<num_t> removeNANs(vector<num_t> x);
-  
-  int str2int(const string& str);
-  
+    
   // Chomps a string, i.e. removes all the trailing end-of-line characters
   string chomp(const string& str);
 
@@ -59,6 +58,26 @@ namespace utils {
   void filterSort(const bool isIncreasingOrder,
 		  vector<num_t>& data,
 		  vector<size_t>& refIcs);
+  
+  string num2str(const num_t x);
+
+  template <typename T>
+  T str2(const string& str) {
+    
+    stringstream ss( chomp(str) );
+    T ret;
+    ss >> ret;
+    
+    if ( ss.fail() || ss.bad() || !ss.eof() ) {
+      cerr << "utils::convert::str2<T>() -- input '" << str
+	   << "' incorrectly formatted for conversion to type T" << endl;
+      exit(1);
+    }
+    
+    return( ret );
+  }
+
+  istream& safeGetline(istream& is, string& t);
   
 }
 

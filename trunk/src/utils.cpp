@@ -3,7 +3,7 @@
 #include <sstream>
 #include <algorithm>
 #include <ctime>
-
+#include <ios>
 
 int utils::generateSeed() {
   
@@ -42,14 +42,13 @@ vector<num_t> utils::removeNANs(vector<num_t> x) {
   return( x );
 }
 
-int utils::str2int(const string& str) {
+string utils::num2str(const num_t x) {
 
-  stringstream ss( utils::chomp(str) );
-  int ret;
-  ss >> ret;
+  stringstream ss;
+  ss << x;
 
-  return( ret );
-
+  return( ss.str() );
+  
 }
 
 // Makes a copy of the string, chomps, and returns
@@ -275,6 +274,39 @@ void utils::filterSort(const bool isIncreasingOrder,
   
   datadefs::separate_pairedv<num_t,size_t>(pairedv,data,refIcs);
 }
+
+
+istream& utils::safeGetline(istream& is, string& t) {
+
+  t.clear();
+
+  // The characters in the stream are read one-by-one using a std::streambuf.
+  // That is faster than reading them one-by-one using the std::istream.
+  // Code that uses streambuf this way must be guarded by a sentry object.
+  // The sentry object performs various tasks,
+  // such as thread synchronization and updating the stream state.
+
+  istream::sentry se(is, true);
+  streambuf* sb = is.rdbuf();
+
+  for(;;) {
+    int c = sb->sbumpc();
+    switch (c) {
+    case '\r':
+      c = sb->sgetc();
+      if(c == '\n')
+	sb->sbumpc();
+      return is;
+    case '\n':
+    case EOF:
+      return is;
+    default:
+      t += (char)c;
+    }
+  }
+}
+
+
 
 
 

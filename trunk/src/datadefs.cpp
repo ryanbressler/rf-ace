@@ -125,7 +125,7 @@ void datadefs::strv2numv(const vector<string>& strvec,
   for(size_t strIdx = 0; strIdx < n; ++strIdx) {
     //cout << strIdx << ": \"" << strvec[strIdx] << "\"" << endl;
     if(!datadefs::isNAN_STR(strvec[strIdx])) {
-      numvec[strIdx] = str2num(strvec[strIdx]);
+      numvec[strIdx] = utils::str2<datadefs::num_t>(strvec[strIdx]);
     } else {
       numvec[strIdx] = datadefs::NUM_NAN;
     }
@@ -153,29 +153,18 @@ bool datadefs::is_unique(const vector<string>& strvec) {
 
  Refactor this method to conform to a more correct model for error handling.
 */
-datadefs::num_t datadefs::str2num(const string& str) {
-
-  // Initialize and use the stringstream
-  //stringstream ss(terminatorIdx != -1 ? str.substr(0,terminatorIdx) : str);
+/*
+  datadefs::num_t datadefs::str2num(const string& str) {
+  
   stringstream ss( utils::chomp(str) );
   datadefs::num_t ret;
   ss >> ret;
   
-  if (ss.fail()) {  // Ensure reading didn't fail
-    cerr << "datadefs::str2num: ERROR: parameter '" << str
-	 << "' could not be read properly. Quitting... "
-	 << endl;
-    assert(false);
-    ret = 0.0;
-    
-  } else if (!ss.eof()) {   // Ensure eofbit is set
-    cerr << "datadefs::str2num: ERROR: parameter '" << str
-	 << "' was only partially read. Quitting... "
-	 << endl;
-    assert(false);
+  utils::streams::checkEnd(ss);
+  
+  return( ret );
   }
-  return(ret);
-}
+*/
   
 /**
  * Determines the cardinality of a given input data set

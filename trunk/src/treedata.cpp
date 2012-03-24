@@ -227,31 +227,6 @@ void Treedata::whiteList(const vector<bool>& keepFeatureIcs) {
   
 }
 
-
-/*
-  void Treedata::updateSortOrder(const size_t featureIdx) {
-  
-  features_[featureIdx].sortOrder.resize( sampleHeaders_.size() );
-  
-  vector<size_t> sampleIcs( sampleHeaders_.size() );
-  vector<size_t> refIcs;
-  
-  datadefs::range(sampleIcs);
-  
-  vector<num_t> foo = this->getFilteredFeatureData(featureIdx,sampleIcs);
-  
-  //vector<num_t> foo = features_[featureIdx].data;
-  bool isIncreasingOrder = true;
-  datadefs::sortDataAndMakeRef(isIncreasingOrder,foo,refIcs);
-  
-  for( size_t i = 0; i < refIcs.size(); ++i ) {
-  features_[featureIdx].sortOrder[sampleIcs[refIcs[i]]] = i;
-  }
-  
-  }
-*/
-
-
 void Treedata::readFileType(string& fileName, FileType& fileType) {
 
   stringstream ss(fileName);
@@ -381,49 +356,20 @@ void Treedata::readARFF(ifstream& featurestream, vector<vector<string> >& rawMat
   //Read one line from the ARFF file
   while ( getline(featurestream,row) ) {
 
-    //This is the final branch: once relation and attributes are read, and we find data header, we'll start reading the data in 
-    if ( hasData && hasRelation ) {
-      //There must be at least two attributes, otherwise the ARFF file makes no sense
-      if ( nFeatures < 2 ) {
-        cerr << "too few attributes ( < 2 ) found from the ARFF file" << endl;
-        assert(false);
-      }
-
-      rawMatrix.resize(nFeatures);
-
-      //Read data row-by-row
-      while(true) {
-        //++nsamples_;
-        string field;
-        stringstream ss(row);
-        
-        for(size_t attributeIdx = 0; attributeIdx < nFeatures; ++attributeIdx) {
-          getline(ss,field,',');
-          //cout << " " << field;
-          rawMatrix[attributeIdx].push_back(field);
-        }
-        //cout << endl;
-
-        if(!getline(featurestream,row)) {
-          break;
-        }
-      }
-
-      break;
-    }
+    row = utils::chomp(row);
 
     //Comment lines and empty lines are omitted
     if(row[0] == '%' || row == "") {
-      continue;  
+      continue;
     }
-
+    
     string rowU = datadefs::toUpperCase(row);
-
+    
     //Read relation
     if(!hasRelation && rowU.compare(0,9,"@RELATION") == 0) {
       hasRelation = true;
       //cout << "found relation header: " << row << endl;
-    } else if ( rowU.compare(0,10,"@ATTRIBUTE") == 0) {    //Read attribute 
+    } else if ( rowU.compare(0,10,"@ATTRIBUTE") == 0) {    //Read attribute
       string attributeName = "";
       bool isNumerical;
       ++nFeatures;
@@ -431,16 +377,51 @@ void Treedata::readARFF(ifstream& featurestream, vector<vector<string> >& rawMat
       Treedata::parseARFFattribute(row,attributeName,isNumerical);
       featureHeaders.push_back(attributeName);
       isFeatureNumerical.push_back(isNumerical);
-
-    } else if(!hasData && rowU.compare(0,5,"@DATA") == 0) {    //Read data header 
-
+      
+    } else if(!hasData && rowU.compare(0,5,"@DATA") == 0) {    //Read data header
+      
       hasData = true;
+      break;
       //cout << "found data header:" << row << endl;
-    } else {      //If none of the earlier branches matched, we have a problem 
+    } else {      //If none of the earlier branches matched, we have a problem
       cerr << "incorrectly formatted ARFF row '" << row << "'" << endl;
       assert(false);
     }
+    
   }
+
+  if ( !hasData ) {
+    cerr << "Treedata::readARFF() -- could not find @data/@DATA identifier" << endl;
+    exit(1);
+  }
+
+  if ( !hasRelation ) {
+    cerr << "Treedata::readARFF() -- could not find @relation/@RELATION identifier" << endl;
+    exit(1);
+  }
+    
+  //Read data row-by-row
+  while ( getline(featurestream,row) ) {
+    
+    row = utils::chomp(row);
+
+    //Comment lines and empty lines are omitted
+    if ( row == "" ) {
+      continue;
+    }
+    
+    // One sample is stored as row in the matrix
+    rawMatrix.push_back( utils::split(row,',') );
+    
+    if ( rawMatrix.back().size() != nFeatures ) {
+      cerr << "Treedata::readARFF() -- sample contains incorrect number of features" << endl;
+      exit(1);
+    }
+    
+  }
+  
+  this->transpose<string>(rawMatrix);
+  
 }
 
 void Treedata::parseARFFattribute(const string& str, string& attributeName, bool& isFeatureNumerical) {
@@ -1021,17 +1002,27 @@ string Treedata::getRawFeatureData(const size_t featureIdx, const size_t sampleI
 
 string Treedata::getRawFeatureData(const size_t featureIdx, const num_t data) {
 
+  // If the input data is NaN, we return NaN as string 
   if ( datadefs::isNAN(data) ) {
     return( datadefs::STR_NAN );
-  } else {
-    if ( features_[featureIdx].isNumerical ) {
-      stringstream ss;
-      ss << data;
-      return( ss.str() );
-    } else {
-      return( features_[featureIdx].backMapping[data] );
-    }
   }
+  
+  // If input feature is numerical, we just represent the numeric value as string
+  if ( features_[featureIdx].isNumerical ) {
+    stringstream ss;
+    ss << data;
+    return( ss.str() );
+    return( utils::num2str(data) );
+  } else {
+    
+    if ( features_[featureIdx].backMapping.find(data) == features_[featureIdx].backMapping.end() ) {
+      cerr << "Treedata::getRawFeatureData() -- unknown value to get" << endl;
+      exit(1);
+    }
+    
+    return( features_[featureIdx].backMapping[data] );
+  }
+  
 }
 
 vector<string> Treedata::getRawFeatureData(const size_t featureIdx) {
