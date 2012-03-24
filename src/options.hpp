@@ -36,16 +36,33 @@ namespace options {
     cout << " Given target feature and input data, applies decision tree ensemble " << endl;
     cout << " learning with RF-ACE to identify statistically significant predictors." << endl << endl;
   }
+
+  void printFilterExamples() {
+    cout << "EXAMPLES:" << endl << endl;
+    cout << "bin/rf-ace-filter -I data.arff -i target -O associations.tsv" << endl << endl;
+    cout << "bin/rf-ace-filter -I data.arff -i 5 -p 50 -t 0.001 -O associations.tsv" << endl << endl;
+  }
   
   void printPredictorBuilderOverview() {
     cout << "PROGRAM: RF-ACE PREDICTOR BUILDER" << endl << endl;
     cout << " Given target feature and input data, builds a Random Forest (RF) or "
 	 << " Gradient Boosting Tree (GBT) predictor" << endl << endl;
   }
+
+  void printPredictorBuilderExamples() {
+    cout << "EXAMPLES:" << endl << endl;
+    cout << "bin/rf-ace-build-predictor -I data.arff -i target --RF -O rf_predictor.sf" << endl << endl;
+    cout << "bin/rf-ace-build-predictor -I data.arff -i target --RF -n 1000 -m 10 -O rf_predictor.sf" << endl << endl;
+  }
   
   void printPredictorOverview() {
     cout << "PROGRAM: RF-ACE PREDICTOR" << endl << endl;
     cout << " Makes predictions given a model and novel data." << endl << endl;
+  }
+
+  void printPredictorExamples() {
+    cout << "EXAMPLES:" << endl << endl;
+    cout << "bin/rf-ace-predict -F rf_predictor.sf -I novel_data.arff -O predictions.tsv" << endl << endl;
   }
   
   // Default general configuration

@@ -54,7 +54,7 @@ StochasticForest::StochasticForest(Treedata* treeData, const string& forestFile)
   }
 
   assert( forestSetup.find("NTREES") != forestSetup.end() );
-  parameters_.nTrees = static_cast<size_t>( utils::str2int(forestSetup["NTREES"]) );
+  parameters_.nTrees = static_cast<size_t>( utils::str2<int>(forestSetup["NTREES"]) );
   rootNodes_.resize(parameters_.nTrees);
 
   assert( forestSetup.find("TARGET") != forestSetup.end() );
@@ -64,7 +64,7 @@ StochasticForest::StochasticForest(Treedata* treeData, const string& forestFile)
   targetSupport_ = utils::split(forestSetup["CATEGORIES"],',');
 
   assert( forestSetup.find("SHRINKAGE") != forestSetup.end() );
-  parameters_.shrinkage = datadefs::str2num(forestSetup["SHRINKAGE"]);
+  parameters_.shrinkage = utils::str2<num_t>(forestSetup["SHRINKAGE"]);
   
   assert( forestStream.good() );
  
@@ -86,7 +86,7 @@ StochasticForest::StochasticForest(Treedata* treeData, const string& forestFile)
     if ( newLine.compare(0,5,"TREE=") == 0 ) { 
       ++treeIdx;
       //cout << treeIdx << " vs " << newLine << " => " << utils::str2int(utils::split(newLine,'=')[1]) << endl;
-      assert( treeIdx == utils::str2int(utils::split(newLine,'=')[1]) );
+      assert( treeIdx == utils::str2<int>(utils::split(newLine,'=')[1]) );
       continue;
     }
         
@@ -103,7 +103,7 @@ StochasticForest::StochasticForest(Treedata* treeData, const string& forestFile)
     Node* nodep = forestMap[treeIdx][nodeMap["NODE"]];
 
     // Set train prediction of the node
-    nodep->setTrainPrediction(datadefs::str2num(nodeMap["PRED"]));
+    nodep->setTrainPrediction(utils::str2<num_t>(nodeMap["PRED"]));
     
     // If the node has a splitter...
     if ( nodeMap.find("SPLITTER") != nodeMap.end() ) {
@@ -113,7 +113,7 @@ StochasticForest::StochasticForest(Treedata* treeData, const string& forestFile)
       // If the splitter is numerical...
       if ( nodeMap["SPLITTERTYPE"] == "NUMERICAL" ) {
        
-	nodep->setSplitter(featureIdx,nodeMap["SPLITTER"],datadefs::str2num(nodeMap["LVALUES"]));
+	nodep->setSplitter(featureIdx,nodeMap["SPLITTER"],utils::str2<num_t>(nodeMap["LVALUES"]));
 	
       } else {
 

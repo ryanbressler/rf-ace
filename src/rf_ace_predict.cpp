@@ -38,9 +38,12 @@ int main(const int argc, char* const argv[]) {
 
   // With no input arguments the help is printed
   if(argc == 1 || gen_op.printHelp ) {
+
     options::printPredictorOverview();
     gen_op.help();
     pred_op.help();
+    options::printPredictorExamples();
+
     return(EXIT_SUCCESS);
   }
 
