@@ -12,7 +12,7 @@
 #include "datadefs.hpp"
 #include "treedata.hpp"
 //#include "splitter.hpp"
-#include "partitionsequence.hpp"
+//#include "partitionsequence.hpp"
 
 using namespace std;
 using datadefs::num_t;
@@ -32,18 +32,20 @@ public:
 
   //Sets a splitter feature for the node.
   //NOTE: splitter can be assigned only once! Subsequent setter calls will raise an assertion failure.
-  void setSplitter(const size_t splitterIdx, const string& splitterName, num_t splitLeftLeqValue);
-  void setSplitter(const size_t splitterIdx, const string& splitterName, const set<string>& leftSplitValues, const set<string>& rightSplitValues);
+  void setSplitter(const size_t splitterIdx, 
+		   const string& splitterName, 
+		   const num_t leftFraction, 
+		   const num_t splitLeftLeqValue);
+
+  void setSplitter(const size_t splitterIdx, 
+		   const string& splitterName, 
+		   const num_t leftFraction, 
+		   const set<string>& leftSplitValues, 
+		   const set<string>& rightSplitValues);
 
   //Given a value, descends to either one of the child nodes, if existing, otherwise returns a pointer to the current node
-  // TODO: get rid of these as there's too much redundancy hidden within
   Node* percolateData(const num_t data);
   Node* percolateData(const string& data);
-
-  
-  //Node* percolate(Treedata* treeData, const size_t sampleIdx);
-  //Node* percolateRandomly(Treedata* treeData, const size_t sampleIdx);
-  //void  percolateData(Treedata* treeData, const size_t sampleIdx, Node** nodep);
 
   void setTrainPrediction(const num_t trainPrediction);
   num_t getTrainPrediction();
@@ -135,9 +137,6 @@ private:
 
 
 
-  //size_t splitterIdx_;
-  //Splitter* splitter_;
-
   struct Splitter {
 
     size_t idx;
@@ -146,6 +145,7 @@ private:
     num_t leftLeqValue;
     set<string> leftValues;
     set<string> rightValues;
+    num_t leftFraction;
 
   } splitter_;
 

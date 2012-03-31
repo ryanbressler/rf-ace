@@ -113,14 +113,21 @@ StochasticForest::StochasticForest(Treedata* treeData, const string& forestFile)
       // If the splitter is numerical...
       if ( nodeMap["SPLITTERTYPE"] == "NUMERICAL" ) {
        
-	nodep->setSplitter(featureIdx,nodeMap["SPLITTER"],utils::str2<num_t>(nodeMap["LVALUES"]));
+	nodep->setSplitter(featureIdx,
+			   nodeMap["SPLITTER"],
+			   utils::str2<num_t>(nodeMap["LFRACTION"]),
+			   utils::str2<num_t>(nodeMap["LVALUES"]));
 	
       } else {
 
 	set<string> splitLeftValues = utils::keys(nodeMap["LVALUES"],':');
 	set<string> splitRightValues = utils::keys(nodeMap["RVALUES"],':');
 
-	nodep->setSplitter(featureIdx,nodeMap["SPLITTER"],splitLeftValues,splitRightValues);
+	nodep->setSplitter(featureIdx,
+			   nodeMap["SPLITTER"],
+			   utils::str2<num_t>(nodeMap["LFRACTION"]),
+			   splitLeftValues,
+			   splitRightValues);
       
       }
 
@@ -158,10 +165,12 @@ void StochasticForest::printToFile(const string& fileName) {
   
   vector<string> categories = treeData_->categories(targetIdx);
 
+  string categoriesStr = utils::join(categories.begin(),categories.end(),',');
+
   toFile << ",NTREES=" << parameters_.nTrees;
   toFile << ",TARGET=" << "\"" << targetName_ << "\"";
   
-  toFile << ",CATEGORIES=" << "\"" << utils::join(categories.begin(),categories.end(),',') << "\"";
+  toFile << ",CATEGORIES=" << "\"" << categoriesStr << "\"";
   toFile << ",SHRINKAGE=" << parameters_.shrinkage << endl;
 
   // Save each tree in the forest

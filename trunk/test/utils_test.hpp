@@ -9,6 +9,7 @@ class UtilsTest : public CppUnit::TestFixture {
   CPPUNIT_TEST( test_removeNANs );
   CPPUNIT_TEST( test_parse );
   CPPUNIT_TEST( test_str2 );
+  CPPUNIT_TEST( test_join );
   CPPUNIT_TEST_SUITE_END();
   
 public:
@@ -18,6 +19,7 @@ public:
   void test_removeNANs();
   void test_parse();
   void test_str2();
+  void test_join();
   
 };
 
@@ -61,6 +63,24 @@ void UtilsTest::test_str2() {
   CPPUNIT_ASSERT(utils::str2<num_t>(d) == -1.0e10);
 
   
+
+}
+
+void UtilsTest::test_join() {
+
+  vector<string> foo;
+  foo.push_back("a");
+  foo.push_back("b");
+
+  CPPUNIT_ASSERT( utils::join(foo.begin(),foo.end(),':') == "a:b" );
+  CPPUNIT_ASSERT( utils::join(foo.begin(),foo.end(),'a') == "aab" );
+  foo.pop_back();
+  CPPUNIT_ASSERT( utils::join(foo.begin(),foo.end(),':') == "a" );
+  CPPUNIT_ASSERT( utils::join(foo.begin(),foo.end(),'a') == "a" );
+  foo.pop_back();
+  CPPUNIT_ASSERT( utils::join(foo.begin(),foo.end(),':') == "" );
+  CPPUNIT_ASSERT( utils::join(foo.begin(),foo.end(),'a') == "" );
+
 
 }
 

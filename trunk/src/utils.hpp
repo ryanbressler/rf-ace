@@ -56,7 +56,8 @@ namespace utils {
       return(ret);
     }
 
-    stringstream ss( *begin );
+    stringstream ss;
+    ss << *begin;
     ++begin;
     
     while( begin != end ) {
