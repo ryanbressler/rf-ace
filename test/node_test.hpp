@@ -61,13 +61,13 @@ void NodeTest::test_setSplitter() {
   
   //CPPUNIT_ASSERT( false );
   
-  CPPUNIT_ASSERT( !node.splitter_ );
+  //CPPUNIT_ASSERT( !node.splitter_ );
   
   node.setSplitter(splitterIdx,"foo",splitLeftLeqValue);
   
-  CPPUNIT_ASSERT( node.splitterIdx_ == splitterIdx );
-  CPPUNIT_ASSERT( node.splitter_->splitterType_ == Splitter::NUMERICAL_SPLITTER );
-  CPPUNIT_ASSERT( fabs(node.splitter_->splitLeftLeqValue_ - splitLeftLeqValue) < datadefs::EPS );
+  CPPUNIT_ASSERT( node.splitter_.idx == splitterIdx );
+  CPPUNIT_ASSERT( node.splitter_.isNumerical );
+  CPPUNIT_ASSERT( fabs(node.splitter_.leftLeqValue - splitLeftLeqValue) < datadefs::EPS );
   
   
 }
@@ -265,10 +265,10 @@ void NodeTest::test_numericalFeatureSplit() {
 
   //cout << splitValue << endl;
 
-  Splitter::Splitter splitter("foo",splitValue);
+  //Splitter::Splitter splitter("foo",splitValue);
 
-  CPPUNIT_ASSERT( splitter.splitsLeft(3.1 - 0.00001) );
-  CPPUNIT_ASSERT( splitter.splitsRight(3.1) );
+  //CPPUNIT_ASSERT( splitter.splitsLeft(3.1 - 0.00001) );
+  //CPPUNIT_ASSERT( splitter.splitsRight(3.1) );
 
   CPPUNIT_ASSERT( fabs(splitFitness - 0.530492285084497) < 1e-10 );
 
@@ -343,13 +343,13 @@ void NodeTest::test_categoricalFeatureSplit() {
     rawSplitValues_right.insert(treedata.getRawFeatureData(featureIdx,*it));
   }
 
-  Splitter::Splitter splitter("foo",rawSplitValues_left,rawSplitValues_right);
+  node.setSplitter(0,"foo",rawSplitValues_left,rawSplitValues_right);
   
   CPPUNIT_ASSERT( sampleIcs_left.size() == sampleIcs_right.size() );
   
-  CPPUNIT_ASSERT( splitter.splitsLeft("0") );
-  CPPUNIT_ASSERT( splitter.splitsLeft("1") );
-  CPPUNIT_ASSERT( splitter.splitsLeft("4") );
+  CPPUNIT_ASSERT( node.percolateData("0") == node.leftChild() );
+  CPPUNIT_ASSERT( node.percolateData("1") == node.leftChild() );
+  CPPUNIT_ASSERT( node.percolateData("4") == node.leftChild() );
 
   //cout << iter << endl;
   
@@ -373,15 +373,17 @@ void NodeTest::test_categoricalFeatureSplit() {
   splitValues_right.clear();
   //datadefs::num_t splitFitness;
 
-  node.categoricalFeatureSplit(&treedata,
-			       targetIdx2,
-			       featureIdx,
-			       GI,
-			       sampleIcs_left,
-			       sampleIcs_right,
-			       splitValues_left,
-			       splitValues_right,
-			       splitFitness);
+  Node node2;
+
+  node2.categoricalFeatureSplit(&treedata,
+				targetIdx2,
+				featureIdx,
+				GI,
+				sampleIcs_left,
+				sampleIcs_right,
+				splitValues_left,
+				splitValues_right,
+				splitFitness);
   
   //datadefs::print<num_t>(splitValues_left);
   //datadefs::print<num_t>(splitValues_right);
@@ -404,14 +406,14 @@ void NodeTest::test_categoricalFeatureSplit() {
   }
 
   
-  Splitter::Splitter splitter2("foo",rawSplitValues_left,rawSplitValues_right);
+  node2.setSplitter(0,"foo",rawSplitValues_left,rawSplitValues_right);
   
-  CPPUNIT_ASSERT( splitter2.splitterType_ == Splitter::CATEGORICAL_SPLITTER );
+  CPPUNIT_ASSERT( !node2.splitter_.isNumerical );
   
   CPPUNIT_ASSERT( sampleIcs_left.size() == 4 );
   CPPUNIT_ASSERT( sampleIcs_right.size() == 6 );
-  CPPUNIT_ASSERT( splitter2.splitsLeft("0") );
-  CPPUNIT_ASSERT( splitter2.splitsLeft("1") );
+  CPPUNIT_ASSERT( node2.percolateData("0") == node2.leftChild() );
+  CPPUNIT_ASSERT( node2.percolateData("1") == node2.leftChild() );
 
   
   //if ( iter == 0 ) {

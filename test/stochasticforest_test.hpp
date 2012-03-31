@@ -10,6 +10,7 @@
 class StochasticForestTest : public CppUnit::TestFixture {
   CPPUNIT_TEST_SUITE( StochasticForestTest );
   CPPUNIT_TEST( test_treeDataPercolation ); 
+  //CPPUNIT_TEST( test_prediction );
   CPPUNIT_TEST_SUITE_END();
   
 public:

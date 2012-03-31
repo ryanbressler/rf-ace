@@ -10,7 +10,7 @@
 #include "node_test.hpp"
 #include "rootnode_test.hpp"
 #include "stochasticforest_test.hpp"
-#include "splitter_test.hpp"
+//#include "splitter_test.hpp"
 #include "treedata_test.hpp"
 #include <cppunit/CompilerOutputter.h>
 #include <cppunit/extensions/TestFactoryRegistry.h>
