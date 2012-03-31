@@ -11,7 +11,7 @@
 #include <string>
 #include "datadefs.hpp"
 #include "treedata.hpp"
-#include "splitter.hpp"
+//#include "splitter.hpp"
 #include "partitionsequence.hpp"
 
 using namespace std;
@@ -28,7 +28,7 @@ public:
   ~Node();
 
   //Gets the splitter for the node
-  inline size_t splitterIdx() { return( splitterIdx_ ); }
+  inline size_t splitterIdx() { return( splitter_.idx ); }
 
   //Sets a splitter feature for the node.
   //NOTE: splitter can be assigned only once! Subsequent setter calls will raise an assertion failure.
@@ -40,14 +40,16 @@ public:
   Node* percolateData(const num_t data);
   Node* percolateData(const string& data);
 
-  Node* percolateData(Treedata* treeData, const size_t sampleIdx);
-  void  percolateData(Treedata* treeData, const size_t sampleIdx, Node** nodep);
+  
+  //Node* percolate(Treedata* treeData, const size_t sampleIdx);
+  //Node* percolateRandomly(Treedata* treeData, const size_t sampleIdx);
+  //void  percolateData(Treedata* treeData, const size_t sampleIdx, Node** nodep);
 
   void setTrainPrediction(const num_t trainPrediction);
   num_t getTrainPrediction();
 
   //Logic test whether the node has children or not
-  inline bool hasChildren() { return(splitter_); }
+  inline bool hasChildren() { return( leftChild_ || rightChild_ ); }
 
   Node* leftChild();
   Node* rightChild();
@@ -97,6 +99,8 @@ protected:
 private:
 #endif
 
+  
+
   void numericalFeatureSplit(Treedata* treedata,
                              const size_t targetIdx,
                              const size_t featureIdx,
@@ -116,6 +120,7 @@ private:
                                set<num_t>& splitValues_right,
                                num_t& splitFitness);
 
+  
   inline num_t getSplitFitness(const size_t n_left, 
 			       const size_t sf_left,
 			       const size_t n_right,
@@ -130,8 +135,19 @@ private:
 
 
 
-  size_t splitterIdx_;
-  Splitter* splitter_;
+  //size_t splitterIdx_;
+  //Splitter* splitter_;
+
+  struct Splitter {
+
+    size_t idx;
+    string name;
+    bool isNumerical;
+    num_t leftLeqValue;
+    set<string> leftValues;
+    set<string> rightValues;
+
+  } splitter_;
 
   num_t trainPrediction_;
 

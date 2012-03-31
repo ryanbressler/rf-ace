@@ -168,23 +168,25 @@ vector<string> utils::readListFromFile(const string& fileName, const char delimi
 }
 
 
-string utils::join(const vector<string>& items, const char delimiter) {
-
+/*
+  string utils::join(const vector<string>& items, const char delimiter) {
+  
   string ret("");
-
+  
   if ( items.size() == 0 ) {
-    return( ret );
-  }
-
-  ret = items[0];
-
-  for( size_t i = 1; i < items.size(); ++i ) {
-    ret.append(delimiter+items[i]);
-  }
-
   return( ret );
-
-}
+  }
+  
+  ret = items[0];
+  
+  for( size_t i = 1; i < items.size(); ++i ) {
+  ret.append(delimiter+items[i]);
+  }
+  
+  return( ret );
+  
+  }
+*/
 
 set<string> utils::readFeatureMask(Treedata& treeData, const string& fileName) {
   

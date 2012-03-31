@@ -47,7 +47,30 @@ namespace utils {
   // Reads a list of items from a file
   vector<string> readListFromFile(const string& fileName, const char delimiter);
 
-  string join(const vector<string>& items, const char delimiter);
+  template <typename InputIterator>
+  string join(InputIterator begin, InputIterator end, const char delimiter) {
+
+    string ret("");
+    
+    if ( begin == end ) {
+      return(ret);
+    }
+
+    stringstream ss( *begin );
+    ++begin;
+    
+    while( begin != end ) {
+      
+      ss << delimiter << *begin;
+
+      ++begin;
+
+    }
+
+    ss >> ret;
+    return( ret );
+
+  }
 
   // WILL BECOME OBSOLETE
   set<string> readFeatureMask(Treedata& treeData, const string& fileName);

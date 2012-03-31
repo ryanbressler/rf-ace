@@ -155,11 +155,13 @@ void StochasticForest::printToFile(const string& fileName) {
   }
 
   size_t targetIdx = treeData_->getFeatureIdx( targetName_ );
+  
+  vector<string> categories = treeData_->categories(targetIdx);
 
   toFile << ",NTREES=" << parameters_.nTrees;
   toFile << ",TARGET=" << "\"" << targetName_ << "\"";
-  //toFile << ",NCATEGORIES=" << targetSupport_.size();
-  toFile << ",CATEGORIES=" << "\"" << utils::join(treeData_->categories(targetIdx),',') << "\"";
+  
+  toFile << ",CATEGORIES=" << "\"" << utils::join(categories.begin(),categories.end(),',') << "\"";
   toFile << ",SHRINKAGE=" << parameters_.shrinkage << endl;
 
   // Save each tree in the forest
@@ -554,10 +556,13 @@ void StochasticForest::predict(vector<string>& categoryPrediction, vector<num_t>
       // Loop through the categories that have predictions
       for ( map<string,size_t>::const_iterator it( catFrequency.begin() ); it != catFrequency.end(); ++it ) {
 	
+	string newCategory = it->first;
+	num_t newConfidence = static_cast<num_t>(it->second);
+
 	// If the prediction has higher prediction than the previous best, switch  
-	if ( it->second > confidence[i]*parameters_.nTrees ) {
-	  categoryPrediction[i] = it->first;
-	  confidence[i] = static_cast<num_t>(it->second) / parameters_.nTrees;
+	if ( newConfidence > confidence[i] ) {
+	  categoryPrediction[i] = newCategory;
+	  confidence[i] = newConfidence;
 	}
       }
 
@@ -641,52 +646,53 @@ map<Node*,vector<size_t> > StochasticForest::percolateSampleIcsByTreeAtRandom(co
 }
 
 Node* StochasticForest::percolateSampleIdxByTree(const size_t sampleIdx, const size_t treeIdx) {
-
+  
   Node* nodep( static_cast<Node*>(rootNodes_[treeIdx]) );
-
+  
   // Keep percolating until we hit the leaf
   while ( nodep->hasChildren() ) {
-
+    
     // Get the splitter feature index
     size_t featureIdxNew = nodep->splitterIdx();
-
+    
     // Get the respective sample of the splitter feature
     num_t value = treeData_->getFeatureData(featureIdxNew,sampleIdx);
     
     Node* childNode;
-
+    
     // Precolate the value, and as a result get a pointer to a child node
     if ( treeData_->isFeatureNumerical(featureIdxNew) ) {
       childNode = nodep->percolateData(value);
     } else {
       childNode = nodep->percolateData(treeData_->getRawFeatureData(featureIdxNew,value));
     }
-   
+    
     // However, if percolation could not be done 
     // (previously unobserved category or missing value), it's time to exit the loop
-    if ( childNode == nodep ) {
+    if ( childNode == NULL ) {
       break;
     }
-
+    
     // Update the pointer and continue percolating
     nodep = childNode;
-
   }
-
+  
   return( nodep );
-
+  
 }
 
 Node* StochasticForest::percolateSampleIdxByTreeAtRandom(const size_t featureIdx, const size_t sampleIdx, const size_t treeIdx) {
   
   Node* nodep( static_cast<Node*>(rootNodes_[treeIdx]) );
-
+  
+  //size_t nSamples = treeData_->nSamples();
+  
   while ( nodep->hasChildren() ) {
-
+    
     size_t featureIdxNew = nodep->splitterIdx();
-
+    
     num_t value = datadefs::NUM_NAN;
-
+    
     if(featureIdx == featureIdxNew) {
       treeData_->getRandomData(featureIdxNew,value);
     } else {
@@ -694,23 +700,23 @@ Node* StochasticForest::percolateSampleIdxByTreeAtRandom(const size_t featureIdx
     }
     
     Node* childNode;
-
+    
     if ( treeData_->isFeatureNumerical(featureIdxNew) ) {
       childNode = nodep->percolateData(value);
     } else {
       childNode = nodep->percolateData(treeData_->getRawFeatureData(featureIdxNew,value));
     }
-
-    if ( childNode == nodep ) {
+    
+    if ( childNode == NULL ) {
       break;
     }
-
+    
     nodep = childNode;
-
+    
   }
-
+  
   return( nodep );
-
+  
 }
 
 // In growForest a bootstrapper was utilized to generate in-box (IB) and out-of-box (OOB) samples.
@@ -898,7 +904,7 @@ num_t StochasticForest::predictionError(const map<Node*,vector<size_t> >& trainI
     
     assert( !datadefs::isNAN(nodePrediction) );
 
-    // Number of percolateds sample in node
+    // Number of percolated sample in node
     size_t nSamplesInNode = targetData.size();
 
     // Depending on the type of the target, different error calculation equation is used

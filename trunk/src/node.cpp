@@ -1,12 +1,14 @@
 #include<iostream>
 #include<cassert>
 #include<iomanip>
+
 #include "node.hpp"
+#include "utils.hpp"
 #include "math.hpp"
 
 Node::Node():
-  splitterIdx_(0),
-  splitter_(NULL),
+  //splitterIdx_(0),
+  //splitter_(NULL),
   trainPrediction_(datadefs::NUM_NAN),
   leftChild_(NULL),
   rightChild_(NULL) {
@@ -34,7 +36,7 @@ void Node::deleteTree() {
   
   delete leftChild_;
   delete rightChild_;
-  delete splitter_;
+  //delete splitter_;
   
 }
 
@@ -47,9 +49,16 @@ void Node::setSplitter(const size_t splitterIdx, const string& splitterName, num
     cerr << "Cannot set a splitter to a node twice!" << endl;
     exit(1);
   }
-  
-  splitterIdx_ = splitterIdx;
-  splitter_ = new Splitter(splitterName,splitLeftLeqValue);
+
+  splitter_.idx = splitterIdx;
+  splitter_.name = splitterName;
+  splitter_.isNumerical = true;
+  splitter_.leftLeqValue = splitLeftLeqValue;
+
+  /*  
+      splitterIdx_ = splitterIdx;
+      splitter_ = new Splitter(splitterName,splitLeftLeqValue);
+  */
 
   leftChild_ = new Node();
   rightChild_ = new Node();
@@ -62,12 +71,15 @@ void Node::setSplitter(const size_t splitterIdx, const string& splitterName, num
 void Node::setSplitter(const size_t splitterIdx, const string& splitterName, const set<string>& leftSplitValues, const set<string>& rightSplitValues) {
 
   if ( this->hasChildren() ) {
-    cerr << "Cannot set a splitter to a node twice!" << endl;
+    cerr << "Node::setSplitter() -- cannot set a splitter to a node twice!" << endl;
     exit(1);
   }
 
-  splitterIdx_ = splitterIdx;
-  splitter_ = new Splitter(splitterName,leftSplitValues,rightSplitValues);
+  splitter_.idx = splitterIdx;
+  splitter_.name = splitterName;
+  splitter_.isNumerical = false;
+  splitter_.leftValues = leftSplitValues;
+  splitter_.rightValues = rightSplitValues;
 
   leftChild_ = new Node();
   rightChild_ = new Node();
@@ -76,82 +88,42 @@ void Node::setSplitter(const size_t splitterIdx, const string& splitterName, con
 
 
 Node* Node::percolateData(const num_t data) {
+  
+  assert( splitter_.isNumerical );
 
   // Return this if the node doesn't have children ( == is a leaf node )
   if ( !this->hasChildren() ) {
-    return( this );
+    return( NULL );
   }
 
-  // Return left child if splits left
-  if ( splitter_->splitsLeft( data ) ) {
-    return( leftChild_ );
-  }
-
-  // Return right child if splits right
-  if ( splitter_->splitsRight( data ) ) {
-    return( rightChild_ );
-  }
-
-  // Return this if splits neither left nor right, which can happen if 
-  // the splitter is categorical or data is NaN
-  return( this );
-
+  return( data <= splitter_.leftLeqValue ? leftChild_ : rightChild_ );
+   
 }
 
 Node* Node::percolateData(const string& data) {
 
+  assert( !splitter_.isNumerical );
+
   // Return this if the node doesn't have children ( == is a leaf node )
   if ( !this->hasChildren() ) {
-    return( this );
+    return( NULL );
   }
 
   // Return left child if splits left
-  if ( splitter_->splitsLeft( data ) ) {
+  if ( splitter_.leftValues.find(data) != splitter_.leftValues.end() ) {
     return( leftChild_ );
   }
 
   // Return right child if splits right
-  if ( splitter_->splitsRight( data ) ) {
+  if ( splitter_.rightValues.find(data) != splitter_.rightValues.end() ) {
     return( rightChild_ );
   }
 
+  cout << "Shit, categorical split failed!" << endl;
+
   // Return this if splits neither left nor right, which can happen if
   // the splitter is categorical
-  return( this );
-
-}
-
-Node* Node::percolateData(Treedata* treeData, const size_t sampleIdx) {
-
-  // Start percolating from this node
-  Node* nodep(this);
-
-  // Percolate until stopped, at which point "nodep" stores the end-node
-  this->percolateData(treeData,sampleIdx,&nodep);
-
-  // Return the end-node
-  return( nodep );
-
-}
-
-void Node::percolateData(Treedata* treeData, const size_t sampleIdx, Node** nodep) {
-
-  
-  if( !this->hasChildren() ) {
-    // If the node does not have children, set "nodep" to this and stop recursion
-    *nodep = this;
-  } else if ( splitter_->splitsLeft(treeData,sampleIdx) ) {
-    // Continue percolating left
-    *nodep = leftChild_;
-    leftChild_->percolateData(treeData,sampleIdx,nodep);
-  } else if ( splitter_->splitsRight(treeData,sampleIdx) ) {
-    // Continue percolating right
-    *nodep = rightChild_;
-    rightChild_->percolateData(treeData,sampleIdx,nodep);
-  } else {
-    // If no split can be made, set "nodep" to this and stop recursion
-    *nodep = this;
-  }
+  return( NULL );
 
 }
 
@@ -173,8 +145,16 @@ void Node::print(string& traversal, ofstream& toFile) {
   
   if ( this->hasChildren() ) {
     
-    toFile << "," << splitter_->print() << endl;
+    string leftValues = utils::join(splitter_.leftValues.begin(),splitter_.leftValues.end(),':');
+    string rightValues = utils::join(splitter_.rightValues.begin(),splitter_.rightValues.end(),':');
+    string splitterType = splitter_.isNumerical ? "NUMERICAL" : "CATEGORICAL";
 
+    toFile << ",SPLITTER=" << "\"" << splitter_.name << "\""
+	   << ",SPLITTERTYPE=" << splitterType
+	   << ",LVALUES=" << "\"" << leftValues << "\""
+	   << ",RVALUES=" << "\"" << rightValues << "\"";
+    
+    
     string traversalLeft = traversal;
     traversalLeft.append("L");
     string traversalRight = traversal;
@@ -182,9 +162,9 @@ void Node::print(string& traversal, ofstream& toFile) {
     
     leftChild_->print(traversalLeft,toFile);
     rightChild_->print(traversalRight,toFile);
-
+    
   } else {
-   toFile << endl;
+    toFile << endl;
   }
 }
 
