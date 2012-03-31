@@ -10,18 +10,13 @@
 class NodeTest : public CppUnit::TestFixture {
   CPPUNIT_TEST_SUITE( NodeTest );
   CPPUNIT_TEST( test_setSplitter );
-  //CPPUNIT_TEST( test_getSplitter );
   CPPUNIT_TEST( test_percolateData );
   CPPUNIT_TEST( test_getLeafTrainPrediction );
   CPPUNIT_TEST( test_hasChildren );
-  CPPUNIT_TEST( test_leafMean );
-  CPPUNIT_TEST( test_leafMode );
-  CPPUNIT_TEST( test_leafGamma );
   CPPUNIT_TEST( test_recursiveNodeSplit );
   CPPUNIT_TEST( test_cleanPairVectorFromNANs );
   CPPUNIT_TEST( test_numericalFeatureSplit );
   CPPUNIT_TEST( test_categoricalFeatureSplit );
-  //CPPUNIT_TEST( test_splitFitness );
   CPPUNIT_TEST( test_recursiveNDescendantNodes );
   CPPUNIT_TEST_SUITE_END();
   
@@ -30,18 +25,13 @@ public:
   void tearDown();
 
   void test_setSplitter();
-  //void test_getSplitter();
   void test_percolateData();
   void test_getLeafTrainPrediction();
   void test_hasChildren();
-  void test_leafMean();
-  void test_leafMode();
-  void test_leafGamma();
   void test_recursiveNodeSplit();
   void test_cleanPairVectorFromNANs();
   void test_numericalFeatureSplit();
   void test_categoricalFeatureSplit();
-  //void test_splitFitness();
   void test_recursiveNDescendantNodes();
 
 };
@@ -58,11 +48,7 @@ void NodeTest::test_setSplitter() {
   //Splitter::Splitter splitter(0.5);
   
   Node::Node node;
-  
-  //CPPUNIT_ASSERT( false );
-  
-  //CPPUNIT_ASSERT( !node.splitter_ );
-  
+    
   node.setSplitter(splitterIdx,"foo",splitLeftLeqValue);
   
   CPPUNIT_ASSERT( node.splitter_.idx == splitterIdx );
@@ -72,18 +58,34 @@ void NodeTest::test_setSplitter() {
   
 }
 
-
-//void NodeTest::test_getSplitter() {
-  //Node::getSplitter(...);
-//}
-
 void NodeTest::test_percolateData() {
   
   Node::Node node0;
   //Splitter splitter("foo",0.1);
   node0.setSplitter(1,"foo",0.1);
-  CPPUNIT_ASSERT( node0.leftChild_ == node0.percolateData(0.09) );
-  CPPUNIT_ASSERT( node0.rightChild_ == node0.percolateData(0.11) );
+  CPPUNIT_ASSERT( node0.leftChild() == node0.percolateData(0.09) );
+  CPPUNIT_ASSERT( node0.rightChild() == node0.percolateData(0.11) );
+  CPPUNIT_ASSERT( NULL == node0.percolateData(datadefs::NUM_NAN));
+
+  Node::Node node1;
+  
+  set<string> leftValues;
+  set<string> rightValues;
+
+  leftValues.insert("a");
+  leftValues.insert("b");
+
+  rightValues.insert("c");
+  rightValues.insert("d");
+
+  node1.setSplitter(1,"foo",leftValues,rightValues);
+
+  CPPUNIT_ASSERT( node1.percolateData("a") == node1.leftChild() );
+  CPPUNIT_ASSERT( node1.percolateData("b") == node1.leftChild() );
+  CPPUNIT_ASSERT( node1.percolateData("c") == node1.rightChild() );
+  CPPUNIT_ASSERT( node1.percolateData("d") == node1.rightChild() );
+
+  CPPUNIT_ASSERT( node1.percolateData("foo") == NULL );
 
 }
 
@@ -91,138 +93,6 @@ void NodeTest::test_getLeafTrainPrediction() {
 }
 
 void NodeTest::test_hasChildren() {
-}
-
-void NodeTest::test_leafMean() {
-  /*
-  vector<datadefs::num_t> data;
-  datadefs::num_t mu;
-  size_t nRealValues;
-
-  for (int i = 0; i < 50; ++i) {
-    data.push_back(static_cast<datadefs::num_t>(i));
-  }
-
-  // Spuriously assign the values of mu and nRealValues, since they'll be
-  //  flattened during function invocation
-  mu = -1.0;
-  nRealValues = static_cast<size_t>(-1);
-
-  Node::leafMean(data, mu, nRealValues);
-  CPPUNIT_ASSERT(mu == 24.5);
-  CPPUNIT_ASSERT(nRealValues == 50);
-
-  // Our data vector is defined as const in our signature. Since we're not
-  //  testing edge cases of non-trivial memory corruption, we ignore it here.
-
-  // Interleave the original input with NaNs; verify we get the same results
-  for (int i = 0; i < 50; ++i) {
-    data.insert(data.begin() + (i*2), datadefs::NUM_NAN);
-  }
-
-  mu = -1.0;
-  nRealValues = static_cast<size_t>(-1);
-
-  Node::leafMean(data, mu, nRealValues);
-  CPPUNIT_ASSERT(mu == 24.5);
-  CPPUNIT_ASSERT(nRealValues == 50);
-
-  // Ensure a vector containing only NaNs is handled properly
-  data.clear();
-  for (int i = 0; i < 50; ++i) {
-    data.push_back(datadefs::NUM_NAN);
-  }
-
-  mu = -1.0;
-  nRealValues = static_cast<size_t>(-1);
-
-  Node::leafMean(data, mu, nRealValues);
-  CPPUNIT_ASSERT(mu == 0.0);
-  CPPUNIT_ASSERT(nRealValues == 0);
-  */
-}
-
-void NodeTest::test_leafMode() {
-  /*
-  vector<datadefs::num_t> data;
-  datadefs::num_t leafMode = -1.0;
-  size_t numClasses = static_cast<size_t>(-1);
-
-  data.push_back(static_cast<datadefs::num_t>(10));
-  for (int i = 0; i < 50; ++i) {
-    data.push_back(static_cast<datadefs::num_t>(i));
-  }
-
-  Node::leafMode(data, leafMode, numClasses);
-  CPPUNIT_ASSERT(leafMode == 10.0);
-
-  // numClasses is defined as const in our signature. Since we're not testing
-  //  edge cases of non-trivial memory corruption, we ignore it here.
-
-  // Interleave the original input with NaNs; verify we get the same results
-  for (int i = 0; i < 50; ++i) {
-    data.insert(data.begin() + (i*2), datadefs::NUM_NAN);
-  }
-
-  leafMode = -1.0;
-  numClasses = static_cast<size_t>(-1);
-
-  Node::leafMode(data, leafMode, numClasses);
-  CPPUNIT_ASSERT(leafMode == 10.0);
-
-  // Ensure a vector containing only NaNs is handled as expected
-  data.clear();
-  for (int i = 0; i < 50; ++i) {
-    data.push_back(datadefs::NUM_NAN);
-  }
-
-  leafMode = -1.0;
-  numClasses = static_cast<size_t>(-1);
-
-  Node::leafMode(data, leafMode, numClasses);
-  CPPUNIT_ASSERT(leafMode == 0.0);
-  */
-}
-
-void NodeTest::test_leafGamma() {
-  /*
-  vector<datadefs::num_t> data;
-  datadefs::num_t leafGamma = -1.0;
-  size_t numClasses = 5;
-
-  for (int i = 0; i < 50; ++i) {
-    data.push_back(static_cast<datadefs::num_t>(i));
-  }
-
-  Node::leafGamma(data, leafGamma, numClasses);
-  CPPUNIT_ASSERT(leafGamma == -0.025);
-
-  // numClasses is defined as const in our signature. Since we're not testing
-  //  edge cases of non-trivial memory corruption, we ignore it here.
-
-  // Interleave the original input with NaNs; verify we get the same results
-  for (int i = 0; i < 50; ++i) {
-    data.insert(data.begin() + (i*2), datadefs::NUM_NAN);
-  }
-
-  leafGamma = -1.0;
-  numClasses = 5;
-
-  Node::leafGamma(data, leafGamma, numClasses);
-  CPPUNIT_ASSERT(leafGamma == -0.025);
-
-  // Ensure a vector containing only NaNs is handled as expected
-  data.clear();
-  for (int i = 0; i < 50; ++i) {
-    data.push_back(datadefs::NUM_NAN);
-  }
-
-  leafGamma = -1.0;
-  numClasses = 5;
-
-  Node::leafGamma(data, leafGamma, numClasses);
-  CPPUNIT_ASSERT(leafGamma == 0.0);
-  */
 }
 
 void NodeTest::test_recursiveNodeSplit() { 

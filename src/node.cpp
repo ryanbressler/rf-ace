@@ -92,7 +92,7 @@ Node* Node::percolateData(const num_t data) {
   assert( splitter_.isNumerical );
 
   // Return this if the node doesn't have children ( == is a leaf node )
-  if ( !this->hasChildren() ) {
+  if ( !this->hasChildren() || datadefs::isNAN(data) ) {
     return( NULL );
   }
 
@@ -119,7 +119,7 @@ Node* Node::percolateData(const string& data) {
     return( rightChild_ );
   }
 
-  cout << "Shit, categorical split failed!" << endl;
+  //cout << "Shit, categorical split failed!" << endl;
 
   // Return this if splits neither left nor right, which can happen if
   // the splitter is categorical

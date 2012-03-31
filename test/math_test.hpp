@@ -15,6 +15,7 @@ class MathTest : public CppUnit::TestFixture {
   CPPUNIT_TEST( test_pearsonCorrelation );
   CPPUNIT_TEST( test_ttest );
   CPPUNIT_TEST( test_mode );
+  CPPUNIT_TEST( test_gamma );
   CPPUNIT_TEST( test_incrementDecrementSquaredError );
   CPPUNIT_TEST( test_incrementDecrementSquaredFrequency );
   CPPUNIT_TEST_SUITE_END();
@@ -28,6 +29,7 @@ public:
   void test_pearsonCorrelation();
   void test_ttest();
   void test_mode();
+  void test_gamma();
   void test_incrementDecrementSquaredError();
   void test_incrementDecrementSquaredFrequency();
 
@@ -222,6 +224,20 @@ void MathTest::test_mode() {
 
   y[18] = 17;
   CPPUNIT_ASSERT( math::mode<size_t>(y) == 17 );
+
+}
+
+void MathTest::test_gamma() {
+
+  vector<datadefs::num_t> data;
+  size_t numClasses = 5;
+
+  for (int i = 0; i < 50; ++i) {
+    data.push_back(static_cast<datadefs::num_t>(i));
+  }
+
+  datadefs::num_t leafGamma = math::gamma(data, numClasses);
+  CPPUNIT_ASSERT(leafGamma == -0.025);
 
 }
 
