@@ -44,17 +44,18 @@ void NodeTest::test_setSplitter() {
   
   size_t splitterIdx = 3;
   datadefs::num_t splitLeftLeqValue = 0.5; 
+  datadefs::num_t leftFraction = 0.5;
   
   //Splitter::Splitter splitter(0.5);
   
   Node::Node node;
     
-  node.setSplitter(splitterIdx,"foo",splitLeftLeqValue);
+  node.setSplitter(splitterIdx,"foo",leftFraction,splitLeftLeqValue);
   
-  CPPUNIT_ASSERT( node.splitter_.idx == splitterIdx );
+  CPPUNIT_ASSERT( node.splitterIdx() == splitterIdx );
   CPPUNIT_ASSERT( node.splitter_.isNumerical );
   CPPUNIT_ASSERT( fabs(node.splitter_.leftLeqValue - splitLeftLeqValue) < datadefs::EPS );
-  
+  CPPUNIT_ASSERT( fabs(node.splitter_.leftFraction - leftFraction) < datadefs::EPS );
   
 }
 
@@ -62,7 +63,7 @@ void NodeTest::test_percolateData() {
   
   Node::Node node0;
   //Splitter splitter("foo",0.1);
-  node0.setSplitter(1,"foo",0.1);
+  node0.setSplitter(1,"foo",0.5,0.1);
   CPPUNIT_ASSERT( node0.leftChild() == node0.percolateData(0.09) );
   CPPUNIT_ASSERT( node0.rightChild() == node0.percolateData(0.11) );
   CPPUNIT_ASSERT( NULL == node0.percolateData(datadefs::NUM_NAN));
@@ -78,7 +79,7 @@ void NodeTest::test_percolateData() {
   rightValues.insert("c");
   rightValues.insert("d");
 
-  node1.setSplitter(1,"foo",leftValues,rightValues);
+  node1.setSplitter(1,"foo",0.5,leftValues,rightValues);
 
   CPPUNIT_ASSERT( node1.percolateData("a") == node1.leftChild() );
   CPPUNIT_ASSERT( node1.percolateData("b") == node1.leftChild() );
@@ -213,7 +214,9 @@ void NodeTest::test_categoricalFeatureSplit() {
     rawSplitValues_right.insert(treedata.getRawFeatureData(featureIdx,*it));
   }
 
-  node.setSplitter(0,"foo",rawSplitValues_left,rawSplitValues_right);
+  datadefs::num_t leftFraction = 1.0*sampleIcs_left.size() / ( sampleIcs_left.size() + sampleIcs_right.size() );
+
+  node.setSplitter(0,"foo",leftFraction,rawSplitValues_left,rawSplitValues_right);
   
   CPPUNIT_ASSERT( sampleIcs_left.size() == sampleIcs_right.size() );
   
@@ -276,7 +279,9 @@ void NodeTest::test_categoricalFeatureSplit() {
   }
 
   
-  node2.setSplitter(0,"foo",rawSplitValues_left,rawSplitValues_right);
+  leftFraction = 1.0*sampleIcs_left.size() / (sampleIcs_left.size() + sampleIcs_right.size() );
+
+  node2.setSplitter(0,"foo",leftFraction,rawSplitValues_left,rawSplitValues_right);
   
   CPPUNIT_ASSERT( !node2.splitter_.isNumerical );
   

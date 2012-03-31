@@ -4,7 +4,7 @@
 #include<cstdlib>
 #include "rootnode.hpp"
 #include "treedata.hpp"
-#include "partitionsequence.hpp"
+//#include "partitionsequence.hpp"
 
 using namespace std;
 

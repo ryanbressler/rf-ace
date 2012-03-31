@@ -3,7 +3,7 @@
 
 #include <cppunit/extensions/HelperMacros.h>
 #include "datadefs.hpp"
-#include "partitionsequence.hpp"
+//#include "partitionsequence.hpp"
 #include "rootnode.hpp"
 #include "errno.hpp"
 
@@ -45,7 +45,7 @@ void RootNodeTest::test_regressionTreeSplitting() {
 			      numClasses);
 
   // Split the rootnode
-  rootNode.setSplitter(1,"foo",1.1);
+  rootNode.setSplitter(1,"foo",0.5,1.1);
   rootNode.trainPrediction_ = 5.0;
   Node::Node* node0 = rootNode.leftChild_;
   Node::Node* node1 = rootNode.rightChild_;
@@ -56,11 +56,11 @@ void RootNodeTest::test_regressionTreeSplitting() {
   splitValuesLeft.insert("1");
   set<string> splitValuesRight;
   splitValuesRight.insert("2");
-  node0->setSplitter(1,"foo",splitValuesLeft,splitValuesRight);
+  node0->setSplitter(1,"foo",0.5,splitValuesLeft,splitValuesRight);
   node0->trainPrediction_ = 4.0;
 
   // Set node1 (right child of rootnode)
-  node1->setSplitter(2,"foo",3.0);
+  node1->setSplitter(2,"foo",0.5,3.0);
   node1->trainPrediction_ = 6.0;
 
   // Children of node0
@@ -69,7 +69,7 @@ void RootNodeTest::test_regressionTreeSplitting() {
 
   // Set nodes 00 and 01
   node00->trainPrediction_ = 3.9;
-  node01->setSplitter(3,"foo",-1.5);
+  node01->setSplitter(3,"foo",0.5,-1.5);
   node01->trainPrediction_ = 4.2;
 
   // Children of node1
@@ -84,7 +84,7 @@ void RootNodeTest::test_regressionTreeSplitting() {
   splitValuesRight.clear();
   splitValuesRight.insert("0");
   splitValuesRight.insert("1");
-  node11->setSplitter(4,"foo",splitValuesLeft,splitValuesRight);
+  node11->setSplitter(4,"foo",0.5,splitValuesLeft,splitValuesRight);
   node11->trainPrediction_ = 6.6;
 
   // Children of node01

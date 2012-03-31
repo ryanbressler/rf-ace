@@ -43,10 +43,18 @@ void Node::deleteTree() {
 // !! Documentation: consider combining with the documentation in the header
 // !! file, fleshing it out a bit. Ideally, implementation notes should fall
 // !! here; notes on the abstraction should fall in the header file.
-void Node::setSplitter(const size_t splitterIdx, const string& splitterName, num_t splitLeftLeqValue) {
+void Node::setSplitter(const size_t splitterIdx, 
+		       const string& splitterName, 
+		       const num_t leftFraction, 
+		       const num_t splitLeftLeqValue) {
   
   if ( this->hasChildren() ) {
     cerr << "Cannot set a splitter to a node twice!" << endl;
+    exit(1);
+  }
+
+  if ( leftFraction < 0.0 || leftFraction > 1.0 ) {
+    cerr << "Node::setSplitter() -- leftFraction must be within 0..1!" << endl;
     exit(1);
   }
 
@@ -54,11 +62,7 @@ void Node::setSplitter(const size_t splitterIdx, const string& splitterName, num
   splitter_.name = splitterName;
   splitter_.isNumerical = true;
   splitter_.leftLeqValue = splitLeftLeqValue;
-
-  /*  
-      splitterIdx_ = splitterIdx;
-      splitter_ = new Splitter(splitterName,splitLeftLeqValue);
-  */
+  splitter_.leftFraction = leftFraction;
 
   leftChild_ = new Node();
   rightChild_ = new Node();
@@ -68,10 +72,19 @@ void Node::setSplitter(const size_t splitterIdx, const string& splitterName, num
 // !! Documentation: consider combining with the documentation in the header
 // !! file, fleshing it out a bit. Ideally, implementation notes should fall
 // !! here; notes on the abstraction should fall in the header file.
-void Node::setSplitter(const size_t splitterIdx, const string& splitterName, const set<string>& leftSplitValues, const set<string>& rightSplitValues) {
+void Node::setSplitter(const size_t splitterIdx, 
+		       const string& splitterName, 
+		       const num_t leftFraction, 
+		       const set<string>& leftSplitValues, 
+		       const set<string>& rightSplitValues) {
 
   if ( this->hasChildren() ) {
     cerr << "Node::setSplitter() -- cannot set a splitter to a node twice!" << endl;
+    exit(1);
+  }
+
+  if ( leftFraction < 0.0 || leftFraction > 1.0 ) {
+    cerr << "Node::setSplitter() -- leftFraction must be within 0..1!" << endl;
     exit(1);
   }
 
@@ -145,15 +158,23 @@ void Node::print(string& traversal, ofstream& toFile) {
   
   if ( this->hasChildren() ) {
     
-    string leftValues = utils::join(splitter_.leftValues.begin(),splitter_.leftValues.end(),':');
-    string rightValues = utils::join(splitter_.rightValues.begin(),splitter_.rightValues.end(),':');
     string splitterType = splitter_.isNumerical ? "NUMERICAL" : "CATEGORICAL";
 
     toFile << ",SPLITTER=" << "\"" << splitter_.name << "\""
 	   << ",SPLITTERTYPE=" << splitterType
-	   << ",LVALUES=" << "\"" << leftValues << "\""
-	   << ",RVALUES=" << "\"" << rightValues << "\"";
-    
+	   << ",LFRACTION=" << splitter_.leftFraction; 
+
+    if ( splitter_.isNumerical ) {
+      toFile << ",LVALUES=" << splitter_.leftLeqValue
+	     << ",RVALUES=" << splitter_.leftLeqValue << endl;
+    } else {
+
+      string leftValues = utils::join(splitter_.leftValues.begin(),splitter_.leftValues.end(),':');
+      string rightValues = utils::join(splitter_.rightValues.begin(),splitter_.rightValues.end(),':');
+      
+      toFile << ",LVALUES=" << "\"" << leftValues << "\""
+	     << ",RVALUES=" << "\"" << rightValues << "\"" << endl;
+    }
     
     string traversalLeft = traversal;
     traversalLeft.append("L");
@@ -351,10 +372,12 @@ bool Node::regularSplitterSeek(Treedata* treeData,
   if ( fabs(splitFitness) < datadefs::EPS ) {
     return(false);
   }
+
+  num_t leftFraction = 1.0 * sampleIcs_left.size() / ( sampleIcs_left.size() + sampleIcs_right.size() );
   
   if ( treeData->isFeatureNumerical(splitFeatureIdx) ) {
 
-    this->setSplitter(splitFeatureIdx,treeData->getFeatureName(splitFeatureIdx),splitValue);
+    this->setSplitter(splitFeatureIdx,treeData->getFeatureName(splitFeatureIdx),leftFraction,splitValue);
 
   } else {
     
@@ -371,7 +394,7 @@ bool Node::regularSplitterSeek(Treedata* treeData,
       rawSplitValues_right.insert( treeData->getRawFeatureData(splitFeatureIdx,*it) );
     }
 
-    this->setSplitter(splitFeatureIdx,treeData->getFeatureName(splitFeatureIdx),rawSplitValues_left,rawSplitValues_right);
+    this->setSplitter(splitFeatureIdx,treeData->getFeatureName(splitFeatureIdx),leftFraction,rawSplitValues_left,rawSplitValues_right);
 
   }
 
