@@ -29,6 +29,16 @@ Node::~Node() {
 
 }
 
+void Node::GrowInstructions::validate() const {
+
+  assert( 0.0 < sampleSizeFraction && sampleSizeFraction <= 1.0 );
+  assert( maxNodesToStop > 0 );
+  assert( minNodeSizeToStop > 0 );
+  assert( nFeaturesForSplit > 0 );
+
+}
+
+
 /**
  * Deletes child nodes, which will cascade all the way to the leaf nodes 
  */
@@ -104,7 +114,8 @@ Node* Node::percolateData(const num_t data) {
   
   assert( splitter_.isNumerical );
 
-  // Return this if the node doesn't have children ( == is a leaf node )
+  // Return NULL if the node doesn't have children ( == is a leaf node )
+  // or the data is NAN
   if ( !this->hasChildren() || datadefs::isNAN(data) ) {
     return( NULL );
   }
@@ -117,8 +128,9 @@ Node* Node::percolateData(const string& data) {
 
   assert( !splitter_.isNumerical );
 
-  // Return this if the node doesn't have children ( == is a leaf node )
-  if ( !this->hasChildren() ) {
+  // Return NULL if the node doesn't have children ( == is a leaf node )
+  // or the data is NAN
+  if ( !this->hasChildren() || datadefs::isNAN_STR(data) ) {
     return( NULL );
   }
 
