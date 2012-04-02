@@ -32,15 +32,9 @@ void StochasticForestTest::test_treeDataPercolation() {
   // Next load a test predictor
   StochasticForest SF(&treeData,"test_predictor.sf");
 
-  Node::Node* nodep( SF.percolateSampleIdxByTree(0,0) );
-  CPPUNIT_ASSERT( fabs( nodep->getTrainPrediction() - 3.9 ) < datadefs::EPS );
+  CPPUNIT_ASSERT( fabs( SF.rootNodes_[0]->getTrainPrediction(0) - 3.9 ) < datadefs::EPS );
+  CPPUNIT_ASSERT( fabs( SF.rootNodes_[0]->getTrainPrediction(1) - 4.3 ) < datadefs::EPS );
   
-  nodep = SF.percolateSampleIdxByTree(1,0);
-  CPPUNIT_ASSERT( fabs( nodep->getTrainPrediction() - 4.3 ) < datadefs::EPS );
-  
-  CPPUNIT_ASSERT( fabs( SF.predictSampleByTree(0,0) - 3.9 ) < datadefs::EPS );
-  CPPUNIT_ASSERT( fabs( SF.predictSampleByTree(1,0) - 4.3 ) < datadefs::EPS );
-
 }
 
 // Registers the fixture into the test 'registry'

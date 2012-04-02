@@ -51,7 +51,7 @@ public:
   num_t getTrainPrediction();
 
   //Logic test whether the node has children or not
-  inline bool hasChildren() { return( leftChild_ || rightChild_ ); }
+  inline bool hasChildren() { return( this->leftChild() || this->rightChild() ); }
 
   Node* leftChild();
   Node* rightChild();
@@ -63,10 +63,6 @@ public:
 
   enum PredictionFunctionType { MEAN, MODE, GAMMA };
 
-#ifndef TEST__
-protected:
-#endif
-
   struct GrowInstructions {
     bool sampleWithReplacement;
     num_t sampleSizeFraction;
@@ -77,8 +73,13 @@ protected:
     bool useContrasts;
     PredictionFunctionType predictionFunctionType;
     size_t numClasses;
-    //PartitionSequence* partitionSequence;
+    
+    void validate() const;
   };
+
+#ifndef TEST__
+protected:
+#endif
 
   void recursiveNodeSplit(Treedata* treeData,
                           const size_t targetIdx,
