@@ -21,7 +21,7 @@ class DataDefsTest : public CppUnit::TestFixture {
   CPPUNIT_TEST( test_cardinality );
   CPPUNIT_TEST( test_countRealValues );
   CPPUNIT_TEST( test_map_data );
-  CPPUNIT_TEST( test_range );
+  //CPPUNIT_TEST( test_range );
   CPPUNIT_TEST( test_sortDataAndMakeRef );
   CPPUNIT_TEST( test_isNAN );
   CPPUNIT_TEST( test_containsNAN );
@@ -43,7 +43,7 @@ public:
   void test_cardinality();
   void test_countRealValues();
   void test_map_data();
-  void test_range();
+  //void test_range();
   void test_sortDataAndMakeRef();
   void test_percentile();
   void test_isNAN();
@@ -212,25 +212,6 @@ void DataDefsTest::test_map_data() {
   datadefs::map_data(data, datamap, nRealValues);
   CPPUNIT_ASSERT(datamap.size() == 0);
   CPPUNIT_ASSERT(nRealValues == 0);
-}
-
-void DataDefsTest::test_range() {
-  vector<size_t> data(50,0);
-
-  datadefs::range(data);
-  for (size_t i = 0; i < 50; ++i) {
-    CPPUNIT_ASSERT(data[i] == i);
-  }
-
-  data.clear();
-  datadefs::range(data);
-  CPPUNIT_ASSERT(data.size() == 0);
-
-  vector<size_t> atad(50,datadefs::NUM_NAN);
-  datadefs::range(atad);
-  for (size_t i = 0; i < 50; ++i) {
-    CPPUNIT_ASSERT(atad[i] == i);
-  }
 }
 
 void DataDefsTest::test_sortDataAndMakeRef() {

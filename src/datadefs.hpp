@@ -69,7 +69,6 @@ namespace datadefs {
                 map<num_t,vector<size_t> >& datamap,
                 size_t& nRealValues);
 
-  void range(vector<size_t>& ics);
   void sortDataAndMakeRef(const bool isIncreasingOrder, vector<num_t>& data, vector<size_t>& refIcs);
 
   ////////////////////////////////////////////////////////////

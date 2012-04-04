@@ -480,13 +480,13 @@ size_t Treedata::nSamples() {
 num_t Treedata::pearsonCorrelation(size_t featureIdx1, size_t featureIdx2) {
   
   vector<num_t> featureData1,featureData2;
-  vector<size_t> sampleIcs( this->nSamples() );
 
-  datadefs::range(sampleIcs);
+  vector<size_t> sampleIcs = utils::range( this->nSamples() );
 
   this->getFilteredFeatureDataPair(featureIdx1,featureIdx2,sampleIcs,featureData1,featureData2);
 
   return( math::pearsonCorrelation(featureData1,featureData2) );
+
 }
 
 size_t Treedata::getFeatureIdx(const string& featureName) {
@@ -539,12 +539,11 @@ void Treedata::permuteContrasts() {
   for ( size_t i = nFeatures; i < 2*nFeatures; ++i ) {
     
 
-    vector<size_t> sampleIcs(nSamples);
-    datadefs::range(sampleIcs);
+    vector<size_t> sampleIcs = utils::range( nSamples );
 
     vector<num_t> filteredData = this->getFilteredFeatureData(i,sampleIcs);
     
-    Treedata::permute(filteredData);
+    this->permute<num_t>(filteredData);
 
     //datadefs::print(features_[i].data);
 
@@ -632,27 +631,28 @@ template <typename T> void Treedata::transpose(vector<vector<T> >& mat) {
   }
 }
 
-
-void Treedata::permute(vector<size_t>& ics) {
+/*
+  void Treedata::permute(vector<size_t>& ics) {
   for (size_t i = 0; i < ics.size(); ++i) {
-    size_t j = randomInteger_() % (i + 1);
-    ics[i] = ics[j];
-    ics[j] = i;
+  size_t j = randomInteger_() % (i + 1);
+  ics[i] = ics[j];
+  ics[j] = i;
   }
-}
-
-void Treedata::permute(vector<num_t>& data) {
+  }
+  
+  void Treedata::permute(vector<num_t>& data) {
   size_t n = data.size();
   vector<size_t> ics(n);
-
+  
   Treedata::permute(ics);
-
+  
   for(size_t i = 0; i < n; ++i) {
-    num_t temp = data[i];
-    data[i] = data[ics[i]];
-    data[ics[i]] = temp;
+  num_t temp = data[i];
+  data[i] = data[ics[i]];
+  data[ics[i]] = temp;
   }
-}
+  }
+*/
 
 
 void Treedata::bootstrapFromRealSamples(const bool withReplacement, 
@@ -688,8 +688,8 @@ void Treedata::bootstrapFromRealSamples(const bool withReplacement,
       ics[sampleIdx] = allIcs[randomInteger_() % nRealSamples];
     }
   } else {  //If sampled without replacement...
-    vector<size_t> foo(nRealSamples);
-    Treedata::permute(foo);
+    vector<size_t> foo = utils::range(nRealSamples);
+    this->permute<size_t>(foo);
     for(size_t i = 0; i < nSamples; ++i) {
       ics[i] = allIcs[foo[i]];
     }

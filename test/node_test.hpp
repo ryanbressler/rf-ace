@@ -111,8 +111,7 @@ void NodeTest::test_numericalFeatureSplit() {
   CPPUNIT_ASSERT( treedata.getFeatureName(1) == "N:F2" );
 
   vector<size_t> sampleIcs_left(0);
-  vector<size_t> sampleIcs_right(8);
-  datadefs::range(sampleIcs_right);
+  vector<size_t> sampleIcs_right = utils::range(8);
   
   datadefs::num_t splitValue;
   datadefs::num_t splitFitness;
@@ -179,8 +178,7 @@ void NodeTest::test_categoricalFeatureSplit() {
   //GI.partitionSequence = &PS;
 
   vector<size_t> sampleIcs_left(0);
-  vector<size_t> sampleIcs_right(n);
-  datadefs::range(sampleIcs_right);
+  vector<size_t> sampleIcs_right = utils::range(n);
   
   set<num_t> splitValues_left,splitValues_right;
   datadefs::num_t splitFitness;
@@ -239,8 +237,7 @@ void NodeTest::test_categoricalFeatureSplit() {
   CPPUNIT_ASSERT( fabs(splitFitness - 1) < datadefs::EPS );
    
   sampleIcs_left.clear();
-  sampleIcs_right.resize(n);
-  datadefs::range(sampleIcs_right);
+  sampleIcs_right = utils::range(n);
   
   splitValues_left.clear();
   splitValues_right.clear();

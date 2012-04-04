@@ -10,6 +10,7 @@ class UtilsTest : public CppUnit::TestFixture {
   CPPUNIT_TEST( test_parse );
   CPPUNIT_TEST( test_str2 );
   CPPUNIT_TEST( test_join );
+  CPPUNIT_TEST( test_range );
   CPPUNIT_TEST_SUITE_END();
   
 public:
@@ -20,6 +21,7 @@ public:
   void test_parse();
   void test_str2();
   void test_join();
+  void test_range();
   
 };
 
@@ -83,6 +85,19 @@ void UtilsTest::test_join() {
 
 
 }
+
+void UtilsTest::test_range() {
+
+  size_t n = 50;
+
+  vector<size_t> ics = utils::range(n);
+
+  for (size_t i = 0; i < n; ++i) {
+    CPPUNIT_ASSERT(ics[i] == i);
+  }
+  
+}
+
 
 // Registers the fixture into the test 'registry'
 CPPUNIT_TEST_SUITE_REGISTRATION( UtilsTest );

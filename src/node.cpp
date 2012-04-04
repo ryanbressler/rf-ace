@@ -31,10 +31,22 @@ Node::~Node() {
 
 void Node::GrowInstructions::validate() const {
 
-  assert( 0.0 < sampleSizeFraction && sampleSizeFraction <= 1.0 );
   assert( maxNodesToStop > 0 );
   assert( minNodeSizeToStop > 0 );
   assert( nFeaturesForSplit > 0 );
+  assert( featureIcs.size() > 0 );
+  
+  if ( isRandomSplit ) {
+    assert( nFeaturesForSplit <= featureIcs.size() );
+  } else {
+    assert( nFeaturesForSplit == featureIcs.size() );
+  }
+
+  if ( sampleWithReplacement ) {
+    assert( 0.0 < sampleSizeFraction );
+  } else {
+    assert( 0.0 < sampleSizeFraction && sampleSizeFraction <= 1.0 );
+  }
 
 }
 
@@ -71,6 +83,7 @@ void Node::setSplitter(const size_t splitterIdx,
   splitter_.idx = splitterIdx;
   splitter_.name = splitterName;
   splitter_.isNumerical = true;
+  splitter_.leftFraction = leftFraction;
   splitter_.leftLeqValue = splitLeftLeqValue;
   splitter_.leftFraction = leftFraction;
 
@@ -101,6 +114,7 @@ void Node::setSplitter(const size_t splitterIdx,
   splitter_.idx = splitterIdx;
   splitter_.name = splitterName;
   splitter_.isNumerical = false;
+  splitter_.leftFraction = leftFraction;
   splitter_.leftValues = leftSplitValues;
   splitter_.rightValues = rightSplitValues;
 
@@ -166,7 +180,7 @@ Node* Node::rightChild() {
  */
 void Node::print(string& traversal, ofstream& toFile) {
 
-  toFile << "NODE=" << traversal << ",PRED=" << setprecision(3) << trainPrediction_;
+  toFile << "NODE=" << traversal << ",PRED=" << trainPrediction_;
   
   if ( this->hasChildren() ) {
     
@@ -217,6 +231,7 @@ void Node::setTrainPrediction(const num_t trainPrediction) {
 // !! Documentation: just your usual accessor, returning a copy of
 // !! trainPrediction_.
 num_t Node::getTrainPrediction() {
+  assert( !datadefs::isNAN(trainPrediction_) );
   return( trainPrediction_ );
 }
 
@@ -230,6 +245,15 @@ void Node::recursiveNodeSplit(Treedata* treeData,
   size_t nSamples = sampleIcs.size();
 
   vector<num_t> trainData = treeData->getFeatureData(targetIdx,sampleIcs);
+
+  /*
+    num_t foo = math::mean(trainData);
+    if ( foo > 1e10 ) {
+    cout << "Hmm, something may be wrong: trainData = ";
+    datadefs::print(trainData);
+    }
+  */
+  
   if ( GI.predictionFunctionType == MEAN ) {
     this->setTrainPrediction( math::mean(trainData) );
   } else if ( GI.predictionFunctionType == MODE ) {
@@ -247,32 +271,35 @@ void Node::recursiveNodeSplit(Treedata* treeData,
     //cout << "Too few samples to start with, quitting" << endl;
     return;
   }
-  
-  vector<size_t> featureSampleIcs(GI.nFeaturesForSplit);
+
+  vector<size_t> featureSampleIcs; 
+  featureSampleIcs = GI.featureIcs;
 
   if(GI.isRandomSplit) {
+
+    // In-place permute of feature indices
+    treeData->permute<size_t>(featureSampleIcs);
+
+    // Take only the first ones
+    featureSampleIcs.resize(GI.nFeaturesForSplit);
+
+    // With 1% sampling rate assign contrasts
     if(GI.useContrasts) {
       for(size_t i = 0; i < GI.nFeaturesForSplit; ++i) {
 	
-        featureSampleIcs[i] = treeData->getRandomIndex(treeData->nFeatures());
 	// If the sampled feature is a contrast... 
 	if( treeData->getRandomIndex( 35535 ) < 355.35 ) { // %1 sampling rate
-	  //cout << "Generated CONTRAST \n" << endl;
+
 	  featureSampleIcs[i] += treeData->nFeatures();
 	}
       }
-    } else {
-      for(size_t i = 0; i < GI.nFeaturesForSplit; ++i) {
-        featureSampleIcs[i] = treeData->getRandomIndex(treeData->nFeatures());
-      }
-    }
+    } 
+
   } else {
-    for(size_t i = 0; i < GI.nFeaturesForSplit; ++i) {
-      //cout << " " << i;
-      featureSampleIcs[i] = i;
-    }
+
+    assert( featureSampleIcs.size() == GI.nFeaturesForSplit );
+
   }
-  //cout << endl;
   
   vector<size_t> sampleIcs_left,sampleIcs_right;
 

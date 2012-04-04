@@ -73,6 +73,7 @@ public:
     bool useContrasts;
     PredictionFunctionType predictionFunctionType;
     size_t numClasses;
+    vector<size_t> featureIcs;
     
     void validate() const;
   };
