@@ -129,6 +129,31 @@ public:
   void replaceFeatureData(const size_t featureIdx, const vector<num_t>& featureData);
   void replaceFeatureData(const size_t featureIdx, const vector<string>& rawFeatureData);
 
+  template <typename T> 
+  void permute(vector<T>& data) {
+
+    // Data size
+    size_t n = data.size();
+    
+    // Mapping indices
+    vector<size_t> ics(n);
+    
+    // Permute indices
+    for (size_t i = 0; i < n; ++i) {
+      size_t j = randomInteger_() % (i + 1);
+      ics[i] = ics[j];
+      ics[j] = i;
+    }
+    
+    // Re-map data based on permuted indices
+    for(size_t i = 0; i < n; ++i) {
+      T temp = data[i];
+      data[i] = data[ics[i]];
+      data[ics[i]] = temp;
+    }
+
+  }
+
 #ifndef TEST__
 private:
 #endif

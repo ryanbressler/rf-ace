@@ -125,8 +125,7 @@ void treeDataTest::test_getFeatureData() {
 
   Treedata treedata("test_2by8_numerical_matrix.tsv",'\t',':');
 
-  vector<size_t> sampleIcs(8);
-  datadefs::range(sampleIcs);
+  vector<size_t> sampleIcs = utils::range(8);
 
   vector<num_t> v1,v2;
 
@@ -203,8 +202,7 @@ void treeDataTest::test_getFilteredFeatureData() {
     N:F6    9       8       7       9       8       7       3       2       1.0     99.23
   */
   
-  vector<size_t> sampleIcs(10);
-  datadefs::range(sampleIcs);
+  vector<size_t> sampleIcs = utils::range(10);
 
   vector<num_t> filteredData = treeData.getFilteredFeatureData(0,sampleIcs);
 

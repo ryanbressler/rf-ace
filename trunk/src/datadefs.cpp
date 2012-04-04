@@ -215,11 +215,8 @@ void datadefs::sortDataAndMakeRef(const bool isIncreasingOrder,
                                                     // !! actual variable name
                                                     // !! as something more
                                                     // !! descriptive.
-  refIcs.resize(data.size()); // The actual allocation of refIcs is irrelevant;
-                              //  its contained data will be flattened and
-                              //  resized. Note that any values that are unsafe
-                              //  for equals may cause an unintended memory leak.
-  datadefs::range(refIcs);
+
+  refIcs = utils::range(data.size());
 
   datadefs::make_pairedv<num_t,size_t>(data,refIcs,pairedv);
 
@@ -255,15 +252,5 @@ void datadefs::map_data(vector<datadefs::num_t> const& data,
         it->second.push_back(i);
       }
     }
-  }
-}
-
-// !! Documentation: this is just a drop-in replacement for Python's range()
-// !! function, hinted by the size of the input vector. It mutates ics,
-// !! specifying a 0-based range in all cases, and could be made more robust if
-// !! the starting value could be given.
-void datadefs::range(vector<size_t>& ics) {
-  for(size_t i = 0; i < ics.size(); ++i) {
-    ics[i] = i;
   }
 }

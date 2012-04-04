@@ -101,6 +101,8 @@ namespace utils {
     return( ret );
   }
 
+  vector<size_t> range(const size_t n);
+
   istream& safeGetline(istream& is, string& t);
   
 }

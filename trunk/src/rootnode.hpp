@@ -14,20 +14,6 @@ public:
   RootNode(Treedata* treeData,
 	   const size_t targetIdx);
 
-  /*
-    RootNode(Treedata* treeData,
-    size_t targetIdx,
-    bool sampleWithReplacement,
-    num_t sampleSizeFraction,
-    size_t maxNodesToStop,
-    size_t minNodeSizeToStop,
-    bool isRandomSplit,
-    size_t nFeaturesForSplit,
-    bool useContrasts,
-    size_t numClasses,
-    const PredictionFunctionType predictionFunctionType);
-  */
-
   ~RootNode();
 
   void growTree(const GrowInstructions& GI);
@@ -35,24 +21,31 @@ public:
   size_t nNodes();
 
   num_t getTrainPrediction(const size_t sampleIdx);
+  num_t getPermutedTrainPrediction(const size_t featureIdx,
+				   const size_t sampleIdx);
+
   vector<num_t> getTrainPrediction();
 
-  num_t getOobError();
+  vector<size_t> getOobIcs();
+
+  //num_t getOobError();
   size_t nOobSamples();
 
-  set<size_t> getFeaturesInTree() { return( featuresInTree_ ); }
+  //set<size_t> getFeaturesInTree();
 
-  num_t getImportance(const size_t featureIdx);
+  //num_t getImportance(const size_t featureIdx);
 
+#ifndef TEST__
 private:
+#endif
 
-  map<Node*,vector<size_t> > percolateSampleIcs(const vector<size_t>& sampleIcs);
+  //map<Node*,vector<size_t> > percolateSampleIcs(const vector<size_t>& sampleIcs);
   Node* percolateSampleIdx(const size_t sampleIdx);
 
-  map<Node*,vector<size_t> > percolateSampleIcsAtRandom(const size_t featureIdx, const vector<size_t>& sampleIcs);
+  //map<Node*,vector<size_t> > percolateSampleIcsAtRandom(const size_t featureIdx, const vector<size_t>& sampleIcs);
   Node* percolateSampleIdxAtRandom(const size_t featureIdx, const size_t sampleIdx);
 
-  num_t getPredictionError(const map<Node*,vector<size_t> >& percolatedSampleIcs);
+  //num_t getPredictionError(const map<Node*,vector<size_t> >& percolatedSampleIcs);
 
   // Required parameters
   Treedata* treeData_;
@@ -62,12 +55,10 @@ private:
   size_t nNodes_;
   vector<size_t> bootstrapIcs_;
   vector<size_t> oobIcs_;
-  num_t oobError_;
+
   set<size_t> featuresInTree_;
 
-  //GrowInstructions GI_;
-
-  
+  vector<num_t> trainPredictionCache_;
 
 };
 

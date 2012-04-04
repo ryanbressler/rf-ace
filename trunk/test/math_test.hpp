@@ -14,6 +14,7 @@ class MathTest : public CppUnit::TestFixture {
   CPPUNIT_TEST( test_squaredError );
   CPPUNIT_TEST( test_pearsonCorrelation );
   CPPUNIT_TEST( test_ttest );
+  CPPUNIT_TEST( test_mean );
   CPPUNIT_TEST( test_mode );
   CPPUNIT_TEST( test_gamma );
   CPPUNIT_TEST( test_incrementDecrementSquaredError );
@@ -28,6 +29,7 @@ public:
   void test_squaredError();
   void test_pearsonCorrelation();
   void test_ttest();
+  void test_mean();
   void test_mode();
   void test_gamma();
   void test_incrementDecrementSquaredError();
@@ -210,13 +212,27 @@ void MathTest::test_ttest() {
 
 }
 
+void MathTest::test_mean() {
+
+  vector<datadefs::num_t> x;
+
+  CPPUNIT_ASSERT( datadefs::isNAN(math::mean(x)) );
+  x.push_back(1.0);
+  CPPUNIT_ASSERT( fabs( math::mean(x) - 1.0 ) < datadefs::EPS );
+  x.push_back(2.0);
+  CPPUNIT_ASSERT( fabs( math::mean(x) - 1.5 ) < datadefs::EPS );
+  x.push_back(datadefs::NUM_NAN);
+  CPPUNIT_ASSERT( datadefs::isNAN(math::mean(x)) );
+
+}
+
 void MathTest::test_mode() {
 
   vector<datadefs::num_t> x(20,0);
   CPPUNIT_ASSERT( math::mode<datadefs::num_t>(x) == 0 );
 
-  vector<size_t> y(20);
-  datadefs::range(y);
+  vector<size_t> y = utils::range(20);
+
   CPPUNIT_ASSERT( math::mode<size_t>(y) == 0 );
 
   y[19] = 18;
