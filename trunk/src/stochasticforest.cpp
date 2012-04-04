@@ -589,86 +589,41 @@ void StochasticForest::predict(vector<num_t>& prediction, vector<num_t>& confide
  
 }
 
-// In growForest a bootstrapper was utilized to generate in-box (IB) and out-of-box (OOB) samples.
-// IB samples were used to grow the forest, excluding OOB samples. In this function, these 
-// previously excluded OOB samples are used for testing which features in the trained trees seem
-// to contribute the most to the quality of the predictions. This is a three-fold process:
-// 
-// 0. for feature_i in features:
-// 1. Take the original forest, percolate OOB samples across the trees all the way to the leaf nodes
-//    and check how concordant the OOB and IB samples in the leafs, on average, are.
-// 2. Same as with #1, but if feature_i is to make the split, sample a random value for feature_i
-//    to make the split with.
-// 3. Quantitate relative increase of disagreement between OOB and IB data on the leaves, with and 
-//    without random sampling. Rationale: if feature_i is important, random sampling will have a 
-//    big impact, thus, relative increase of disagreement will be high.  
-/*
-  void StochasticForest::updateImportanceValues() {
-  
-  // The number of real features in the data matrix...
-  size_t nRealFeatures = treeData_->nFeatures();
-  
-  // But as there is an equal amount of contrast features, the total feature count is double that.
-  size_t nAllFeatures = 2 * nRealFeatures;
+num_t StochasticForest::error(const vector<num_t>& data1, 
+			      const vector<num_t>& data2) {
 
-  importanceValues_.clear();
-  importanceValues_.resize( nAllFeatures, 0.0 );
+  size_t nSamples = data1.size();
+  assert( nSamples == data2.size() );
 
-  vector<bool> hasImportance( nAllFeatures, false );
+  num_t predictionError = 0.0;
+  size_t nRealSamples = 0;
 
-  size_t nOobSamples = 0;
-
-  oobError_ = 0.0;
-
-  for ( size_t treeIdx = 0; treeIdx < this->nTrees(); ++treeIdx ) {
-
-  size_t nNewOobSamples = rootNodes_[treeIdx]->nOobSamples();
-  
-  nOobSamples += nNewOobSamples;
-  
-  oobError_ += rootNodes_[treeIdx]->getOobError(); // Unnormalized!
-  
-  set<size_t> featuresInTree = rootNodes_[treeIdx]->getFeaturesInTree();
-  
-  for ( set<size_t>::const_iterator it( featuresInTree.begin() ); it != featuresInTree.end(); ++it ) {
-  
-  size_t featureIdx = *it;
-  
-  importanceValues_[featureIdx] += rootNodes_[treeIdx]->getImportance(featureIdx);
-  hasImportance[featureIdx] = true;
-  }
-  
-  }
-  
-  // Normalize oobError_ by the number of trees and OOB samples
-  oobError_ /= nOobSamples;
-  
-  for ( size_t featureIdx = 0; featureIdx < nAllFeatures; ++featureIdx ) {
-  
-  if ( !hasImportance[featureIdx] || fabs(oobError_) < datadefs::EPS ) {
-  importanceValues_[featureIdx] = datadefs::NUM_NAN;
+  if ( this->isTargetNumerical() ) {
+    for ( size_t sampleIdx = 0; sampleIdx < nSamples; ++sampleIdx ) {
+      if ( !datadefs::isNAN(data1[sampleIdx]) & !datadefs::isNAN(data2[sampleIdx]) ) {
+        ++nRealSamples;
+        predictionError += pow( data1[sampleIdx] - data2[sampleIdx] ,2);
+      }
+    }
   } else {
-  importanceValues_[featureIdx] /= ( nOobSamples * oobError_ );
+    for ( size_t sampleIdx = 0; sampleIdx < nSamples; ++sampleIdx ) {
+      if ( !datadefs::isNAN(data1[sampleIdx]) && !datadefs::isNAN(data2[sampleIdx]) ) {
+        ++nRealSamples;
+        predictionError += 1.0 * ( data1[sampleIdx] != data2[sampleIdx] );
+      }
+    }
   }
-  }
-  
-  contrastImportanceValues_.resize(nRealFeatures);
-  
-  copy(importanceValues_.begin() + nRealFeatures,
-  importanceValues_.end(),
-  contrastImportanceValues_.begin());
-  
-  importanceValues_.resize(nRealFeatures);
-  
-  }
-*/
+
+  predictionError /= nRealSamples;
+  return( predictionError );
+
+}
+
 
 void StochasticForest::updateImportanceValues() {
 
   vector<num_t> oobPredictions = this->getOobPredictions();
   
-  size_t nSamples = treeData_->nSamples();
-
   size_t nRealFeatures = treeData_->nFeatures();
   size_t nAllFeatures = 2*nRealFeatures;
 
@@ -678,52 +633,13 @@ void StochasticForest::updateImportanceValues() {
 
   importanceValues_.resize(nAllFeatures);
 
-  // datadefs::print(oobPredictions);
-  // datadefs::print(trueData);
-
-  oobError_ = 0.0;
-
-  size_t nRealSamples = 0;
-
-  if ( this->isTargetNumerical() ) {
-    for ( size_t sampleIdx = 0; sampleIdx < nSamples; ++sampleIdx ) {
-      if ( !datadefs::isNAN(oobPredictions[sampleIdx]) ) {
-	++nRealSamples;
-	oobError_ += pow( oobPredictions[sampleIdx] - trueData[sampleIdx] ,2); 
-      }
-    }
-  } else {
-    for ( size_t sampleIdx = 0; sampleIdx < nSamples; ++sampleIdx ) {
-      if ( !datadefs::isNAN(oobPredictions[sampleIdx]) ) {
-	++nRealSamples;
-        oobError_ += 1.0 * ( oobPredictions[sampleIdx] != trueData[sampleIdx] );
-      }
-    }
-  }
-
-  oobError_ /= nRealSamples;
-
-  //cout << "OOB error is " << oobError_ << endl;
+  oobError_ = this->error(oobPredictions,trueData);
 
   for ( size_t featureIdx = 0; featureIdx < nAllFeatures; ++featureIdx ) {
 
-    num_t permutedOobError = 0.0;
-
     vector<num_t> permutedOobPredictions = this->getPermutedOobPredictions(featureIdx);
 
-    if ( this->isTargetNumerical() ) {
-      for ( size_t sampleIdx = 0; sampleIdx < nSamples; ++sampleIdx ) {
-	if ( !datadefs::isNAN(permutedOobPredictions[sampleIdx]) ) {
-	permutedOobError += pow(permutedOobPredictions[sampleIdx]-trueData[sampleIdx],2) / nSamples;
-	}
-      }
-    } else {
-      for ( size_t sampleIdx = 0; sampleIdx < nSamples; ++sampleIdx ) {
-	if ( !datadefs::isNAN(permutedOobPredictions[sampleIdx]) ) {
-	  permutedOobError += 1.0 * ( permutedOobPredictions[sampleIdx] != trueData[sampleIdx] ) / nSamples;
-	}
-      }
-    }
+    num_t permutedOobError = this->error(permutedOobPredictions,trueData);
 
     importanceValues_[featureIdx] = ( permutedOobError - oobError_ ) / oobError_;
 
