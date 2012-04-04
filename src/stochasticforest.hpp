@@ -75,6 +75,9 @@ private:
   // TODO: StochasticForest::transformLogistic() should be moved elsewhere
   void transformLogistic(vector<num_t>& prediction, vector<num_t>& probability);
   
+  num_t error(const vector<num_t>& data1,
+	      const vector<num_t>& data2); 
+
   void updateImportanceValues();
 
   //Pointer to treeData_ object, stores all the feature data with which the trees are grown (i.e. training data)
