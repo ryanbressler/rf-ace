@@ -614,7 +614,10 @@ num_t StochasticForest::error(const vector<num_t>& data1,
     }
   }
 
-  predictionError /= nRealSamples;
+  if ( nRealSamples > 0 ) {
+    predictionError /= nRealSamples;
+  }
+
   return( predictionError );
 
 }

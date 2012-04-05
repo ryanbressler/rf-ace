@@ -64,6 +64,32 @@ namespace options {
     cout << "EXAMPLES:" << endl << endl;
     cout << "bin/rf-ace-predict -F rf_predictor.sf -I novel_data.arff -O predictions.tsv" << endl << endl;
   }
+
+  template <typename T>
+  class Parameter {
+  public:
+    string longOpt;
+    string shortOpt;
+    T value;
+    
+    void update(ArgParse& parser,const T& defaultValue) {
+      value = defaultValue;
+      parser.getArgument<T>(shortOpt,longOpt,value);
+    }
+  };
+
+  class Flag {
+  public:
+    string longOpt;
+    string shortOpt;
+    bool value;
+
+    void update(ArgParse& parser, const bool defaultValue) {
+      value = defaultValue;
+      parser.getFlag(shortOpt,longOpt,value);
+    }
+
+  };
   
   // Default general configuration
   const bool   GENERAL_DEFAULT_PRINT_HELP = false;
