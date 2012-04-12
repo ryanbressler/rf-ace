@@ -77,6 +77,8 @@ public:
   vector<num_t> getFilteredFeatureData(const size_t featureIdx,
 				       vector<size_t>& sampleIcs);
 
+  
+
   void getFilteredFeatureDataPair(const size_t featureIdx1, 
 				  const size_t featureIdx2, 
 				  vector<size_t>& sampleIcs, 
@@ -112,7 +114,11 @@ public:
   vector<string> getRawFeatureData(const size_t featureIdx);
   
   inline void getRandomData(const size_t featureIdx, num_t& data) {data = features_[featureIdx].data[randomInteger_() % sampleHeaders_.size() ]; }
+
   inline size_t getRandomIndex(const size_t n) { return( randomInteger_() % n ); }
+
+  // 2^32 == 4294967296 == upper bound for randomInteger_
+  inline num_t getRandomUnif() { return( static_cast<num_t>( 1.0 * randomInteger_() / 4294967296. ) ); }
   
   // Generates a bootstrap sample from the real samples of featureIdx. Samples not in the bootstrap sample will be stored in oob_ics,
   // and the number of oob samples is stored in noob.
@@ -206,20 +212,8 @@ private:
 
   map<string,size_t> name2idx_;
 
-  //map<string,size_t> name2idxHashTest_;
-
   MTRand_int32 randomInteger_;
-
-  /*
-    void initTemp();
-    
-    struct Temp {
-    vector<num_t> featureDataCopy;
-    vector<num_t> targetDataCopy;
-    vector<size_t> sampleIcsCopy;
-    vector<size_t> multiplicity;
-    } temp_;
-  */
+  
 };
 
 #endif

@@ -40,16 +40,16 @@ public:
   
   void learnRF();
   void learnGBT();
-  
-  //map<size_t,map<size_t,size_t> > featureFrequency();
-  
-  vector<num_t> importanceValues();
-  vector<num_t> contrastImportanceValues();
-  num_t oobError();
+    
+  num_t getOobError();
+
+  void getImportanceValues(vector<num_t>& importanceValues,
+                           vector<num_t>& contrastImportanceValues);
     
   void predict(vector<string>& categoryPrediction, vector<num_t>& confidence);
   void predict(vector<num_t>& prediction, vector<num_t>& confidence);
 
+  vector<num_t> getPredictions();
   vector<num_t> getOobPredictions();
   vector<num_t> getPermutedOobPredictions(const size_t featureIdx);
 
@@ -78,7 +78,6 @@ private:
   num_t error(const vector<num_t>& data1,
 	      const vector<num_t>& data2); 
 
-  void updateImportanceValues();
 
   //Pointer to treeData_ object, stores all the feature data with which the trees are grown (i.e. training data)
   Treedata* treeData_;
@@ -91,10 +90,6 @@ private:
 
   //Root nodes for every tree
   vector<RootNode*> rootNodes_;
-
-  vector<num_t> importanceValues_;
-  vector<num_t> contrastImportanceValues_;
-  num_t oobError_;
   
 };
 

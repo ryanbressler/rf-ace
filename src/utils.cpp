@@ -13,31 +13,11 @@ int utils::generateSeed() {
   
 }
 
-
-
 // Returns a copy of input vector x with NAN-entries removed
 // NOTE: is just a wrapper of the algorithm "remove_if"
 vector<num_t> utils::removeNANs(vector<num_t> x) {
 
-  //vector<num_t> trimmed = x.size());
-
   x.erase( remove_if(x.begin(),x.end(),&datadefs::isNAN), x.end() );
-
-  /*
-    size_t nRetained = 0;
-    for(size_t i = 0; i < x.size(); ++i) {
-    if( !datadefs::isNAN(x[i]) ) {
-    trimmed[nRetained] = x[i];
-    ++nRetained;
-    }
-    }
-    trimmed.resize(nRetained);
-    if ( nRetained == 0 ) {
-    cout << "utils::removeNANs() -- data has 0 real values!" << endl;
-    }
-    
-    return(trimmed);
-  */
 
   return( x );
 }
@@ -166,27 +146,6 @@ vector<string> utils::readListFromFile(const string& fileName, const char delimi
   
   return( utils::split(streamObj,delimiter) );
 }
-
-
-/*
-  string utils::join(const vector<string>& items, const char delimiter) {
-  
-  string ret("");
-  
-  if ( items.size() == 0 ) {
-  return( ret );
-  }
-  
-  ret = items[0];
-  
-  for( size_t i = 1; i < items.size(); ++i ) {
-  ret.append(delimiter+items[i]);
-  }
-  
-  return( ret );
-  
-  }
-*/
 
 set<string> utils::readFeatureMask(Treedata& treeData, const string& fileName) {
   

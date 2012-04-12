@@ -137,7 +137,6 @@ Treedata::Treedata(string fileName, char dataDelimiter, char headerDelimiter, in
     seed = utils::generateSeed();
   }
   randomInteger_.seed( static_cast<unsigned int>(seed) );
-  
 
   // Permute contrasts, so that the data becomes just noise
   this->permuteContrasts();

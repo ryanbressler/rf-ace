@@ -133,10 +133,17 @@ Node* RootNode::percolateSampleIdx(const size_t sampleIdx) {
       childNode = nodep->percolateData(treeData_->getRawFeatureData(featureIdxNew,value));
     }
 
-    // However, if percolation could not be done
-    // (previously unobserved category or missing value), it's time to exit the loop
+    // 
     if ( !childNode ) {
       break;
+      /*
+	num_t r = treeData_->getRandomUnif();
+	if ( r <= nodep->leftFraction() ) {
+	childNode = nodep->leftChild();
+	} else {
+	childNode = nodep->rightChild();
+	}
+      */
     }
 
     // Update the pointer and continue percolating
