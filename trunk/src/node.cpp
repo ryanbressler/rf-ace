@@ -272,8 +272,7 @@ void Node::recursiveNodeSplit(Treedata* treeData,
     return;
   }
 
-  vector<size_t> featureSampleIcs; 
-  featureSampleIcs = GI.featureIcs;
+  vector<size_t> featureSampleIcs = GI.featureIcs;
 
   if(GI.isRandomSplit) {
 
@@ -283,23 +282,23 @@ void Node::recursiveNodeSplit(Treedata* treeData,
     // Take only the first ones
     featureSampleIcs.resize(GI.nFeaturesForSplit);
 
-    // With 1% sampling rate assign contrasts
-    if(GI.useContrasts) {
-      for(size_t i = 0; i < GI.nFeaturesForSplit; ++i) {
-	
-	// If the sampled feature is a contrast... 
-	if( treeData->getRandomIndex( 35535 ) < 355.35 ) { // %1 sampling rate
-
-	  featureSampleIcs[i] += treeData->nFeatures();
-	}
-      }
-    } 
-
-  } else {
-
-    assert( featureSampleIcs.size() == GI.nFeaturesForSplit );
-
   }
+
+  // With 1% sampling rate assign contrasts
+  if(GI.useContrasts) {
+    for(size_t i = 0; i < GI.nFeaturesForSplit; ++i) {
+      
+      // If the sampled feature is a contrast... 
+      if( treeData->getRandomIndex( 35535 ) < 355.35 ) { // %1 sampling rate
+	
+	featureSampleIcs[i] += treeData->nFeatures();
+      }
+    }
+  } 
+
+  //datadefs::print<size_t>(featureSampleIcs);
+  
+  assert( featureSampleIcs.size() == GI.nFeaturesForSplit );
   
   vector<size_t> sampleIcs_left,sampleIcs_right;
 

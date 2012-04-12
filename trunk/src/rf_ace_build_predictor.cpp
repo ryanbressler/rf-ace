@@ -112,7 +112,7 @@ int main(const int argc, char* const argv[]) {
   SF.printToFile( gen_op.output );
   cout << "DONE" << endl << endl;
 
-  cout << "OOB error = " << SF.oobError();
+  cout << "OOB error = " << SF.getOobError();
 
   size_t targetIdx = treeData.getFeatureIdx(gen_op.targetStr);
   vector<num_t> data = utils::removeNANs(treeData.getFeatureData(targetIdx));

@@ -11,15 +11,9 @@
 #include <string>
 #include "datadefs.hpp"
 #include "treedata.hpp"
-//#include "splitter.hpp"
-//#include "partitionsequence.hpp"
 
 using namespace std;
 using datadefs::num_t;
-
-class Node;
-
-//typedef void (Node::*LeafPredictionFunction)(const vector<num_t>&, const size_t);
 
 class Node {
 public:
@@ -55,6 +49,8 @@ public:
 
   Node* leftChild();
   Node* rightChild();
+
+  num_t leftFraction() { return( splitter_.leftFraction ); }
 
   void deleteTree();
 

@@ -14,10 +14,7 @@ StochasticForest::StochasticForest(Treedata* treeData, const string& targetName,
   treeData_(treeData),
   parameters_(parameters),
   targetName_(targetName),
-  rootNodes_(parameters_.nTrees),
-  importanceValues_(treeData_->nFeatures(),0.0),
-  contrastImportanceValues_(treeData_->nFeatures(),0.0),
-  oobError_(datadefs::NUM_NAN) {
+  rootNodes_(parameters_.nTrees) {
 
   parameters_.validate();
 
@@ -251,13 +248,11 @@ void StochasticForest::learnRF() {
     
   }
 
-  this->updateImportanceValues();
 
 }
 
 void StochasticForest::learnGBT() {
-  
-  //parameters_.shrinkage = shrinkage;
+ 
 
   size_t targetIdx = treeData_->getFeatureIdx( targetName_ );
   size_t nCategories = targetSupport_.size();
@@ -267,7 +262,6 @@ void StochasticForest::learnGBT() {
   }
 
   // This is required since the number of trees became multiplied by the number of classes
-  //oobMatrix_.resize( parameters_.nTrees );
   rootNodes_.resize( parameters_.nTrees );
 
   RootNode::PredictionFunctionType predictionFunctionType;
@@ -302,8 +296,6 @@ void StochasticForest::learnGBT() {
   } else {
     this->growCategoricalGBT(GI);
   }
-
-  this->updateImportanceValues();
 
 }
 
@@ -623,8 +615,21 @@ num_t StochasticForest::error(const vector<num_t>& data1,
 }
 
 
-void StochasticForest::updateImportanceValues() {
+num_t StochasticForest::getOobError() {
 
+  vector<num_t> oobPredictions = this->getOobPredictions();
+  
+  size_t targetIdx = treeData_->getFeatureIdx(targetName_);
+  vector<num_t> trueData = treeData_->getFeatureData(targetIdx);
+
+  return( this->error(oobPredictions,trueData) );
+  
+}
+
+void StochasticForest::getImportanceValues(vector<num_t>& importanceValues, vector<num_t>& contrastImportanceValues) {
+  
+  //assert( !datadefs::isNAN(oobError_) );
+  
   vector<num_t> oobPredictions = this->getOobPredictions();
   
   size_t nRealFeatures = treeData_->nFeatures();
@@ -634,9 +639,9 @@ void StochasticForest::updateImportanceValues() {
 
   vector<num_t> trueData = treeData_->getFeatureData(targetIdx);
 
-  importanceValues_.resize(nAllFeatures);
+  importanceValues.resize(nAllFeatures);
 
-  oobError_ = this->error(oobPredictions,trueData);
+  num_t oobError = this->error(oobPredictions,trueData);
 
   for ( size_t featureIdx = 0; featureIdx < nAllFeatures; ++featureIdx ) {
 
@@ -644,24 +649,44 @@ void StochasticForest::updateImportanceValues() {
 
     num_t permutedOobError = this->error(permutedOobPredictions,trueData);
 
-    importanceValues_[featureIdx] = ( permutedOobError - oobError_ ) / oobError_;
+    importanceValues[featureIdx] = ( permutedOobError - oobError ) / oobError;
 
   }
 
-  contrastImportanceValues_.resize(nRealFeatures);
+  contrastImportanceValues.resize(nRealFeatures);
 
-  copy(importanceValues_.begin() + nRealFeatures,
-       importanceValues_.end(),
-       contrastImportanceValues_.begin());
+  copy(importanceValues.begin() + nRealFeatures,
+       importanceValues.end(),
+       contrastImportanceValues.begin());
 
-  importanceValues_.resize(nRealFeatures);
+  importanceValues.resize(nRealFeatures);
 
 }
 
 
 
-vector<num_t> StochasticForest::getOobPredictions() {
+vector<num_t> StochasticForest::getPredictions() {
+  
+  size_t nSamples = treeData_->nSamples();
+  size_t nTrees = this->nTrees();
+  vector<vector<num_t> > predictionMatrix(nSamples,vector<num_t>(nTrees));
+  for ( size_t treeIdx = 0; treeIdx < nTrees; ++treeIdx ) {
+    for ( size_t sampleIdx = 0; sampleIdx < nSamples; ++sampleIdx ) {
+      predictionMatrix[sampleIdx][treeIdx] = rootNodes_[treeIdx]->getTrainPrediction(sampleIdx);
+    }
+  }
+  
+  vector<num_t> predictions(nSamples);
+  
+  this->isTargetNumerical() ?
+    transform(predictionMatrix.begin(),predictionMatrix.end(),predictions.begin(),math::mean) :
+    transform(predictionMatrix.begin(),predictionMatrix.end(),predictions.begin(),math::mode<num_t>);
+  
+  return( predictions );
+}
 
+vector<num_t> StochasticForest::getOobPredictions() {
+  
   size_t nSamples = treeData_->nSamples();
   size_t nTrees = this->nTrees();
   vector<vector<num_t> > predictionMatrix(nSamples);
@@ -672,16 +697,13 @@ vector<num_t> StochasticForest::getOobPredictions() {
       predictionMatrix[sampleIdx].push_back( rootNodes_[treeIdx]->getTrainPrediction(sampleIdx) );
     }
   }
+
   vector<num_t> oobPredictions(nSamples);
-  if ( this->isTargetNumerical() ) {
-    for ( size_t sampleIdx = 0; sampleIdx < nSamples; ++sampleIdx ) {
-      oobPredictions[sampleIdx] = math::mean( predictionMatrix[sampleIdx] );
-    } 
-  } else {
-    for ( size_t sampleIdx = 0; sampleIdx < nSamples; ++sampleIdx ) {
-      oobPredictions[sampleIdx] = math::mode( predictionMatrix[sampleIdx] );
-    }
-  }
+  
+  this->isTargetNumerical() ? 
+    transform(predictionMatrix.begin(),predictionMatrix.end(),oobPredictions.begin(),math::mean) : 
+    transform(predictionMatrix.begin(),predictionMatrix.end(),oobPredictions.begin(),math::mode<num_t>);
+
   return( oobPredictions );
 }
 
@@ -697,17 +719,15 @@ vector<num_t> StochasticForest::getPermutedOobPredictions(const size_t featureId
       predictionMatrix[sampleIdx].push_back( rootNodes_[treeIdx]->getPermutedTrainPrediction(featureIdx,sampleIdx) );
     }
   }
+
   vector<num_t> oobPredictions(nSamples);
-  if ( this->isTargetNumerical() ) {
-    for ( size_t sampleIdx = 0; sampleIdx < nSamples; ++sampleIdx ) {
-      oobPredictions[sampleIdx] = math::mean( predictionMatrix[sampleIdx] );
-    } 
-  } else {
-    for ( size_t sampleIdx = 0; sampleIdx < nSamples; ++sampleIdx ) {
-      oobPredictions[sampleIdx] = math::mode( predictionMatrix[sampleIdx] );
-    }
-  }
+   
+  this->isTargetNumerical() ?
+    transform(predictionMatrix.begin(),predictionMatrix.end(),oobPredictions.begin(),math::mean) :
+    transform(predictionMatrix.begin(),predictionMatrix.end(),oobPredictions.begin(),math::mode<num_t>);
+
   return( oobPredictions );
+
 }
 
 
@@ -861,15 +881,15 @@ size_t StochasticForest::nTrees() {
   }
 */
 
-vector<num_t> StochasticForest::importanceValues() {
-  return( importanceValues_ );
-}
+//vector<num_t> StochasticForest::importanceValues() {
+//  return( importanceValues_ );
+//}
 
-vector<num_t> StochasticForest::contrastImportanceValues() {
-  return( contrastImportanceValues_ );
-}
+//vector<num_t> StochasticForest::contrastImportanceValues() {
+//  return( contrastImportanceValues_ );
+//}
 
-num_t StochasticForest::oobError() {
-  return( oobError_ );
-}
+//num_t StochasticForest::oobError() {
+//  return( oobError_ );
+//}
 

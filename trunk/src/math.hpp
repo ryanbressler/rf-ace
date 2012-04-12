@@ -2,6 +2,7 @@
 #define MATH_HPP
 
 #include <vector>
+#include <algorithm>
 #include <map>
 #include "datadefs.hpp"
 #include "errno.hpp"
@@ -45,7 +46,7 @@ namespace math {
 			   const vector<num_t>& y);
 
   inline num_t mean(const vector<num_t>& x) {
-
+    
     if ( x.size() == 0 ) {
       return( datadefs::NUM_NAN );
     }
@@ -85,6 +86,8 @@ namespace math {
     return( maxElement->first );
   }
   
+  
+
   num_t gamma(const vector<num_t>& x, const size_t nCategories); 
   
   num_t squaredError(const vector<num_t>& x);

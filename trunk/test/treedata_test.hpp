@@ -11,7 +11,7 @@ class treeDataTest : public CppUnit::TestFixture {
   //CPPUNIT_TEST( test_permuteContrasts );
   CPPUNIT_TEST( test_name2idxMap );
   CPPUNIT_TEST( test_getFeatureData );
-  //CPPUNIT_TEST( test_updateSortOrder );
+  CPPUNIT_TEST( test_getRandomUnif );
   CPPUNIT_TEST( test_getFilteredFeatureData );
   CPPUNIT_TEST( test_getFilteredAndSortedFeatureDataPair3 );
   CPPUNIT_TEST( test_parseARFF );
@@ -26,7 +26,7 @@ public:
   void test_permuteContrasts();
   void test_name2idxMap();
   void test_getFeatureData();
-  //void test_updateSortOrder();
+  void test_getRandomUnif();
   void test_getFilteredFeatureData();
   void test_getFilteredAndSortedFeatureDataPair3();
   void test_parseARFF();
@@ -134,56 +134,6 @@ void treeDataTest::test_getFeatureData() {
   
 
 }
-
-/*
-  void treeDataTest::test_updateSortOrder() {
-  
-  Treedata treedata("test_6by10_mixed_matrix.tsv",'\t',':');
-  
-  CPPUNIT_ASSERT( treedata.features_[0].sortOrder[0] == 0 );
-  CPPUNIT_ASSERT( treedata.features_[0].sortOrder[1] == 5 );
-  CPPUNIT_ASSERT( treedata.features_[0].sortOrder[2] == 0 );
-  CPPUNIT_ASSERT( treedata.features_[0].sortOrder[3] == 4 );
-  CPPUNIT_ASSERT( treedata.features_[0].sortOrder[4] == 1 );
-  CPPUNIT_ASSERT( treedata.features_[0].sortOrder[5] == 2 );
-  CPPUNIT_ASSERT( treedata.features_[0].sortOrder[6] == 3 );
-  CPPUNIT_ASSERT( treedata.features_[0].sortOrder[7] == 7 );
-  CPPUNIT_ASSERT( treedata.features_[0].sortOrder[8] == 6 );
-  CPPUNIT_ASSERT( treedata.features_[0].sortOrder[9] == 0 );
-  
-  CPPUNIT_ASSERT( treedata.features_[1].sortOrder[0] == 0 );
-  CPPUNIT_ASSERT( treedata.features_[1].sortOrder[1] == 1 );
-  CPPUNIT_ASSERT( treedata.features_[1].sortOrder[2] == 2 );
-  CPPUNIT_ASSERT( treedata.features_[1].sortOrder[3] == 3 );
-  CPPUNIT_ASSERT( treedata.features_[1].sortOrder[4] == 4 );
-  CPPUNIT_ASSERT( treedata.features_[1].sortOrder[5] == 0 );
-  CPPUNIT_ASSERT( treedata.features_[1].sortOrder[6] == 0 );
-  CPPUNIT_ASSERT( treedata.features_[1].sortOrder[7] == 5 );
-  CPPUNIT_ASSERT( treedata.features_[1].sortOrder[8] == 0 );
-  CPPUNIT_ASSERT( treedata.features_[1].sortOrder[9] == 6 );
-  
-  CPPUNIT_ASSERT( treedata.features_[2].sortOrder.size() == 0 );
-  
-  CPPUNIT_ASSERT( treedata.features_[3].sortOrder[0] == 9 );
-  CPPUNIT_ASSERT( treedata.features_[3].sortOrder[1] == 8 );
-  CPPUNIT_ASSERT( treedata.features_[3].sortOrder[2] == 7 );
-  CPPUNIT_ASSERT( treedata.features_[3].sortOrder[3] == 6 );
-  CPPUNIT_ASSERT( treedata.features_[3].sortOrder[4] == 5 );
-  CPPUNIT_ASSERT( treedata.features_[3].sortOrder[5] == 4 );
-  CPPUNIT_ASSERT( treedata.features_[3].sortOrder[6] == 3 );
-  CPPUNIT_ASSERT( treedata.features_[3].sortOrder[7] == 2 );
-  CPPUNIT_ASSERT( treedata.features_[3].sortOrder[8] == 1 );
-  CPPUNIT_ASSERT( treedata.features_[3].sortOrder[9] == 0 );
-  
-  CPPUNIT_ASSERT( treedata.features_[4].sortOrder.size() == 0 );
-  
-  CPPUNIT_ASSERT( treedata.features_[5].sortOrder[6] == 2 );
-  CPPUNIT_ASSERT( treedata.features_[5].sortOrder[7] == 1 );
-  CPPUNIT_ASSERT( treedata.features_[5].sortOrder[8] == 0 );
-  CPPUNIT_ASSERT( treedata.features_[5].sortOrder[9] == 9 );
-  
-  } 
-*/ 
 
 
 void treeDataTest::test_getFilteredFeatureData() {
@@ -471,6 +421,17 @@ void treeDataTest::test_parseARFF() {
   CPPUNIT_ASSERT( fabs( treeData.getFeatureData(4,7) - 104.0000 ) < datadefs::EPS );
   CPPUNIT_ASSERT( fabs( treeData.getFeatureData(4,8) - 126.0000 ) < datadefs::EPS );
   CPPUNIT_ASSERT( fabs( treeData.getFeatureData(4,9) - 150.0000 ) < datadefs::EPS );
+
+}
+
+void treeDataTest::test_getRandomUnif() {
+
+  Treedata treedata("test_6by10_mixed_matrix.tsv",'\t',':');
+
+  for ( size_t i = 0; i < 100000; ++i ) {
+    datadefs::num_t r = treedata.getRandomUnif();
+    CPPUNIT_ASSERT( 0.0 <= r && r < 1.0 );
+  }
 
 }
 

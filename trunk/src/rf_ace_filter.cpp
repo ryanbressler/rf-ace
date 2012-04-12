@@ -217,8 +217,7 @@ statistics::RF_statistics executeRandomForest(Treedata& treeData,
     // Get the number of nodes in each tree in the forest
     nodeMat[permIdx] = SF.nNodes();
         
-    importanceMat[permIdx] = SF.importanceValues();
-    contrastImportanceMat[permIdx] = SF.contrastImportanceValues();
+    SF.getImportanceValues(importanceMat[permIdx],contrastImportanceMat[permIdx]);
 
     // Store the new percentile value in the vector cSample
     cSample[permIdx] = math::percentile( utils::removeNANs( contrastImportanceMat[permIdx] ) , 0.5);
