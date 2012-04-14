@@ -26,16 +26,16 @@ public:
 
   //Sets a splitter feature for the node.
   //NOTE: splitter can be assigned only once! Subsequent setter calls will raise an assertion failure.
-  void setSplitter(const size_t splitterIdx, 
-		   const string& splitterName, 
-		   const num_t leftFraction, 
-		   const num_t splitLeftLeqValue);
+  void setSplitter(const size_t splitterIdx,
+                   const string& splitterName,
+                   const num_t leftFraction,
+                   const num_t splitLeftLeqValue);
 
-  void setSplitter(const size_t splitterIdx, 
-		   const string& splitterName, 
-		   const num_t leftFraction, 
-		   const set<string>& leftSplitValues, 
-		   const set<string>& rightSplitValues);
+  void setSplitter(const size_t splitterIdx,
+                   const string& splitterName,
+                   const num_t leftFraction,
+                   const set<string>& leftSplitValues,
+                   const set<string>& rightSplitValues);
 
   //Given a value, descends to either one of the child nodes, if existing, otherwise returns a pointer to the current node
   Node* percolateData(const num_t data);
@@ -77,7 +77,7 @@ public:
 #ifndef TEST__
 protected:
 #endif
-
+  
   void recursiveNodeSplit(Treedata* treeData,
                           const size_t targetIdx,
                           const vector<size_t>& sampleIcs,
@@ -100,39 +100,39 @@ private:
 #endif
 
   
-
-  void numericalFeatureSplit(Treedata* treedata,
-                             const size_t targetIdx,
-                             const size_t featureIdx,
-                             const GrowInstructions& GI,
-                             vector<size_t>& sampleIcs_left,
-                             vector<size_t>& sampleIcs_right,
-			     num_t& splitValue,
-                             num_t& splitFitness);
-
-  void categoricalFeatureSplit(Treedata* treedata,
-                               const size_t targetIdx,
-                               const size_t featureIdx,
-			       const GrowInstructions& GI,
-			       vector<size_t>& sampleIcs_left,
-                               vector<size_t>& sampleIcs_right,
-                               set<num_t>& splitValues_left,
-                               set<num_t>& splitValues_right,
-                               num_t& splitFitness);
-
-  
-  inline num_t getSplitFitness(const size_t n_left, 
-			       const size_t sf_left,
-			       const size_t n_right,
-			       const size_t sf_right,
-			       const size_t n_tot,
-			       const size_t sf_tot) {
+  /*
+    void numericalFeatureSplit(Treedata* treedata,
+    const size_t targetIdx,
+    const size_t featureIdx,
+    const GrowInstructions& GI,
+    vector<size_t>& sampleIcs_left,
+    vector<size_t>& sampleIcs_right,
+    num_t& splitValue,
+    num_t& splitFitness);
+    
+    void categoricalFeatureSplit(Treedata* treedata,
+    const size_t targetIdx,
+    const size_t featureIdx,
+    const GrowInstructions& GI,
+    vector<size_t>& sampleIcs_left,
+    vector<size_t>& sampleIcs_right,
+    set<num_t>& splitValues_left,
+    set<num_t>& splitValues_right,
+    num_t& splitFitness);
+    
+    
+    inline num_t getSplitFitness(const size_t n_left, 
+    const size_t sf_left,
+    const size_t n_right,
+    const size_t sf_right,
+    const size_t n_tot,
+    const size_t sf_tot) {
     
     return( ( -1.0*n_left*n_right*sf_tot + 
-	       1.0*n_tot*n_right*sf_left + 
-	       1.0*n_tot*n_left*sf_right ) / 
-	    ( 1.0*n_left*n_right * (1.0*n_tot*n_tot - 1.0*sf_tot) ) ); }
-
+    1.0*n_tot*n_right*sf_left + 
+    1.0*n_tot*n_left*sf_right ) / 
+    ( 1.0*n_left*n_right * (1.0*n_tot*n_tot - 1.0*sf_tot) ) ); }
+  */
 
 
   struct Splitter {

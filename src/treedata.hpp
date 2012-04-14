@@ -77,8 +77,43 @@ public:
   vector<num_t> getFilteredFeatureData(const size_t featureIdx,
 				       vector<size_t>& sampleIcs);
 
-  
+  num_t numericalFeatureSplit(const size_t targetIdx,
+			      const size_t featureIdx,
+			      const size_t minSamples,
+			      vector<size_t>& sampleIcs_left,
+			      vector<size_t>& sampleIcs_right,
+			      num_t& splitValue);
 
+  num_t categoricalFeatureSplit(const size_t targetIdx,
+				const size_t featureIdx,
+				const size_t minSamples,
+				vector<size_t>& sampleIcs_left,
+				vector<size_t>& sampleIcs_right,
+				set<num_t>& splitValues_left,
+				set<num_t>& splitValues_right);
+
+  num_t getCategoricalSplitFitness(const num_t sf_tot,
+                                   const num_t nsf,
+                                   const size_t n);
+
+  num_t getNumericalSplitFitness(const num_t se_tot,
+				 const num_t se_best);
+
+  /*
+    inline num_t getSplitFitness(const size_t n_left,
+    const size_t sf_left,
+    const size_t n_right,
+    const size_t sf_right,
+    const size_t n_tot,
+    const size_t sf_tot) {
+    
+    return( ( -1.0*n_left*n_right*sf_tot +
+    1.0*n_tot*n_right*sf_left +
+    1.0*n_tot*n_left*sf_right ) /
+    ( 1.0*n_left*n_right * (1.0*n_tot*n_tot - 1.0*sf_tot) ) ); }
+  */    
+
+  
   void getFilteredFeatureDataPair(const size_t featureIdx1, 
 				  const size_t featureIdx2, 
 				  vector<size_t>& sampleIcs, 
