@@ -135,15 +135,13 @@ Node* RootNode::percolateSampleIdx(const size_t sampleIdx) {
 
     // 
     if ( !childNode ) {
-      break;
-      /*
-	num_t r = treeData_->getRandomUnif();
-	if ( r <= nodep->leftFraction() ) {
+      //break;
+      num_t r = treeData_->getRandomUnif();
+      if ( r <= nodep->leftFraction() ) {
 	childNode = nodep->leftChild();
-	} else {
+      } else {
 	childNode = nodep->rightChild();
-	}
-      */
+      }
     }
 
     // Update the pointer and continue percolating
@@ -201,7 +199,13 @@ Node* RootNode::percolateSampleIdxAtRandom(const size_t featureIdx, const size_t
     }
 
     if ( !childNode ) {
-      break;
+      //break;
+      num_t r = treeData_->getRandomUnif();
+      if ( r <= nodep->leftFraction() ) {
+        childNode = nodep->leftChild();
+      } else {
+        childNode = nodep->rightChild();
+      }
     }
 
     nodep = childNode;

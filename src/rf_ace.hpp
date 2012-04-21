@@ -35,7 +35,7 @@ namespace rface {
       treeData.whiteList(whiteFeatureNames);
       cout << "DONE" << endl;
     } 
-    
+
     if ( gen_op.blackList != "" ) {
       
       cout << "Reading blacklist '" << gen_op.blackList << "', please wait... " << flush;
@@ -114,9 +114,9 @@ namespace rface {
 
   }
 
-  void updateMTry(Treedata& treeData, options::StochasticForest_options& SF_op) {
-    if ( SF_op.mTry == options::RF_DEFAULT_M_TRY ) {
-      SF_op.mTry = static_cast<size_t>( floor(0.1*treeData.nFeatures()) );
+  void updateMTry(Treedata& treeData, options::General_options& gen_op) {
+    if ( gen_op.mTry == options::RF_DEFAULT_M_TRY ) {
+      gen_op.mTry = static_cast<size_t>( floor(0.1*treeData.nFeatures()) );
     }
   }
 
@@ -152,25 +152,18 @@ namespace rface {
 	 << "= " << gen_op.seed << endl;
     cout << endl;
 
-  }
-
-  void printStochasticForestSetup(const options::StochasticForest_options& SF_op) {
-
     cout << "Stochastic Forest configuration:" << endl;
-    cout << "  --" << SF_op.nTrees_l << setw( options::maxWidth - SF_op.nTrees_l.size() ) << ""
-	 << "= "; if(SF_op.nTrees == 0) { cout << "DEFAULT" << endl; } else { cout << SF_op.nTrees << endl; }
-    cout << "  --" << SF_op.mTry_l << setw( options::maxWidth - SF_op.mTry_l.size() ) << ""
-	 << "= " << SF_op.mTry << endl;
-    cout << "  --" << SF_op.nMaxLeaves_l << setw( options::maxWidth - SF_op.nMaxLeaves_l.size() ) << ""
-	 << "= " << SF_op.nMaxLeaves << endl;
-    cout << "  --" << SF_op.nodeSize_l << setw( options::maxWidth - SF_op.nodeSize_l.size() ) << ""
-	 << "= "; if(SF_op.nodeSize == 0) { cout << "DEFAULT" << endl; } else { cout << SF_op.nodeSize << endl; }
-    cout << "  --" << SF_op.shrinkage_l << setw( options::maxWidth - SF_op.shrinkage_l.size() ) << ""
-         << "= " << SF_op.shrinkage << endl;
-    //cout << "  --" << SF_op.inBoxFraction_l << setw( options::maxWidth - SF_op.inBoxFraction_l.size() ) << ""
-    //     << "= " << SF_op.inBoxFraction << endl;
+    cout << "  --" << gen_op.nTrees_l << setw( options::maxWidth - gen_op.nTrees_l.size() ) << ""
+         << "= "; if(gen_op.nTrees == 0) { cout << "DEFAULT" << endl; } else { cout << gen_op.nTrees << endl; }
+    cout << "  --" << gen_op.mTry_l << setw( options::maxWidth - gen_op.mTry_l.size() ) << ""
+         << "= " << gen_op.mTry << endl;
+    cout << "  --" << gen_op.nMaxLeaves_l << setw( options::maxWidth - gen_op.nMaxLeaves_l.size() ) << ""
+         << "= " << gen_op.nMaxLeaves << endl;
+    cout << "  --" << gen_op.nodeSize_l << setw( options::maxWidth - gen_op.nodeSize_l.size() ) << ""
+         << "= "; if(gen_op.nodeSize == 0) { cout << "DEFAULT" << endl; } else { cout << gen_op.nodeSize << endl; }
+    cout << "  --" << gen_op.shrinkage_l << setw( options::maxWidth - gen_op.shrinkage_l.size() ) << ""
+         << "= " << gen_op.shrinkage << endl;
     cout << endl;
-
 
   }
   

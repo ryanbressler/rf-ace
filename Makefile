@@ -7,22 +7,22 @@ TESTFLAGS = -L/home/erkkila2/lib -lcppunit -ldl -pedantic -I/home/erkkila2/inclu
 MPFLAG = -fopenmp
 .PHONY: all test clean  # Squash directory checks for the usual suspects
 
-all: filter build-predictor predictor
+all: rf-ace
 
-filter: $(SOURCEFILES)
-	$(COMPILER) $(CFLAGS) src/rf_ace_filter.cpp $(SOURCEFILES) -o bin/rf-ace-filter
+rf-ace: $(SOURCEFILES)
+	$(COMPILER) $(CFLAGS) src/rf_ace.cpp $(SOURCEFILES) -o bin/rf-ace
 
-build-predictor: $(SOURCEFILES)
-	$(COMPILER) $(CFLAGS) src/rf_ace_build_predictor.cpp $(SOURCEFILES) -o bin/rf-ace-build-predictor
+#build-predictor: $(SOURCEFILES)
+#	$(COMPILER) $(CFLAGS) src/rf_ace_build_predictor.cpp $(SOURCEFILES) -o bin/rf-ace-build-predictor
 
-predictor: $(SOURCEFILES)
-	$(COMPILER) $(CFLAGS) src/rf_ace_predict.cpp $(SOURCEFILES) -o bin/rf-ace-predict
+#predictor: $(SOURCEFILES)
+#	$(COMPILER) $(CFLAGS) src/rf_ace_predict.cpp $(SOURCEFILES) -o bin/rf-ace-predict
 
 debug: $(SOURCEFILES)
-	$(COMPILER) $(CFLAGS) src/rf_ace_filter.cpp $(SOURCEFILES) -o bin/rf-ace-filter -ggdb
+	$(COMPILER) $(CFLAGS) src/rf_ace.cpp $(SOURCEFILES) -o bin/rf-ace-filter -ggdb
 
 static: $(SOURCEFILES)
-	$(COMPILER) $(CFLAGS) src/rf_ace_filter.cpp $(STATICFLAGS) $(SOURCEFILES) -o bin/rf-ace-filter
+	$(COMPILER) $(CFLAGS) src/rf_ace.cpp $(STATICFLAGS) $(SOURCEFILES) -o bin/rf-ace-filter
 
 #benchmark: src/benchmark.cpp $(SOURCEFILES)
 #	$(COMPILER) $(CFLAGS) src/benchmark.cpp $(SOURCEFILES) -o bin/benchmark
@@ -34,4 +34,4 @@ test: $(SOURCEFILES) $(TESTFILES)
 	rm -f bin/test; $(COMPILER) $(TESTFLAGS) test/run_tests.cpp $(SOURCEFILES) -o bin/test -ggdb; ./bin/test
 
 clean:
-	rm -rf bin/rf-ace-filter bin/benchmark bin/GBT_benchmark bin/test bin/*.dSYM/ src/*.o
+	rm -rf bin/rf-ace bin/benchmark bin/GBT_benchmark bin/test bin/*.dSYM/ src/*.o
