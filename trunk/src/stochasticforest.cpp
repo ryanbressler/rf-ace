@@ -575,7 +575,9 @@ void StochasticForest::predict(vector<num_t>& prediction, vector<num_t>& confide
       predictionVec[treeIdx] = rootNodes_[treeIdx]->getTrainPrediction(sampleIdx);
     }
     prediction[sampleIdx] = math::mean( predictionVec );
-    confidence[sampleIdx] = sqrt( math::squaredError(predictionVec,prediction[sampleIdx]) );
+    //datadefs::print<num_t>(predictionVec);
+    confidence[sampleIdx] = sqrt( math::squaredError(predictionVec,prediction[sampleIdx]) / nTrees );
+    //cout << " ** ERROR = " << confidence[sampleIdx] << endl;
   }
 
  
@@ -623,6 +625,17 @@ num_t StochasticForest::getOobError() {
   vector<num_t> trueData = treeData_->getFeatureData(targetIdx);
 
   return( this->error(oobPredictions,trueData) );
+  
+}
+
+num_t StochasticForest::getError() {
+
+  vector<num_t> predictions = this->getPredictions();
+
+  size_t targetIdx = treeData_->getFeatureIdx(targetName_);
+  vector<num_t> trueData = treeData_->getFeatureData(targetIdx);
+
+  return( this->error(predictions,trueData) );
   
 }
 

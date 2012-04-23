@@ -40,7 +40,8 @@ public:
   
   void learnRF();
   void learnGBT();
-    
+
+  num_t getError();
   num_t getOobError();
 
   void getImportanceValues(vector<num_t>& importanceValues,
