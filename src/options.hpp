@@ -177,18 +177,13 @@ namespace options {
 
     void help() {
 
-      cout << "REQUIRED ARGUMENTS:" << endl;
+      cout << "GENERAL ARGUMENTS:" << endl;
       cout << " -" << input_s << " / --" << input_l << setw( maxWidth - input_l.size() )
            << " " << "Input data file (.afm or .arff) or predictor forest file (.sf)" << endl;
       cout << " -" << targetStr_s << " / --" << targetStr_l << setw( maxWidth - targetStr_l.size() )
            << " " << "Target, specified as integer or string that is to be matched with the content of input" << endl;
       cout << " -" << output_s << " / --" << output_l << setw( maxWidth - output_l.size() )
            << " " << "Output file" << endl;
-      cout << endl;
-      
-      cout << "OPTIONAL ARGUMENTS:" << endl;
-      cout << " -" << isFilter_s << " / --" << isFilter_l << setw( maxWidth - isFilter_l.size() )
-	   << " " << "Set this flag if you want to perform feature selection" << endl;
       cout << " -" << predictionData_s << " / --" << predictionData_l << setw( maxWidth - predictionData_l.size() )
 	   << " " << "[Prediction only] Test data file (.afm or .arff) for prediction" << endl;
       cout << " -" << log_s << " / --" << log_l << setw( maxWidth - log_l.size() )
@@ -198,16 +193,16 @@ namespace options {
       cout << " -" << blackList_s << " / --" << blackList_l << setw( maxWidth - blackList_l.size() )
            << " " << "Black list of features to be excluded from the input file(s)." << endl;
       cout << " -" << dataDelimiter_s << " / --" << dataDelimiter_l << setw( maxWidth - dataDelimiter_l.size() )
-           << " " << "Data delimiter (default \\t)" << endl;
+           << " " << "[AFM only] Data delimiter (default \\t)" << endl;
       cout << " -" << headerDelimiter_s << " / --" << headerDelimiter_l << setw( maxWidth - headerDelimiter_l.size() )
-           << " " << "Header delimiter that separates the N and C symbols in feature headers from the rest (default " << GENERAL_DEFAULT_HEADER_DELIMITER << ")" << endl;
+           << " " << "[AFM only] Header delimiter that separates the N and C symbols in feature headers from the rest (default " << GENERAL_DEFAULT_HEADER_DELIMITER << ")" << endl;
       cout << " -" << pruneFeatures_s << " / --" << pruneFeatures_l << setw( maxWidth - pruneFeatures_l.size() )
            << " " << "Features with less than n ( default " << GENERAL_DEFAULT_MIN_SAMPLES << " ) samples will be removed" << endl;
       cout << " -" << seed_s << " / --" << seed_l << setw( maxWidth - seed_l.size() ) 
 	   << " " << "Seed (positive integer) for the Mersenne Twister random number generator" << endl;
       cout << endl;
 
-      cout << "OPTIONAL ARGUMENTS -- STOCHASTIC FOREST:" << endl;
+      cout << "STOCHASTIC FOREST ARGUMENTS:" << endl;
       cout << " -" << nTrees_s << " / --" << nTrees_l << setw( maxWidth - nTrees_l.size() )
 	   << " " << "Number of trees in the forest" << endl;
       cout << " -" << mTry_s << " / --" << mTry_l << setw( maxWidth - mTry_l.size() )
@@ -220,11 +215,13 @@ namespace options {
 	   << " " << "[GBT only] Shrinkage applied to evolving the residual" << endl;
       cout << endl;
 
-      cout << "OPTIONAL ARGUMENTS -- STATISTICAL TEST:" << endl;
+      cout << "FILTER ARGUMENTS:" << endl;
+      cout << " -" << isFilter_s << " / --" << isFilter_l << setw( maxWidth - isFilter_l.size() )
+           << " " << "Set this flag if you want to perform feature selection (default OFF)" << endl;
       cout << " -" << nPerms_s << " / --" << nPerms_l << setw( maxWidth - nPerms_l.size() )
-           << " " << "Number of permutations in statistical test (default " << ST_DEFAULT_N_PERMS << ")" << endl;
+           << " " << "[Filter only] Number of permutations in statistical test (default " << ST_DEFAULT_N_PERMS << ")" << endl;
       cout << " -" << pValueThreshold_s << " / --" << pValueThreshold_l << setw( maxWidth - pValueThreshold_l.size() )
-           << " " << "P-value threshold in statistical test (default " << ST_DEFAULT_P_VALUE_THRESHOLD << ")" << endl;
+           << " " << "[Filter only] P-value threshold in statistical test (default " << ST_DEFAULT_P_VALUE_THRESHOLD << ")" << endl;
       cout << endl;
 
       cout << "EXAMPLES:" << endl << endl;

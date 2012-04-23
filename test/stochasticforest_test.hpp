@@ -11,6 +11,7 @@ class StochasticForestTest : public CppUnit::TestFixture {
   CPPUNIT_TEST_SUITE( StochasticForestTest );
   CPPUNIT_TEST( test_treeDataPercolation ); 
   CPPUNIT_TEST( test_error );
+  CPPUNIT_TEST( test_treeGrowing );
   CPPUNIT_TEST_SUITE_END();
   
 public:
@@ -19,6 +20,8 @@ public:
 
   void test_error();
   void test_treeDataPercolation();
+
+  void test_treeGrowing();
 
 };
 
@@ -84,6 +87,12 @@ void StochasticForestTest::test_error() {
   y.push_back(2.0);
   CPPUNIT_ASSERT( fabs( SF.error(x,y) - 4.0 ) < datadefs::EPS );
   
+  
+
+}
+
+void StochasticForestTest::test_treeGrowing() {
+
   
 
 }
