@@ -2,8 +2,8 @@
 #define STOCHASTICFORESTTEST_HPP
 
 #include <cppunit/extensions/HelperMacros.h>
-//#include "datadefs.hpp"
-//#include "partitionsequence.hpp"
+#include "datadefs.hpp"
+#include "treedata.hpp"
 #include "stochasticforest.hpp"
 #include "errno.hpp"
 
@@ -88,14 +88,34 @@ void StochasticForestTest::test_error() {
   CPPUNIT_ASSERT( fabs( SF.error(x,y) - 4.0 ) < datadefs::EPS );
   
   
-
+  
 }
 
 void StochasticForestTest::test_treeGrowing() {
+  
+  size_t seed = 1335162575;
+  
+  Treedata treeData("test_103by100_numeric_matrix.tsv",'\t',':',seed);
 
+  StochasticForest::Parameters parameters;
+
+  parameters.model = StochasticForest::RF;
+  parameters.nTrees = 1;
+  parameters.mTry = 101;
+  parameters.nMaxLeaves = 1000;
+  parameters.nodeSize = 1;
+  parameters.inBoxFraction = 1.0;
+  parameters.sampleWithReplacement = true;
+  parameters.useContrasts = false;
+  parameters.isRandomSplit = true;
+  parameters.shrinkage = 0.0;
+
+  StochasticForest SF(&treeData,"N:output",parameters);
+  
   
 
 }
+
 
 // Registers the fixture into the test 'registry'
 CPPUNIT_TEST_SUITE_REGISTRATION( StochasticForestTest ); 
