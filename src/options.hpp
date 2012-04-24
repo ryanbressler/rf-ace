@@ -19,7 +19,7 @@ namespace options {
 
     output << endl;
     output << "-----------------------------------------------------" << endl;
-    output << "|  RF-ACE version:  1.0.5, April 21st, 2012         |" << endl;
+    output << "|  RF-ACE version:  1.0.5, April 24th, 2012         |" << endl;
     output << "|    Project page:  http://code.google.com/p/rf-ace |" << endl;
     output << "|     Report bugs:  timo.p.erkkila@tut.fi           |" << endl;
     output << "-----------------------------------------------------" << endl;
@@ -42,6 +42,7 @@ namespace options {
   // Statistical test default configuration
   const size_t ST_DEFAULT_N_PERMS = 20;
   const num_t  ST_DEFAULT_P_VALUE_THRESHOLD = 0.05;
+  const bool   ST_DEFAULT_NO_SORT = false;
 
   // Random Forest default configuration
   const size_t RF_DEFAULT_N_TREES = 100;
@@ -95,6 +96,8 @@ namespace options {
     // Statistical test related parameters
     size_t nPerms; const string nPerms_s; const string nPerms_l;
     num_t pValueThreshold; const string pValueThreshold_s; const string pValueThreshold_l;
+    bool noSort; const string noSort_s; const string noSort_l;
+    string contrastOutput; const string contrastOutput_s; const string contrastOutput_l;
 
     General_options():
       printHelp(GENERAL_DEFAULT_PRINT_HELP),printHelp_s("h"),printHelp_l("help"),
@@ -118,7 +121,9 @@ namespace options {
       shrinkage_s("k"),shrinkage_l("shrinkage"),
       // Statistical test related parameters
       nPerms(ST_DEFAULT_N_PERMS),nPerms_s("p"),nPerms_l("nperms"),
-      pValueThreshold(ST_DEFAULT_P_VALUE_THRESHOLD),pValueThreshold_s("t"),pValueThreshold_l("pthreshold") { setRFDefaults(); }
+      pValueThreshold(ST_DEFAULT_P_VALUE_THRESHOLD),pValueThreshold_s("t"),pValueThreshold_l("pthreshold"), 
+      noSort(ST_DEFAULT_NO_SORT),noSort_s("N"),noSort_l("noSort"),
+      contrastOutput(""),contrastOutput_s("C"),contrastOutput_l("contrast_output") { setRFDefaults(); }
     
     void loadUserParams(ArgParse& parser) {
             
@@ -161,8 +166,10 @@ namespace options {
       // Statistical test parameters
       parser.getArgument<size_t>(nPerms_s, nPerms_l, nPerms);
       parser.getArgument<num_t>(pValueThreshold_s,  pValueThreshold_l,  pValueThreshold);
+      parser.getFlag(noSort_s, noSort_l, noSort);
+      parser.getArgument<string>(contrastOutput_s, contrastOutput_l, contrastOutput);
 
-      if ( nPerms < 6 ) {
+      if ( nPerms > 1 && nPerms < 6 ) {
         cerr << "Use more than 5 permutations in statistical test!" << endl;
         exit(1);
       }
@@ -222,25 +229,32 @@ namespace options {
            << " " << "[Filter only] Number of permutations in statistical test (default " << ST_DEFAULT_N_PERMS << ")" << endl;
       cout << " -" << pValueThreshold_s << " / --" << pValueThreshold_l << setw( maxWidth - pValueThreshold_l.size() )
            << " " << "[Filter only] P-value threshold in statistical test (default " << ST_DEFAULT_P_VALUE_THRESHOLD << ")" << endl;
+      cout << " -" << noSort_s << " / --" << noSort_l << setw( maxWidth - noSort_l.size() )
+	   << " " << "[Filter only] Set this flag if you want the associations be listed unsorted (default OFF)" << endl; 
+      cout << " -" << contrastOutput_s << " / --" << contrastOutput_l << setw( maxWidth - contrastOutput_l.size() )
+	   << " " << "[Filter only] Output file for contrast value summary(ies) (one contrast value per permutation)" << endl;
       cout << endl;
 
       cout << "EXAMPLES:" << endl << endl;
       
-      cout << "Performing feature selection using 'target' as the target variable:" << endl;
-      cout << "bin/rf-ace --filter -I data.arff -i target -O associations.tsv" << endl << endl;
+      cout << "Performing feature selection using 'target' as the target variable:" << endl
+	   << "bin/rf-ace --filter -I data.arff -i target -O associations.tsv" << endl << endl;
 
-      cout << "Performing feature selection with 50 permutations and p-value threshold of 0.001:" << endl;
-      cout << "bin/rf-ace --filter -I data.arff -i 5 -p 50 -t 0.001 -O associations.tsv" << endl << endl;
+      cout << "Performing feature selection with 50 permutations and p-value threshold of 0.001:" << endl
+	   << "bin/rf-ace --filter -I data.arff -i 5 -p 50 -t 0.001 -O associations.tsv" << endl << endl;
 
-      cout << "Building Random Forest with 1000 trees and mTry of 10 and predicting with test data:" << endl;
-      cout << "bin/rf-ace -I data.arff -i target -T testdata.arff -n 1000 -m 10 -O predictions.tsv" << endl << endl;
+      cout << "Performing feature selection with regular Random Forest (p == 1) and listing associations unsorted:" << endl
+	   << "bin/rf-ace --filter -I data.arff -i 5 -p 1 --noSort -O associations_unsorted.tsv" << endl << endl;
+      
+      cout << "Building Random Forest with 1000 trees and mTry of 10 and predicting with test data:" << endl
+	   << "bin/rf-ace -I data.arff -i target -T testdata.arff -n 1000 -m 10 -O predictions.tsv" << endl << endl;
 
-      cout << "Building Random Forest predictor and saving it to a file for later use:" << endl;
-      cout << "bin/rf-ace -I data.arff -i target -O rf_predictor.sf" << endl << endl;
+      cout << "Building Random Forest predictor and saving it to a file for later use:" << endl
+	   << "bin/rf-ace -I data.arff -i target -O rf_predictor.sf" << endl << endl;
 
-      cout << "Loading Random Forest predictor from file and predicting with test data:" << endl;
-      cout << "bin/rf-ace -I predictor.sf -T testdata.arff -O predictions.tsv" << endl << endl;
-
+      cout << "Loading Random Forest predictor from file and predicting with test data:" << endl
+	   << "bin/rf-ace -I predictor.sf -T testdata.arff -O predictions.tsv" << endl << endl;
+      
     }
     
     void setRFDefaults() {
