@@ -5,8 +5,7 @@ function DI = deltaImpurity_regr(x,idx)
 %halves, "left" and "right", indicated by idx
 
 %Make sure idx is in proper range
-assert(idx >= 1);
-assert(idx <= length(x));
+assert( 1 <= idx && idx < length(x), 'error: idx not in 1..(n-1)');
 
 % Caculate the decrease using the variance formula (slow+instable)
 DI = deltaImpurity_var_regr(x,idx);
@@ -15,7 +14,7 @@ DI = deltaImpurity_var_regr(x,idx);
 DI_test = deltaImpurity_mean_regr(x,idx);
 
 %Make sure the two measures agree
-assert( abs(DI - DI_test ) < eps );
+assert( abs(DI - DI_test ) < 1e-5, 'error: impurity functions disagree');
 
 
 function DI = deltaImpurity_mean_regr(x,idx)
