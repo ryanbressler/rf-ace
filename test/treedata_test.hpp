@@ -733,9 +733,6 @@ void treeDataTest::test_categoricalFeatureSplit() {
 
 }
 
-
-
-
 // Registers the fixture into the test 'registry'
 CPPUNIT_TEST_SUITE_REGISTRATION( treeDataTest ); 
 

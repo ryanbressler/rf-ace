@@ -99,21 +99,6 @@ public:
   num_t getNumericalSplitFitness(const num_t se_tot,
 				 const num_t se_best);
 
-  /*
-    inline num_t getSplitFitness(const size_t n_left,
-    const size_t sf_left,
-    const size_t n_right,
-    const size_t sf_right,
-    const size_t n_tot,
-    const size_t sf_tot) {
-    
-    return( ( -1.0*n_left*n_right*sf_tot +
-    1.0*n_tot*n_right*sf_left +
-    1.0*n_tot*n_left*sf_right ) /
-    ( 1.0*n_left*n_right * (1.0*n_tot*n_tot - 1.0*sf_tot) ) ); }
-  */    
-
-  
   void getFilteredFeatureDataPair(const size_t featureIdx1, 
 				  const size_t featureIdx2, 
 				  vector<size_t>& sampleIcs, 

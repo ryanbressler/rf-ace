@@ -7,7 +7,7 @@ function DI = deltaImpurity_regr(x,idx)
 %Make sure idx is in proper range
 assert( 1 <= idx && idx < length(x), 'error: idx not in 1..(n-1)');
 
-% Caculate the decrease using the variance formula (slow+instable)
+% Caculate the decrease using the variance formula (slow+unstable)
 DI = deltaImpurity_var_regr(x,idx);
 
 %Calculate the decrease using the mean formulat (fast+stable)
