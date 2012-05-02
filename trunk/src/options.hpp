@@ -48,7 +48,7 @@ namespace options {
   const size_t RF_DEFAULT_N_TREES = 100;
   const size_t RF_DEFAULT_M_TRY = 0;
   const size_t RF_DEFAULT_N_MAX_LEAVES = 100;
-  const size_t RF_DEFAULT_NODE_SIZE = 5;
+  const size_t RF_DEFAULT_NODE_SIZE = 3;
   const num_t  RF_DEFAULT_IN_BOX_FRACTION = 1.0;
   const num_t  RF_DEFAULT_SAMPLE_WITH_REPLACEMENT = true;
   const bool   RF_DEFAULT_USE_CONTRASTS = true;
@@ -59,7 +59,7 @@ namespace options {
   const size_t GBT_DEFAULT_N_TREES = 100;
   const size_t GBT_DEFAULT_M_TRY = 0;
   const size_t GBT_DEFAULT_N_MAX_LEAVES = 6;
-  const size_t GBT_DEFAULT_NODE_SIZE = 5;
+  const size_t GBT_DEFAULT_NODE_SIZE = 3;
   const num_t  GBT_DEFAULT_IN_BOX_FRACTION = 0.5;
   const num_t  GBT_DEFAULT_SAMPLE_WITH_REPLACEMENT = false;
   const bool   GBT_DEFAULT_USE_CONTRASTS = false;

@@ -842,7 +842,7 @@ num_t Treedata::numericalFeatureSplit(const size_t targetIdx,
   if ( this->isFeatureNumerical(targetIdx) ) {
 
     // We start with one sample on the left branch
-    size_t n = 1;
+    size_t n_left = 1;
     num_t mu_left = tv[0];
     vector<num_t> se_left(n_tot, 0.0);
 
@@ -851,7 +851,7 @@ num_t Treedata::numericalFeatureSplit(const size_t targetIdx,
     // NOTE1: leftmost sample has been added already, so we start i from 1
     // NOTE2: rightmost sample needs to be included since we want to compute
     //        squared error for the whole data vector ( i.e. se_tot )
-    for( size_t i = 1; i < n_tot; ++i ) {
+    for ( size_t i = 1; i < n_tot; ++i ) {
 
       // We need to manually transfer the previous squared error to the
       // present slot
@@ -859,11 +859,11 @@ num_t Treedata::numericalFeatureSplit(const size_t targetIdx,
 
       // This function takes n'th data point tv[i] from right to left
       // and updates the mean and squared error
-      math::incrementSquaredError(tv[i],++n,mu_left,se_left[i]);
+      math::incrementSquaredError(tv[i],++n_left,mu_left,se_left[i]);
     }
 
     // Make sure we accumulated the right number of samples
-    assert( n == n_tot );
+    assert( n_left == n_tot );
 
     // Make sure the squared error didn't become corrupted by NANs
     assert( !datadefs::isNAN(se_left.back()) );
@@ -877,7 +877,7 @@ num_t Treedata::numericalFeatureSplit(const size_t targetIdx,
 
     // Now it's time to start adding samples from left to right
     // NOTE: it's intentional to set n to 0
-    n = 0;
+    size_t n_right = 0;
     num_t mu_right = 0.0;
     num_t se_right = 0.0;
 
@@ -887,7 +887,7 @@ num_t Treedata::numericalFeatureSplit(const size_t targetIdx,
 
       // Add n'th sample tv[i] from left to right and update
       // mean and squared error
-      math::incrementSquaredError(tv[i],++n,mu_right,se_right);
+      math::incrementSquaredError(tv[i],++n_right,mu_right,se_right);
 
       // If the sample is repeated and we can continue, continue
       if ( i-1 >= static_cast<int>(minSamples) && tv[i-1] == tv[i] ) {
