@@ -803,13 +803,13 @@ num_t Treedata::getCategoricalSplitFitness(const num_t sf_tot,
   
 }
 
+// WILL BECOME OBSOLETE
 num_t Treedata::getNumericalSplitFitness(const num_t se_tot,
 					 const num_t se_best) {
   
   return( ( se_tot - se_best ) / se_tot );
 
 }
-
 
 
 // !! Correctness, Inadequate Abstraction: kill this method with fire. Refactor, REFACTOR, _*REFACTOR*_.

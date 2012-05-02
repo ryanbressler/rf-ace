@@ -191,6 +191,34 @@ namespace math {
     }
   }
   
+  // Calculates decrease in impurity for a numerical target
+  inline num_t deltaImpurity_regr(const num_t mu_tot,
+				  const size_t n_tot,
+				  const num_t mu_left,
+				  const size_t n_left,
+				  const num_t mu_right,
+				  const size_t n_right) {
+
+    return( - pow(mu_tot,2)
+	    + 1.0 * n_left  / n_tot * pow(mu_left,2)
+	    + 1.0 * n_right / n_tot * pow(mu_right,2) );
+    
+    
+  }
+ 
+  inline num_t deltaImpurity_class(const num_t prop_sq_tot,
+				   const size_t n_tot,
+				   const num_t prop_sq_left,
+				   const size_t n_left,
+				   const num_t prop_sq_right,
+				   const size_t n_right) {
+
+    return( - prop_sq_tot 
+	    + 1.0 * n_left  / n_tot * prop_sq_left
+	    + 1.0 * n_right / n_tot * prop_sq_right );
+
+  }
+  
 }
   
 #endif
