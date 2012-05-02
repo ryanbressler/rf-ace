@@ -136,7 +136,12 @@ void rf_ace_filter(options::General_options& gen_op) {
     for ( size_t i = 0; i < featureIcs.size(); ++i ) {
       size_t featureIdx = featureIcs[i];
       
-      if ( gen_op.nPerms > 1 && pValues[i] > gen_op.pValueThreshold ) {
+      // With more than 1 permutation we look at p-value threshold
+      if ( gen_op.nPerms > 1 ) {
+	if ( pValues[i] > gen_op.pValueThreshold ) {
+	  continue;
+	} // ... otherwise we look at importance threshold
+      } else if ( importanceValues[i] < datadefs::EPS ) {
 	continue;
       }
       
