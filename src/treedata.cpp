@@ -795,6 +795,7 @@ void Treedata::getFilteredFeatureDataPair(const size_t featureIdx1,
 
 }
 
+// !! WILL BECOME OBSOLETE
 num_t Treedata::getCategoricalSplitFitness(const num_t sf_tot,
 					   const num_t nsf_best,
 					   const size_t n_tot) {
@@ -803,7 +804,7 @@ num_t Treedata::getCategoricalSplitFitness(const num_t sf_tot,
   
 }
 
-// WILL BECOME OBSOLETE
+// !! WILL BECOME OBSOLETE
 num_t Treedata::getNumericalSplitFitness(const num_t se_tot,
 					 const num_t se_best) {
   
