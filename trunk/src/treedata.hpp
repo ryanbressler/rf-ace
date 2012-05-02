@@ -92,10 +92,12 @@ public:
 				set<num_t>& splitValues_left,
 				set<num_t>& splitValues_right);
 
+  // !! WILL BECOME OBSOLETE
   num_t getCategoricalSplitFitness(const num_t sf_tot,
                                    const num_t nsf,
                                    const size_t n);
 
+  // !! WILL BECOME OBSOLETE
   num_t getNumericalSplitFitness(const num_t se_tot,
 				 const num_t se_best);
 
