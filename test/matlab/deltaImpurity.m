@@ -58,4 +58,8 @@ DI = giniIndex(x) - nL/n*giniIndex(x_left) - nR/n*giniIndex(x_right);
 function GI = giniIndex(x)
 
 GI = hist(x,unique(x))/length(x);
-GI = 1 - sum(GI.^2);
+if ~isempty(GI)
+    GI = 1 - sum(GI.^2);
+else
+    GI = 0;
+end
