@@ -95,7 +95,7 @@ void StochasticForestTest::test_treeGrowing() {
   
   size_t seed = 1335162575;
   
-  Treedata treeData("test_103by100_numeric_matrix.tsv",'\t',':',seed);
+  //Treedata treeData("test_103by100_numeric_matrix.tsv",'\t',':',seed);
 
   StochasticForest::Parameters parameters;
 
@@ -110,7 +110,7 @@ void StochasticForestTest::test_treeGrowing() {
   parameters.isRandomSplit = true;
   parameters.shrinkage = 0.0;
 
-  StochasticForest SF(&treeData,"N:output",parameters);
+  //StochasticForest SF(&treeData,"N:output",parameters);
   
   
 
