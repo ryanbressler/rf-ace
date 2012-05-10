@@ -32,6 +32,7 @@ const string initNANs[] = {"NA","NAN","?"}; /** !! Incomplete definition:
                                              *  http://en.wikipedia.org/wiki/NaN#Display */
 const set<datadefs::NAN_t> datadefs::NANs(initNANs,initNANs+3);
 
+const string datadefs::CONTRAST = "CONTRAST";
 
 ////////////////////////////////////////////////////////////
 // HELPER FUNCTIONS

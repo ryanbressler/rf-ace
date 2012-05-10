@@ -34,6 +34,8 @@ namespace options {
   // Default general configuration
   const bool   GENERAL_DEFAULT_PRINT_HELP = false;
   const bool   GENERAL_DEFAULT_IS_FILTER = false;
+  const bool   GENERAL_DEFAULT_IS_RECOMBINER = false;
+  const bool   GENERAL_DEFAULT_REPORT_CONTRASTS = false;
   const char   GENERAL_DEFAULT_DATA_DELIMITER = '\t';
   const char   GENERAL_DEFAULT_HEADER_DELIMITER = ':';
   const size_t GENERAL_DEFAULT_MIN_SAMPLES = 5;
@@ -74,6 +76,8 @@ namespace options {
     // I/O related and general paramters
     bool printHelp; const string printHelp_s; const string printHelp_l;
     bool isFilter; const string isFilter_s; const string isFilter_l;
+    bool isRecombiner; const string isRecombiner_s; const string isRecombiner_l;
+    bool reportContrasts; const string reportContrasts_s; const string reportContrasts_l;
     string input; const string input_s; const string input_l;
     string output; const string output_s; const string output_l;
     string targetStr; const string targetStr_s; const string targetStr_l;
@@ -87,21 +91,22 @@ namespace options {
     int seed; string seed_s; string seed_l;
 
     // Random Forest related parameters
-    size_t  nTrees; const string nTrees_s; const string nTrees_l;
-    size_t  mTry; const string mTry_s; const string mTry_l;
-    size_t  nMaxLeaves; const string nMaxLeaves_s; const string nMaxLeaves_l;
-    size_t  nodeSize; const string nodeSize_s; const string nodeSize_l;
-    num_t   shrinkage; const string shrinkage_s; const string shrinkage_l;
+    size_t nTrees; const string nTrees_s; const string nTrees_l;
+    size_t mTry; const string mTry_s; const string mTry_l;
+    size_t nMaxLeaves; const string nMaxLeaves_s; const string nMaxLeaves_l;
+    size_t nodeSize; const string nodeSize_s; const string nodeSize_l;
+    num_t shrinkage; const string shrinkage_s; const string shrinkage_l;
 
     // Statistical test related parameters
     size_t nPerms; const string nPerms_s; const string nPerms_l;
     num_t pValueThreshold; const string pValueThreshold_s; const string pValueThreshold_l;
     bool noSort; const string noSort_s; const string noSort_l;
-    string contrastOutput; const string contrastOutput_s; const string contrastOutput_l;
 
     General_options():
       printHelp(GENERAL_DEFAULT_PRINT_HELP),printHelp_s("h"),printHelp_l("help"),
       isFilter(GENERAL_DEFAULT_IS_FILTER),isFilter_s("L"),isFilter_l("filter"),
+      isRecombiner(GENERAL_DEFAULT_IS_RECOMBINER),isRecombiner_s("R"),isRecombiner_l("recombine"),
+      reportContrasts(GENERAL_DEFAULT_REPORT_CONTRASTS),reportContrasts_s("C"),reportContrasts_l("report_contrasts"),
       input(""),input_s("I"),input_l("input"),
       output(""),output_s("O"),output_l("output"),
       targetStr(""),targetStr_s("i"),targetStr_l("target"),
@@ -122,14 +127,15 @@ namespace options {
       // Statistical test related parameters
       nPerms(ST_DEFAULT_N_PERMS),nPerms_s("p"),nPerms_l("nperms"),
       pValueThreshold(ST_DEFAULT_P_VALUE_THRESHOLD),pValueThreshold_s("t"),pValueThreshold_l("pthreshold"), 
-      noSort(ST_DEFAULT_NO_SORT),noSort_s("N"),noSort_l("noSort"),
-      contrastOutput(""),contrastOutput_s("C"),contrastOutput_l("contrast_output") { setRFDefaults(); }
+      noSort(ST_DEFAULT_NO_SORT),noSort_s("N"),noSort_l("noSort") { setRFDefaults(); }
     
     void loadUserParams(ArgParse& parser) {
             
       // I/O related and general parameters
       parser.getFlag(printHelp_s, printHelp_l, printHelp);
       parser.getFlag(isFilter_s,isFilter_l,isFilter);
+      parser.getFlag(isRecombiner_s,isRecombiner_l,isRecombiner);
+      parser.getFlag(reportContrasts_s,reportContrasts_l,reportContrasts);
       parser.getArgument<string>(input_s, input_l, input);
       parser.getArgument<string>(targetStr_s, targetStr_l, targetStr);
       parser.getArgument<string>(output_s, output_l, output);
@@ -167,7 +173,7 @@ namespace options {
       parser.getArgument<size_t>(nPerms_s, nPerms_l, nPerms);
       parser.getArgument<num_t>(pValueThreshold_s,  pValueThreshold_l,  pValueThreshold);
       parser.getFlag(noSort_s, noSort_l, noSort);
-      parser.getArgument<string>(contrastOutput_s, contrastOutput_l, contrastOutput);
+      //parser.getArgument<string>(contrastOutput_s, contrastOutput_l, contrastOutput);
 
       if ( nPerms > 1 && nPerms < 6 ) {
         cerr << "Use more than 5 permutations in statistical test!" << endl;
@@ -178,7 +184,6 @@ namespace options {
         cerr << "P-value threshold in statistical test must be within 0...1" << endl;
         exit(1);
       }
-
   
     }
 
@@ -231,8 +236,8 @@ namespace options {
            << " " << "[Filter only] P-value threshold in statistical test (default " << ST_DEFAULT_P_VALUE_THRESHOLD << ")" << endl;
       cout << " -" << noSort_s << " / --" << noSort_l << setw( maxWidth - noSort_l.size() )
 	   << " " << "[Filter only] Set this flag if you want the associations be listed unsorted (default OFF)" << endl; 
-      cout << " -" << contrastOutput_s << " / --" << contrastOutput_l << setw( maxWidth - contrastOutput_l.size() )
-	   << " " << "[Filter only] Output file for contrast value summary(ies) (one contrast value per permutation)" << endl;
+      cout << " -" << reportContrasts_s << " / --" << reportContrasts_l << setw( maxWidth - reportContrasts_l.size() )
+	   << " " << "[Filter only] Set this flag if you want to report contrasts in the output association file (default OFF)" << endl;
       cout << endl;
 
       cout << "EXAMPLES:" << endl << endl;

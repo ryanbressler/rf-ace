@@ -47,7 +47,7 @@ namespace datadefs {
   typedef string NAN_t;             /** Used to represent NANs as a string */
   extern const set<NAN_t> NANs;     /** The complete set of string
                                      *   representations of NAN */
-
+  extern const string CONTRAST;
   
   ////////////////////////////////////////////////////////////
   // METHOD DECLARATIONS
@@ -201,7 +201,7 @@ namespace datadefs {
     for(size_t i = 0; i < x.size(); ++i) {
       cout << " " << x[i];
     }
-    cout << endl;
+    //cout << endl;
   }
 
   template <typename T> void print(const set<T>& x) {
@@ -209,7 +209,7 @@ namespace datadefs {
     for( typename set<T>::const_iterator it = x.begin(); it != x.end(); ++it) {
       cout << " " << *it;
     }
-    cout << endl;
+    //cout << endl;
   }
 
 }
