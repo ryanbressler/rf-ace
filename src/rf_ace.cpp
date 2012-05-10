@@ -74,6 +74,8 @@ int main(const int argc, char* const argv[]) {
   if ( gen_op.isRecombiner ) {
     rf_ace_recombine(gen_op);
   }
+
+  rf_ace(gen_op);
   
 }
 
@@ -90,10 +92,6 @@ void rf_ace_filter(options::General_options& gen_op) {
   rface::pruneFeatureSpace(treeData,gen_op);
   rface::updateMTry(treeData,gen_op);
       
-  // After masking, it's safe to refer to features as indices 
-  // TODO: rf_ace.cpp: this should be made obsolete; instead of indices, use the feature headers
-  //size_t targetIdx = treeData.getFeatureIdx(gen_op.targetStr);
-    
   if(treeData.nSamples() < 2 * gen_op.nodeSize) {
     cerr << "Not enough samples (" << treeData.nSamples() << ") to perform a single split" << endl;
     exit(1);
@@ -135,72 +133,6 @@ void rf_ace_filter(options::General_options& gen_op) {
   }
 
   printAssociationsToFile(gen_op,featureNames,pValues,importanceValues,contrastImportanceSample,correlations,sampleCounts);
-
-  //size_t nFeatures = treeData.nFeatures();
-    
-  //size_t nSignificantFeatures = 0;
-
-  //if( gen_op.output != "" ) {
-
-  /*
-    ofstream toAssociationFile(gen_op.output.c_str());
-    toAssociationFile.precision(8);
-    
-    // Initialize mapping vector to identity mapping: range 0,1,...,N-1
-    // NOTE: when not sorting we use the identity map, otherwise the sorted map
-    vector<size_t> featureIcs = utils::range( treeData.nFeatures() );
-    
-    // If we prefer sorting the outputs wrt. significance (either p-value or importance)
-    if ( !gen_op.noSort ) {
-    // If there are more than one permutation, we can compute the p-values and thus sort wrt. them
-    if ( gen_op.nPerms > 1 ) {
-    bool isIncreasingOrder = true;
-    datadefs::sortDataAndMakeRef(isIncreasingOrder,pValues,featureIcs);
-    datadefs::sortFromRef<num_t>(importanceValues,featureIcs);
-    } else { // ... otherwise we can sort wrt. importance scores 
-    bool isIncreasingOrder = false;
-    datadefs::sortDataAndMakeRef(isIncreasingOrder,importanceValues,featureIcs);
-    datadefs::sortFromRef<num_t>(pValues,featureIcs);
-    }
-    }
-    
-    assert( gen_op.targetStr == treeData.getFeatureName(targetIdx) );
-    
-    for ( size_t i = 0; i < featureIcs.size(); ++i ) {
-    size_t featureIdx = featureIcs[i];
-    
-    // With more than 1 permutation we look at p-value threshold
-    if ( gen_op.nPerms > 1 ) {
-    if ( pValues[i] > gen_op.pValueThreshold ) {
-    continue;
-    }  ... otherwise we look at importance threshold
-    TODO: add importance value threshold as an option
-    } else if ( importanceValues[i] < datadefs::EPS ) {
-    continue;
-    }
-    
-    if ( featureIdx == targetIdx ) {
-    continue;
-    }
-    
-    ++nSignificantFeatures;
-    
-    // cout << " " << i << ":" << featureIdx;
-    
-    toAssociationFile << fixed << gen_op.targetStr.c_str() << "\t" << treeData.getFeatureName(featureIdx).c_str()
-    << "\t" << log10(pValues[i]) << "\t" << importanceValues[i] << "\t"
-    << treeData.pearsonCorrelation(targetIdx,featureIdx) << "\t" << treeData.nRealSamples(targetIdx,featureIdx) << endl;
-    }
-    
-    toAssociationFile.close();
-  
-    
-    
-    // Print some statistics
-    // NOTE: we're subtracting the target from the total head count, that's why we need to subtract by 1
-    cout << "DONE, " << nSignificantFeatures << " / " << nFeatures  - 1 << " features ( "
-    << 100.0 * nSignificantFeatures / ( nFeatures - 1 ) << " % ) left " << endl;
-  */    
 
   if ( gen_op.log != "" ) {
     
@@ -602,9 +534,7 @@ void rf_ace_recombine(options::General_options& gen_op) {
 
   assert( associationMap.find( datadefs::CONTRAST ) != associationMap.end() );
 
-  cout << "foo" << endl;
-
-  // Subtrast one because contrast is included
+  // Subtract one because contrast is included
   size_t nRealFeatures = associationMap.size() - 1;
 
   vector<string> featureNames(nRealFeatures);
@@ -620,10 +550,6 @@ void rf_ace_recombine(options::General_options& gen_op) {
     
     string featureName = it->first;
     vector<num_t> importanceSample = it->second;
-
-    cout << gen_op.targetStr << " " << featureName << " ";
-    datadefs::print(associationMap[featureName]);
-    cout << " " << correlationMap[featureName] << " " << sampleCountMap[featureName] << endl;
 
     if ( featureName != datadefs::CONTRAST ) {
       featureNames[i] = featureName;
