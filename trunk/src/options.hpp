@@ -34,7 +34,7 @@ namespace options {
   // Default general configuration
   const bool   GENERAL_DEFAULT_PRINT_HELP = false;
   const bool   GENERAL_DEFAULT_IS_FILTER = false;
-  const bool   GENERAL_DEFAULT_IS_RECOMBINER = false;
+  const size_t GENERAL_DEFAULT_RECOMBINE_PERMS = 0;
   const bool   GENERAL_DEFAULT_REPORT_CONTRASTS = false;
   const char   GENERAL_DEFAULT_DATA_DELIMITER = '\t';
   const char   GENERAL_DEFAULT_HEADER_DELIMITER = ':';
@@ -44,7 +44,8 @@ namespace options {
   // Statistical test default configuration
   const size_t ST_DEFAULT_N_PERMS = 20;
   const num_t  ST_DEFAULT_P_VALUE_THRESHOLD = 0.05;
-  const bool   ST_DEFAULT_NO_SORT = false;
+  const num_t  ST_DEFAULT_IMPORTANCE_THRESHOLD = 0.0;
+  //const bool   ST_DEFAULT_NO_SORT = false;
 
   // Random Forest default configuration
   const size_t RF_DEFAULT_N_TREES = 100;
@@ -73,10 +74,13 @@ namespace options {
   
   struct General_options {
 
+    // EXPERIMENTAL
+    bool isRecombiner;
+    size_t recombinePerms; const string recombinePerms_s; const string recombinePerms_l;
+
     // I/O related and general paramters
     bool printHelp; const string printHelp_s; const string printHelp_l;
     bool isFilter; const string isFilter_s; const string isFilter_l;
-    bool isRecombiner; const string isRecombiner_s; const string isRecombiner_l;
     bool reportContrasts; const string reportContrasts_s; const string reportContrasts_l;
     string input; const string input_s; const string input_l;
     string output; const string output_s; const string output_l;
@@ -100,12 +104,16 @@ namespace options {
     // Statistical test related parameters
     size_t nPerms; const string nPerms_s; const string nPerms_l;
     num_t pValueThreshold; const string pValueThreshold_s; const string pValueThreshold_l;
-    bool noSort; const string noSort_s; const string noSort_l;
+    num_t importanceThreshold; const string importanceThreshold_s; const string importanceThreshold_l;
+    //bool noSort; const string noSort_s; const string noSort_l;
 
     General_options():
+      // EXPERIMENTAL PARAMETERS
+      isRecombiner(false),
+      recombinePerms(GENERAL_DEFAULT_RECOMBINE_PERMS),recombinePerms_s("R"),recombinePerms_l("recombine"),
+      // I/O and general parameters
       printHelp(GENERAL_DEFAULT_PRINT_HELP),printHelp_s("h"),printHelp_l("help"),
       isFilter(GENERAL_DEFAULT_IS_FILTER),isFilter_s("L"),isFilter_l("filter"),
-      isRecombiner(GENERAL_DEFAULT_IS_RECOMBINER),isRecombiner_s("R"),isRecombiner_l("recombine"),
       reportContrasts(GENERAL_DEFAULT_REPORT_CONTRASTS),reportContrasts_s("C"),reportContrasts_l("report_contrasts"),
       input(""),input_s("I"),input_l("input"),
       output(""),output_s("O"),output_l("output"),
@@ -126,15 +134,25 @@ namespace options {
       shrinkage_s("k"),shrinkage_l("shrinkage"),
       // Statistical test related parameters
       nPerms(ST_DEFAULT_N_PERMS),nPerms_s("p"),nPerms_l("nperms"),
-      pValueThreshold(ST_DEFAULT_P_VALUE_THRESHOLD),pValueThreshold_s("t"),pValueThreshold_l("pthreshold"), 
-      noSort(ST_DEFAULT_NO_SORT),noSort_s("N"),noSort_l("noSort") { setRFDefaults(); }
+      pValueThreshold(ST_DEFAULT_P_VALUE_THRESHOLD),pValueThreshold_s("t"),pValueThreshold_l("p_threshold"),
+      importanceThreshold(ST_DEFAULT_IMPORTANCE_THRESHOLD),importanceThreshold_s("o"),importanceThreshold_l("i_threshold")
+      //noSort(ST_DEFAULT_NO_SORT),noSort_s("N"),noSort_l("noSort") 
+    { 
+      setRFDefaults(); 
+    }
     
     void loadUserParams(ArgParse& parser) {
             
+      // EXPERIMENTAL PARAMETERS
+      parser.getFlag(recombinePerms_s, recombinePerms_l, isRecombiner);
+      if ( isRecombiner ) {
+	parser.getArgument<size_t>(recombinePerms_s,recombinePerms_l,recombinePerms);
+      }
+
       // I/O related and general parameters
       parser.getFlag(printHelp_s, printHelp_l, printHelp);
       parser.getFlag(isFilter_s,isFilter_l,isFilter);
-      parser.getFlag(isRecombiner_s,isRecombiner_l,isRecombiner);
+      parser.getArgument<size_t>(recombinePerms_s,recombinePerms_l,recombinePerms);
       parser.getFlag(reportContrasts_s,reportContrasts_l,reportContrasts);
       parser.getArgument<string>(input_s, input_l, input);
       parser.getArgument<string>(targetStr_s, targetStr_l, targetStr);
@@ -172,7 +190,8 @@ namespace options {
       // Statistical test parameters
       parser.getArgument<size_t>(nPerms_s, nPerms_l, nPerms);
       parser.getArgument<num_t>(pValueThreshold_s,  pValueThreshold_l,  pValueThreshold);
-      parser.getFlag(noSort_s, noSort_l, noSort);
+      parser.getArgument<num_t>(importanceThreshold_s, importanceThreshold_l, importanceThreshold);
+      //parser.getFlag(noSort_s, noSort_l, noSort);
       //parser.getArgument<string>(contrastOutput_s, contrastOutput_l, contrastOutput);
 
       if ( nPerms > 1 && nPerms < 6 ) {
@@ -234,8 +253,10 @@ namespace options {
            << " " << "[Filter only] Number of permutations in statistical test (default " << ST_DEFAULT_N_PERMS << ")" << endl;
       cout << " -" << pValueThreshold_s << " / --" << pValueThreshold_l << setw( maxWidth - pValueThreshold_l.size() )
            << " " << "[Filter only] P-value threshold in statistical test (default " << ST_DEFAULT_P_VALUE_THRESHOLD << ")" << endl;
-      cout << " -" << noSort_s << " / --" << noSort_l << setw( maxWidth - noSort_l.size() )
-	   << " " << "[Filter only] Set this flag if you want the associations be listed unsorted (default OFF)" << endl; 
+      cout << " -" << importanceThreshold_s << " / --" << importanceThreshold_l << setw( maxWidth - importanceThreshold_l.size() )
+	   << " " << "[Filter only] Importance threshold in statistical test (default " << ST_DEFAULT_IMPORTANCE_THRESHOLD << ")" << endl;
+      //cout << " -" << noSort_s << " / --" << noSort_l << setw( maxWidth - noSort_l.size() )
+      //     << " " << "[Filter only] Set this flag if you want the associations be listed unsorted (default OFF)" << endl; 
       cout << " -" << reportContrasts_s << " / --" << reportContrasts_l << setw( maxWidth - reportContrasts_l.size() )
 	   << " " << "[Filter only] Set this flag if you want to report contrasts in the output association file (default OFF)" << endl;
       cout << endl;

@@ -37,6 +37,8 @@ void rf_ace(options::General_options& gen_op);
 
 void rf_ace_recombine(options::General_options& gen_op);
 
+void printGeneralSetup(Treedata& treeData, const options::General_options& gen_op); 
+
 void printAssociationsToFile(options::General_options& gen_op, 
 			     vector<string>& featureNames,
 			     vector<num_t>& pValues,
@@ -68,14 +70,27 @@ int main(const int argc, char* const argv[]) {
   rface::validateRequiredParameters(gen_op);
 
   if ( gen_op.isFilter ) {
-    rf_ace_filter(gen_op);
-  }
-  
-  if ( gen_op.isRecombiner ) {
-    rf_ace_recombine(gen_op);
-  }
 
-  rf_ace(gen_op);
+    rf_ace_filter(gen_op);
+
+  } else if ( gen_op.isRecombiner ) {
+    
+    cout << " *(EXPERIMENTAL) RF-ACE RECOMBINER ACTIVATED* " << endl;
+        
+    if ( gen_op.recombinePerms == 0 ) {
+      cerr << "Currently the number of permutations to be recombined ( -" 
+	   << gen_op.recombinePerms_s << " / --" << gen_op.recombinePerms_l << endl
+	   << " ) needs to be explicitly specified." << endl;
+      exit(1);
+    }
+
+    rf_ace_recombine(gen_op);
+
+  } else {
+
+    rf_ace(gen_op);
+
+  }
   
 }
 
@@ -97,8 +112,7 @@ void rf_ace_filter(options::General_options& gen_op) {
     exit(1);
   }
   
-  rface::printGeneralSetup(treeData,gen_op);
-  //rface::printStochasticForestSetup(SF_op);
+  printGeneralSetup(treeData,gen_op);
       
   // Store the start time (in clock cycles) just before the analysis
   clock_t clockStart( clock() );
@@ -132,7 +146,13 @@ void rf_ace_filter(options::General_options& gen_op) {
     sampleCounts[i] = treeData.nRealSamples(targetIdx,i);
   }
 
-  printAssociationsToFile(gen_op,featureNames,pValues,importanceValues,contrastImportanceSample,correlations,sampleCounts);
+  printAssociationsToFile(gen_op,
+			  featureNames,
+			  pValues,
+			  importanceValues,
+			  contrastImportanceSample,
+			  correlations,
+			  sampleCounts);
 
   if ( gen_op.log != "" ) {
     
@@ -157,6 +177,63 @@ void rf_ace_filter(options::General_options& gen_op) {
   
   exit(0);
 }
+
+void printGeneralSetup(Treedata& treeData, const options::General_options& gen_op) {
+  
+  // After masking, it's safe to refer to features as indices
+  // TODO: rf_ace.cpp: this should be made obsolete; instead of indices, use the feature headers
+  size_t targetIdx = treeData.getFeatureIdx(gen_op.targetStr);
+  
+  size_t nAllFeatures = treeData.nFeatures();
+  size_t nRealSamples = treeData.nRealSamples(targetIdx);
+  num_t realFraction = 1.0*nRealSamples / treeData.nSamples();
+  
+  //Before number crunching, print values of parameters of RF-ACE
+  cout << "General configuration:" << endl;
+  cout << "    nfeatures" << setw(options::maxWidth-9) << "" << "= " << nAllFeatures << endl;
+  cout << "    nsamples"  << setw(options::maxWidth-8) << "" << "= " << treeData.nRealSamples(targetIdx) << " / " << treeData.nSamples() << " ( " << 100.0 * ( 1 - realFraction ) << " % missing )" << endl;
+  cout << "    tree type" << setw(options::maxWidth-9) << "" << "= ";
+  if(treeData.isFeatureNumerical(targetIdx)) { cout << "Regression CART" << endl; } else { cout << treeData.nCategories(targetIdx) << "-class CART" << endl; }
+  cout << "  --" << gen_op.dataDelimiter_l << setw( options::maxWidth - gen_op.dataDelimiter_l.size() ) << ""
+       << "= '" << gen_op.dataDelimiter << "'" << endl;
+  cout << "  --" << gen_op.headerDelimiter_l << setw( options::maxWidth - gen_op.headerDelimiter_l.size() ) << ""
+       << "= '" << gen_op.headerDelimiter << "'" << endl;
+  cout << "  --" << gen_op.input_l << setw( options::maxWidth - gen_op.input_l.size() ) << ""
+       << "= " << gen_op.input << endl;
+  cout << "  --" << gen_op.targetStr_l << setw( options::maxWidth - gen_op.targetStr_l.size() ) << ""
+       << "= " << gen_op.targetStr << " ( index " << targetIdx << " )" << endl;
+  cout << "  --" << gen_op.output_l << setw( options::maxWidth - gen_op.output_l.size() ) << ""
+       << "= "; if ( gen_op.output != "" ) { cout << gen_op.output << endl; } else { cout << "NOT SET" << endl; }
+  cout << "  --" << gen_op.log_l << setw( options::maxWidth - gen_op.log_l.size() ) << ""
+       << "= "; if( gen_op.log != "" ) { cout << gen_op.log << endl; } else { cout << "NOT SET" << endl; }
+  cout << "  --" << gen_op.seed_l << setw( options::maxWidth - gen_op.seed_l.size() ) << ""
+       << "= " << gen_op.seed << endl;
+  cout << endl;
+
+  cout << "Stochastic Forest configuration:" << endl;
+  cout << "  --" << gen_op.nTrees_l << setw( options::maxWidth - gen_op.nTrees_l.size() ) << ""
+       << "= "; if(gen_op.nTrees == 0) { cout << "DEFAULT" << endl; } else { cout << gen_op.nTrees << endl; }
+  cout << "  --" << gen_op.mTry_l << setw( options::maxWidth - gen_op.mTry_l.size() ) << ""
+       << "= " << gen_op.mTry << endl;
+  cout << "  --" << gen_op.nMaxLeaves_l << setw( options::maxWidth - gen_op.nMaxLeaves_l.size() ) << ""
+       << "= " << gen_op.nMaxLeaves << endl;
+  cout << "  --" << gen_op.nodeSize_l << setw( options::maxWidth - gen_op.nodeSize_l.size() ) << ""
+       << "= "; if(gen_op.nodeSize == 0) { cout << "DEFAULT" << endl; } else { cout << gen_op.nodeSize << endl; }
+  cout << "  --" << gen_op.shrinkage_l << setw( options::maxWidth - gen_op.shrinkage_l.size() ) << ""
+       << "= " << gen_op.shrinkage << endl;
+  cout << endl;
+
+  cout << "Statistical test configuration [Filter only]:" << endl;
+  cout << "  --" << gen_op.nPerms_l << setw( options::maxWidth - gen_op.nPerms_l.size() ) << ""
+       << "= " << gen_op.nPerms << endl;
+  cout << "  --" << gen_op.pValueThreshold_l << setw( options::maxWidth - gen_op.pValueThreshold_l.size() ) << ""
+       << "= " << gen_op.pValueThreshold << " (lower limit)" <<endl;
+  cout << "  --" << gen_op.importanceThreshold_l << setw( options::maxWidth - gen_op.importanceThreshold_l.size() ) << ""
+       << "= " << gen_op.importanceThreshold << " (upper limit)" << endl;
+  cout << endl;
+
+}
+
 
 statistics::RF_statistics executeRandomForest(Treedata& treeData,
 					      const options::General_options& gen_op,
@@ -300,9 +377,6 @@ void rf_ace(options::General_options& gen_op) {
   //   exit(1);
   // }
 
-  // These are to override the default parameter settings
-  //gen_op.loadUserParams(parser);
-
   rface::pruneFeatureSpace(treeData,gen_op);
   rface::updateMTry(treeData,gen_op);
 
@@ -314,8 +388,7 @@ void rf_ace(options::General_options& gen_op) {
   parameters.useContrasts = false;
   parameters.shrinkage    = gen_op.shrinkage;
     
-  rface::printGeneralSetup(treeData,gen_op);
-  //rface::printStochasticForestSetup(_op);
+  printGeneralSetup(treeData,gen_op);
 
   // Store the start time (in clock cycles) just before the analysis
   clock_t clockStart( clock() );
@@ -442,21 +515,21 @@ void printAssociationsToFile(options::General_options& gen_op,
   vector<size_t> featureIcs = utils::range( featureNames.size() );
 
   // If we prefer sorting the outputs wrt. significance (either p-value or importance)
-  if ( !gen_op.noSort ) {
-    // If there are more than one permutation, we can compute the p-values and thus sort wrt. them
-    if ( gen_op.nPerms > 1 ) {
-      bool isIncreasingOrder = true;
-      datadefs::sortDataAndMakeRef(isIncreasingOrder,pValues,featureIcs);
-      datadefs::sortFromRef<num_t>(importanceValues,featureIcs);
-    } else { // ... otherwise we can sort wrt. importance scores
-      bool isIncreasingOrder = false;
-      datadefs::sortDataAndMakeRef(isIncreasingOrder,importanceValues,featureIcs);
-      datadefs::sortFromRef<num_t>(pValues,featureIcs);
-    }
-    datadefs::sortFromRef<string>(featureNames,featureIcs);
-    datadefs::sortFromRef<num_t>(correlations,featureIcs);
-    datadefs::sortFromRef<size_t>(sampleCounts,featureIcs);
+  //if ( !gen_op.noSort ) {
+  // If there are more than one permutation, we can compute the p-values and thus sort wrt. them
+  if ( gen_op.nPerms > 1 ) {
+    bool isIncreasingOrder = true;
+    datadefs::sortDataAndMakeRef(isIncreasingOrder,pValues,featureIcs);
+    datadefs::sortFromRef<num_t>(importanceValues,featureIcs);
+  } else { // ... otherwise we can sort wrt. importance scores
+    bool isIncreasingOrder = false;
+    datadefs::sortDataAndMakeRef(isIncreasingOrder,importanceValues,featureIcs);
+    datadefs::sortFromRef<num_t>(pValues,featureIcs);
   }
+  datadefs::sortFromRef<string>(featureNames,featureIcs);
+  datadefs::sortFromRef<num_t>(correlations,featureIcs);
+  datadefs::sortFromRef<size_t>(sampleCounts,featureIcs);
+  //}
 
   //assert( gen_op.targetStr == treeData.getFeatureName(targetIdx) );
 
@@ -464,16 +537,15 @@ void printAssociationsToFile(options::General_options& gen_op,
 
   size_t nFeatures = featureIcs.size();
 
-  for ( size_t i = 0; i < nFeatures; ++i ) {
+  for ( size_t i = 0; i < featureIcs.size(); ++i ) {
     //size_t featureIdx = featureIcs[i];
 
     // With more than 1 permutation we look at p-value threshold
-    if ( gen_op.nPerms > 1 ) {
-      if ( pValues[i] > gen_op.pValueThreshold ) {
-        continue;
-      } // ... otherwise we look at importance threshold
-      // TODO: add importance value threshold as an option
-    } else if ( importanceValues[i] < datadefs::EPS ) {
+    if ( gen_op.nPerms > 1 && pValues[i] > gen_op.pValueThreshold ) {
+      continue;
+    } 
+
+    if ( importanceValues[i] < gen_op.importanceThreshold ) {
       continue;
     }
 
@@ -512,22 +584,42 @@ void printAssociationsToFile(options::General_options& gen_op,
 
 void rf_ace_recombine(options::General_options& gen_op) {
 
+  // Read all lines from file
   vector<string> associations = utils::readListFromFile(gen_op.input,'\n');
 
+  // Initialize containers for storing the maps from associated features to 
+  // variables
   map<string,vector<num_t> > associationMap;
   map<string,num_t> correlationMap;
   map<string,size_t> sampleCountMap;
 
+  // For reference extract the first association ...
   vector<string> association = utils::split(associations[0],'\t');
 
+  // ... and from the first association extract the target feature
   gen_op.targetStr = association[0];
 
+  // Go through all associations in the list and update the map containers
   for ( size_t i = 0; i < associations.size(); ++i ) {
+    
+    // Extract the association from line "i"
     association = utils::split(associations[i],'\t');
+
+    // Extract the feature name from line "i"
     string featureName = association[1];
+
+    // Make sure the target feature is listed as first in each entry in the file
+    // that is to be recombined (thus, we know that the entries are related to 
+    // the same variable)
     assert( gen_op.targetStr == association[0] );
+    
+    // Extract the importance value ...
     num_t importanceValue = utils::str2<num_t>(association[3]);
+    
+    // ... and push it back to the container 
     associationMap[featureName].push_back(importanceValue);
+
+    // 
     correlationMap[featureName] = utils::str2<num_t>(association[4]);
     sampleCountMap[featureName] = utils::str2<size_t>(association[5]);
   }
@@ -545,13 +637,25 @@ void rf_ace_recombine(options::General_options& gen_op) {
 
   vector<num_t> contrastImportanceSample = associationMap[datadefs::CONTRAST];
 
+  // Notify if the sample size of the null distribution is very low
+  if ( contrastImportanceSample.size() < 5 ) {
+    cerr << " Too few samples drawn ( " << contrastImportanceSample.size() << " < 5 ) from the null distribution. Consider adding more permutations. Quitting..." << endl;
+    exit(0);
+  }
+
+  // Keep count of the total number of features for which there are 
+  // enough ( >= 5 ) importance values
   size_t i = 0;
+
+  // Go through all features in the container
   for ( map<string,vector<num_t> >::const_iterator it(associationMap.begin() ); it != associationMap.end(); ++it ) {
     
+    // For clarity map the iterator into more representative variable names
     string featureName = it->first;
     vector<num_t> importanceSample = it->second;
 
-    if ( featureName != datadefs::CONTRAST ) {
+    // If there are enough ( >= 5 ) importance values, we can compute the t-test 
+    if ( importanceSample.size() >= 5 && featureName != datadefs::CONTRAST ) {
       featureNames[i] = featureName;
       importanceValues[i] = math::mean(importanceSample);
       pValues[i] = math::ttest(importanceSample,contrastImportanceSample);
@@ -563,9 +667,21 @@ void rf_ace_recombine(options::General_options& gen_op) {
 
   }
   
+  featureNames.resize(i);
+  pValues.resize(i);
+  importanceValues.resize(i);
+  correlations.resize(i);
+  sampleCounts.resize(i);
+
   gen_op.reportContrasts = false;
 
-  printAssociationsToFile(gen_op,featureNames,pValues,importanceValues,contrastImportanceSample,correlations,sampleCounts);
+  printAssociationsToFile(gen_op,
+			  featureNames,
+			  pValues,
+			  importanceValues,
+			  contrastImportanceSample,
+			  correlations,
+			  sampleCounts);
 
 }
 
