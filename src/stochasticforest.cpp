@@ -21,10 +21,19 @@ StochasticForest::StochasticForest(Treedata* treeData, const string& targetName,
   size_t targetIdx = treeData_->getFeatureIdx(targetName_);
   targetSupport_ = treeData_->categories(targetIdx);
 
+  // Grows the forest
   if ( parameters_.model == RF ) {
     this->learnRF();
   } else {
     this->learnGBT();
+  }
+
+  // Get features in the forest for fast look-up
+  for ( size_t treeIdx = 0; treeIdx < rootNodes_.size(); ++treeIdx ) {
+    set<size_t> featuresInTree = rootNodes_[treeIdx]->getFeaturesInTree();
+    for ( set<size_t>::const_iterator it(featuresInTree.begin()); it != featuresInTree.end(); ++it ) {
+      featuresInForest_.insert(*it);
+    }
   }
 
 }
@@ -239,15 +248,14 @@ void StochasticForest::learnRF() {
   GI.featureIcs = utils::range( treeData_->nFeatures() );
   GI.featureIcs.erase( GI.featureIcs.begin() + targetIdx ); // Remove target from the feature index list
 
-  //Allocates memory for the root nodes
-  for(size_t treeIdx = 0; treeIdx < parameters_.nTrees; ++treeIdx) {
+  // Allocates memory for the root nodes
+  for ( size_t treeIdx = 0; treeIdx < parameters_.nTrees; ++treeIdx ) {
     rootNodes_[treeIdx] = new RootNode(treeData_,
 				       targetIdx);
     
     rootNodes_[treeIdx]->growTree(GI);
-    
-  }
 
+  }
 
 }
 
@@ -641,7 +649,7 @@ num_t StochasticForest::getError() {
 
 void StochasticForest::getImportanceValues(vector<num_t>& importanceValues, vector<num_t>& contrastImportanceValues) {
   
-  //assert( !datadefs::isNAN(oobError_) );
+  assert( featuresInForest_.size() > 0 );
   
   vector<num_t> oobPredictions = this->getOobPredictions();
   
@@ -652,11 +660,14 @@ void StochasticForest::getImportanceValues(vector<num_t>& importanceValues, vect
 
   vector<num_t> trueData = treeData_->getFeatureData(targetIdx);
 
-  importanceValues.resize(nAllFeatures);
+  importanceValues.clear();
+  importanceValues.resize(nAllFeatures,0.0);
 
   num_t oobError = this->error(oobPredictions,trueData);
 
-  for ( size_t featureIdx = 0; featureIdx < nAllFeatures; ++featureIdx ) {
+  for ( set<size_t>::const_iterator it(featuresInForest_.begin()); it != featuresInForest_.end(); ++it ) {
+
+    size_t featureIdx = *it;
 
     vector<num_t> permutedOobPredictions = this->getPermutedOobPredictions(featureIdx);
 

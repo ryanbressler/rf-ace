@@ -79,18 +79,20 @@ private:
   num_t error(const vector<num_t>& data1,
 	      const vector<num_t>& data2); 
 
-
-  //Pointer to treeData_ object, stores all the feature data with which the trees are grown (i.e. training data)
+  // Pointer to treeData_ object, stores all the feature data with which the trees are grown (i.e. training data)
   Treedata* treeData_;
 
   Parameters parameters_;
 
-  //Chosen target to regress on
+  // Chosen target to regress on
   string targetName_;
   vector<string> targetSupport_;
 
-  //Root nodes for every tree
+  // Root nodes for every tree
   vector<RootNode*> rootNodes_;
+
+  // Container for all features in the forest for fast look-up
+  set<size_t> featuresInForest_;
   
 };
 

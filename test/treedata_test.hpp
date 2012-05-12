@@ -20,6 +20,7 @@ class treeDataTest : public CppUnit::TestFixture {
   CPPUNIT_TEST( test_removeFeatures );
   CPPUNIT_TEST( test_numericalFeatureSplit );
   CPPUNIT_TEST( test_categoricalFeatureSplit );
+  CPPUNIT_TEST( test_numericalFeatureSplitsCategoricalTarget );
   CPPUNIT_TEST_SUITE_END();
   
 public:
@@ -37,10 +38,24 @@ public:
   void test_removeFeatures();
   void test_numericalFeatureSplit();
   void test_categoricalFeatureSplit();
+  void test_numericalFeatureSplitsCategoricalTarget();
+
+private:
+
+  Treedata* treeData_;
 };
 
-void treeDataTest::setUp() {}
-void treeDataTest::tearDown() {}
+void treeDataTest::setUp() {
+
+  treeData_ = new Treedata("test_103by300_mixed_matrix.afm",'\t',':');
+
+}
+
+void treeDataTest::tearDown() {
+  
+  delete treeData_;
+  
+}
  
 
 void treeDataTest::test_permuteContrasts() {
@@ -730,6 +745,28 @@ void treeDataTest::test_categoricalFeatureSplit() {
   CPPUNIT_ASSERT( fabs( splitFitness - 0.642857142857143 ) < 1e-10 );
 
 
+
+}
+
+void treeDataTest::test_numericalFeatureSplitsCategoricalTarget() {
+
+  size_t featureIdx = treeData_->getFeatureIdx("N:output");
+  size_t targetIdx = treeData_->getFeatureIdx("C:class");
+
+  vector<size_t> sampleIcs_left( utils::range(treeData_->nSamples()) );
+  vector<size_t> sampleIcs_right;
+  size_t minSplit = 1;
+  num_t splitValue;
+
+
+  num_t deltaImpurity = treeData_->numericalFeatureSplit(targetIdx,
+							 featureIdx,
+							 minSplit,
+							 sampleIcs_left,
+							 sampleIcs_right,
+							 splitValue);
+
+  
 
 }
 

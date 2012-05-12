@@ -31,7 +31,7 @@ public:
   //num_t getOobError();
   size_t nOobSamples();
 
-  //set<size_t> getFeaturesInTree();
+  set<size_t> getFeaturesInTree() { return(featuresInTree_); }
 
   //num_t getImportance(const size_t featureIdx);
 

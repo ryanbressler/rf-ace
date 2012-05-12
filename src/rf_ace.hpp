@@ -120,7 +120,8 @@ namespace rface {
     }
   }
 
-  void printGeneralSetup(Treedata& treeData, const options::General_options& gen_op) {
+  /*
+    void printGeneralSetup(Treedata& treeData, const options::General_options& gen_op) {
     
     // After masking, it's safe to refer to features as indices
     // TODO: rf_ace.cpp: this should be made obsolete; instead of indices, use the feature headers
@@ -137,35 +138,36 @@ namespace rface {
     cout << "    tree type" << setw(options::maxWidth-9) << "" << "= ";
     if(treeData.isFeatureNumerical(targetIdx)) { cout << "Regression CART" << endl; } else { cout << treeData.nCategories(targetIdx) << "-class CART" << endl; }
     cout << "  --" << gen_op.dataDelimiter_l << setw( options::maxWidth - gen_op.dataDelimiter_l.size() ) << ""
-	 << "= '" << gen_op.dataDelimiter << "'" << endl;
+    << "= '" << gen_op.dataDelimiter << "'" << endl;
     cout << "  --" << gen_op.headerDelimiter_l << setw( options::maxWidth - gen_op.headerDelimiter_l.size() ) << ""
-	 << "= '" << gen_op.headerDelimiter << "'" << endl;
+    << "= '" << gen_op.headerDelimiter << "'" << endl;
     cout << "  --" << gen_op.input_l << setw( options::maxWidth - gen_op.input_l.size() ) << ""
-	 << "= " << gen_op.input << endl;
+    << "= " << gen_op.input << endl;
     cout << "  --" << gen_op.targetStr_l << setw( options::maxWidth - gen_op.targetStr_l.size() ) << ""
-	 << "= " << gen_op.targetStr << " ( index " << targetIdx << " )" << endl;
+    << "= " << gen_op.targetStr << " ( index " << targetIdx << " )" << endl;
     cout << "  --" << gen_op.output_l << setw( options::maxWidth - gen_op.output_l.size() ) << ""
-	 << "= "; if ( gen_op.output != "" ) { cout << gen_op.output << endl; } else { cout << "NOT SET" << endl; }
+    << "= "; if ( gen_op.output != "" ) { cout << gen_op.output << endl; } else { cout << "NOT SET" << endl; }
     cout << "  --" << gen_op.log_l << setw( options::maxWidth - gen_op.log_l.size() ) << ""
-	 << "= "; if( gen_op.log != "" ) { cout << gen_op.log << endl; } else { cout << "NOT SET" << endl; }
+    << "= "; if( gen_op.log != "" ) { cout << gen_op.log << endl; } else { cout << "NOT SET" << endl; }
     cout << "  --" << gen_op.seed_l << setw( options::maxWidth - gen_op.seed_l.size() ) << ""
-	 << "= " << gen_op.seed << endl;
+    << "= " << gen_op.seed << endl;
     cout << endl;
-
+    
     cout << "Stochastic Forest configuration:" << endl;
     cout << "  --" << gen_op.nTrees_l << setw( options::maxWidth - gen_op.nTrees_l.size() ) << ""
-         << "= "; if(gen_op.nTrees == 0) { cout << "DEFAULT" << endl; } else { cout << gen_op.nTrees << endl; }
+    << "= "; if(gen_op.nTrees == 0) { cout << "DEFAULT" << endl; } else { cout << gen_op.nTrees << endl; }
     cout << "  --" << gen_op.mTry_l << setw( options::maxWidth - gen_op.mTry_l.size() ) << ""
-         << "= " << gen_op.mTry << endl;
+    << "= " << gen_op.mTry << endl;
     cout << "  --" << gen_op.nMaxLeaves_l << setw( options::maxWidth - gen_op.nMaxLeaves_l.size() ) << ""
-         << "= " << gen_op.nMaxLeaves << endl;
+    << "= " << gen_op.nMaxLeaves << endl;
     cout << "  --" << gen_op.nodeSize_l << setw( options::maxWidth - gen_op.nodeSize_l.size() ) << ""
-         << "= "; if(gen_op.nodeSize == 0) { cout << "DEFAULT" << endl; } else { cout << gen_op.nodeSize << endl; }
+    << "= "; if(gen_op.nodeSize == 0) { cout << "DEFAULT" << endl; } else { cout << gen_op.nodeSize << endl; }
     cout << "  --" << gen_op.shrinkage_l << setw( options::maxWidth - gen_op.shrinkage_l.size() ) << ""
-         << "= " << gen_op.shrinkage << endl;
+    << "= " << gen_op.shrinkage << endl;
     cout << endl;
-
-  }
+    
+    }
+  */
   
 }
 
