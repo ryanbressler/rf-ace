@@ -60,6 +60,8 @@ public:
 
   size_t nTrees();
 
+  inline set<size_t> getFeaturesInForest() { return( featuresInForest_ ); }
+
   inline string getTargetName() { return( targetName_ ); }
   inline bool isTargetNumerical() { return( targetSupport_.size() == 0 ? true : false ); }
   inline model_t type() { return( parameters_.model ); }

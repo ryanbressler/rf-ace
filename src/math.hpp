@@ -217,6 +217,16 @@ namespace math {
 	    + sf_right / ( n_tot * n_right ) );
 
   }
+
+  template <typename T>
+  inline void setUnion(set<T>& baseSet, const set<T>& newSet) {
+
+    for ( typename set<T>::const_iterator it( newSet.begin() ); it != newSet.end(); ++it ) {
+      baseSet.insert(*it);
+    }
+
+  }
+
   
 }
   

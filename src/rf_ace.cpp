@@ -29,7 +29,8 @@ statistics::RF_statistics executeRandomForest(Treedata& treeData,
 					      const options::General_options& gen_op,
 					      vector<num_t>& pValues,
 					      vector<num_t>& importanceValues,
-					      vector<num_t>& contrastImportanceSample);
+					      vector<num_t>& contrastImportanceSample,
+					      set<size_t>& featuresInAllForests);
 
 void rf_ace_filter(options::General_options& gen_op);
 
@@ -117,20 +118,14 @@ void rf_ace_filter(options::General_options& gen_op) {
   // Store the start time (in clock cycles) just before the analysis
   clock_t clockStart( clock() );
   
-  ////////////////////////////////////////////////////////////////////////
-  //  STEP 1 -- MULTIVARIATE ASSOCIATIONS WITH RANDOM FOREST ENSEMBLES  //
-  ////////////////////////////////////////////////////////////////////////     
   vector<num_t> pValues; 
   vector<num_t> importanceValues; 
   vector<num_t> contrastImportanceSample;
+  set<size_t> featuresInAllForests;
   
   cout << "===> Uncovering associations... " << flush;
-  RF_stat = executeRandomForest(treeData,gen_op,pValues,importanceValues,contrastImportanceSample);
+  RF_stat = executeRandomForest(treeData,gen_op,pValues,importanceValues,contrastImportanceSample,featuresInAllForests);
   cout << "DONE" << endl;
-  
-  /////////////////////////////////////////////////
-  //  STEP 2 -- FEATURE FILTERING WITH P-VALUES  //
-  /////////////////////////////////////////////////
   
   cout << "===> Filtering features... " << flush;
 
@@ -140,12 +135,41 @@ void rf_ace_filter(options::General_options& gen_op) {
   vector<num_t> correlations ( treeData.nFeatures() );
   vector<size_t> sampleCounts( treeData.nFeatures() );
 
-  for ( size_t i = 0; i < treeData.nFeatures(); ++i ) {
-    featureNames[i] = treeData.getFeatureName(i);
-    correlations[i] = treeData.pearsonCorrelation(targetIdx,i);
-    sampleCounts[i] = treeData.nRealSamples(targetIdx,i);
-  }
+  size_t nIncludedFeatures = 0;
 
+  for ( size_t i = 0; i < treeData.nFeatures(); ++i ) {
+
+    // If we don't want to report all features in the association file...
+    if ( !gen_op.reportAllFeatures ) {
+     
+      bool featureNotInForests = featuresInAllForests.find(i) == featuresInAllForests.end();
+      bool tooHighPValue = gen_op.nPerms > 1 && pValues[i] > gen_op.pValueThreshold;
+      bool tooLowImportance = importanceValues[i] < gen_op.importanceThreshold;
+     
+      if ( featureNotInForests || tooLowImportance || tooHighPValue ) {
+	continue;
+      }
+    }
+
+    // In any case, we will omit target feature from the association list
+    if ( gen_op.targetStr == treeData.getFeatureName(i) ) {
+      continue;
+    }
+    
+    pValues[nIncludedFeatures] = pValues[i];
+    importanceValues[nIncludedFeatures] = importanceValues[i];
+    featureNames[nIncludedFeatures] = treeData.getFeatureName(i);
+    correlations[nIncludedFeatures] = treeData.pearsonCorrelation(targetIdx,i);
+    sampleCounts[nIncludedFeatures] = treeData.nRealSamples(targetIdx,i);
+    ++nIncludedFeatures;
+  }
+  
+  pValues.resize(nIncludedFeatures);
+  importanceValues.resize(nIncludedFeatures);
+  featureNames.resize(nIncludedFeatures);
+  correlations.resize(nIncludedFeatures);
+  sampleCounts.resize(nIncludedFeatures);
+  
   printAssociationsToFile(gen_op,
 			  featureNames,
 			  pValues,
@@ -153,7 +177,7 @@ void rf_ace_filter(options::General_options& gen_op) {
 			  contrastImportanceSample,
 			  correlations,
 			  sampleCounts);
-
+  
   if ( gen_op.log != "" ) {
     
     ofstream toLogFile(gen_op.log.c_str());
@@ -239,7 +263,8 @@ statistics::RF_statistics executeRandomForest(Treedata& treeData,
 					      const options::General_options& gen_op,
 					      vector<num_t>& pValues,
 					      vector<num_t>& importanceValues,
-					      vector<num_t>& contrastImportanceSample) {
+					      vector<num_t>& contrastImportanceSample,
+					      set<size_t>& featuresInAllForests) {
   
   vector<vector<size_t> > nodeMat(gen_op.nPerms,vector<size_t>(gen_op.nTrees));
   
@@ -251,6 +276,7 @@ statistics::RF_statistics executeRandomForest(Treedata& treeData,
   pValues.clear();
   pValues.resize(nFeatures,1.0);
   importanceValues.resize(2*nFeatures);
+  featuresInAllForests.clear();
   
   StochasticForest::Parameters parameters;
   parameters.model = StochasticForest::RF;
@@ -286,14 +312,16 @@ statistics::RF_statistics executeRandomForest(Treedata& treeData,
     nodeMat[permIdx] = SF.nNodes();
     
     SF.getImportanceValues(importanceMat[permIdx],contrastImportanceMat[permIdx]);
+
+    // Will update featuresInAllForests to contain all features in the current forest
+    math::setUnion(featuresInAllForests,SF.getFeaturesInForest());    
     
     // Store the new percentile value in the vector contrastImportanceSample
-    contrastImportanceSample[permIdx] = math::mean( utils::removeNANs( contrastImportanceMat[permIdx] ) );
+    contrastImportanceSample[permIdx] = math::mean( contrastImportanceMat[permIdx] );
     
   }
 
-  // Remove possible NANs from the contrast sample
-  contrastImportanceSample = utils::removeNANs(contrastImportanceSample);
+  assert( !datadefs::containsNAN(contrastImportanceSample) );
   
   // Notify if the sample size of the null distribution is very low
   if ( gen_op.nPerms > 1 && contrastImportanceSample.size() < 5 ) {
@@ -312,9 +340,8 @@ statistics::RF_statistics executeRandomForest(Treedata& treeData,
     for(size_t permIdx = 0; permIdx < gen_op.nPerms; ++permIdx) {
       featureImportanceSample[permIdx] = importanceMat[permIdx][featureIdx];
     }
-
-    // Remove missing values
-    featureImportanceSample = utils::removeNANs(featureImportanceSample);
+    
+    assert( !datadefs::containsNAN(featureImportanceSample) );
 
     // If sample size is too small, assign p-value to 1.0
     if ( featureImportanceSample.size() < 5 ) {
@@ -535,34 +562,16 @@ void printAssociationsToFile(options::General_options& gen_op,
 
   //assert( gen_op.targetStr == treeData.getFeatureName(targetIdx) );
 
-  size_t nSignificantFeatures = 0;
+  //size_t nSignificantFeatures = 0;
 
   size_t nFeatures = featureIcs.size();
 
-  for ( size_t i = 0; i < featureIcs.size(); ++i ) {
-    //size_t featureIdx = featureIcs[i];
-
-    // With more than 1 permutation we look at p-value threshold
-    if ( gen_op.nPerms > 1 && pValues[i] > gen_op.pValueThreshold ) {
-      continue;
-    } 
-
-    if ( importanceValues[i] < gen_op.importanceThreshold ) {
-      continue;
-    }
-
-    if ( featureNames[i] == gen_op.targetStr ) {
-      --nFeatures;
-      continue;
-    }
-
-    ++nSignificantFeatures;
-
-    // cout << " " << i << ":" << featureIdx;
+  for ( size_t i = 0; i < nFeatures; ++i ) {
 
     toAssociationFile << gen_op.targetStr.c_str() << "\t" << featureNames[i]
                       << "\t" << scientific << log10(pValues[i]) << "\t" << scientific << importanceValues[i] << "\t"
 		      << scientific << correlations[i] << "\t" << sampleCounts[i] << endl;
+
   }
 
   if ( gen_op.reportContrasts ) {
@@ -578,9 +587,7 @@ void printAssociationsToFile(options::General_options& gen_op,
 
   // Print some statistics
   // NOTE: we're subtracting the target from the total head count, that's why we need to subtract by 1
-  cout << "DONE, " << nSignificantFeatures << " / " << nFeatures << " features ( "
-       << 100.0 * nSignificantFeatures / nFeatures << " % ) left " << endl;
-
+  cout << "DONE, " << nFeatures << " features printed to file" << endl;
 
 }
 
@@ -648,8 +655,8 @@ void rf_ace_recombine(options::General_options& gen_op) {
 
   // Keep count of the total number of features for which there are 
   // enough ( >= 5 ) importance values
-  size_t i = 0;
-
+  size_t nIncludedFeatures = 0;
+  
   // Go through all features in the container
   for ( map<string,vector<num_t> >::const_iterator it(associationMap.begin() ); it != associationMap.end(); ++it ) {
     
@@ -657,28 +664,38 @@ void rf_ace_recombine(options::General_options& gen_op) {
     string featureName = it->first;
     vector<num_t> importanceSample = it->second; 
     importanceSample.resize(gen_op.recombinePerms,0.0);
+    
+    num_t pValue = math::ttest(importanceSample,contrastImportanceSample);
+    num_t importanceValue = math::mean(importanceSample);
 
-    // If there are enough ( >= 5 ) importance values, we can compute the t-test 
-    if ( importanceSample.size() >= 5 && featureName != datadefs::CONTRAST ) {
-      featureNames[i] = featureName;
-      importanceValues[i] = math::mean(importanceSample);
-      pValues[i] = math::ttest(importanceSample,contrastImportanceSample);
-      correlations[i] = correlationMap[featureName];
-      sampleCounts[i] = sampleCountMap[featureName];
-     
-      ++i;
+    bool featureIsContrast = featureName == datadefs::CONTRAST; 
+    bool tooHighPValue = gen_op.nPerms > 1 && pValue > gen_op.pValueThreshold;
+    bool tooLowImportance = importanceValue < gen_op.importanceThreshold;
+    
+    if ( tooLowImportance || 
+	 tooHighPValue || 
+	 featureIsContrast ) {
+      continue;
     }
-
+    
+    featureNames[nIncludedFeatures] = featureName;
+    pValues[nIncludedFeatures] = pValue;
+    importanceValues[nIncludedFeatures] = importanceValue;
+    correlations[nIncludedFeatures] = correlationMap[featureName];
+    sampleCounts[nIncludedFeatures] = sampleCountMap[featureName];
+    
+    ++nIncludedFeatures;
+    
   }
   
-  featureNames.resize(i);
-  pValues.resize(i);
-  importanceValues.resize(i);
-  correlations.resize(i);
-  sampleCounts.resize(i);
-
+  featureNames.resize(nIncludedFeatures);
+  pValues.resize(nIncludedFeatures);
+  importanceValues.resize(nIncludedFeatures);
+  correlations.resize(nIncludedFeatures);
+  sampleCounts.resize(nIncludedFeatures);
+  
   gen_op.reportContrasts = false;
-
+  
   printAssociationsToFile(gen_op,
 			  featureNames,
 			  pValues,
@@ -686,7 +703,7 @@ void rf_ace_recombine(options::General_options& gen_op) {
 			  contrastImportanceSample,
 			  correlations,
 			  sampleCounts);
-
+  
 }
 
 
