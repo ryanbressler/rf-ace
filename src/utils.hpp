@@ -109,6 +109,10 @@ namespace utils {
 
   template <typename T>
   T str2(const string& str) {
+
+    if( datadefs::isNAN_STR(str) ) {
+      return( static_cast<T>(datadefs::NUM_NAN) );
+    }
     
     stringstream ss( chomp(str) );
     T ret;

@@ -75,7 +75,7 @@ int main(const int argc, char* const argv[]) {
 
   } else if ( gen_op.isRecombiner ) {
     
-    cout << " *(EXPERIMENTAL) RF-ACE RECOMBINER ACTIVATED* " << endl;
+    cout << " *(EXPERIMENTAL) RF-ACE RECOMBINER (" << gen_op.recombinePerms << " permutations) ACTIVATED* " << endl;
         
     if ( gen_op.recombinePerms == 0 ) {
       cerr << "Currently the number of permutations to be recombined ( -" 
@@ -297,7 +297,9 @@ statistics::RF_statistics executeRandomForest(Treedata& treeData,
   
   // Notify if the sample size of the null distribution is very low
   if ( gen_op.nPerms > 1 && contrastImportanceSample.size() < 5 ) {
-    cerr << " Too few samples drawn ( " << contrastImportanceSample.size() << " < 5 ) from the null distribution. Consider adding more permutations. Quitting..." << endl;
+    cerr << " Too few samples drawn ( " << contrastImportanceSample.size() 
+	 << " < 5 ) from the null distribution. Consider adding more permutations. Quitting..." 
+	 << endl;
     exit(0);
   }
   
@@ -334,7 +336,7 @@ statistics::RF_statistics executeRandomForest(Treedata& treeData,
     
     // Calculate mean importace score from the sample
     importanceValues[featureIdx] = math::mean(featureImportanceSample);
-    
+
   }
   
   // Store statistics of the run in an object
@@ -636,6 +638,7 @@ void rf_ace_recombine(options::General_options& gen_op) {
   vector<size_t> sampleCounts(nRealFeatures);
 
   vector<num_t> contrastImportanceSample = associationMap[datadefs::CONTRAST];
+  contrastImportanceSample.resize(gen_op.recombinePerms,0.0);
 
   // Notify if the sample size of the null distribution is very low
   if ( contrastImportanceSample.size() < 5 ) {
@@ -652,7 +655,8 @@ void rf_ace_recombine(options::General_options& gen_op) {
     
     // For clarity map the iterator into more representative variable names
     string featureName = it->first;
-    vector<num_t> importanceSample = it->second;
+    vector<num_t> importanceSample = it->second; 
+    importanceSample.resize(gen_op.recombinePerms,0.0);
 
     // If there are enough ( >= 5 ) importance values, we can compute the t-test 
     if ( importanceSample.size() >= 5 && featureName != datadefs::CONTRAST ) {

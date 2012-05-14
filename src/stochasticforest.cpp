@@ -677,6 +677,9 @@ void StochasticForest::getImportanceValues(vector<num_t>& importanceValues, vect
 
   }
 
+  assert( !datadefs::containsNAN(importanceValues) );
+
+
   contrastImportanceValues.resize(nRealFeatures);
 
   copy(importanceValues.begin() + nRealFeatures,
