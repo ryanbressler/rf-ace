@@ -85,6 +85,19 @@ void DataDefsTest::test_strv2catv() {
     CPPUNIT_ASSERT(4.0);
   }
   CPPUNIT_ASSERT(datadefs::isNAN(catvec[50]));
+
+  CPPUNIT_ASSERT( mapping["a"] == 0.0 );
+  CPPUNIT_ASSERT( mapping["b"] == 1.0 );
+  CPPUNIT_ASSERT( mapping["c"] == 2.0 );
+  CPPUNIT_ASSERT( mapping["A"] == 3.0 );
+  CPPUNIT_ASSERT( mapping[""]  == 4.0 );
+
+  CPPUNIT_ASSERT( backMapping[0.0] == "a" );
+  CPPUNIT_ASSERT( backMapping[1.0] == "b" );
+  CPPUNIT_ASSERT( backMapping[2.0] == "c" );
+  CPPUNIT_ASSERT( backMapping[3.0] == "A" );
+  CPPUNIT_ASSERT( backMapping[4.0]  == "" );
+
 }
 
 void DataDefsTest::test_strv2numv() {

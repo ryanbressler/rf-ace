@@ -913,7 +913,7 @@ num_t Treedata::numericalFeatureSplit(const size_t targetIdx,
   }
 
 
-  if(bestSplitIdx == -1) {
+  if ( bestSplitIdx == -1 ) {
     DI_best = 0.0;
     return( DI_best );
   }
@@ -1397,9 +1397,9 @@ string Treedata::getRawFeatureData(const size_t featureIdx, const num_t data) {
   
   // If input feature is numerical, we just represent the numeric value as string
   if ( features_[featureIdx].isNumerical ) {
-    stringstream ss;
-    ss << data;
-    return( ss.str() );
+    //stringstream ss;
+    //ss << data;
+    //return( ss.str() );
     return( utils::num2str(data) );
   } else {
     

@@ -18,8 +18,10 @@ class treeDataTest : public CppUnit::TestFixture {
   CPPUNIT_TEST( test_parseARFF_extended ); 
   CPPUNIT_TEST( test_keepFeatures );
   CPPUNIT_TEST( test_removeFeatures );
-  CPPUNIT_TEST( test_numericalFeatureSplit );
-  CPPUNIT_TEST( test_categoricalFeatureSplit );
+  CPPUNIT_TEST( test_numericalFeatureSplitsNumericalTarget );
+  CPPUNIT_TEST( test_numericalFeatureSplitsCategoricalTarget );
+  CPPUNIT_TEST( test_categoricalFeatureSplitsNumericalTarget );
+  CPPUNIT_TEST( test_categoricalFeatureSplitsCategoricalTarget );
   CPPUNIT_TEST_SUITE_END();
   
 public:
@@ -35,8 +37,10 @@ public:
   void test_parseARFF_extended();
   void test_keepFeatures();
   void test_removeFeatures();
-  void test_numericalFeatureSplit();
-  void test_categoricalFeatureSplit();
+  void test_numericalFeatureSplitsNumericalTarget();
+  void test_numericalFeatureSplitsCategoricalTarget();
+  void test_categoricalFeatureSplitsNumericalTarget();
+  void test_categoricalFeatureSplitsCategoricalTarget();
 
 private:
 
@@ -522,7 +526,7 @@ void treeDataTest::test_removeFeatures() {
 
 }
 
-void treeDataTest::test_numericalFeatureSplit() {
+void treeDataTest::test_numericalFeatureSplitsNumericalTarget() {
 
   vector<size_t> sampleIcs_left(0);
   vector<size_t> sampleIcs_right = utils::range(300);
@@ -565,27 +569,39 @@ void treeDataTest::test_numericalFeatureSplit() {
     CPPUNIT_ASSERT( rightIcs.find(33) != rightIcs.end() );
   }
   
-  targetIdx = 1; // categorical
-  featureIdx = 2; // numerical
+  minSamples = 50;
 
-  sampleIcs_left.clear();
-  sampleIcs_right.clear();
-  sampleIcs_right = utils::range(300);
   
+
+}
+
+void treeDataTest::test_numericalFeatureSplitsCategoricalTarget() {
+
+  size_t targetIdx = 1; // categorical
+  size_t featureIdx = 2; // numerical
+
+  vector<size_t> sampleIcs_left;
+  vector<size_t> sampleIcs_right = utils::range(300);
+
+  datadefs::num_t splitValue;
+  datadefs::num_t deltaImpurity;
+
+  size_t minSamples = 1;
+
   deltaImpurity = treeData_->numericalFeatureSplit(targetIdx,
-						   featureIdx,
-						   minSamples,
-						   sampleIcs_left,
-						   sampleIcs_right,
-						   splitValue);
+                                                   featureIdx,
+                                                   minSamples,
+                                                   sampleIcs_left,
+                                                   sampleIcs_right,
+                                                   splitValue);
 
   {
     set<size_t> leftIcs(sampleIcs_left.begin(),sampleIcs_left.end());
     set<size_t> rightIcs(sampleIcs_right.begin(),sampleIcs_right.end());
-    
+
     CPPUNIT_ASSERT( fabs( deltaImpurity - 0.012389077212806 ) < 1e-10 );
     CPPUNIT_ASSERT( fabs( splitValue - 9.827 ) < 1e-10 );
-    
+
     CPPUNIT_ASSERT( sampleIcs_left.size() == 295 );
     CPPUNIT_ASSERT( sampleIcs_right.size() == 5 );
 
@@ -594,7 +610,7 @@ void treeDataTest::test_numericalFeatureSplit() {
     CPPUNIT_ASSERT( leftIcs.find(3)   != leftIcs.end() );
     CPPUNIT_ASSERT( leftIcs.find(7)   != leftIcs.end() );
     CPPUNIT_ASSERT( leftIcs.find(256) != leftIcs.end() );
-    
+
     CPPUNIT_ASSERT( rightIcs.find(69)  != rightIcs.end() );
     CPPUNIT_ASSERT( rightIcs.find(55)  != rightIcs.end() );
     CPPUNIT_ASSERT( rightIcs.find(100) != rightIcs.end() );
@@ -602,13 +618,10 @@ void treeDataTest::test_numericalFeatureSplit() {
     CPPUNIT_ASSERT( rightIcs.find(91)  != rightIcs.end() );
   }
 
-  minSamples = 50;
-
-  
 
 }
 
-void treeDataTest::test_categoricalFeatureSplit() {
+void treeDataTest::test_categoricalFeatureSplitsNumericalTarget() {
 
   vector<size_t> sampleIcs_left(0);
   vector<size_t> sampleIcs_right = utils::range(300);
@@ -651,6 +664,52 @@ void treeDataTest::test_categoricalFeatureSplit() {
   CPPUNIT_ASSERT( sampleIcs_right.size() == 209 );
 
   CPPUNIT_ASSERT( fabs( deltaImpurity - 1.102087375288799 ) < 1e-10 );
+
+}
+
+void treeDataTest::test_categoricalFeatureSplitsCategoricalTarget() {
+
+  vector<size_t> sampleIcs_left(0);
+  vector<size_t> sampleIcs_right = utils::range(300);
+
+  set<num_t> splitValues_left,splitValues_right;
+  datadefs::num_t deltaImpurity;
+
+  size_t featureIdx = 8;
+  size_t targetIdx = 1;
+  size_t minSamples = 1;
+
+  deltaImpurity = treeData_->categoricalFeatureSplit(targetIdx,
+                                                     featureIdx,
+                                                     minSamples,
+                                                     sampleIcs_left,
+                                                     sampleIcs_right,
+                                                     splitValues_left,
+                                                     splitValues_right);
+
+  CPPUNIT_ASSERT( sampleIcs_left.size() == 89 );
+  CPPUNIT_ASSERT( sampleIcs_right.size() == 211 );
+
+  set<string> rawSplitValues_left,rawSplitValues_right;
+  
+  for(set<num_t>::const_iterator it(splitValues_left.begin()); it != splitValues_left.end(); ++it ) {
+    rawSplitValues_left.insert(treeData_->getRawFeatureData(featureIdx,*it));
+  }
+
+  for(set<num_t>::const_iterator it(splitValues_right.begin()); it != splitValues_right.end(); ++it ) {
+    rawSplitValues_right.insert(treeData_->getRawFeatureData(featureIdx,*it));
+  }
+
+  datadefs::num_t leftFraction = 1.0*sampleIcs_left.size() / ( sampleIcs_left.size() + sampleIcs_right.size() );
+
+  Node node;
+  node.setSplitter(0,"foo",leftFraction,rawSplitValues_left,rawSplitValues_right);
+
+  CPPUNIT_ASSERT( node.percolateData("1") == node.leftChild() );
+  CPPUNIT_ASSERT( node.percolateData("2") == node.rightChild() );
+  CPPUNIT_ASSERT( node.percolateData("3") == node.rightChild() );
+
+  CPPUNIT_ASSERT( fabs( deltaImpurity - 0.001691905260604 ) < 1e-10 );
 
 }
 
