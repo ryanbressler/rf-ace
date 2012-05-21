@@ -6,7 +6,7 @@ n = length(tv);
 assert(n == length(fv));
 
 ics_left = false(1,n);
-ics_right = 1:n;
+ics_right = true(1,n);
 
 splitValues_left = [];
 splitValues_right = fVals;
