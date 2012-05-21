@@ -1002,7 +1002,6 @@ num_t Treedata::categoricalFeatureSplit(const size_t targetIdx,
 	num_t DI = math::deltaImpurity_regr(mu_tot,n_tot,mu_left,n_left,mu_right,n_right);
         if ( DI > DI_best ) { //&& n_left >= minSamples && n_right >= minSamples )
 
-          //cout << " => BETTER" << endl;
           it_best = it;
           DI_best = DI;
         }
