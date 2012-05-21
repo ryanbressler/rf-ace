@@ -795,24 +795,6 @@ void Treedata::getFilteredFeatureDataPair(const size_t featureIdx1,
 
 }
 
-// !! WILL BECOME OBSOLETE
-num_t Treedata::getCategoricalSplitFitness(const num_t sf_tot,
-					   const num_t nsf_best,
-					   const size_t n_tot) {
-
-  return( -1.0 * sf_tot + 1.0 * n_tot * nsf_best ) / ( 1.0 * n_tot * n_tot - 1.0 * sf_tot );
-  
-}
-
-// !! WILL BECOME OBSOLETE
-num_t Treedata::getNumericalSplitFitness(const num_t se_tot,
-					 const num_t se_best) {
-  
-  return( ( se_tot - se_best ) / se_tot );
-
-}
-
-
 // !! Correctness, Inadequate Abstraction: kill this method with fire. Refactor, REFACTOR, _*REFACTOR*_.
 num_t Treedata::numericalFeatureSplit(const size_t targetIdx,
 				      const size_t featureIdx,
@@ -821,7 +803,7 @@ num_t Treedata::numericalFeatureSplit(const size_t targetIdx,
 				      vector<size_t>& sampleIcs_right,
 				      num_t& splitValue) {
 
-  num_t splitFitness = datadefs::NUM_NAN;
+  num_t DI_best = 0.0;
 
   vector<num_t> tv,fv;
 
@@ -834,7 +816,8 @@ num_t Treedata::numericalFeatureSplit(const size_t targetIdx,
   size_t n_left = 0;
 
   if(n_tot < 2 * minSamples) {
-    return( datadefs::NUM_NAN );
+    DI_best = 0.0;
+    return( DI_best );
   }
 
   int bestSplitIdx = -1;
@@ -842,153 +825,97 @@ num_t Treedata::numericalFeatureSplit(const size_t targetIdx,
   //If the target is numerical, we use the incremental squared error formula
   if ( this->isFeatureNumerical(targetIdx) ) {
 
-    // We start with one sample on the left branch
-    size_t n_left = 1;
-    num_t mu_left = tv[0];
-    vector<num_t> se_left(n_tot, 0.0);
-
-    // Add one sample at a time, from right to left, while updating the
-    // mean and squared error
-    // NOTE1: leftmost sample has been added already, so we start i from 1
-    // NOTE2: rightmost sample needs to be included since we want to compute
-    //        squared error for the whole data vector ( i.e. se_tot )
-    for ( size_t i = 1; i < n_tot; ++i ) {
-
-      // We need to manually transfer the previous squared error to the
-      // present slot
-      se_left[i] = se_left[i-1];
-
-      // This function takes n'th data point tv[i] from right to left
-      // and updates the mean and squared error
-      math::incrementSquaredError(tv[i],++n_left,mu_left,se_left[i]);
-    }
-
-    // Make sure we accumulated the right number of samples
-    assert( n_left == n_tot );
+    // We start with all samples on the left branch
+    num_t mu_tot = math::mean(tv);
+    num_t mu_left = 0.0;
+    num_t mu_right = mu_tot;
 
     // Make sure the squared error didn't become corrupted by NANs
-    assert( !datadefs::isNAN(se_left.back()) );
-
-    // Total squared error now equals to the squared error of left branch
-    // wince all samples were taken to the left one by one
-    num_t se_tot = se_left.back();
-
-    // The best squared error is set to the worst case
-    num_t se_best = se_left.back();
-
-    // Now it's time to start adding samples from left to right
-    // NOTE: it's intentional to set n to 0
-    size_t n_right = 0;
-    num_t mu_right = 0.0;
-    num_t se_right = 0.0;
+    assert( !datadefs::isNAN(mu_tot) );
 
     // Add samples one by one from left to right until we hit the
     // minimum allowed size of the branch
-    for( int i = n_tot-1; i >= static_cast<int>(minSamples); --i ) {
+    for( size_t i = 0; i < n_tot - minSamples; ++i ) {
 
       // Add n'th sample tv[i] from left to right and update
       // mean and squared error
-      math::incrementSquaredError(tv[i],++n_right,mu_right,se_right);
+      ++n_left;
+      --n_right;
+      mu_left  += ( tv[i] - mu_left  ) / n_left;
+      mu_right -= ( tv[i] - mu_right ) / n_right;
 
       // If the sample is repeated and we can continue, continue
-      if ( i-1 >= static_cast<int>(minSamples) && tv[i-1] == tv[i] ) {
+      if ( n_left < minSamples || 
+	   (i + 1 < n_tot - minSamples && tv[ i + 1 ] == tv[ i ]) ) {
         continue;
       }
+      
+      // If the current split point yields a better split than the best,
+      // update DI_best and bestSplitIdx
+      num_t DI = math::deltaImpurity_regr(mu_tot,n_tot,mu_left,n_left,mu_right,n_right);
+      if (  DI > DI_best ) {
 
-      // If the split point "i-1" yields a better split than the previous one,
-      // update se_best and bestSplitIdx
-      if ( se_left[i-1] + se_right < se_best ) {
-
-        bestSplitIdx = i-1;
-        se_best = se_left[i-1] + se_right;
+        bestSplitIdx = i;
+        DI_best = DI;
 
       }
 
     }
 
     // Make sure there were no NANs to corrupt the results
-    assert( !datadefs::isNAN(se_right) );
+    assert( !datadefs::isNAN(DI_best) );
 
-    // Calculate split fitness
-    splitFitness = this->getNumericalSplitFitness(se_tot,se_best);
 
   } else { // Otherwise we use the iterative gini index formula to update impurity scores while we traverse "right"
 
-    // We start with one sample on the left branch
-    size_t n_left = 1;
-    map<num_t,size_t> freq_left;
-    freq_left[ tv[0] ] = 1;
-    vector<size_t> sf_left(n_tot, 0);
-    sf_left[0] = 1;
-
-    // Add one sample at a time, from right to left, while updating the
-    // squared frequency
-    // NOTE1: leftmost sample has been added already, so we start i from 1
-    // NOTE2: rightmost sample needs to be included since we want to compute
-    //        squared error for the whole data vector ( i.e. sf_tot )
-    for( size_t i = 1; i < n_tot; ++i ) {
-
-      // We need to manually transfer the previous squared frequency to the
-      // present slot
-      sf_left[i] = sf_left[i-1];
-
-      // This function takes n'th data point tv[i] from right to left
-      // and updates the squared frequency
-      math::incrementSquaredFrequency(tv[i],freq_left,sf_left[i]);
-      ++n_left;
-    }
-
-    // Make sure we accumulated the right number of samples
-    assert( n_left == n_tot );
-
-    // Total squared frequency now equals to the squared frequency of left branch
-    // since all samples were taken to the left one by one
-    size_t sf_tot = sf_left.back();
-
-    // The best normalized squared frequency is set to the worst case
-    num_t nsf_best = sf_left.back() / n_left;
-
-    // Now it's time to start adding samples from right to left
-    // NOTE: it's intentional to set n_right to 0
-    size_t n_right = 0;
     map<num_t,size_t> freq_right;
     size_t sf_right = 0;
+    
+    for ( size_t i = 0; i < n_tot; ++i ) {
+      math::incrementSquaredFrequency(tv[i],freq_right,sf_right);
+    }
 
-    // Add samples one by one from left to right until we hit the
+    size_t sf_tot = sf_right;
+
+    map<num_t,size_t> freq_left;
+    size_t sf_left = 0;
+
+    // Add samples one by one from right to left until we hit the
     // minimum allowed size of the branch
-    for( int i = n_tot-1; i >= static_cast<int>(minSamples); --i ) {
+    for( size_t i = 0; i < n_tot - minSamples; ++i ) {
 
       // Add n'th sample tv[i] from right to left and update
       // mean and squared frequency
-      math::incrementSquaredFrequency(tv[i],freq_right,sf_right);
-      ++n_right;
-      --n_left;
+      math::incrementSquaredFrequency(tv[i],freq_left,sf_left);
+      ++n_left;
+
+      math::decrementSquaredFrequency(tv[i],freq_right,sf_right);
+      --n_right;
 
       // If we have repeated samples and can continue, continue
-      if ( i-1 > static_cast<int>(minSamples) && tv[i-1] == tv[i] ) {
+      if ( n_left < minSamples || 
+	   (i + 1 > n_tot - minSamples && tv[ i + 1 ] == tv[ i ]) ) {
         continue;
       }
 
       // If the split point "i-1" yields a better split than the previous one,
       // update se_best and bestSplitIdx
-      if(1.0*n_right*sf_left[i-1] + 1.0*n_left*sf_right > n_left*n_right*nsf_best && n_left >= minSamples) {
-        bestSplitIdx = i-1;
-        nsf_best = 1.0*sf_left[i-1] / n_left + 1.0*sf_right / n_right;
-        //splitFitness = this->getSplitFitness(n_left,sf_left[i-1],n_right,sf_right,n_tot,sf_tot);
+      num_t DI = math::deltaImpurity_class(sf_tot,n_tot,sf_left,n_left,sf_right,n_right);
+      if ( DI > DI_best ) {
+        bestSplitIdx = i;
+	DI_best = DI;
       }
 
-
     }
-
-    splitFitness = this->getCategoricalSplitFitness(sf_tot,nsf_best,n_tot);
-    // splitFitness = ( -1.0*sf_tot + 1.0 * n_tot * nsf_best ) / ( 1.0 * n_tot * n_tot - 1.0 * sf_tot );
+    
+    assert( !datadefs::isNAN(DI_best) );
 
   }
 
 
   if(bestSplitIdx == -1) {
-    //cout << "N : " << n_left << " <-> " << n_right << " : fitness " << splitFitness << endl;
-    return( datadefs::NUM_NAN );
+    DI_best = 0.0;
+    return( DI_best );
   }
 
   splitValue = fv[bestSplitIdx];
@@ -1005,7 +932,7 @@ num_t Treedata::numericalFeatureSplit(const size_t targetIdx,
 
   //cout << "N : " << n_left << " <-> " << n_right << " : fitness " << splitFitness << endl;
 
-  return( splitFitness );
+  return( DI_best );
   
 }
 
@@ -1018,7 +945,7 @@ num_t Treedata::categoricalFeatureSplit(const size_t targetIdx,
 					set<num_t>& splitValues_left,
 					set<num_t>& splitValues_right) {
 
-  num_t splitFitness = datadefs::NUM_NAN;
+  num_t DI_best = 0.0;
 
   vector<num_t> tv,fv;
 
@@ -1039,21 +966,15 @@ num_t Treedata::categoricalFeatureSplit(const size_t targetIdx,
   size_t n_left = 0;
 
   if(n_tot < 2 * minSamples) {
-    return( datadefs::NUM_NAN );
+    DI_best = 0.0;
+    return( DI_best );
   }
 
   if ( this->isFeatureNumerical(targetIdx) ) {
 
-    num_t mu_right = math::mean(tv);
-    num_t se_right = math::squaredError(tv,mu_right);
-
+    num_t mu_tot = math::mean(tv);
+    num_t mu_right = mu_tot;
     num_t mu_left = 0.0;
-    num_t se_left = 0.0;
-
-    assert(n_tot == n_right);
-
-    num_t se_best = se_right;
-    num_t se_tot = se_right;
 
     while ( fmap_right.size() > 1 ) {
 
@@ -1069,23 +990,21 @@ num_t Treedata::categoricalFeatureSplit(const size_t targetIdx,
         for(size_t i = 0; i < it->second.size(); ++i) {
           //cout << " " << it->second[i];
 
-          // Add sample to left
-          ++n_left;
-	  math::incrementSquaredError(tv[ it->second[i] ], n_left, mu_left, se_left);
-
-          // Remove sample from right
-          --n_right;
-	  math::decrementSquaredError(tv[ it->second[i] ], n_right, mu_right, se_right);
+	  ++n_left;
+	  --n_right;
+	  mu_left  += ( tv[ it->second[i] ] - mu_left  ) / n_left;
+	  mu_right -= ( tv[ it->second[i] ] - mu_right ) / n_right;
 
         }
         //cout << " ]" << endl;
 
         //If the split reduces impurity even further, save the point
-        if ( se_left + se_right < se_best ) { //&& n_left >= minSamples && n_right >= minSamples )
+	num_t DI = math::deltaImpurity_regr(mu_tot,n_tot,mu_left,n_left,mu_right,n_right);
+        if ( DI > DI_best ) { //&& n_left >= minSamples && n_right >= minSamples )
 
           //cout << " => BETTER" << endl;
           it_best = it;
-          se_best = se_left + se_right;
+          DI_best = DI;
         }
 
         //Take samples from left and put them right
@@ -1093,13 +1012,10 @@ num_t Treedata::categoricalFeatureSplit(const size_t targetIdx,
         for(size_t i = 0; i < it->second.size(); ++i) {
           //cout << " " << it->second[i];
 
-          // Add sample to right
+	  --n_left;
           ++n_right;
-	  math::incrementSquaredError(tv[ it->second[i] ], n_right, mu_right, se_right);
-
-          // Remove sample from left
-          --n_left;
-	  math::decrementSquaredError(tv[ it->second[i] ], n_left, mu_left, se_left);
+          mu_left  -= ( tv[ it->second[i] ] - mu_left  ) / n_left;
+          mu_right += ( tv[ it->second[i] ] - mu_right ) / n_right;
 
         }
         //cout << " ]" << endl;
@@ -1118,13 +1034,10 @@ num_t Treedata::categoricalFeatureSplit(const size_t targetIdx,
       for(size_t i = 0; i < it_best->second.size(); ++i) {
         //cout << " " << it->second[i];
 
-        // Add sample to left
-        ++n_left;
-	math::incrementSquaredError(tv[ it_best->second[i] ], n_left, mu_left, se_left);
-
-        // Remove sample from right
-        --n_right;
-	math::decrementSquaredError(tv[ it_best->second[i] ], n_right, mu_right, se_right);
+	++n_left;
+	--n_right;
+	mu_left  += ( tv[ it_best->second[i] ] - mu_left  ) / n_left;
+	mu_right -= ( tv[ it_best->second[i] ] - mu_right ) / n_right;
 
       }
 
@@ -1135,7 +1048,7 @@ num_t Treedata::categoricalFeatureSplit(const size_t targetIdx,
     }
 
     // Calculate the final split fitness
-    splitFitness = this->getNumericalSplitFitness(se_tot,se_best);
+    //splitFitness = this->getNumericalSplitFitness(se_tot,se_best);
 
   } else {
 
@@ -1147,11 +1060,7 @@ num_t Treedata::categoricalFeatureSplit(const size_t targetIdx,
       math::incrementSquaredFrequency(tv[i], freq_right, sf_right);
     }
 
-    //datadefs::sqfreq(tv,freq_right,sf_right,n_right);
-    assert(n_tot == n_right);
-
     size_t sf_tot = sf_right;
-    num_t nsf_best = 1.0 * sf_right / n_right;
 
     while ( fmap_right.size() > 1 ) {
 
@@ -1179,11 +1088,11 @@ num_t Treedata::categoricalFeatureSplit(const size_t targetIdx,
         //cout << " ]" << endl;
 
         //If the impurity becomes reduced even further, save the point
-        if ( 1.0*n_right*sf_left + 1.0*n_left*sf_right > 1.0*n_left*n_right*nsf_best ) { //&& n_left >= minSamples && n_right >= minSamples )
+	num_t DI = math::deltaImpurity_class(sf_tot,n_tot,sf_left,n_left,sf_right,n_right);
+        if ( DI > DI_best ) { //&& n_left >= minSamples && n_right >= minSamples )
 
-          nsf_best = 1.0*sf_left/n_left + 1.0*sf_right/n_right;
           it_best = it;
-          //cout << "nsf_best is now " << nsf_best << endl;
+	  DI_best = DI;
         }
 
         // Take samples from left and put them right
@@ -1230,15 +1139,11 @@ num_t Treedata::categoricalFeatureSplit(const size_t targetIdx,
 
     }
 
-    // Calculate the final split fitness
-    splitFitness = this->getCategoricalSplitFitness(sf_tot,nsf_best,n_tot);
-    //splitFitness = ( -1.0*sf_tot + 1.0 * n_tot * nsf_best ) / ( 1.0 * n_tot * n_tot - 1.0 * sf_tot );
-    // splitFitness = this->getSplitFitness(n_left,sf_left,n_right,sf_right,n_tot,sf_tot);
-
   }
 
   if( n_left < minSamples || n_right < minSamples ) {
-    return( datadefs::NUM_NAN );
+    DI_best = 0.0;
+    return( DI_best );
   }
 
   // Assign samples and categories on the left. First store the original sample indices
@@ -1275,7 +1180,7 @@ num_t Treedata::categoricalFeatureSplit(const size_t targetIdx,
   assert( iter == n_right );
   assert( splitValues_right.size() == fmap_right.size() );
 
-  return( splitFitness );
+  return( DI_best );
 
 }
 

@@ -93,14 +93,18 @@ public:
 				set<num_t>& splitValues_right);
 
   // !! WILL BECOME OBSOLETE
-  num_t getCategoricalSplitFitness(const num_t sf_tot,
-                                   const num_t nsf,
-                                   const size_t n);
+  /*
+    num_t getCategoricalSplitFitness(const num_t sf_tot,
+    const num_t nsf,
+    const size_t n);
+  */
 
   // !! WILL BECOME OBSOLETE
-  num_t getNumericalSplitFitness(const num_t se_tot,
-				 const num_t se_best);
-
+  /*
+    num_t getNumericalSplitFitness(const num_t se_tot,
+    const num_t se_best);
+  */    
+  
   void getFilteredFeatureDataPair(const size_t featureIdx1, 
 				  const size_t featureIdx2, 
 				  vector<size_t>& sampleIcs, 
