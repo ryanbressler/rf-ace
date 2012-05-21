@@ -647,7 +647,10 @@ void treeDataTest::test_categoricalFeatureSplit() {
   CPPUNIT_ASSERT( node.percolateData("2") == node.rightChild() );
   CPPUNIT_ASSERT( node.percolateData("3") == node.leftChild() );
 
-  CPPUNIT_ASSERT( fabs( deltaImpurity - 1 ) < datadefs::EPS );
+  CPPUNIT_ASSERT( sampleIcs_left.size() == 91 );
+  CPPUNIT_ASSERT( sampleIcs_right.size() == 209 );
+
+  CPPUNIT_ASSERT( fabs( deltaImpurity - 1.102087375288799 ) < 1e-10 );
 
 }
 

@@ -38,8 +38,8 @@ void StochasticForestTest::test_treeDataPercolation() {
 
   CPPUNIT_ASSERT( fabs( SF.rootNodes_[0]->getTrainPrediction(0) - 3.9 ) < datadefs::EPS );
   CPPUNIT_ASSERT( fabs( SF.rootNodes_[0]->getTrainPrediction(1) - 4.3 ) < datadefs::EPS );
-  CPPUNIT_ASSERT( fabs( SF.rootNodes_[0]->getTrainPrediction(2) - 5.0 ) < datadefs::EPS );
-  CPPUNIT_ASSERT( fabs( SF.rootNodes_[0]->getTrainPrediction(3) - 6.6 ) < datadefs::EPS );
+  CPPUNIT_ASSERT( fabs( SF.rootNodes_[0]->getTrainPrediction(2) - 3.9 ) < datadefs::EPS );
+  CPPUNIT_ASSERT( fabs( SF.rootNodes_[0]->getTrainPrediction(3) - 6.5 ) < datadefs::EPS );
 
   vector<num_t> prediction,confidence;
 
@@ -49,8 +49,8 @@ void StochasticForestTest::test_treeDataPercolation() {
   CPPUNIT_ASSERT( confidence.size() == 4 );
   CPPUNIT_ASSERT( fabs( prediction[0] - 3.9 ) < datadefs::EPS );
   CPPUNIT_ASSERT( fabs( prediction[1] - 4.3 ) < datadefs::EPS );
-  CPPUNIT_ASSERT( fabs( prediction[2] - 5.0 ) < datadefs::EPS );
-  CPPUNIT_ASSERT( fabs( prediction[3] - 6.6 ) < datadefs::EPS );
+  CPPUNIT_ASSERT( fabs( prediction[2] - 3.9 ) < datadefs::EPS );
+  CPPUNIT_ASSERT( fabs( prediction[3] - 6.5 ) < datadefs::EPS );
 
   SF.rootNodes_[0]->oobIcs_ = utils::range(4);
 
@@ -59,8 +59,8 @@ void StochasticForestTest::test_treeDataPercolation() {
   CPPUNIT_ASSERT( prediction.size() == 4 );
   CPPUNIT_ASSERT( fabs( prediction[0] - 3.9 ) < datadefs::EPS );
   CPPUNIT_ASSERT( fabs( prediction[1] - 4.3 ) < datadefs::EPS );
-  CPPUNIT_ASSERT( fabs( prediction[2] - 5.0 ) < datadefs::EPS );
-  CPPUNIT_ASSERT( fabs( prediction[3] - 6.6 ) < datadefs::EPS );
+  CPPUNIT_ASSERT( fabs( prediction[2] - 3.9 ) < datadefs::EPS );
+  CPPUNIT_ASSERT( fabs( prediction[3] - 6.5 ) < datadefs::EPS );
 
 }
 
