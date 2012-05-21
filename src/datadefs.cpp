@@ -246,9 +246,7 @@ void datadefs::map_data(vector<datadefs::num_t> const& data,
       ++nRealValues;
       it = datamap.find(data[i]);
       if(it == datamap.end()) {
-        vector<size_t> foo;
-        foo.push_back(i);
-        datamap.insert(pair<datadefs::num_t,vector<size_t> >(data[i],foo));
+        datamap.insert(pair<datadefs::num_t,vector<size_t> >(data[i],vector<size_t>(1,i)));
       } else {
         it->second.push_back(i);
       }

@@ -16,39 +16,45 @@ DI_best = 0;
 while true
     
     splitVal = -1;
-    splitIdx = -1;
     
     for i = 1:length(splitValues_right)
         
         fVal = splitValues_right(i);
         
-        ics_left = ics_left | fv == fVal;
-        ics_right = ics_right & fv ~= fVal;
+        ics_left_test = ics_left | fv == fVal;
+        ics_right_test = ics_right & fv ~= fVal;
         
-        DI = deltaImpurity(tv(ics_left),tv(ics_right),isTargetNumerical);
+        DI = deltaImpurity(tv(ics_left_test),tv(ics_right_test),isTargetNumerical);
         
         if DI > DI_best
             DI_best = DI;
             splitVal = fVal;
-            splitIdx = i;
         end
         
-        ics_left = ics_left & fv ~= fVal;
-        ics_right = ics_right | fv == fVal;
+        %ics_left = ics_left & fv ~= fVal;
+        %ics_right = ics_right | fv == fVal;
         
     end
     
     if splitVal == -1
+        %sum(ics_left)
+        %sum(ics_right)
         break;
     end
     
-    splitValues_left = [splitValues_left,fVal];
-    splitValues_right = [splitValues_right(1:splitIdx-1),splitValues_right(splitIdx+1:end)];
-    
+    splitValues_left = unique([splitValues_left,splitVal])
+    splitValues_right = setdiff(splitValues_right,splitVal)
+
     ics_left = ics_left | fv == splitVal;
     ics_right = ics_right & fv ~= splitVal;
     
 end
+
+%splitValues_left
+%splitValues_right
+%sum(ics_left)
+%sum(ics_right)
+
 
 ics_left = find(ics_left);
 ics_right = find(ics_right);
