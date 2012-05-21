@@ -20,7 +20,6 @@ class treeDataTest : public CppUnit::TestFixture {
   CPPUNIT_TEST( test_removeFeatures );
   CPPUNIT_TEST( test_numericalFeatureSplit );
   CPPUNIT_TEST( test_categoricalFeatureSplit );
-  CPPUNIT_TEST( test_numericalFeatureSplitsCategoricalTarget );
   CPPUNIT_TEST_SUITE_END();
   
 public:
@@ -38,7 +37,6 @@ public:
   void test_removeFeatures();
   void test_numericalFeatureSplit();
   void test_categoricalFeatureSplit();
-  void test_numericalFeatureSplitsCategoricalTarget();
 
 private:
 
@@ -526,158 +524,118 @@ void treeDataTest::test_removeFeatures() {
 
 void treeDataTest::test_numericalFeatureSplit() {
 
-  Treedata treedata("test_2by8_numerical_matrix.tsv",'\t',':');
-
-  CPPUNIT_ASSERT( treedata.getFeatureName(0) == "N:F1" );
-  CPPUNIT_ASSERT( treedata.getFeatureName(1) == "N:F2" );
-
   vector<size_t> sampleIcs_left(0);
-  vector<size_t> sampleIcs_right = utils::range(8);
+  vector<size_t> sampleIcs_right = utils::range(300);
 
   datadefs::num_t splitValue;
-  datadefs::num_t splitFitness;
+  datadefs::num_t deltaImpurity;
 
-  size_t minSamples = 2;
+  size_t minSamples = 1;
 
-  size_t targetIdx = 1;
-  size_t featureIdx = 0;
+  size_t targetIdx = 0; // numerical
+  size_t featureIdx = 2; // numerical
 
-  splitFitness = treedata.numericalFeatureSplit(targetIdx,
-						featureIdx,
-						minSamples,
-						sampleIcs_left,
-						sampleIcs_right,
-						splitValue);
-
-  CPPUNIT_ASSERT( fabs(splitFitness - 0.530492285084497) < 1e-10 );
-
-  CPPUNIT_ASSERT(sampleIcs_left.size() == 4);
-  for(size_t i = 0; i < sampleIcs_left.size(); ++i) {
-    size_t idx = sampleIcs_left[i];
-    CPPUNIT_ASSERT(idx == 1 || idx == 6 || idx == 0 || idx == 7);
-  }
-
-  CPPUNIT_ASSERT(sampleIcs_right.size() == 2);
-  for(size_t i = 0; i < sampleIcs_right.size(); ++i) {
-    size_t idx = sampleIcs_right[i];
-    CPPUNIT_ASSERT(idx == 5 || idx == 4);
-  }
-
-
-  Treedata treedata2("test_6by10_mixed_matrix.tsv",'\t',':');
-
-  /*
-    N:F1    nA      8.5     3.4     7.2     5       6       7       11      9       NA
-    N:F2    2       3       4       5       6       NA      NA      9       nan     10
-    C:F3    NA      nA      naN     NaN     1       1       1       2       2       2
-    N:F4    10      9.9     8       7       6       5       4       3       2.4     1
-    C:F5    3       3       3       4       4       5       3       2       2       2
-    N:F6    9       8       7       9       8       7       3       2       1.0     99.23
-  */
-
-  targetIdx = 2;
-  featureIdx = 0;
-
-  sampleIcs_left.clear();
-  sampleIcs_right.clear();
-  sampleIcs_right.push_back(5);
-  sampleIcs_right.push_back(6);
-  sampleIcs_right.push_back(7);
-
-  minSamples = 1;
-
-  splitFitness = treedata2.numericalFeatureSplit(targetIdx,
-                                                 featureIdx,
-                                                 minSamples,
-                                                 sampleIcs_left,
-                                                 sampleIcs_right,
-                                                 splitValue);
-
-  // datadefs::print<size_t>(sampleIcs_left);
-  // datadefs::print<size_t>(sampleIcs_right);
-  // cout << splitFitness << endl;
-
-  CPPUNIT_ASSERT( sampleIcs_left.size() == 2 );
-  CPPUNIT_ASSERT( sampleIcs_right.size() == 1 );
-  CPPUNIT_ASSERT( sampleIcs_left[0] == 5 );
-  CPPUNIT_ASSERT( sampleIcs_left[1] == 6 );
-  CPPUNIT_ASSERT( sampleIcs_right[0] == 7 );
-  CPPUNIT_ASSERT( fabs( splitValue - 7 ) < datadefs::EPS );
-  CPPUNIT_ASSERT( fabs( splitFitness - 1 ) < datadefs::EPS );
-
-  sampleIcs_left.clear();
-  sampleIcs_right.clear();
-  sampleIcs_right.push_back(5);
-  sampleIcs_right.push_back(6);
-
-  splitFitness = treedata2.numericalFeatureSplit(targetIdx,
-                                                 featureIdx,
-                                                 minSamples,
-                                                 sampleIcs_left,
-                                                 sampleIcs_right,
-                                                 splitValue);
-
-  CPPUNIT_ASSERT( sampleIcs_left.size() == 0 );
-  CPPUNIT_ASSERT( sampleIcs_right.size() == 2 );
-  CPPUNIT_ASSERT( sampleIcs_right[0] == 5 );
-  CPPUNIT_ASSERT( sampleIcs_right[1] == 6 );
-  CPPUNIT_ASSERT( datadefs::isNAN(splitFitness) );
-
-  sampleIcs_right[1] = 7;
+  deltaImpurity = treeData_->numericalFeatureSplit(targetIdx,
+						   featureIdx,
+						   minSamples,
+						   sampleIcs_left,
+						   sampleIcs_right,
+						   splitValue);
   
-  splitFitness = treedata2.numericalFeatureSplit(targetIdx,
-                                                 featureIdx,
-                                                 minSamples,
-                                                 sampleIcs_left,
-                                                 sampleIcs_right,
-                                                 splitValue);
+  {
+    set<size_t> leftIcs(sampleIcs_left.begin(),sampleIcs_left.end());
+    set<size_t> rightIcs(sampleIcs_right.begin(),sampleIcs_right.end());
+    
+    CPPUNIT_ASSERT( fabs( deltaImpurity - 1.289680394982406 ) < 1e-10 );
+    CPPUNIT_ASSERT( fabs( splitValue - 4.387 ) < 1e-10 );
+    
+    CPPUNIT_ASSERT( sampleIcs_left.size() == 127 );
+    CPPUNIT_ASSERT( sampleIcs_right.size() == 173 );
 
-  CPPUNIT_ASSERT( sampleIcs_left.size() == 1 );
-  CPPUNIT_ASSERT( sampleIcs_right.size() == 1 );
-  CPPUNIT_ASSERT( sampleIcs_left[0] == 5 );
-  CPPUNIT_ASSERT( sampleIcs_right[0] == 7 );
-  CPPUNIT_ASSERT( fabs( splitValue - 6 ) < datadefs::EPS );
-  CPPUNIT_ASSERT( fabs( splitFitness - 1 ) < datadefs::EPS );
+    CPPUNIT_ASSERT( leftIcs.find(198) != leftIcs.end() );
+    CPPUNIT_ASSERT( leftIcs.find(8)   != leftIcs.end() );
+    CPPUNIT_ASSERT( leftIcs.find(102) != leftIcs.end() );
+    CPPUNIT_ASSERT( leftIcs.find(4)   != leftIcs.end() );
+    CPPUNIT_ASSERT( leftIcs.find(299) != leftIcs.end() );
+    
+    CPPUNIT_ASSERT( rightIcs.find(26) != rightIcs.end() );
+    CPPUNIT_ASSERT( rightIcs.find(2)  != rightIcs.end() );
+    CPPUNIT_ASSERT( rightIcs.find(10) != rightIcs.end() );
+    CPPUNIT_ASSERT( rightIcs.find(81) != rightIcs.end() );
+    CPPUNIT_ASSERT( rightIcs.find(33) != rightIcs.end() );
+  }
+  
+  targetIdx = 1; // categorical
+  featureIdx = 2; // numerical
+
+  sampleIcs_left.clear();
+  sampleIcs_right.clear();
+  sampleIcs_right = utils::range(300);
+  
+  deltaImpurity = treeData_->numericalFeatureSplit(targetIdx,
+						   featureIdx,
+						   minSamples,
+						   sampleIcs_left,
+						   sampleIcs_right,
+						   splitValue);
+
+  {
+    set<size_t> leftIcs(sampleIcs_left.begin(),sampleIcs_left.end());
+    set<size_t> rightIcs(sampleIcs_right.begin(),sampleIcs_right.end());
+    
+    CPPUNIT_ASSERT( fabs( deltaImpurity - 0.012389077212806 ) < 1e-10 );
+    CPPUNIT_ASSERT( fabs( splitValue - 9.827 ) < 1e-10 );
+    
+    CPPUNIT_ASSERT( sampleIcs_left.size() == 295 );
+    CPPUNIT_ASSERT( sampleIcs_right.size() == 5 );
+
+    CPPUNIT_ASSERT( leftIcs.find(261) != leftIcs.end() );
+    CPPUNIT_ASSERT( leftIcs.find(185) != leftIcs.end() );
+    CPPUNIT_ASSERT( leftIcs.find(3)   != leftIcs.end() );
+    CPPUNIT_ASSERT( leftIcs.find(7)   != leftIcs.end() );
+    CPPUNIT_ASSERT( leftIcs.find(256) != leftIcs.end() );
+    
+    CPPUNIT_ASSERT( rightIcs.find(69)  != rightIcs.end() );
+    CPPUNIT_ASSERT( rightIcs.find(55)  != rightIcs.end() );
+    CPPUNIT_ASSERT( rightIcs.find(100) != rightIcs.end() );
+    CPPUNIT_ASSERT( rightIcs.find(127) != rightIcs.end() );
+    CPPUNIT_ASSERT( rightIcs.find(91)  != rightIcs.end() );
+  }
+
+  minSamples = 50;
+
+  
 
 }
 
 void treeDataTest::test_categoricalFeatureSplit() {
 
-  size_t n = 10;
-
-  Treedata treedata("test_3by10_categorical_matrix.tsv",'\t',':');
-
-  size_t featureIdx = 0;
-
-  size_t targetIdx1 = 1;
-  size_t targetIdx2 = 2;
-
-
-  size_t minSamples = 2;
-
-
   vector<size_t> sampleIcs_left(0);
-  vector<size_t> sampleIcs_right = utils::range(n);
+  vector<size_t> sampleIcs_right = utils::range(300);
 
   set<num_t> splitValues_left,splitValues_right;
-  datadefs::num_t splitFitness;
+  datadefs::num_t deltaImpurity;
 
-  splitFitness = treedata.categoricalFeatureSplit(targetIdx1,
-						  featureIdx,
-						  minSamples,
-						  sampleIcs_left,
-						  sampleIcs_right,
-						  splitValues_left,
-						  splitValues_right);
+  size_t featureIdx = 1;
+  size_t targetIdx = 0;
+  size_t minSamples = 1;
+
+  deltaImpurity = treeData_->categoricalFeatureSplit(targetIdx,
+						     featureIdx,
+						     minSamples,
+						     sampleIcs_left,
+						     sampleIcs_right,
+						     splitValues_left,
+						     splitValues_right);
 
   set<string> rawSplitValues_left,rawSplitValues_right;
 
   for(set<num_t>::const_iterator it(splitValues_left.begin()); it != splitValues_left.end(); ++it ) {
-    rawSplitValues_left.insert(treedata.getRawFeatureData(featureIdx,*it));
+    rawSplitValues_left.insert(treeData_->getRawFeatureData(featureIdx,*it));
   }
 
   for(set<num_t>::const_iterator it(splitValues_right.begin()); it != splitValues_right.end(); ++it ) {
-    rawSplitValues_right.insert(treedata.getRawFeatureData(featureIdx,*it));
+    rawSplitValues_right.insert(treeData_->getRawFeatureData(featureIdx,*it));
   }
 
   datadefs::num_t leftFraction = 1.0*sampleIcs_left.size() / ( sampleIcs_left.size() + sampleIcs_right.size() );
@@ -685,88 +643,11 @@ void treeDataTest::test_categoricalFeatureSplit() {
   Node node;
   node.setSplitter(0,"foo",leftFraction,rawSplitValues_left,rawSplitValues_right);
 
-  CPPUNIT_ASSERT( sampleIcs_left.size() == sampleIcs_right.size() );
+  CPPUNIT_ASSERT( node.percolateData("1") == node.rightChild() );
+  CPPUNIT_ASSERT( node.percolateData("2") == node.rightChild() );
+  CPPUNIT_ASSERT( node.percolateData("3") == node.leftChild() );
 
-  CPPUNIT_ASSERT( node.percolateData("0") == node.leftChild() );
-  CPPUNIT_ASSERT( node.percolateData("1") == node.leftChild() );
-  CPPUNIT_ASSERT( node.percolateData("4") == node.leftChild() );
-
-  //cout << iter << endl;
-
-  for(size_t i = 0; i < sampleIcs_left.size(); ++i ) {
-    //cout << " " << treedata.getRawFeatureData(targetIdx1,sampleIcs_left[i]);
-    CPPUNIT_ASSERT( treedata.getRawFeatureData(targetIdx1,sampleIcs_left[i]) == "1" );
-    CPPUNIT_ASSERT( treedata.getRawFeatureData(targetIdx1,sampleIcs_right[i]) == "0" );
-  }
-
-  //cout << endl;
-
-  //cout << splitFitness << endl;
-
-  CPPUNIT_ASSERT( fabs(splitFitness - 1) < datadefs::EPS );
-
-  sampleIcs_left.clear();
-  sampleIcs_right = utils::range(n);
-
-  splitValues_left.clear();
-  splitValues_right.clear();
-
-  splitFitness = treedata.categoricalFeatureSplit(targetIdx2,
-						  featureIdx,
-						  minSamples,
-						  sampleIcs_left,
-						  sampleIcs_right,
-						  splitValues_left,
-						  splitValues_right);
-  
-  rawSplitValues_left.clear();
-  rawSplitValues_right.clear();
-  
-  for(set<num_t>::const_iterator it(splitValues_left.begin()); it != splitValues_left.end(); ++it ) {
-    rawSplitValues_left.insert(treedata.getRawFeatureData(featureIdx,*it));
-  }
-
-  for(set<num_t>::const_iterator it(splitValues_right.begin()); it != splitValues_right.end(); ++it ) {
-    rawSplitValues_right.insert(treedata.getRawFeatureData(featureIdx,*it));
-  }
-
-  leftFraction = 1.0*sampleIcs_left.size() / (sampleIcs_left.size() + sampleIcs_right.size() );
-
-  Node node2;
-  node2.setSplitter(0,"foo",leftFraction,rawSplitValues_left,rawSplitValues_right);
-  
-  CPPUNIT_ASSERT( !node2.splitter_.isNumerical );
-  
-  CPPUNIT_ASSERT( sampleIcs_left.size() == 4 );
-  CPPUNIT_ASSERT( sampleIcs_right.size() == 6 );
-  CPPUNIT_ASSERT( node2.percolateData("0") == node2.leftChild() );
-  CPPUNIT_ASSERT( node2.percolateData("1") == node2.leftChild() );
-  
-  CPPUNIT_ASSERT( fabs( splitFitness - 0.642857142857143 ) < 1e-10 );
-
-
-
-}
-
-void treeDataTest::test_numericalFeatureSplitsCategoricalTarget() {
-
-  size_t featureIdx = treeData_->getFeatureIdx("N:output");
-  size_t targetIdx = treeData_->getFeatureIdx("C:class");
-
-  vector<size_t> sampleIcs_left( utils::range(treeData_->nSamples()) );
-  vector<size_t> sampleIcs_right;
-  size_t minSplit = 1;
-  num_t splitValue;
-
-
-  num_t deltaImpurity = treeData_->numericalFeatureSplit(targetIdx,
-							 featureIdx,
-							 minSplit,
-							 sampleIcs_left,
-							 sampleIcs_right,
-							 splitValue);
-
-  
+  CPPUNIT_ASSERT( fabs( deltaImpurity - 1 ) < datadefs::EPS );
 
 }
 

@@ -199,22 +199,22 @@ namespace math {
 				  const num_t mu_right,
 				  const size_t n_right) {
 
-    return( - pow(mu_tot,2)
-	    + pow(mu_left,2)  * n_left  / n_tot
-	    + pow(mu_right,2) * n_right / n_tot );
+    return( - mu_tot   * mu_tot
+	    + mu_left  * mu_left  * n_left  / n_tot
+	    + mu_right * mu_right * n_right / n_tot );
     
   }
  
-  inline num_t deltaImpurity_class(const num_t sf_tot,
+  inline num_t deltaImpurity_class(const size_t sf_tot,
 				   const size_t n_tot,
-				   const num_t sf_left,
+				   const size_t sf_left,
 				   const size_t n_left,
-				   const num_t sf_right,
+				   const size_t sf_right,
 				   const size_t n_right) {
 
-    return( - sf_tot   / ( n_tot * n_tot   ) 
-	    + sf_left  / ( n_tot * n_left  )
-	    + sf_right / ( n_tot * n_right ) );
+    return( - 1.0 * sf_tot   / ( n_tot * n_tot   ) 
+	    + 1.0 * sf_left  / ( n_tot * n_left  )
+	    + 1.0 * sf_right / ( n_tot * n_right ) );
 
   }
 
