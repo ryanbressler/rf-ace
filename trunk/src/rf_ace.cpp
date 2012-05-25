@@ -194,7 +194,7 @@ void rf_ace_filter(options::General_options& gen_op) {
   cout << 1.0 * ( clock() - clockStart ) / CLOCKS_PER_SEC << " seconds elapsed." << endl << endl;
   
   cout << "Association file created, format:" << endl;
-  cout << "TARGET   PREDICTOR   LOG10(P-VALUE)   IMPORTANCE   CORRELATION   NSAMPLES" << endl;
+  cout << "TARGET   PREDICTOR   P-VALUE   IMPORTANCE   CORRELATION   NSAMPLES" << endl;
   cout << endl;
   cout << "RF-ACE completed successfully." << endl;
   cout << endl;
@@ -438,7 +438,7 @@ void rf_ace(options::General_options& gen_op) {
   num_t ibOobError =  SF.getError();
   num_t nullError;
   if ( treeData.isFeatureNumerical(targetIdx) ) {
-    nullError = math::squaredError(data) / data.size();
+    nullError = math::var(data);
   } else {
     map<num_t,size_t> freq = math::frequency(data);
     nullError = 1.0 * ( data.size() - freq[ math::mode<num_t>(data) ] ) / data.size();
@@ -569,7 +569,7 @@ void printAssociationsToFile(options::General_options& gen_op,
   for ( size_t i = 0; i < nFeatures; ++i ) {
 
     toAssociationFile << gen_op.targetStr.c_str() << "\t" << featureNames[i]
-                      << "\t" << scientific << log10(pValues[i]) << "\t" << scientific << importanceValues[i] << "\t"
+                      << "\t" << scientific << pValues[i] << "\t" << scientific << importanceValues[i] << "\t"
 		      << scientific << correlations[i] << "\t" << sampleCounts[i] << endl;
 
   }
@@ -577,7 +577,7 @@ void printAssociationsToFile(options::General_options& gen_op,
   if ( gen_op.reportContrasts ) {
     for ( size_t i = 0; i < contrastImportanceSample.size(); ++i ) {
       toAssociationFile << gen_op.targetStr.c_str() << "\t" << datadefs::CONTRAST
-			<< "\t" << scientific << 0.0 << "\t" << scientific << contrastImportanceSample[i] << "\t" 
+			<< "\t" << scientific << 1.0 << "\t" << scientific << contrastImportanceSample[i] << "\t" 
 			<< scientific << 0.0 << "\t" << 0 << endl;
     }
   }

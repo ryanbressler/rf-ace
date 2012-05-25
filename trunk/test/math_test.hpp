@@ -11,13 +11,14 @@ using namespace std;
 class MathTest : public CppUnit::TestFixture {
   CPPUNIT_TEST_SUITE( MathTest );
   CPPUNIT_TEST( test_erf );
-  CPPUNIT_TEST( test_squaredError );
+  //CPPUNIT_TEST( test_squaredError );
+  CPPUNIT_TEST( test_var );
   CPPUNIT_TEST( test_pearsonCorrelation );
   CPPUNIT_TEST( test_ttest );
   CPPUNIT_TEST( test_mean );
   CPPUNIT_TEST( test_mode );
   CPPUNIT_TEST( test_gamma );
-  CPPUNIT_TEST( test_incrementDecrementSquaredError );
+  //CPPUNIT_TEST( test_incrementDecrementSquaredError );
   CPPUNIT_TEST( test_incrementDecrementSquaredFrequency );
   CPPUNIT_TEST_SUITE_END();
   
@@ -26,13 +27,14 @@ public:
   void tearDown();
   
   void test_erf();
-  void test_squaredError();
+  //void test_squaredError();
+  void test_var();
   void test_pearsonCorrelation();
   void test_ttest();
   void test_mean();
   void test_mode();
   void test_gamma();
-  void test_incrementDecrementSquaredError();
+  //void test_incrementDecrementSquaredError();
   void test_incrementDecrementSquaredFrequency();
 
 };
@@ -56,30 +58,37 @@ void MathTest::test_erf() {
 
 }
 
-void MathTest::test_squaredError() {
+void MathTest::test_var() {
 
   vector<datadefs::num_t> data;
-  datadefs::num_t mu = -1.0;
-  datadefs::num_t se = -1.0;
+  datadefs::num_t mu, se, var;
   //size_t nRealValues = static_cast<size_t>(-1);
   for (int i = 0; i < 50; ++i) {
     data.push_back(static_cast<datadefs::num_t>(i));
   }
-  
-  mu = math::mean(data);
-  se = math::squaredError(data, mu);
-  CPPUNIT_ASSERT(mu == 24.5);
-  CPPUNIT_ASSERT(se == 10412.5);
-  CPPUNIT_ASSERT( fabs( se - math::squaredError(data) ) < datadefs::EPS );
-  
-  data.resize(0);
+
+  var = math::var(data);
 
   mu = math::mean(data);
-  se = math::squaredError(data, mu);
-  CPPUNIT_ASSERT( datadefs::isNAN(mu) );
-  CPPUNIT_ASSERT( datadefs::isNAN(se) );
-  CPPUNIT_ASSERT( datadefs::isNAN(math::squaredError(data)) );
-  
+
+  CPPUNIT_ASSERT( fabs( var - 212.5 ) < 1e-6 );
+
+  var = math::var(data,mu);
+
+  CPPUNIT_ASSERT( fabs( var - 212.5 ) < 1e-6 );
+
+  data.push_back(datadefs::NUM_NAN);
+
+  CPPUNIT_ASSERT( datadefs::isNAN(math::var(data)) );
+
+  data.resize(0);
+
+  CPPUNIT_ASSERT( datadefs::isNAN(math::var(data)) );
+
+  data.resize(1,0.0);
+
+  CPPUNIT_ASSERT( datadefs::isNAN(math::var(data)) );
+
 }
 
 void MathTest::test_ttest() {
@@ -268,11 +277,12 @@ void MathTest::test_pearsonCorrelation() {
     y.push_back(static_cast<datadefs::num_t>(i));
     y2.push_back(static_cast<datadefs::num_t>(49-i));
   }
+
   corr = math::pearsonCorrelation(x, y);
-  CPPUNIT_ASSERT(corr == 1.0);
+  CPPUNIT_ASSERT( fabs( corr - 1.0 ) < 1e-6 );
 
   corr = math::pearsonCorrelation(x, y2);
-  CPPUNIT_ASSERT(corr == -1.0);
+  CPPUNIT_ASSERT( fabs( corr + 1.0 ) < 1e-6 );
 
   // x and y are defined as const in our signature. Since we're not
   //  testing edge cases of non-trivial memory corruption, we ignore it here.
@@ -292,79 +302,6 @@ void MathTest::test_pearsonCorrelation() {
   corr = math::pearsonCorrelation(x, y);
   CPPUNIT_ASSERT( datadefs::isNAN(corr) );
 }
-
-
-void MathTest::test_incrementDecrementSquaredError() {
-  
-  datadefs::num_t se = 0.0;
-  datadefs::num_t mu = 0.0;
-  size_t n = 0;
-
-  // TEST: increment three values, 1.0, 2.0, 3.0
-  
-  ++n;
-  math::incrementSquaredError(1.0,n,mu,se);
-  CPPUNIT_ASSERT( fabs( mu - 1.0) < datadefs::EPS );
-  CPPUNIT_ASSERT( fabs( se - 0.0) < datadefs::EPS );
-  
-  ++n;
-  math::incrementSquaredError(2.0,n,mu,se);
-  CPPUNIT_ASSERT( fabs( mu - 1.5 ) < datadefs::EPS );
-  CPPUNIT_ASSERT( fabs( se - 0.5 ) < datadefs::EPS ); 
-
-  ++n;
-  math::incrementSquaredError(3.0,n,mu,se);
-  CPPUNIT_ASSERT( fabs( mu - 2.0 ) < datadefs::EPS );
-  CPPUNIT_ASSERT( fabs( se - 2.0 ) < datadefs::EPS );
-
-  // TEST: decrement the same values
-
-  --n;
-  math::decrementSquaredError(3.0,n,mu,se);
-  CPPUNIT_ASSERT( fabs( mu - 1.5 ) < datadefs::EPS );
-  CPPUNIT_ASSERT( fabs( se - 0.5 ) < datadefs::EPS );
-
-  --n;
-  math::decrementSquaredError(2.0,n,mu,se);
-  CPPUNIT_ASSERT( fabs( mu - 1.0) < datadefs::EPS );
-  CPPUNIT_ASSERT( fabs( se - 0.0) < datadefs::EPS );
-
-  --n;
-  math::decrementSquaredError(1.0,n,mu,se);
-  CPPUNIT_ASSERT( fabs( mu - 0.0) < datadefs::EPS );
-  CPPUNIT_ASSERT( fabs( se - 0.0) < datadefs::EPS );
-
-  // We're back at square one
-  CPPUNIT_ASSERT( n == 0 );
-
-  // TEST: increment 10 times the same value
-  while( n < 10 ) {
-    
-    ++n;
-    math::incrementSquaredError(1.5,n,mu,se);
-    CPPUNIT_ASSERT( fabs( mu - 1.5) < datadefs::EPS );
-    CPPUNIT_ASSERT( fabs( se - 0.0) < datadefs::EPS );
-
-  }
-
-  // TEST: decrement 10 times the same value
-  while( n >= 2 ) {
-
-    --n;
-    math::decrementSquaredError(1.5,n,mu,se);
-    CPPUNIT_ASSERT( fabs( mu - 1.5) < datadefs::EPS );
-    CPPUNIT_ASSERT( fabs( se - 0.0) < datadefs::EPS );
-
-  }
-
-  --n;
-  math::decrementSquaredError(1.5,n,mu,se);
-  CPPUNIT_ASSERT( fabs( mu - 0.0) < datadefs::EPS );
-  CPPUNIT_ASSERT( fabs( se - 0.0) < datadefs::EPS );
-
-  
-}
-
 
 void MathTest::test_incrementDecrementSquaredFrequency() {
 

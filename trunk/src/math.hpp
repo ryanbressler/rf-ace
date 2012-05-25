@@ -90,59 +90,14 @@ namespace math {
 
   num_t gamma(const vector<num_t>& x, const size_t nCategories); 
   
-  num_t squaredError(const vector<num_t>& x);
+  //num_t squaredError(const vector<num_t>& x);
   
-  num_t squaredError(const vector<num_t>& x, const num_t mu); 
+  //num_t squaredError(const vector<num_t>& x, const num_t mu); 
 
-  /**
-     Updates the mean and squared error by ADDING x_n to the set
-     NOTE: NANs will corrupt the data
-  */
-  inline void incrementSquaredError(const num_t& x_n,
-				    const size_t& n,
-				    num_t& mu,
-				    num_t& se) {
-    
-    // Save the current mean
-    num_t mu_old = mu;
-    
-    // Update mean
-    mu += (x_n - mu_old) / n;
-    
-    // If there are already at least two data points, 
-    // squared error can be calculated, otherwise assign se := 0.0
-    if(n > 1) {
-      se += (x_n - mu) * (x_n - mu_old);
-    } else { 
-      se = 0.0; /** Implementation note: this may spuriously invoke on
-		    overflow. size_t is assumed to always be unsigned in
-		    accordance with the 1999 ISO C standard (C99). */
-    }
-  } 
+  // Unbiased variance estimate: 1/(n-1)*sum(y-y_i)^2
+  num_t var(const vector<num_t>& x);
 
-
-  /**
-     Updates the mean and squared error by REMOVING x_n from the set
-     NOTE: NANs will corrupt the data
-  */
-  inline void decrementSquaredError(const num_t& x_n,
-				    const size_t& n,
-				    num_t& mu,
-				    num_t& se) {
-    
-    
-    if(n > 1) {
-      num_t mu_old = mu;
-      mu -= (x_n - mu) / n;
-      se -= (x_n - mu) * (x_n - mu_old);
-    } else if(n == 1) {
-      mu -= (x_n - mu) / n;
-      se = 0.0;
-    } else {
-      mu = 0.0;
-      se = 0.0;
-    }
-  }
+  num_t var(const vector<num_t>& x, const num_t& mu);
 
   /**
      Updates the squared frequency by ADDING x_n to the set
