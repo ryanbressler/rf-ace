@@ -61,7 +61,7 @@ num_t math::ttest(const vector<num_t>& x,
 
   // Sample mean and variance of x
   num_t mean_x = math::mean(x);
-  num_t var_x = math::squaredError(x,mean_x);
+  num_t var_x = math::var(x,mean_x);
   size_t n_x = x.size();
 
   // If sample size is too small, we exit
@@ -69,21 +69,15 @@ num_t math::ttest(const vector<num_t>& x,
     return( datadefs::NUM_NAN );
   }
 
-  // Normalize squared error to get unbiased variance estimate
-  var_x /= (n_x - 1);
-
   // Sample mean and variance of y
   num_t mean_y = math::mean(y);
-  num_t var_y = math::squaredError(y,mean_y);
+  num_t var_y = math::var(y,mean_y);
   size_t n_y = y.size();
 
   // If sample size is too small, we exit
   if ( n_y < 2 ) {
     return( datadefs::NUM_NAN );
   }
-
-  // Normalize squared error to get unbiased variance estimate
-  var_y /= (n_y - 1);
 
   // Degrees of freedom
   size_t v = n_x + n_y - 2;
@@ -219,9 +213,9 @@ num_t math::pearsonCorrelation(const vector<num_t>& x,
   num_t corr = 0.0;
   
   num_t mu_x = math::mean(x);
-  num_t se_x = math::squaredError(x,mu_x);
+  num_t se_x = math::var(x,mu_x) * (n - 1);
   num_t mu_y = math::mean(y);
-  num_t se_y = math::squaredError(y,mu_y);
+  num_t se_y = math::var(y,mu_y) * (n - 1);
   
   for(size_t i = 0; i < n; ++i) {
     corr += ( x[i] - mu_x ) * ( y[i] - mu_y );
@@ -253,26 +247,54 @@ num_t math::gamma(const vector<num_t>& x, const size_t nCategories) {
   
 }
 
-num_t math::squaredError(const vector<num_t>& x, const num_t mu) {
-
+/*
+  num_t math::squaredError(const vector<num_t>& x, const num_t mu) {
+  
   if ( x.size() == 0 ) {
-    return( datadefs::NUM_NAN );
+  return( datadefs::NUM_NAN );
   }
   
   num_t se = 0.0;
   
   for(size_t i = 0; i < x.size(); ++i) {
-    se += pow(x[i] - mu,2);
+  se += pow(x[i] - mu,2);
   }
   
   return( se );
-}
-
-num_t math::squaredError(const vector<num_t>& x) {
-
+  }
+  
+  num_t math::squaredError(const vector<num_t>& x) {
+  
   num_t mu = math::mean(x);
   
   return( squaredError(x,mu) );
   
+  }
+*/
+
+num_t math::var(const vector<num_t>& x) {
+
+  num_t mu = math::mean(x);
+
+  return( math::var(x,mu) );
+
+}
+
+num_t math::var(const vector<num_t>& x, const num_t& mu) {
+  
+  if ( x.size() < 2 ) {
+    return( datadefs::NUM_NAN );
+  }
+
+  size_t n = x.size();
+
+  num_t ret = 0.0;
+
+  for(size_t i = 0; i < n; ++i) {
+    ret += pow(x[i] - mu,2) / ( n - 1 );
+  }
+
+  return( ret );
+
 }
 

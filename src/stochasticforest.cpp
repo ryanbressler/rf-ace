@@ -584,7 +584,7 @@ void StochasticForest::predict(vector<num_t>& prediction, vector<num_t>& confide
     }
     prediction[sampleIdx] = math::mean( predictionVec );
     //datadefs::print<num_t>(predictionVec);
-    confidence[sampleIdx] = sqrt( math::squaredError(predictionVec,prediction[sampleIdx]) / nTrees );
+    confidence[sampleIdx] = sqrt( math::var(predictionVec,prediction[sampleIdx]) );
     //cout << " ** ERROR = " << confidence[sampleIdx] << endl;
   }
 
