@@ -26,7 +26,7 @@ using namespace std;
 using datadefs::num_t;
 
 statistics::RF_statistics executeRandomForest(Treedata& treeData,
-					      const options::General_options& gen_op,
+					      options::General_options& gen_op,
 					      vector<num_t>& pValues,
 					      vector<num_t>& importanceValues,
 					      vector<num_t>& contrastImportanceSample,
@@ -50,25 +50,31 @@ void printAssociationsToFile(options::General_options& gen_op,
 
 void printPredictionToFile(StochasticForest& SF, Treedata& treeData, const string& targetName, const string& fileName);
 
+void printHeader(ostream& out) {
+  out << endl
+      << "-----------------------------------------------------" << endl
+      << "|  RF-ACE version:  1.0.5, April 24th, 2012         |" << endl
+      << "|    Project page:  http://code.google.com/p/rf-ace |" << endl
+      << "|     Report bugs:  timo.p.erkkila@tut.fi           |" << endl
+      << "-----------------------------------------------------" << endl
+      << endl;
+}
+
 int main(const int argc, char* const argv[]) {
 
-  options::printHeader(cout);
-
-  //ArgParse parser(argc,argv);
-
+  printHeader(cout);
+  
   // Structs that store all the user-specified command-line arguments
   options::General_options gen_op(argc,argv);
   gen_op.loadUserParams();
   
   // With no input arguments the help is printed
   if ( argc == 1 || gen_op.printHelp ) {
-    //options::printFilterOverview();
     gen_op.help();
     return(EXIT_SUCCESS);
-
   }
 
-  rface::validateRequiredParameters(gen_op);
+  gen_op.validate();
 
   if ( gen_op.isFilter ) {
 
@@ -132,7 +138,7 @@ void rf_ace_filter(options::General_options& gen_op) {
   size_t targetIdx = treeData.getFeatureIdx(gen_op.targetStr);
   
   vector<string> featureNames( treeData.nFeatures() );
-  vector<num_t> correlations ( treeData.nFeatures() );
+  vector<num_t> correlations(  treeData.nFeatures() );
   vector<size_t> sampleCounts( treeData.nFeatures() );
 
   size_t nIncludedFeatures = 0;
@@ -181,7 +187,7 @@ void rf_ace_filter(options::General_options& gen_op) {
   if ( gen_op.log != "" ) {
     
     ofstream toLogFile(gen_op.log.c_str());
-    options::printHeader(toLogFile);
+    printHeader(toLogFile);
     RF_stat.print(toLogFile);
     toLogFile.close();
     
@@ -216,8 +222,14 @@ void printGeneralSetup(Treedata& treeData, const options::General_options& gen_o
   cout << "General configuration:" << endl;
   cout << "    nfeatures" << setw(options::maxWidth-9) << "" << "= " << nAllFeatures << endl;
   cout << "    nsamples"  << setw(options::maxWidth-8) << "" << "= " << treeData.nRealSamples(targetIdx) << " / " << treeData.nSamples() << " ( " << 100.0 * ( 1 - realFraction ) << " % missing )" << endl;
-  cout << "    tree type" << setw(options::maxWidth-9) << "" << "= ";
-  if(treeData.isFeatureNumerical(targetIdx)) { cout << "Regression CART" << endl; } else { cout << treeData.nCategories(targetIdx) << "-class CART" << endl; }
+  cout << "  --" << gen_op.forestType_l << setw( options::maxWidth - gen_op.forestType_l.size() ) << ""
+       << "= ";
+  if(gen_op.forestType == options::RF ) { cout << "RF"; } 
+  else if(gen_op.forestType == options::GBT ) { cout << "GBT"; } 
+  else if(gen_op.forestType == options::CART ) { cout << "CART"; }
+  cout << endl;
+  cout << "    data type" << setw(options::maxWidth-9) << "" << "= "; 
+  if(treeData.isFeatureNumerical(targetIdx)) { cout << "NUMERICAL" << endl; } else { cout << treeData.nCategories(targetIdx) << " CATEGORIES" << endl; }
   cout << "  --" << gen_op.dataDelimiter_l << setw( options::maxWidth - gen_op.dataDelimiter_l.size() ) << ""
        << "= '" << gen_op.dataDelimiter << "'" << endl;
   cout << "  --" << gen_op.headerDelimiter_l << setw( options::maxWidth - gen_op.headerDelimiter_l.size() ) << ""
@@ -260,7 +272,7 @@ void printGeneralSetup(Treedata& treeData, const options::General_options& gen_o
 
 
 statistics::RF_statistics executeRandomForest(Treedata& treeData,
-					      const options::General_options& gen_op,
+					      options::General_options& gen_op,
 					      vector<num_t>& pValues,
 					      vector<num_t>& importanceValues,
 					      vector<num_t>& contrastImportanceSample,
@@ -278,25 +290,6 @@ statistics::RF_statistics executeRandomForest(Treedata& treeData,
   importanceValues.resize(2*nFeatures);
   featuresInAllForests.clear();
   
-  StochasticForest::Parameters parameters;
-  parameters.model = StochasticForest::RF;
-  parameters.inBoxFraction = 1.0;
-  parameters.sampleWithReplacement = true;
-  parameters.isRandomSplit = true;
-  parameters.nTrees       = gen_op.nTrees;
-  parameters.mTry         = gen_op.mTry;
-  parameters.nMaxLeaves   = gen_op.nMaxLeaves;
-  parameters.nodeSize     = gen_op.nodeSize;
-  parameters.useContrasts = true;
-  parameters.shrinkage    = gen_op.shrinkage;
-
-  if(gen_op.nPerms > 1 || gen_op.reportContrasts ) {
-    parameters.useContrasts = true;
-  } else {
-    parameters.useContrasts = false;
-  }
-  
-  
   Progress progress;
   clock_t clockStart( clock() );
   contrastImportanceSample.resize(gen_op.nPerms);
@@ -306,7 +299,7 @@ statistics::RF_statistics executeRandomForest(Treedata& treeData,
     progress.update(1.0*permIdx/gen_op.nPerms);
     
     // Initialize the Random Forest object
-    StochasticForest SF(&treeData,gen_op.targetStr,parameters);
+    StochasticForest SF(&treeData,gen_op);
     
     // Get the number of nodes in each tree in the forest
     nodeMat[permIdx] = SF.nNodes();
@@ -388,7 +381,7 @@ void rf_ace(options::General_options& gen_op) {
   rface::updateTargetStr(treeData,gen_op);
 
   // Initialize parameters struct for the stochastic forest and load defaults
-  StochasticForest::Parameters parameters;
+  //StochasticForest::Parameters parameters;
   //if ( PB_op.isGBT ) {
   // parameters.model = StochasticForest::GBT;
   // parameters.inBoxFraction = 0.5;
@@ -396,10 +389,10 @@ void rf_ace(options::General_options& gen_op) {
   // parameters.isRandomSplit = false;
   // gen_op.setGBTDefaults();
   // else if ( PB_op.isRF ) {
-  parameters.model = StochasticForest::RF;
-  parameters.inBoxFraction = 1.0;
-  parameters.sampleWithReplacement = true;
-  parameters.isRandomSplit = true;
+  //parameters.model = StochasticForest::RF;
+  //parameters.inBoxFraction = 1.0;
+  //parameters.sampleWithReplacement = true;
+  //parameters.isRandomSplit = true;
   // gen_op.setRFDefaults();
   //} else {
   //   cerr << "Model needs to be specified explicitly" << endl;
@@ -410,12 +403,12 @@ void rf_ace(options::General_options& gen_op) {
   rface::updateMTry(treeData,gen_op);
 
   // Copy command line parameters to parameters struct for the stochastic forest
-  parameters.nTrees       = gen_op.nTrees;
-  parameters.mTry         = gen_op.mTry;
-  parameters.nMaxLeaves   = gen_op.nMaxLeaves;
-  parameters.nodeSize     = gen_op.nodeSize;
-  parameters.useContrasts = false;
-  parameters.shrinkage    = gen_op.shrinkage;
+  //parameters.nTrees       = gen_op.nTrees;
+  //parameters.mTry         = gen_op.mTry;
+  //parameters.nMaxLeaves   = gen_op.nMaxLeaves;
+  //parameters.nodeSize     = gen_op.nodeSize;
+  gen_op.useContrasts = false;
+  //parameters.shrinkage    = gen_op.shrinkage;
     
   printGeneralSetup(treeData,gen_op);
 
@@ -428,7 +421,7 @@ void rf_ace(options::General_options& gen_op) {
   cout << "===> Growing RF predictor... " << flush;
   // }
   
-  StochasticForest SF(&treeData,gen_op.targetStr,parameters);
+  StochasticForest SF(&treeData,gen_op);
   cout << "DONE" << endl << endl;
 
   size_t targetIdx = treeData.getFeatureIdx(gen_op.targetStr);

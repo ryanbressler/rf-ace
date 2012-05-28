@@ -15,69 +15,57 @@ using datadefs::num_t;
 
 namespace options {
 
-  void printHeader(ostream& output) {
+  enum ForestType {GBT,RF,CART,UNKNOW};
 
-    output << endl;
-    output << "-----------------------------------------------------" << endl;
-    output << "|  RF-ACE version:  1.0.5, April 24th, 2012         |" << endl;
-    output << "|    Project page:  http://code.google.com/p/rf-ace |" << endl;
-    output << "|     Report bugs:  timo.p.erkkila@tut.fi           |" << endl;
-    output << "-----------------------------------------------------" << endl;
-    output << endl;
-  }
-
-  void printHelpHint() {
-    cout << endl;
-    cout << "To get started, type \"-h\" or \"--help\"" << endl;
-  }
-  
   // Default general configuration
-  const bool   GENERAL_DEFAULT_PRINT_HELP = false;
-  const bool   GENERAL_DEFAULT_IS_FILTER = false;
-  const size_t GENERAL_DEFAULT_RECOMBINE_PERMS = 0;
-  const bool   GENERAL_DEFAULT_REPORT_CONTRASTS = false;
-  const char   GENERAL_DEFAULT_DATA_DELIMITER = '\t';
-  const char   GENERAL_DEFAULT_HEADER_DELIMITER = ':';
-  const size_t GENERAL_DEFAULT_MIN_SAMPLES = 5;
-  const int    GENERAL_DEFAULT_SEED = -1;
+  const bool       GENERAL_DEFAULT_PRINT_HELP = false;
+  const bool       GENERAL_DEFAULT_IS_FILTER = false;
+  const size_t     GENERAL_DEFAULT_RECOMBINE_PERMS = 0;
+  const bool       GENERAL_DEFAULT_REPORT_CONTRASTS = false;
+  const char       GENERAL_DEFAULT_DATA_DELIMITER = '\t';
+  const char       GENERAL_DEFAULT_HEADER_DELIMITER = ':';
+  const size_t     GENERAL_DEFAULT_MIN_SAMPLES = 5;
+  const int        GENERAL_DEFAULT_SEED = -1;
+  const ForestType GENERAL_DEFAULT_FOREST_TYPE = RF;
 
   // Statistical test default configuration
-  const size_t ST_DEFAULT_N_PERMS = 20;
-  const num_t  ST_DEFAULT_P_VALUE_THRESHOLD = 0.05;
-  const num_t  ST_DEFAULT_IMPORTANCE_THRESHOLD = 0;
-  const bool   ST_DEFAULT_REPORT_NONEXISTENT_FEATURES = false;
+  const size_t     ST_DEFAULT_N_PERMS = 20;
+  const num_t      ST_DEFAULT_P_VALUE_THRESHOLD = 0.05;
+  const num_t      ST_DEFAULT_IMPORTANCE_THRESHOLD = 0;
+  const bool       ST_DEFAULT_REPORT_NONEXISTENT_FEATURES = false;
 
   // Random Forest default configuration
-  const size_t RF_DEFAULT_N_TREES = 100;
-  const size_t RF_DEFAULT_M_TRY = 0;
-  const size_t RF_DEFAULT_N_MAX_LEAVES = 100;
-  const size_t RF_DEFAULT_NODE_SIZE = 3;
-  const num_t  RF_DEFAULT_IN_BOX_FRACTION = 1.0;
-  const num_t  RF_DEFAULT_SAMPLE_WITH_REPLACEMENT = true;
-  const bool   RF_DEFAULT_USE_CONTRASTS = true;
-  const bool   RF_DEFAULT_IS_RANDOM_SPLIT = true;
-  const num_t  RF_DEFAULT_SHRINKAGE = 0.0;
+  const size_t     RF_DEFAULT_N_TREES = 100;
+  const size_t     RF_DEFAULT_M_TRY = 0;
+  const size_t     RF_DEFAULT_N_MAX_LEAVES = 100;
+  const size_t     RF_DEFAULT_NODE_SIZE = 3;
+  const num_t      RF_DEFAULT_IN_BOX_FRACTION = 1.0;
+  const num_t      RF_DEFAULT_SAMPLE_WITH_REPLACEMENT = true;
+  const bool       RF_DEFAULT_USE_CONTRASTS = true;
+  const bool       RF_DEFAULT_IS_RANDOM_SPLIT = true;
+  const num_t      RF_DEFAULT_SHRINKAGE = 0.0;
 
   // Gradient Boosting Trees default configuration
-  const size_t GBT_DEFAULT_N_TREES = 100;
-  const size_t GBT_DEFAULT_M_TRY = 0;
-  const size_t GBT_DEFAULT_N_MAX_LEAVES = 6;
-  const size_t GBT_DEFAULT_NODE_SIZE = 3;
-  const num_t  GBT_DEFAULT_IN_BOX_FRACTION = 0.5;
-  const num_t  GBT_DEFAULT_SAMPLE_WITH_REPLACEMENT = false;
-  const bool   GBT_DEFAULT_USE_CONTRASTS = false;
-  const bool   GBT_DEFAULT_IS_RANDOM_SPLIT = false;
-  const num_t  GBT_DEFAULT_SHRINKAGE = 0.1;
+  const size_t     GBT_DEFAULT_N_TREES = 100;
+  const size_t     GBT_DEFAULT_M_TRY = 0;
+  const size_t     GBT_DEFAULT_N_MAX_LEAVES = 6;
+  const size_t     GBT_DEFAULT_NODE_SIZE = 3;
+  const num_t      GBT_DEFAULT_IN_BOX_FRACTION = 0.5;
+  const num_t      GBT_DEFAULT_SAMPLE_WITH_REPLACEMENT = false;
+  const bool       GBT_DEFAULT_USE_CONTRASTS = false;
+  const bool       GBT_DEFAULT_IS_RANDOM_SPLIT = false;
+  const num_t      GBT_DEFAULT_SHRINKAGE = 0.1;
 
   // Determines the amount of indentation in help print-outs
   const size_t maxWidth = 20;
   
   struct General_options {
 
+  private:
     ArgParse* parser_;
 
+  public:
     // EXPERIMENTAL
-    //bool isRecombiner;
     size_t recombinePerms; const string recombinePerms_s; const string recombinePerms_l;
 
     // I/O related and general paramters
@@ -96,12 +84,21 @@ namespace options {
     size_t pruneFeatures; const string pruneFeatures_s; const string pruneFeatures_l;
     int seed; string seed_s; string seed_l;
 
+    // Forest Type
+    ForestType forestType; const string forestType_s; const string forestType_l;
+
     // Random Forest related parameters
     size_t nTrees; const string nTrees_s; const string nTrees_l;
     size_t mTry; const string mTry_s; const string mTry_l;
     size_t nMaxLeaves; const string nMaxLeaves_s; const string nMaxLeaves_l;
     size_t nodeSize; const string nodeSize_s; const string nodeSize_l;
     num_t shrinkage; const string shrinkage_s; const string shrinkage_l;
+
+    // Parameters that cannot be controlled through the interface
+    num_t inBoxFraction;
+    bool sampleWithReplacement;
+    bool isRandomSplit;
+    bool useContrasts;
 
     // Statistical test related parameters
     size_t nPerms; const string nPerms_s; const string nPerms_l;
@@ -127,7 +124,10 @@ namespace options {
       headerDelimiter(GENERAL_DEFAULT_HEADER_DELIMITER),headerDelimiter_s("H"),headerDelimiter_l("head_delim"),
       pruneFeatures(GENERAL_DEFAULT_MIN_SAMPLES),pruneFeatures_s("X"),pruneFeatures_l("prune_features"),
       seed(GENERAL_DEFAULT_SEED),seed_s("S"),seed_l("seed"),
+      // Forest Type
+      forestType(GENERAL_DEFAULT_FOREST_TYPE),forestType_s("f"),forestType_l("forest_type"),
       // Random Forest related parameters
+      // NOTE: Defaults will be loaded inside the constructor
       nTrees_s("n"),nTrees_l("ntrees"),
       mTry_s("m"),mTry_l("mtry"),
       nMaxLeaves_s("a"),nMaxLeaves_l("nmaxleaves"),
@@ -142,7 +142,14 @@ namespace options {
       
       parser_ = new ArgParse(argc,argv);
 
-      setRFDefaults(); 
+      if ( forestType == RF ) {
+	setRFDefaults(); 
+      } else if ( forestType == GBT ) {
+	setGBTDefaults();
+      } else if ( forestType == CART ) {
+	cerr << "CART forest not yet fully specified!" << endl;
+	exit(1);
+      } 
     }
     
     General_options() {
@@ -150,6 +157,31 @@ namespace options {
     }
 
     void loadUserParams() {
+
+      // If forest type is explicitly specified, update it
+      if ( this->isSet(forestType_s,forestType_l) ) {
+        string forestTypeAsStr("");
+        parser_->getArgument<string>(forestType_s, forestType_l, forestTypeAsStr);
+        if ( forestTypeAsStr == "RF" ) {
+          forestType = RF;
+        } else if ( forestTypeAsStr == "GBT" ) {
+          forestType = GBT;
+        } else if ( forestTypeAsStr == "CART" ) {
+          forestType = CART;
+        } else {
+          cerr << "Invalid Forest Type!" << endl;
+          exit(1);
+        }
+      }
+
+      if ( forestType == RF ) {
+        setRFDefaults();
+      } else if ( forestType == GBT ) {
+        setGBTDefaults();
+      } else if ( forestType == CART ) {
+        cerr << "CART forest not yet fully specified!" << endl;
+        exit(1);
+      }
             
       // EXPERIMENTAL PARAMETERS
       //parser.getFlag(recombinePerms_s, recombinePerms_l, isRecombiner);
@@ -202,16 +234,40 @@ namespace options {
       parser_->getFlag(reportAllFeatures_s, reportAllFeatures_l, reportAllFeatures);
       //parser.getArgument<string>(contrastOutput_s, contrastOutput_l, contrastOutput);
 
+    }
+
+    void validate() {
+      
       if ( nPerms > 1 && nPerms < 6 ) {
         cerr << "Use more than 5 permutations in statistical test!" << endl;
         exit(1);
       }
-
+      
       if ( pValueThreshold < 0.0 || pValueThreshold > 1.0 ) {
         cerr << "P-value threshold in statistical test must be within 0...1" << endl;
         exit(1);
       }
-  
+
+      // Print help and exit if input file is not specified
+      if ( input == "" ) {
+	cerr << "Input file not specified" << endl;
+	this->helpHint();
+	exit(1);
+      }
+      
+      // Print help and exit if target index is not specified
+      if ( !this->isSet(recombinePerms_s,recombinePerms_l) && targetStr == "" ) {
+	cerr << "target not specified" << endl;
+	this->helpHint();
+	exit(1);
+      }
+      
+      if ( output == "" ) {
+	cerr << "You forgot to specify an output file!" << endl;
+	this->helpHint();
+	exit(1);
+      }
+        
     }
 
     bool isSet(const string& shortOpt, const string& longOpt) const {
@@ -222,6 +278,12 @@ namespace options {
       return( ret );
 
     }
+
+    void helpHint() {
+      cout << endl;
+      cout << "To get started, type -" << printHelp_s << " / --" << printHelp_l << endl;
+    }
+
 
     void help() {
 
@@ -248,6 +310,8 @@ namespace options {
            << " " << "Features with less than n ( default " << GENERAL_DEFAULT_MIN_SAMPLES << " ) samples will be removed" << endl;
       cout << " -" << seed_s << " / --" << seed_l << setw( maxWidth - seed_l.size() ) 
 	   << " " << "Seed (positive integer) for the Mersenne Twister random number generator" << endl;
+      cout << " -" << forestType_s << " / --" << forestType_l << setw( maxWidth - forestType_l.size() )
+	   << " " << "Forest Type: RF (default), GBT, or CART" << endl;
       cout << endl;
 
       cout << "STOCHASTIC FOREST ARGUMENTS:" << endl;
@@ -299,6 +363,10 @@ namespace options {
     
     void setRFDefaults() {
 
+      inBoxFraction         = 1.0;
+      sampleWithReplacement = true;
+      isRandomSplit         = true;
+      useContrasts          = true;
       nTrees                = RF_DEFAULT_N_TREES;
       mTry                  = RF_DEFAULT_M_TRY;
       nMaxLeaves            = RF_DEFAULT_N_MAX_LEAVES;
@@ -309,6 +377,10 @@ namespace options {
 
     void setGBTDefaults() {
 
+      inBoxFraction         = 0.5;
+      sampleWithReplacement = false;
+      isRandomSplit         = false;
+      useContrasts          = false;
       nTrees                = GBT_DEFAULT_N_TREES;
       mTry                  = GBT_DEFAULT_M_TRY;
       nMaxLeaves            = GBT_DEFAULT_N_MAX_LEAVES;

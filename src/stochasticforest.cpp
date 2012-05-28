@@ -10,22 +10,30 @@
 #include "utils.hpp"
 #include "math.hpp"
 
-StochasticForest::StochasticForest(Treedata* treeData, const string& targetName, const Parameters& parameters):
+StochasticForest::StochasticForest(Treedata* treeData, options::General_options& parameters):
   treeData_(treeData),
   parameters_(parameters),
-  targetName_(targetName),
+  targetName_(parameters_.targetStr),
   rootNodes_(parameters_.nTrees) {
 
-  parameters_.validate();
+  this->validateParameters();
 
   size_t targetIdx = treeData_->getFeatureIdx(targetName_);
   targetSupport_ = treeData_->categories(targetIdx);
 
   // Grows the forest
-  if ( parameters_.model == RF ) {
+  if ( parameters_.forestType == options::RF ) {
     this->learnRF();
-  } else {
+  } else if ( parameters_.forestType == options::GBT ) {
+    cerr << "GBT isn't working at the moment!" << endl;
+    exit(1);
     this->learnGBT();
+  } else if ( parameters_.forestType == options::CART ) {
+    cerr << "CART isn't working at the moment!" << endl;
+    exit(1);
+  } else {
+    cerr << "Unknown model to be learned!" << endl;
+    exit(1);
   }
 
   // Get features in the forest for fast look-up
@@ -38,18 +46,18 @@ StochasticForest::StochasticForest(Treedata* treeData, const string& targetName,
 
 }
 
-void StochasticForest::Parameters::validate() {
+void StochasticForest::validateParameters() {
   
-  assert( nTrees > 0 );
-  assert( mTry > 0 );
-  assert( nMaxLeaves > 0 );
-  assert( nodeSize > 0 );
+  assert( parameters_.nTrees > 0 );
+  assert( parameters_.mTry > 0 );
+  assert( parameters_.nMaxLeaves > 0 );
+  assert( parameters_.nodeSize > 0 );
   //assert( shrinkage > 0.0 );
 
-  if ( sampleWithReplacement ) {
-    assert( 0.0 < inBoxFraction );
+  if ( parameters_.sampleWithReplacement ) {
+    assert( 0.0 < parameters_.inBoxFraction );
   } else {
-    assert( 0.0 < inBoxFraction && inBoxFraction <= 1.0 );
+    assert( 0.0 < parameters_.inBoxFraction && parameters_.inBoxFraction <= 1.0 );
   }
 
 }
@@ -67,9 +75,9 @@ StochasticForest::StochasticForest(Treedata* treeData, const string& forestFile)
 
   //assert( forestSetup["FOREST"] == "GBT" );
   if ( forestSetup["FOREST"] == "GBT" ) {
-    parameters_.model = GBT;
+    parameters_.forestType = options::GBT;
   } else if ( forestSetup["FOREST"] == "RF" ) {
-    parameters_.model = RF;
+    parameters_.forestType = options::RF;
   } else {
     cerr << "Unknown forest type: " << forestSetup["FOREST"] << endl;
     exit(1);
@@ -179,9 +187,9 @@ void StochasticForest::printToFile(const string& fileName) {
   // Open stream for writing
   ofstream toFile( fileName.c_str() );
 
-  if ( parameters_.model == GBT ) {
+  if ( parameters_.forestType == options::GBT ) {
     toFile << "FOREST=GBT";
-  } else if ( parameters_.model == RF ) {
+  } else if ( parameters_.forestType == options::RF ) {
     toFile << "FOREST=RF"; 
   }
 
@@ -469,7 +477,7 @@ void StochasticForest::predict(vector<string>& categoryPrediction, vector<num_t>
   categoryPrediction.resize( nSamples );
   confidence.resize( nSamples );
 
-  if ( parameters_.model == GBT ) {
+  if ( parameters_.forestType == options::GBT ) {
     
     // For classification, each "tree" is actually numClasses_ trees in a row, each predicting the probability of its own class.
     size_t numIterations = nTrees / nCategories;
@@ -513,7 +521,7 @@ void StochasticForest::predict(vector<string>& categoryPrediction, vector<num_t>
       confidence[i] = *largestElementIt;
     }
 
-  } else if ( parameters_.model == RF ) {
+  } else if ( parameters_.forestType == options::RF ) {
 
     for ( size_t i = 0; i < nSamples; ++i ) {
       
