@@ -74,8 +74,10 @@ namespace options {
   
   struct General_options {
 
+    ArgParse* parser_;
+
     // EXPERIMENTAL
-    bool isRecombiner;
+    //bool isRecombiner;
     size_t recombinePerms; const string recombinePerms_s; const string recombinePerms_l;
 
     // I/O related and general paramters
@@ -107,9 +109,8 @@ namespace options {
     num_t importanceThreshold; const string importanceThreshold_s; const string importanceThreshold_l;
     bool reportAllFeatures; const string reportAllFeatures_s; const string reportAllFeatures_l;
 
-    General_options():
+    General_options(const int argc, char* const argv[]):
       // EXPERIMENTAL PARAMETERS
-      isRecombiner(false),
       recombinePerms(GENERAL_DEFAULT_RECOMBINE_PERMS),recombinePerms_s("R"),recombinePerms_l("recombine"),
       // I/O and general parameters
       printHelp(GENERAL_DEFAULT_PRINT_HELP),printHelp_s("h"),printHelp_l("help"),
@@ -138,33 +139,40 @@ namespace options {
       importanceThreshold(ST_DEFAULT_IMPORTANCE_THRESHOLD),importanceThreshold_s("o"),importanceThreshold_l("i_threshold"),
       reportAllFeatures(ST_DEFAULT_REPORT_NONEXISTENT_FEATURES),reportAllFeatures_s("A"),reportAllFeatures_l("report_all_features") 
     { 
+      
+      parser_ = new ArgParse(argc,argv);
+
       setRFDefaults(); 
     }
     
-    void loadUserParams(ArgParse& parser) {
+    General_options() {
+      delete parser_;
+    }
+
+    void loadUserParams() {
             
       // EXPERIMENTAL PARAMETERS
-      parser.getFlag(recombinePerms_s, recombinePerms_l, isRecombiner);
-      if ( isRecombiner ) {
-	parser.getArgument<size_t>(recombinePerms_s,recombinePerms_l,recombinePerms);
-      }
+      //parser.getFlag(recombinePerms_s, recombinePerms_l, isRecombiner);
+      //if ( isRecombiner ) {
+      parser_->getArgument<size_t>(recombinePerms_s,recombinePerms_l,recombinePerms);
+      //}
 
       // I/O related and general parameters
-      parser.getFlag(printHelp_s, printHelp_l, printHelp);
-      parser.getFlag(isFilter_s,isFilter_l,isFilter);
-      parser.getArgument<size_t>(recombinePerms_s,recombinePerms_l,recombinePerms);
-      parser.getFlag(reportContrasts_s,reportContrasts_l,reportContrasts);
-      parser.getArgument<string>(input_s, input_l, input);
-      parser.getArgument<string>(targetStr_s, targetStr_l, targetStr);
-      parser.getArgument<string>(output_s, output_l, output);
-      parser.getArgument<string>(whiteList_s, whiteList_l, whiteList);
-      parser.getArgument<string>(blackList_s, blackList_l, blackList);
-      parser.getArgument<string>(predictionData_s, predictionData_l, predictionData);
-      parser.getArgument<string>(log_s,log_l,log);
+      parser_->getFlag(printHelp_s, printHelp_l, printHelp);
+      parser_->getFlag(isFilter_s,isFilter_l,isFilter);
+      parser_->getArgument<size_t>(recombinePerms_s,recombinePerms_l,recombinePerms);
+      parser_->getFlag(reportContrasts_s,reportContrasts_l,reportContrasts);
+      parser_->getArgument<string>(input_s, input_l, input);
+      parser_->getArgument<string>(targetStr_s, targetStr_l, targetStr);
+      parser_->getArgument<string>(output_s, output_l, output);
+      parser_->getArgument<string>(whiteList_s, whiteList_l, whiteList);
+      parser_->getArgument<string>(blackList_s, blackList_l, blackList);
+      parser_->getArgument<string>(predictionData_s, predictionData_l, predictionData);
+      parser_->getArgument<string>(log_s,log_l,log);
       string dataDelimiter,headerDelimiter;
-      parser.getArgument<string>(dataDelimiter_s, dataDelimiter_l, dataDelimiter);
-      parser.getArgument<string>(headerDelimiter_s, headerDelimiter_l, headerDelimiter);
-      parser.getArgument<size_t>(pruneFeatures_s, pruneFeatures_l, pruneFeatures);
+      parser_->getArgument<string>(dataDelimiter_s, dataDelimiter_l, dataDelimiter);
+      parser_->getArgument<string>(headerDelimiter_s, headerDelimiter_l, headerDelimiter);
+      parser_->getArgument<size_t>(pruneFeatures_s, pruneFeatures_l, pruneFeatures);
       stringstream ss(dataDelimiter);
       ss >> dataDelimiter;
 
@@ -173,7 +181,7 @@ namespace options {
       ss << headerDelimiter;
       ss >> headerDelimiter;
 
-      parser.getArgument<int>(seed_s, seed_l, seed);
+      parser_->getArgument<int>(seed_s, seed_l, seed);
       
       // If no seed was provided, generate one
       if ( seed == GENERAL_DEFAULT_SEED ) {
@@ -181,17 +189,17 @@ namespace options {
       }
     
       // Random Forest related parameters
-      parser.getArgument<size_t>( nTrees_s, nTrees_l, nTrees );
-      parser.getArgument<size_t>( mTry_s, mTry_l, mTry );
-      parser.getArgument<size_t>( nMaxLeaves_s, nMaxLeaves_l, nMaxLeaves );
-      parser.getArgument<size_t>( nodeSize_s, nodeSize_l, nodeSize );
-      parser.getArgument<num_t>(  shrinkage_s, shrinkage_l, shrinkage );
+      parser_->getArgument<size_t>( nTrees_s, nTrees_l, nTrees );
+      parser_->getArgument<size_t>( mTry_s, mTry_l, mTry );
+      parser_->getArgument<size_t>( nMaxLeaves_s, nMaxLeaves_l, nMaxLeaves );
+      parser_->getArgument<size_t>( nodeSize_s, nodeSize_l, nodeSize );
+      parser_->getArgument<num_t>(  shrinkage_s, shrinkage_l, shrinkage );
 
       // Statistical test parameters
-      parser.getArgument<size_t>(nPerms_s, nPerms_l, nPerms);
-      parser.getArgument<num_t>(pValueThreshold_s,  pValueThreshold_l,  pValueThreshold);
-      parser.getArgument<num_t>(importanceThreshold_s, importanceThreshold_l, importanceThreshold);
-      parser.getFlag(reportAllFeatures_s, reportAllFeatures_l, reportAllFeatures);
+      parser_->getArgument<size_t>(nPerms_s, nPerms_l, nPerms);
+      parser_->getArgument<num_t>(pValueThreshold_s,  pValueThreshold_l,  pValueThreshold);
+      parser_->getArgument<num_t>(importanceThreshold_s, importanceThreshold_l, importanceThreshold);
+      parser_->getFlag(reportAllFeatures_s, reportAllFeatures_l, reportAllFeatures);
       //parser.getArgument<string>(contrastOutput_s, contrastOutput_l, contrastOutput);
 
       if ( nPerms > 1 && nPerms < 6 ) {
@@ -204,6 +212,15 @@ namespace options {
         exit(1);
       }
   
+    }
+
+    bool isSet(const string& shortOpt, const string& longOpt) const {
+
+      bool ret = false;
+
+      parser_->getFlag(shortOpt,longOpt,ret);
+      return( ret );
+
     }
 
     void help() {

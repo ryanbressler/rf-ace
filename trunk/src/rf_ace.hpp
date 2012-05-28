@@ -82,7 +82,7 @@ namespace rface {
     }
 
     // Print help and exit if target index is not specified
-    if ( !gen_op.isRecombiner && gen_op.targetStr == "" ) {
+    if ( !gen_op.isSet(gen_op.recombinePerms_s,gen_op.recombinePerms_l) && gen_op.targetStr == "" ) {
       cerr << "target not specified" << endl;
       options::printHelpHint();
       exit(1);

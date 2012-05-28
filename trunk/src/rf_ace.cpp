@@ -12,7 +12,7 @@
 #include <map>
 
 #include "rf_ace.hpp"
-#include "argparse.hpp"
+//#include "argparse.hpp"
 #include "stochasticforest.hpp"
 #include "treedata.hpp"
 #include "datadefs.hpp"
@@ -54,11 +54,11 @@ int main(const int argc, char* const argv[]) {
 
   options::printHeader(cout);
 
-  ArgParse parser(argc,argv);
+  //ArgParse parser(argc,argv);
 
   // Structs that store all the user-specified command-line arguments
-  options::General_options gen_op;
-  gen_op.loadUserParams(parser);
+  options::General_options gen_op(argc,argv);
+  gen_op.loadUserParams();
   
   // With no input arguments the help is printed
   if ( argc == 1 || gen_op.printHelp ) {
@@ -74,7 +74,7 @@ int main(const int argc, char* const argv[]) {
 
     rf_ace_filter(gen_op);
 
-  } else if ( gen_op.isRecombiner ) {
+  } else if ( gen_op.isSet(gen_op.recombinePerms_s,gen_op.recombinePerms_l) ) {
     
     cout << " *(EXPERIMENTAL) RF-ACE RECOMBINER (" << gen_op.recombinePerms << " permutations) ACTIVATED* " << endl;
         
