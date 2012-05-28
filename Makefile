@@ -1,5 +1,5 @@
 COMPILER = g++
-CFLAGS = -O3 -Wall -Wextra -Wuninitialized -pedantic -I/usr/lib64/glib-2.12/include -I/usr/include/glib-2.12 -I/usr/ -Isrc/
+CFLAGS = -O3 -Wall -Wextra -pedantic -I/usr/lib64/glib-2.12/include -I/usr/include/glib-2.12 -I/usr/ -Isrc/
 SOURCEFILES = src/progress.cpp src/statistics.cpp src/math.cpp src/gamma.cpp src/stochasticforest.cpp src/rootnode.cpp src/node.cpp src/treedata.cpp src/mtrand.cpp src/datadefs.cpp src/utils.cpp
 STATICFLAGS = -static-libgcc -static
 TESTFILES = test/argparse_test.hpp test/datadefs_test.hpp test/mtrand_test.hpp test/stochasticforest_test.hpp test/utils_test.hpp test/math_test.hpp test/rootnode_test.hpp test/node_test.hpp test/treedata_test.hpp
