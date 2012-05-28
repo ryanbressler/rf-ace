@@ -72,29 +72,31 @@ namespace rface {
     
   }
 
-  void validateRequiredParameters(const options::General_options& gen_op) {
-
+  /*
+    void validateRequiredParameters(const options::General_options& gen_op) {
+    
     // Print help and exit if input file is not specified
     if ( gen_op.input == "" ) {
-      cerr << "Input file not specified" << endl;
-      options::printHelpHint();
-      exit(1);
+    cerr << "Input file not specified" << endl;
+    options::printHelpHint();
+    exit(1);
     }
-
+    
     // Print help and exit if target index is not specified
     if ( !gen_op.isSet(gen_op.recombinePerms_s,gen_op.recombinePerms_l) && gen_op.targetStr == "" ) {
-      cerr << "target not specified" << endl;
-      options::printHelpHint();
-      exit(1);
+    cerr << "target not specified" << endl;
+    options::printHelpHint();
+    exit(1);
     }
-
+    
     if ( gen_op.output == "" ) {
-      cerr << "You forgot to specify an output file!" << endl;
-      options::printHelpHint();
-      exit(1);
+    cerr << "You forgot to specify an output file!" << endl;
+    options::printHelpHint();
+    exit(1);
     }
-
-  }
+    
+    }
+  */
 
   void updateTargetStr(Treedata& treeData, options::General_options& gen_op) {
 

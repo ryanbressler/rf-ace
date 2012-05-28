@@ -4,34 +4,14 @@
 #include<cstdlib>
 #include "rootnode.hpp"
 #include "treedata.hpp"
-//#include "partitionsequence.hpp"
+#include "options.hpp"
 
 using namespace std;
 
-/*
-  TODO: inherit RF and GBT from this class, to simplify the structure
-*/
 class StochasticForest {
 public:
 
-  enum model_t { RF, GBT };
-
-  struct Parameters {
-    model_t model;
-    size_t  nTrees;
-    size_t  mTry;
-    size_t  nMaxLeaves;
-    size_t  nodeSize;
-    num_t   inBoxFraction;
-    bool    sampleWithReplacement;
-    bool    useContrasts;
-    bool    isRandomSplit;
-    num_t   shrinkage;
-
-    void validate();
-  };
-
-  StochasticForest(Treedata* treeData, const string& targetName, const Parameters& parameters);
+  StochasticForest(Treedata* treeData, options::General_options& parameters);
   
   // Load an existing forest
   StochasticForest(Treedata* treeData, const string& forestFile);
@@ -64,13 +44,14 @@ public:
 
   inline string getTargetName() { return( targetName_ ); }
   inline bool isTargetNumerical() { return( targetSupport_.size() == 0 ? true : false ); }
-  inline model_t type() { return( parameters_.model ); }
 
   void printToFile(const string& fileName);
 
 #ifndef TEST__
 private:
 #endif
+
+  void validateParameters();
 
   void growNumericalGBT(const Node::GrowInstructions& GI);
   void growCategoricalGBT(const Node::GrowInstructions& GI);
@@ -84,7 +65,7 @@ private:
   // Pointer to treeData_ object, stores all the feature data with which the trees are grown (i.e. training data)
   Treedata* treeData_;
 
-  Parameters parameters_;
+  options::General_options parameters_;
 
   // Chosen target to regress on
   string targetName_;
