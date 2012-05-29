@@ -16,8 +16,6 @@ StochasticForest::StochasticForest(Treedata* treeData, options::General_options&
   targetName_(parameters_.targetStr),
   rootNodes_(parameters_.nTrees) {
 
-  this->validateParameters();
-
   size_t targetIdx = treeData_->getFeatureIdx(targetName_);
   targetSupport_ = treeData_->categories(targetIdx);
 
@@ -29,8 +27,7 @@ StochasticForest::StochasticForest(Treedata* treeData, options::General_options&
     exit(1);
     this->learnGBT();
   } else if ( parameters_.forestType == options::CART ) {
-    cerr << "CART isn't working at the moment!" << endl;
-    exit(1);
+    this->learnRF();
   } else {
     cerr << "Unknown model to be learned!" << endl;
     exit(1);
@@ -46,22 +43,6 @@ StochasticForest::StochasticForest(Treedata* treeData, options::General_options&
 
 }
 
-void StochasticForest::validateParameters() {
-  
-  assert( parameters_.nTrees > 0 );
-  assert( parameters_.mTry > 0 );
-  assert( parameters_.nMaxLeaves > 0 );
-  assert( parameters_.nodeSize > 0 );
-  //assert( shrinkage > 0.0 );
-
-  if ( parameters_.sampleWithReplacement ) {
-    assert( 0.0 < parameters_.inBoxFraction );
-  } else {
-    assert( 0.0 < parameters_.inBoxFraction && parameters_.inBoxFraction <= 1.0 );
-  }
-
-}
-
 StochasticForest::StochasticForest(Treedata* treeData, const string& forestFile):
   treeData_(treeData) {
 
@@ -73,8 +54,12 @@ StochasticForest::StochasticForest(Treedata* treeData, const string& forestFile)
 
   map<string,string> forestSetup = utils::parse(newLine,',','=','"');
 
+  //options::General_options parameters();
+  //parameters_ = parameters;
+
   //assert( forestSetup["FOREST"] == "GBT" );
   if ( forestSetup["FOREST"] == "GBT" ) {
+    
     parameters_.forestType = options::GBT;
   } else if ( forestSetup["FOREST"] == "RF" ) {
     parameters_.forestType = options::RF;
@@ -244,8 +229,8 @@ void StochasticForest::learnRF() {
 
   Node::GrowInstructions GI;
 
-  GI.sampleWithReplacement = true;
-  GI.sampleSizeFraction = 1.0;
+  GI.sampleWithReplacement = parameters_.sampleWithReplacement;
+  GI.sampleSizeFraction = parameters_.inBoxFraction;
   GI.maxNodesToStop = 2 * parameters_.nMaxLeaves - 1;
   GI.minNodeSizeToStop = parameters_.nodeSize;
   GI.isRandomSplit = parameters_.isRandomSplit;
@@ -847,84 +832,4 @@ size_t StochasticForest::nNodes(const size_t treeIdx) {
 size_t StochasticForest::nTrees() {
   return( rootNodes_.size() );
 }
-
-/*
-  num_t StochasticForest::predictionError(const map<Node*,vector<size_t> >& trainIcs) {
-  
-  // Get index point to the target in treeData_
-  size_t targetIdx = treeData_->getFeatureIdx( targetName_ );
-  
-  // Initialize oobError to 0.0
-  num_t predictionError = 0.0;
-  
-  // Count total number of samples
-  size_t nSamples = 0;
-  
-  // Get the type of the target
-  bool isTargetNumerical = treeData_->isFeatureNumerical(targetIdx);
-  
-  // Loop through all nodes that have samples assigned to them
-  for(map<Node*,vector<size_t> >::const_iterator it(trainIcs.begin()); it != trainIcs.end(); ++it) {
-  
-  // Get target data
-  // NOTE1: it->second points to the data indices
-  // NOTE2: we happen to know that the indices do not point to data with NANs, which is why
-  //        we don't have to make explicit NAN-checks either
-  vector<num_t> targetData = treeData_->getFeatureData(targetIdx,it->second);
-  
-  // Get node prediction
-  // NOTE: it->first points to the node
-  num_t nodePrediction = it->first->getTrainPrediction();
-  
-  assert( !datadefs::isNAN(nodePrediction) );
-  
-  // Number of percolated sample in node
-  size_t nSamplesInNode = targetData.size();
-  
-  // Depending on the type of the target, different error calculation equation is used
-  if(isTargetNumerical) {
-  
-  // Use squared error formula
-  for(size_t i = 0; i < nSamplesInNode; ++i) {
-  predictionError += pow(nodePrediction - targetData[i],2);
-  }
-  
-  } else {
-  
-  // Use fraction of misprediction formula
-  for(size_t i = 0; i < nSamplesInNode; ++i) {
-  predictionError += nodePrediction != targetData[i]; 
-  }
-  }
-  
-  assert( !datadefs::isNAN(predictionError) );
-  
-  // Accumulate total sample counter
-  nSamples += nSamplesInNode;
-  
-  }
-  
-  // Get mean
-  if(nSamples > 0) {
-  predictionError /= nSamples;
-  } else {
-  predictionError = datadefs::NUM_NAN;
-  }
-  
-  return( predictionError );
-  
-  }
-*/
-
-//vector<num_t> StochasticForest::importanceValues() {
-//  return( importanceValues_ );
-//}
-
-//vector<num_t> StochasticForest::contrastImportanceValues() {
-//  return( contrastImportanceValues_ );
-//}
-
-//num_t StochasticForest::oobError() {
-//  return( oobError_ );
-//}
 

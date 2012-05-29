@@ -5,6 +5,7 @@
 #include <string>
 #include <sstream>
 #include <iostream>
+#include <iomanip>
 #include "argparse.hpp"
 #include "datadefs.hpp"
 #include "treedata.hpp"
@@ -37,7 +38,7 @@ namespace options {
   // Random Forest default configuration
   const size_t     RF_DEFAULT_N_TREES = 100;
   const size_t     RF_DEFAULT_M_TRY = 0;
-  const size_t     RF_DEFAULT_N_MAX_LEAVES = 100;
+  const size_t     RF_DEFAULT_N_MAX_LEAVES = 0;
   const size_t     RF_DEFAULT_NODE_SIZE = 3;
   const num_t      RF_DEFAULT_IN_BOX_FRACTION = 1.0;
   const num_t      RF_DEFAULT_SAMPLE_WITH_REPLACEMENT = true;
@@ -56,8 +57,19 @@ namespace options {
   const bool       GBT_DEFAULT_IS_RANDOM_SPLIT = false;
   const num_t      GBT_DEFAULT_SHRINKAGE = 0.1;
 
+  // CART default configuration
+  const size_t     CART_DEFAULT_N_TREES = 1;
+  const size_t     CART_DEFAULT_M_TRY = 0;
+  const size_t     CART_DEFAULT_N_MAX_LEAVES = 0;
+  const size_t     CART_DEFAULT_NODE_SIZE = 3;
+  const num_t      CART_DEFAULT_IN_BOX_FRACTION = 1.0;
+  const num_t      CART_DEFAULT_SAMPLE_WITH_REPLACEMENT = false;
+  const bool       CART_DEFAULT_USE_CONTRASTS = false;
+  const bool       CART_DEFAULT_IS_RANDOM_SPLIT = false;
+  const num_t      CART_DEFAULT_SHRINKAGE = 0;
+
   // Determines the amount of indentation in help print-outs
-  const size_t maxWidth = 20;
+  const size_t maxWidth = 15;
   
   struct General_options {
 
@@ -106,6 +118,8 @@ namespace options {
     num_t importanceThreshold; const string importanceThreshold_s; const string importanceThreshold_l;
     bool reportAllFeatures; const string reportAllFeatures_s; const string reportAllFeatures_l;
 
+    General_options(): parser_(NULL) { /* EMPTY CONSTRUCTOR */ }
+    
     General_options(const int argc, char* const argv[]):
       // EXPERIMENTAL PARAMETERS
       recombinePerms(GENERAL_DEFAULT_RECOMBINE_PERMS),recombinePerms_s("R"),recombinePerms_l("recombine"),
@@ -147,13 +161,14 @@ namespace options {
       } else if ( forestType == GBT ) {
 	setGBTDefaults();
       } else if ( forestType == CART ) {
-	cerr << "CART forest not yet fully specified!" << endl;
-	exit(1);
+	setCARTDefaults();
       } 
     }
     
-    General_options() {
-      delete parser_;
+    ~General_options() {
+      if ( parser_ ) {
+	delete parser_;
+      }
     }
 
     void loadUserParams() {
@@ -179,15 +194,14 @@ namespace options {
       } else if ( forestType == GBT ) {
         setGBTDefaults();
       } else if ( forestType == CART ) {
-        cerr << "CART forest not yet fully specified!" << endl;
-        exit(1);
+	setCARTDefaults();
+      } else {
+	cerr << "Unknown forest type!" << endl;
+	exit(1);
       }
             
       // EXPERIMENTAL PARAMETERS
-      //parser.getFlag(recombinePerms_s, recombinePerms_l, isRecombiner);
-      //if ( isRecombiner ) {
       parser_->getArgument<size_t>(recombinePerms_s,recombinePerms_l,recombinePerms);
-      //}
 
       // I/O related and general parameters
       parser_->getFlag(printHelp_s, printHelp_l, printHelp);
@@ -232,11 +246,10 @@ namespace options {
       parser_->getArgument<num_t>(pValueThreshold_s,  pValueThreshold_l,  pValueThreshold);
       parser_->getArgument<num_t>(importanceThreshold_s, importanceThreshold_l, importanceThreshold);
       parser_->getFlag(reportAllFeatures_s, reportAllFeatures_l, reportAllFeatures);
-      //parser.getArgument<string>(contrastOutput_s, contrastOutput_l, contrastOutput);
 
     }
 
-    void validate() {
+    void validateParameters() {
       
       if ( nPerms > 1 && nPerms < 6 ) {
         cerr << "Use more than 5 permutations in statistical test!" << endl;
@@ -267,7 +280,56 @@ namespace options {
 	this->helpHint();
 	exit(1);
       }
+
+      assert( nTrees > 0 );
+      assert( mTry > 0 );
+      assert( nMaxLeaves > 0 );
+      assert( nodeSize > 0 );
+
+      if ( sampleWithReplacement ) {
+	assert( 0.0 < inBoxFraction );
+      } else {
+	assert( 0.0 < inBoxFraction && inBoxFraction <= 1.0 );
+      }
         
+    }
+
+    string printOpt(const string& shortOpt, const string& longOpt) {
+      stringstream out;
+      out << "  -" << shortOpt << " / --" << longOpt << setw( options::maxWidth - longOpt.size() ) << "";
+      return( out.str() );
+    }
+    
+    void printParameters() {
+      
+      cout << printOpt(dataDelimiter_s,dataDelimiter_l) << "= '" << dataDelimiter << "'" << endl;
+      cout << printOpt(headerDelimiter_s,headerDelimiter_l) << "= '" << headerDelimiter << "'" << endl;
+      cout << printOpt(input_s,input_l) << "= " << input << endl;
+      cout << printOpt(targetStr_s,targetStr_l) << "= " << targetStr << endl;
+      cout << printOpt(output_s,output_l) << "= "; if ( output != "" ) { cout << output << endl; } else { cout << "NOT SET" << endl; }
+      cout << printOpt(log_s,log_l) << "= "; if( log != "" ) { cout << log << endl; } else { cout << "NOT SET" << endl; }
+      cout << printOpt(seed_s,seed_l) << "= " << seed << endl;
+      cout << endl;
+
+      cout << "Stochastic Forest configuration:" << endl;
+      cout << printOpt(forestType_s,forestType_l) << "= ";
+      if(forestType == options::RF ) { cout << "RF"; }
+      else if(forestType == options::GBT ) { cout << "GBT"; }
+      else if(forestType == options::CART ) { cout << "CART"; }
+      cout << endl;
+      cout << printOpt(nTrees_s,nTrees_l) << "= " << nTrees << endl;
+      cout << printOpt(mTry_s,mTry_l) << "= " << mTry << endl;
+      cout << printOpt(nMaxLeaves_s,nMaxLeaves_l) << "= " << nMaxLeaves << endl;
+      cout << printOpt(nodeSize_s,nodeSize_l) << "= " << nodeSize << endl; 
+      cout << printOpt(shrinkage_s,shrinkage_l) << "= " << shrinkage << endl;
+      cout << endl;
+
+      cout << "Statistical test configuration [Filter only]:" << endl;
+      cout << printOpt(nPerms_s,nPerms_l) << "= " << nPerms << endl;
+      cout << printOpt(pValueThreshold_s,pValueThreshold_l) << "= " << pValueThreshold << " (lower limit)" <<endl;
+      cout << printOpt(importanceThreshold_s,importanceThreshold_l) << "= " << importanceThreshold << " (upper limit)" << endl;
+      cout << endl;
+
     }
 
     bool isSet(const string& shortOpt, const string& longOpt) const {
@@ -277,6 +339,13 @@ namespace options {
       parser_->getFlag(shortOpt,longOpt,ret);
       return( ret );
 
+    }
+
+    template <typename T>
+    void setIfNotSet(const string& shortOpt, const string& longOpt, T& oldVal, const T& newVal) {
+      if ( !isSet(shortOpt,longOpt) ) {
+	oldVal = newVal;
+      }
     }
 
     void helpHint() {
@@ -363,29 +432,42 @@ namespace options {
     
     void setRFDefaults() {
 
-      inBoxFraction         = 1.0;
-      sampleWithReplacement = true;
-      isRandomSplit         = true;
-      useContrasts          = true;
+      inBoxFraction         = RF_DEFAULT_IN_BOX_FRACTION;
+      sampleWithReplacement = RF_DEFAULT_SAMPLE_WITH_REPLACEMENT;
+      isRandomSplit         = RF_DEFAULT_IS_RANDOM_SPLIT;
+      useContrasts          = RF_DEFAULT_USE_CONTRASTS;
       nTrees                = RF_DEFAULT_N_TREES;
       mTry                  = RF_DEFAULT_M_TRY;
       nMaxLeaves            = RF_DEFAULT_N_MAX_LEAVES;
       nodeSize              = RF_DEFAULT_NODE_SIZE;
       shrinkage             = RF_DEFAULT_SHRINKAGE;
-
     }
 
     void setGBTDefaults() {
 
-      inBoxFraction         = 0.5;
-      sampleWithReplacement = false;
-      isRandomSplit         = false;
-      useContrasts          = false;
+      inBoxFraction         = GBT_DEFAULT_IN_BOX_FRACTION;
+      sampleWithReplacement = GBT_DEFAULT_SAMPLE_WITH_REPLACEMENT;
+      isRandomSplit         = GBT_DEFAULT_IS_RANDOM_SPLIT;
+      useContrasts          = GBT_DEFAULT_USE_CONTRASTS;
       nTrees                = GBT_DEFAULT_N_TREES;
       mTry                  = GBT_DEFAULT_M_TRY;
       nMaxLeaves            = GBT_DEFAULT_N_MAX_LEAVES;
       nodeSize              = GBT_DEFAULT_NODE_SIZE;
       shrinkage             = GBT_DEFAULT_SHRINKAGE;
+
+    }
+
+    void setCARTDefaults() {
+
+      inBoxFraction         = CART_DEFAULT_IN_BOX_FRACTION;
+      sampleWithReplacement = CART_DEFAULT_SAMPLE_WITH_REPLACEMENT;
+      isRandomSplit         = CART_DEFAULT_IS_RANDOM_SPLIT;
+      useContrasts          = CART_DEFAULT_USE_CONTRASTS;
+      nTrees                = CART_DEFAULT_N_TREES;
+      mTry                  = CART_DEFAULT_M_TRY;
+      nMaxLeaves            = CART_DEFAULT_N_MAX_LEAVES;
+      nodeSize              = CART_DEFAULT_NODE_SIZE;
+      shrinkage             = CART_DEFAULT_SHRINKAGE;
 
     }
     

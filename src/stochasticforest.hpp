@@ -51,8 +51,6 @@ public:
 private:
 #endif
 
-  void validateParameters();
-
   void growNumericalGBT(const Node::GrowInstructions& GI);
   void growCategoricalGBT(const Node::GrowInstructions& GI);
 

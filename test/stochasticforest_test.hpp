@@ -6,6 +6,7 @@
 #include "treedata.hpp"
 #include "stochasticforest.hpp"
 #include "errno.hpp"
+#include "options.hpp"
 
 class StochasticForestTest : public CppUnit::TestFixture {
   CPPUNIT_TEST_SUITE( StochasticForestTest );
@@ -97,9 +98,9 @@ void StochasticForestTest::test_treeGrowing() {
   
   //Treedata treeData("test_103by100_numeric_matrix.tsv",'\t',':',seed);
 
-  StochasticForest::Parameters parameters;
+  options::General_options parameters;
 
-  parameters.model = StochasticForest::RF;
+  parameters.forestType = options::RF;
   parameters.nTrees = 1;
   parameters.mTry = 101;
   parameters.nMaxLeaves = 1000;
