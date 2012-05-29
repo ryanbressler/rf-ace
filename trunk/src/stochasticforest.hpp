@@ -11,7 +11,7 @@ using namespace std;
 class StochasticForest {
 public:
 
-  StochasticForest(Treedata* treeData, options::General_options& parameters);
+  StochasticForest(Treedata* treeData, options::General_options parameters);
   
   // Load an existing forest
   StochasticForest(Treedata* treeData, const string& forestFile);
@@ -42,7 +42,7 @@ public:
 
   inline set<size_t> getFeaturesInForest() { return( featuresInForest_ ); }
 
-  inline string getTargetName() { return( targetName_ ); }
+  inline string getTargetName() { return( parameters_.targetStr ); }
   inline bool isTargetNumerical() { return( targetSupport_.size() == 0 ? true : false ); }
 
   void printToFile(const string& fileName);
@@ -50,6 +50,8 @@ public:
 #ifndef TEST__
 private:
 #endif
+
+  Node::GrowInstructions getGrowInstructions();
 
   // Summarizes predictions across samples and trees in the forest, stored in predictionMatrix
   vector<num_t> getPredictions(const vector<vector<num_t> >& predictionMatrix);
@@ -69,7 +71,7 @@ private:
   options::General_options parameters_;
 
   // Chosen target to regress on
-  string targetName_;
+  //string targetName_;
   vector<string> targetSupport_;
 
   // Root nodes for every tree

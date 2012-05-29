@@ -112,11 +112,9 @@ void rf_ace_filter(options::General_options& gen_op) {
   rface::pruneFeatureSpace(treeData,gen_op);
   //rface::updateMTry(treeData,gen_op);
 
-  if ( gen_op.forestType != options::GBT ) {
-    gen_op.setIfNotSet(gen_op.nMaxLeaves_s,gen_op.nMaxLeaves_l,gen_op.nMaxLeaves,treeData.nSamples());
-    gen_op.setIfNotSet(gen_op.mTry_s,gen_op.mTry_l,gen_op.mTry,treeData.nFeatures()-1);
-  }
-      
+  gen_op.setIfNotSet(gen_op.nMaxLeaves_s,gen_op.nMaxLeaves_l,gen_op.nMaxLeaves,treeData.nSamples());
+  gen_op.setIfNotSet(gen_op.mTry_s,gen_op.mTry_l,gen_op.mTry,static_cast<size_t>(0.1*treeData.nFeatures()-1));
+
   if(treeData.nSamples() < 2 * gen_op.nodeSize) {
     cerr << "Not enough samples (" << treeData.nSamples() << ") to perform a single split" << endl;
     exit(1);
@@ -257,23 +255,39 @@ statistics::RF_statistics executeRandomForest(Treedata& treeData,
   clock_t clockStart( clock() );
   contrastImportanceSample.resize(gen_op.nPerms);
   
-  for(int permIdx = 0; permIdx < static_cast<int>(gen_op.nPerms); ++permIdx) {
+  for(size_t permIdx = 0; permIdx < gen_op.nPerms; ++permIdx) {
     
+    cout << "New loop!" << endl;
+    cout << "permutation " << permIdx << " / " << gen_op.nPerms << endl;
+
     progress.update(1.0*permIdx/gen_op.nPerms);
     
+    cout << "after progress(...)" << endl;
+
     // Initialize the Random Forest object
     StochasticForest SF(&treeData,gen_op);
+
+    cout << "after SF(...)" << endl;
     
     // Get the number of nodes in each tree in the forest
     nodeMat[permIdx] = SF.nNodes();
     
     SF.getImportanceValues(importanceMat[permIdx],contrastImportanceMat[permIdx]);
 
+    cout << "after SF.getImportanceValues(...)" << endl;
+
     // Will update featuresInAllForests to contain all features in the current forest
     math::setUnion(featuresInAllForests,SF.getFeaturesInForest());    
     
+    cout << "after setUnion(...)" << endl;
+
+    datadefs::print(importanceMat[permIdx]);
+    cout << endl;
+    
     // Store the new percentile value in the vector contrastImportanceSample
     contrastImportanceSample[permIdx] = math::mean( contrastImportanceMat[permIdx] );
+    
+    cout << "after mean(...)" << endl;
     
   }
 
@@ -346,7 +360,7 @@ void rf_ace(options::General_options& gen_op) {
   rface::pruneFeatureSpace(treeData,gen_op);
 
   gen_op.setIfNotSet(gen_op.nMaxLeaves_s,gen_op.nMaxLeaves_l,gen_op.nMaxLeaves,treeData.nSamples());
-  gen_op.setIfNotSet(gen_op.mTry_s,gen_op.mTry_l,gen_op.mTry,treeData.nFeatures()-1);
+  gen_op.setIfNotSet(gen_op.mTry_s,gen_op.mTry_l,gen_op.mTry,static_cast<size_t>(0.1*treeData.nFeatures()-1));
 
   // We never want to use contrasts when we are building a predictor
   gen_op.useContrasts = false;
