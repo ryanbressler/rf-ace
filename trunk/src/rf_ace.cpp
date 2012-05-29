@@ -74,8 +74,6 @@ int main(const int argc, char* const argv[]) {
     return(EXIT_SUCCESS);
   }
 
-  gen_op.validate();
-
   if ( gen_op.isFilter ) {
 
     rf_ace_filter(gen_op);
@@ -112,7 +110,12 @@ void rf_ace_filter(options::General_options& gen_op) {
 
   rface::updateTargetStr(treeData,gen_op);
   rface::pruneFeatureSpace(treeData,gen_op);
-  rface::updateMTry(treeData,gen_op);
+  //rface::updateMTry(treeData,gen_op);
+
+  if ( gen_op.forestType != options::GBT ) {
+    gen_op.setIfNotSet(gen_op.nMaxLeaves_s,gen_op.nMaxLeaves_l,gen_op.nMaxLeaves,treeData.nSamples());
+    gen_op.setIfNotSet(gen_op.mTry_s,gen_op.mTry_l,gen_op.mTry,treeData.nFeatures()-1);
+  }
       
   if(treeData.nSamples() < 2 * gen_op.nodeSize) {
     cerr << "Not enough samples (" << treeData.nSamples() << ") to perform a single split" << endl;
@@ -120,6 +123,10 @@ void rf_ace_filter(options::General_options& gen_op) {
   }
   
   printGeneralSetup(treeData,gen_op);
+
+  gen_op.printParameters();
+
+  gen_op.validateParameters();
       
   // Store the start time (in clock cycles) just before the analysis
   clock_t clockStart( clock() );
@@ -222,51 +229,6 @@ void printGeneralSetup(Treedata& treeData, const options::General_options& gen_o
   cout << "General configuration:" << endl;
   cout << "    nfeatures" << setw(options::maxWidth-9) << "" << "= " << nAllFeatures << endl;
   cout << "    nsamples"  << setw(options::maxWidth-8) << "" << "= " << treeData.nRealSamples(targetIdx) << " / " << treeData.nSamples() << " ( " << 100.0 * ( 1 - realFraction ) << " % missing )" << endl;
-  cout << "  --" << gen_op.forestType_l << setw( options::maxWidth - gen_op.forestType_l.size() ) << ""
-       << "= ";
-  if(gen_op.forestType == options::RF ) { cout << "RF"; } 
-  else if(gen_op.forestType == options::GBT ) { cout << "GBT"; } 
-  else if(gen_op.forestType == options::CART ) { cout << "CART"; }
-  cout << endl;
-  cout << "    data type" << setw(options::maxWidth-9) << "" << "= "; 
-  if(treeData.isFeatureNumerical(targetIdx)) { cout << "NUMERICAL" << endl; } else { cout << treeData.nCategories(targetIdx) << " CATEGORIES" << endl; }
-  cout << "  --" << gen_op.dataDelimiter_l << setw( options::maxWidth - gen_op.dataDelimiter_l.size() ) << ""
-       << "= '" << gen_op.dataDelimiter << "'" << endl;
-  cout << "  --" << gen_op.headerDelimiter_l << setw( options::maxWidth - gen_op.headerDelimiter_l.size() ) << ""
-       << "= '" << gen_op.headerDelimiter << "'" << endl;
-  cout << "  --" << gen_op.input_l << setw( options::maxWidth - gen_op.input_l.size() ) << ""
-       << "= " << gen_op.input << endl;
-  cout << "  --" << gen_op.targetStr_l << setw( options::maxWidth - gen_op.targetStr_l.size() ) << ""
-       << "= " << gen_op.targetStr << " ( index " << targetIdx << " )" << endl;
-  cout << "  --" << gen_op.output_l << setw( options::maxWidth - gen_op.output_l.size() ) << ""
-       << "= "; if ( gen_op.output != "" ) { cout << gen_op.output << endl; } else { cout << "NOT SET" << endl; }
-  cout << "  --" << gen_op.log_l << setw( options::maxWidth - gen_op.log_l.size() ) << ""
-       << "= "; if( gen_op.log != "" ) { cout << gen_op.log << endl; } else { cout << "NOT SET" << endl; }
-  cout << "  --" << gen_op.seed_l << setw( options::maxWidth - gen_op.seed_l.size() ) << ""
-       << "= " << gen_op.seed << endl;
-  cout << endl;
-
-  cout << "Stochastic Forest configuration:" << endl;
-  cout << "  --" << gen_op.nTrees_l << setw( options::maxWidth - gen_op.nTrees_l.size() ) << ""
-       << "= "; if(gen_op.nTrees == 0) { cout << "DEFAULT" << endl; } else { cout << gen_op.nTrees << endl; }
-  cout << "  --" << gen_op.mTry_l << setw( options::maxWidth - gen_op.mTry_l.size() ) << ""
-       << "= " << gen_op.mTry << endl;
-  cout << "  --" << gen_op.nMaxLeaves_l << setw( options::maxWidth - gen_op.nMaxLeaves_l.size() ) << ""
-       << "= " << gen_op.nMaxLeaves << endl;
-  cout << "  --" << gen_op.nodeSize_l << setw( options::maxWidth - gen_op.nodeSize_l.size() ) << ""
-       << "= "; if(gen_op.nodeSize == 0) { cout << "DEFAULT" << endl; } else { cout << gen_op.nodeSize << endl; }
-  cout << "  --" << gen_op.shrinkage_l << setw( options::maxWidth - gen_op.shrinkage_l.size() ) << ""
-       << "= " << gen_op.shrinkage << endl;
-  cout << endl;
-
-  cout << "Statistical test configuration [Filter only]:" << endl;
-  cout << "  --" << gen_op.nPerms_l << setw( options::maxWidth - gen_op.nPerms_l.size() ) << ""
-       << "= " << gen_op.nPerms << endl;
-  cout << "  --" << gen_op.pValueThreshold_l << setw( options::maxWidth - gen_op.pValueThreshold_l.size() ) << ""
-       << "= " << gen_op.pValueThreshold << " (lower limit)" <<endl;
-  cout << "  --" << gen_op.importanceThreshold_l << setw( options::maxWidth - gen_op.importanceThreshold_l.size() ) << ""
-       << "= " << gen_op.importanceThreshold << " (upper limit)" << endl;
-  cout << endl;
 
 }
 
@@ -380,47 +342,34 @@ void rf_ace(options::General_options& gen_op) {
   
   rface::updateTargetStr(treeData,gen_op);
 
-  // Initialize parameters struct for the stochastic forest and load defaults
-  //StochasticForest::Parameters parameters;
-  //if ( PB_op.isGBT ) {
-  // parameters.model = StochasticForest::GBT;
-  // parameters.inBoxFraction = 0.5;
-  // parameters.sampleWithReplacement = false;
-  // parameters.isRandomSplit = false;
-  // gen_op.setGBTDefaults();
-  // else if ( PB_op.isRF ) {
-  //parameters.model = StochasticForest::RF;
-  //parameters.inBoxFraction = 1.0;
-  //parameters.sampleWithReplacement = true;
-  //parameters.isRandomSplit = true;
-  // gen_op.setRFDefaults();
-  //} else {
-  //   cerr << "Model needs to be specified explicitly" << endl;
-  //   exit(1);
-  // }
-
   rface::pruneFeatureSpace(treeData,gen_op);
-  rface::updateMTry(treeData,gen_op);
 
-  // Copy command line parameters to parameters struct for the stochastic forest
-  //parameters.nTrees       = gen_op.nTrees;
-  //parameters.mTry         = gen_op.mTry;
-  //parameters.nMaxLeaves   = gen_op.nMaxLeaves;
-  //parameters.nodeSize     = gen_op.nodeSize;
+  gen_op.setIfNotSet(gen_op.nMaxLeaves_s,gen_op.nMaxLeaves_l,gen_op.nMaxLeaves,treeData.nSamples());
+  gen_op.setIfNotSet(gen_op.mTry_s,gen_op.mTry_l,gen_op.mTry,treeData.nFeatures()-1);
+
+  // We never want to use contrasts when we are building a predictor
   gen_op.useContrasts = false;
-  //parameters.shrinkage    = gen_op.shrinkage;
     
   printGeneralSetup(treeData,gen_op);
 
+  gen_op.printParameters();
+
+  gen_op.validateParameters();
+
   // Store the start time (in clock cycles) just before the analysis
   clock_t clockStart( clock() );
-      
-  //if ( PB_op.isGBT ) {
-  //   cout << "===> Growing GBT predictor... " << flush;
-  //} else {
-  cout << "===> Growing RF predictor... " << flush;
-  // }
-  
+
+  if ( gen_op.forestType == options::RF ) {
+    cout << "===> Growing RF predictor... " << flush;
+  } else if ( gen_op.forestType == options::GBT ) {
+    cout << "===> Growing GBT predictor... " << flush;
+  } else if ( gen_op.forestType == options::CART ) {
+    cout << "===> Growing CART predictor... " << flush;
+  } else {
+    cerr << "Unknown forest type!" << endl;
+    exit(1);
+  }
+
   StochasticForest SF(&treeData,gen_op);
   cout << "DONE" << endl << endl;
 
