@@ -69,7 +69,7 @@ namespace options {
   const num_t      CART_DEFAULT_SHRINKAGE = 0;
 
   // Determines the amount of indentation in help print-outs
-  const size_t maxWidth = 15;
+  const size_t maxWidth = 17;
   
   struct General_options {
 
@@ -126,32 +126,32 @@ namespace options {
       // I/O and general parameters
       printHelp(GENERAL_DEFAULT_PRINT_HELP),printHelp_s("h"),printHelp_l("help"),
       isFilter(GENERAL_DEFAULT_IS_FILTER),isFilter_s("L"),isFilter_l("filter"),
-      reportContrasts(GENERAL_DEFAULT_REPORT_CONTRASTS),reportContrasts_s("C"),reportContrasts_l("report_contrasts"),
+      reportContrasts(GENERAL_DEFAULT_REPORT_CONTRASTS),reportContrasts_s("C"),reportContrasts_l("listAllContrasts"),
       input(""),input_s("I"),input_l("input"),
       output(""),output_s("O"),output_l("output"),
       targetStr(""),targetStr_s("i"),targetStr_l("target"),
-      whiteList(""),whiteList_s("W"),whiteList_l("whitelist"),
-      blackList(""),blackList_s("B"),blackList_l("blacklist"),
+      whiteList(""),whiteList_s("W"),whiteList_l("whiteList"),
+      blackList(""),blackList_s("B"),blackList_l("blackList"),
       predictionData(""),predictionData_s("T"),predictionData_l("test"),
       log(""),log_s("L"),log_l("log"),
-      dataDelimiter(GENERAL_DEFAULT_DATA_DELIMITER),dataDelimiter_s("D"),dataDelimiter_l("data_delim"),
-      headerDelimiter(GENERAL_DEFAULT_HEADER_DELIMITER),headerDelimiter_s("H"),headerDelimiter_l("head_delim"),
-      pruneFeatures(GENERAL_DEFAULT_MIN_SAMPLES),pruneFeatures_s("X"),pruneFeatures_l("prune_features"),
+      dataDelimiter(GENERAL_DEFAULT_DATA_DELIMITER),dataDelimiter_s("D"),dataDelimiter_l("dataDelim"),
+      headerDelimiter(GENERAL_DEFAULT_HEADER_DELIMITER),headerDelimiter_s("H"),headerDelimiter_l("headDelim"),
+      pruneFeatures(GENERAL_DEFAULT_MIN_SAMPLES),pruneFeatures_s("X"),pruneFeatures_l("pruneFeatures"),
       seed(GENERAL_DEFAULT_SEED),seed_s("S"),seed_l("seed"),
       // Forest Type
-      forestType(GENERAL_DEFAULT_FOREST_TYPE),forestType_s("f"),forestType_l("forest_type"),
+      forestType(GENERAL_DEFAULT_FOREST_TYPE),forestType_s("f"),forestType_l("forestType"),
       // Random Forest related parameters
       // NOTE: Defaults will be loaded inside the constructor
-      nTrees_s("n"),nTrees_l("ntrees"),
-      mTry_s("m"),mTry_l("mtry"),
-      nMaxLeaves_s("a"),nMaxLeaves_l("nmaxleaves"),
-      nodeSize_s("s"),nodeSize_l("nodesize"),
+      nTrees_s("n"),nTrees_l("nTrees"),
+      mTry_s("m"),mTry_l("mTry"),
+      nMaxLeaves_s("a"),nMaxLeaves_l("nMaxLeaves"),
+      nodeSize_s("s"),nodeSize_l("nodeSize"),
       shrinkage_s("k"),shrinkage_l("shrinkage"),
       // Statistical test related parameters
-      nPerms(ST_DEFAULT_N_PERMS),nPerms_s("p"),nPerms_l("nperms"),
-      pValueThreshold(ST_DEFAULT_P_VALUE_THRESHOLD),pValueThreshold_s("t"),pValueThreshold_l("p_threshold"),
-      importanceThreshold(ST_DEFAULT_IMPORTANCE_THRESHOLD),importanceThreshold_s("o"),importanceThreshold_l("i_threshold"),
-      reportAllFeatures(ST_DEFAULT_REPORT_NONEXISTENT_FEATURES),reportAllFeatures_s("A"),reportAllFeatures_l("report_all_features") 
+      nPerms(ST_DEFAULT_N_PERMS),nPerms_s("p"),nPerms_l("nPerms"),
+      pValueThreshold(ST_DEFAULT_P_VALUE_THRESHOLD),pValueThreshold_s("t"),pValueThreshold_l("pValueTh"),
+      importanceThreshold(ST_DEFAULT_IMPORTANCE_THRESHOLD),importanceThreshold_s("o"),importanceThreshold_l("importanceTh"),
+      reportAllFeatures(ST_DEFAULT_REPORT_NONEXISTENT_FEATURES),reportAllFeatures_s("A"),reportAllFeatures_l("listAllFeatures") 
     { 
       
       parser_ = new ArgParse(argc,argv);
@@ -393,7 +393,7 @@ namespace options {
       cout << " -" << nMaxLeaves_s << " / --" << nMaxLeaves_l << setw( maxWidth - nMaxLeaves_l.size() )
 	   << " " << "Maximum number of leaves per tree" << endl;
       cout << " -" << nodeSize_s << " / --" << nodeSize_l << setw( maxWidth - nodeSize_l.size() )
-	   << " " << "Minimum number of train samples per node, affects tree depth" << endl;
+	   << " " << "Smallest number of train samples per leaf node." << endl;
       cout << " -" << shrinkage_s << " / --" << shrinkage_l << setw( maxWidth - shrinkage_l.size() )
 	   << " " << "[GBT only] Shrinkage applied to evolving the residual" << endl;
       cout << endl;
