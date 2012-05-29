@@ -51,6 +51,9 @@ public:
 private:
 #endif
 
+  // Summarizes predictions across samples and trees in the forest, stored in predictionMatrix
+  vector<num_t> getPredictions(const vector<vector<num_t> >& predictionMatrix);
+
   void growNumericalGBT(const Node::GrowInstructions& GI);
   void growCategoricalGBT(const Node::GrowInstructions& GI);
 

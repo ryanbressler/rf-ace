@@ -301,9 +301,11 @@ namespace options {
     }
     
     void printParameters() {
-      
-      cout << printOpt(dataDelimiter_s,dataDelimiter_l) << "= '" << dataDelimiter << "'" << endl;
-      cout << printOpt(headerDelimiter_s,headerDelimiter_l) << "= '" << headerDelimiter << "'" << endl;
+
+      cout << endl;
+      cout << "General configuration:" << endl;
+      cout << printOpt(dataDelimiter_s,dataDelimiter_l) << "= '" << dataDelimiter << "' [AFM only]" << endl;
+      cout << printOpt(headerDelimiter_s,headerDelimiter_l) << "= '" << headerDelimiter << "' [AFM only]" << endl;
       cout << printOpt(input_s,input_l) << "= " << input << endl;
       cout << printOpt(targetStr_s,targetStr_l) << "= " << targetStr << endl;
       cout << printOpt(output_s,output_l) << "= "; if ( output != "" ) { cout << output << endl; } else { cout << "NOT SET" << endl; }
@@ -321,7 +323,7 @@ namespace options {
       cout << printOpt(mTry_s,mTry_l) << "= " << mTry << endl;
       cout << printOpt(nMaxLeaves_s,nMaxLeaves_l) << "= " << nMaxLeaves << endl;
       cout << printOpt(nodeSize_s,nodeSize_l) << "= " << nodeSize << endl; 
-      cout << printOpt(shrinkage_s,shrinkage_l) << "= " << shrinkage << endl;
+      cout << printOpt(shrinkage_s,shrinkage_l) << "= " << shrinkage << " [GBT only]" << endl;
       cout << endl;
 
       cout << "Statistical test configuration [Filter only]:" << endl;

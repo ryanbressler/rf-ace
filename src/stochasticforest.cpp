@@ -54,15 +54,13 @@ StochasticForest::StochasticForest(Treedata* treeData, const string& forestFile)
 
   map<string,string> forestSetup = utils::parse(newLine,',','=','"');
 
-  //options::General_options parameters();
-  //parameters_ = parameters;
-
   //assert( forestSetup["FOREST"] == "GBT" );
-  if ( forestSetup["FOREST"] == "GBT" ) {
-    
+  if ( forestSetup["FOREST"] == "GBT" ) {    
     parameters_.forestType = options::GBT;
   } else if ( forestSetup["FOREST"] == "RF" ) {
     parameters_.forestType = options::RF;
+  } else if ( forestSetup["FOREST"] == "CART" ) {
+    parameters_.forestType = options::CART;
   } else {
     cerr << "Unknown forest type: " << forestSetup["FOREST"] << endl;
     exit(1);
@@ -176,6 +174,8 @@ void StochasticForest::printToFile(const string& fileName) {
     toFile << "FOREST=GBT";
   } else if ( parameters_.forestType == options::RF ) {
     toFile << "FOREST=RF"; 
+  } else if ( parameters_.forestType == options::CART ) {
+    toFile << "FOREST=CART";
   }
 
   size_t targetIdx = treeData_->getFeatureIdx( targetName_ );
@@ -683,6 +683,27 @@ void StochasticForest::getImportanceValues(vector<num_t>& importanceValues, vect
 
 }
 
+vector<num_t> StochasticForest::getPredictions(const vector<vector<num_t> >& predictionMatrix) {
+  
+  vector<num_t> predictions(treeData_->nSamples(),datadefs::NUM_NAN);
+  
+  if ( this->isTargetNumerical() ) {
+
+    for ( size_t i = 0; i < treeData_->nSamples(); ++i ) {
+      predictions[i] = math::mean(predictionMatrix[i]);
+    }
+
+  } else {
+    
+    for ( size_t i = 0; i < treeData_->nSamples(); ++i ) {
+      if ( predictionMatrix[i].size() > 0 ) {
+	predictions[i] = math::mode(predictionMatrix[i]);
+      }
+    }
+  }
+
+  return( predictions );
+}
 
 
 vector<num_t> StochasticForest::getPredictions() {
@@ -696,13 +717,8 @@ vector<num_t> StochasticForest::getPredictions() {
     }
   }
   
-  vector<num_t> predictions(nSamples);
-  
-  this->isTargetNumerical() ?
-    transform(predictionMatrix.begin(),predictionMatrix.end(),predictions.begin(),math::mean) :
-    transform(predictionMatrix.begin(),predictionMatrix.end(),predictions.begin(),math::mode<num_t>);
-  
-  return( predictions );
+  return( getPredictions(predictionMatrix) );
+
 }
 
 vector<num_t> StochasticForest::getOobPredictions() {
@@ -717,14 +733,9 @@ vector<num_t> StochasticForest::getOobPredictions() {
       predictionMatrix[sampleIdx].push_back( rootNodes_[treeIdx]->getTrainPrediction(sampleIdx) );
     }
   }
-
-  vector<num_t> oobPredictions(nSamples);
   
-  this->isTargetNumerical() ? 
-    transform(predictionMatrix.begin(),predictionMatrix.end(),oobPredictions.begin(),math::mean) : 
-    transform(predictionMatrix.begin(),predictionMatrix.end(),oobPredictions.begin(),math::mode<num_t>);
+  return( getPredictions(predictionMatrix) );
 
-  return( oobPredictions );
 }
 
 vector<num_t> StochasticForest::getPermutedOobPredictions(const size_t featureIdx) {
@@ -740,13 +751,7 @@ vector<num_t> StochasticForest::getPermutedOobPredictions(const size_t featureId
     }
   }
 
-  vector<num_t> oobPredictions(nSamples);
-   
-  this->isTargetNumerical() ?
-    transform(predictionMatrix.begin(),predictionMatrix.end(),oobPredictions.begin(),math::mean) :
-    transform(predictionMatrix.begin(),predictionMatrix.end(),oobPredictions.begin(),math::mode<num_t>);
-
-  return( oobPredictions );
+  return( getPredictions(predictionMatrix) );
 
 }
 
