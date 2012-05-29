@@ -312,7 +312,7 @@ void Node::recursiveNodeSplit(Treedata* treeData,
   if ( !foundSplit ) {
 
     vector<num_t> trainData = treeData->getFeatureData(targetIdx,sampleIcs);
-
+    
     if ( GI.predictionFunctionType == MEAN ) {
       this->setTrainPrediction( math::mean(trainData) );
     } else if ( GI.predictionFunctionType == MODE ) {
@@ -323,9 +323,9 @@ void Node::recursiveNodeSplit(Treedata* treeData,
       cerr << "Node::recursiveNodeSplit() -- unknown prediction function!" << endl;
       exit(1);
     }
-
+    
     assert( !datadefs::isNAN(trainPrediction_) );
-   
+    
     return;
   }
   

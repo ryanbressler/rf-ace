@@ -11,10 +11,10 @@ using namespace std;
 class StochasticForest {
 public:
 
-  StochasticForest(Treedata* treeData, options::General_options parameters);
+  StochasticForest(Treedata* treeData, options::General_options* parameters);
   
   // Load an existing forest
-  StochasticForest(Treedata* treeData, const string& forestFile);
+  StochasticForest(Treedata* treeData, options::General_options* parameters, const string& forestFile);
 
   ~StochasticForest();
   
@@ -42,7 +42,7 @@ public:
 
   inline set<size_t> getFeaturesInForest() { return( featuresInForest_ ); }
 
-  inline string getTargetName() { return( parameters_.targetStr ); }
+  inline string getTargetName() { return( parameters_->targetStr ); }
   inline bool isTargetNumerical() { return( targetSupport_.size() == 0 ? true : false ); }
 
   void printToFile(const string& fileName);
@@ -68,7 +68,7 @@ private:
   // Pointer to treeData_ object, stores all the feature data with which the trees are grown (i.e. training data)
   Treedata* treeData_;
 
-  options::General_options parameters_;
+  options::General_options* parameters_;
 
   // Chosen target to regress on
   //string targetName_;
