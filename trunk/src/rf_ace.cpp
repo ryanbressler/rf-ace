@@ -257,37 +257,21 @@ statistics::RF_statistics executeRandomForest(Treedata& treeData,
   
   for(size_t permIdx = 0; permIdx < gen_op.nPerms; ++permIdx) {
     
-    cout << "New loop!" << endl;
-    cout << "permutation " << permIdx << " / " << gen_op.nPerms << endl;
-
     progress.update(1.0*permIdx/gen_op.nPerms);
     
-    cout << "after progress(...)" << endl;
-
     // Initialize the Random Forest object
-    StochasticForest SF(&treeData,gen_op);
+    StochasticForest SF(&treeData,&gen_op);
 
-    cout << "after SF(...)" << endl;
-    
     // Get the number of nodes in each tree in the forest
     nodeMat[permIdx] = SF.nNodes();
     
     SF.getImportanceValues(importanceMat[permIdx],contrastImportanceMat[permIdx]);
 
-    cout << "after SF.getImportanceValues(...)" << endl;
-
     // Will update featuresInAllForests to contain all features in the current forest
     math::setUnion(featuresInAllForests,SF.getFeaturesInForest());    
     
-    cout << "after setUnion(...)" << endl;
-
-    datadefs::print(importanceMat[permIdx]);
-    cout << endl;
-    
     // Store the new percentile value in the vector contrastImportanceSample
     contrastImportanceSample[permIdx] = math::mean( contrastImportanceMat[permIdx] );
-    
-    cout << "after mean(...)" << endl;
     
   }
 
@@ -385,7 +369,7 @@ void rf_ace(options::General_options& gen_op) {
     exit(1);
   }
 
-  StochasticForest SF(&treeData,gen_op);
+  StochasticForest SF(&treeData,&gen_op);
   cout << "DONE" << endl << endl;
 
   size_t targetIdx = treeData.getFeatureIdx(gen_op.targetStr);
