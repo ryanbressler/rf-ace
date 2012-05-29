@@ -104,7 +104,7 @@ void rf_ace_filter(options::General_options& gen_op) {
   statistics::RF_statistics RF_stat;
 
   // Read train data into Treedata object
-  cout << "Reading file '" << gen_op.input << "', please wait... " << flush;
+  cout << "===> Reading file '" << gen_op.input << "', please wait... " << flush;
   Treedata treeData(gen_op.input,gen_op.dataDelimiter,gen_op.headerDelimiter,gen_op.seed);
   cout << "DONE" << endl;
 
@@ -226,10 +226,11 @@ void printGeneralSetup(Treedata& treeData, const options::General_options& gen_o
   num_t realFraction = 1.0*nRealSamples / treeData.nSamples();
   
   //Before number crunching, print values of parameters of RF-ACE
-  cout << "General configuration:" << endl;
-  cout << "    nfeatures" << setw(options::maxWidth-9) << "" << "= " << nAllFeatures << endl;
-  cout << "    nsamples"  << setw(options::maxWidth-8) << "" << "= " << treeData.nRealSamples(targetIdx) << " / " << treeData.nSamples() << " ( " << 100.0 * ( 1 - realFraction ) << " % missing )" << endl;
-
+  cout << endl;
+  cout << "Input data:" << endl;
+  cout << " - " << nAllFeatures << " features" << endl;
+  cout << " - " << treeData.nRealSamples(targetIdx) << " samples / " << treeData.nSamples() << " ( " << 100.0 * ( 1 - realFraction ) << " % missing )" << endl;
+  
 }
 
 
@@ -336,7 +337,7 @@ statistics::RF_statistics executeRandomForest(Treedata& treeData,
 void rf_ace(options::General_options& gen_op) {
   
   // Read train data into Treedata object
-  cout << "Reading file '" << gen_op.input << "', please wait... " << flush;
+  cout << "===> Reading file '" << gen_op.input << "', please wait... " << flush;
   Treedata treeData(gen_op.input,gen_op.dataDelimiter,gen_op.headerDelimiter,gen_op.seed);
   cout << "DONE" << endl;
   
