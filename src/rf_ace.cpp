@@ -38,6 +38,8 @@ void rf_ace(options::General_options& gen_op);
 
 void rf_ace_recombine(options::General_options& gen_op);
 
+void setEnforcedForestParameters(Treedata& treeData, options::General_options& gen_op); 
+
 void printGeneralSetup(Treedata& treeData, const options::General_options& gen_op); 
 
 void printAssociationsToFile(options::General_options& gen_op, 
@@ -52,11 +54,11 @@ void printPredictionToFile(StochasticForest& SF, Treedata& treeData, const strin
 
 void printHeader(ostream& out) {
   out << endl
-      << "-----------------------------------------------------" << endl
-      << "|  RF-ACE version:  1.0.5, April 24th, 2012         |" << endl
-      << "|    Project page:  http://code.google.com/p/rf-ace |" << endl
-      << "|     Report bugs:  timo.p.erkkila@tut.fi           |" << endl
-      << "-----------------------------------------------------" << endl
+      << "-----------------------------------------------------------" << endl
+      << "|  RF-ACE version:  1.0.5, May 29th 2012                  |" << endl
+      << "|    Compile date:  " << __DATE__ << ", " << __TIME__ << "                 |" << endl 
+      << "|   Report issues:  code.google.com/p/rf-ace/issues/list  |" << endl
+      << "-----------------------------------------------------------" << endl
       << endl;
 }
 
@@ -110,14 +112,11 @@ void rf_ace_filter(options::General_options& gen_op) {
 
   rface::updateTargetStr(treeData,gen_op);
   rface::pruneFeatureSpace(treeData,gen_op);
-  //rface::updateMTry(treeData,gen_op);
 
-  gen_op.setIfNotSet(gen_op.nMaxLeaves_s,gen_op.nMaxLeaves_l,gen_op.nMaxLeaves,treeData.nSamples());
-  gen_op.setIfNotSet(gen_op.mTry_s,gen_op.mTry_l,gen_op.mTry,static_cast<size_t>(0.1*treeData.nFeatures()));
+  //gen_op.setIfNotSet(gen_op.nMaxLeaves_s,gen_op.nMaxLeaves_l,gen_op.nMaxLeaves,treeData.nRealSamples());
 
-  if ( gen_op.mTry < 1 ) {
-    gen_op.mTry = 1;
-  }
+  // Some default and enforced parameter settings for RF, CART, and GBT
+  setEnforcedForestParameters(treeData,gen_op);
 
   if(treeData.nSamples() < 2 * gen_op.nodeSize) {
     cerr << "Not enough samples (" << treeData.nSamples() << ") to perform a single split" << endl;
@@ -347,8 +346,10 @@ void rf_ace(options::General_options& gen_op) {
 
   rface::pruneFeatureSpace(treeData,gen_op);
 
-  gen_op.setIfNotSet(gen_op.nMaxLeaves_s,gen_op.nMaxLeaves_l,gen_op.nMaxLeaves,treeData.nSamples());
-  gen_op.setIfNotSet(gen_op.mTry_s,gen_op.mTry_l,gen_op.mTry,static_cast<size_t>(0.1*treeData.nFeatures()-1));
+  setEnforcedForestParameters(treeData,gen_op);
+
+  //gen_op.setIfNotSet(gen_op.nMaxLeaves_s,gen_op.nMaxLeaves_l,gen_op.nMaxLeaves,treeData.nSamples());
+  //gen_op.setIfNotSet(gen_op.mTry_s,gen_op.mTry_l,gen_op.mTry,static_cast<size_t>(0.1*treeData.nFeatures()-1));
 
   // We never want to use contrasts when we are building a predictor
   gen_op.useContrasts = false;
@@ -432,6 +433,31 @@ void rf_ace(options::General_options& gen_op) {
   }
   
   exit(0);
+}
+
+void setEnforcedForestParameters(Treedata& treeData, options::General_options& gen_op) {
+
+  size_t targetIdx = treeData.getFeatureIdx(gen_op.targetStr);
+
+  // Allow trees to grow to maximal depth, if not told otherwise
+  gen_op.setIfNotSet(gen_op.nMaxLeaves_s,gen_op.nMaxLeaves_l,gen_op.nMaxLeaves,treeData.nRealSamples(targetIdx));
+  
+  if ( gen_op.forestType == options::RF ) {
+
+    // RF mTry is by default set to 10% of features
+    gen_op.setIfNotSet(gen_op.mTry_s,gen_op.mTry_l,gen_op.mTry,static_cast<size_t>(0.1*treeData.nFeatures()));
+
+    // Minimum mTry is 1
+    if ( gen_op.mTry < 1 ) {
+      gen_op.mTry = 1;
+    }
+
+  } else if ( gen_op.forestType == options::CART ) {
+
+    // In CART mode only one tree is grown
+    gen_op.nTrees = 1;
+  }
+
 }
 
 vector<string> readFeatureMask(const string& fileName);

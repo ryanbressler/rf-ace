@@ -221,16 +221,19 @@ Node::GrowInstructions StochasticForest::getGrowInstructions() {
   GI.maxNodesToStop = 2 * parameters_->nMaxLeaves - 1;
   GI.minNodeSizeToStop = parameters_->nodeSize;
   GI.isRandomSplit = parameters_->isRandomSplit;
+
+  GI.featureIcs = utils::range( treeData_->nFeatures() );
+  GI.featureIcs.erase( GI.featureIcs.begin() + targetIdx ); // Remove target from the feature index list
+
   if ( GI.isRandomSplit ) {
     GI.nFeaturesForSplit = parameters_->mTry;
   } else {
-    GI.nFeaturesForSplit = treeData_->nFeatures() - 1;
+    GI.nFeaturesForSplit = GI.featureIcs.size();
   }
+
   GI.useContrasts = parameters_->useContrasts;
   GI.numClasses = targetSupport_.size();
   GI.predictionFunctionType = predictionFunctionType;
-  GI.featureIcs = utils::range( treeData_->nFeatures() );
-  GI.featureIcs.erase( GI.featureIcs.begin() + targetIdx ); // Remove target from the feature index list
 
   return( GI );
 
@@ -239,15 +242,15 @@ Node::GrowInstructions StochasticForest::getGrowInstructions() {
 void StochasticForest::learnRF() {
 
   // We force the shrinkage to equal to one over the number of trees
-  parameters_->shrinkage = 1.0 / parameters_->nTrees;
+  //parameters_->shrinkage = 1.0 / parameters_->nTrees;
 
   // If we use contrasts, we need to permute them before using
   if(parameters_->useContrasts) {
     treeData_->permuteContrasts();
   }
 
-  if ( parameters_->mTry == 0 ) {
-    cerr << "StochasticForest::learnRF() -- must have at least 1 feature sampled per split" << endl;
+  if ( parameters_->isRandomSplit && parameters_->mTry == 0 ) {
+    cerr << "StochasticForest::learnRF() -- for randomized splits mTry must be greater than 0" << endl;
     exit(1);
   }
 
@@ -607,6 +610,8 @@ num_t StochasticForest::error(const vector<num_t>& data1,
 
   if ( nRealSamples > 0 ) {
     predictionError /= nRealSamples;
+  } else {
+    predictionError = datadefs::NUM_NAN;
   }
 
   return( predictionError );
