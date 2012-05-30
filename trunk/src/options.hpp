@@ -282,7 +282,12 @@ namespace options {
       }
 
       assert( nTrees > 0 );
-      assert( mTry > 0 );
+
+      if ( isRandomSplit && mTry == 0 ) {
+        cerr << "if RF-ACE splits with random features, mTry must be greater than 0" << endl;
+	exit(1);
+      }
+
       assert( nMaxLeaves > 0 );
       assert( nodeSize > 0 );
 
@@ -313,25 +318,29 @@ namespace options {
       cout << printOpt(seed_s,seed_l) << "= " << seed << endl;
       cout << endl;
 
-      cout << "Stochastic Forest configuration:" << endl;
-      cout << printOpt(forestType_s,forestType_l) << "= ";
-      if(forestType == options::RF ) { cout << "RF"; }
-      else if(forestType == options::GBT ) { cout << "GBT"; }
-      else if(forestType == options::CART ) { cout << "CART"; }
-      cout << endl;
-      cout << printOpt(nTrees_s,nTrees_l) << "= " << nTrees << endl;
-      cout << printOpt(mTry_s,mTry_l) << "= " << mTry << endl;
+      if(forestType == options::RF ) { 
+	cout << "Random Forest configuration:" << endl;
+	cout << printOpt(nTrees_s,nTrees_l) << "= " << nTrees << endl;
+	cout << printOpt(mTry_s,mTry_l) << "= " << mTry << endl;
+      } else if(forestType == options::GBT ) { 
+	cout << "Gradient Boosting Trees configuration:" << endl;
+	cout << printOpt(nTrees_s,nTrees_l) << "= " << nTrees << endl;
+	cout << printOpt(shrinkage_s,shrinkage_l) << "= " << shrinkage << endl;
+      } else if(forestType == options::CART ) { 
+	cout << "CART configuration:" << endl;
+      }      
       cout << printOpt(nMaxLeaves_s,nMaxLeaves_l) << "= " << nMaxLeaves << endl;
       cout << printOpt(nodeSize_s,nodeSize_l) << "= " << nodeSize << endl; 
-      cout << printOpt(shrinkage_s,shrinkage_l) << "= " << shrinkage << " [GBT only]" << endl;
       cout << endl;
 
-      cout << "Statistical test configuration [Filter only]:" << endl;
-      cout << printOpt(nPerms_s,nPerms_l) << "= " << nPerms << endl;
-      cout << printOpt(pValueThreshold_s,pValueThreshold_l) << "= " << pValueThreshold << " (lower limit)" <<endl;
-      cout << printOpt(importanceThreshold_s,importanceThreshold_l) << "= " << importanceThreshold << " (upper limit)" << endl;
-      cout << endl;
-
+      if ( isFilter ) {
+	cout << "Filter configuration:" << endl;
+	cout << printOpt(nPerms_s,nPerms_l) << "= " << nPerms << endl;
+	cout << printOpt(pValueThreshold_s,pValueThreshold_l) << "= " << pValueThreshold << " (lower limit)" <<endl;
+	cout << printOpt(importanceThreshold_s,importanceThreshold_l) << "= " << importanceThreshold << " (upper limit)" << endl;
+	cout << endl;
+      }
+      
     }
 
     bool isSet(const string& shortOpt, const string& longOpt) const {
@@ -387,13 +396,13 @@ namespace options {
 
       cout << "STOCHASTIC FOREST ARGUMENTS:" << endl;
       cout << " -" << nTrees_s << " / --" << nTrees_l << setw( maxWidth - nTrees_l.size() )
-	   << " " << "Number of trees in the forest" << endl;
+	   << " " << "[RF and GBT only] Number of trees in the forest" << endl;
       cout << " -" << mTry_s << " / --" << mTry_l << setw( maxWidth - mTry_l.size() )
-	   << " " << "Fraction of randomly drawn features per node split" << endl;
+	   << " " << "[RF only] Fraction of randomly drawn features per node split" << endl;
       cout << " -" << nMaxLeaves_s << " / --" << nMaxLeaves_l << setw( maxWidth - nMaxLeaves_l.size() )
 	   << " " << "Maximum number of leaves per tree" << endl;
       cout << " -" << nodeSize_s << " / --" << nodeSize_l << setw( maxWidth - nodeSize_l.size() )
-	   << " " << "Smallest number of train samples per leaf node." << endl;
+	   << " " << "Smallest number of train samples per leaf node" << endl;
       cout << " -" << shrinkage_s << " / --" << shrinkage_l << setw( maxWidth - shrinkage_l.size() )
 	   << " " << "[GBT only] Shrinkage applied to evolving the residual" << endl;
       cout << endl;
