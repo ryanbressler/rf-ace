@@ -86,7 +86,52 @@ namespace math {
     return( maxElement->first );
   }
   
+  template<typename T>
+  map<T,map<T,size_t> > confusionMap(const vector<T>& x, const vector<T>& y) {
+
+    assert(x.size() == y.size());
+
+    map<T,map<T,size_t> > cMap;
+
+    set<T> allClasses;
+
+    for ( size_t i = 0; i < x.size(); ++i ) {
+      T a = x[i];
+      T b = y[i];
+      allClasses.insert(a);
+      allClasses.insert(b);
+      if ( cMap[a].find(b) == cMap[a].end() ) {
+	cMap[a][b] = 1;
+      } else {
+	++cMap[a][b];
+      }
+    }
+
+  }
+
+  template<typename T> 
+  num_t categoricalError(const vector<T>& x, const vector<T>& y) {
+
+    assert( x.size() == y.size() );
+
+    size_t n = x.size();
+
+    if ( n == 0 ) {
+      return(datadefs::NUM_NAN);
+    }
+
+    num_t ret = 0.0;
+
+    for ( size_t i = 0; i < n; ++i ) {
+      ret += static_cast<num_t>( x[i] != y[i] ) / n;
+    }
+    
+    return( ret );
+    
+  }
   
+  num_t numericalError(const vector<num_t>& x, const vector<num_t>& y);
+
 
   num_t gamma(const vector<num_t>& x, const size_t nCategories); 
   

@@ -23,6 +23,7 @@ public:
 
   //Gets the splitter for the node
   inline size_t splitterIdx() { return( splitter_.idx ); }
+  inline string splitterName() { return( splitter_.name ); }
 
   //Sets a splitter feature for the node.
   //NOTE: splitter can be assigned only once! Subsequent setter calls will raise an assertion failure.
@@ -41,8 +42,10 @@ public:
   Node* percolateData(const num_t data);
   Node* percolateData(const string& data);
 
-  void setTrainPrediction(const num_t trainPrediction);
+  void setTrainPrediction(const num_t trainPrediction, const string& rawTrainPrediction = datadefs::STR_NAN );
+  
   num_t getTrainPrediction();
+  string getRawTrainPrediction();
 
   //Logic test whether the node has children or not
   inline bool hasChildren() { return( this->leftChild() || this->rightChild() ); }
@@ -100,41 +103,6 @@ private:
 #endif
 
   
-  /*
-    void numericalFeatureSplit(Treedata* treedata,
-    const size_t targetIdx,
-    const size_t featureIdx,
-    const GrowInstructions& GI,
-    vector<size_t>& sampleIcs_left,
-    vector<size_t>& sampleIcs_right,
-    num_t& splitValue,
-    num_t& splitFitness);
-    
-    void categoricalFeatureSplit(Treedata* treedata,
-    const size_t targetIdx,
-    const size_t featureIdx,
-    const GrowInstructions& GI,
-    vector<size_t>& sampleIcs_left,
-    vector<size_t>& sampleIcs_right,
-    set<num_t>& splitValues_left,
-    set<num_t>& splitValues_right,
-    num_t& splitFitness);
-    
-    
-    inline num_t getSplitFitness(const size_t n_left, 
-    const size_t sf_left,
-    const size_t n_right,
-    const size_t sf_right,
-    const size_t n_tot,
-    const size_t sf_tot) {
-    
-    return( ( -1.0*n_left*n_right*sf_tot + 
-    1.0*n_tot*n_right*sf_left + 
-    1.0*n_tot*n_left*sf_right ) / 
-    ( 1.0*n_left*n_right * (1.0*n_tot*n_tot - 1.0*sf_tot) ) ); }
-  */
-
-
   struct Splitter {
 
     size_t idx;
@@ -147,7 +115,8 @@ private:
 
   } splitter_;
 
-  num_t trainPrediction_;
+  num_t  trainPrediction_;
+  string rawTrainPrediction_;
 
   Node* leftChild_;
   Node* rightChild_;

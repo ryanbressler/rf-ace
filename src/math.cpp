@@ -247,30 +247,27 @@ num_t math::gamma(const vector<num_t>& x, const size_t nCategories) {
   
 }
 
-/*
-  num_t math::squaredError(const vector<num_t>& x, const num_t mu) {
-  
-  if ( x.size() == 0 ) {
-  return( datadefs::NUM_NAN );
+
+num_t math::numericalError(const vector<num_t>& x, const vector<num_t>& y) {
+
+  assert( x.size() == y.size() );
+
+  size_t n = x.size();
+
+  if ( n == 0 ) {
+    return(datadefs::NUM_NAN);
   }
-  
-  num_t se = 0.0;
-  
-  for(size_t i = 0; i < x.size(); ++i) {
-  se += pow(x[i] - mu,2);
+
+  num_t ret = 0.0;
+
+  for ( size_t i = 0; i < n; ++i ) {
+    ret += pow( x[i] - y[i], 2 ) / n;
   }
-  
-  return( se );
-  }
-  
-  num_t math::squaredError(const vector<num_t>& x) {
-  
-  num_t mu = math::mean(x);
-  
-  return( squaredError(x,mu) );
-  
-  }
-*/
+
+  return( sqrt(ret) );
+
+}
+
 
 num_t math::var(const vector<num_t>& x) {
 

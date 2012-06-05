@@ -10,7 +10,7 @@ using namespace std;
 
 class StochasticForest {
 public:
-
+  
   StochasticForest(Treedata* treeData, options::General_options* parameters);
   
   // Load an existing forest
@@ -27,10 +27,14 @@ public:
   void getImportanceValues(vector<num_t>& importanceValues,
                            vector<num_t>& contrastImportanceValues);
     
-  void predict(vector<string>& categoryPrediction, vector<num_t>& confidence);
-  void predict(vector<num_t>& prediction, vector<num_t>& confidence);
+  //void predict(vector<string>& categoryPrediction, vector<num_t>& confidence);
+  //void predict(vector<num_t>& prediction, vector<num_t>& confidence);
 
   vector<num_t> getPredictions();
+
+  void getPredictions(Treedata* treeDataTest, vector<string>& prediction, vector<num_t>& confidence);
+  void getPredictions(Treedata* treeDataTest, vector<num_t>& prediction, vector<num_t>& confidence);
+
   vector<num_t> getOobPredictions();
   vector<num_t> getPermutedOobPredictions(const size_t featureIdx);
 

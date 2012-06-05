@@ -45,6 +45,9 @@ public:
   // Returns feature index, given the name
   size_t getFeatureIdx(const string& featureName);
 
+  // A value denoting the "one-over-last" feature in matrix
+  size_t end() { return( datadefs::MAX_IDX ); }
+
   // Returns feature name, given the index
   string getFeatureName(const size_t featureIdx);
 
@@ -92,25 +95,11 @@ public:
 				set<num_t>& splitValues_left,
 				set<num_t>& splitValues_right);
 
-  // !! WILL BECOME OBSOLETE
-  /*
-    num_t getCategoricalSplitFitness(const num_t sf_tot,
-    const num_t nsf,
-    const size_t n);
-  */
-
-  // !! WILL BECOME OBSOLETE
-  /*
-    num_t getNumericalSplitFitness(const num_t se_tot,
-    const num_t se_best);
-  */    
-  
   void getFilteredFeatureDataPair(const size_t featureIdx1, 
 				  const size_t featureIdx2, 
 				  vector<size_t>& sampleIcs, 
 				  vector<num_t>& featureData1, 
 				  vector<num_t>& featureData2);
-
   
   /*
     void getFilteredAndSortedFeatureDataPair(const size_t targetIdx, 
@@ -118,8 +107,7 @@ public:
     vector<size_t>& sampleIcs, 
     vector<num_t>& targetData, 
     vector<num_t>& featureData);
-    
-    
+        
     void getFilteredAndSortedFeatureDataPair2(const size_t targetIdx,
     const size_t featureIdx,
     vector<size_t>& sampleIcs,

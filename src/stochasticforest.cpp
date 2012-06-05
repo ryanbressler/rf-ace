@@ -451,137 +451,141 @@ void StochasticForest::transformLogistic(vector<num_t>& prediction, vector<num_t
   }
 }
 
-void StochasticForest::predict(vector<string>& categoryPrediction, vector<num_t>& confidence) {
-
+/*
+  void StochasticForest::predict(vector<string>& categoryPrediction, vector<num_t>& confidence) {
+  
   //size_t targetIdx = treeData_->getFeatureIdx( parameters_->targetStr );
   size_t nSamples = treeData_->nSamples();
   size_t nCategories = targetSupport_.size(); //treeData_->nCategories( targetIdx );
   size_t nTrees = this->nTrees();
-
+  
   categoryPrediction.resize( nSamples );
   confidence.resize( nSamples );
-
+  
   if ( parameters_->forestType == options::GBT ) {
-    
-    // For classification, each "tree" is actually numClasses_ trees in a row, each predicting the probability of its own class.
-    size_t numIterations = nTrees / nCategories;
-
-    // Vector storing the transformed probabilities for each class prediction
-    vector<num_t> prediction( nCategories );
-
-    // Vector storing true probabilities for each class prediction
-    vector<num_t> probPrediction( nCategories );
-
-    // For each sample we need to produce predictions for each class.
-    for ( size_t i = 0; i < nSamples; i++ ) {
-      
-      for (size_t k = 0; k < nCategories; ++k) {
-	
-	// Initialize the prediction
-	prediction[k] = 0.0;
-	
-	// We go through
-	for(size_t m = 0; m < numIterations; ++m) {
-	  
-	  // Tree index
-	  size_t t =  m * nCategories + k;
-	  
-	  // Shrinked shift towards the new prediction
-	  prediction[k] = prediction[k] + parameters_->shrinkage * rootNodes_[t]->getTrainPrediction(i);
-	  
-	}
-      }
-      
-      // ... find index of maximum prediction, this is the predicted category
-      vector<num_t>::iterator maxProb = max_element( prediction.begin(), prediction.end() );
-      size_t maxProbCategory = maxProb - prediction.begin();
-      
-      categoryPrediction[i] = targetSupport_[maxProbCategory]; 
-      //treeData_->getRawFeatureData(targetIdx,maxProbCategory); //backMapping[ maxProbCategory ]; // classes are 0,1,2,...
-      
-      StochasticForest::transformLogistic(prediction, probPrediction); // predictions-to-probabilities
-      
-      vector<num_t>::iterator largestElementIt = max_element(probPrediction.begin(),probPrediction.end());
-      confidence[i] = *largestElementIt;
-    }
-
-  } else if ( parameters_->forestType == options::RF ) {
-
-    for ( size_t i = 0; i < nSamples; ++i ) {
-      
-      // This container stores the categories and their frequencies
-      map<string,size_t> catFrequency;
-
-      for ( size_t t = 0; t < nTrees; ++t ) {
-	
-	// Extract predicted category
-	string newCategory = targetSupport_[static_cast<size_t>(rootNodes_[t]->getTrainPrediction(i))];
-	
-	// If category has been seen already, increment frequency by one
-	if ( catFrequency.find(newCategory) != catFrequency.end() ) {
-	  ++catFrequency[newCategory];
-	} else {
-	  
-	  // Otherwise assign frequency to 1
-	  catFrequency[newCategory] = 1;
-
-	}
-      }
-
-      // There can be less, but no more categories represented in the support than in the data
-      assert( catFrequency.size() <= nCategories );
-
-      // Initialize confidence to 0.0
-      confidence[i] = 0.0;
-      
-      // Loop through the categories that have predictions
-      for ( map<string,size_t>::const_iterator it( catFrequency.begin() ); it != catFrequency.end(); ++it ) {
-	
-	string newCategory = it->first;
-	num_t newConfidence = static_cast<num_t>(it->second);
-
-	// If the prediction has higher prediction than the previous best, switch  
-	if ( newConfidence > confidence[i] ) {
-	  categoryPrediction[i] = newCategory;
-	  confidence[i] = newConfidence;
-	}
-      }
-
-      confidence[i] /= nTrees;
-
-    }
-
-  } else {
-
-    // This should never happen
-    cerr << "StochasticForest::predict(string) -- no model to predict with" << endl;
-    exit(1);
-
+  
+  // For classification, each "tree" is actually numClasses_ trees in a row, each predicting the probability of its own class.
+  size_t numIterations = nTrees / nCategories;
+  
+  // Vector storing the transformed probabilities for each class prediction
+  vector<num_t> prediction( nCategories );
+  
+  // Vector storing true probabilities for each class prediction
+  vector<num_t> probPrediction( nCategories );
+  
+  // For each sample we need to produce predictions for each class.
+  for ( size_t i = 0; i < nSamples; i++ ) {
+  
+  for (size_t k = 0; k < nCategories; ++k) {
+  
+  // Initialize the prediction
+  prediction[k] = 0.0;
+  
+  // We go through
+  for(size_t m = 0; m < numIterations; ++m) {
+  
+  // Tree index
+  size_t t =  m * nCategories + k;
+  
+  // Shrinked shift towards the new prediction
+  prediction[k] = prediction[k] + parameters_->shrinkage * rootNodes_[t]->getTrainPrediction(i);
+  
   }
+  }
+  
+  // ... find index of maximum prediction, this is the predicted category
+  vector<num_t>::iterator maxProb = max_element( prediction.begin(), prediction.end() );
+  size_t maxProbCategory = maxProb - prediction.begin();
+  
+  categoryPrediction[i] = targetSupport_[maxProbCategory]; 
+  //treeData_->getRawFeatureData(targetIdx,maxProbCategory); //backMapping[ maxProbCategory ]; // classes are 0,1,2,...
+  
+  StochasticForest::transformLogistic(prediction, probPrediction); // predictions-to-probabilities
+  
+  vector<num_t>::iterator largestElementIt = max_element(probPrediction.begin(),probPrediction.end());
+  confidence[i] = *largestElementIt;
+  }
+  
+  } else if ( parameters_->forestType == options::RF ) {
+  
+  for ( size_t i = 0; i < nSamples; ++i ) {
+  
+  // This container stores the categories and their frequencies
+  map<string,size_t> catFrequency;
+  
+  for ( size_t t = 0; t < nTrees; ++t ) {
+  
+  // Extract predicted category
+  string newCategory = targetSupport_[static_cast<size_t>(rootNodes_[t]->getTrainPrediction(i))];
+  
+  // If category has been seen already, increment frequency by one
+  if ( catFrequency.find(newCategory) != catFrequency.end() ) {
+  ++catFrequency[newCategory];
+  } else {
+  
+  // Otherwise assign frequency to 1
+  catFrequency[newCategory] = 1;
+  
+  }
+  }
+  
+  // There can be less, but no more categories represented in the support than in the data
+  assert( catFrequency.size() <= nCategories );
+  
+  // Initialize confidence to 0.0
+  confidence[i] = 0.0;
+  
+  // Loop through the categories that have predictions
+  for ( map<string,size_t>::const_iterator it( catFrequency.begin() ); it != catFrequency.end(); ++it ) {
+  
+  string newCategory = it->first;
+  num_t newConfidence = static_cast<num_t>(it->second);
+  
+  // If the prediction has higher prediction than the previous best, switch  
+  if ( newConfidence > confidence[i] ) {
+  categoryPrediction[i] = newCategory;
+  confidence[i] = newConfidence;
+  }
+  }
+  
+  confidence[i] /= nTrees;
+  
+  }
+  
+  } else {
+  
+  // This should never happen
+  cerr << "StochasticForest::predict(string) -- no model to predict with" << endl;
+  exit(1);
+  
+  }
+  
+  }
+*/
 
-}
-
-void StochasticForest::predict(vector<num_t>& prediction, vector<num_t>& confidence) {
- 
+/*
+  void StochasticForest::predict(vector<num_t>& prediction, vector<num_t>& confidence) {
+  
   size_t nSamples = treeData_->nSamples();
   size_t nTrees = this->nTrees();
-
+  
   prediction.resize(nSamples);
   confidence.resize(nSamples);
-
+  
   for ( size_t sampleIdx = 0; sampleIdx < nSamples; ++sampleIdx ) {  
-    vector<num_t> predictionVec(nTrees);
-    for ( size_t treeIdx = 0; treeIdx < nTrees; ++treeIdx) {
-      predictionVec[treeIdx] = rootNodes_[treeIdx]->getTrainPrediction(sampleIdx);
-    }
-    prediction[sampleIdx] = math::mean( predictionVec );
-    //datadefs::print<num_t>(predictionVec);
-    confidence[sampleIdx] = sqrt( math::var(predictionVec,prediction[sampleIdx]) );
-    //cout << " ** ERROR = " << confidence[sampleIdx] << endl;
+  vector<num_t> predictionVec(nTrees);
+  for ( size_t treeIdx = 0; treeIdx < nTrees; ++treeIdx) {
+  predictionVec[treeIdx] = rootNodes_[treeIdx]->getTrainPrediction(sampleIdx);
   }
-
- 
-}
+  prediction[sampleIdx] = math::mean( predictionVec );
+  //datadefs::print<num_t>(predictionVec);
+  confidence[sampleIdx] = sqrt( math::var(predictionVec,prediction[sampleIdx]) );
+  //cout << " ** ERROR = " << confidence[sampleIdx] << endl;
+  }
+  
+  
+  }
+*/
 
 num_t StochasticForest::error(const vector<num_t>& data1, 
 			      const vector<num_t>& data2) {
@@ -643,7 +647,9 @@ num_t StochasticForest::getError() {
 
 void StochasticForest::getImportanceValues(vector<num_t>& importanceValues, vector<num_t>& contrastImportanceValues) {
   
-  assert( featuresInForest_.size() > 0 );
+  if ( featuresInForest_.size() == 0 ) {
+    cout << "NOTE: forest is empty!" << endl;
+  }
   
   vector<num_t> oobPredictions = this->getOobPredictions();
   
@@ -684,16 +690,17 @@ void StochasticForest::getImportanceValues(vector<num_t>& importanceValues, vect
 
 }
 
+
 vector<num_t> StochasticForest::getPredictions(const vector<vector<num_t> >& predictionMatrix) {
   
   vector<num_t> predictions(treeData_->nSamples(),datadefs::NUM_NAN);
   
   if ( this->isTargetNumerical() ) {
-
+    
     for ( size_t i = 0; i < treeData_->nSamples(); ++i ) {
       predictions[i] = math::mean(predictionMatrix[i]);
     }
-
+    
   } else {
     
     for ( size_t i = 0; i < treeData_->nSamples(); ++i ) {
@@ -702,10 +709,53 @@ vector<num_t> StochasticForest::getPredictions(const vector<vector<num_t> >& pre
       }
     }
   }
-
+  
   return( predictions );
 }
 
+void StochasticForest::getPredictions(Treedata* testData, vector<string>& predictions, vector<num_t>& confidence) {
+
+  size_t nSamples = testData->nSamples();
+  size_t nTrees = this->nTrees();
+  vector<vector<string> > predictionMatrix(nSamples,vector<string>(nTrees));
+  predictions.resize(nSamples);
+  for ( size_t treeIdx = 0; treeIdx < nTrees; ++treeIdx ) {
+    for ( size_t sampleIdx = 0; sampleIdx < nSamples; ++sampleIdx ) {
+      predictionMatrix[sampleIdx][treeIdx] = rootNodes_[treeIdx]->getRawTestPrediction(testData,sampleIdx);
+    }
+  }
+
+  transform(predictionMatrix.begin(),predictionMatrix.end(),predictions.begin(),math::mode<string>);
+
+  confidence.clear();
+  confidence.resize(nSamples,datadefs::NUM_NAN);
+
+}
+
+void StochasticForest::getPredictions(Treedata* testData, vector<num_t>& predictions, vector<num_t>& confidence) {
+
+  size_t nSamples = testData->nSamples();
+  size_t nTrees = this->nTrees();
+  vector<vector<num_t> > predictionMatrix(nSamples,vector<num_t>(nTrees));
+  predictions.resize(nSamples);
+  for ( size_t treeIdx = 0; treeIdx < nTrees; ++treeIdx ) {
+    for ( size_t sampleIdx = 0; sampleIdx < nSamples; ++sampleIdx ) {
+      predictionMatrix[sampleIdx][treeIdx] = rootNodes_[treeIdx]->getTestPrediction(testData,sampleIdx);
+    }
+  }
+
+  /*
+    for ( size_t sampleIdx = 0; sampleIdx < nSamples; ++sampleIdx ) {
+    datadefs::print(predictionMatrix[sampleIdx]);
+    }
+  */
+
+  transform(predictionMatrix.begin(),predictionMatrix.end(),predictions.begin(),math::mean);
+
+  confidence.clear();
+  confidence.resize(nSamples,datadefs::NUM_NAN);
+
+}
 
 vector<num_t> StochasticForest::getPredictions() {
   
@@ -755,9 +805,6 @@ vector<num_t> StochasticForest::getPermutedOobPredictions(const size_t featureId
   return( getPredictions(predictionMatrix) );
 
 }
-
-
-
 
 /**
    Returns a vector of node counts in the trees of the forest
