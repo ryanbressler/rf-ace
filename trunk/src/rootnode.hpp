@@ -20,6 +20,9 @@ public:
   
   size_t nNodes();
 
+  num_t getTestPrediction(Treedata* treeData, const size_t sampleIdx);
+  string getRawTestPrediction(Treedata* treeData, const size_t sampleIdx);
+
   num_t getTrainPrediction(const size_t sampleIdx);
   num_t getPermutedTrainPrediction(const size_t featureIdx,
 				   const size_t sampleIdx);
@@ -39,7 +42,7 @@ public:
 private:
 #endif
 
-  //map<Node*,vector<size_t> > percolateSampleIcs(const vector<size_t>& sampleIcs);
+  Node* percolateSampleIdx(Treedata* testData, const size_t sampleIdx);
   Node* percolateSampleIdx(const size_t sampleIdx);
 
   //map<Node*,vector<size_t> > percolateSampleIcsAtRandom(const size_t featureIdx, const vector<size_t>& sampleIcs);

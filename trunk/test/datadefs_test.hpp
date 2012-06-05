@@ -21,7 +21,7 @@ class DataDefsTest : public CppUnit::TestFixture {
   CPPUNIT_TEST( test_cardinality );
   CPPUNIT_TEST( test_countRealValues );
   CPPUNIT_TEST( test_map_data );
-  //CPPUNIT_TEST( test_range );
+  CPPUNIT_TEST( test_max_idx );
   CPPUNIT_TEST( test_sortDataAndMakeRef );
   CPPUNIT_TEST( test_isNAN );
   CPPUNIT_TEST( test_containsNAN );
@@ -43,7 +43,7 @@ public:
   void test_cardinality();
   void test_countRealValues();
   void test_map_data();
-  //void test_range();
+  void test_max_idx();
   void test_sortDataAndMakeRef();
   void test_percentile();
   void test_isNAN();
@@ -268,6 +268,12 @@ void DataDefsTest::test_sortDataAndMakeRef() {
   CPPUNIT_ASSERT(refIcs.size() == 0);
 
   // NaNs are not checked as sorting targets, as their behavior is currently undefined
+}
+
+void DataDefsTest::test_max_idx() {
+  
+  CPPUNIT_ASSERT( datadefs::MAX_IDX == numeric_limits<size_t>::max() );
+
 }
 
 

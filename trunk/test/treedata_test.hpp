@@ -22,6 +22,7 @@ class treeDataTest : public CppUnit::TestFixture {
   CPPUNIT_TEST( test_numericalFeatureSplitsCategoricalTarget );
   CPPUNIT_TEST( test_categoricalFeatureSplitsNumericalTarget );
   CPPUNIT_TEST( test_categoricalFeatureSplitsCategoricalTarget );
+  CPPUNIT_TEST( test_end );
   CPPUNIT_TEST_SUITE_END();
   
 public:
@@ -41,6 +42,7 @@ public:
   void test_numericalFeatureSplitsCategoricalTarget();
   void test_categoricalFeatureSplitsNumericalTarget();
   void test_categoricalFeatureSplitsCategoricalTarget();
+  void test_end();
 
 private:
 
@@ -710,6 +712,12 @@ void treeDataTest::test_categoricalFeatureSplitsCategoricalTarget() {
   CPPUNIT_ASSERT( node.percolateData("3") == node.rightChild() );
 
   CPPUNIT_ASSERT( fabs( deltaImpurity - 0.001691905260604 ) < 1e-10 );
+
+}
+
+void treeDataTest::test_end() {
+
+  CPPUNIT_ASSERT( treeData_->getFeatureIdx("IDontExist") == treeData_->end() );
 
 }
 

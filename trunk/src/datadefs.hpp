@@ -34,6 +34,8 @@ namespace datadefs {
   
   extern const num_t NUM_INF;       /** Numeric representation of positive infinity */
 
+  extern const size_t MAX_IDX;
+
   extern const num_t A;             /** Numeric constant used to estimate the
                                      *   error function of a normal distribution,
                                      *   with properties given here:
@@ -201,16 +203,18 @@ namespace datadefs {
     for(size_t i = 0; i < x.size(); ++i) {
       cout << " " << x[i];
     }
-    //cout << endl;
+    cout << endl;
   }
 
-  template <typename T> void print(const set<T>& x) {
+  /*
+    template <typename T> void print(const set<T>& x) {
     
     for( typename set<T>::const_iterator it = x.begin(); it != x.end(); ++it) {
-      cout << " " << *it;
+    cout << " " << *it;
     }
-    //cout << endl;
-  }
+    cout << endl;
+    }
+  */
 
 }
 

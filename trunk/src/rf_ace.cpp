@@ -50,12 +50,55 @@ void printAssociationsToFile(options::General_options& gen_op,
 			     vector<num_t>& correlations,
 			     vector<size_t>& sampleCounts);
 
-void printPredictionToFile(StochasticForest& SF, Treedata& treeData, const string& targetName, const string& fileName);
+
+void printPredictionToFile(StochasticForest& SF, Treedata& treeDataTest, const string& targetName, const string& fileName) {
+  
+  ofstream toPredictionFile(fileName.c_str());
+  
+  size_t targetIdx = treeDataTest.getFeatureIdx(targetName);
+  
+  if ( SF.isTargetNumerical() ) {
+    
+    
+    vector<num_t> trueData(treeDataTest.nSamples(),datadefs::NUM_NAN);
+    if ( targetIdx != treeDataTest.end() ) {
+      trueData = treeDataTest.getFeatureData(targetIdx);
+    }
+    
+    vector<num_t> prediction;
+    vector<num_t> confidence;
+    SF.getPredictions(&treeDataTest,prediction,confidence);
+    
+    for(size_t i = 0; i < prediction.size(); ++i) {
+      toPredictionFile << targetName << "\t" << treeDataTest.getSampleName(i) << "\t" << trueData[i] << "\t" << prediction[i] << "\t" << setprecision(3) << confidence[i] << endl;
+    }
+    
+  } else {
+
+    vector<string> trueData(treeDataTest.nSamples(),datadefs::STR_NAN);
+    if ( targetIdx != treeDataTest.end() ) {
+      trueData = treeDataTest.getRawFeatureData(targetIdx);
+    }
+    
+    vector<string> prediction;
+    vector<num_t> confidence;
+    SF.getPredictions(&treeDataTest,prediction,confidence);
+    
+    for(size_t i = 0; i < prediction.size(); ++i) {
+      toPredictionFile << targetName << "\t" << treeDataTest.getSampleName(i) << "\t" << trueData[i] << "\t" << prediction[i] << "\t" << setprecision(3) << confidence[i] << endl;
+    }
+    
+  }
+  
+  toPredictionFile.close();
+  
+}
+
 
 void printHeader(ostream& out) {
   out << endl
       << "-----------------------------------------------------------" << endl
-      << "|  RF-ACE version:  1.0.5, May 29th 2012                  |" << endl
+      << "|  RF-ACE version:  1.0.5, May 29 2012                    |" << endl
       << "|    Compile date:  " << __DATE__ << ", " << __TIME__ << "                 |" << endl 
       << "|   Report issues:  code.google.com/p/rf-ace/issues/list  |" << endl
       << "-----------------------------------------------------------" << endl
@@ -112,8 +155,6 @@ void rf_ace_filter(options::General_options& gen_op) {
 
   rface::updateTargetStr(treeData,gen_op);
   rface::pruneFeatureSpace(treeData,gen_op);
-
-  //gen_op.setIfNotSet(gen_op.nMaxLeaves_s,gen_op.nMaxLeaves_l,gen_op.nMaxLeaves,treeData.nRealSamples());
 
   // Some default and enforced parameter settings for RF, CART, and GBT
   setEnforcedForestParameters(treeData,gen_op);
@@ -258,26 +299,28 @@ statistics::RF_statistics executeRandomForest(Treedata& treeData,
   clock_t clockStart( clock() );
   contrastImportanceSample.resize(gen_op.nPerms);
   
+  size_t targetIdx = treeData.getFeatureIdx(gen_op.targetStr);
+  assert( targetIdx != treeData.end() );
+
   for(size_t permIdx = 0; permIdx < gen_op.nPerms; ++permIdx) {
     
     progress.update(1.0*permIdx/gen_op.nPerms);
     
-    // Initialize the Random Forest object
     StochasticForest SF(&treeData,&gen_op);
 
     // Get the number of nodes in each tree in the forest
     nodeMat[permIdx] = SF.nNodes();
     
     SF.getImportanceValues(importanceMat[permIdx],contrastImportanceMat[permIdx]);
-
+    
     // Will update featuresInAllForests to contain all features in the current forest
-    math::setUnion(featuresInAllForests,SF.getFeaturesInForest());    
+    math::setUnion(featuresInAllForests,SF.getFeaturesInForest());
     
     // Store the new percentile value in the vector contrastImportanceSample
     contrastImportanceSample[permIdx] = math::mean( contrastImportanceMat[permIdx] );
     
   }
-
+  
   assert( !datadefs::containsNAN(contrastImportanceSample) );
   
   // Notify if the sample size of the null distribution is very low
@@ -348,9 +391,6 @@ void rf_ace(options::General_options& gen_op) {
 
   setEnforcedForestParameters(treeData,gen_op);
 
-  //gen_op.setIfNotSet(gen_op.nMaxLeaves_s,gen_op.nMaxLeaves_l,gen_op.nMaxLeaves,treeData.nSamples());
-  //gen_op.setIfNotSet(gen_op.mTry_s,gen_op.mTry_l,gen_op.mTry,static_cast<size_t>(0.1*treeData.nFeatures()-1));
-
   // We never want to use contrasts when we are building a predictor
   gen_op.useContrasts = false;
     
@@ -383,6 +423,7 @@ void rf_ace(options::General_options& gen_op) {
   num_t oobError = SF.getOobError();
   num_t ibOobError =  SF.getError();
   num_t nullError;
+
   if ( treeData.isFeatureNumerical(targetIdx) ) {
     nullError = math::var(data);
   } else {
@@ -413,14 +454,17 @@ void rf_ace(options::General_options& gen_op) {
 
     cout << "===> Making predictions with test data... " << flush;
 
-    printPredictionToFile(SF,treeData,gen_op.targetStr,gen_op.output);
+    Treedata treeDataTest(gen_op.predictionData,gen_op.dataDelimiter,gen_op.headerDelimiter,gen_op.seed);
+
+    printPredictionToFile(SF,treeDataTest,gen_op.targetStr,gen_op.output);
+
+    
 
     cout << "DONE" << endl;
 
     cout << endl;
 
     cout << 1.0 * ( clock() - clockStart ) / CLOCKS_PER_SEC << " seconds elapsed." << endl << endl;
-
 
     cout << "Prediction file '" << gen_op.output << "' created. Format:" << endl;
     cout << "TARGET   SAMPLE_ID     PREDICTION    CONFIDENCE" << endl;
@@ -462,37 +506,6 @@ void setEnforcedForestParameters(Treedata& treeData, options::General_options& g
 
 vector<string> readFeatureMask(const string& fileName);
 
-void printPredictionToFile(StochasticForest& SF, Treedata& treeData, const string& targetName, const string& fileName) {
-
-  ofstream toPredictionFile(fileName.c_str());
-  
-  //size_t targetIdx = treeData.getFeatureIdx(targetName);
-  
-  if ( SF.isTargetNumerical() ) {
-    
-    vector<num_t> prediction;
-    vector<num_t> confidence;
-    SF.predict(prediction,confidence);
-    
-    for(size_t i = 0; i < prediction.size(); ++i) {
-      toPredictionFile << targetName << "\t" << treeData.getSampleName(i) << "\t" << prediction[i] << "\t" << setprecision(3) << confidence[i] << endl;
-    }
-    
-  } else {
-
-    vector<string> prediction;
-    vector<num_t> confidence;
-    SF.predict(prediction,confidence);
-    
-    for(size_t i = 0; i < prediction.size(); ++i) {
-      toPredictionFile << targetName << "\t" << treeData.getSampleName(i) << "\t" << prediction[i] << "\t" << setprecision(3) << confidence[i] << endl;
-    }
-    
-  }
-
-  toPredictionFile.close();
-   
-}
 
 void printAssociationsToFile(options::General_options& gen_op, 
 			     vector<string>& featureNames, 

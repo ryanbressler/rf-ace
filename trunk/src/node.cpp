@@ -7,9 +7,8 @@
 #include "math.hpp"
 
 Node::Node():
-  //splitterIdx_(0),
-  //splitter_(NULL),
   trainPrediction_(datadefs::NUM_NAN),
+  rawTrainPrediction_(datadefs::STR_NAN),
   leftChild_(NULL),
   rightChild_(NULL) {
   
@@ -58,7 +57,6 @@ void Node::deleteTree() {
   
   delete leftChild_;
   delete rightChild_;
-  //delete splitter_;
   
 }
 
@@ -223,16 +221,21 @@ void Node::print(ofstream& toFile) {
 }
 
 
-void Node::setTrainPrediction(const num_t trainPrediction) {
+void Node::setTrainPrediction(const num_t trainPrediction, const string& rawTrainPrediction) {
   trainPrediction_ = trainPrediction;
+  rawTrainPrediction_ = rawTrainPrediction;
 }
-
 
 // !! Documentation: just your usual accessor, returning a copy of
 // !! trainPrediction_.
 num_t Node::getTrainPrediction() {
   assert( !datadefs::isNAN(trainPrediction_) );
   return( trainPrediction_ );
+}
+
+string Node::getRawTrainPrediction() {
+  assert( !datadefs::isNAN_STR(rawTrainPrediction_) );
+  return( rawTrainPrediction_ );
 }
 
 void Node::recursiveNodeSplit(Treedata* treeData,
@@ -253,7 +256,9 @@ void Node::recursiveNodeSplit(Treedata* treeData,
     if ( GI.predictionFunctionType == MEAN ) {
       this->setTrainPrediction( math::mean(trainData) );
     } else if ( GI.predictionFunctionType == MODE ) {
-      this->setTrainPrediction( math::mode<num_t>(trainData) );
+      num_t trainPrediction = math::mode<num_t>(trainData);
+      string rawTrainPrediction = treeData->getRawFeatureData(targetIdx,trainPrediction);
+      this->setTrainPrediction( trainPrediction, rawTrainPrediction );
     } else if ( GI.predictionFunctionType == GAMMA ) {
       this->setTrainPrediction( math::gamma(trainData,GI.numClasses) );
     } else {
@@ -316,7 +321,9 @@ void Node::recursiveNodeSplit(Treedata* treeData,
     if ( GI.predictionFunctionType == MEAN ) {
       this->setTrainPrediction( math::mean(trainData) );
     } else if ( GI.predictionFunctionType == MODE ) {
-      this->setTrainPrediction( math::mode<num_t>(trainData) );
+      num_t trainPrediction = math::mode<num_t>(trainData);
+      string rawTrainPrediction = treeData->getRawFeatureData(targetIdx,trainPrediction);
+      this->setTrainPrediction( trainPrediction, rawTrainPrediction );
     } else if ( GI.predictionFunctionType == GAMMA ) {
       this->setTrainPrediction( math::gamma(trainData,GI.numClasses) );
     } else {
@@ -325,7 +332,7 @@ void Node::recursiveNodeSplit(Treedata* treeData,
     }
     
     assert( !datadefs::isNAN(trainPrediction_) );
-    
+
     return;
   }
   

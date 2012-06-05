@@ -46,7 +46,7 @@ void StochasticForestTest::test_treeDataPercolation() {
 
   vector<num_t> prediction,confidence;
 
-  SF.predict(prediction,confidence);
+  SF.getPredictions(&treeData,prediction,confidence);
 
   CPPUNIT_ASSERT( prediction.size() == 4 );
   CPPUNIT_ASSERT( confidence.size() == 4 );
@@ -78,15 +78,15 @@ void StochasticForestTest::test_error() {
   StochasticForest SF(&treeData,&parameters,"test_predictor.sf");
 
   vector<num_t> x,y;
-  CPPUNIT_ASSERT( fabs( SF.error(x,y) - 0.0 ) < datadefs::EPS );
+  CPPUNIT_ASSERT( datadefs::isNAN( SF.error(x,y) ) );
   
   x.push_back(datadefs::NUM_NAN);
   y = x;
-  CPPUNIT_ASSERT( fabs( SF.error(x,y) - 0.0 ) < datadefs::EPS );
+  CPPUNIT_ASSERT( datadefs::isNAN( SF.error(x,y) ) );
 
   x.push_back(1.0);
   y.push_back(datadefs::NUM_NAN);
-  CPPUNIT_ASSERT( fabs( SF.error(x,y) - 0.0 ) < datadefs::EPS );
+  CPPUNIT_ASSERT( datadefs::isNAN( SF.error(x,y) ) );
 
   x.push_back(0.0);
   y.push_back(2.0);

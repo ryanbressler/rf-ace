@@ -141,6 +141,8 @@ Treedata::Treedata(string fileName, char dataDelimiter, char headerDelimiter, in
   // Permute contrasts, so that the data becomes just noise
   this->permuteContrasts();
 
+  
+
 }
 
 Treedata::~Treedata() {
@@ -489,19 +491,23 @@ num_t Treedata::pearsonCorrelation(size_t featureIdx1, size_t featureIdx2) {
 }
 
 size_t Treedata::getFeatureIdx(const string& featureName) {
-  if ( name2idx_.find(featureName) == name2idx_.end() ) {
-    cerr << "Treedata::getFeatureIdx() -- feature '" << featureName << "' does not exist" << endl;
-    exit(1);
+  
+  map<string,size_t>::const_iterator it( name2idx_.find(featureName) );
+  
+  // If the feature does not exist, return "end", which is a value that 
+  // points to outside the range of valid indices
+  if ( it == name2idx_.end() ) {
+    return( this->end() );
   }
-  return( name2idx_[featureName] );
+  return( it->second );
 }
 
 string Treedata::getFeatureName(const size_t featureIdx) {
-  return(features_[featureIdx].name);
+  return( features_.at(featureIdx).name );
 }
 
 string Treedata::getSampleName(const size_t sampleIdx) {
-  return(sampleHeaders_[sampleIdx]);
+  return( sampleHeaders_.at(sampleIdx) );
 }
 
 
@@ -537,7 +543,6 @@ void Treedata::permuteContrasts() {
 
   for ( size_t i = nFeatures; i < 2*nFeatures; ++i ) {
     
-
     vector<size_t> sampleIcs = utils::range( nSamples );
 
     vector<num_t> filteredData = this->getFilteredFeatureData(i,sampleIcs);

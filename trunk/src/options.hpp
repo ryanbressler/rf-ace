@@ -125,7 +125,7 @@ namespace options {
       recombinePerms(GENERAL_DEFAULT_RECOMBINE_PERMS),recombinePerms_s("R"),recombinePerms_l("recombine"),
       // I/O and general parameters
       printHelp(GENERAL_DEFAULT_PRINT_HELP),printHelp_s("h"),printHelp_l("help"),
-      isFilter(GENERAL_DEFAULT_IS_FILTER),isFilter_s("L"),isFilter_l("filter"),
+      isFilter(GENERAL_DEFAULT_IS_FILTER),isFilter_s("F"),isFilter_l("filter"),
       reportContrasts(GENERAL_DEFAULT_REPORT_CONTRASTS),reportContrasts_s("C"),reportContrasts_l("listAllContrasts"),
       input(""),input_s("I"),input_l("input"),
       output(""),output_s("O"),output_l("output"),
