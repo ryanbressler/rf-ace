@@ -673,7 +673,7 @@ void StochasticForest::getImportanceValues(vector<num_t>& importanceValues, vect
 
     num_t permutedOobError = this->error(permutedOobPredictions,trueData);
 
-    importanceValues[featureIdx] = ( permutedOobError - oobError ) / oobError;
+    importanceValues[featureIdx] = permutedOobError - oobError;
 
   }
 
