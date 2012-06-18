@@ -24,77 +24,91 @@ public:
 
   void test_treeGrowing();
 
+private:
+
+  Treedata* trainData_;
+  options::General_options* genOp_;
+  StochasticForest* CART_;
+
 };
 
-void StochasticForestTest::setUp() {}
-void StochasticForestTest::tearDown() {}
+void StochasticForestTest::setUp() {
+
+  //trainData_ = new Treedata("test_103by300_mixed_matrix.afm",'\t',':');
+
+  //genOp_ = new options::General_options;
+  
+  //genOp_->setCARTDefaults();
+  
+  //CART_ = new StochasticForest(trainData_,genOp_);
+
+}
+
+void StochasticForestTest::tearDown() {
+
+  //delete CART_;
+  //delete trainData_;
+  //delete genOp_;
+  
+  
+}
 
 void StochasticForestTest::test_treeDataPercolation() {
 
+
   // First we need some data
-  Treedata::Treedata treeData("testdata.tsv",'\t',':');
-
+  Treedata::Treedata testData("testdata.tsv",'\t',':');
+  
   options::General_options parameters;
-
+  
+  parameters.forestInput = "test_predictor.sf";
+  
   // Next load a test predictor
-  StochasticForest SF(&treeData,&parameters,"test_predictor.sf");
-
-  CPPUNIT_ASSERT( fabs( SF.rootNodes_[0]->getTrainPrediction(0) - 3.9 ) < datadefs::EPS );
-  CPPUNIT_ASSERT( fabs( SF.rootNodes_[0]->getTrainPrediction(1) - 4.3 ) < datadefs::EPS );
-  CPPUNIT_ASSERT( fabs( SF.rootNodes_[0]->getTrainPrediction(2) - 3.9 ) < datadefs::EPS );
-  CPPUNIT_ASSERT( fabs( SF.rootNodes_[0]->getTrainPrediction(3) - 6.5 ) < datadefs::EPS );
-
+  StochasticForest SF(&parameters);
+  
   vector<num_t> prediction,confidence;
-
-  SF.getPredictions(&treeData,prediction,confidence);
-
+  
+  SF.predictWithTestData(&testData,prediction,confidence);
+  
   CPPUNIT_ASSERT( prediction.size() == 4 );
   CPPUNIT_ASSERT( confidence.size() == 4 );
   CPPUNIT_ASSERT( fabs( prediction[0] - 3.9 ) < datadefs::EPS );
   CPPUNIT_ASSERT( fabs( prediction[1] - 4.3 ) < datadefs::EPS );
   CPPUNIT_ASSERT( fabs( prediction[2] - 3.9 ) < datadefs::EPS );
   CPPUNIT_ASSERT( fabs( prediction[3] - 6.5 ) < datadefs::EPS );
-
-  SF.rootNodes_[0]->oobIcs_ = utils::range(4);
-
-  prediction = SF.getOobPredictions();
-
-  CPPUNIT_ASSERT( prediction.size() == 4 );
-  CPPUNIT_ASSERT( fabs( prediction[0] - 3.9 ) < datadefs::EPS );
-  CPPUNIT_ASSERT( fabs( prediction[1] - 4.3 ) < datadefs::EPS );
-  CPPUNIT_ASSERT( fabs( prediction[2] - 3.9 ) < datadefs::EPS );
-  CPPUNIT_ASSERT( fabs( prediction[3] - 6.5 ) < datadefs::EPS );
+  
 
 }
 
+
 void StochasticForestTest::test_error() {
-
-  // First we need some data
-  Treedata::Treedata treeData("testdata.tsv",'\t',':');
-
+/*
   options::General_options parameters;
-
+  
+  parameters.forestInput = "test_predictor.sf";
+  
   // Next load a test predictor
-  StochasticForest SF(&treeData,&parameters,"test_predictor.sf");
-
+  StochasticForest SF(&parameters);
+  
   vector<num_t> x,y;
   CPPUNIT_ASSERT( datadefs::isNAN( SF.error(x,y) ) );
   
   x.push_back(datadefs::NUM_NAN);
   y = x;
   CPPUNIT_ASSERT( datadefs::isNAN( SF.error(x,y) ) );
-
+  
   x.push_back(1.0);
   y.push_back(datadefs::NUM_NAN);
   CPPUNIT_ASSERT( datadefs::isNAN( SF.error(x,y) ) );
-
+  
   x.push_back(0.0);
   y.push_back(2.0);
   CPPUNIT_ASSERT( fabs( SF.error(x,y) - 4.0 ) < datadefs::EPS );
   
   
-  
+*/
 }
+
 
 void StochasticForestTest::test_treeGrowing() {
   

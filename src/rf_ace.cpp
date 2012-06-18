@@ -51,49 +51,7 @@ void printAssociationsToFile(options::General_options& gen_op,
 			     vector<size_t>& sampleCounts);
 
 
-void printPredictionToFile(StochasticForest& SF, Treedata& treeDataTest, const string& targetName, const string& fileName) {
-  
-  ofstream toPredictionFile(fileName.c_str());
-  
-  size_t targetIdx = treeDataTest.getFeatureIdx(targetName);
-  
-  if ( SF.isTargetNumerical() ) {
-    
-    
-    vector<num_t> trueData(treeDataTest.nSamples(),datadefs::NUM_NAN);
-    if ( targetIdx != treeDataTest.end() ) {
-      trueData = treeDataTest.getFeatureData(targetIdx);
-    }
-    
-    vector<num_t> prediction;
-    vector<num_t> confidence;
-    SF.getPredictions(&treeDataTest,prediction,confidence);
-    
-    for(size_t i = 0; i < prediction.size(); ++i) {
-      toPredictionFile << targetName << "\t" << treeDataTest.getSampleName(i) << "\t" << trueData[i] << "\t" << prediction[i] << "\t" << setprecision(3) << confidence[i] << endl;
-    }
-    
-  } else {
-
-    vector<string> trueData(treeDataTest.nSamples(),datadefs::STR_NAN);
-    if ( targetIdx != treeDataTest.end() ) {
-      trueData = treeDataTest.getRawFeatureData(targetIdx);
-    }
-    
-    vector<string> prediction;
-    vector<num_t> confidence;
-    SF.getPredictions(&treeDataTest,prediction,confidence);
-    
-    for(size_t i = 0; i < prediction.size(); ++i) {
-      toPredictionFile << targetName << "\t" << treeDataTest.getSampleName(i) << "\t" << trueData[i] << "\t" << prediction[i] << "\t" << setprecision(3) << confidence[i] << endl;
-    }
-    
-  }
-  
-  toPredictionFile.close();
-  
-}
-
+void printPredictionToFile(StochasticForest& SF, Treedata& treeDataTest, const string& targetName, const string& fileName);
 
 void printHeader(ostream& out) {
   out << endl
@@ -107,6 +65,9 @@ void printHeader(ostream& out) {
 
 int main(const int argc, char* const argv[]) {
 
+  // Store the start time (in clock cycles) just before the analysis
+  clock_t clockStart( clock() );
+  
   printHeader(cout);
   
   // Structs that store all the user-specified command-line arguments
@@ -141,7 +102,10 @@ int main(const int argc, char* const argv[]) {
     rf_ace(gen_op);
 
   }
-  
+
+  cout << endl;
+  cout << 1.0 * ( clock() - clockStart ) / CLOCKS_PER_SEC << " seconds elapsed." << endl << endl;
+
 }
 
 void rf_ace_filter(options::General_options& gen_op) {
@@ -170,9 +134,6 @@ void rf_ace_filter(options::General_options& gen_op) {
 
   gen_op.validateParameters();
       
-  // Store the start time (in clock cycles) just before the analysis
-  clock_t clockStart( clock() );
-  
   vector<num_t> pValues; 
   vector<num_t> importanceValues; 
   vector<num_t> contrastImportanceSample;
@@ -246,15 +207,12 @@ void rf_ace_filter(options::General_options& gen_op) {
     
   }
   
-  cout << 1.0 * ( clock() - clockStart ) / CLOCKS_PER_SEC << " seconds elapsed." << endl << endl;
-  
   cout << "Association file created, format:" << endl;
   cout << "TARGET   PREDICTOR   P-VALUE   IMPORTANCE   CORRELATION   NSAMPLES" << endl;
   cout << endl;
   cout << "RF-ACE completed successfully." << endl;
   cout << endl;
   
-  exit(0);
 }
 
 void printGeneralSetup(Treedata& treeData, const options::General_options& gen_op) {
@@ -377,106 +335,135 @@ statistics::RF_statistics executeRandomForest(Treedata& treeData,
   
 }
 
+StochasticForest rf_ace_build_predictor(Treedata& trainData, options::General_options& gen_op) {
 
-void rf_ace(options::General_options& gen_op) {
-  
-  // Read train data into Treedata object
-  cout << "===> Reading file '" << gen_op.input << "', please wait... " << flush;
-  Treedata treeData(gen_op.input,gen_op.dataDelimiter,gen_op.headerDelimiter,gen_op.seed);
-  cout << "DONE" << endl;
-  
-  rface::updateTargetStr(treeData,gen_op);
+  rface::updateTargetStr(trainData,gen_op);
 
-  rface::pruneFeatureSpace(treeData,gen_op);
+  rface::pruneFeatureSpace(trainData,gen_op);
 
-  setEnforcedForestParameters(treeData,gen_op);
+  setEnforcedForestParameters(trainData,gen_op);
 
   // We never want to use contrasts when we are building a predictor
   gen_op.useContrasts = false;
-    
-  printGeneralSetup(treeData,gen_op);
+
+  printGeneralSetup(trainData,gen_op);
 
   gen_op.printParameters();
 
   gen_op.validateParameters();
 
-  // Store the start time (in clock cycles) just before the analysis
-  clock_t clockStart( clock() );
-
-  if ( gen_op.forestType == options::RF ) {
+  if ( gen_op.modelType == options::RF ) {
     cout << "===> Growing RF predictor... " << flush;
-  } else if ( gen_op.forestType == options::GBT ) {
+  } else if ( gen_op.modelType == options::GBT ) {
     cout << "===> Growing GBT predictor... " << flush;
-  } else if ( gen_op.forestType == options::CART ) {
+  } else if ( gen_op.modelType == options::CART ) {
     cout << "===> Growing CART predictor... " << flush;
   } else {
     cerr << "Unknown forest type!" << endl;
     exit(1);
   }
 
-  StochasticForest SF(&treeData,&gen_op);
+  StochasticForest SF(&trainData,&gen_op);
   cout << "DONE" << endl << endl;
 
-  size_t targetIdx = treeData.getFeatureIdx(gen_op.targetStr);
-  vector<num_t> data = utils::removeNANs(treeData.getFeatureData(targetIdx));
+  size_t targetIdx = trainData.getFeatureIdx(gen_op.targetStr);
+  vector<num_t> data = utils::removeNANs(trainData.getFeatureData(targetIdx));
 
   num_t oobError = SF.getOobError();
   num_t ibOobError =  SF.getError();
-  num_t nullError;
 
-  if ( treeData.isFeatureNumerical(targetIdx) ) {
-    nullError = math::var(data);
+  cout << "RF training error measures (NULL == no model):" << endl;
+  if ( trainData.isFeatureNumerical(targetIdx) ) {
+    num_t nullError = math::var(data);
+    cout << "              NULL std = " << sqrt( nullError ) << endl;
+    cout << "               OOB std = " << sqrt( oobError ) << endl;
+    cout << "            IB+OOB std = " << sqrt( ibOobError ) << endl;
+    cout << "  % explained by model = " << 1 - oobError / nullError << " = 1 - (OOB var) / (NULL var)" << endl;
   } else {
-    map<num_t,size_t> freq = math::frequency(data);
-    nullError = 1.0 * ( data.size() - freq[ math::mode<num_t>(data) ] ) / data.size();
+    num_t nullError = math::nMismatches( data, math::mode(data) );
+    cout << "       NULL % mispred. = " << 1.0 * nullError / data.size() << endl;
+    cout << "        OOB % mispred. = " << oobError << endl;
+    cout << "     IB+OOB % mispred. = " << ibOobError << endl;
+    cout << "  % explained by model = " << 1 - oobError / nullError << " ( 1 - (OOB # mispred.) / (NULL # mispred.) )" << endl;
   }
-
-  cout << "RF training error measures:" << endl;
-  cout << "  data variance = " << nullError << endl;
-  cout << "      OOB error = " << oobError << endl;
-  cout << "   IB+OOB error = " << ibOobError << endl;
-  cout << "    1 - OOB/var = " << 1 - oobError / nullError << endl;
   cout << endl;
 
-  if ( gen_op.predictionData == "" ) {
+  return( SF );
 
-    cout << "===> Writing predictor to file... " << flush;
-    SF.printToFile( gen_op.output );
-    cout << "DONE" << endl << endl;
-    
-    cout << endl;
-    cout << 1.0 * ( clock() - clockStart ) / CLOCKS_PER_SEC << " seconds elapsed." << endl << endl;
-    
-    cout << "RF-ACE predictor built and saved to a file." << endl;
-    cout << endl;
+}
 
-  } else {
-
-    cout << "===> Making predictions with test data... " << flush;
-
-    Treedata treeDataTest(gen_op.predictionData,gen_op.dataDelimiter,gen_op.headerDelimiter,gen_op.seed);
-
-    printPredictionToFile(SF,treeDataTest,gen_op.targetStr,gen_op.output);
-
-    
-
-    cout << "DONE" << endl;
-
-    cout << endl;
-
-    cout << 1.0 * ( clock() - clockStart ) / CLOCKS_PER_SEC << " seconds elapsed." << endl << endl;
-
-    cout << "Prediction file '" << gen_op.output << "' created. Format:" << endl;
-    cout << "TARGET   SAMPLE_ID     PREDICTION    CONFIDENCE" << endl;
-    cout << endl;
-
-
-    cout << "RF-ACE completed successfully." << endl;
-    cout << endl;
-
-  }
+void rf_ace(options::General_options& gen_op) {
   
-  exit(0);
+  if ( gen_op.isSet(gen_op.input_s,gen_op.input_l) ) {
+
+    // Read train data into Treedata object
+    cout << "===> Reading file '" << gen_op.input << "', please wait... " << flush;
+    Treedata trainData(gen_op.input,gen_op.dataDelimiter,gen_op.headerDelimiter,gen_op.seed);
+    cout << "DONE" << endl;
+    
+    StochasticForest SF = rf_ace_build_predictor(trainData,gen_op);
+
+    if ( gen_op.isSet(gen_op.predictionData_s,gen_op.predictionData_l) ) {
+      
+      cout << "===> Making predictions with test data... " << flush;
+
+      Treedata treeDataTest(gen_op.predictionData,gen_op.dataDelimiter,gen_op.headerDelimiter,gen_op.seed);
+
+      printPredictionToFile(SF,treeDataTest,gen_op.targetStr,gen_op.output);
+
+      cout << "DONE" << endl << endl;
+
+      cout << "Prediction file '" << gen_op.output << "' created. Format:" << endl;
+      cout << "TARGET   SAMPLE_ID     PREDICTION    CONFIDENCE" << endl;
+      cout << endl;
+
+      cout << "RF-ACE completed successfully." << endl;
+      cout << endl;
+
+    } else {
+      
+      cout << "===> Writing predictor to file... " << flush;
+      SF.printToFile( gen_op.output );
+      cout << "DONE" << endl << endl;
+
+      cout << "RF-ACE predictor built and saved to a file." << endl;
+      cout << endl;
+
+    }
+
+    return;
+
+  } 
+
+  if ( !gen_op.isSet(gen_op.forestInput_s,gen_op.forestInput_l) ) {
+    cerr << "If no input data is specified, forest file for prediction is assumed" << endl;
+    exit(1);
+  }
+
+  if ( !gen_op.isSet(gen_op.predictionData_s,gen_op.predictionData_l) ) {
+    cerr << "If forest predictor is given as input, prediction data is assumed" << endl;
+    exit(1);
+  }
+
+  cout << "Yay, selected the right branch!" << endl;
+
+  StochasticForest SF(&gen_op);
+
+  cout << "===> Making predictions with test data... " << flush;
+
+  Treedata treeDataTest(gen_op.predictionData,gen_op.dataDelimiter,gen_op.headerDelimiter,gen_op.seed);
+
+  printPredictionToFile(SF,treeDataTest,gen_op.targetStr,gen_op.output);
+
+  cout << "DONE" << endl << endl;
+
+  cout << "Prediction file '" << gen_op.output << "' created. Format:" << endl;
+  cout << "TARGET   SAMPLE_ID     PREDICTION    CONFIDENCE" << endl;
+  cout << endl;
+
+  cout << "RF-ACE completed successfully." << endl;
+  cout << endl;
+
 }
 
 void setEnforcedForestParameters(Treedata& treeData, options::General_options& gen_op) {
@@ -486,7 +473,7 @@ void setEnforcedForestParameters(Treedata& treeData, options::General_options& g
   // Allow trees to grow to maximal depth, if not told otherwise
   gen_op.setIfNotSet(gen_op.nMaxLeaves_s,gen_op.nMaxLeaves_l,gen_op.nMaxLeaves,treeData.nRealSamples(targetIdx));
   
-  if ( gen_op.forestType == options::RF ) {
+  if ( gen_op.modelType == options::RF ) {
 
     // RF mTry is by default set to 10% of features
     gen_op.setIfNotSet(gen_op.mTry_s,gen_op.mTry_l,gen_op.mTry,static_cast<size_t>(0.1*treeData.nFeatures()));
@@ -496,7 +483,7 @@ void setEnforcedForestParameters(Treedata& treeData, options::General_options& g
       gen_op.mTry = 1;
     }
 
-  } else if ( gen_op.forestType == options::CART ) {
+  } else if ( gen_op.modelType == options::CART ) {
 
     // In CART mode only one tree is grown
     gen_op.nTrees = 1;
@@ -687,6 +674,48 @@ void rf_ace_recombine(options::General_options& gen_op) {
 			  contrastImportanceSample,
 			  correlations,
 			  sampleCounts);
+  
+}
+
+void printPredictionToFile(StochasticForest& SF, Treedata& treeDataTest, const string& targetName, const string& fileName) {
+
+  ofstream toPredictionFile(fileName.c_str());
+  
+  size_t targetIdx = treeDataTest.getFeatureIdx(targetName);
+  
+  if ( SF.isTargetNumerical() ) {
+        
+    vector<num_t> trueData(treeDataTest.nSamples(),datadefs::NUM_NAN);
+    if ( targetIdx != treeDataTest.end() ) {
+      trueData = treeDataTest.getFeatureData(targetIdx);
+    }
+    
+    vector<num_t> prediction;
+    vector<num_t> confidence;
+    SF.predictWithTestData(&treeDataTest,prediction,confidence);
+    
+    for(size_t i = 0; i < prediction.size(); ++i) {
+      toPredictionFile << targetName << "\t" << treeDataTest.getSampleName(i) << "\t" << trueData[i] << "\t" << prediction[i] << "\t" << setprecision(3) << confidence[i] << endl;
+    }
+    
+  } else {
+    
+    vector<string> trueData(treeDataTest.nSamples(),datadefs::STR_NAN);
+    if ( targetIdx != treeDataTest.end() ) {
+      trueData = treeDataTest.getRawFeatureData(targetIdx);
+    }
+    
+    vector<string> prediction;
+    vector<num_t> confidence;
+    SF.predictWithTestData(&treeDataTest,prediction,confidence);
+    
+    for(size_t i = 0; i < prediction.size(); ++i) {
+      toPredictionFile << targetName << "\t" << treeDataTest.getSampleName(i) << "\t" << trueData[i] << "\t" << prediction[i] << "\t" << setprecision(3) << confidence[i] << endl;
+    }
+    
+  }
+  
+  toPredictionFile.close();
   
 }
 

@@ -20,13 +20,13 @@ StochasticForest::StochasticForest(Treedata* treeData, options::General_options*
   targetSupport_ = treeData_->categories(targetIdx);
 
   // Grows the forest
-  if ( parameters_->forestType == options::RF ) {
+  if ( parameters_->modelType == options::RF ) {
     this->learnRF();
-  } else if ( parameters_->forestType == options::GBT ) {
+  } else if ( parameters_->modelType == options::GBT ) {
     cerr << "GBT isn't working at the moment!" << endl;
     exit(1);
     this->learnGBT();
-  } else if ( parameters_->forestType == options::CART ) {
+  } else if ( parameters_->modelType == options::CART ) {
     this->learnRF();
   } else {
     cerr << "Unknown model to be learned!" << endl;
@@ -43,11 +43,11 @@ StochasticForest::StochasticForest(Treedata* treeData, options::General_options*
 
 }
 
-StochasticForest::StochasticForest(Treedata* treeData, options::General_options* parameters, const string& forestFile):
-  treeData_(treeData),
+StochasticForest::StochasticForest(options::General_options* parameters):
+  //treeData_(treeData),
   parameters_(parameters) {
 
-  ifstream forestStream( forestFile.c_str() );
+  ifstream forestStream( parameters_->forestInput.c_str() );
   assert(forestStream.good());
   
   string newLine("");
@@ -56,11 +56,11 @@ StochasticForest::StochasticForest(Treedata* treeData, options::General_options*
   map<string,string> forestSetup = utils::parse(newLine,',','=','"');
 
   if ( forestSetup["FOREST"] == "GBT" ) {    
-    parameters_->forestType = options::GBT;
+    parameters_->modelType = options::GBT;
   } else if ( forestSetup["FOREST"] == "RF" ) {
-    parameters_->forestType = options::RF;
+    parameters_->modelType = options::RF;
   } else if ( forestSetup["FOREST"] == "CART" ) {
-    parameters_->forestType = options::CART;
+    parameters_->modelType = options::CART;
   } else {
     cerr << "Unknown forest type: " << forestSetup["FOREST"] << endl;
     exit(1);
@@ -73,7 +73,7 @@ StochasticForest::StochasticForest(Treedata* treeData, options::General_options*
   assert( forestSetup.find("TARGET") != forestSetup.end() );
   parameters_->targetStr = forestSetup["TARGET"];
 
-  size_t targetIdx = treeData_->getFeatureIdx(parameters_->targetStr);
+  //size_t targetIdx = treeData_->getFeatureIdx(parameters_->targetStr);
 
   assert( forestSetup.find("CATEGORIES") != forestSetup.end() );
   targetSupport_ = utils::split(forestSetup["CATEGORIES"],',');
@@ -111,7 +111,7 @@ StochasticForest::StochasticForest(Treedata* treeData, options::General_options*
 
     // If the node is rootnode, we will create a new RootNode object and assign a reference to it in forestMap
     if ( nodeMap["NODE"] == "*" ) {
-      rootNodes_[treeIdx] = new RootNode(treeData,targetIdx);
+      rootNodes_[treeIdx] = new RootNode(NULL,1);
       forestMap[treeIdx]["*"] = rootNodes_[treeIdx];
     }
       
@@ -123,12 +123,12 @@ StochasticForest::StochasticForest(Treedata* treeData, options::General_options*
     // If the node has a splitter...
     if ( nodeMap.find("SPLITTER") != nodeMap.end() ) {
       
-      size_t featureIdx = treeData_->getFeatureIdx(nodeMap["SPLITTER"]);
+      //size_t featureIdx = treeData_->getFeatureIdx(nodeMap["SPLITTER"]);
 
       // If the splitter is numerical...
       if ( nodeMap["SPLITTERTYPE"] == "NUMERICAL" ) {
        
-	nodep->setSplitter(featureIdx,
+	nodep->setSplitter(1,
 			   nodeMap["SPLITTER"],
 			   utils::str2<num_t>(nodeMap["LFRACTION"]),
 			   utils::str2<num_t>(nodeMap["LVALUES"]));
@@ -138,7 +138,7 @@ StochasticForest::StochasticForest(Treedata* treeData, options::General_options*
 	set<string> splitLeftValues = utils::keys(nodeMap["LVALUES"],':');
 	set<string> splitRightValues = utils::keys(nodeMap["RVALUES"],':');
 
-	nodep->setSplitter(featureIdx,
+	nodep->setSplitter(1,
 			   nodeMap["SPLITTER"],
 			   utils::str2<num_t>(nodeMap["LFRACTION"]),
 			   splitLeftValues,
@@ -171,11 +171,11 @@ void StochasticForest::printToFile(const string& fileName) {
   // Open stream for writing
   ofstream toFile( fileName.c_str() );
 
-  if ( parameters_->forestType == options::GBT ) {
+  if ( parameters_->modelType == options::GBT ) {
     toFile << "FOREST=GBT";
-  } else if ( parameters_->forestType == options::RF ) {
+  } else if ( parameters_->modelType == options::RF ) {
     toFile << "FOREST=RF"; 
-  } else if ( parameters_->forestType == options::CART ) {
+  } else if ( parameters_->modelType == options::CART ) {
     toFile << "FOREST=CART";
   }
 
@@ -185,9 +185,8 @@ void StochasticForest::printToFile(const string& fileName) {
 
   string categoriesStr = utils::join(categories.begin(),categories.end(),',');
 
-  toFile << ",NTREES=" << parameters_->nTrees;
   toFile << ",TARGET=" << "\"" << parameters_->targetStr << "\"";
-  
+  toFile << ",NTREES=" << parameters_->nTrees;
   toFile << ",CATEGORIES=" << "\"" << categoriesStr << "\"";
   toFile << ",SHRINKAGE=" << parameters_->shrinkage << endl;
 
@@ -462,7 +461,7 @@ void StochasticForest::transformLogistic(vector<num_t>& prediction, vector<num_t
   categoryPrediction.resize( nSamples );
   confidence.resize( nSamples );
   
-  if ( parameters_->forestType == options::GBT ) {
+  if ( parameters_->modelType == options::GBT ) {
   
   // For classification, each "tree" is actually numClasses_ trees in a row, each predicting the probability of its own class.
   size_t numIterations = nTrees / nCategories;
@@ -506,7 +505,7 @@ void StochasticForest::transformLogistic(vector<num_t>& prediction, vector<num_t
   confidence[i] = *largestElementIt;
   }
   
-  } else if ( parameters_->forestType == options::RF ) {
+  } else if ( parameters_->modelType == options::RF ) {
   
   for ( size_t i = 0; i < nSamples; ++i ) {
   
@@ -690,85 +689,61 @@ void StochasticForest::getImportanceValues(vector<num_t>& importanceValues, vect
 
 }
 
+void StochasticForest::predictWithTestData(Treedata* testData, vector<string>& predictions, vector<num_t>& confidence) {
 
-vector<num_t> StochasticForest::getPredictions(const vector<vector<num_t> >& predictionMatrix) {
-  
-  vector<num_t> predictions(treeData_->nSamples(),datadefs::NUM_NAN);
-  
-  if ( this->isTargetNumerical() ) {
-    
-    for ( size_t i = 0; i < treeData_->nSamples(); ++i ) {
-      predictions[i] = math::mean(predictionMatrix[i]);
-    }
-    
-  } else {
-    
-    for ( size_t i = 0; i < treeData_->nSamples(); ++i ) {
-      if ( predictionMatrix[i].size() > 0 ) {
-	predictions[i] = math::mode(predictionMatrix[i]);
-      }
-    }
-  }
-  
-  return( predictions );
-}
+  //cout << "Here categorical" << endl;
 
-void StochasticForest::getPredictions(Treedata* testData, vector<string>& predictions, vector<num_t>& confidence) {
+  assert( !this->isTargetNumerical() );
 
   size_t nSamples = testData->nSamples();
   size_t nTrees = this->nTrees();
-  vector<vector<string> > predictionMatrix(nSamples,vector<string>(nTrees));
   predictions.resize(nSamples);
-  for ( size_t treeIdx = 0; treeIdx < nTrees; ++treeIdx ) {
-    for ( size_t sampleIdx = 0; sampleIdx < nSamples; ++sampleIdx ) {
-      predictionMatrix[sampleIdx][treeIdx] = rootNodes_[treeIdx]->getRawTestPrediction(testData,sampleIdx);
+  confidence.resize(nSamples);
+  for ( size_t sampleIdx = 0; sampleIdx < nSamples; ++sampleIdx ) {
+    vector<string> predictionVec(nTrees);
+    for ( size_t treeIdx = 0; treeIdx < nTrees; ++treeIdx ) {
+      predictionVec[treeIdx] = rootNodes_[treeIdx]->getRawTestPrediction(testData,sampleIdx);
     }
+    predictions[sampleIdx] = math::mode(predictionVec);
+    confidence[sampleIdx] = 1.0 * math::nMismatches(predictionVec,predictions[sampleIdx]) / nSamples;
   }
-
-  transform(predictionMatrix.begin(),predictionMatrix.end(),predictions.begin(),math::mode<string>);
-
-  confidence.clear();
-  confidence.resize(nSamples,datadefs::NUM_NAN);
-
 }
 
-void StochasticForest::getPredictions(Treedata* testData, vector<num_t>& predictions, vector<num_t>& confidence) {
+void StochasticForest::predictWithTestData(Treedata* testData, vector<num_t>& predictions, vector<num_t>& confidence) {
 
+  //cout << "Here" << endl;
+
+  assert( this->isTargetNumerical() );
+  
   size_t nSamples = testData->nSamples();
   size_t nTrees = this->nTrees();
-  vector<vector<num_t> > predictionMatrix(nSamples,vector<num_t>(nTrees));
   predictions.resize(nSamples);
-  for ( size_t treeIdx = 0; treeIdx < nTrees; ++treeIdx ) {
-    for ( size_t sampleIdx = 0; sampleIdx < nSamples; ++sampleIdx ) {
-      predictionMatrix[sampleIdx][treeIdx] = rootNodes_[treeIdx]->getTestPrediction(testData,sampleIdx);
+  confidence.resize(nSamples);
+  for ( size_t sampleIdx = 0; sampleIdx < nSamples; ++sampleIdx ) {
+    vector<num_t> predictionVec(nTrees);
+    for ( size_t treeIdx = 0; treeIdx < nTrees; ++treeIdx ) {
+      //cout << "Here 2" << endl;
+      predictionVec[treeIdx] = rootNodes_[treeIdx]->getTestPrediction(testData,sampleIdx);
     }
+    predictions[sampleIdx] = math::mean(predictionVec);
+    confidence[sampleIdx] = sqrt(math::var(predictionVec,predictions[sampleIdx]));
   }
-
-  /*
-    for ( size_t sampleIdx = 0; sampleIdx < nSamples; ++sampleIdx ) {
-    datadefs::print(predictionMatrix[sampleIdx]);
-    }
-  */
-
-  transform(predictionMatrix.begin(),predictionMatrix.end(),predictions.begin(),math::mean);
-
-  confidence.clear();
-  confidence.resize(nSamples,datadefs::NUM_NAN);
-
 }
 
 vector<num_t> StochasticForest::getPredictions() {
   
   size_t nSamples = treeData_->nSamples();
   size_t nTrees = this->nTrees();
-  vector<vector<num_t> > predictionMatrix(nSamples,vector<num_t>(nTrees));
-  for ( size_t treeIdx = 0; treeIdx < nTrees; ++treeIdx ) {
-    for ( size_t sampleIdx = 0; sampleIdx < nSamples; ++sampleIdx ) {
-      predictionMatrix[sampleIdx][treeIdx] = rootNodes_[treeIdx]->getTrainPrediction(sampleIdx);
+  vector<num_t> predictions(nSamples);
+  for ( size_t sampleIdx = 0; sampleIdx < nSamples; ++sampleIdx ) {
+    vector<num_t> predictionVec(nTrees);
+    for ( size_t treeIdx = 0; treeIdx < nTrees; ++treeIdx ) {
+      predictionVec[treeIdx] = rootNodes_[treeIdx]->getTrainPrediction(sampleIdx);
     }
+    predictions[sampleIdx] = this->isTargetNumerical() ? math::mean(predictionVec) : math::mode(predictionVec);
   }
   
-  return( getPredictions(predictionMatrix) );
+  return( predictions );
 
 }
 
@@ -777,6 +752,7 @@ vector<num_t> StochasticForest::getOobPredictions() {
   size_t nSamples = treeData_->nSamples();
   size_t nTrees = this->nTrees();
   vector<vector<num_t> > predictionMatrix(nSamples);
+  vector<num_t> predictions(nSamples);
   for ( size_t treeIdx = 0; treeIdx < nTrees; ++treeIdx ) {
     vector<size_t> oobIcs = rootNodes_[treeIdx]->getOobIcs();
     for ( vector<size_t>::const_iterator it( oobIcs.begin() ); it != oobIcs.end(); ++it ) {
@@ -785,7 +761,11 @@ vector<num_t> StochasticForest::getOobPredictions() {
     }
   }
   
-  return( getPredictions(predictionMatrix) );
+  for ( size_t sampleIdx = 0; sampleIdx < nSamples; ++sampleIdx ) {
+    predictions[sampleIdx] = this->isTargetNumerical() ? math::mean(predictionMatrix[sampleIdx]) : math::mode(predictionMatrix[sampleIdx]);
+  }
+
+  return( predictions );
 
 }
 
@@ -794,6 +774,7 @@ vector<num_t> StochasticForest::getPermutedOobPredictions(const size_t featureId
   size_t nSamples = treeData_->nSamples();
   size_t nTrees = this->nTrees();
   vector<vector<num_t> > predictionMatrix(nSamples);
+  vector<num_t> predictions(nSamples);
   for ( size_t treeIdx = 0; treeIdx < nTrees; ++treeIdx ) {
     vector<size_t> oobIcs = rootNodes_[treeIdx]->getOobIcs();
     for ( vector<size_t>::const_iterator it( oobIcs.begin() ); it != oobIcs.end(); ++it ) {
@@ -802,8 +783,12 @@ vector<num_t> StochasticForest::getPermutedOobPredictions(const size_t featureId
     }
   }
 
-  return( getPredictions(predictionMatrix) );
+  for ( size_t sampleIdx = 0; sampleIdx < nSamples; ++sampleIdx ) {
+    predictions[sampleIdx] = this->isTargetNumerical() ? math::mean(predictionMatrix[sampleIdx]) : math::mode(predictionMatrix[sampleIdx]);
+  }
 
+  return( predictions );
+  
 }
 
 /**

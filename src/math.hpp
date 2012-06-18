@@ -85,6 +85,17 @@ namespace math {
     }
     return( maxElement->first );
   }
+
+  template<typename T>
+  size_t nMismatches(const vector<T>& x, const T& y) {
+    size_t count = 0;
+    for ( size_t i = 0; i < x.size(); ++i ) {
+      if ( x[i] != y ) {
+	++count;
+      }
+    }
+    return( count );
+  }
   
   template<typename T>
   map<T,map<T,size_t> > confusionMap(const vector<T>& x, const vector<T>& y) {

@@ -7,12 +7,21 @@ RootNode::RootNode(Treedata* treeData,
   Node(),
   treeData_(treeData),
   targetIdx_(targetIdx),
-  nNodes_(1),
-  trainPredictionCache_(treeData_->nSamples(),datadefs::NUM_NAN) { /* EMPTY CONSTRUCTOR */ }
+  nNodes_(1) {
+
+  trainPredictionCache_.clear();
+  
+  if ( treeData ) {
+    trainPredictionCache_.resize(treeData_->nSamples(),datadefs::NUM_NAN);    
+  } 
+  
+}
 
 RootNode::~RootNode() { /* EMPTY DESTRUCTOR */ }
 
 void RootNode::growTree(const GrowInstructions& GI) {
+
+  assert( treeData_ );
 
   GI.validate();
 
@@ -68,18 +77,23 @@ void RootNode::growTree(const GrowInstructions& GI) {
 }
 
 size_t RootNode::nNodes() {
+  assert( treeData_ );
   return( nNodes_ );
 }
 
 vector<size_t> RootNode::getOobIcs() {
+  assert( treeData_ );
   return( oobIcs_ );
 }
 
 size_t RootNode::nOobSamples() {
+  assert( treeData_ );
   return( oobIcs_.size() ); 
 }
 
 Node* RootNode::percolateSampleIdx(const size_t sampleIdx) {
+
+  assert( treeData_ );
 
   Node* nodep( this );
 
@@ -171,6 +185,8 @@ Node* RootNode::percolateSampleIdx(Treedata* testData, const size_t sampleIdx) {
 
 Node* RootNode::percolateSampleIdxAtRandom(const size_t featureIdx, const size_t sampleIdx) {
 
+  assert( treeData_ );
+  
   Node* nodep( this );
 
   while ( nodep->hasChildren() ) {
@@ -226,6 +242,8 @@ string RootNode::getRawTestPrediction(Treedata* testData, const size_t sampleIdx
 
 num_t RootNode::getTrainPrediction(const size_t sampleIdx) {
 
+  assert( treeData_ );
+
   // If we don't yet have a prediction for the sample index...
   if ( datadefs::isNAN(trainPredictionCache_[sampleIdx]) ) {
 
@@ -250,6 +268,8 @@ num_t RootNode::getTrainPrediction(const size_t sampleIdx) {
 num_t RootNode::getPermutedTrainPrediction(const size_t featureIdx, 
 					 const size_t sampleIdx) {
 
+  assert( treeData_ );
+
   // If we have the feature in the tree...
   if ( featuresInTree_.find(featureIdx) != featuresInTree_.end() ) {
 
@@ -264,6 +284,8 @@ num_t RootNode::getPermutedTrainPrediction(const size_t featureIdx,
 }
 
 vector<num_t> RootNode::getTrainPrediction() {
+
+  assert( treeData_ );
 
   size_t nSamples = treeData_->nSamples();
 

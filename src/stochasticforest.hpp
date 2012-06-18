@@ -14,7 +14,7 @@ public:
   StochasticForest(Treedata* treeData, options::General_options* parameters);
   
   // Load an existing forest
-  StochasticForest(Treedata* treeData, options::General_options* parameters, const string& forestFile);
+  StochasticForest(options::General_options* parameters);
 
   ~StochasticForest();
   
@@ -32,8 +32,8 @@ public:
 
   vector<num_t> getPredictions();
 
-  void getPredictions(Treedata* treeDataTest, vector<string>& prediction, vector<num_t>& confidence);
-  void getPredictions(Treedata* treeDataTest, vector<num_t>& prediction, vector<num_t>& confidence);
+  void predictWithTestData(Treedata* treeDataTest, vector<string>& predictions, vector<num_t>& confidence);
+  void predictWithTestData(Treedata* treeDataTest, vector<num_t>& predictions, vector<num_t>& confidence);
 
   vector<num_t> getOobPredictions();
   vector<num_t> getPermutedOobPredictions(const size_t featureIdx);
@@ -58,8 +58,8 @@ private:
   Node::GrowInstructions getGrowInstructions();
 
   // Summarizes predictions across samples and trees in the forest, stored in predictionMatrix
-  vector<num_t> getPredictions(const vector<vector<num_t> >& predictionMatrix);
-
+  //vector<num_t> getPredictions(const vector<vector<num_t> >& predictionMatrix, vector<num_t>& predictions, vector<num_t>& confidence);
+  
   void growNumericalGBT(const Node::GrowInstructions& GI);
   void growCategoricalGBT(const Node::GrowInstructions& GI);
 
