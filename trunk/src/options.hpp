@@ -27,12 +27,12 @@ namespace options {
   const char       GENERAL_DEFAULT_HEADER_DELIMITER = ':';
   const size_t     GENERAL_DEFAULT_MIN_SAMPLES = 5;
   const int        GENERAL_DEFAULT_SEED = -1;
-  const ForestType GENERAL_DEFAULT_FOREST_TYPE = RF;
+  const ForestType GENERAL_DEFAULT_MODEL_TYPE = RF;
 
   // Statistical test default configuration
   const size_t     ST_DEFAULT_N_PERMS = 20;
   const num_t      ST_DEFAULT_P_VALUE_THRESHOLD = 0.05;
-  const num_t      ST_DEFAULT_IMPORTANCE_THRESHOLD = 0;
+  const num_t      ST_DEFAULT_IMPORTANCE_THRESHOLD = 0.00001;
   const bool       ST_DEFAULT_REPORT_NONEXISTENT_FEATURES = false;
 
   // Random Forest default configuration
@@ -71,7 +71,7 @@ namespace options {
   // Determines the amount of indentation in help print-outs
   const size_t maxWidth = 17;
   
-  struct General_options {
+  class General_options {
 
   private:
     ArgParse* parser_;
@@ -86,6 +86,7 @@ namespace options {
     bool reportContrasts; const string reportContrasts_s; const string reportContrasts_l;
     string input; const string input_s; const string input_l;
     string output; const string output_s; const string output_l;
+    string forestInput; const string forestInput_s; const string forestInput_l;
     string targetStr; const string targetStr_s; const string targetStr_l;
     string whiteList; const string whiteList_s; const string whiteList_l;
     string blackList; const string blackList_s; const string blackList_l;
@@ -97,7 +98,7 @@ namespace options {
     int seed; string seed_s; string seed_l;
 
     // Forest Type
-    ForestType forestType; const string forestType_s; const string forestType_l;
+    ForestType modelType; const string modelType_s; const string modelType_l;
 
     // Random Forest related parameters
     size_t nTrees; const string nTrees_s; const string nTrees_l;
@@ -125,10 +126,11 @@ namespace options {
       recombinePerms(GENERAL_DEFAULT_RECOMBINE_PERMS),recombinePerms_s("R"),recombinePerms_l("recombine"),
       // I/O and general parameters
       printHelp(GENERAL_DEFAULT_PRINT_HELP),printHelp_s("h"),printHelp_l("help"),
-      isFilter(GENERAL_DEFAULT_IS_FILTER),isFilter_s("F"),isFilter_l("filter"),
+      isFilter(GENERAL_DEFAULT_IS_FILTER),isFilter_s("f"),isFilter_l("filter"),
       reportContrasts(GENERAL_DEFAULT_REPORT_CONTRASTS),reportContrasts_s("C"),reportContrasts_l("listAllContrasts"),
       input(""),input_s("I"),input_l("input"),
       output(""),output_s("O"),output_l("output"),
+      forestInput(""),forestInput_s("F"),forestInput_l("forestInput"),
       targetStr(""),targetStr_s("i"),targetStr_l("target"),
       whiteList(""),whiteList_s("W"),whiteList_l("whiteList"),
       blackList(""),blackList_s("B"),blackList_l("blackList"),
@@ -139,7 +141,7 @@ namespace options {
       pruneFeatures(GENERAL_DEFAULT_MIN_SAMPLES),pruneFeatures_s("X"),pruneFeatures_l("pruneFeatures"),
       seed(GENERAL_DEFAULT_SEED),seed_s("S"),seed_l("seed"),
       // Forest Type
-      forestType(GENERAL_DEFAULT_FOREST_TYPE),forestType_s("f"),forestType_l("forestType"),
+      modelType(GENERAL_DEFAULT_MODEL_TYPE),modelType_s("M"),modelType_l("modelType"),
       // Random Forest related parameters
       // NOTE: Defaults will be loaded inside the constructor
       nTrees_s("n"),nTrees_l("nTrees"),
@@ -156,11 +158,11 @@ namespace options {
       
       parser_ = new ArgParse(argc,argv);
 
-      if ( forestType == RF ) {
+      if ( modelType == RF ) {
 	setRFDefaults(); 
-      } else if ( forestType == GBT ) {
+      } else if ( modelType == GBT ) {
 	setGBTDefaults();
-      } else if ( forestType == CART ) {
+      } else if ( modelType == CART ) {
 	setCARTDefaults();
       } 
     }
@@ -174,26 +176,26 @@ namespace options {
     void loadUserParams() {
 
       // If forest type is explicitly specified, update it
-      if ( this->isSet(forestType_s,forestType_l) ) {
-        string forestTypeAsStr("");
-        parser_->getArgument<string>(forestType_s, forestType_l, forestTypeAsStr);
-        if ( forestTypeAsStr == "RF" ) {
-          forestType = RF;
-        } else if ( forestTypeAsStr == "GBT" ) {
-          forestType = GBT;
-        } else if ( forestTypeAsStr == "CART" ) {
-          forestType = CART;
+      if ( this->isSet(modelType_s,modelType_l) ) {
+        string modelTypeAsStr("");
+        parser_->getArgument<string>(modelType_s, modelType_l, modelTypeAsStr);
+        if ( modelTypeAsStr == "RF" ) {
+          modelType = RF;
+        } else if ( modelTypeAsStr == "GBT" ) {
+          modelType = GBT;
+        } else if ( modelTypeAsStr == "CART" ) {
+          modelType = CART;
         } else {
           cerr << "Invalid Forest Type!" << endl;
           exit(1);
         }
       }
 
-      if ( forestType == RF ) {
+      if ( modelType == RF ) {
         setRFDefaults();
-      } else if ( forestType == GBT ) {
+      } else if ( modelType == GBT ) {
         setGBTDefaults();
-      } else if ( forestType == CART ) {
+      } else if ( modelType == CART ) {
 	setCARTDefaults();
       } else {
 	cerr << "Unknown forest type!" << endl;
@@ -211,6 +213,7 @@ namespace options {
       parser_->getArgument<string>(input_s, input_l, input);
       parser_->getArgument<string>(targetStr_s, targetStr_l, targetStr);
       parser_->getArgument<string>(output_s, output_l, output);
+      parser_->getArgument<string>(forestInput_s, forestInput_l, forestInput);
       parser_->getArgument<string>(whiteList_s, whiteList_l, whiteList);
       parser_->getArgument<string>(blackList_s, blackList_l, blackList);
       parser_->getArgument<string>(predictionData_s, predictionData_l, predictionData);
@@ -318,15 +321,15 @@ namespace options {
       cout << printOpt(seed_s,seed_l) << "= " << seed << endl;
       cout << endl;
 
-      if(forestType == options::RF ) { 
+      if(modelType == options::RF ) { 
 	cout << "Random Forest configuration:" << endl;
 	cout << printOpt(nTrees_s,nTrees_l) << "= " << nTrees << endl;
 	cout << printOpt(mTry_s,mTry_l) << "= " << mTry << endl;
-      } else if(forestType == options::GBT ) { 
+      } else if(modelType == options::GBT ) { 
 	cout << "Gradient Boosting Trees configuration:" << endl;
 	cout << printOpt(nTrees_s,nTrees_l) << "= " << nTrees << endl;
 	cout << printOpt(shrinkage_s,shrinkage_l) << "= " << shrinkage << endl;
-      } else if(forestType == options::CART ) { 
+      } else if(modelType == options::CART ) { 
 	cout << "CART configuration:" << endl;
       }      
       cout << printOpt(nMaxLeaves_s,nMaxLeaves_l) << "= " << nMaxLeaves << endl;
@@ -336,8 +339,8 @@ namespace options {
       if ( isFilter ) {
 	cout << "Filter configuration:" << endl;
 	cout << printOpt(nPerms_s,nPerms_l) << "= " << nPerms << endl;
-	cout << printOpt(pValueThreshold_s,pValueThreshold_l) << "= " << pValueThreshold << " (lower limit)" <<endl;
-	cout << printOpt(importanceThreshold_s,importanceThreshold_l) << "= " << importanceThreshold << " (upper limit)" << endl;
+	cout << printOpt(pValueThreshold_s,pValueThreshold_l) << "= " << pValueThreshold << " (upper limit)" <<endl;
+	cout << printOpt(importanceThreshold_s,importanceThreshold_l) << "= " << importanceThreshold << " (lower limit)" << endl;
 	cout << endl;
       }
       
@@ -369,11 +372,13 @@ namespace options {
 
       cout << "GENERAL ARGUMENTS:" << endl;
       cout << " -" << input_s << " / --" << input_l << setw( maxWidth - input_l.size() )
-           << " " << "Input data file (.afm or .arff) or predictor forest file (.sf)" << endl;
+           << " " << "Input data file (.afm or .arff)" << endl;
       cout << " -" << targetStr_s << " / --" << targetStr_l << setw( maxWidth - targetStr_l.size() )
            << " " << "Target, specified as integer or string that is to be matched with the content of input" << endl;
       cout << " -" << output_s << " / --" << output_l << setw( maxWidth - output_l.size() )
            << " " << "Output file" << endl;
+      cout << " -" << forestInput_s << " / --" << forestInput_l << setw( maxWidth - forestInput_l.size() )
+	   << " " << "[Prediction only] Forest input file (.sf), for making predictions" << endl;
       cout << " -" << predictionData_s << " / --" << predictionData_l << setw( maxWidth - predictionData_l.size() )
 	   << " " << "[Prediction only] Test data file (.afm or .arff) for prediction" << endl;
       cout << " -" << log_s << " / --" << log_l << setw( maxWidth - log_l.size() )
@@ -390,8 +395,8 @@ namespace options {
            << " " << "Features with less than n ( default " << GENERAL_DEFAULT_MIN_SAMPLES << " ) samples will be removed" << endl;
       cout << " -" << seed_s << " / --" << seed_l << setw( maxWidth - seed_l.size() ) 
 	   << " " << "Seed (positive integer) for the Mersenne Twister random number generator" << endl;
-      cout << " -" << forestType_s << " / --" << forestType_l << setw( maxWidth - forestType_l.size() )
-	   << " " << "Forest Type: RF (default), GBT, or CART" << endl;
+      cout << " -" << modelType_s << " / --" << modelType_l << setw( maxWidth - modelType_l.size() )
+	   << " " << "Model Type: RF (default), GBT, or CART" << endl;
       cout << endl;
 
       cout << "STOCHASTIC FOREST ARGUMENTS:" << endl;
@@ -437,12 +442,13 @@ namespace options {
 	   << "bin/rf-ace -I data.arff -i target -O rf_predictor.sf" << endl << endl;
 
       cout << "Loading Random Forest predictor from file and predicting with test data:" << endl
-	   << "bin/rf-ace -I predictor.sf -T testdata.arff -O predictions.tsv" << endl << endl;
+	   << "bin/rf-ace -F rf_predictor.sf -T testdata.arff -O predictions.tsv" << endl << endl;
       
     }
     
     void setRFDefaults() {
 
+      modelType             = RF;
       inBoxFraction         = RF_DEFAULT_IN_BOX_FRACTION;
       sampleWithReplacement = RF_DEFAULT_SAMPLE_WITH_REPLACEMENT;
       isRandomSplit         = RF_DEFAULT_IS_RANDOM_SPLIT;
@@ -456,6 +462,7 @@ namespace options {
 
     void setGBTDefaults() {
 
+      modelType             = GBT;
       inBoxFraction         = GBT_DEFAULT_IN_BOX_FRACTION;
       sampleWithReplacement = GBT_DEFAULT_SAMPLE_WITH_REPLACEMENT;
       isRandomSplit         = GBT_DEFAULT_IS_RANDOM_SPLIT;
@@ -470,6 +477,7 @@ namespace options {
 
     void setCARTDefaults() {
 
+      modelType             = CART;
       inBoxFraction         = CART_DEFAULT_IN_BOX_FRACTION;
       sampleWithReplacement = CART_DEFAULT_SAMPLE_WITH_REPLACEMENT;
       isRandomSplit         = CART_DEFAULT_IS_RANDOM_SPLIT;

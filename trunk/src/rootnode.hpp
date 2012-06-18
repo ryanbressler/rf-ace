@@ -36,7 +36,7 @@ public:
 
   set<size_t> getFeaturesInTree() { return(featuresInTree_); }
 
-  //num_t getImportance(const size_t featureIdx);
+  //Treedata* trainData() { return(&treeData_); }
 
 #ifndef TEST__
 private:
