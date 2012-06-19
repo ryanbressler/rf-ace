@@ -532,10 +532,6 @@ void printAssociationsToFile(options::General_options& gen_op,
 
   size_t nFeatures = featureIcs.size();
 
-  if ( gen_op.isAdjustedPValue ) {
-    cout << "Adjusting p-value" << endl;
-  }
-
   for ( size_t i = 0; i < nFeatures; ++i ) {
 
     num_t pValue = gen_op.isAdjustedPValue ? pValues[i] * nFeatures / ( i + 1 ) : pValues[i];
