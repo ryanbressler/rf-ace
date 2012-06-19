@@ -303,7 +303,7 @@ statistics::RF_statistics executeRandomForest(Treedata& treeData,
 
     // If sample size is too small, assign p-value to 1.0
     if ( featureImportanceSample.size() < 5 ) {
-
+      
       pValues[featureIdx] = 1.0;
 
     } else {
@@ -413,21 +413,24 @@ void rf_ace(options::General_options& gen_op) {
 
       cout << "DONE" << endl << endl;
 
-      cout << "Prediction file '" << gen_op.output << "' created. Format:" << endl;
-      cout << "TARGET   SAMPLE_ID     PREDICTION    CONFIDENCE" << endl;
-      cout << endl;
-
-      cout << "RF-ACE completed successfully." << endl;
-      cout << endl;
-
+      cout << "Prediction file '" << gen_op.output << "' created. Format:" << endl
+	   << "TARGET   SAMPLE_ID  TRUE_DATA(*)  PREDICTION    CONFIDENCE(**)" << endl
+	   << endl
+	   << "  (*): should target variable have true data for test samples, write them," << endl
+	   << "       otherwise write NA" << endl
+	   << " (**): confidence is the st.dev for regression and % of mispred. for classification" << endl
+	   << endl
+	   << "RF-ACE completed successfully." << endl
+	   << endl;
+      
     } else {
       
       cout << "===> Writing predictor to file... " << flush;
       SF.printToFile( gen_op.output );
-      cout << "DONE" << endl << endl;
-
-      cout << "RF-ACE predictor built and saved to a file." << endl;
-      cout << endl;
+      cout << "DONE" << endl 
+	   << endl
+	   << "RF-ACE predictor built and saved to a file '" << gen_op.output << "'" << endl
+	   << endl;
 
     }
 
