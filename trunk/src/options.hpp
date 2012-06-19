@@ -32,6 +32,7 @@ namespace options {
   // Statistical test default configuration
   const size_t     ST_DEFAULT_N_PERMS = 20;
   const num_t      ST_DEFAULT_P_VALUE_THRESHOLD = 0.05;
+  const bool       ST_DEFAULT_IS_ADJUSTED_P_VALUE = false;
   const num_t      ST_DEFAULT_IMPORTANCE_THRESHOLD = 0.00001;
   const bool       ST_DEFAULT_REPORT_NONEXISTENT_FEATURES = false;
 
@@ -116,6 +117,7 @@ namespace options {
     // Statistical test related parameters
     size_t nPerms; const string nPerms_s; const string nPerms_l;
     num_t pValueThreshold; const string pValueThreshold_s; const string pValueThreshold_l;
+    bool isAdjustedPValue; const string isAdjustedPValue_s; const string isAdjustedPValue_l;
     num_t importanceThreshold; const string importanceThreshold_s; const string importanceThreshold_l;
     bool reportAllFeatures; const string reportAllFeatures_s; const string reportAllFeatures_l;
 
@@ -152,6 +154,7 @@ namespace options {
       // Statistical test related parameters
       nPerms(ST_DEFAULT_N_PERMS),nPerms_s("p"),nPerms_l("nPerms"),
       pValueThreshold(ST_DEFAULT_P_VALUE_THRESHOLD),pValueThreshold_s("t"),pValueThreshold_l("pValueTh"),
+      isAdjustedPValue(ST_DEFAULT_IS_ADJUSTED_P_VALUE),isAdjustedPValue_s("d"),isAdjustedPValue_l("adjustP"),
       importanceThreshold(ST_DEFAULT_IMPORTANCE_THRESHOLD),importanceThreshold_s("o"),importanceThreshold_l("importanceTh"),
       reportAllFeatures(ST_DEFAULT_REPORT_NONEXISTENT_FEATURES),reportAllFeatures_s("A"),reportAllFeatures_l("listAllFeatures") 
     { 
@@ -247,6 +250,7 @@ namespace options {
       // Statistical test parameters
       parser_->getArgument<size_t>(nPerms_s, nPerms_l, nPerms);
       parser_->getArgument<num_t>(pValueThreshold_s,  pValueThreshold_l,  pValueThreshold);
+      parser_->getFlag(isAdjustedPValue_s, isAdjustedPValue_l, isAdjustedPValue);
       parser_->getArgument<num_t>(importanceThreshold_s, importanceThreshold_l, importanceThreshold);
       parser_->getFlag(reportAllFeatures_s, reportAllFeatures_l, reportAllFeatures);
 
@@ -421,6 +425,8 @@ namespace options {
            << " " << "[Filter only] P-value threshold in statistical test (default " << ST_DEFAULT_P_VALUE_THRESHOLD << ")" << endl;
       cout << " -" << importanceThreshold_s << " / --" << importanceThreshold_l << setw( maxWidth - importanceThreshold_l.size() )
 	   << " " << "[Filter only] Importance threshold in statistical test (default " << ST_DEFAULT_IMPORTANCE_THRESHOLD << ")" << endl;
+      cout << " -" << isAdjustedPValue_s << " / --" << isAdjustedPValue_l << setw( maxWidth - isAdjustedPValue_l.size() ) 
+	   << " " << "[Filter only] set this flag if wou want Benjamini-Hochberg multiple testing correction (default OFF)" << endl;
       cout << " -" << reportAllFeatures_s << " / --" << reportAllFeatures_l << setw( maxWidth - reportAllFeatures_l.size() )
            << " " << "[Filter only] Set this flag if you want the association file to list all features regardless of statistical significance (default OFF)" << endl; 
       cout << " -" << reportContrasts_s << " / --" << reportContrasts_l << setw( maxWidth - reportContrasts_l.size() )

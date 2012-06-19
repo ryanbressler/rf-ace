@@ -511,14 +511,11 @@ void printAssociationsToFile(options::General_options& gen_op,
   assert( featureNames.size() == sampleCounts.size() );
 
   ofstream toAssociationFile(gen_op.output.c_str());
-  //toAssociationFile.precision(8);
 
   // Initialize mapping vector to identity mapping: range 0,1,...,N-1
   // NOTE: when not sorting we use the identity map, otherwise the sorted map
   vector<size_t> featureIcs = utils::range( featureNames.size() );
 
-  // If we prefer sorting the outputs wrt. significance (either p-value or importance)
-  //if ( !gen_op.noSort ) {
   // If there are more than one permutation, we can compute the p-values and thus sort wrt. them
   if ( gen_op.nPerms > 1 ) {
     bool isIncreasingOrder = true;
@@ -532,18 +529,20 @@ void printAssociationsToFile(options::General_options& gen_op,
   datadefs::sortFromRef<string>(featureNames,featureIcs);
   datadefs::sortFromRef<num_t>(correlations,featureIcs);
   datadefs::sortFromRef<size_t>(sampleCounts,featureIcs);
-  //}
-
-  //assert( gen_op.targetStr == treeData.getFeatureName(targetIdx) );
-
-  //size_t nSignificantFeatures = 0;
 
   size_t nFeatures = featureIcs.size();
 
+  if ( gen_op.isAdjustedPValue ) {
+    cout << "Adjusting p-value" << endl;
+  }
+
   for ( size_t i = 0; i < nFeatures; ++i ) {
 
+    num_t pValue = gen_op.isAdjustedPValue ? pValues[i] * nFeatures / ( i + 1 ) : pValues[i];
+    pValue = pValue > 1.0 ? 1.0 : pValue;
+
     toAssociationFile << gen_op.targetStr.c_str() << "\t" << featureNames[i]
-                      << "\t" << scientific << pValues[i] << "\t" << scientific << importanceValues[i] << "\t"
+                      << "\t" << scientific << pValue << "\t" << scientific << importanceValues[i] << "\t"
 		      << scientific << correlations[i] << "\t" << sampleCounts[i] << endl;
 
   }
