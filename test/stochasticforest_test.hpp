@@ -26,33 +26,35 @@ public:
 
 private:
 
-  Treedata* trainData_;
-  options::General_options* genOp_;
-  StochasticForest* CART_;
+  //Treedata* trainData_;
+  //options::General_options* genOp_;
+  //StochasticForest* CART_;
 
 };
 
 void StochasticForestTest::setUp() {
 
-  trainData_ = new Treedata("test_103by300_mixed_matrix.afm",'\t',':');
-
-  genOp_ = new options::General_options;
-  
-  genOp_->setCARTDefaults();
-  
-  genOp_->nTrees = 1;
-  genOp_->nMaxLeaves = 1000;
-  genOp_->nodeSize = 5;
-
-  CART_ = new StochasticForest(trainData_,genOp_);
+  /*
+    trainData_ = new Treedata("test_103by300_mixed_matrix.afm",'\t',':');
+    
+    genOp_ = new options::General_options;
+    
+    genOp_->setCARTDefaults();
+    
+    genOp_->nTrees = 1;
+    genOp_->nMaxLeaves = 1000;
+    genOp_->nodeSize = 5;
+    
+    CART_ = new StochasticForest(trainData_,genOp_);
+  */
 
 }
 
 void StochasticForestTest::tearDown() {
 
-  delete CART_;
-  delete trainData_;
-  delete genOp_;
+  //delete CART_;
+  //delete trainData_;
+  //delete genOp_;
   
 }
 

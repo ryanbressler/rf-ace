@@ -53,6 +53,29 @@ num_t math::percentile(vector<num_t> x,
   
 }
 
+void math::adjustPValues(vector<num_t>& pValues, const size_t nTests) {
+
+  num_t previousPValue = 0.0;
+
+  for ( size_t i = 0; i < pValues.size(); ++i ) {
+    
+    pValues[i] *= nTests / ( i + 1 );
+    
+    if ( pValues[i] > 1.0 ) {
+      pValues[i] = 1.0;
+    }
+    
+    if ( pValues[i] < previousPValue ) {
+      pValues[i] = previousPValue;
+    } else {
+      previousPValue = pValues[i];
+    }
+    
+  }
+  
+}
+
+
 /**
    Two-sample t-test
 */
