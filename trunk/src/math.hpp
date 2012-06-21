@@ -25,6 +25,8 @@ namespace math {
   */
   num_t erf(num_t x);
 
+  void adjustPValues(vector<num_t>& pValues, const size_t nTests);
+
   /**
      Two-sample t-test
      NOTE: see http://en.wikipedia.org/wiki/Student's_t-test
