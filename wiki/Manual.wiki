@@ -1,6 +1,6 @@
 #summary Manual pages.
 
-*The manual pages have been written on the basis of RF-ACE version 1.0*
+*The manual pages have been written on the basis of RF-ACE version 1.0.5*
 
 = Description =
 
@@ -26,17 +26,7 @@ or
 {{{
 make_win64
 }}}
-Simple as that! You should now have the following binaries:
-
-*`rf-ace-filter`*
-  * performs feature selection with an ensemble Random Forest approach
-  * extracts p-values for associations
-  * can be used for dimensionality reduction in subsequent prediction
-*`rf-ace-build-predictor`* 
-  * builds either a GBT (default) or RF predictor based on input data
-  * stores the predictor forest as a forest file (.sf)
-*`rf-ace-predict`* 
-  * makes predictions with novel data, given a predictor (.sf)
+Simple as that! 
 
 If you feel lucky, check for compiled binaries at the [http://code.google.com/p/rf-ace/downloads/list download page]. 
 
@@ -61,6 +51,7 @@ Missing values can be any upper/lowercase combination of
 
  * NA
  * NAN
+ * NULL
  * ?
 
 And binary/categorical features may have string literal entries. Here is an example of a valid AFM:
@@ -68,13 +59,11 @@ And binary/categorical features may have string literal entries. Here is an exam
 	S1	S2	S3	S4	S5	S6	S7	S8	S9	S10
 N:F1	NA	8.5	3.4	7.2	5	6	7	11	9	NA
 N:F2	2	3	4	5	6	NA	NA	9	NA	10
-B:F3	NA	NA	NA	NA	DEAD	DEAD	DEAD	ALIVE	ALIVE	ALIVE
+B:F3	NA	NA	NA	NA	MALE	FEMALE	MALE	MALE	MALE	FEMALE
 N:F4	10	9.9	8	7	6	5	4	3	2.4	1
 C:F5	3	3	3	4	4	5	3	2	2	2
 N:F6	9	8	7	9	8	7	3	2	1.0	99.23
 }}}
-
-
 
 * Attribute-Relation File Format (ARFF) *
 
@@ -84,34 +73,30 @@ Read more about [http://www.cs.waikato.ac.nz/~ml/weka/arff.html ARFF specificati
 
 
 = Identify important features from data using RF-ACE = 
-RF-ACE performs feature selection for a given target and feature matrix using the `rf-ace-filter` sub-program as follows:
+RF-ACE performs feature selection for a given target and feature matrix using `rf-ace` as follows:
 {{{
-bin/rf-ace-filter -I data.arff -i target -O associations.tsv
+bin/rf-ace --filter -I data.arff -i target -O associations.tsv
 }}}   
-The parameter `-I / --traindata` is used to specify the feature matrix, `-i / --target` to specify the target, and `-O / --associations` to specify the output file for associations. The format of the association list is as follows (one entry per row):
+The parameter `-I / --traindata` is used to specify the feature matrix, `-i / --target` to specify the target, and `-O / --associations` to specify the output file for associations. `-F / --filter` specifies that we do feature selection instead of data prediction. The format of the association list is as follows (one entry per row):
 {{{
-TARGET    PREDICTOR    LOG10(P-VALUE)    IMPORTANCE    CORRELATION    NSAMPLES
+TARGET    PREDICTOR    P-VALUE    IMPORTANCE    CORRELATION    NSAMPLES
 }}} 
 where `NSAMPLES` is the number of non-missing samples shared by the target and predictor. There will be one such entry (row) per each identified, statistically significant association, sorted by p-value to increasing order. 
 
 == Giving target feature as an integer ==
 It is possible to replace the name of the feature as the argument for `-i / --target` with a `0`-base integer pointing to the proper row/column of the data file. So valid arguments for `-i` are `0,1,...,N-1`, where `N-1` is the number of features in the input data file. The following command would take the first feature in the file as the target feature and regard others as candidate predictors:
 {{{
-bin/rf-ace-filter -I data.arff -i 0 -O associations.tsv
+bin/rf-ace --filter -I data.arff -i 0 -O associations.tsv
 }}}
 
 == Tuning parameters of the statistical test ==
-By default `rf-ace-filter` assigns the p-value threshold to `0.05`, but which can be manually tuned by the `-t / --pthreshold` parameter like so:
+By default `rf-ace` assigns the p-value threshold to `0.05`, but which can be manually tuned by the `-t / --pthreshold` parameter like so:
 {{{
-bin/rf-ace-filter -I data.arff -i target -O associations.tsv -t 0.001
+bin/rf-ace --filter -I data.arff -i target -O associations.tsv -t 0.001
 }}}
-It is thus possible to get the complete association list, sorted with respect to p-value, by setting the p-value threshold to `1.0` like so
-{{{
-bin/rf-ace-filter -I data.arff -i target -O associations.tsv -t 1.0
-}}}  
 If you would like to have more permutations (default `20`) sampled for the t-test, you can do that using the parameter `-p / --nperms` like so:
 {{{
-bin/rf-ace-filter -I data.arff -i target -O associations.tsv -p 50
+bin/rf-ace --filter -I data.arff -i target -O associations.tsv -p 50
 }}}
 In many circumstances, however, it is not recommended to reduce the number of permutations; consider `20` to be the lower limit at which the statistical test behaves robustly across wide range of situations. If RF-ACE recognizes the number of permutations is not sufficient for the t-test, an error will be raised and the program exits; increasing the number of permutations for the t-test will most likely remedy the issue.
 
@@ -120,15 +105,11 @@ In many circumstances, however, it is not recommended to reduce the number of pe
 === Removing features with too few samples overlapping with the target ===
 As the input data can be sparse, and depending on which target has been selected, it may become favorable to remove features that are too sparse for reliable analysis. By default `rf-ace-filter` removes features with less than `5` non-missing samples shared by the feature and target, but which can be set to any other value using the parameter `-X / --pruneFeatures` like so:
 {{{
-bin/rf-ace-filter -I data.arff -i target -O associations.tsv -X 60
+bin/rf-ace --filter -I data.arff -i target -O associations.tsv -X 60
 }}}
 which would thus cause features with less than `60` intersecting non-missing samples to be removed from analysis.
 === Blacklisting features ===
 In some cases the input data contains features that for some reason are not suited for as predictors, but whose explicit removal from the input data may be unfavorable. If that is the case, then one can invoke the blacklisting parameter `-B / --blacklist` like so:
 {{{
-bin/rf-ace-filter -I data.arff -i target -O associations.tsv -B blacklist.txt
+bin/rf-ace --filter -I data.arff -i target -O associations.tsv -B blacklist.txt
 }}} 
-
-== `rf-ace-build-predictor` ==
-
-== `rf-ace-predict` ==
