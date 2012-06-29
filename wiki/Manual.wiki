@@ -101,7 +101,7 @@ bin/rf-ace --filter -I data.arff -i target -O associations.tsv -p 50
 In many circumstances, however, it is not recommended to reduce the number of permutations; consider `20` to be the lower limit at which the statistical test behaves robustly across wide range of situations. If RF-ACE recognizes the number of permutations is not sufficient for the t-test, an error will be raised and the program exits; increasing the number of permutations for the t-test will most likely remedy the issue.
 
 == Trimming feature space ==
-`rf-ace-filter` provides a suite of tools to remove features from the candidate list of predictors under specified conditions. 
+`rf-ace` provides a suite of tools to remove features from the candidate list of predictors under specified conditions. 
 === Removing features with too few samples overlapping with the target ===
 As the input data can be sparse, and depending on which target has been selected, it may become favorable to remove features that are too sparse for reliable analysis. By default `rf-ace-filter` removes features with less than `5` non-missing samples shared by the feature and target, but which can be set to any other value using the parameter `-X / --pruneFeatures` like so:
 {{{
