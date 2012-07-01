@@ -191,14 +191,7 @@ void StochasticForest::printToFile(const string& fileName) {
   
   vector<string> categories = treeData_->categories(targetIdx);
 
-  cout << "nCategories: " << categories.size() << endl;
-  cout << "categories: ";
-  datadefs::print(categories);
-  cout << endl;
-
   string categoriesStr = utils::join(categories.begin(),categories.end(),',');
-
-  cout << "categoriesStr: " << categoriesStr << endl;
 
   toFile << ",TARGET=" << "\"" << parameters_->targetStr << "\"";
   toFile << ",NTREES=" << parameters_->nTrees;
