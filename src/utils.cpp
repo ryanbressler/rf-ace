@@ -31,20 +31,27 @@ string utils::num2str(const num_t x) {
   
 }
 
-// Makes a copy of the string, chomps, and returns
-string utils::chomp(const string& str) {
+// Removes all newline and any trailing characters
+string utils::chomp(const string& str, const string& nl) {
   
-  // Chop at the first newline character, if it exists
-  int crIdx = str.find("\r");
-  int lfIdx = str.find("\n");
-  int terminatorIdx = crIdx;
-  if (lfIdx != -1 && lfIdx < crIdx) {
-    terminatorIdx = lfIdx;
+  size_t endStr = str.find_first_of(nl);
+  return( str.substr(0, endStr) );
+
+}
+
+// Remove all leading and trailing whitespaces
+string utils::trim(const string& str, const string& wh) {
+  
+  size_t beginStr = str.find_first_not_of(wh);
+  if ( beginStr == string::npos ) {
+    // no content
+    return("");
   }
+
+  size_t endStr = str.find_last_not_of(wh);
+  size_t range = endStr - beginStr + 1;
   
-  string ret(str);
-  
-  return( terminatorIdx != -1 ? ret.substr(0,terminatorIdx) : ret );
+  return( str.substr(beginStr, range) );
 }
 
 set<string> utils::keys(const string& str, const char delimiter) {
@@ -120,18 +127,18 @@ map<string,string> utils::parse(istream& streamObj,
 
 }
 
-vector<string> utils::split(const string& str, const char delimiter) {
+vector<string> utils::split(const string& str, const char delimiter, const string& wh) {
   stringstream streamObj(str);
-  return( utils::split(streamObj,delimiter) );
+  return( utils::split(streamObj,delimiter,wh) );
 }
 
-vector<string> utils::split(istream& streamObj, const char delimiter) {
+vector<string> utils::split(istream& streamObj, const char delimiter, const string& wh) {
 
   string newItem("");
   vector<string> items;
 
   while ( getline(streamObj,newItem,delimiter) ) {
-    newItem = utils::chomp(newItem);
+    newItem = utils::trim(newItem,wh);
     items.push_back(newItem);
   }
 

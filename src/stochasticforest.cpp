@@ -78,6 +78,8 @@ StochasticForest::StochasticForest(options::General_options* parameters):
   assert( forestSetup.find("CATEGORIES") != forestSetup.end() );
   targetSupport_ = utils::split(forestSetup["CATEGORIES"],',');
 
+  bool isTargetNumerical = targetSupport_.size() == 0;
+
   assert( forestSetup.find("SHRINKAGE") != forestSetup.end() );
   parameters_->shrinkage = utils::str2<num_t>(forestSetup["SHRINKAGE"]);
   
@@ -117,10 +119,15 @@ StochasticForest::StochasticForest(options::General_options* parameters):
       
     Node* nodep = forestMap[treeIdx][nodeMap["NODE"]];
 
-    string rawPrediction = nodeMap["PRED"];
+    string rawTrainPrediction = nodeMap["PRED"];
+    num_t trainPrediction = datadefs::NUM_NAN;
 
+    if ( isTargetNumerical ) {
+      trainPrediction = utils::str2<num_t>(rawTrainPrediction);
+    }
+    
     // Set train prediction of the node
-    nodep->setTrainPrediction(utils::str2<num_t>(rawPrediction), rawPrediction);
+    nodep->setTrainPrediction(trainPrediction, rawTrainPrediction);
     
     // If the node has a splitter...
     if ( nodeMap.find("SPLITTER") != nodeMap.end() ) {
@@ -166,7 +173,6 @@ StochasticForest::~StochasticForest() {
 }
 
 /* Prints the forest into a file, so that the forest can be loaded for later use (e.g. prediction).
- * This function still lacks most of the content. 
  */
 void StochasticForest::printToFile(const string& fileName) {
 
@@ -185,7 +191,14 @@ void StochasticForest::printToFile(const string& fileName) {
   
   vector<string> categories = treeData_->categories(targetIdx);
 
+  cout << "nCategories: " << categories.size() << endl;
+  cout << "categories: ";
+  datadefs::print(categories);
+  cout << endl;
+
   string categoriesStr = utils::join(categories.begin(),categories.end(),',');
+
+  cout << "categoriesStr: " << categoriesStr << endl;
 
   toFile << ",TARGET=" << "\"" << parameters_->targetStr << "\"";
   toFile << ",NTREES=" << parameters_->nTrees;
