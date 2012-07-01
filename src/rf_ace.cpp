@@ -423,7 +423,6 @@ void rf_ace(options::General_options& gen_op) {
       printPredictionToFile(SF,treeDataTest,gen_op.targetStr,gen_op.output);
 
       cout << "DONE" << endl << endl;
-
       cout << "Prediction file '" << gen_op.output << "' created. Format:" << endl
 	   << "TARGET   SAMPLE_ID  TRUE_DATA(*)  PREDICTION    CONFIDENCE(**)" << endl
 	   << endl
@@ -459,8 +458,6 @@ void rf_ace(options::General_options& gen_op) {
     exit(1);
   }
 
-  cout << "Yay, selected the right branch!" << endl;
-
   StochasticForest SF(&gen_op);
 
   cout << "===> Making predictions with test data... " << flush;
@@ -470,13 +467,15 @@ void rf_ace(options::General_options& gen_op) {
   printPredictionToFile(SF,treeDataTest,gen_op.targetStr,gen_op.output);
 
   cout << "DONE" << endl << endl;
-
-  cout << "Prediction file '" << gen_op.output << "' created. Format:" << endl;
-  cout << "TARGET   SAMPLE_ID     PREDICTION    CONFIDENCE" << endl;
-  cout << endl;
-
-  cout << "RF-ACE completed successfully." << endl;
-  cout << endl;
+  cout << "Prediction file '" << gen_op.output << "' created. Format:" << endl
+       << "TARGET   SAMPLE_ID  TRUE_DATA(*)  PREDICTION    CONFIDENCE(**)" << endl
+       << endl
+       << "  (*): should target variable have true data for test samples, write them," << endl
+       << "       otherwise write NA" << endl
+       << " (**): confidence is the st.dev for regression and % of mispred. for classification" << endl
+       << endl
+       << "RF-ACE completed successfully." << endl
+       << endl;
 
 }
 
