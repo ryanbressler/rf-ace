@@ -112,6 +112,10 @@ void datadefs::strv2catv(const vector<string>& strvec,
     for(map<string,num_t>::const_iterator it(mapping.begin()); it != mapping.end(); ++it) {
       cout << "mapping[" << it->first << "] => " << it->second << " => " << backMapping[ it->second ] << endl;  		    
     }
+    cout << "backMapping:" << endl;
+    for ( map<num_t,string>::const_iterator it(backMapping.begin()); it != backMapping.end(); ++it ) {
+      cout << "backMapping[" << it->first << "] => " << it->second << " => " << mapping[ it->second ] << endl;
+    }
   }
 
 }

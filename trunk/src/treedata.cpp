@@ -304,6 +304,7 @@ void Treedata::readAFM(ifstream& featurestream,
     vector<string> rawVector(nColumns);
     for(size_t i = 0; i < nColumns; ++i) {
       getline(ss,rawVector[i],dataDelimiter_);
+      rawVector[i] = utils::trim(rawVector[i]);
     }
     assert(!ss.fail());
     assert(ss.eof());

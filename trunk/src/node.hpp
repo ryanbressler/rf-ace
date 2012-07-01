@@ -42,7 +42,7 @@ public:
   Node* percolateData(const num_t data);
   Node* percolateData(const string& data);
 
-  void setTrainPrediction(const num_t trainPrediction, const string& rawTrainPrediction = datadefs::STR_NAN );
+  void setTrainPrediction(const num_t trainPrediction, const string& rawTrainPrediction );
   
   num_t getTrainPrediction();
   string getRawTrainPrediction();

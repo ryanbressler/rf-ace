@@ -178,7 +178,7 @@ Node* Node::rightChild() {
  */
 void Node::print(string& traversal, ofstream& toFile) {
 
-  toFile << "NODE=" << traversal << ",PRED=" << trainPrediction_;
+  toFile << "NODE=" << traversal << ",PRED=" << rawTrainPrediction_;
   
   if ( this->hasChildren() ) {
     
@@ -254,19 +254,24 @@ void Node::recursiveNodeSplit(Treedata* treeData,
     vector<num_t> trainData = treeData->getFeatureData(targetIdx,sampleIcs);
 
     if ( GI.predictionFunctionType == MEAN ) {
-      this->setTrainPrediction( math::mean(trainData) );
+      num_t trainPrediction = math::mean(trainData);
+      string rawTrainPrediction = utils::num2str(trainPrediction);
+      this->setTrainPrediction( trainPrediction, rawTrainPrediction );
     } else if ( GI.predictionFunctionType == MODE ) {
       num_t trainPrediction = math::mode<num_t>(trainData);
       string rawTrainPrediction = treeData->getRawFeatureData(targetIdx,trainPrediction);
       this->setTrainPrediction( trainPrediction, rawTrainPrediction );
     } else if ( GI.predictionFunctionType == GAMMA ) {
-      this->setTrainPrediction( math::gamma(trainData,GI.numClasses) );
+      num_t trainPrediction = math::gamma(trainData,GI.numClasses);
+      string rawTrainPrediction = utils::num2str(trainPrediction);
+      this->setTrainPrediction( trainPrediction, rawTrainPrediction );
     } else {
       cerr << "Node::recursiveNodeSplit() -- unknown prediction function!" << endl;
       exit(1);
     }
 
-    assert( !datadefs::isNAN(trainPrediction_) );
+    //assert( !datadefs::isNAN(trainPrediction_) );
+    assert( !datadefs::isNAN_STR(rawTrainPrediction_) );
 
     return;
   }
@@ -319,19 +324,24 @@ void Node::recursiveNodeSplit(Treedata* treeData,
     vector<num_t> trainData = treeData->getFeatureData(targetIdx,sampleIcs);
     
     if ( GI.predictionFunctionType == MEAN ) {
-      this->setTrainPrediction( math::mean(trainData) );
+      num_t trainPrediction = math::mean(trainData);
+      string rawTrainPrediction = utils::num2str(trainPrediction);
+      this->setTrainPrediction( trainPrediction, rawTrainPrediction );
     } else if ( GI.predictionFunctionType == MODE ) {
       num_t trainPrediction = math::mode<num_t>(trainData);
       string rawTrainPrediction = treeData->getRawFeatureData(targetIdx,trainPrediction);
       this->setTrainPrediction( trainPrediction, rawTrainPrediction );
     } else if ( GI.predictionFunctionType == GAMMA ) {
-      this->setTrainPrediction( math::gamma(trainData,GI.numClasses) );
+      num_t trainPrediction = math::gamma(trainData,GI.numClasses);
+      string rawTrainPrediction = utils::num2str(trainPrediction);
+      this->setTrainPrediction( trainPrediction, rawTrainPrediction );
     } else {
       cerr << "Node::recursiveNodeSplit() -- unknown prediction function!" << endl;
       exit(1);
     }
-    
-    assert( !datadefs::isNAN(trainPrediction_) );
+
+    //assert( !datadefs::isNAN(trainPrediction_) );
+    assert( !datadefs::isNAN_STR(rawTrainPrediction_) );
 
     return;
   }

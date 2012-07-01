@@ -25,7 +25,10 @@ namespace utils {
   
     
   // Chomps a string, i.e. removes all the trailing end-of-line characters
-  string chomp(const string& str);
+  string chomp(const string& str, const string& eof = "\r\n");
+
+  // Removes leading and trailing whitespace characters
+  string trim(const string& str, const string& wh = " ");
 
   set<string> keys(const string& str, const char delimiter);
   
@@ -41,10 +44,10 @@ namespace utils {
 			   const char comment);
   
   // Splits a delimited string
-  vector<string> split(const string& str, const char delimiter);
+  vector<string> split(const string& str, const char delimiter, const string& wh = " ");
 
   // Splits a delimited stream
-  vector<string> split(istream& streamObj, const char delimiter);
+  vector<string> split(istream& streamObj, const char delimiter, const string& wh = " ");
 
   // Reads a list of items from a file
   vector<string> readListFromFile(const string& fileName, const char delimiter);
