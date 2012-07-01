@@ -28,10 +28,10 @@ const datadefs::num_t datadefs::LOG_OF_MAX_NUM = 70.0; /** !! Potentially
                                                         * expressible as a
                                                         * num_t? */
 
-const string initNANs[] = {"NA","NAN","?"}; /** !! Incomplete definition:
-                                             * consider including:
-                                             *  http://en.wikipedia.org/wiki/NaN#Display */
-const set<datadefs::NAN_t> datadefs::NANs(initNANs,initNANs+3);
+// List of NaN's adapted from http://en.wikipedia.org/wiki/NaN#Display
+const string initNANs[] = {"NA","NAN","NAN%","NANQ","NANS","QNAN","SNAN","1.#SNAN","1.#QNAN","-1.#IND","NULL","?"}; 
+
+const set<datadefs::NAN_t> datadefs::NANs(initNANs,initNANs+12);
 
 const string datadefs::CONTRAST = "CONTRAST";
 

@@ -117,8 +117,10 @@ StochasticForest::StochasticForest(options::General_options* parameters):
       
     Node* nodep = forestMap[treeIdx][nodeMap["NODE"]];
 
+    string rawPrediction = nodeMap["PRED"];
+
     // Set train prediction of the node
-    nodep->setTrainPrediction(utils::str2<num_t>(nodeMap["PRED"]));
+    nodep->setTrainPrediction(utils::str2<num_t>(rawPrediction), rawPrediction);
     
     // If the node has a splitter...
     if ( nodeMap.find("SPLITTER") != nodeMap.end() ) {
