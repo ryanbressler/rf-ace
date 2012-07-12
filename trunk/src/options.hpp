@@ -34,6 +34,7 @@ namespace options {
   const num_t      ST_DEFAULT_P_VALUE_THRESHOLD = 0.05;
   const bool       ST_DEFAULT_IS_ADJUSTED_P_VALUE = false;
   const num_t      ST_DEFAULT_IMPORTANCE_THRESHOLD = 0.00001;
+  const bool       ST_NORMALIZE_IMPORTANCE_VALUES = false;
   const bool       ST_DEFAULT_REPORT_NONEXISTENT_FEATURES = false;
 
   // Random Forest default configuration
@@ -118,6 +119,7 @@ namespace options {
     size_t nPerms; const string nPerms_s; const string nPerms_l;
     num_t pValueThreshold; const string pValueThreshold_s; const string pValueThreshold_l;
     bool isAdjustedPValue; const string isAdjustedPValue_s; const string isAdjustedPValue_l;
+    bool normalizeImportanceValues; const string normalizeImportanceValues_s; const string normalizeImportanceValues_l;
     num_t importanceThreshold; const string importanceThreshold_s; const string importanceThreshold_l;
     bool reportAllFeatures; const string reportAllFeatures_s; const string reportAllFeatures_l;
 
@@ -155,6 +157,7 @@ namespace options {
       nPerms(ST_DEFAULT_N_PERMS),nPerms_s("p"),nPerms_l("nPerms"),
       pValueThreshold(ST_DEFAULT_P_VALUE_THRESHOLD),pValueThreshold_s("t"),pValueThreshold_l("pValueTh"),
       isAdjustedPValue(ST_DEFAULT_IS_ADJUSTED_P_VALUE),isAdjustedPValue_s("d"),isAdjustedPValue_l("adjustP"),
+      normalizeImportanceValues(ST_NORMALIZE_IMPORTANCE_VALUES),normalizeImportanceValues_s("r"),normalizeImportanceValues_l("normImportance"),
       importanceThreshold(ST_DEFAULT_IMPORTANCE_THRESHOLD),importanceThreshold_s("o"),importanceThreshold_l("importanceTh"),
       reportAllFeatures(ST_DEFAULT_REPORT_NONEXISTENT_FEATURES),reportAllFeatures_s("A"),reportAllFeatures_l("listAllFeatures") 
     { 
@@ -251,6 +254,7 @@ namespace options {
       parser_->getArgument<size_t>(nPerms_s, nPerms_l, nPerms);
       parser_->getArgument<num_t>(pValueThreshold_s,  pValueThreshold_l,  pValueThreshold);
       parser_->getFlag(isAdjustedPValue_s, isAdjustedPValue_l, isAdjustedPValue);
+      parser_->getFlag(normalizeImportanceValues_s, normalizeImportanceValues_l, normalizeImportanceValues);
       parser_->getArgument<num_t>(importanceThreshold_s, importanceThreshold_l, importanceThreshold);
       parser_->getFlag(reportAllFeatures_s, reportAllFeatures_l, reportAllFeatures);
 
@@ -344,6 +348,8 @@ namespace options {
 	cout << "Filter configuration:" << endl;
 	cout << printOpt(nPerms_s,nPerms_l) << "= " << nPerms << endl;
 	cout << printOpt(pValueThreshold_s,pValueThreshold_l) << "= " << pValueThreshold << " (upper limit)" <<endl;
+	cout << printOpt(normalizeImportanceValues_s,normalizeImportanceValues_l) << "= ";
+	if ( normalizeImportanceValues ) { cout << "YES" << endl; } else { cout << "NO" << endl; }
 	cout << printOpt(importanceThreshold_s,importanceThreshold_l) << "= " << importanceThreshold << " (lower limit)" << endl;
 	cout << endl;
       }
@@ -423,6 +429,8 @@ namespace options {
            << " " << "[Filter only] Number of permutations in statistical test (default " << ST_DEFAULT_N_PERMS << ")" << endl;
       cout << " -" << pValueThreshold_s << " / --" << pValueThreshold_l << setw( maxWidth - pValueThreshold_l.size() )
            << " " << "[Filter only] P-value threshold in statistical test (default " << ST_DEFAULT_P_VALUE_THRESHOLD << ")" << endl;
+      cout << " -" << normalizeImportanceValues_s << " / --" << normalizeImportanceValues_l << setw( maxWidth - normalizeImportanceValues_l.size() )
+           << " " << "[Filter only] set this flag if wou want importance values normalized (default OFF)" << endl;
       cout << " -" << importanceThreshold_s << " / --" << importanceThreshold_l << setw( maxWidth - importanceThreshold_l.size() )
 	   << " " << "[Filter only] Importance threshold in statistical test (default " << ST_DEFAULT_IMPORTANCE_THRESHOLD << ")" << endl;
       cout << " -" << isAdjustedPValue_s << " / --" << isAdjustedPValue_l << setw( maxWidth - isAdjustedPValue_l.size() ) 
