@@ -12,11 +12,11 @@ all: rf-ace
 rf-ace: $(SOURCEFILES)
 	$(COMPILER) $(CFLAGS) src/rf_ace.cpp $(SOURCEFILES) -o bin/rf-ace
 
-#build-predictor: $(SOURCEFILES)
-#	$(COMPILER) $(CFLAGS) src/rf_ace_build_predictor.cpp $(SOURCEFILES) -o bin/rf-ace-build-predictor
+rf-ace-i386: $(SOURCEFILES)
+	$(COMPILER) $(CFLAGS) -m32 src/rf_ace.cpp $(SOURCEFILES) -o bin/rf-ace-i386
 
-#predictor: $(SOURCEFILES)
-#	$(COMPILER) $(CFLAGS) src/rf_ace_predict.cpp $(SOURCEFILES) -o bin/rf-ace-predict
+rf-ace-amd64: $(SOURCEFILES)
+	$(COMPILER) $(CFLAGS) -m64 src/rf_ace.cpp $(SOURCEFILES) -o bin/rf-ace-amd64
 
 debug: $(SOURCEFILES)
 	$(COMPILER) $(CFLAGS) src/rf_ace.cpp $(SOURCEFILES) -o bin/rf-ace-filter -ggdb

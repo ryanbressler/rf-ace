@@ -682,6 +682,14 @@ void StochasticForest::getImportanceValues(vector<num_t>& importanceValues, vect
 
     importanceValues[featureIdx] = permutedOobError - oobError;
 
+    if ( parameters_->normalizeImportanceValues ) {
+      if ( oobError < datadefs::EPS ) {
+	importanceValues[featureIdx] = datadefs::NUM_INF;
+      } else {
+	importanceValues[featureIdx] /= oobError;
+      }
+    }
+
   }
 
   assert( !datadefs::containsNAN(importanceValues) );
