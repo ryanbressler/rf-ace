@@ -10,6 +10,7 @@
 #include "datadefs.hpp"
 #include "treedata.hpp"
 #include "utils.hpp"
+#include "distributions.hpp"
 
 using namespace std;
 using datadefs::num_t;
@@ -28,6 +29,7 @@ namespace options {
   const size_t     GENERAL_DEFAULT_MIN_SAMPLES = 5;
   const int        GENERAL_DEFAULT_SEED = -1;
   const ForestType GENERAL_DEFAULT_MODEL_TYPE = RF;
+  const size_t     GENERAL_DEFAULT_N_THREADS = 1;
 
   // Statistical test default configuration
   const size_t     ST_DEFAULT_N_PERMS = 20;
@@ -73,11 +75,11 @@ namespace options {
   // Determines the amount of indentation in help print-outs
   const size_t maxWidth = 17;
   
-  class General_options {
-
-  private:
-    ArgParse* parser_;
-
+  class Base_options {
+    
+    //private:
+    //ArgParse* parser_;
+    
   public:
     // EXPERIMENTAL
     size_t recombinePerms; const string recombinePerms_s; const string recombinePerms_l;
@@ -98,6 +100,7 @@ namespace options {
     char headerDelimiter; const string headerDelimiter_s; const string headerDelimiter_l;
     size_t pruneFeatures; const string pruneFeatures_s; const string pruneFeatures_l;
     int seed; string seed_s; string seed_l;
+    size_t nThreads; const string nThreads_s; const string nThreads_l;
 
     // Forest Type
     ForestType modelType; const string modelType_s; const string modelType_l;
@@ -114,6 +117,7 @@ namespace options {
     bool sampleWithReplacement;
     bool isRandomSplit;
     bool useContrasts;
+    vector<distributions::RandInt> randIntGens;
 
     // Statistical test related parameters
     size_t nPerms; const string nPerms_s; const string nPerms_l;
@@ -123,9 +127,8 @@ namespace options {
     num_t importanceThreshold; const string importanceThreshold_s; const string importanceThreshold_l;
     bool reportAllFeatures; const string reportAllFeatures_s; const string reportAllFeatures_l;
 
-    General_options(): parser_(NULL) { /* EMPTY CONSTRUCTOR */ }
-    
-    General_options(const int argc, char* const argv[]):
+    Base_options(): 
+
       // EXPERIMENTAL PARAMETERS
       recombinePerms(GENERAL_DEFAULT_RECOMBINE_PERMS),recombinePerms_s("R"),recombinePerms_l("recombine"),
       // I/O and general parameters
@@ -144,6 +147,7 @@ namespace options {
       headerDelimiter(GENERAL_DEFAULT_HEADER_DELIMITER),headerDelimiter_s("H"),headerDelimiter_l("headDelim"),
       pruneFeatures(GENERAL_DEFAULT_MIN_SAMPLES),pruneFeatures_s("X"),pruneFeatures_l("pruneFeatures"),
       seed(GENERAL_DEFAULT_SEED),seed_s("S"),seed_l("seed"),
+      nThreads(GENERAL_DEFAULT_N_THREADS),nThreads_s("e"),nThreads_l("nThreads"),
       // Forest Type
       modelType(GENERAL_DEFAULT_MODEL_TYPE),modelType_s("M"),modelType_l("modelType"),
       // Random Forest related parameters
@@ -159,11 +163,25 @@ namespace options {
       isAdjustedPValue(ST_DEFAULT_IS_ADJUSTED_P_VALUE),isAdjustedPValue_s("d"),isAdjustedPValue_l("adjustP"),
       normalizeImportanceValues(ST_NORMALIZE_IMPORTANCE_VALUES),normalizeImportanceValues_s("r"),normalizeImportanceValues_l("normImportance"),
       importanceThreshold(ST_DEFAULT_IMPORTANCE_THRESHOLD),importanceThreshold_s("o"),importanceThreshold_l("importanceTh"),
-      reportAllFeatures(ST_DEFAULT_REPORT_NONEXISTENT_FEATURES),reportAllFeatures_s("A"),reportAllFeatures_l("listAllFeatures") 
-    { 
-      
-      parser_ = new ArgParse(argc,argv);
+      reportAllFeatures(ST_DEFAULT_REPORT_NONEXISTENT_FEATURES),reportAllFeatures_s("A"),reportAllFeatures_l("listAllFeatures")
 
+    { /* EMPTY CONSTRUCTOR */}
+  };
+
+  class General_options : public Base_options {
+    
+  private: 
+    ArgParse parser_;
+
+  public:
+
+    General_options():
+      Base_options() { /* EMPTY CONSTRUCTOR */ }
+    
+    General_options(const int argc, char* const argv[]):
+      Base_options(),
+      parser_(argc,argv) { 
+      
       if ( modelType == RF ) {
 	setRFDefaults(); 
       } else if ( modelType == GBT ) {
@@ -174,9 +192,9 @@ namespace options {
     }
     
     ~General_options() {
-      if ( parser_ ) {
-	delete parser_;
-      }
+      //if ( parser_ ) {
+      //delete parser_;
+      //}
     }
 
     void loadUserParams() {
@@ -184,7 +202,7 @@ namespace options {
       // If forest type is explicitly specified, update it
       if ( this->isSet(modelType_s,modelType_l) ) {
         string modelTypeAsStr("");
-        parser_->getArgument<string>(modelType_s, modelType_l, modelTypeAsStr);
+        parser_.getArgument<string>(modelType_s, modelType_l, modelTypeAsStr);
         if ( modelTypeAsStr == "RF" ) {
           modelType = RF;
         } else if ( modelTypeAsStr == "GBT" ) {
@@ -209,25 +227,25 @@ namespace options {
       }
             
       // EXPERIMENTAL PARAMETERS
-      parser_->getArgument<size_t>(recombinePerms_s,recombinePerms_l,recombinePerms);
+      parser_.getArgument<size_t>(recombinePerms_s,recombinePerms_l,recombinePerms);
 
       // I/O related and general parameters
-      parser_->getFlag(printHelp_s, printHelp_l, printHelp);
-      parser_->getFlag(isFilter_s,isFilter_l,isFilter);
-      parser_->getArgument<size_t>(recombinePerms_s,recombinePerms_l,recombinePerms);
-      parser_->getFlag(reportContrasts_s,reportContrasts_l,reportContrasts);
-      parser_->getArgument<string>(input_s, input_l, input);
-      parser_->getArgument<string>(targetStr_s, targetStr_l, targetStr);
-      parser_->getArgument<string>(output_s, output_l, output);
-      parser_->getArgument<string>(forestInput_s, forestInput_l, forestInput);
-      parser_->getArgument<string>(whiteList_s, whiteList_l, whiteList);
-      parser_->getArgument<string>(blackList_s, blackList_l, blackList);
-      parser_->getArgument<string>(predictionData_s, predictionData_l, predictionData);
-      parser_->getArgument<string>(log_s,log_l,log);
+      parser_.getFlag(printHelp_s, printHelp_l, printHelp);
+      parser_.getFlag(isFilter_s,isFilter_l,isFilter);
+      parser_.getArgument<size_t>(recombinePerms_s,recombinePerms_l,recombinePerms);
+      parser_.getFlag(reportContrasts_s,reportContrasts_l,reportContrasts);
+      parser_.getArgument<string>(input_s, input_l, input);
+      parser_.getArgument<string>(targetStr_s, targetStr_l, targetStr);
+      parser_.getArgument<string>(output_s, output_l, output);
+      parser_.getArgument<string>(forestInput_s, forestInput_l, forestInput);
+      parser_.getArgument<string>(whiteList_s, whiteList_l, whiteList);
+      parser_.getArgument<string>(blackList_s, blackList_l, blackList);
+      parser_.getArgument<string>(predictionData_s, predictionData_l, predictionData);
+      parser_.getArgument<string>(log_s,log_l,log);
       string dataDelimiter,headerDelimiter;
-      parser_->getArgument<string>(dataDelimiter_s, dataDelimiter_l, dataDelimiter);
-      parser_->getArgument<string>(headerDelimiter_s, headerDelimiter_l, headerDelimiter);
-      parser_->getArgument<size_t>(pruneFeatures_s, pruneFeatures_l, pruneFeatures);
+      parser_.getArgument<string>(dataDelimiter_s, dataDelimiter_l, dataDelimiter);
+      parser_.getArgument<string>(headerDelimiter_s, headerDelimiter_l, headerDelimiter);
+      parser_.getArgument<size_t>(pruneFeatures_s, pruneFeatures_l, pruneFeatures);
       stringstream ss(dataDelimiter);
       ss >> dataDelimiter;
 
@@ -236,27 +254,34 @@ namespace options {
       ss << headerDelimiter;
       ss >> headerDelimiter;
 
-      parser_->getArgument<int>(seed_s, seed_l, seed);
+      parser_.getArgument<int>(seed_s, seed_l, seed);
       
       // If no seed was provided, generate one
       if ( seed == GENERAL_DEFAULT_SEED ) {
-	seed = utils::generateSeed();
+	seed = distributions::generateSeed();
+      }
+
+      parser_.getArgument<size_t>(nThreads_s, nThreads_l, nThreads);
+
+      randIntGens.resize(nThreads);
+      for ( size_t threadIdx = 0; threadIdx < nThreads; ++threadIdx ) {
+	randIntGens[threadIdx].seed(seed + threadIdx);
       }
     
       // Random Forest related parameters
-      parser_->getArgument<size_t>( nTrees_s, nTrees_l, nTrees );
-      parser_->getArgument<size_t>( mTry_s, mTry_l, mTry );
-      parser_->getArgument<size_t>( nMaxLeaves_s, nMaxLeaves_l, nMaxLeaves );
-      parser_->getArgument<size_t>( nodeSize_s, nodeSize_l, nodeSize );
-      parser_->getArgument<num_t>(  shrinkage_s, shrinkage_l, shrinkage );
+      parser_.getArgument<size_t>( nTrees_s, nTrees_l, nTrees );
+      parser_.getArgument<size_t>( mTry_s, mTry_l, mTry );
+      parser_.getArgument<size_t>( nMaxLeaves_s, nMaxLeaves_l, nMaxLeaves );
+      parser_.getArgument<size_t>( nodeSize_s, nodeSize_l, nodeSize );
+      parser_.getArgument<num_t>(  shrinkage_s, shrinkage_l, shrinkage );
 
       // Statistical test parameters
-      parser_->getArgument<size_t>(nPerms_s, nPerms_l, nPerms);
-      parser_->getArgument<num_t>(pValueThreshold_s,  pValueThreshold_l,  pValueThreshold);
-      parser_->getFlag(isAdjustedPValue_s, isAdjustedPValue_l, isAdjustedPValue);
-      parser_->getFlag(normalizeImportanceValues_s, normalizeImportanceValues_l, normalizeImportanceValues);
-      parser_->getArgument<num_t>(importanceThreshold_s, importanceThreshold_l, importanceThreshold);
-      parser_->getFlag(reportAllFeatures_s, reportAllFeatures_l, reportAllFeatures);
+      parser_.getArgument<size_t>(nPerms_s, nPerms_l, nPerms);
+      parser_.getArgument<num_t>(pValueThreshold_s,  pValueThreshold_l,  pValueThreshold);
+      parser_.getFlag(isAdjustedPValue_s, isAdjustedPValue_l, isAdjustedPValue);
+      parser_.getFlag(normalizeImportanceValues_s, normalizeImportanceValues_l, normalizeImportanceValues);
+      parser_.getArgument<num_t>(importanceThreshold_s, importanceThreshold_l, importanceThreshold);
+      parser_.getFlag(reportAllFeatures_s, reportAllFeatures_l, reportAllFeatures);
 
     }
 
@@ -267,30 +292,37 @@ namespace options {
         exit(1);
       }
       
+      if ( nThreads == 0 ) {
+	cerr << "The number of threads must be greater than zero!" << endl;
+	exit(1);
+      }
+
       if ( pValueThreshold < 0.0 || pValueThreshold > 1.0 ) {
         cerr << "P-value threshold in statistical test must be within 0...1" << endl;
         exit(1);
       }
 
       // Print help and exit if input file is not specified
-      if ( input == "" ) {
+      /*
+	if ( input == "" ) {
 	cerr << "Input file not specified" << endl;
 	this->helpHint();
 	exit(1);
-      }
-      
-      // Print help and exit if target index is not specified
-      if ( !this->isSet(recombinePerms_s,recombinePerms_l) && targetStr == "" ) {
+	}
+	
+	// Print help and exit if target index is not specified
+	if ( !this->isSet(recombinePerms_s,recombinePerms_l) && targetStr == "" ) {
 	cerr << "target not specified" << endl;
 	this->helpHint();
 	exit(1);
-      }
-      
-      if ( output == "" ) {
+	}
+	
+	if ( output == "" ) {
 	cerr << "You forgot to specify an output file!" << endl;
 	this->helpHint();
 	exit(1);
-      }
+	}
+      */
 
       assert( nTrees > 0 );
 
@@ -307,7 +339,7 @@ namespace options {
       } else {
 	assert( 0.0 < inBoxFraction && inBoxFraction <= 1.0 );
       }
-        
+
     }
 
     string printOpt(const string& shortOpt, const string& longOpt) {
@@ -327,6 +359,7 @@ namespace options {
       cout << printOpt(output_s,output_l) << "= "; if ( output != "" ) { cout << output << endl; } else { cout << "NOT SET" << endl; }
       cout << printOpt(log_s,log_l) << "= "; if( log != "" ) { cout << log << endl; } else { cout << "NOT SET" << endl; }
       cout << printOpt(seed_s,seed_l) << "= " << seed << endl;
+      cout << printOpt(nThreads_s,nThreads_l) << "= " << nThreads << endl;
       cout << endl;
 
       if(modelType == options::RF ) { 
@@ -356,11 +389,11 @@ namespace options {
       
     }
 
-    bool isSet(const string& shortOpt, const string& longOpt) const {
+    bool isSet(const string& shortOpt, const string& longOpt) {
 
       bool ret = false;
 
-      parser_->getFlag(shortOpt,longOpt,ret);
+      parser_.getFlag(shortOpt,longOpt,ret);
       return( ret );
 
     }

@@ -2,16 +2,7 @@
 
 #include <sstream>
 #include <algorithm>
-#include <ctime>
 #include <ios>
-
-int utils::generateSeed() {
-  
-  time_t now;
-  time(&now);
-  return( clock() + now );
-  
-}
 
 // Returns a copy of input vector x with NAN-entries removed
 // NOTE: is just a wrapper of the algorithm "remove_if"
@@ -286,6 +277,37 @@ istream& utils::safeGetline(istream& is, string& t) {
   }
 }
 
+vector<vector<size_t> > utils::splitRange(const size_t nElements, const size_t nSplits) {
+
+  vector<size_t> ics = utils::range(nElements);
+
+  assert( nSplits >= 1 );
+
+  vector<vector<size_t> > splits(nSplits);
+
+  size_t splitSize = ics.size() / nSplits ;
+
+  size_t remainder = ics.size() % nSplits;
+
+  size_t startIdx = 0;
+
+  for ( size_t splitIdx = 0; splitIdx < nSplits; ++splitIdx ) {
+
+    size_t stopIdx = startIdx + splitSize;
+
+    if ( splitIdx < remainder ) stopIdx++;
+
+    splits[splitIdx].resize(stopIdx-startIdx);
+
+    copy(ics.begin()+startIdx,ics.begin()+stopIdx,splits[splitIdx].begin());
+
+    startIdx = stopIdx;
+
+  }
+
+  return( splits );
+
+}
 
 
 

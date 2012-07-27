@@ -272,7 +272,7 @@ void DataDefsTest::test_sortDataAndMakeRef() {
 
 void DataDefsTest::test_max_idx() {
   
-  CPPUNIT_ASSERT( datadefs::MAX_IDX == numeric_limits<size_t>::max() );
+  CPPUNIT_ASSERT( datadefs::MAX_IDX == numeric_limits<size_t>::max() - 1 );
 
 }
 

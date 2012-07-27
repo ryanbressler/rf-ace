@@ -11,6 +11,7 @@
 #include <string>
 #include "datadefs.hpp"
 #include "treedata.hpp"
+#include "options.hpp"
 
 using namespace std;
 using datadefs::num_t;
@@ -62,7 +63,8 @@ public:
 
   enum PredictionFunctionType { MEAN, MODE, GAMMA };
 
-  struct GrowInstructions {
+  /*
+    struct GrowInstructions {
     bool sampleWithReplacement;
     num_t sampleSizeFraction;
     size_t maxNodesToStop;
@@ -75,7 +77,8 @@ public:
     vector<size_t> featureIcs;
     
     void validate() const;
-  };
+    };
+  */
 
 #ifndef TEST__
 protected:
@@ -83,16 +86,19 @@ protected:
   
   void recursiveNodeSplit(Treedata* treeData,
                           const size_t targetIdx,
-                          const vector<size_t>& sampleIcs,
-                          const GrowInstructions& GI,
+                          options::General_options* parameters,
+			  const size_t threadIdx,
+			  const PredictionFunctionType& predictionFunctionType,
+			  vector<size_t> featureIcs,
+			  const vector<size_t>& sampleIcs,
                           set<size_t>& featuresInTree,
-                          size_t* nNodes);
+                          size_t* nLeaves);
 
   bool regularSplitterSeek(Treedata* treeData,
 			   const size_t targetIdx,
 			   const vector<size_t>& sampleIcs,
 			   const vector<size_t>& featureSampleIcs,
-			   const GrowInstructions& GI,
+			   options::General_options* parameters,
 			   size_t& splitFeatureIdx,
 			   vector<size_t>& sampleIcs_left,
 			   vector<size_t>& sampleIcs_right,

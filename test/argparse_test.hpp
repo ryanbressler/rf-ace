@@ -25,8 +25,16 @@ public:
   void test_spuriousArgv();
 };
 
-void ArgParseTest::setUp() {}
-void ArgParseTest::tearDown() {}
+void ArgParseTest::setUp() {
+
+  //cout << "Testing distributions.hpp: " << flush;
+
+}
+void ArgParseTest::tearDown() {
+
+  //cout << " DONE" << endl;
+
+}
 
 void ArgParseTest::test_getArgument() {
   const int argc = 6;

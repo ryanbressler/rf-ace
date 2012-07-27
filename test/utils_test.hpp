@@ -4,8 +4,10 @@
 #include <cppunit/extensions/HelperMacros.h>
 #include <vector>
 #include <string>
+#include <algorithm>
 #include "datadefs.hpp"
 #include "utils.hpp"
+#include "distributions.hpp"
 
 class UtilsTest : public CppUnit::TestFixture {
   CPPUNIT_TEST_SUITE( UtilsTest );
@@ -17,6 +19,7 @@ class UtilsTest : public CppUnit::TestFixture {
   CPPUNIT_TEST( test_trim );
   CPPUNIT_TEST( test_chomp );
   CPPUNIT_TEST( test_split );
+  CPPUNIT_TEST( test_permute );
   CPPUNIT_TEST_SUITE_END();
   
 public:
@@ -31,6 +34,7 @@ public:
   void test_trim();
   void test_chomp();
   void test_split();
+  void test_permute();
   
 };
 
@@ -177,6 +181,39 @@ void UtilsTest::test_split() {
   CPPUNIT_ASSERT( vec[6] == "" );
 
 }
+
+void UtilsTest::test_permute() {
+
+  distributions::RandInt rand(0);
+
+  num_t initData[] = {1.0,3.1,2.2,4.2,4.1,6.5,7.5,3,2};
+
+  // Repeat the test 5 times
+  for ( size_t i = 0; i < 5; ++i ) {
+    
+    vector<datadefs::num_t> data(initData,initData+8);
+    vector<datadefs::num_t> dataOrig = data;
+    
+    utils::permute(data,rand);
+    
+    bool anyChange = false;
+    
+    for ( size_t i = 0; i < data.size(); ++i ) {
+      if ( data[i] != dataOrig[i] ) anyChange = true;
+    }
+    
+    CPPUNIT_ASSERT( anyChange );
+    
+    sort(data.begin(),data.end());
+    sort(dataOrig.begin(),dataOrig.end());
+    
+    for ( size_t i = 0; i < data.size(); ++i ) {
+      CPPUNIT_ASSERT( data[i] == dataOrig[i] );
+    }
+  }
+
+}
+
 
 // Registers the fixture into the test 'registry'
 CPPUNIT_TEST_SUITE_REGISTRATION( UtilsTest );
