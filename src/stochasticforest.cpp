@@ -282,18 +282,7 @@ void StochasticForest::learnRF() {
 
   //thread* thr = (thread*) calloc(parameters_->nThreads,sizeof(thread));
 
-  //cout << "Growing " << rootNodes_.size() << " trees" << endl;
-
-  /*
-    for ( size_t treeIdx = 0; treeIdx < parameters_->nTrees; ++treeIdx ) {
-    
-    rootNodes_[treeIdx] = new RootNode(treeData_,
-    parameters_,
-    0);
-    
-    rootNodes_[treeIdx]->growTree();
-    }
-  */
+  vector<thread> threads;
 
   set<size_t> createdTreeIcs;
   
@@ -314,19 +303,16 @@ void StochasticForest::learnRF() {
       
       rootNodesPerThread[i] = rootNodes_[treeIcsPerThread[i]];
       
-      rootNodes_[treeIcsPerThread[i]]->growTree();
+      //rootNodes_[treeIcsPerThread[i]]->growTree();
     }
     
-    //thr[threadIdx] = thread(growTreesPerThread,rootNodesPerThread); //thread(this->growTrees,treeIcsPerThread[threadIdx],threadIdx);
+    threads.push_back( thread(growTreesPerThread,rootNodesPerThread) ); //thread(this->growTrees,treeIcsPerThread[threadIdx],threadIdx);
   }
   
-  //for ( size_t threadIdx = 0; threadIdx < parameters_->nThreads; ++threadIdx ) {
-  //  thr[threadIdx].join();
-  //}
+  for ( size_t threadIdx = 0; threadIdx < threads.size(); ++threadIdx ) {
+    threads[threadIdx].join();
+  }
   
-  //free(thr);
-  //thr = NULL;
-
 }
 
 void StochasticForest::learnGBT() {
