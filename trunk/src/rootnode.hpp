@@ -7,16 +7,18 @@
 #include <set>
 #include "node.hpp"
 #include "treedata.hpp"
+#include "options.hpp"
 
 class RootNode : public Node {
 public:
 
   RootNode(Treedata* treeData,
-	   const size_t targetIdx);
+	   options::General_options* parameters,
+	   const size_t threadIdx);
 
   ~RootNode();
 
-  void growTree(const GrowInstructions& GI);
+  void growTree();
   
   size_t nNodes();
 
@@ -52,8 +54,9 @@ private:
 
   // Required parameters
   Treedata* treeData_;
-  size_t targetIdx_;
-  
+  options::General_options* parameters_;
+  size_t threadIdx_;
+
   // Parameters that are generated only when a tree is grown
   size_t nNodes_;
   vector<size_t> bootstrapIcs_;

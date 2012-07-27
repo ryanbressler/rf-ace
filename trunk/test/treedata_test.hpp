@@ -6,12 +6,12 @@
 #include "datadefs.hpp"
 #include "node.hpp"
 #include "errno.hpp"
+#include "distributions.hpp"
 
 class treeDataTest : public CppUnit::TestFixture {
   CPPUNIT_TEST_SUITE( treeDataTest );
   CPPUNIT_TEST( test_name2idxMap );
   CPPUNIT_TEST( test_getFeatureData );
-  CPPUNIT_TEST( test_getRandomUnif );
   CPPUNIT_TEST( test_getFilteredFeatureData );
   CPPUNIT_TEST( test_getFilteredAndSortedFeatureDataPair3 );
   CPPUNIT_TEST( test_parseARFF );
@@ -31,7 +31,6 @@ public:
   void test_permuteContrasts();
   void test_name2idxMap();
   void test_getFeatureData();
-  void test_getRandomUnif();
   void test_getFilteredFeatureData();
   void test_getFilteredAndSortedFeatureDataPair3();
   void test_parseARFF();
@@ -47,11 +46,16 @@ public:
 private:
 
   Treedata* treeData_;
+
+  distributions::RandInt randInt_;
+
 };
 
 void treeDataTest::setUp() {
 
-  treeData_ = new Treedata("test_103by300_mixed_matrix.afm",'\t',':');
+  randInt_.seed(0);
+
+  treeData_ = new Treedata("test_103by300_mixed_matrix.afm",'\t',':',randInt_);
 
 }
 
@@ -66,7 +70,7 @@ void treeDataTest::test_permuteContrasts() {
   
   string fileName = "test_6by10_mixed_matrix.tsv";
   
-  Treedata::Treedata treeData(fileName,'\t',':');
+  Treedata::Treedata treeData(fileName,'\t',':',randInt_);
   
   //treeData.permuteContrasts();
 
@@ -109,7 +113,7 @@ void treeDataTest::test_name2idxMap() {
 
   string fileName = "test_6by10_mixed_matrix.tsv";
 
-  Treedata::Treedata treeData(fileName,'\t',':');
+  Treedata::Treedata treeData(fileName,'\t',':',randInt_);
 
   CPPUNIT_ASSERT( treeData.name2idx_.size() == 2*treeData.nFeatures() );
   CPPUNIT_ASSERT( treeData.features_.size() == 2*treeData.nFeatures() );
@@ -146,7 +150,7 @@ void treeDataTest::test_name2idxMap() {
 
 void treeDataTest::test_getFeatureData() {
 
-  Treedata treedata("test_2by8_numerical_matrix.tsv",'\t',':');
+  Treedata treedata("test_2by8_numerical_matrix.tsv",'\t',':',randInt_);
 
   vector<size_t> sampleIcs = utils::range(8);
 
@@ -163,7 +167,7 @@ void treeDataTest::test_getFilteredFeatureData() {
   
   string fileName = "test_6by10_mixed_matrix.tsv";
   
-  Treedata::Treedata treeData(fileName,'\t',':');
+  Treedata::Treedata treeData(fileName,'\t',':',randInt_);
 
 
   /*
@@ -247,7 +251,7 @@ void treeDataTest::test_getFilteredAndSortedFeatureDataPair3() {
 
   string fileName = "test_6by10_mixed_matrix.tsv";
 
-  Treedata::Treedata treeData(fileName,'\t',':');
+  Treedata::Treedata treeData(fileName,'\t',':',randInt_);
 
   /*
     N:F1    nA      8.5     3.4     7.2     5       6       7       11      9       NA
@@ -344,7 +348,7 @@ void treeDataTest::test_getFilteredAndSortedFeatureDataPair3() {
 
 void treeDataTest::test_parseARFF() {
   
-  Treedata treeData("test_5by10_numeric_matrix.arff",'\t',':');
+  Treedata treeData("test_5by10_numeric_matrix.arff",'\t',':',randInt_);
 
   /*
     0.8147, 1.0000,  0.0596, 0.9160, 6.0000
@@ -447,26 +451,15 @@ void treeDataTest::test_parseARFF() {
 
 }
 
-void treeDataTest::test_getRandomUnif() {
-
-  Treedata treedata("test_6by10_mixed_matrix.tsv",'\t',':');
-
-  for ( size_t i = 0; i < 100000; ++i ) {
-    datadefs::num_t r = treedata.getRandomUnif();
-    CPPUNIT_ASSERT( 0.0 <= r && r < 1.0 );
-  }
-
-}
-
 void treeDataTest::test_parseARFF_extended() {
 
-  Treedata treeData("test_12by21_categorical_matrix.arff",'\t',':');
+  Treedata treeData("test_12by21_categorical_matrix.arff",'\t',':',randInt_);
 
 }
 
 void treeDataTest::test_keepFeatures() {
   
-  Treedata treedata("test_6by10_mixed_matrix.tsv",'\t',':');
+  Treedata treedata("test_6by10_mixed_matrix.tsv",'\t',':',randInt_);
 
   // Feature names in the matrix are N:F1 N:F2 C:F3 N:F4 C:F5 N:F6
 
@@ -496,7 +489,7 @@ void treeDataTest::test_keepFeatures() {
 
 void treeDataTest::test_removeFeatures() {
 
-  Treedata treedata("test_6by10_mixed_matrix.tsv",'\t',':');
+  Treedata treedata("test_6by10_mixed_matrix.tsv",'\t',':',randInt_);
 
   // Feature names in the matrix are N:F1 N:F2 C:F3 N:F4 C:F5 N:F6
 

@@ -32,6 +32,10 @@ namespace rface {
       cout << "DONE" << endl;
       cout << "===> Applying feature mask, removing " << treeData.nFeatures() - whiteFeatureNames.size()
 	   << " / " << treeData.nFeatures() << " features, please wait... " << flush;
+      
+      // Add the target feature into the white list, otherwise it may get removed
+      whiteFeatureNames.insert(gen_op.targetStr);
+
       treeData.whiteList(whiteFeatureNames);
       cout << "DONE" << endl;
     } 
@@ -43,6 +47,10 @@ namespace rface {
       cout << "DONE" << endl;
       cout << "===> Applying blacklist, keeping " << treeData.nFeatures() - blackFeatureNames.size()
 	   << " / " << treeData.nFeatures() << " features, please wait... " << flush;
+
+      // Remove the target feature from the black list, otherwise it will get removed
+      blackFeatureNames.erase(gen_op.targetStr);
+
       treeData.blackList(blackFeatureNames);
       cout << "DONE" << endl;
     }

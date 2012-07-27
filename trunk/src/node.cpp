@@ -28,33 +28,40 @@ Node::~Node() {
 
 }
 
-void Node::GrowInstructions::validate() const {
-
+/*
+  void Node::GrowInstructions::validate() const {
+  
   assert( maxNodesToStop > 0 );
   assert( minNodeSizeToStop > 0 );
   assert( nFeaturesForSplit > 0 );
   assert( featureIcs.size() > 0 );
   
   if ( isRandomSplit ) {
-    assert( nFeaturesForSplit <= featureIcs.size() );
+  assert( nFeaturesForSplit <= featureIcs.size() );
   } else {
-    assert( nFeaturesForSplit == featureIcs.size() );
+  assert( nFeaturesForSplit == featureIcs.size() );
   }
-
+  
   if ( sampleWithReplacement ) {
-    assert( 0.0 < sampleSizeFraction );
+  assert( 0.0 < sampleSizeFraction );
   } else {
-    assert( 0.0 < sampleSizeFraction && sampleSizeFraction <= 1.0 );
+  assert( 0.0 < sampleSizeFraction && sampleSizeFraction <= 1.0 );
   }
-
-}
+  
+  }
+*/
 
 
 /**
  * Deletes child nodes, which will cascade all the way to the leaf nodes 
  */
 void Node::deleteTree() {
-  
+
+  if ( false ) {
+    cout << "DEL " << leftChild_ << endl;
+    cout << "DEL " << rightChild_ << endl; 
+  }
+
   delete leftChild_;
   delete rightChild_;
   
@@ -88,6 +95,11 @@ void Node::setSplitter(const size_t splitterIdx,
   leftChild_ = new Node();
   rightChild_ = new Node();
 
+  if ( false ) {
+    cout << "NEW " << leftChild_ << endl;
+    cout << "NEW " << rightChild_ << endl;
+  }
+
 }
 
 // !! Documentation: consider combining with the documentation in the header
@@ -118,6 +130,11 @@ void Node::setSplitter(const size_t splitterIdx,
 
   leftChild_ = new Node();
   rightChild_ = new Node();
+
+  if ( false ) {
+    cout << "NEW " << leftChild_ << endl;
+    cout << "NEW " << rightChild_ << endl;
+  }
 
 }
 
@@ -239,30 +256,40 @@ string Node::getRawTrainPrediction() {
 }
 
 void Node::recursiveNodeSplit(Treedata* treeData,
-                              const size_t targetIdx,
-                              const vector<size_t>& sampleIcs,
-                              const GrowInstructions& GI,
-                              set<size_t>& featuresInTree,
-                              size_t* nNodes) {
+			      const size_t targetIdx,
+			      options::General_options* parameters,
+			      const size_t threadIdx,
+			      const PredictionFunctionType& predictionFunctionType,
+			      vector<size_t> featureIcs,
+			      const vector<size_t>& sampleIcs,
+			      set<size_t>& featuresInTree,
+			      size_t* nLeaves) {
+
+  if ( false ) {
+    cout << "REC " << this << endl;
+    cout << " " << treeData << endl;
+    cout << " " << parameters << endl;
+    cout << " " << nLeaves << endl;
+  }
 
   size_t nSamples = sampleIcs.size();
 
-  assert( *nNodes <= GI.maxNodesToStop );
+  assert( *nLeaves <= parameters->nMaxLeaves );
 
-  if ( nSamples < 2 * GI.minNodeSizeToStop || *nNodes >= GI.maxNodesToStop ) {
+  if ( nSamples < 2 * parameters->nodeSize || *nLeaves == parameters->nMaxLeaves ) {
     
     vector<num_t> trainData = treeData->getFeatureData(targetIdx,sampleIcs);
 
-    if ( GI.predictionFunctionType == MEAN ) {
+    if ( predictionFunctionType == MEAN ) {
       num_t trainPrediction = math::mean(trainData);
       string rawTrainPrediction = utils::num2str(trainPrediction);
       this->setTrainPrediction( trainPrediction, rawTrainPrediction );
-    } else if ( GI.predictionFunctionType == MODE ) {
+    } else if ( predictionFunctionType == MODE ) {
       num_t trainPrediction = math::mode<num_t>(trainData);
       string rawTrainPrediction = treeData->getRawFeatureData(targetIdx,trainPrediction);
       this->setTrainPrediction( trainPrediction, rawTrainPrediction );
-    } else if ( GI.predictionFunctionType == GAMMA ) {
-      num_t trainPrediction = math::gamma(trainData,GI.numClasses);
+    } else if ( predictionFunctionType == GAMMA ) {
+      num_t trainPrediction = math::gamma(trainData, treeData->nCategories(targetIdx) );
       string rawTrainPrediction = utils::num2str(trainPrediction);
       this->setTrainPrediction( trainPrediction, rawTrainPrediction );
     } else {
@@ -276,24 +303,23 @@ void Node::recursiveNodeSplit(Treedata* treeData,
     return;
   }
 
-  vector<size_t> featureSampleIcs = GI.featureIcs;
+  vector<size_t> featureSampleIcs = featureIcs;
 
-  if(GI.isRandomSplit) {
+  if(parameters->isRandomSplit) {
 
-    // In-place permute of feature indices
-    treeData->permute<size_t>(featureSampleIcs);
+    utils::permute(featureSampleIcs,parameters->randIntGens[threadIdx]);
 
     // Take only the first ones
-    featureSampleIcs.resize(GI.nFeaturesForSplit);
+    featureSampleIcs.resize(parameters->mTry);
 
   }
 
   // With 1% sampling rate assign contrasts
-  if(GI.useContrasts) {
-    for(size_t i = 0; i < GI.nFeaturesForSplit; ++i) {
+  if(parameters->useContrasts) {
+    for(size_t i = 0; i < parameters->mTry; ++i) {
       
       // If the sampled feature is a contrast... 
-      if( treeData->getRandomUnif() < 0.01 ) { // %1 sampling rate
+      if( parameters->randIntGens[threadIdx].uniform() < 0.01 ) { // %1 sampling rate
 	
 	featureSampleIcs[i] += treeData->nFeatures();
       }
@@ -302,7 +328,7 @@ void Node::recursiveNodeSplit(Treedata* treeData,
 
   //datadefs::print<size_t>(featureSampleIcs);
   
-  assert( featureSampleIcs.size() == GI.nFeaturesForSplit );
+  assert( featureSampleIcs.size() == parameters->mTry );
   
   vector<size_t> sampleIcs_left,sampleIcs_right;
 
@@ -313,7 +339,7 @@ void Node::recursiveNodeSplit(Treedata* treeData,
 					      targetIdx,
 					      sampleIcs,
 					      featureSampleIcs,
-					      GI,
+					      parameters,
 					      splitFeatureIdx,
 					      sampleIcs_left,
 					      sampleIcs_right,
@@ -323,16 +349,16 @@ void Node::recursiveNodeSplit(Treedata* treeData,
 
     vector<num_t> trainData = treeData->getFeatureData(targetIdx,sampleIcs);
     
-    if ( GI.predictionFunctionType == MEAN ) {
+    if ( predictionFunctionType == MEAN ) {
       num_t trainPrediction = math::mean(trainData);
       string rawTrainPrediction = utils::num2str(trainPrediction);
       this->setTrainPrediction( trainPrediction, rawTrainPrediction );
-    } else if ( GI.predictionFunctionType == MODE ) {
+    } else if ( predictionFunctionType == MODE ) {
       num_t trainPrediction = math::mode<num_t>(trainData);
       string rawTrainPrediction = treeData->getRawFeatureData(targetIdx,trainPrediction);
       this->setTrainPrediction( trainPrediction, rawTrainPrediction );
-    } else if ( GI.predictionFunctionType == GAMMA ) {
-      num_t trainPrediction = math::gamma(trainData,GI.numClasses);
+    } else if ( predictionFunctionType == GAMMA ) {
+      num_t trainPrediction = math::gamma(trainData,treeData->nCategories(targetIdx));
       string rawTrainPrediction = utils::num2str(trainPrediction);
       this->setTrainPrediction( trainPrediction, rawTrainPrediction );
     } else {
@@ -347,10 +373,10 @@ void Node::recursiveNodeSplit(Treedata* treeData,
   }
   
   featuresInTree.insert(splitFeatureIdx);
-  *nNodes += 2;
+  *nLeaves += 1;
   
-  leftChild_->recursiveNodeSplit(treeData,targetIdx,sampleIcs_left,GI,featuresInTree,nNodes);
-  rightChild_->recursiveNodeSplit(treeData,targetIdx,sampleIcs_right,GI,featuresInTree,nNodes);
+  leftChild_->recursiveNodeSplit(treeData,targetIdx,parameters,threadIdx,predictionFunctionType,featureIcs,sampleIcs_left,featuresInTree,nLeaves);
+  rightChild_->recursiveNodeSplit(treeData,targetIdx,parameters,threadIdx,predictionFunctionType,featureIcs,sampleIcs_right,featuresInTree,nLeaves);
   
 }
 
@@ -358,7 +384,7 @@ bool Node::regularSplitterSeek(Treedata* treeData,
 			       const size_t targetIdx,
 			       const vector<size_t>& sampleIcs,
 			       const vector<size_t>& featureSampleIcs,
-			       const GrowInstructions& GI,
+			       options::General_options* parameters,
 			       size_t& splitFeatureIdx,
 			       vector<size_t>& sampleIcs_left,
 			       vector<size_t>& sampleIcs_right,
@@ -397,7 +423,7 @@ bool Node::regularSplitterSeek(Treedata* treeData,
 
       newSplitFitness = treeData->numericalFeatureSplit(targetIdx,
 							newSplitFeatureIdx,
-							GI.minNodeSizeToStop,
+							parameters->nodeSize,
 							newSampleIcs_left,
 							newSampleIcs_right,
 							newSplitValue);
@@ -405,7 +431,7 @@ bool Node::regularSplitterSeek(Treedata* treeData,
 
       newSplitFitness = treeData->categoricalFeatureSplit(targetIdx,
 							  newSplitFeatureIdx,
-							  GI.minNodeSizeToStop,
+							  parameters->nodeSize,
 							  newSampleIcs_left,
 							  newSampleIcs_right,
 							  newSplitValues_left,
@@ -413,8 +439,8 @@ bool Node::regularSplitterSeek(Treedata* treeData,
     }
 
     if( newSplitFitness > splitFitness &&
-	newSampleIcs_left.size() >= GI.minNodeSizeToStop &&
-	newSampleIcs_right.size() >= GI.minNodeSizeToStop ) {
+	newSampleIcs_left.size() >= parameters->nodeSize &&
+	newSampleIcs_right.size() >= parameters->nodeSize ) {
       
       splitFitness = newSplitFitness;
       splitFeatureIdx = newSplitFeatureIdx;

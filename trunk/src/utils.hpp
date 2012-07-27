@@ -9,6 +9,7 @@
 #include <cstdlib>
 #include "datadefs.hpp"
 #include "treedata.hpp"
+#include "distributions.hpp"
 
 using namespace std;
 using datadefs::num_t;
@@ -17,7 +18,7 @@ using datadefs::num_t;
 namespace utils {
 
   // Generate seeds for random number generators
-  int generateSeed();
+  //int generateSeed();
   
   // Removes missing values from the provided data vector
   vector<num_t> removeNANs(vector<num_t> x);
@@ -133,6 +134,21 @@ namespace utils {
   vector<size_t> range(const size_t n);
 
   istream& safeGetline(istream& is, string& t);
+
+  vector<vector<size_t> > splitRange(const size_t nElements, const size_t nSplits);
+
+  template<typename T>
+  void permute(vector<T>& data, distributions::RandInt& randInt) {
+    
+    // Permute indices
+    for (size_t i = 0; i < data.size(); ++i) {
+      size_t j = randInt() % (i + 1);
+      T temp = data[i];
+      data[i] = data[j];
+      data[j] = temp;
+    }
+
+  }
   
 }
 

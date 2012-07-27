@@ -12,7 +12,6 @@
 #include <map>
 
 #include "rf_ace.hpp"
-//#include "argparse.hpp"
 #include "stochasticforest.hpp"
 #include "treedata.hpp"
 #include "datadefs.hpp"
@@ -21,6 +20,7 @@
 #include "statistics.hpp"
 #include "progress.hpp"
 #include "math.hpp"
+#include "distributions.hpp"
 
 using namespace std;
 using datadefs::num_t;
@@ -113,7 +113,7 @@ void rf_ace_filter(options::General_options& gen_op) {
 
   // Read train data into Treedata object
   cout << "===> Reading file '" << gen_op.input << "', please wait... " << flush;
-  Treedata treeData(gen_op.input,gen_op.dataDelimiter,gen_op.headerDelimiter,gen_op.seed);
+  Treedata treeData(gen_op.input,gen_op.dataDelimiter,gen_op.headerDelimiter,gen_op.randIntGens[0]);
   cout << "DONE" << endl;
 
   rface::updateTargetStr(treeData,gen_op);
@@ -409,7 +409,7 @@ void rf_ace(options::General_options& gen_op) {
 
     // Read train data into Treedata object
     cout << "===> Reading file '" << gen_op.input << "', please wait... " << flush;
-    Treedata trainData(gen_op.input,gen_op.dataDelimiter,gen_op.headerDelimiter,gen_op.seed);
+    Treedata trainData(gen_op.input,gen_op.dataDelimiter,gen_op.headerDelimiter,gen_op.randIntGens[0]);
     cout << "DONE" << endl;
     
     StochasticForest SF = rf_ace_build_predictor(trainData,gen_op);
@@ -418,7 +418,7 @@ void rf_ace(options::General_options& gen_op) {
       
       cout << "===> Making predictions with test data... " << flush;
 
-      Treedata treeDataTest(gen_op.predictionData,gen_op.dataDelimiter,gen_op.headerDelimiter,gen_op.seed);
+      Treedata treeDataTest(gen_op.predictionData,gen_op.dataDelimiter,gen_op.headerDelimiter,gen_op.randIntGens[0]);
 
       printPredictionToFile(SF,treeDataTest,gen_op.targetStr,gen_op.output);
 
@@ -462,7 +462,7 @@ void rf_ace(options::General_options& gen_op) {
 
   cout << "===> Making predictions with test data... " << flush;
 
-  Treedata treeDataTest(gen_op.predictionData,gen_op.dataDelimiter,gen_op.headerDelimiter,gen_op.seed);
+  Treedata treeDataTest(gen_op.predictionData,gen_op.dataDelimiter,gen_op.headerDelimiter,gen_op.randIntGens[0]);
 
   printPredictionToFile(SF,treeDataTest,gen_op.targetStr,gen_op.output);
 

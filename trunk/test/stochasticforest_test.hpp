@@ -7,26 +7,28 @@
 #include "stochasticforest.hpp"
 #include "errno.hpp"
 #include "options.hpp"
+#include "distributions.hpp"
 
 class StochasticForestTest : public CppUnit::TestFixture {
   CPPUNIT_TEST_SUITE( StochasticForestTest );
   CPPUNIT_TEST( test_treeDataPercolation ); 
   CPPUNIT_TEST( test_error );
-  CPPUNIT_TEST( test_treeGrowing );
+  CPPUNIT_TEST( test_CART );
   CPPUNIT_TEST_SUITE_END();
   
 public:
+  
   void setUp();
   void tearDown();
 
   void test_error();
   void test_treeDataPercolation();
 
-  void test_treeGrowing();
+  void test_CART();
 
 private:
 
-  //Treedata* trainData_;
+  //Treedata trainData_;
   //options::General_options* genOp_;
   //StochasticForest* CART_;
 
@@ -61,16 +63,17 @@ void StochasticForestTest::tearDown() {
 void StochasticForestTest::test_treeDataPercolation() {
 
 
-  // First we need some data
-  Treedata::Treedata testData("testdata.tsv",'\t',':');
-  
   options::General_options parameters;
-  
+  //parameters.modelType = options::RF;
+  parameters.loadUserParams();
   parameters.forestInput = "test_predictor.sf";
+
+  // First we need some data
+  Treedata::Treedata testData("testdata.tsv",'\t',':',parameters.randIntGens[0]);
   
   // Next load a test predictor
   StochasticForest SF(&parameters);
-  
+
   vector<num_t> prediction,confidence;
   
   SF.predictWithTestData(&testData,prediction,confidence);
@@ -115,30 +118,21 @@ void StochasticForestTest::test_error() {
 }
 
 
-void StochasticForestTest::test_treeGrowing() {
+void StochasticForestTest::test_CART() {
+ 
   
-  // size_t seed = 1335162575;
-  
-  //Treedata treeData("test_103by100_numeric_matrix.tsv",'\t',':',seed);
+  options::General_options CARTParameters;
+  CARTParameters.modelType = options::CART;
+  CARTParameters.loadUserParams();
+  CARTParameters.targetStr = "N:output";
 
-  /*
-    options::General_options parameters;
-    
-    parameters.forestType = options::RF;
-    parameters.nTrees = 1;
-    parameters.mTry = 101;
-    parameters.nMaxLeaves = 1000;
-    parameters.nodeSize = 1;
-    parameters.inBoxFraction = 1.0;
-    parameters.sampleWithReplacement = true;
-    parameters.useContrasts = false;
-    parameters.isRandomSplit = true;
-    parameters.shrinkage = 0.0;
-  */
-    
-  //StochasticForest SF(&treeData,"N:output",parameters);
-  
-  
+  Treedata treeData("test_103by300_mixed_matrix.afm",'\t',':',CARTParameters.randIntGens[0]);
+
+  CARTParameters.nMaxLeaves = treeData.nSamples();
+
+  //CARTParameters.printParameters();
+
+  StochasticForest CART(&treeData,&CARTParameters);
 
 }
 

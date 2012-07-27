@@ -10,7 +10,7 @@
 #include <fstream>
 
 #include "datadefs.hpp"
-#include "mtrand.h"
+#include "distributions.hpp"
 
 using namespace std;
 using datadefs::num_t;
@@ -19,7 +19,8 @@ class Treedata  {
 public:
 
   // Initializes the object and reads in a data matrix
-  Treedata(string fileName, char dataDelimiter, char headerDelimiter, int seed = -1 );
+  // NOTE: will permute the contrasts, which is why it needs the RNG
+  Treedata(string fileName, char dataDelimiter, char headerDelimiter, distributions::RandInt& randInt);
 
   ~Treedata();
 
@@ -127,57 +128,34 @@ public:
   string getRawFeatureData(const size_t featureIdx, const num_t data);
   vector<string> getRawFeatureData(const size_t featureIdx);
   
-  inline void getRandomData(const size_t featureIdx, num_t& data) {data = features_[featureIdx].data[randomInteger_() % sampleHeaders_.size() ]; }
+  //inline void getRandomData(const size_t featureIdx, num_t& data) {data = features_[featureIdx].data[randomInteger_() % sampleHeaders_.size() ]; }
 
-  inline size_t getRandomIndex(const size_t n) { return( randomInteger_() % n ); }
+  //inline size_t getRandomIndex(const size_t n) { return( randomInteger_() % n ); }
 
   // 2^32 == 4294967296 == upper bound for randomInteger_
-  inline num_t getRandomUnif() { return( static_cast<num_t>( 1.0 * randomInteger_() / 4294967296. ) ); }
+  //inline num_t getRandomUnif() { return( static_cast<num_t>( 1.0 * randomInteger_() / 4294967296. ) ); }
   
   // Generates a bootstrap sample from the real samples of featureIdx. Samples not in the bootstrap sample will be stored in oob_ics,
   // and the number of oob samples is stored in noob.
-  void bootstrapFromRealSamples(const bool withReplacement, 
+  void bootstrapFromRealSamples(distributions::RandInt& randInt,
+				const bool withReplacement, 
                                 const num_t sampleSize, 
                                 const size_t featureIdx, 
                                 vector<size_t>& ics, 
                                 vector<size_t>& oobIcs);
 
-  void permuteContrasts();
+  void permuteContrasts(distributions::RandInt& randInt);
 
   bool isFeatureNumerical(const size_t featureIdx);
 
   void replaceFeatureData(const size_t featureIdx, const vector<num_t>& featureData);
   void replaceFeatureData(const size_t featureIdx, const vector<string>& rawFeatureData);
 
-  template <typename T> 
-  void permute(vector<T>& data) {
-
-    // Data size
-    size_t n = data.size();
-    
-    // Mapping indices
-    vector<size_t> ics(n);
-    
-    // Permute indices
-    for (size_t i = 0; i < n; ++i) {
-      size_t j = randomInteger_() % (i + 1);
-      ics[i] = ics[j];
-      ics[j] = i;
-    }
-    
-    // Re-map data based on permuted indices
-    for(size_t i = 0; i < n; ++i) {
-      T temp = data[i];
-      data[i] = data[ics[i]];
-      data[ics[i]] = temp;
-    }
-
-  }
-
+  
 #ifndef TEST__
 private:
 #endif
-
+  
   struct Feature {
     vector<num_t> data;
     //vector<size_t> sortOrder;
@@ -225,8 +203,6 @@ private:
   vector<string> sampleHeaders_;
 
   map<string,size_t> name2idx_;
-
-  MTRand_int32 randomInteger_;
   
 };
 

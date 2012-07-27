@@ -1,10 +1,12 @@
 #ifndef STOCHASTICFOREST_HPP
 #define STOCHASTICFOREST_HPP
 
-#include<cstdlib>
+#include <cstdlib>
+//#include <thread>
 #include "rootnode.hpp"
 #include "treedata.hpp"
 #include "options.hpp"
+#include "distributions.hpp"
 
 using namespace std;
 
@@ -18,9 +20,6 @@ public:
 
   ~StochasticForest();
   
-  void learnRF();
-  void learnGBT();
-
   num_t getError();
   num_t getOobError();
 
@@ -54,14 +53,19 @@ public:
 #ifndef TEST__
 private:
 #endif
+  
+  //void growTrees(vector<size_t>& treeIcs, size_t threadIdx);
 
-  Node::GrowInstructions getGrowInstructions();
+  void learnRF();
+  void learnGBT();
+
+  //Node::GrowInstructions getGrowInstructions();
 
   // Summarizes predictions across samples and trees in the forest, stored in predictionMatrix
   //vector<num_t> getPredictions(const vector<vector<num_t> >& predictionMatrix, vector<num_t>& predictions, vector<num_t>& confidence);
   
-  void growNumericalGBT(const Node::GrowInstructions& GI);
-  void growCategoricalGBT(const Node::GrowInstructions& GI);
+  void growNumericalGBT();
+  void growCategoricalGBT();
 
   // TODO: StochasticForest::transformLogistic() should be moved elsewhere
   void transformLogistic(vector<num_t>& prediction, vector<num_t>& probability);

@@ -18,6 +18,9 @@ using namespace std;
 class ArgParse {
 
 public:
+
+  ArgParse() {}
+
   ArgParse(const int argc, char* const argv[]) {
     if (argc < 1) {
       throw ERRNO_INVALID_ARGUMENT;

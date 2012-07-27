@@ -18,7 +18,7 @@ using namespace std;
    NOTE: dataDelimiter and headerDelimiter are used only when the format is AFM, for 
    ARFF default delimiter (comma) is used 
 */
-Treedata::Treedata(string fileName, char dataDelimiter, char headerDelimiter, int seed):
+Treedata::Treedata(string fileName, char dataDelimiter, char headerDelimiter, distributions::RandInt& randInt):
   dataDelimiter_(dataDelimiter),
   headerDelimiter_(headerDelimiter),
   features_(0),
@@ -132,17 +132,9 @@ Treedata::Treedata(string fileName, char dataDelimiter, char headerDelimiter, in
     name2idx_[contrastName] = i;
   }
 
-  // Initialize the Mersenne Twister random number generator
-  if ( seed < 0 ) {
-    seed = utils::generateSeed();
-  }
-  randomInteger_.seed( static_cast<unsigned int>(seed) );
-
   // Permute contrasts, so that the data becomes just noise
-  this->permuteContrasts();
-
-  
-
+  this->permuteContrasts(randInt);
+ 
 }
 
 Treedata::~Treedata() {
@@ -537,7 +529,7 @@ void Treedata::print(const size_t featureIdx) {
 }
 
 
-void Treedata::permuteContrasts() {
+void Treedata::permuteContrasts(distributions::RandInt& randInt) {
 
   size_t nFeatures = this->nFeatures();
   size_t nSamples = this->nSamples();
@@ -548,7 +540,8 @@ void Treedata::permuteContrasts() {
 
     vector<num_t> filteredData = this->getFilteredFeatureData(i,sampleIcs);
     
-    this->permute<num_t>(filteredData);
+    utils::permute(filteredData,randInt);
+    //this->permute<num_t>(filteredData);
 
     //datadefs::print(features_[i].data);
 
@@ -660,7 +653,8 @@ template <typename T> void Treedata::transpose(vector<vector<T> >& mat) {
 */
 
 
-void Treedata::bootstrapFromRealSamples(const bool withReplacement, 
+void Treedata::bootstrapFromRealSamples(distributions::RandInt& randInt,
+					const bool withReplacement, 
                                         const num_t sampleSize, 
                                         const size_t featureIdx, 
                                         vector<size_t>& ics, 
@@ -690,11 +684,11 @@ void Treedata::bootstrapFromRealSamples(const bool withReplacement,
   if(withReplacement) {
     //Draw nSamples random integers from range of allIcs
     for(size_t sampleIdx = 0; sampleIdx < nSamples; ++sampleIdx) {
-      ics[sampleIdx] = allIcs[randomInteger_() % nRealSamples];
+      ics[sampleIdx] = allIcs[randInt() % nRealSamples];
     }
   } else {  //If sampled without replacement...
     vector<size_t> foo = utils::range(nRealSamples);
-    this->permute<size_t>(foo);
+    utils::permute(foo,randInt);
     for(size_t i = 0; i < nSamples; ++i) {
       ics[i] = allIcs[foo[i]];
     }
