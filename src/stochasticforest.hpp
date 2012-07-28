@@ -31,8 +31,8 @@ public:
 
   vector<num_t> getPredictions();
 
-  void predictWithTestData(Treedata* treeDataTest, vector<string>& predictions, vector<num_t>& confidence);
-  void predictWithTestData(Treedata* treeDataTest, vector<num_t>& predictions, vector<num_t>& confidence);
+  void predict(Treedata* treeDataTest, vector<string>& predictions, vector<num_t>& confidence);
+  void predict(Treedata* treeDataTest, vector<num_t>& predictions, vector<num_t>& confidence);
 
   vector<num_t> getOobPredictions();
   vector<num_t> getPermutedOobPredictions(const size_t featureIdx);
@@ -46,7 +46,7 @@ public:
   inline set<size_t> getFeaturesInForest() { return( featuresInForest_ ); }
 
   inline string getTargetName() { return( parameters_->targetStr ); }
-  inline bool isTargetNumerical() { return( targetSupport_.size() == 0 ? true : false ); }
+  inline bool isTargetNumerical() { return( rootNodes_[0]->isTargetNumerical() ); }
 
   void printToFile(const string& fileName);
 
@@ -54,7 +54,7 @@ public:
 private:
 #endif
   
-  //void growTrees(vector<size_t>& treeIcs, size_t threadIdx);
+  //void growTreesPerThread(vector<RootNode*>& rootNodes);
 
   void learnRF();
   void learnGBT();

@@ -195,8 +195,8 @@ Node* RootNode::percolateSampleIdx(Treedata* testData, const size_t sampleIdx) {
     // 2. the value to split with is NaN
     // in which case we end up here
     if ( !childNode ) {
-      //cout << "Flipping coin..." << endl;
-      num_t r = parameters_->randIntGens[threadIdx_].uniform();
+      // NOTE: RANDOMIZATION IN PREDICTION HAS BEEN TURNED OFF, TO ALLOW EASIER THREADING
+      num_t r = 0.5; //parameters_->randIntGens[threadIdx_].uniform();
       if ( r <= nodep->leftFraction() ) {
         childNode = nodep->leftChild();
       } else {
@@ -242,8 +242,8 @@ Node* RootNode::percolateSampleIdxAtRandom(const size_t featureIdx, const size_t
     }
 
     if ( !childNode ) {
-      //break;
-      num_t r = parameters_->randIntGens[threadIdx_].uniform();
+      // NOTE: RANDOMIZATION IN PREDICTION HAS BEEN TURNED OFF, TO ALLOW EASIER THREADING
+      num_t r = 0.5; //parameters_->randIntGens[threadIdx_].uniform();
       if ( r <= nodep->leftFraction() ) {
         childNode = nodep->leftChild();
       } else {
@@ -260,11 +260,13 @@ Node* RootNode::percolateSampleIdxAtRandom(const size_t featureIdx, const size_t
 }
 
 
+
 num_t RootNode::getTestPrediction(Treedata* testData, const size_t sampleIdx) {
-
+  
   return( this->percolateSampleIdx(testData,sampleIdx)->getTrainPrediction() );
-
+  
 }
+
 
 string RootNode::getRawTestPrediction(Treedata* testData, const size_t sampleIdx) {
 

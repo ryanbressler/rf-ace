@@ -8,6 +8,7 @@
 #include <cstdlib>
 #include <map>
 #include <fstream>
+#include <unordered_map>
 
 #include "datadefs.hpp"
 #include "distributions.hpp"
@@ -202,7 +203,7 @@ private:
   vector<Feature> features_;
   vector<string> sampleHeaders_;
 
-  map<string,size_t> name2idx_;
+  unordered_map<string,size_t> name2idx_;
   
 };
 

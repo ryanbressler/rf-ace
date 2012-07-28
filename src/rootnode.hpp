@@ -33,12 +33,11 @@ public:
 
   vector<size_t> getOobIcs();
 
-  //num_t getOobError();
   size_t nOobSamples();
 
   set<size_t> getFeaturesInTree() { return(featuresInTree_); }
 
-  //Treedata* trainData() { return(&treeData_); }
+  bool isTargetNumerical() { return(treeData_->isFeatureNumerical(treeData_->getFeatureIdx(parameters_->targetStr))); }
 
 #ifndef TEST__
 private:
