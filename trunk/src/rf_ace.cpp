@@ -64,8 +64,8 @@ void printHeader(ostream& out) {
 
 int main(const int argc, char* const argv[]) {
 
-  // Store the start time (in clock cycles) just before the analysis
-  clock_t clockStart( clock() );
+  // Store the start time just before the analysis
+  clock_t timeStart( time(0) );
   
   printHeader(cout);
   
@@ -103,7 +103,7 @@ int main(const int argc, char* const argv[]) {
   }
 
   cout << endl;
-  cout << 1.0 * ( clock() - clockStart ) / CLOCKS_PER_SEC << " seconds elapsed." << endl << endl;
+  cout << time(0) - timeStart << " seconds elapsed." << endl << endl;
 
 }
 
@@ -265,7 +265,7 @@ statistics::RF_statistics executeRandomForest(Treedata& treeData,
   featuresInAllForests.clear();
   
   Progress progress;
-  clock_t clockStart( clock() );
+  clock_t timeStart( time(0) );
   contrastImportanceSample.resize(gen_op.nPerms);
   
   size_t targetIdx = treeData.getFeatureIdx(gen_op.targetStr);
@@ -336,7 +336,7 @@ statistics::RF_statistics executeRandomForest(Treedata& treeData,
   }
   
   // Store statistics of the run in an object
-  statistics::RF_statistics RF_stat(importanceMat,contrastImportanceMat,nodeMat, 1.0 * ( clock() - clockStart ) / CLOCKS_PER_SEC );
+  statistics::RF_statistics RF_stat(importanceMat,contrastImportanceMat,nodeMat, time(0) - timeStart );
   
   // Resize importance value container to proper dimensions
   importanceValues.resize( treeData.nFeatures() );
@@ -679,28 +679,32 @@ void printPredictionToFile(StochasticForest& SF, Treedata& treeDataTest, const s
     if ( targetIdx != treeDataTest.end() ) {
       trueData = treeDataTest.getFeatureData(targetIdx);
     }
-    
+
     vector<num_t> prediction;
     vector<num_t> confidence;
-    SF.predictWithTestData(&treeDataTest,prediction,confidence);
-    
+    SF.predict(&treeDataTest,prediction,confidence);
+
     for(size_t i = 0; i < prediction.size(); ++i) {
-      toPredictionFile << targetName << "\t" << treeDataTest.getSampleName(i) << "\t" << trueData[i] << "\t" << prediction[i] << "\t" << setprecision(3) << confidence[i] << endl;
+      toPredictionFile << targetName << "\t" << treeDataTest.getSampleName(i) << "\t" 
+		       << trueData[i] << "\t" << prediction[i] << "\t" 
+		       << setprecision(3) << confidence[i] << endl;
     }
     
   } else {
-    
+
     vector<string> trueData(treeDataTest.nSamples(),datadefs::STR_NAN);
     if ( targetIdx != treeDataTest.end() ) {
       trueData = treeDataTest.getRawFeatureData(targetIdx);
     }
-    
+
     vector<string> prediction;
     vector<num_t> confidence;
-    SF.predictWithTestData(&treeDataTest,prediction,confidence);
+    SF.predict(&treeDataTest,prediction,confidence);
     
     for(size_t i = 0; i < prediction.size(); ++i) {
-      toPredictionFile << targetName << "\t" << treeDataTest.getSampleName(i) << "\t" << trueData[i] << "\t" << prediction[i] << "\t" << setprecision(3) << confidence[i] << endl;
+      toPredictionFile << targetName << "\t" << treeDataTest.getSampleName(i) << "\t" 
+		       << trueData[i] << "\t" << prediction[i] << "\t" 
+		       << setprecision(3) << confidence[i] << endl;
     }
     
   }

@@ -179,7 +179,7 @@ void Treedata::whiteList(const vector<bool>& keepFeatureIcs) {
   vector<Feature> featureCopy = features_;
   features_.resize(2*nFeaturesNew);
 
-  map<string,size_t> name2idxCopy = name2idx_;
+  unordered_map<string,size_t> name2idxCopy = name2idx_;
 
   name2idx_.clear();
 
@@ -485,7 +485,7 @@ num_t Treedata::pearsonCorrelation(size_t featureIdx1, size_t featureIdx2) {
 
 size_t Treedata::getFeatureIdx(const string& featureName) {
   
-  map<string,size_t>::const_iterator it( name2idx_.find(featureName) );
+  unordered_map<string,size_t>::const_iterator it( name2idx_.find(featureName) );
   
   // If the feature does not exist, return "end", which is a value that 
   // points to outside the range of valid indices
