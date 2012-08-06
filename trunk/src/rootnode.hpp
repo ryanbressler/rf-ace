@@ -12,7 +12,7 @@
 class RootNode : public Node {
 public:
 
-  RootNode(Treedata* treeData,
+  RootNode(Treedata* trainData,
 	   options::General_options* parameters,
 	   const size_t threadIdx);
 
@@ -37,8 +37,6 @@ public:
 
   set<size_t> getFeaturesInTree() { return(featuresInTree_); }
 
-  bool isTargetNumerical() { return(treeData_->isFeatureNumerical(treeData_->getFeatureIdx(parameters_->targetStr))); }
-
 #ifndef TEST__
 private:
 #endif
@@ -46,17 +44,14 @@ private:
   Node* percolateSampleIdx(Treedata* testData, const size_t sampleIdx);
   Node* percolateSampleIdx(const size_t sampleIdx);
 
-  //map<Node*,vector<size_t> > percolateSampleIcsAtRandom(const size_t featureIdx, const vector<size_t>& sampleIcs);
   Node* percolateSampleIdxAtRandom(const size_t featureIdx, const size_t sampleIdx);
 
-  //num_t getPredictionError(const map<Node*,vector<size_t> >& percolatedSampleIcs);
-
   // Required parameters
-  Treedata* treeData_;
   options::General_options* parameters_;
   size_t threadIdx_;
 
   // Parameters that are generated only when a tree is grown
+  Treedata* trainData_;
   size_t nNodes_;
   vector<size_t> bootstrapIcs_;
   vector<size_t> oobIcs_;

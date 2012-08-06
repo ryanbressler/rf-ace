@@ -5,7 +5,10 @@ function DI = deltaImpurity(x_left,x_right,isNumerical)
 %halves, "x_left" and "x_right". Type of data is indicated by 
 % isNumerical flag
 
-% Caculate the decrease using the variance formula (slow+unstable)
+assert(~any(isnan(x_left)));
+assert(~any(isnan(x_right)));
+
+% Calculate the decrease using the variance formula (slow+unstable)
 if isNumerical
     DI = deltaImpurity_var_regr(x_left,x_right);
     
@@ -13,7 +16,11 @@ if isNumerical
     DI_test = deltaImpurity_mean_regr(x_left,x_right);
 
     %Make sure the two measures agree
-    assert( abs(DI - DI_test ) < 1e-5, 'error: impurity functions disagree');
+    if any(isnan([DI,DI_test]))
+        assert(isnan(DI) && isnan(DI_test), 'error: only the other impurity function yields NaN');
+    else
+        assert( abs(DI - DI_test ) < 1e-3, 'error: impurity functions disagree in value');
+    end
 else
     
     DI = deltaImpurity_class(x_left,x_right);

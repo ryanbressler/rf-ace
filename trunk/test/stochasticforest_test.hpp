@@ -28,55 +28,39 @@ public:
 
 private:
 
-  //Treedata trainData_;
-  //options::General_options* genOp_;
-  //StochasticForest* CART_;
+  Treedata* trainData_;
+  options::General_options parameters_;
 
 };
 
 void StochasticForestTest::setUp() {
-
-  /*
-    trainData_ = new Treedata("test_103by300_mixed_matrix.afm",'\t',':');
-    
-    genOp_ = new options::General_options;
-    
-    genOp_->setCARTDefaults();
-    
-    genOp_->nTrees = 1;
-    genOp_->nMaxLeaves = 1000;
-    genOp_->nodeSize = 5;
-    
-    CART_ = new StochasticForest(trainData_,genOp_);
-  */
-
+  
+  parameters_.setCARTDefaults();
+  
+  trainData_ = new Treedata("test_103by300_mixed_matrix.afm",'\t',':',parameters_.randIntGens[0]);
+  
 }
 
 void StochasticForestTest::tearDown() {
 
-  //delete CART_;
-  //delete trainData_;
-  //delete genOp_;
+  delete trainData_;
   
 }
 
 void StochasticForestTest::test_treeDataPercolation() {
 
 
-  options::General_options parameters;
-  //parameters.modelType = options::RF;
-  parameters.loadUserParams();
-  parameters.forestInput = "test_predictor.sf";
+  parameters_.forestInput = "test_predictor.sf";
 
   // First we need some data
-  Treedata::Treedata testData("testdata.tsv",'\t',':',parameters.randIntGens[0]);
-  
+  Treedata::Treedata testData("testdata.tsv",'\t',':',parameters_.randIntGens[0]);
+
   // Next load a test predictor
-  StochasticForest SF(&parameters);
+  StochasticForest SF(&parameters_);
 
   vector<num_t> prediction,confidence;
   
-  SF.predictWithTestData(&testData,prediction,confidence);
+  SF.predict(&testData,prediction,confidence);
   
   CPPUNIT_ASSERT( prediction.size() == 4 );
   CPPUNIT_ASSERT( confidence.size() == 4 );
@@ -85,7 +69,6 @@ void StochasticForestTest::test_treeDataPercolation() {
   CPPUNIT_ASSERT( fabs( prediction[2] - 3.9 ) < datadefs::EPS );
   CPPUNIT_ASSERT( fabs( prediction[3] - 6.5 ) < datadefs::EPS );
   
-
 }
 
 
@@ -120,19 +103,19 @@ void StochasticForestTest::test_error() {
 
 void StochasticForestTest::test_CART() {
  
-  
-  options::General_options CARTParameters;
-  CARTParameters.modelType = options::CART;
-  CARTParameters.loadUserParams();
-  CARTParameters.targetStr = "N:output";
+  parameters_.targetStr = "N:output";
 
-  Treedata treeData("test_103by300_mixed_matrix.afm",'\t',':',CARTParameters.randIntGens[0]);
+  Treedata treeData("test_103by300_mixed_nan_matrix.afm",'\t',':',parameters_.randIntGens[0]);
 
-  CARTParameters.nMaxLeaves = treeData.nSamples();
+  parameters_.nMaxLeaves = treeData.nSamples();
 
-  //CARTParameters.printParameters();
+  //parameters_.printParameters();
 
-  StochasticForest CART(&treeData,&CARTParameters);
+  StochasticForest CART(&treeData,&parameters_);
+
+  CPPUNIT_ASSERT( CART.rootNodes_[0]->splitter_.name == "N:input" );
+
+  //CART.rootNodes_[0]->splitter_.print();
 
 }
 

@@ -119,6 +119,22 @@ private:
     set<string> rightValues;
     num_t leftFraction;
 
+    void print() {
+      cout << "Splitter:" << endl
+	   << " idx    = " << idx << endl
+	   << " name   = " << name << endl;
+      if ( isNumerical ) {
+	cout << " lVal   = " << leftLeqValue << endl;
+      } else {
+	cout << " lVals  = ";
+	utils::write(cout,leftValues.begin(),leftValues.end());
+	cout << endl << " rVals  = ";
+	utils::write(cout,rightValues.begin(),rightValues.end());
+	cout << endl;
+      }
+      
+    }
+    
   } splitter_;
 
   num_t  trainPrediction_;
