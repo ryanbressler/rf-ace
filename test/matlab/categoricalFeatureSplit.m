@@ -1,6 +1,12 @@
 function [DI,splitValues_left,splitValues_right,ics_left,ics_right] = categoricalFeatureSplit(tv,fv,minSamples,isTargetNumerical)
 
+%eliminate NaNs
+ics = find(~isnan(tv) & ~isnan(fv));
+tv = tv(ics);
+fv = fv(ics);
+
 fVals = unique(fv);
+fVals(isnan(fVals)) = [];
 
 n = length(tv);
 assert(n == length(fv));
@@ -26,7 +32,7 @@ while true
         
         DI = deltaImpurity(tv(ics_left_test),tv(ics_right_test),isTargetNumerical);
         
-        if DI > DI_best
+        if DI > DI_best && sum(~isnan(ics_left_test)) >= minSamples && sum(~isnan(ics_right_test)) > minSamples
             DI_best = DI;
             splitVal = fVal;
         end
@@ -42,8 +48,8 @@ while true
         break;
     end
     
-    splitValues_left = unique([splitValues_left,splitVal])
-    splitValues_right = setdiff(splitValues_right,splitVal)
+    splitValues_left = unique([splitValues_left,splitVal]);
+    splitValues_right = setdiff(splitValues_right,splitVal);
 
     ics_left = ics_left | fv == splitVal;
     ics_right = ics_right & fv ~= splitVal;

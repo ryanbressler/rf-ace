@@ -1,12 +1,13 @@
 #include "datadefs.hpp"
-#include<math.h>
-#include<cassert>
-#include<sstream>
-#include<algorithm>
-#include<iostream>
-#include<limits>
+#include <math.h>
+#include <cassert>
+#include <sstream>
+#include <algorithm>
+#include <iostream>
+#include <limits>
+#include <thread>
+//#include <regex>
 
-#include "datadefs.hpp"
 #include "utils.hpp" // This will be removed after all utilities currently under datadefs are properly relocated
 
 using namespace std;
@@ -18,6 +19,7 @@ const datadefs::num_t datadefs::NUM_NAN = numeric_limits<double>::quiet_NaN();//
 const string datadefs::STR_NAN = "NA";
 const datadefs::num_t datadefs::NUM_INF = numeric_limits<double>::infinity();
 const size_t datadefs::MAX_IDX = numeric_limits<size_t>::max() - 1;
+const size_t datadefs::MAX_THREADS = thread::hardware_concurrency();
 const datadefs::num_t datadefs::EPS = 1e-18; //1e-12;
 const datadefs::num_t datadefs::PI = 3.1415926535;
 const datadefs::num_t datadefs::A = 0.140012;

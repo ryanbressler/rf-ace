@@ -71,7 +71,6 @@ int main(const int argc, char* const argv[]) {
   
   // Structs that store all the user-specified command-line arguments
   options::General_options gen_op(argc,argv);
-  gen_op.loadUserParams();
   
   // With no input arguments the help is printed
   if ( argc == 1 || gen_op.printHelp ) {

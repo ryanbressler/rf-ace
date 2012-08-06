@@ -2,19 +2,19 @@
 #include "rootnode.hpp"
 #include "datadefs.hpp"
 
-RootNode::RootNode(Treedata* treeData,
+RootNode::RootNode(Treedata* trainData,
 		   options::General_options* parameters,
 		   size_t threadIdx): 
   Node(),
-  treeData_(treeData),
   parameters_(parameters),
   threadIdx_(threadIdx),
+  trainData_(trainData),
   nNodes_(1) {
 
   trainPredictionCache_.clear();
   
-  if ( treeData ) {
-    trainPredictionCache_.resize(treeData_->nSamples(),datadefs::NUM_NAN);    
+  if ( trainData_ ) {
+    trainPredictionCache_.resize(trainData_->nSamples(),datadefs::NUM_NAN);    
   } 
   
 }
@@ -23,7 +23,7 @@ RootNode::~RootNode() { /* EMPTY DESTRUCTOR */ }
 
 void RootNode::growTree() {
 
-  assert( treeData_ );
+  assert( trainData_ );
 
   parameters_->validateParameters();
 
@@ -41,24 +41,24 @@ void RootNode::growTree() {
   //Generate the vector for bootstrap indices
   vector<size_t> bootstrapIcs;
   
-  size_t targetIdx = treeData_->getFeatureIdx( parameters_->targetStr );
+  size_t targetIdx = trainData_->getFeatureIdx( parameters_->targetStr );
   
-  if ( targetIdx == treeData_->end() ) {
+  if ( targetIdx == trainData_->end() ) {
     cerr << "Missing target, cannot grow trees!" << endl;
     exit(1);
   }
 
   //Generate bootstrap indices and oob-indices
-  treeData_->bootstrapFromRealSamples(parameters_->randIntGens[threadIdx_], parameters_->sampleWithReplacement, parameters_->inBoxFraction, targetIdx, bootstrapIcs_, oobIcs_);
+  trainData_->bootstrapFromRealSamples(parameters_->randIntGens[threadIdx_], parameters_->sampleWithReplacement, parameters_->inBoxFraction, targetIdx, bootstrapIcs_, oobIcs_);
 
   //This is to check that the bootstrap sample doesn't contain any missing values (it shouldn't!)
   if ( false ) {
-    vector<num_t> targetData = treeData_->getFeatureData(targetIdx,bootstrapIcs_);
+    vector<num_t> targetData = trainData_->getFeatureData(targetIdx,bootstrapIcs_);
     for(size_t i = 0; i < targetData.size(); ++i) {
       assert(!datadefs::isNAN(targetData[i]));
     }
 
-    targetData = treeData_->getFeatureData(targetIdx,oobIcs_);
+    targetData = trainData_->getFeatureData(targetIdx,oobIcs_);
     for(size_t i = 0; i < targetData.size(); ++i) {
       assert(!datadefs::isNAN(targetData[i]));
     }
@@ -79,14 +79,14 @@ void RootNode::growTree() {
 
   featuresInTree_.clear();
 
-  vector<size_t> featureIcs = utils::range( treeData_->nFeatures() );
+  vector<size_t> featureIcs = utils::range( trainData_->nFeatures() );
   featureIcs.erase( featureIcs.begin() + targetIdx );
 
   PredictionFunctionType predictionFunctionType;
 
-  if ( treeData_->isFeatureNumerical(targetIdx) ) {
+  if ( trainData_->isFeatureNumerical(targetIdx) ) {
     predictionFunctionType = Node::MEAN;
-  } else if ( !treeData_->isFeatureNumerical(targetIdx) && parameters_->modelType == options::GBT ) {
+  } else if ( !trainData_->isFeatureNumerical(targetIdx) && parameters_->modelType == options::GBT ) {
     predictionFunctionType = Node::GAMMA;
   } else {
     predictionFunctionType = Node::MODE;
@@ -99,30 +99,30 @@ void RootNode::growTree() {
   }
 
   //Start the recursive node splitting from the root node. This will generate the tree.
-  this->recursiveNodeSplit(treeData_,targetIdx,parameters_,threadIdx_,predictionFunctionType,featureIcs,bootstrapIcs_,featuresInTree_,&nLeaves);
+  this->recursiveNodeSplit(trainData_,targetIdx,parameters_,threadIdx_,predictionFunctionType,featureIcs,bootstrapIcs_,featuresInTree_,&nLeaves);
   
   nNodes_ = 2 * nLeaves - 1;
 
 }
 
 size_t RootNode::nNodes() {
-  assert( treeData_ );
+  assert( trainData_ );
   return( nNodes_ );
 }
 
 vector<size_t> RootNode::getOobIcs() {
-  assert( treeData_ );
+  assert( trainData_ );
   return( oobIcs_ );
 }
 
 size_t RootNode::nOobSamples() {
-  assert( treeData_ );
+  assert( trainData_ );
   return( oobIcs_.size() ); 
 }
 
 Node* RootNode::percolateSampleIdx(const size_t sampleIdx) {
 
-  assert( treeData_ );
+  assert( trainData_ );
 
   Node* nodep( this );
 
@@ -133,15 +133,15 @@ Node* RootNode::percolateSampleIdx(const size_t sampleIdx) {
     size_t featureIdxNew = nodep->splitterIdx();
 
     // Get the respective sample of the splitter feature
-    num_t value = treeData_->getFeatureData(featureIdxNew,sampleIdx);
+    num_t value = trainData_->getFeatureData(featureIdxNew,sampleIdx);
 
     Node* childNode;
 
     // Precolate the value, and as a result get a pointer to a child node
-    if ( treeData_->isFeatureNumerical(featureIdxNew) ) {
+    if ( trainData_->isFeatureNumerical(featureIdxNew) ) {
       childNode = nodep->percolateData(value);
     } else {
-      childNode = nodep->percolateData(treeData_->getRawFeatureData(featureIdxNew,value));
+      childNode = nodep->percolateData(trainData_->getRawFeatureData(featureIdxNew,value));
     }
 
     // 
@@ -214,11 +214,11 @@ Node* RootNode::percolateSampleIdx(Treedata* testData, const size_t sampleIdx) {
 
 Node* RootNode::percolateSampleIdxAtRandom(const size_t featureIdx, const size_t sampleIdx) {
 
-  assert( treeData_ );
+  assert( trainData_ );
   
   Node* nodep( this );
 
-  size_t nSamples = treeData_->nSamples();
+  size_t nSamples = trainData_->nSamples();
 
   while ( nodep->hasChildren() ) {
 
@@ -228,17 +228,17 @@ Node* RootNode::percolateSampleIdxAtRandom(const size_t featureIdx, const size_t
 
     if(featureIdx == featureIdxNew) {
       size_t randomSampleIdx = parameters_->randIntGens[threadIdx_]() % nSamples;
-      value = treeData_->getFeatureData(featureIdxNew,randomSampleIdx);
+      value = trainData_->getFeatureData(featureIdxNew,randomSampleIdx);
     } else {
-      value = treeData_->getFeatureData(featureIdxNew,sampleIdx);
+      value = trainData_->getFeatureData(featureIdxNew,sampleIdx);
     }
 
     Node* childNode;
 
-    if ( treeData_->isFeatureNumerical(featureIdxNew) ) {
+    if ( trainData_->isFeatureNumerical(featureIdxNew) ) {
       childNode = nodep->percolateData(value);
     } else {
-      childNode = nodep->percolateData(treeData_->getRawFeatureData(featureIdxNew,value));
+      childNode = nodep->percolateData(trainData_->getRawFeatureData(featureIdxNew,value));
     }
 
     if ( !childNode ) {
@@ -276,7 +276,7 @@ string RootNode::getRawTestPrediction(Treedata* testData, const size_t sampleIdx
 
 num_t RootNode::getTrainPrediction(const size_t sampleIdx) {
 
-  assert( treeData_ );
+  assert( trainData_ );
 
   // If we don't yet have a prediction for the sample index...
   if ( datadefs::isNAN(trainPredictionCache_[sampleIdx]) ) {
@@ -302,7 +302,7 @@ num_t RootNode::getTrainPrediction(const size_t sampleIdx) {
 num_t RootNode::getPermutedTrainPrediction(const size_t featureIdx, 
 					 const size_t sampleIdx) {
 
-  assert( treeData_ );
+  assert( trainData_ );
 
   // If we have the feature in the tree...
   if ( featuresInTree_.find(featureIdx) != featuresInTree_.end() ) {
@@ -319,9 +319,9 @@ num_t RootNode::getPermutedTrainPrediction(const size_t featureIdx,
 
 vector<num_t> RootNode::getTrainPrediction() {
 
-  assert( treeData_ );
+  assert( trainData_ );
 
-  size_t nSamples = treeData_->nSamples();
+  size_t nSamples = trainData_->nSamples();
 
   vector<num_t> prediction(nSamples);
 

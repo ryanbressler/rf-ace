@@ -46,7 +46,7 @@ public:
   inline set<size_t> getFeaturesInForest() { return( featuresInForest_ ); }
 
   inline string getTargetName() { return( parameters_->targetStr ); }
-  inline bool isTargetNumerical() { return( rootNodes_[0]->isTargetNumerical() ); }
+  inline bool isTargetNumerical() { return( targetSupport_.size() == 0 ); }
 
   void printToFile(const string& fileName);
 
@@ -54,16 +54,9 @@ public:
 private:
 #endif
   
-  //void growTreesPerThread(vector<RootNode*>& rootNodes);
-
   void learnRF();
   void learnGBT();
 
-  //Node::GrowInstructions getGrowInstructions();
-
-  // Summarizes predictions across samples and trees in the forest, stored in predictionMatrix
-  //vector<num_t> getPredictions(const vector<vector<num_t> >& predictionMatrix, vector<num_t>& predictions, vector<num_t>& confidence);
-  
   void growNumericalGBT();
   void growCategoricalGBT();
 

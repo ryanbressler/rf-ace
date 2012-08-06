@@ -72,12 +72,8 @@ StochasticForest::StochasticForest(options::General_options* parameters):
   assert( forestSetup.find("TARGET") != forestSetup.end() );
   parameters_->targetStr = forestSetup["TARGET"];
 
-  //size_t targetIdx = treeData_->getFeatureIdx(parameters_->targetStr);
-
   assert( forestSetup.find("CATEGORIES") != forestSetup.end() );
   targetSupport_ = utils::split(forestSetup["CATEGORIES"],',');
-
-  bool isTargetNumerical = targetSupport_.size() == 0;
 
   assert( forestSetup.find("SHRINKAGE") != forestSetup.end() );
   parameters_->shrinkage = utils::str2<num_t>(forestSetup["SHRINKAGE"]);
@@ -122,7 +118,7 @@ StochasticForest::StochasticForest(options::General_options* parameters):
     string rawTrainPrediction = nodeMap["PRED"];
     num_t trainPrediction = datadefs::NUM_NAN;
 
-    if ( isTargetNumerical ) {
+    if ( this->isTargetNumerical() ) {
       trainPrediction = utils::str2<num_t>(rawTrainPrediction);
     }
     
@@ -191,11 +187,9 @@ void StochasticForest::printToFile(const string& fileName) {
   
   vector<string> categories = treeData_->categories(targetIdx);
 
-  string categoriesStr = utils::join(categories.begin(),categories.end(),',');
-
   toFile << ",TARGET=" << "\"" << parameters_->targetStr << "\"";
   toFile << ",NTREES=" << parameters_->nTrees;
-  toFile << ",CATEGORIES=" << "\"" << categoriesStr << "\"";
+  toFile << ",CATEGORIES=" << "\""; utils::write(toFile,categories.begin(),categories.end(),','); toFile << "\"";
   toFile << ",SHRINKAGE=" << parameters_->shrinkage << endl;
 
   // Save each tree in the forest
@@ -208,47 +202,6 @@ void StochasticForest::printToFile(const string& fileName) {
   toFile.close();
   
 }
-
-/*
-  Node::GrowInstructions StochasticForest::getGrowInstructions() {
-  
-  Node::GrowInstructions GI;
-  
-  size_t targetIdx = treeData_->getFeatureIdx( parameters_->targetStr );
-  
-  RootNode::PredictionFunctionType predictionFunctionType;
-  
-  if(treeData_->isFeatureNumerical(targetIdx)) {
-  predictionFunctionType = RootNode::MEAN;
-  } else {
-  predictionFunctionType = RootNode::MODE;
-  }
-  
-  GI.sampleWithReplacement = parameters_->sampleWithReplacement;
-  GI.sampleSizeFraction = parameters_->inBoxFraction;
-  GI.maxNodesToStop = 2 * parameters_->nMaxLeaves - 1;
-  GI.minNodeSizeToStop = parameters_->nodeSize;
-  GI.isRandomSplit = parameters_->isRandomSplit;
-  
-  GI.featureIcs = utils::range( treeData_->nFeatures() );
-  GI.featureIcs.erase( GI.featureIcs.begin() + targetIdx ); // Remove target from the feature index list
-  
-  if ( GI.isRandomSplit ) {
-  GI.nFeaturesForSplit = parameters_->mTry;
-  } else {
-  GI.nFeaturesForSplit = GI.featureIcs.size();
-  }
-  
-  GI.useContrasts = parameters_->useContrasts;
-  GI.numClasses = targetSupport_.size();
-  GI.predictionFunctionType = predictionFunctionType;
-  
-  GI.randIntGens = &parameters_->randIntGens;
-  
-  return( GI );
-  
-  }
-*/
 
 void growTreesPerThread(vector<RootNode*>& rootNodes) {
    
@@ -635,8 +588,9 @@ void predictNumPerThread(Treedata* testData, vector<RootNode*>& rootNodes, vecto
 
 void StochasticForest::predict(Treedata* testData, vector<string>& predictions, vector<num_t>& confidence) {
 
-  assert( parameters_->modelType == options::RF );
+  assert( parameters_->modelType != options::GBT );
   assert( !this->isTargetNumerical() );
+  assert( parameters_->nThreads > 0 );
 
   size_t nSamples = testData->nSamples();
 
@@ -648,9 +602,13 @@ void StochasticForest::predict(Treedata* testData, vector<string>& predictions, 
   vector<thread> threads;
 
   for ( size_t threadIdx = 0; threadIdx < parameters_->nThreads; ++threadIdx ) {
-    threads.push_back( thread(predictCatPerThread,testData,rootNodes_,sampleIcs[threadIdx],&predictions,&confidence) );
+    // We only launch a thread if there are any samples allocated for prediction
+    if ( sampleIcs.size() > 0 ) {
+      threads.push_back( thread(predictCatPerThread,testData,rootNodes_,sampleIcs[threadIdx],&predictions,&confidence) );
+    }
   }
 
+  // Join all launched threads
   for ( size_t threadIdx = 0; threadIdx < threads.size(); ++threadIdx ) {
     threads[threadIdx].join();
   }
@@ -660,8 +618,9 @@ void StochasticForest::predict(Treedata* testData, vector<string>& predictions, 
 
 void StochasticForest::predict(Treedata* testData, vector<num_t>& predictions, vector<num_t>& confidence) {
 
-  assert( parameters_->modelType == options::RF );
+  assert( parameters_->modelType != options::GBT );
   assert( this->isTargetNumerical() );
+  assert( parameters_->nThreads > 0 );
 
   size_t nSamples = testData->nSamples();
 
@@ -673,9 +632,11 @@ void StochasticForest::predict(Treedata* testData, vector<num_t>& predictions, v
   vector<thread> threads;
 
   for ( size_t threadIdx = 0; threadIdx < parameters_->nThreads; ++threadIdx ) {
+    // We only launch a thread if there are any samples allocated for prediction
     threads.push_back( thread(predictNumPerThread,testData,rootNodes_,sampleIcs[threadIdx],&predictions,&confidence) );
   }
 
+  // Join all launched threads
   for ( size_t threadIdx = 0; threadIdx < threads.size(); ++threadIdx ) {
     threads[threadIdx].join();
   }

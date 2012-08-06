@@ -3,8 +3,12 @@
 #include<iomanip>
 
 #include "node.hpp"
+#include "datadefs.hpp"
 #include "utils.hpp"
 #include "math.hpp"
+
+using namespace std;
+using datadefs::num_t;
 
 Node::Node():
   trainPrediction_(datadefs::NUM_NAN),
@@ -27,30 +31,6 @@ Node::~Node() {
   }
 
 }
-
-/*
-  void Node::GrowInstructions::validate() const {
-  
-  assert( maxNodesToStop > 0 );
-  assert( minNodeSizeToStop > 0 );
-  assert( nFeaturesForSplit > 0 );
-  assert( featureIcs.size() > 0 );
-  
-  if ( isRandomSplit ) {
-  assert( nFeaturesForSplit <= featureIcs.size() );
-  } else {
-  assert( nFeaturesForSplit == featureIcs.size() );
-  }
-  
-  if ( sampleWithReplacement ) {
-  assert( 0.0 < sampleSizeFraction );
-  } else {
-  assert( 0.0 < sampleSizeFraction && sampleSizeFraction <= 1.0 );
-  }
-  
-  }
-*/
-
 
 /**
  * Deletes child nodes, which will cascade all the way to the leaf nodes 
@@ -210,11 +190,8 @@ void Node::print(string& traversal, ofstream& toFile) {
 	     << ",RVALUES=" << splitter_.leftLeqValue << endl;
     } else {
 
-      string leftValues = utils::join(splitter_.leftValues.begin(),splitter_.leftValues.end(),':');
-      string rightValues = utils::join(splitter_.rightValues.begin(),splitter_.rightValues.end(),':');
-      
-      toFile << ",LVALUES=" << "\"" << leftValues << "\""
-	     << ",RVALUES=" << "\"" << rightValues << "\"" << endl;
+      toFile << ",LVALUES=" << "\""; utils::write(toFile,splitter_.leftValues.begin(),splitter_.leftValues.end(),':'); toFile << "\""
+	     << ",RVALUES=" << "\""; utils::write(toFile,splitter_.rightValues.begin(),splitter_.rightValues.end(),':'); toFile << "\"" << endl;
     }
     
     string traversalLeft = traversal;

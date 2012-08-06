@@ -846,13 +846,14 @@ num_t Treedata::numericalFeatureSplit(const size_t targetIdx,
 
       // If the sample is repeated and we can continue, continue
       if ( n_left < minSamples || 
-	   (i + 1 < n_tot - minSamples && tv[ i + 1 ] == tv[ i ]) ) {
+	   (i + 1 < n_tot - minSamples && fv[ i + 1 ] == fv[ i ]) ) {
         continue;
       }
       
       // If the current split point yields a better split than the best,
       // update DI_best and bestSplitIdx
       num_t DI = math::deltaImpurity_regr(mu_tot,n_tot,mu_left,n_left,mu_right,n_right);
+      //cout << "(" << n_left << "," << tv[i] << "," << DI << ")"; 
       if (  DI > DI_best ) {
 
         bestSplitIdx = i;
@@ -894,7 +895,7 @@ num_t Treedata::numericalFeatureSplit(const size_t targetIdx,
 
       // If we have repeated samples and can continue, continue
       if ( n_left < minSamples || 
-	   (i + 1 > n_tot - minSamples && tv[ i + 1 ] == tv[ i ]) ) {
+	   (i + 1 > n_tot - minSamples && fv[ i + 1 ] == fv[ i ]) ) {
         continue;
       }
 
@@ -982,42 +983,34 @@ num_t Treedata::categoricalFeatureSplit(const size_t targetIdx,
 
       // We test each category one by one and see if the fitness becomes improved
       for ( map<num_t,vector<size_t> >::iterator it( fmap_right.begin() ); it != fmap_right.end() ; ++it ) {
-
+	
         //cout << "Testing to split with feature '" << treedata->getRawFeatureData(featureIdx,it->first) << "'" << endl;
-
+	
         // Take samples from right and put them left
         //cout << "from right to left: [";
+	size_t n_left_c = n_left;
+	size_t n_right_c = n_right;
+	num_t mu_left_c = mu_left;
+	num_t mu_right_c = mu_right;
+	
         for(size_t i = 0; i < it->second.size(); ++i) {
           //cout << " " << it->second[i];
-
-	  ++n_left;
-	  --n_right;
-	  mu_left  += ( tv[ it->second[i] ] - mu_left  ) / n_left;
-	  mu_right -= ( tv[ it->second[i] ] - mu_right ) / n_right;
-
+	  
+	  ++n_left_c;
+	  --n_right_c;
+	  mu_left_c  += ( tv[ it->second[i] ] - mu_left_c  ) / n_left_c;
+	  mu_right_c -= ( tv[ it->second[i] ] - mu_right_c ) / n_right_c;
+	  
         }
         //cout << " ]" << endl;
-
+	
         //If the split reduces impurity even further, save the point
-	num_t DI = math::deltaImpurity_regr(mu_tot,n_tot,mu_left,n_left,mu_right,n_right);
+	num_t DI = math::deltaImpurity_regr(mu_tot,n_tot,mu_left_c,n_left_c,mu_right_c,n_right_c);
         if ( DI > DI_best ) { //&& n_left >= minSamples && n_right >= minSamples )
-
+	  
           it_best = it;
           DI_best = DI;
         }
-
-        //Take samples from left and put them right
-        //cout << "From left to right: [";
-        for(size_t i = 0; i < it->second.size(); ++i) {
-          //cout << " " << it->second[i];
-
-	  --n_left;
-          ++n_right;
-          mu_left  -= ( tv[ it->second[i] ] - mu_left  ) / n_left;
-          mu_right += ( tv[ it->second[i] ] - mu_right ) / n_right;
-
-        }
-        //cout << " ]" << endl;
 
       }
 
@@ -1028,7 +1021,7 @@ num_t Treedata::categoricalFeatureSplit(const size_t targetIdx,
         //cout << " -- STOP --" << endl;
         break;
       }
-
+      
       // Otherwise move samples from right to left
       for(size_t i = 0; i < it_best->second.size(); ++i) {
         //cout << " " << it->second[i];

@@ -6,6 +6,7 @@
 #include <sstream>
 #include <iostream>
 #include <iomanip>
+#include <thread>
 #include "argparse.hpp"
 #include "datadefs.hpp"
 #include "treedata.hpp"
@@ -30,6 +31,7 @@ namespace options {
   const int        GENERAL_DEFAULT_SEED = -1;
   const ForestType GENERAL_DEFAULT_MODEL_TYPE = RF;
   const size_t     GENERAL_DEFAULT_N_THREADS = 1;
+  const bool       GENERAL_DEFAULT_IS_MAX_THREADS = false;
 
   // Statistical test default configuration
   const size_t     ST_DEFAULT_N_PERMS = 20;
@@ -101,6 +103,7 @@ namespace options {
     size_t pruneFeatures; const string pruneFeatures_s; const string pruneFeatures_l;
     int seed; string seed_s; string seed_l;
     size_t nThreads; const string nThreads_s; const string nThreads_l;
+    bool isMaxThreads; const string isMaxThreads_s; const string isMaxThreads_l;
 
     // Forest Type
     ForestType modelType; const string modelType_s; const string modelType_l;
@@ -148,6 +151,7 @@ namespace options {
       pruneFeatures(GENERAL_DEFAULT_MIN_SAMPLES),pruneFeatures_s("X"),pruneFeatures_l("pruneFeatures"),
       seed(GENERAL_DEFAULT_SEED),seed_s("S"),seed_l("seed"),
       nThreads(GENERAL_DEFAULT_N_THREADS),nThreads_s("e"),nThreads_l("nThreads"),
+      isMaxThreads(GENERAL_DEFAULT_IS_MAX_THREADS),isMaxThreads_s("R"),isMaxThreads_l("maxThreads"),
       // Forest Type
       modelType(GENERAL_DEFAULT_MODEL_TYPE),modelType_s("M"),modelType_l("modelType"),
       // Random Forest related parameters
@@ -176,7 +180,18 @@ namespace options {
   public:
 
     General_options():
-      Base_options() { /* EMPTY CONSTRUCTOR */ }
+      Base_options() { 
+
+      if ( modelType == RF ) {
+        setRFDefaults();
+      } else if ( modelType == GBT ) {
+        setGBTDefaults();
+      } else if ( modelType == CART ) {
+        setCARTDefaults();
+      }
+
+      this->loadUserParams(); 
+    }
     
     General_options(const int argc, char* const argv[]):
       Base_options(),
@@ -189,6 +204,8 @@ namespace options {
       } else if ( modelType == CART ) {
 	setCARTDefaults();
       } 
+
+      this->loadUserParams();
     }
     
     ~General_options() {
@@ -262,7 +279,16 @@ namespace options {
       }
 
       parser_.getArgument<size_t>(nThreads_s, nThreads_l, nThreads);
+      parser_.getFlag(isMaxThreads_s, isMaxThreads_l, isMaxThreads);
 
+      if ( isMaxThreads ) {
+	if ( datadefs::MAX_THREADS == 0 ) {
+	  cout << "Cannot extract information about maximum available threads. Using " << nThreads << " threads instead." << endl;
+	} else {
+	  nThreads = datadefs::MAX_THREADS;
+	}
+      }
+      
       randIntGens.resize(nThreads);
       for ( size_t threadIdx = 0; threadIdx < nThreads; ++threadIdx ) {
 	randIntGens[threadIdx].seed(seed + threadIdx);

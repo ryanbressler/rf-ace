@@ -49,8 +49,11 @@ namespace rface {
 	   << " / " << treeData.nFeatures() << " features, please wait... " << flush;
 
       // Remove the target feature from the black list, otherwise it will get removed
-      blackFeatureNames.erase(gen_op.targetStr);
-
+      if ( blackFeatureNames.find(gen_op.targetStr) != blackFeatureNames.end() ) {
+	cout << " Target found in the blacklist -- omitting... " << flush;
+	blackFeatureNames.erase(gen_op.targetStr);
+      }
+      
       treeData.blackList(blackFeatureNames);
       cout << "DONE" << endl;
     }

@@ -35,6 +35,7 @@ namespace datadefs {
   extern const num_t NUM_INF;       /** Numeric representation of positive infinity */
 
   extern const size_t MAX_IDX;
+  extern const size_t MAX_THREADS;
 
   extern const num_t A;             /** Numeric constant used to estimate the
                                      *   error function of a normal distribution,
@@ -72,6 +73,8 @@ namespace datadefs {
                 size_t& nRealValues);
 
   void sortDataAndMakeRef(const bool isIncreasingOrder, vector<num_t>& data, vector<size_t>& refIcs);
+
+  //bool isAFM(const string& str);
 
   ////////////////////////////////////////////////////////////
   // INLINE METHOD DEFINITIONS
@@ -199,12 +202,14 @@ namespace datadefs {
   /**
    * Prints a vector
    */
-  template <typename T> void print(const vector<T>& x) {
+  /*
+    template <typename T> void print(const vector<T>& x) {
     for(size_t i = 0; i < x.size(); ++i) {
-      cout << " " << x[i];
+    cout << " " << x[i];
     }
     cout << endl;
-  }
+    }
+  */
 
   /*
     template <typename T> void print(const set<T>& x) {

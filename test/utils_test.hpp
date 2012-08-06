@@ -14,12 +14,13 @@ class UtilsTest : public CppUnit::TestFixture {
   CPPUNIT_TEST( test_removeNANs );
   CPPUNIT_TEST( test_parse );
   CPPUNIT_TEST( test_str2 );
-  CPPUNIT_TEST( test_join );
+  CPPUNIT_TEST( test_write );
   CPPUNIT_TEST( test_range );
   CPPUNIT_TEST( test_trim );
   CPPUNIT_TEST( test_chomp );
   CPPUNIT_TEST( test_split );
   CPPUNIT_TEST( test_permute );
+  CPPUNIT_TEST( test_splitRange );
   CPPUNIT_TEST_SUITE_END();
   
 public:
@@ -29,12 +30,13 @@ public:
   void test_removeNANs();
   void test_parse();
   void test_str2();
-  void test_join();
+  void test_write();
   void test_range();
   void test_trim();
   void test_chomp();
   void test_split();
   void test_permute();
+  void test_splitRange();
   
 };
 
@@ -79,21 +81,43 @@ void UtilsTest::test_str2() {
 
 }
 
-void UtilsTest::test_join() {
+void UtilsTest::test_write() {
 
   vector<string> foo;
   foo.push_back("a");
   foo.push_back("b");
 
-  CPPUNIT_ASSERT( utils::join(foo.begin(),foo.end(),',') == "a,b" );
-  CPPUNIT_ASSERT( utils::join(foo.begin(),foo.end(),'a') == "aab" );
-  foo.pop_back();
-  CPPUNIT_ASSERT( utils::join(foo.begin(),foo.end(),',') == "a" );
-  CPPUNIT_ASSERT( utils::join(foo.begin(),foo.end(),'a') == "a" );
-  foo.pop_back();
-  CPPUNIT_ASSERT( utils::join(foo.begin(),foo.end(),',') == "" );
-  CPPUNIT_ASSERT( utils::join(foo.begin(),foo.end(),'a') == "" );
+  stringstream is;
+  string result;
 
+  utils::write(is,foo.begin(),foo.end(),',');
+  is >> result;
+  is.clear();
+
+  CPPUNIT_ASSERT( result == "a,b" );
+
+  utils::write(is,foo.begin(),foo.end(),'a');
+  is >> result;
+  is.clear();
+
+  CPPUNIT_ASSERT( result == "aab" );
+
+  foo.pop_back();
+
+  utils::write(is,foo.begin(),foo.end(),',');
+  is >> result;
+  is.clear();
+
+  CPPUNIT_ASSERT( result == "a" );
+
+  foo.pop_back();
+
+  // Nothing should be read into "is", which is why "result" stays unchanged
+  utils::write(is,foo.begin(),foo.end(),',');
+  is >> result;
+  is.clear();
+
+  CPPUNIT_ASSERT( result == "a" );
 
 }
 
@@ -214,6 +238,22 @@ void UtilsTest::test_permute() {
 
 }
 
+void UtilsTest::test_splitRange() {
+
+  //vector<size_t> ics = utils::range(10);
+
+  vector<vector<size_t> > icsSets = utils::splitRange(10,1);
+
+  CPPUNIT_ASSERT( icsSets.size() == 1 );
+
+  for ( size_t i = 0; i < icsSets.size(); ++i ) {
+    for ( size_t j = 0; j < icsSets[i].size(); ++j ) {
+      CPPUNIT_ASSERT( icsSets[i][j] == j );
+    }
+  }
+
+
+}
 
 // Registers the fixture into the test 'registry'
 CPPUNIT_TEST_SUITE_REGISTRATION( UtilsTest );
