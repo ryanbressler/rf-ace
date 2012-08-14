@@ -1,11 +1,10 @@
 COMPILER = g++
-CFLAGS = -O3 -std=c++0x -Wall -Wextra -pedantic -I/usr/lib64/glib-2.12/include -I/usr/include/glib-2.12 -I/usr/ -Isrc/
+CFLAGS = -O2 -std=c++0x -Wall -Wextra -pedantic -I/usr/lib64/glib-2.12/include -I/usr/include/glib-2.12 -I/usr/ -Isrc/
 TFLAGS = -pthread
-SOURCEFILES = src/progress.cpp src/statistics.cpp src/math.cpp src/gamma.cpp src/stochasticforest.cpp src/rootnode.cpp src/node.cpp src/treedata.cpp src/datadefs.cpp src/utils.cpp src/distributions.cpp
+SOURCEFILES = src/progress.cpp src/statistics.cpp src/math.cpp src/stochasticforest.cpp src/rootnode.cpp src/node.cpp src/treedata.cpp src/datadefs.cpp src/utils.cpp src/distributions.cpp
 STATICFLAGS = -static-libgcc -static
 TESTFILES = test/distributions_test.hpp test/argparse_test.hpp test/datadefs_test.hpp test/stochasticforest_test.hpp test/utils_test.hpp test/math_test.hpp test/rootnode_test.hpp test/node_test.hpp test/treedata_test.hpp
 TESTFLAGS = -std=c++0x -L/home/erkkila2/lib -lcppunit -ldl -pedantic -I/home/erkkila2/include -I/usr/lib64/glib-2.12/include -I/usr/include/glib-2.12 -I/usr/ -Isrc/
-MPFLAG = -fopenmp
 .PHONY: all test clean  # Squash directory checks for the usual suspects
 
 all: rf-ace

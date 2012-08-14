@@ -293,7 +293,7 @@ namespace options {
       for ( size_t threadIdx = 0; threadIdx < nThreads; ++threadIdx ) {
 	randIntGens[threadIdx].seed(seed + threadIdx);
       }
-    
+
       // Random Forest related parameters
       parser_.getArgument<size_t>( nTrees_s, nTrees_l, nTrees );
       parser_.getArgument<size_t>( mTry_s, mTry_l, mTry );

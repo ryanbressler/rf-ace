@@ -684,7 +684,7 @@ void Treedata::bootstrapFromRealSamples(distributions::RandInt& randInt,
   if(withReplacement) {
     //Draw nSamples random integers from range of allIcs
     for(size_t sampleIdx = 0; sampleIdx < nSamples; ++sampleIdx) {
-      ics[sampleIdx] = allIcs[randInt() % nRealSamples];
+      ics[sampleIdx] = allIcs[ randInt() % nRealSamples ];
     }
   } else {  //If sampled without replacement...
     vector<size_t> foo = utils::range(nRealSamples);

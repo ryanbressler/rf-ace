@@ -582,6 +582,7 @@ void predictNumPerThread(Treedata* testData, vector<RootNode*>& rootNodes, vecto
     }
     (*predictions)[sampleIdx] = math::mean(predictionVec);
     (*confidence)[sampleIdx] = sqrt(math::var(predictionVec,(*predictions)[sampleIdx]));
+
   }
 }
 
@@ -709,19 +710,15 @@ vector<num_t> StochasticForest::getPermutedOobPredictions(const size_t featureId
 /**
    Returns a vector of node counts in the trees of the forest
 */
-vector<size_t> StochasticForest::nNodes() {
+size_t StochasticForest::nNodes() {
   
-  // Get the number of trees
-  size_t nTrees = this->nTrees();
-
-  // Initialize the node count vector
-  vector<size_t> nNodes(nTrees) ;
+  size_t nNodes = 0;
 
   // Loop through all trees
-  for(size_t treeIdx = 0; treeIdx < nTrees; ++treeIdx) {
+  for(size_t treeIdx = 0; treeIdx < this->nTrees(); ++treeIdx) {
 
     // Get the node count for the tree
-    nNodes[treeIdx] = this->nNodes(treeIdx);
+    nNodes += this->nNodes(treeIdx);
 
   }
   

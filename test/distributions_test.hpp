@@ -3,6 +3,7 @@
 
 #include <cppunit/extensions/HelperMacros.h>
 #include "distributions.hpp"
+#include <unordered_map>
 
 class DistributionsTest : public CppUnit::TestFixture {
   CPPUNIT_TEST_SUITE( DistributionsTest );
@@ -39,13 +40,40 @@ void DistributionsTest::tearDown() {
 void DistributionsTest::test_randint() {
 
   // Make two identical random integer generators
-  distributions::RandInt rand1(0);
-  distributions::RandInt rand2(0);
-  
+  distributions::RandInt randGen1(0);
+  distributions::RandInt randGen2(0);
+
   // Test that rand1 and rand2 stay in sync
   for ( size_t i = 0; i < 1000; ++i ) {
-    CPPUNIT_ASSERT( rand1() == rand2() );
+    
+    size_t r1 = randGen1();
+    size_t r2 = randGen2();
+    //cout << " " << r1 << "-" << r2 << " ";
+    CPPUNIT_ASSERT( randGen1() == randGen2() );
   }
+
+  unordered_map<size_t,size_t> hist;
+
+  size_t maxIdx = 1000;
+
+  for ( size_t i = 0; i < maxIdx; ++i ) {
+    hist[i] = 0;
+  }
+
+  for ( size_t i = 0; i < 100000; ++i ) {
+    //size_t r = rand1() % maxIdx;
+    ++hist[ randGen1() % maxIdx ];
+  }
+
+  size_t nZeroCounts = 0;
+
+  for ( size_t i = 0; i < maxIdx; ++i ) {
+    if ( hist[i] == 0 ) ++nZeroCounts;
+  }
+
+  // We allow there to be at most two indices that never got sampled during
+  // 100k random number generation rounds
+  CPPUNIT_ASSERT( nZeroCounts <= 2 );
 
 }
 
@@ -56,7 +84,9 @@ void DistributionsTest::test_uniform() {
 
   for ( size_t i = 0; i < 100000; ++i ) {
     datadefs::num_t r = randInt_.uniform();
-    CPPUNIT_ASSERT( 0.0 <= r && r < 1.0 );
+    CPPUNIT_ASSERT( 0.0 <= r && r <= 1.0 );
+
+    //cout << " " << r; 
 
     if ( r_min > r ) r_min = r;
     if ( r_max < r ) r_max = r;
@@ -64,10 +94,14 @@ void DistributionsTest::test_uniform() {
   }
   
   CPPUNIT_ASSERT( r_max > r_min );
+
+  //cout << "x ~ U(" << r_min << "," << r_max << ")" << endl; 
   
   CPPUNIT_ASSERT( fabs( 1 - r_max - r_min ) < 0.0001 );
 
 }
+
+
 
 
 // Registers the fixture into the test 'registry'

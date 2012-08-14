@@ -277,7 +277,9 @@ statistics::RF_statistics executeRandomForest(Treedata& treeData,
     StochasticForest SF(&treeData,&gen_op);
 
     // Get the number of nodes in each tree in the forest
-    nodeMat[permIdx] = SF.nNodes();
+    for ( size_t treeIdx = 0; treeIdx < SF.nTrees(); ++treeIdx ) {
+      nodeMat[permIdx][treeIdx] = SF.nNodes(treeIdx);
+    }
     
     SF.getImportanceValues(importanceMat[permIdx],contrastImportanceMat[permIdx]);
     

@@ -38,7 +38,7 @@ public:
   vector<num_t> getPermutedOobPredictions(const size_t featureIdx);
 
   //Counts the number of nodes in the forest
-  vector<size_t> nNodes();
+  size_t nNodes();
   size_t nNodes(const size_t treeIdx);
 
   size_t nTrees();

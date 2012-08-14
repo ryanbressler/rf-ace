@@ -107,15 +107,15 @@ void StochasticForestTest::test_CART() {
 
   Treedata treeData("test_103by300_mixed_nan_matrix.afm",'\t',':',parameters_.randIntGens[0]);
 
-  parameters_.nMaxLeaves = treeData.nSamples();
-
-  //parameters_.printParameters();
+  parameters_.nMaxLeaves = 2;
 
   StochasticForest CART(&treeData,&parameters_);
 
   CPPUNIT_ASSERT( CART.rootNodes_[0]->splitter_.name == "N:input" );
 
-  //CART.rootNodes_[0]->splitter_.print();
+  CPPUNIT_ASSERT( CART.nNodes() == 3 );
+
+  
 
 }
 
