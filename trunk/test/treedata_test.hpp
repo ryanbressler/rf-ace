@@ -23,6 +23,7 @@ class treeDataTest : public CppUnit::TestFixture {
   CPPUNIT_TEST( test_categoricalFeatureSplitsNumericalTarget );
   CPPUNIT_TEST( test_categoricalFeatureSplitsCategoricalTarget );
   CPPUNIT_TEST( test_fullSplitterSweep );
+  CPPUNIT_TEST( test_bootstrapRealSamples );
   CPPUNIT_TEST( test_end );
   CPPUNIT_TEST_SUITE_END();
   
@@ -43,6 +44,7 @@ public:
   void test_categoricalFeatureSplitsNumericalTarget();
   void test_categoricalFeatureSplitsCategoricalTarget();
   void test_fullSplitterSweep();
+  void test_bootstrapRealSamples();
   void test_end();
 
 private:
@@ -771,6 +773,33 @@ void treeDataTest::test_fullSplitterSweep() {
     CPPUNIT_ASSERT( utils::str2<size_t>(checkLine[4]) == sampleIcs_right.size() );    
 
   }
+
+}
+
+void treeDataTest::test_bootstrapRealSamples() {
+
+  bool withReplacement = true;
+  num_t sampleSize = 1.0;
+  size_t featureIdx = 0;
+  vector<size_t> ics,oobIcs;
+
+  num_t oobFraction = 0.0;
+
+  for ( size_t i = 0; i < 1000; ++i ) {
+
+    treeData_->bootstrapFromRealSamples(randInt_,withReplacement,sampleSize,featureIdx,ics,oobIcs);
+
+    oobFraction += 1.0 * oobIcs.size(); 
+
+    CPPUNIT_ASSERT( ics.size() == treeData_->nRealSamples(featureIdx) );
+    CPPUNIT_ASSERT( !datadefs::containsNAN(treeData_->getFeatureData(featureIdx,ics)) );
+    CPPUNIT_ASSERT( !datadefs::containsNAN(treeData_->getFeatureData(featureIdx,oobIcs)) );
+
+  }
+
+  oobFraction /= 1000 * treeData_->nRealSamples(featureIdx);
+
+  CPPUNIT_ASSERT( fabs( oobFraction - 0.36 ) < 0.05 );
 
 }
 

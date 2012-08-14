@@ -300,7 +300,7 @@ num_t RootNode::getTrainPrediction(const size_t sampleIdx) {
 }
 
 num_t RootNode::getPermutedTrainPrediction(const size_t featureIdx, 
-					 const size_t sampleIdx) {
+					   const size_t sampleIdx) {
 
   assert( trainData_ );
 

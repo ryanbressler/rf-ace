@@ -18,7 +18,7 @@ using namespace std;
 const datadefs::num_t datadefs::NUM_NAN = numeric_limits<double>::quiet_NaN();//numeric_limits<double>::infinity();
 const string datadefs::STR_NAN = "NA";
 const datadefs::num_t datadefs::NUM_INF = numeric_limits<double>::infinity();
-const size_t datadefs::MAX_IDX = numeric_limits<size_t>::max() - 1;
+const size_t datadefs::MAX_IDX = numeric_limits<int32_t>::max() - 1;
 const size_t datadefs::MAX_THREADS = thread::hardware_concurrency();
 const datadefs::num_t datadefs::EPS = 1e-18; //1e-12;
 const datadefs::num_t datadefs::PI = 3.1415926535;
