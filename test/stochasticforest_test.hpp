@@ -61,13 +61,13 @@ void StochasticForestTest::test_treeDataPercolation() {
   vector<num_t> prediction,confidence;
   
   SF.predict(&testData,prediction,confidence);
-  
+
   CPPUNIT_ASSERT( prediction.size() == 4 );
   CPPUNIT_ASSERT( confidence.size() == 4 );
   CPPUNIT_ASSERT( fabs( prediction[0] - 3.9 ) < datadefs::EPS );
   CPPUNIT_ASSERT( fabs( prediction[1] - 4.3 ) < datadefs::EPS );
-  CPPUNIT_ASSERT( fabs( prediction[2] - 3.9 ) < datadefs::EPS );
-  CPPUNIT_ASSERT( fabs( prediction[3] - 6.5 ) < datadefs::EPS );
+  CPPUNIT_ASSERT( fabs( prediction[2] - 5.0 ) < datadefs::EPS );
+  CPPUNIT_ASSERT( fabs( prediction[3] - 6.6 ) < datadefs::EPS );
   
 }
 

@@ -19,29 +19,24 @@ using datadefs::num_t;
 class Node {
 public:
   //Initializes node.
-  Node();
+  Node(options::General_options* parameters, const size_t threadIdx);
   ~Node();
 
   //Gets the splitter for the node
-  inline size_t splitterIdx() { return( splitter_.idx ); }
+  //inline size_t splitterIdx() { return( splitter_.idx ); }
   inline string splitterName() { return( splitter_.name ); }
 
   //Sets a splitter feature for the node.
   //NOTE: splitter can be assigned only once! Subsequent setter calls will raise an assertion failure.
-  void setSplitter(const size_t splitterIdx,
-                   const string& splitterName,
-                   const num_t leftFraction,
+  void setSplitter(const string& splitterName,
                    const num_t splitLeftLeqValue);
 
-  void setSplitter(const size_t splitterIdx,
-                   const string& splitterName,
-                   const num_t leftFraction,
+  void setSplitter(const string& splitterName,
                    const set<string>& leftSplitValues,
                    const set<string>& rightSplitValues);
 
   //Given a value, descends to either one of the child nodes, if existing, otherwise returns a pointer to the current node
-  Node* percolateData(const num_t data);
-  Node* percolateData(const string& data);
+  Node* percolate(Treedata* testData, const size_t sampleIdx, const size_t scrambleFeatureIdx = datadefs::MAX_IDX);
 
   void setTrainPrediction(const num_t trainPrediction, const string& rawTrainPrediction );
   
@@ -54,8 +49,6 @@ public:
   Node* leftChild();
   Node* rightChild();
 
-  num_t leftFraction() { return( splitter_.leftFraction ); }
-
   void deleteTree();
 
   void print(ofstream& toFile);
@@ -63,31 +56,12 @@ public:
 
   enum PredictionFunctionType { MEAN, MODE, GAMMA };
 
-  /*
-    struct GrowInstructions {
-    bool sampleWithReplacement;
-    num_t sampleSizeFraction;
-    size_t maxNodesToStop;
-    size_t minNodeSizeToStop;
-    bool isRandomSplit;
-    size_t nFeaturesForSplit;
-    bool useContrasts;
-    PredictionFunctionType predictionFunctionType;
-    size_t numClasses;
-    vector<size_t> featureIcs;
-    
-    void validate() const;
-    };
-  */
-
 #ifndef TEST__
 protected:
 #endif
   
   void recursiveNodeSplit(Treedata* treeData,
                           const size_t targetIdx,
-                          options::General_options* parameters,
-			  const size_t threadIdx,
 			  const PredictionFunctionType& predictionFunctionType,
 			  vector<size_t> featureIcs,
 			  const vector<size_t>& sampleIcs,
@@ -98,11 +72,13 @@ protected:
 			   const size_t targetIdx,
 			   const vector<size_t>& sampleIcs,
 			   const vector<size_t>& featureSampleIcs,
-			   options::General_options* parameters,
 			   size_t& splitFeatureIdx,
 			   vector<size_t>& sampleIcs_left,
 			   vector<size_t>& sampleIcs_right,
 			   num_t& splitFitness);
+
+  options::General_options* parameters_;
+  size_t threadIdx_;
 
 #ifndef TEST__
 private:
@@ -111,17 +87,15 @@ private:
   
   struct Splitter {
 
-    size_t idx;
     string name;
     bool isNumerical;
     num_t leftLeqValue;
     set<string> leftValues;
     set<string> rightValues;
-    num_t leftFraction;
 
     void print() {
       cout << "Splitter:" << endl
-	   << " idx    = " << idx << endl
+	//<< " idx    = " << idx << endl
 	   << " name   = " << name << endl;
       if ( isNumerical ) {
 	cout << " lVal   = " << leftLeqValue << endl;

@@ -28,7 +28,7 @@ public:
   num_t getTrainPrediction(const size_t sampleIdx);
   num_t getPermutedTrainPrediction(const size_t featureIdx,
 				   const size_t sampleIdx);
-
+  
   vector<num_t> getTrainPrediction();
 
   vector<size_t> getOobIcs();
@@ -40,15 +40,6 @@ public:
 #ifndef TEST__
 private:
 #endif
-
-  Node* percolateSampleIdx(Treedata* testData, const size_t sampleIdx);
-  Node* percolateSampleIdx(const size_t sampleIdx);
-
-  Node* percolateSampleIdxAtRandom(const size_t featureIdx, const size_t sampleIdx);
-
-  // Required parameters
-  options::General_options* parameters_;
-  size_t threadIdx_;
 
   // Parameters that are generated only when a tree is grown
   Treedata* trainData_;

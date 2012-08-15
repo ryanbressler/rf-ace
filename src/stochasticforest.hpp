@@ -20,17 +20,12 @@ public:
 
   ~StochasticForest();
   
-  num_t getError();
+  num_t getError() { return(0.0); }
   num_t getOobError();
 
   void getImportanceValues(vector<num_t>& importanceValues,
                            vector<num_t>& contrastImportanceValues);
     
-  //void predict(vector<string>& categoryPrediction, vector<num_t>& confidence);
-  //void predict(vector<num_t>& prediction, vector<num_t>& confidence);
-
-  vector<num_t> getPredictions();
-
   void predict(Treedata* treeDataTest, vector<string>& predictions, vector<num_t>& confidence);
   void predict(Treedata* treeDataTest, vector<num_t>& predictions, vector<num_t>& confidence);
 
@@ -67,7 +62,7 @@ private:
 	      const vector<num_t>& data2); 
 
   // Pointer to treeData_ object, stores all the feature data with which the trees are grown (i.e. training data)
-  Treedata* treeData_;
+  Treedata* trainData_;
 
   options::General_options* parameters_;
 

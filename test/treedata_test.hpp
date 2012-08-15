@@ -54,7 +54,8 @@ private:
 
   distributions::RandInt randInt_;
 
-
+  options::General_options parameters_;
+  size_t threadIdx_;
 
 };
 
@@ -64,6 +65,9 @@ void treeDataTest::setUp() {
 
   treeData_ = new Treedata("test_103by300_mixed_matrix.afm",'\t',':',randInt_);
   treeData_103by300NaN_ = new Treedata("test_103by300_mixed_nan_matrix.afm",'\t',':',randInt_);
+
+  parameters_.setCARTDefaults();
+  threadIdx_ = 0;
 
 }
 
@@ -645,27 +649,29 @@ void treeDataTest::test_categoricalFeatureSplitsNumericalTarget() {
 						     splitValues_left,
 						     splitValues_right);
 
-  set<string> rawSplitValues_left,rawSplitValues_right;
-
-  for(set<num_t>::const_iterator it(splitValues_left.begin()); it != splitValues_left.end(); ++it ) {
+  /*
+    set<string> rawSplitValues_left,rawSplitValues_right;
+    
+    for(set<num_t>::const_iterator it(splitValues_left.begin()); it != splitValues_left.end(); ++it ) {
     rawSplitValues_left.insert(treeData_->getRawFeatureData(featureIdx,*it));
-  }
-
-  for(set<num_t>::const_iterator it(splitValues_right.begin()); it != splitValues_right.end(); ++it ) {
+    }
+    
+    for(set<num_t>::const_iterator it(splitValues_right.begin()); it != splitValues_right.end(); ++it ) {
     rawSplitValues_right.insert(treeData_->getRawFeatureData(featureIdx,*it));
-  }
-
-  datadefs::num_t leftFraction = 1.0*sampleIcs_left.size() / ( sampleIcs_left.size() + sampleIcs_right.size() );
-
-  Node node;
-  node.setSplitter(0,"foo",leftFraction,rawSplitValues_left,rawSplitValues_right);
-
-  CPPUNIT_ASSERT( node.percolateData("1") == node.rightChild() );
-  CPPUNIT_ASSERT( node.percolateData("2") == node.rightChild() );
-  CPPUNIT_ASSERT( node.percolateData("3") == node.leftChild() );
-
-  CPPUNIT_ASSERT( sampleIcs_left.size() == 91 );
-  CPPUNIT_ASSERT( sampleIcs_right.size() == 209 );
+    }
+    
+    datadefs::num_t leftFraction = 1.0*sampleIcs_left.size() / ( sampleIcs_left.size() + sampleIcs_right.size() );
+    
+    Node node(&parameters_,threadIdx_);
+    node.setSplitter("foo",rawSplitValues_left,rawSplitValues_right);
+    
+    CPPUNIT_ASSERT( node.percolate(treeData_,1) == node.rightChild() );
+    CPPUNIT_ASSERT( node.percolate(treeData_,2) == node.rightChild() );
+    CPPUNIT_ASSERT( node.percolate(treeData_,0) == node.leftChild() );
+    
+    CPPUNIT_ASSERT( sampleIcs_left.size() == 91 );
+    CPPUNIT_ASSERT( sampleIcs_right.size() == 209 );
+  */
 
   CPPUNIT_ASSERT( fabs( deltaImpurity - 1.102087375288799 ) < 1e-10 );
 
@@ -706,12 +712,12 @@ void treeDataTest::test_categoricalFeatureSplitsCategoricalTarget() {
 
   datadefs::num_t leftFraction = 1.0*sampleIcs_left.size() / ( sampleIcs_left.size() + sampleIcs_right.size() );
 
-  Node node;
-  node.setSplitter(0,"foo",leftFraction,rawSplitValues_left,rawSplitValues_right);
+  Node node(&parameters_,threadIdx_);
+  node.setSplitter("C:noise_6",rawSplitValues_left,rawSplitValues_right);
 
-  CPPUNIT_ASSERT( node.percolateData("1") == node.leftChild() );
-  CPPUNIT_ASSERT( node.percolateData("2") == node.rightChild() );
-  CPPUNIT_ASSERT( node.percolateData("3") == node.rightChild() );
+  CPPUNIT_ASSERT( node.percolate(treeData_,0) == node.leftChild() );
+  CPPUNIT_ASSERT( node.percolate(treeData_,3) == node.rightChild() );
+  CPPUNIT_ASSERT( node.percolate(treeData_,1) == node.rightChild() );
 
   CPPUNIT_ASSERT( fabs( deltaImpurity - 0.001691905260604 ) < 1e-10 );
 
