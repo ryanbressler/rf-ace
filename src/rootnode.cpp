@@ -142,15 +142,7 @@ num_t RootNode::getTrainPrediction(const size_t sampleIdx) {
     // We make the prediction!
     trainPredictionCache_[sampleIdx] = this->percolate(trainData_,sampleIdx)->getTrainPrediction();
 
-    //if ( trainPredictionCache_[sampleIdx] > 1e10 ) {
-    //  cout << " " << trainPredictionCache_[sampleIdx];
-    //}
-
   }
-
-  //if ( trainPredictionCache_[sampleIdx] > 1e10 ) {
-  //  cout << " " << trainPredictionCache_[sampleIdx];
-  //}
 
   // Return prediction from the cache
   return( trainPredictionCache_[sampleIdx] );
