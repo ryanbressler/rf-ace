@@ -119,8 +119,8 @@ Node* Node::percolate(Treedata* testData, const size_t sampleIdx, const size_t s
     }
     if ( datadefs::isNAN(data) ) { return( this ); }
     return( data <= splitter_.leftLeqValue ? 
-	    this->leftChild()->percolate(testData,sampleIdx) : 
-	    this->rightChild()->percolate(testData,sampleIdx) );
+	    this->leftChild()->percolate(testData,sampleIdx,scrambleFeatureIdx) : 
+	    this->rightChild()->percolate(testData,sampleIdx,scrambleFeatureIdx) );
     
   } else {
     string data;
@@ -132,11 +132,11 @@ Node* Node::percolate(Treedata* testData, const size_t sampleIdx, const size_t s
     if ( datadefs::isNAN_STR(data) ) { return( this ); }
     // Return left child if splits left
     if ( splitter_.leftValues.find(data) != splitter_.leftValues.end() ) {
-      return( this->leftChild()->percolate(testData,sampleIdx) );
+      return( this->leftChild()->percolate(testData,sampleIdx,scrambleFeatureIdx) );
     }
     // Return right child if splits right
     if ( splitter_.rightValues.find(data) != splitter_.rightValues.end() ) {
-      return( this->rightChild()->percolate(testData,sampleIdx) );
+      return( this->rightChild()->percolate(testData,sampleIdx,scrambleFeatureIdx) );
     }
 
     // Else return this
@@ -277,15 +277,13 @@ void Node::recursiveNodeSplit(Treedata* treeData,
     for(size_t i = 0; i < parameters_->mTry; ++i) {
       
       // If the sampled feature is a contrast... 
-      if( parameters_->randIntGens[threadIdx_].uniform() < 0.001 ) { // %1 sampling rate
+      if( parameters_->randIntGens[threadIdx_].uniform() < 0.01 ) { // %1 sampling rate
 	
 	featureSampleIcs[i] += treeData->nFeatures();
       }
     }
   } 
 
-  //datadefs::print<size_t>(featureSampleIcs);
-  
   assert( featureSampleIcs.size() == parameters_->mTry );
   
   vector<size_t> sampleIcs_left,sampleIcs_right;
