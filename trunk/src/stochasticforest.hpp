@@ -41,7 +41,7 @@ public:
   inline set<size_t> getFeaturesInForest() { return( featuresInForest_ ); }
 
   inline string getTargetName() { return( parameters_->targetStr ); }
-  inline bool isTargetNumerical() { return( targetSupport_.size() == 0 ); }
+  inline bool isTargetNumerical() { return( isTargetNumerical_ ); }
 
   void printToFile(const string& fileName);
 
@@ -56,7 +56,7 @@ private:
   void growCategoricalGBT();
 
   // TODO: StochasticForest::transformLogistic() should be moved elsewhere
-  void transformLogistic(vector<num_t>& prediction, vector<num_t>& probability);
+  void transformLogistic(size_t nCategories, vector<num_t>& prediction, vector<num_t>& probability);
   
   num_t error(const vector<num_t>& data1,
 	      const vector<num_t>& data2); 
@@ -68,7 +68,7 @@ private:
 
   // Chosen target to regress on
   //string targetName_;
-  vector<string> targetSupport_;
+  bool isTargetNumerical_;
 
   // Root nodes for every tree
   vector<RootNode*> rootNodes_;

@@ -16,8 +16,7 @@ StochasticForest::StochasticForest(Treedata* trainData, options::General_options
   parameters_(parameters),
   rootNodes_(parameters_->nTrees) {
 
-  size_t targetIdx = trainData_->getFeatureIdx(parameters_->targetStr);
-  targetSupport_ = trainData_->categories(targetIdx);
+  isTargetNumerical_ = trainData_->isFeatureNumerical(trainData_->getFeatureIdx(parameters_->targetStr));
 
   // Grows the forest
   if ( parameters_->modelType == options::RF ) {
@@ -73,7 +72,7 @@ StochasticForest::StochasticForest(options::General_options* parameters):
   parameters_->targetStr = forestSetup["TARGET"];
 
   assert( forestSetup.find("CATEGORIES") != forestSetup.end() );
-  targetSupport_ = utils::split(forestSetup["CATEGORIES"],',');
+  isTargetNumerical_ = utils::split(forestSetup["CATEGORIES"],',').size() == 0 ;
 
   assert( forestSetup.find("SHRINKAGE") != forestSetup.end() );
   parameters_->shrinkage = utils::str2<num_t>(forestSetup["SHRINKAGE"]);
@@ -260,10 +259,10 @@ void StochasticForest::learnGBT() {
  
 
   //size_t targetIdx = trainData_->getFeatureIdx( parameters_->targetStr );
-  size_t nCategories = targetSupport_.size();
+  //size_t nCategories = trainData_->nCategories(parameters_->targetStr); //targetSupport_.size();
 
-  if (nCategories > 0) {
-    parameters_->nTrees *= nCategories;
+  if ( !isTargetNumerical_ ) {
+    parameters_->nTrees *= trainData_->nCategories(trainData_->getFeatureIdx(parameters_->targetStr)); //nCategories;
   }
 
   // This is required since the number of trees became multiplied by the number of classes
@@ -280,7 +279,7 @@ void StochasticForest::learnGBT() {
 				       threadIdx);
   }
     
-  if ( targetSupport_.size() == 0 ) {
+  if ( isTargetNumerical_ ) {
     this->growNumericalGBT();
   } else {
     this->growCategoricalGBT();
@@ -349,9 +348,6 @@ void StochasticForest::growCategoricalGBT() {
   size_t targetIdx = trainData_->getFeatureIdx( parameters_->targetStr );
   size_t nCategories = trainData_->nCategories( targetIdx );
 
-  //A function pointer to a function "gamma()" that is used to compute the node predictions with
-  //RootNode::PredictionFunctionType predictionFunctionType = RootNode::GAMMA;
-
   // Save a copy of the target column because it will be overwritten later.
   // We also know that it must be categorical.
   size_t nSamples = trainData_->nSamples();
@@ -381,7 +377,7 @@ void StochasticForest::growCategoricalGBT() {
   for(size_t m=0; m < numIterations; ++m) {
     // Multiclass logistic transform of class probabilities from current probability estimates.
     for (size_t i=0; i<nSamples; i++) {
-      StochasticForest::transformLogistic( prediction[i],  curProbability[i]);
+      StochasticForest::transformLogistic(nCategories, prediction[i], curProbability[i]);
       // each prediction[i] is a vector<num_t>(numClasses_)
     }
 
@@ -418,9 +414,9 @@ void StochasticForest::growCategoricalGBT() {
   trainData_->replaceFeatureData(targetIdx,trueRawTargetData);
 }
 
-void StochasticForest::transformLogistic(vector<num_t>& prediction, vector<num_t>& probability) {
+void StochasticForest::transformLogistic(size_t nCategories, vector<num_t>& prediction, vector<num_t>& probability) {
 
-  size_t nCategories = targetSupport_.size();
+  //size_t nCategories = trainData_->nCategories();
 
   // Multiclass logistic transform of class probabilities from current probability estimates.
   assert( nCategories == prediction.size() );
