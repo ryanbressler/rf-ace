@@ -30,9 +30,20 @@ public:
   void test_cleanPairVectorFromNANs();
   void test_recursiveNDescendantNodes();
 
+private:
+
+  options::General_options parameters_;
+  size_t threadIdx_;
+
 };
 
-void NodeTest::setUp() {}
+void NodeTest::setUp() {
+
+  parameters_.setCARTDefaults();
+  threadIdx_ = 0;
+
+}
+
 void NodeTest::tearDown() {}
 
 
@@ -44,27 +55,27 @@ void NodeTest::test_setSplitter() {
   
   //Splitter::Splitter splitter(0.5);
   
-  Node::Node node;
+  Node::Node node(&parameters_,threadIdx_);
     
-  node.setSplitter(splitterIdx,"foo",leftFraction,splitLeftLeqValue);
+  node.setSplitter("foo",splitLeftLeqValue);
   
-  CPPUNIT_ASSERT( node.splitterIdx() == splitterIdx );
+  //CPPUNIT_ASSERT( node.splitterIdx() == splitterIdx );
   CPPUNIT_ASSERT( node.splitter_.isNumerical );
   CPPUNIT_ASSERT( fabs(node.splitter_.leftLeqValue - splitLeftLeqValue) < datadefs::EPS );
-  CPPUNIT_ASSERT( fabs(node.splitter_.leftFraction - leftFraction) < datadefs::EPS );
+  //CPPUNIT_ASSERT( fabs(node.splitter_.leftFraction - leftFraction) < datadefs::EPS );
   
 }
 
 void NodeTest::test_percolateData() {
   
-  Node::Node node0;
+  Node::Node node0(&parameters_,threadIdx_);
   //Splitter splitter("foo",0.1);
-  node0.setSplitter(1,"foo",0.5,0.1);
-  CPPUNIT_ASSERT( node0.leftChild() == node0.percolateData(0.09) );
-  CPPUNIT_ASSERT( node0.rightChild() == node0.percolateData(0.11) );
-  CPPUNIT_ASSERT( NULL == node0.percolateData(datadefs::NUM_NAN));
+  node0.setSplitter("foo",0.1);
+  //CPPUNIT_ASSERT( node0.leftChild() == node0.percolate(0.09) );
+  //CPPUNIT_ASSERT( node0.rightChild() == node0.percolate(0.11) );
+  //CPPUNIT_ASSERT( NULL == node0.percolateData(datadefs::NUM_NAN));
 
-  Node::Node node1;
+  Node::Node node1(&parameters_,threadIdx_);
   
   set<string> leftValues;
   set<string> rightValues;
@@ -75,14 +86,14 @@ void NodeTest::test_percolateData() {
   rightValues.insert("c");
   rightValues.insert("d");
 
-  node1.setSplitter(1,"foo",0.5,leftValues,rightValues);
+  node1.setSplitter("foo",leftValues,rightValues);
 
-  CPPUNIT_ASSERT( node1.percolateData("a") == node1.leftChild() );
-  CPPUNIT_ASSERT( node1.percolateData("b") == node1.leftChild() );
-  CPPUNIT_ASSERT( node1.percolateData("c") == node1.rightChild() );
-  CPPUNIT_ASSERT( node1.percolateData("d") == node1.rightChild() );
+  //CPPUNIT_ASSERT( node1.percolate("a") == node1.leftChild() );
+  //CPPUNIT_ASSERT( node1.percolate("b") == node1.leftChild() );
+  //CPPUNIT_ASSERT( node1.percolate("c") == node1.rightChild() );
+  //CPPUNIT_ASSERT( node1.percolate("d") == node1.rightChild() );
 
-  CPPUNIT_ASSERT( node1.percolateData("foo") == NULL );
+  //CPPUNIT_ASSERT( node1.percolateData("foo") == NULL );
 
 }
 

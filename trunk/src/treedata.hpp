@@ -187,15 +187,6 @@ private:
   bool isValidCategoricalHeader(const string& str);
   bool isValidFeatureHeader(const string& str);
 
-  // NOTE: original contents in ics will be replaced.
-  void permute(vector<size_t>& ics);
-
-  // Permutes data.
-  void permute(vector<num_t>& data);
-
-  // A helper function that creates sort indices for the feature for fast lookup
-  //void updateSortOrder(const size_t featureIdx);
-  
   template <typename T> void transpose(vector<vector<T> >& mat);
   
   char dataDelimiter_;

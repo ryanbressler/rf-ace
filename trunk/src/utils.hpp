@@ -17,9 +17,6 @@ using datadefs::num_t;
 
 namespace utils {
 
-  // Generate seeds for random number generators
-  //int generateSeed();
-  
   // Removes missing values from the provided data vector
   vector<num_t> removeNANs(vector<num_t> x);
 

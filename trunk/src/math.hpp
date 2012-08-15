@@ -4,6 +4,7 @@
 #include <vector>
 #include <algorithm>
 #include <map>
+#include <utility>
 #include "datadefs.hpp"
 #include "errno.hpp"
 
@@ -78,7 +79,7 @@ namespace math {
 
   template<typename T>
   T mode(const vector<T>& x) {
-    map<T,size_t> freq = frequency<T>(x);
+    map<T,size_t> freq = frequency(x);
     typename map<T,size_t>::const_iterator maxElement( freq.begin() );
     for ( typename map<T,size_t>::const_iterator it(freq.begin()); it != freq.end(); ++it ) {
       if ( it->second > maxElement->second ) {

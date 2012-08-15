@@ -20,6 +20,8 @@ class MathTest : public CppUnit::TestFixture {
   CPPUNIT_TEST( test_gamma );
   //CPPUNIT_TEST( test_incrementDecrementSquaredError );
   CPPUNIT_TEST( test_incrementDecrementSquaredFrequency );
+  CPPUNIT_TEST( test_numericalError );
+  CPPUNIT_TEST( test_categoricalError );
   CPPUNIT_TEST_SUITE_END();
   
 public:
@@ -36,6 +38,8 @@ public:
   void test_gamma();
   //void test_incrementDecrementSquaredError();
   void test_incrementDecrementSquaredFrequency();
+  void test_numericalError();
+  void test_categoricalError();
 
 };
 
@@ -238,17 +242,15 @@ void MathTest::test_mean() {
 void MathTest::test_mode() {
 
   vector<datadefs::num_t> x(20,0);
-  CPPUNIT_ASSERT( math::mode<datadefs::num_t>(x) == 0 );
+  CPPUNIT_ASSERT( math::mode(x) == 0 );
 
   vector<size_t> y = utils::range(20);
 
-  CPPUNIT_ASSERT( math::mode<size_t>(y) == 0 );
-
   y[19] = 18;
-  CPPUNIT_ASSERT( math::mode<size_t>(y) == 18 );
+  CPPUNIT_ASSERT( math::mode(y) == 18 );
 
   y[18] = 17;
-  CPPUNIT_ASSERT( math::mode<size_t>(y) == 17 );
+  CPPUNIT_ASSERT( math::mode(y) == 17 );
 
 }
 
@@ -365,7 +367,13 @@ void MathTest::test_incrementDecrementSquaredFrequency() {
 
 }
 
+void MathTest::test_numericalError() {
 
+}
+
+void MathTest::test_categoricalError() {
+
+}
 
 // Registers the fixture into the test 'registry'
 CPPUNIT_TEST_SUITE_REGISTRATION( MathTest );

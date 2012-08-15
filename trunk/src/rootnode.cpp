@@ -5,9 +5,9 @@
 RootNode::RootNode(Treedata* trainData,
 		   options::General_options* parameters,
 		   size_t threadIdx): 
-  Node(),
-  parameters_(parameters),
-  threadIdx_(threadIdx),
+  Node(parameters,threadIdx),
+  //parameters_(parameters),
+  //threadIdx_(threadIdx),
   trainData_(trainData),
   nNodes_(1) {
 
@@ -99,7 +99,7 @@ void RootNode::growTree() {
   }
 
   //Start the recursive node splitting from the root node. This will generate the tree.
-  this->recursiveNodeSplit(trainData_,targetIdx,parameters_,threadIdx_,predictionFunctionType,featureIcs,bootstrapIcs_,featuresInTree_,&nLeaves);
+  this->recursiveNodeSplit(trainData_,targetIdx,predictionFunctionType,featureIcs,bootstrapIcs_,featuresInTree_,&nLeaves);
   
   nNodes_ = 2 * nLeaves - 1;
 
@@ -120,157 +120,15 @@ size_t RootNode::nOobSamples() {
   return( oobIcs_.size() ); 
 }
 
-Node* RootNode::percolateSampleIdx(const size_t sampleIdx) {
-
-  assert( trainData_ );
-
-  Node* nodep( this );
-
-  // Keep percolating until we hit the leaf
-  while ( nodep->hasChildren() ) {
-
-    // Get the splitter feature index
-    size_t featureIdxNew = nodep->splitterIdx();
-
-    // Get the respective sample of the splitter feature
-    num_t value = trainData_->getFeatureData(featureIdxNew,sampleIdx);
-
-    Node* childNode;
-
-    // Precolate the value, and as a result get a pointer to a child node
-    if ( trainData_->isFeatureNumerical(featureIdxNew) ) {
-      childNode = nodep->percolateData(value);
-    } else {
-      childNode = nodep->percolateData(trainData_->getRawFeatureData(featureIdxNew,value));
-    }
-
-    // 
-    if ( !childNode ) {
-      //break;
-      num_t r = parameters_->randIntGens[threadIdx_].uniform();
-      if ( r <= nodep->leftFraction() ) {
-	childNode = nodep->leftChild();
-      } else {
-	childNode = nodep->rightChild();
-      }
-    }
-
-    // Update the pointer and continue percolating
-    nodep = childNode;
-  }
-
-  return( nodep );
-
-}
-
-Node* RootNode::percolateSampleIdx(Treedata* testData, const size_t sampleIdx) {
-
-  Node* nodep( this );
-
-  // Keep percolating until we hit the leaf
-  while ( nodep->hasChildren() ) {
-
-    // Get the splitter feature index
-    size_t featureIdxNew = testData->getFeatureIdx( nodep->splitterName() );
-
-    Node* childNode = NULL;
-
-    // If the feature exists in the matrix...
-    if ( featureIdxNew != testData->end() ) {
-      
-      // Get the respective sample of the splitter feature
-      num_t value = testData->getFeatureData(featureIdxNew,sampleIdx);
-      
-      // Precolate the value, and as a result get a pointer to a child node
-      if ( testData->isFeatureNumerical(featureIdxNew) ) {
-	childNode = nodep->percolateData(value);
-      } else {
-	childNode = nodep->percolateData(testData->getRawFeatureData(featureIdxNew,value));
-      }
-
-    }
-    
-    // The percolation of data to the child nodes failed due to:
-    // 1. no feature to split with in the matrix
-    // 2. the value to split with is NaN
-    // in which case we end up here
-    if ( !childNode ) {
-      // NOTE: RANDOMIZATION IN PREDICTION HAS BEEN TURNED OFF, TO ALLOW EASIER THREADING
-      num_t r = 0.5; //parameters_->randIntGens[threadIdx_].uniform();
-      if ( r <= nodep->leftFraction() ) {
-        childNode = nodep->leftChild();
-      } else {
-        childNode = nodep->rightChild();
-      }
-    }
-
-    // Update the pointer and continue percolating
-    nodep = childNode;
-  }
-
-  return( nodep );
-
-}
-
-Node* RootNode::percolateSampleIdxAtRandom(const size_t featureIdx, const size_t sampleIdx) {
-
-  assert( trainData_ );
-  
-  Node* nodep( this );
-
-  size_t nSamples = trainData_->nSamples();
-
-  while ( nodep->hasChildren() ) {
-
-    size_t featureIdxNew = nodep->splitterIdx();
-
-    num_t value = datadefs::NUM_NAN;
-
-    if(featureIdx == featureIdxNew) {
-      size_t randomSampleIdx = parameters_->randIntGens[threadIdx_]() % nSamples;
-      value = trainData_->getFeatureData(featureIdxNew,randomSampleIdx);
-    } else {
-      value = trainData_->getFeatureData(featureIdxNew,sampleIdx);
-    }
-
-    Node* childNode;
-
-    if ( trainData_->isFeatureNumerical(featureIdxNew) ) {
-      childNode = nodep->percolateData(value);
-    } else {
-      childNode = nodep->percolateData(trainData_->getRawFeatureData(featureIdxNew,value));
-    }
-
-    if ( !childNode ) {
-      // NOTE: RANDOMIZATION IN PREDICTION HAS BEEN TURNED OFF, TO ALLOW EASIER THREADING
-      num_t r = 0.5; //parameters_->randIntGens[threadIdx_].uniform();
-      if ( r <= nodep->leftFraction() ) {
-        childNode = nodep->leftChild();
-      } else {
-        childNode = nodep->rightChild();
-      }
-    }
-
-    nodep = childNode;
-
-  }
-
-  return( nodep );
-
-}
-
-
-
 num_t RootNode::getTestPrediction(Treedata* testData, const size_t sampleIdx) {
   
-  return( this->percolateSampleIdx(testData,sampleIdx)->getTrainPrediction() );
+  return( this->percolate(testData,sampleIdx)->getTrainPrediction() );
   
 }
-
 
 string RootNode::getRawTestPrediction(Treedata* testData, const size_t sampleIdx) {
 
-  return( this->percolateSampleIdx(testData,sampleIdx)->getRawTrainPrediction() );
+  return( this->percolate(testData,sampleIdx)->getRawTrainPrediction() );
 
 }
 
@@ -282,7 +140,7 @@ num_t RootNode::getTrainPrediction(const size_t sampleIdx) {
   if ( datadefs::isNAN(trainPredictionCache_[sampleIdx]) ) {
 
     // We make the prediction!
-    trainPredictionCache_[sampleIdx] = this->percolateSampleIdx(sampleIdx)->getTrainPrediction();
+    trainPredictionCache_[sampleIdx] = this->percolate(trainData_,sampleIdx)->getTrainPrediction();
 
     //if ( trainPredictionCache_[sampleIdx] > 1e10 ) {
     //  cout << " " << trainPredictionCache_[sampleIdx];
@@ -308,7 +166,7 @@ num_t RootNode::getPermutedTrainPrediction(const size_t featureIdx,
   if ( featuresInTree_.find(featureIdx) != featuresInTree_.end() ) {
 
     // We make the prediction by permuting the splitter with the feature!
-    return( this->percolateSampleIdxAtRandom(featureIdx,sampleIdx)->getTrainPrediction() );
+    return( this->percolate(trainData_,sampleIdx,featureIdx)->getTrainPrediction() );
   
   }
   
