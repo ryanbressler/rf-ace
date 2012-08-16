@@ -24,16 +24,26 @@ struct Feature {
   map<string,num_t> mapping;
   map<num_t,string> backMapping;
   string name;
+
+  Feature();
+  Feature(const vector<num_t>& newData, const string& newName);
+  Feature(const vector<string>& newStringData, const string& newName);
+
 };
 
 class Treedata  {
 public:
+
+  // Initializes the object 
+  Treedata(const vector<Feature>& features, options::General_options* parameters, const vector<string>& sampleHeaders = vector<string>(0) );
 
   // Initializes the object and reads in a data matrix
   // NOTE: will permute the contrasts, which is why it needs the RNG
   Treedata(string fileName, options::General_options* parameters);
 
   ~Treedata();
+
+  
 
   // Takes a set of features that are to be retained in the Treedata object.
   // Others will be removed.
@@ -138,13 +148,6 @@ public:
   string getRawFeatureData(const size_t featureIdx, const size_t sampleIdx);
   string getRawFeatureData(const size_t featureIdx, const num_t data);
   vector<string> getRawFeatureData(const size_t featureIdx);
-  
-  //inline void getRandomData(const size_t featureIdx, num_t& data) {data = features_[featureIdx].data[randomInteger_() % sampleHeaders_.size() ]; }
-
-  //inline size_t getRandomIndex(const size_t n) { return( randomInteger_() % n ); }
-
-  // 2^32 == 4294967296 == upper bound for randomInteger_
-  //inline num_t getRandomUnif() { return( static_cast<num_t>( 1.0 * randomInteger_() / 4294967296. ) ); }
   
   // Generates a bootstrap sample from the real samples of featureIdx. Samples not in the bootstrap sample will be stored in oob_ics,
   // and the number of oob samples is stored in noob.

@@ -13,15 +13,71 @@
 
 using namespace std;
 
+Feature::Feature() {
+
+  
+}
+
+Feature::Feature(const vector<num_t>& newData, const string& newName) {
+
+  data = newData;
+  name = newName;
+  isNumerical = true;
+  mapping.clear();
+  backMapping.clear();
+
+}
+
+Feature::Feature(const vector<string>& newStringData, const string& newName) {
+
+  datadefs::strv2catv(newStringData,data,mapping,backMapping);
+  
+  name = newName;
+  isNumerical = false;
+
+}
+
+
+Treedata::Treedata(const vector<Feature>& features, options::General_options* parameters, const vector<string>& sampleHeaders):
+  parameters_(parameters),
+  features_(features),
+  sampleHeaders_(sampleHeaders) {
+
+  size_t nFeatures = features_.size();
+
+  assert( nFeatures > 0 );
+
+  size_t nSamples = features_[0].data.size();
+
+  for ( size_t featureIdx = 0; featureIdx < nFeatures; ++featureIdx ) {
+
+    assert( features_[featureIdx].data.size() == nSamples );
+    name2idx_[ features_[featureIdx].name ] = featureIdx;
+  }
+
+  assert( nSamples > 0 );
+
+  if ( sampleHeaders_.size() == 0 ) {
+    sampleHeaders_.resize(nSamples,"NO_SAMPLE_ID");
+  } 
+
+  assert( sampleHeaders_.size() == nSamples );
+
+  if ( parameters_->useContrasts ) {
+    this->createContrasts(); // Doubles matrix size
+    this->permuteContrasts(parameters_->randIntGens[0]);
+  }
+  
+}
+
+
 /**
    Reads a data file into a Treedata object. The data file can be either AFM or ARFF
    NOTE: dataDelimiter and headerDelimiter are used only when the format is AFM, for 
    ARFF default delimiter (comma) is used 
 */
 Treedata::Treedata(string fileName, options::General_options* parameters):
-  parameters_(parameters),
-  features_(0),
-  sampleHeaders_(0) {
+  parameters_(parameters) {
 
   //Initialize stream to read from file
   ifstream featurestream;
@@ -61,8 +117,7 @@ Treedata::Treedata(string fileName, options::General_options* parameters):
 
     // ARFF doesn't contain sample headers 
     sampleHeaders_.clear();
-    sampleHeaders_.resize(rawMatrix[0].size(),
-			  "NO_SAMPLE_ID");
+    sampleHeaders_.resize(rawMatrix[0].size(),"NO_SAMPLE_ID");
     
   } else {
     
@@ -75,9 +130,6 @@ Treedata::Treedata(string fileName, options::General_options* parameters):
 		      isFeatureNumerical);
     
   }      
-
-
-  
 
   // Extract the number of features 
   size_t nFeatures = featureHeaders.size();
@@ -98,27 +150,32 @@ Treedata::Treedata(string fileName, options::General_options* parameters):
     name2idx_[featureHeaders[i]] = i;
 
     // Get name for the i'th feature
-    features_[i].name = featureHeaders[i];
+    //features_[i].name = featureHeaders[i];
 
     // Get type for the i'th feature
-    features_[i].isNumerical = isFeatureNumerical[i];
+    //features_[i].isNumerical = isFeatureNumerical[i];
 
-    if(features_[i].isNumerical) {
+    if ( isFeatureNumerical[i] ) {
+
+      vector<num_t> data;
 
       // If type is numerical, read the raw data as numbers
-      datadefs::strv2numv(rawMatrix[i],
-			  features_[i].data);
+      datadefs::strv2numv(rawMatrix[i],data);
+
+      features_[i] = Feature(data,featureHeaders[i]);
 
     } else {
+
+      features_[i] = Feature(rawMatrix[i],featureHeaders[i]);
 
       // If type is categorical, read the raw data as string literals
       // NOTE: mapping and backMapping store the information how to translate
       //       the raw data (string literals) to the internal format (numbers) 
       //       and back
-      datadefs::strv2catv(rawMatrix[i], 
-			  features_[i].data, 
-			  features_[i].mapping, 
-			  features_[i].backMapping);
+      //datadefs::strv2catv(rawMatrix[i], 
+      //			  features_[i].data, 
+      //			  features_[i].mapping, 
+      //			  features_[i].backMapping);
 
     }
 
