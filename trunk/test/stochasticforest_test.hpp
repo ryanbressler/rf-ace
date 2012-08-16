@@ -37,7 +37,7 @@ void StochasticForestTest::setUp() {
   
   parameters_.setCARTDefaults();
   
-  trainData_ = new Treedata("test_103by300_mixed_matrix.afm",'\t',':',parameters_.randIntGens[0]);
+  trainData_ = new Treedata("test_103by300_mixed_matrix.afm",&parameters_);
   
 }
 
@@ -53,7 +53,7 @@ void StochasticForestTest::test_treeDataPercolation() {
   parameters_.forestInput = "test_predictor.sf";
 
   // First we need some data
-  Treedata::Treedata testData("testdata.tsv",'\t',':',parameters_.randIntGens[0]);
+  Treedata::Treedata testData("testdata.tsv",&parameters_);
 
   // Next load a test predictor
   StochasticForest SF(&parameters_);
@@ -105,7 +105,7 @@ void StochasticForestTest::test_CART() {
  
   parameters_.targetStr = "N:output";
 
-  Treedata treeData("test_103by300_mixed_nan_matrix.afm",'\t',':',parameters_.randIntGens[0]);
+  Treedata treeData("test_103by300_mixed_nan_matrix.afm",&parameters_);
 
   parameters_.nMaxLeaves = 2;
 

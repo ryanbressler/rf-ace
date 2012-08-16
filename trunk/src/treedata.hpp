@@ -12,16 +12,26 @@
 
 #include "datadefs.hpp"
 #include "distributions.hpp"
+#include "options.hpp"
 
 using namespace std;
 using datadefs::num_t;
+
+struct Feature {
+  vector<num_t> data;
+  //vector<size_t> sortOrder;
+  bool isNumerical;
+  map<string,num_t> mapping;
+  map<num_t,string> backMapping;
+  string name;
+};
 
 class Treedata  {
 public:
 
   // Initializes the object and reads in a data matrix
   // NOTE: will permute the contrasts, which is why it needs the RNG
-  Treedata(string fileName, char dataDelimiter, char headerDelimiter, distributions::RandInt& randInt);
+  Treedata(string fileName, options::General_options* parameters);
 
   ~Treedata();
 
@@ -145,6 +155,7 @@ public:
                                 vector<size_t>& ics, 
                                 vector<size_t>& oobIcs);
 
+  void createContrasts();
   void permuteContrasts(distributions::RandInt& randInt);
 
   bool isFeatureNumerical(const size_t featureIdx);
@@ -156,15 +167,6 @@ public:
 #ifndef TEST__
 private:
 #endif
-  
-  struct Feature {
-    vector<num_t> data;
-    //vector<size_t> sortOrder;
-    bool isNumerical;
-    map<string,num_t> mapping;
-    map<num_t,string> backMapping;
-    string name;
-  };
   
   enum FileType {UNKNOWN, AFM, ARFF};
 
@@ -188,9 +190,9 @@ private:
   bool isValidFeatureHeader(const string& str);
 
   template <typename T> void transpose(vector<vector<T> >& mat);
+
+  options::General_options* parameters_;
   
-  char dataDelimiter_;
-  char headerDelimiter_;
   vector<Feature> features_;
   vector<string> sampleHeaders_;
 
