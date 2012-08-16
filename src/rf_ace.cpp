@@ -112,7 +112,7 @@ void rf_ace_filter(options::General_options& gen_op) {
 
   // Read train data into Treedata object
   cout << "===> Reading file '" << gen_op.input << "', please wait... " << flush;
-  Treedata treeData(gen_op.input,gen_op.dataDelimiter,gen_op.headerDelimiter,gen_op.randIntGens[0]);
+  Treedata treeData(gen_op.input,&gen_op);
   cout << "DONE" << endl;
 
   rface::updateTargetStr(treeData,gen_op);
@@ -410,7 +410,7 @@ void rf_ace(options::General_options& gen_op) {
 
     // Read train data into Treedata object
     cout << "===> Reading file '" << gen_op.input << "', please wait... " << flush;
-    Treedata trainData(gen_op.input,gen_op.dataDelimiter,gen_op.headerDelimiter,gen_op.randIntGens[0]);
+    Treedata trainData(gen_op.input,&gen_op);
     cout << "DONE" << endl;
     
     StochasticForest SF = rf_ace_build_predictor(trainData,gen_op);
@@ -419,7 +419,7 @@ void rf_ace(options::General_options& gen_op) {
       
       cout << "===> Making predictions with test data... " << flush;
 
-      Treedata treeDataTest(gen_op.predictionData,gen_op.dataDelimiter,gen_op.headerDelimiter,gen_op.randIntGens[0]);
+      Treedata treeDataTest(gen_op.predictionData,&gen_op);
 
       printPredictionToFile(SF,treeDataTest,gen_op.targetStr,gen_op.output);
 
@@ -463,7 +463,7 @@ void rf_ace(options::General_options& gen_op) {
 
   cout << "===> Making predictions with test data... " << flush;
 
-  Treedata treeDataTest(gen_op.predictionData,gen_op.dataDelimiter,gen_op.headerDelimiter,gen_op.randIntGens[0]);
+  Treedata treeDataTest(gen_op.predictionData,&gen_op);
 
   printPredictionToFile(SF,treeDataTest,gen_op.targetStr,gen_op.output);
 

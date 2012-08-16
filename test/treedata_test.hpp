@@ -63,10 +63,10 @@ void treeDataTest::setUp() {
 
   randInt_.seed(0);
 
-  treeData_ = new Treedata("test_103by300_mixed_matrix.afm",'\t',':',randInt_);
-  treeData_103by300NaN_ = new Treedata("test_103by300_mixed_nan_matrix.afm",'\t',':',randInt_);
+  treeData_ = new Treedata("test_103by300_mixed_matrix.afm",&parameters_);
+  treeData_103by300NaN_ = new Treedata("test_103by300_mixed_nan_matrix.afm",&parameters_);
 
-  parameters_.setCARTDefaults();
+  parameters_.useContrasts = true;
   threadIdx_ = 0;
 
 }
@@ -83,7 +83,7 @@ void treeDataTest::test_permuteContrasts() {
   
   string fileName = "test_6by10_mixed_matrix.tsv";
   
-  Treedata::Treedata treeData(fileName,'\t',':',randInt_);
+  Treedata::Treedata treeData(fileName,&parameters_);
   
   //treeData.permuteContrasts();
 
@@ -126,7 +126,7 @@ void treeDataTest::test_name2idxMap() {
 
   string fileName = "test_6by10_mixed_matrix.tsv";
 
-  Treedata::Treedata treeData(fileName,'\t',':',randInt_);
+  Treedata::Treedata treeData(fileName,&parameters_);
 
   CPPUNIT_ASSERT( treeData.name2idx_.size() == 2*treeData.nFeatures() );
   CPPUNIT_ASSERT( treeData.features_.size() == 2*treeData.nFeatures() );
@@ -163,7 +163,7 @@ void treeDataTest::test_name2idxMap() {
 
 void treeDataTest::test_getFeatureData() {
 
-  Treedata treedata("test_2by8_numerical_matrix.tsv",'\t',':',randInt_);
+  Treedata treedata("test_2by8_numerical_matrix.tsv",&parameters_);
 
   vector<size_t> sampleIcs = utils::range(8);
 
@@ -180,7 +180,7 @@ void treeDataTest::test_getFilteredFeatureData() {
   
   string fileName = "test_6by10_mixed_matrix.tsv";
   
-  Treedata::Treedata treeData(fileName,'\t',':',randInt_);
+  Treedata::Treedata treeData(fileName,&parameters_);
 
 
   /*
@@ -264,7 +264,7 @@ void treeDataTest::test_getFilteredAndSortedFeatureDataPair3() {
 
   string fileName = "test_6by10_mixed_matrix.tsv";
 
-  Treedata::Treedata treeData(fileName,'\t',':',randInt_);
+  Treedata::Treedata treeData(fileName,&parameters_);
 
   /*
     N:F1    nA      8.5     3.4     7.2     5       6       7       11      9       NA
@@ -361,7 +361,7 @@ void treeDataTest::test_getFilteredAndSortedFeatureDataPair3() {
 
 void treeDataTest::test_parseARFF() {
   
-  Treedata treeData("test_5by10_numeric_matrix.arff",'\t',':',randInt_);
+  Treedata treeData("test_5by10_numeric_matrix.arff",&parameters_);
 
   /*
     0.8147, 1.0000,  0.0596, 0.9160, 6.0000
@@ -466,13 +466,13 @@ void treeDataTest::test_parseARFF() {
 
 void treeDataTest::test_parseARFF_extended() {
 
-  Treedata treeData("test_12by21_categorical_matrix.arff",'\t',':',randInt_);
+  Treedata treeData("test_12by21_categorical_matrix.arff",&parameters_);
 
 }
 
 void treeDataTest::test_keepFeatures() {
   
-  Treedata treedata("test_6by10_mixed_matrix.tsv",'\t',':',randInt_);
+  Treedata treedata("test_6by10_mixed_matrix.tsv",&parameters_);
 
   // Feature names in the matrix are N:F1 N:F2 C:F3 N:F4 C:F5 N:F6
 
@@ -502,7 +502,7 @@ void treeDataTest::test_keepFeatures() {
 
 void treeDataTest::test_removeFeatures() {
 
-  Treedata treedata("test_6by10_mixed_matrix.tsv",'\t',':',randInt_);
+  Treedata treedata("test_6by10_mixed_matrix.tsv",&parameters_);
 
   // Feature names in the matrix are N:F1 N:F2 C:F3 N:F4 C:F5 N:F6
 
@@ -732,55 +732,66 @@ void treeDataTest::test_fullSplitterSweep() {
   //size_t targetIdx = treeData->getFeatureIdx("N:output");
   size_t minSamples = 3;
 
-  vector<string> checkList = utils::readListFromFile("test_fullSplitterSweep.txt",'\n');
+  vector<string> sweepFiles = {"test_fullSplitterSweep.txt"}; //,"test_fullSplitterSweep_C:class.txt"};
 
-  for ( size_t i = 0; i < checkList.size(); ++i ) {
+  for ( size_t f = 0; f < sweepFiles.size(); ++f ) {
 
-    vector<string> checkLine = utils::split(checkList[i],'\t');
+    //cout << "examining file " << sweepFiles[f] << endl;
 
-    CPPUNIT_ASSERT( checkLine.size() == 5 );
-
-    size_t targetIdx = treeData->getFeatureIdx(checkLine[0]);
-    size_t featureIdx = treeData->getFeatureIdx(checkLine[1]);
-
-    CPPUNIT_ASSERT( featureIdx != targetIdx );
-    CPPUNIT_ASSERT( featureIdx != treeData->end() );
-    CPPUNIT_ASSERT( targetIdx != treeData->end() );
-
-    num_t DI;
-    size_t nIcs_left;
-    size_t nIcs_right;
-
-    vector<size_t> sampleIcs_left;
-    vector<size_t> sampleIcs_right = utils::range( treeData->nSamples() );
-
-    vector<num_t> tv = treeData->getFilteredFeatureData(targetIdx,sampleIcs_right);
-
-    if ( treeData->isFeatureNumerical(featureIdx) ) {
-
-      num_t splitValue;
-      DI = treeData->numericalFeatureSplit(targetIdx,featureIdx,minSamples,sampleIcs_left,sampleIcs_right,splitValue);
-
-    } else {
+    vector<string> checkList = utils::readListFromFile(sweepFiles[f],'\n');
+    
+    for ( size_t i = 0; i < checkList.size(); ++i ) {
       
-      set<num_t> splitValues_left, splitValues_right;
-      DI = treeData->categoricalFeatureSplit(targetIdx,featureIdx,minSamples,sampleIcs_left,sampleIcs_right,splitValues_left,splitValues_right);
+      vector<string> checkLine = utils::split(checkList[i],'\t');
+      
+      CPPUNIT_ASSERT( checkLine.size() == 5 );
+      
+      size_t targetIdx = treeData->getFeatureIdx(checkLine[0]);
+      size_t featureIdx = treeData->getFeatureIdx(checkLine[1]);
+      
+      CPPUNIT_ASSERT( featureIdx != targetIdx );
+      CPPUNIT_ASSERT( featureIdx != treeData->end() );
+      CPPUNIT_ASSERT( targetIdx != treeData->end() );
+      
+      num_t DI;
+      size_t nIcs_left;
+      size_t nIcs_right;
+      
+      vector<size_t> sampleIcs_left;
+      vector<size_t> sampleIcs_right = utils::range( treeData->nSamples() );
+      
+      vector<num_t> tv = treeData->getFilteredFeatureData(targetIdx,sampleIcs_right);
+      
+      if ( treeData->isFeatureNumerical(featureIdx) ) {
+	
+	num_t splitValue;
+	DI = treeData->numericalFeatureSplit(targetIdx,featureIdx,minSamples,sampleIcs_left,sampleIcs_right,splitValue);
+	
+      } else {
+	
+	set<num_t> splitValues_left, splitValues_right;
+	DI = treeData->categoricalFeatureSplit(targetIdx,featureIdx,minSamples,sampleIcs_left,sampleIcs_right,splitValues_left,splitValues_right);
+	
+      }
+      
+      /*
+	cout << treeData->getFeatureName(targetIdx) << " " << treeData->getFeatureName(featureIdx) << " " << utils::str2<num_t>(checkLine[2]) << " == " << DI 
+	<< " , " << utils::str2<size_t>(checkLine[3]) << " == " << sampleIcs_left.size() 
+	<< " , " << utils::str2<size_t>(checkLine[4]) << " == " << sampleIcs_right.size() << endl;
+      */
+      
+      //cout << checkLine[2] << " vs " << DI << endl;
+
+      CPPUNIT_ASSERT( fabs( utils::str2<num_t>(checkLine[2]) - DI ) < 1e-5 );
+      CPPUNIT_ASSERT( utils::str2<size_t>(checkLine[3]) == sampleIcs_left.size() );
+      CPPUNIT_ASSERT( utils::str2<size_t>(checkLine[4]) == sampleIcs_right.size() );    
       
     }
-
-    /*
-      cout << treeData->getFeatureName(targetIdx) << " " << treeData->getFeatureName(featureIdx) << " " << utils::str2<num_t>(checkLine[2]) << " == " << DI 
-      << " , " << utils::str2<size_t>(checkLine[3]) << " == " << sampleIcs_left.size() 
-      << " , " << utils::str2<size_t>(checkLine[4]) << " == " << sampleIcs_right.size() << endl;
-    */
-
-    CPPUNIT_ASSERT( fabs( utils::str2<num_t>(checkLine[2]) - DI ) < 1e-5 );
-    CPPUNIT_ASSERT( utils::str2<size_t>(checkLine[3]) == sampleIcs_left.size() );
-    CPPUNIT_ASSERT( utils::str2<size_t>(checkLine[4]) == sampleIcs_right.size() );    
-
+    
   }
 
 }
+  
 
 void treeDataTest::test_bootstrapRealSamples() {
 

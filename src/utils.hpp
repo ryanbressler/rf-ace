@@ -14,6 +14,7 @@
 using namespace std;
 using datadefs::num_t;
 
+class Treedata;
 
 namespace utils {
 

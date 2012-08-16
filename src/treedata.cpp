@@ -18,9 +18,8 @@ using namespace std;
    NOTE: dataDelimiter and headerDelimiter are used only when the format is AFM, for 
    ARFF default delimiter (comma) is used 
 */
-Treedata::Treedata(string fileName, char dataDelimiter, char headerDelimiter, distributions::RandInt& randInt):
-  dataDelimiter_(dataDelimiter),
-  headerDelimiter_(headerDelimiter),
+Treedata::Treedata(string fileName, options::General_options* parameters):
+  parameters_(parameters),
   features_(0),
   sampleHeaders_(0) {
 
@@ -77,12 +76,13 @@ Treedata::Treedata(string fileName, char dataDelimiter, char headerDelimiter, di
     
   }      
 
+
+  
+
   // Extract the number of features 
   size_t nFeatures = featureHeaders.size();
 
-  // Resize the feature data container to fit the 
-  // original AND contrast features ( so 2*nFeatures )
-  features_.resize(2*nFeatures);
+  features_.resize(nFeatures);
 
   // Start reading data to the final container "features_"
   for(size_t i = 0; i < nFeatures; ++i) {
@@ -124,21 +124,32 @@ Treedata::Treedata(string fileName, char dataDelimiter, char headerDelimiter, di
 
   } 
  
-  // Generate contrast features
-  for(size_t i = nFeatures; i < 2*nFeatures; ++i) {
-    features_[i] = features_[ i - nFeatures ];
-    string contrastName = features_[ i - nFeatures ].name;
-    features_[i].name = contrastName.append("_CONTRAST");
-    name2idx_[contrastName] = i;
+  if ( parameters_->useContrasts ) {
+    this->createContrasts(); // Doubles matrix size
+    this->permuteContrasts(parameters_->randIntGens[0]);
   }
-
-  // Permute contrasts, so that the data becomes just noise
-  this->permuteContrasts(randInt);
- 
+  
 }
 
 Treedata::~Treedata() {
   /* Empty destructor */
+}
+
+void Treedata::createContrasts() {
+
+  // Resize the feature data container to fit the
+  // original AND contrast features ( so 2*nFeatures )
+  size_t nFeatures = features_.size();
+  features_.resize(2*nFeatures);
+
+  // Generate contrast features
+  for(size_t i = nFeatures; i < 2*nFeatures; ++i) {
+    features_[i] = features_[ i - nFeatures ];
+    features_[i].name = features_[ i - nFeatures ].name;
+    features_[i].name.append("_CONTRAST");
+    name2idx_[ features_[i].name ] = i;
+  }
+
 }
 
 void Treedata::whiteList(const set<string>& featureNames ) {
@@ -252,14 +263,14 @@ void Treedata::readAFM(ifstream& featurestream,
   isFeatureNumerical.clear();
 
   //Remove upper left element from the matrix as useless
-  getline(featurestream,field,dataDelimiter_);
+  getline(featurestream,field,parameters_->dataDelimiter);
 
   //Next read the first row, which should contain the column headers
   getline(featurestream,row);
   stringstream ss( utils::chomp(row) );
   bool isFeaturesAsRows = true;
   vector<string> columnHeaders;
-  while ( getline(ss,field,dataDelimiter_) ) {
+  while ( getline(ss,field,parameters_->dataDelimiter) ) {
 
     // If at least one of the column headers is a valid feature header, we assume features are stored as columns
     if ( isFeaturesAsRows && isValidFeatureHeader(field) ) {
@@ -290,12 +301,12 @@ void Treedata::readAFM(ifstream& featurestream,
     ss << row;
 
     //Read the next row header from the stream
-    getline(ss,field,dataDelimiter_);
+    getline(ss,field,parameters_->dataDelimiter);
     rowHeaders.push_back(field);
 
     vector<string> rawVector(nColumns);
     for(size_t i = 0; i < nColumns; ++i) {
-      getline(ss,rawVector[i],dataDelimiter_);
+      getline(ss,rawVector[i],parameters_->dataDelimiter);
       rawVector[i] = utils::trim(rawVector[i]);
     }
     assert(!ss.fail());
@@ -444,7 +455,7 @@ bool Treedata::isValidNumericalHeader(const string& str) {
   
   stringstream ss(str);
   string typeStr;
-  getline(ss,typeStr,headerDelimiter_);
+  getline(ss,typeStr,parameters_->headerDelimiter);
 
   return(  typeStr == "N" );
 }
@@ -453,7 +464,7 @@ bool Treedata::isValidCategoricalHeader(const string& str) {
 
   stringstream ss(str);
   string typeStr;
-  getline(ss,typeStr,headerDelimiter_);
+  getline(ss,typeStr,parameters_->headerDelimiter);
 
   return( typeStr == "C" || typeStr == "B" );
 }
@@ -463,7 +474,7 @@ bool Treedata::isValidFeatureHeader(const string& str) {
 }
 
 size_t Treedata::nFeatures() {
-  return( features_.size() / 2 );
+  return( parameters_->useContrasts ? features_.size() / 2 : features_.size() );
 }
 
 size_t Treedata::nSamples() {
