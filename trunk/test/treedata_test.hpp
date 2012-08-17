@@ -20,6 +20,7 @@ class treeDataTest : public CppUnit::TestFixture {
   CPPUNIT_TEST( test_removeFeatures );
   CPPUNIT_TEST( test_numericalFeatureSplitsNumericalTarget );
   CPPUNIT_TEST( test_numericalFeatureSplitsCategoricalTarget );
+  CPPUNIT_TEST( test_numericalFeatureSplitsCategoricalTarget2 );
   CPPUNIT_TEST( test_categoricalFeatureSplitsNumericalTarget );
   CPPUNIT_TEST( test_categoricalFeatureSplitsCategoricalTarget );
   CPPUNIT_TEST( test_fullSplitterSweep );
@@ -41,6 +42,7 @@ public:
   void test_removeFeatures();
   void test_numericalFeatureSplitsNumericalTarget();
   void test_numericalFeatureSplitsCategoricalTarget();
+  void test_numericalFeatureSplitsCategoricalTarget2();
   void test_categoricalFeatureSplitsNumericalTarget();
   void test_categoricalFeatureSplitsCategoricalTarget();
   void test_fullSplitterSweep();
@@ -629,6 +631,27 @@ void treeDataTest::test_numericalFeatureSplitsCategoricalTarget() {
 
 }
 
+void treeDataTest::test_numericalFeatureSplitsCategoricalTarget2() {
+
+  Treedata* treeData = treeData_103by300NaN_;
+
+  size_t targetIdx = treeData->getFeatureIdx("C:class");
+  size_t featureIdx = treeData->getFeatureIdx("N:output");
+
+  size_t minSamples = 3;
+
+  vector<size_t> sampleIcs_left(0);
+  vector<size_t> sampleIcs_right( utils::range(treeData->nSamples()) );
+  vector<num_t> tv = treeData->getFilteredFeatureData(targetIdx,sampleIcs_right);
+
+  num_t splitValue;
+
+  num_t deltaImpurity = treeData->numericalFeatureSplit(targetIdx,featureIdx,minSamples,sampleIcs_left,sampleIcs_right,splitValue);
+
+  //cout << deltaImpurity << " " << splitValue << " " << sampleIcs_left.size() << " " << sampleIcs_right.size() << endl;
+
+}
+
 void treeDataTest::test_categoricalFeatureSplitsNumericalTarget() {
 
   vector<size_t> sampleIcs_left(0);
@@ -732,7 +755,7 @@ void treeDataTest::test_fullSplitterSweep() {
   //size_t targetIdx = treeData->getFeatureIdx("N:output");
   size_t minSamples = 3;
 
-  vector<string> sweepFiles = {"test_fullSplitterSweep.txt"}; //,"test_fullSplitterSweep_C:class.txt"};
+  vector<string> sweepFiles = {"test_fullSplitterSweep.txt","test_fullSplitterSweep_C:class.txt"};
 
   for ( size_t f = 0; f < sweepFiles.size(); ++f ) {
 
@@ -780,7 +803,7 @@ void treeDataTest::test_fullSplitterSweep() {
 	<< " , " << utils::str2<size_t>(checkLine[4]) << " == " << sampleIcs_right.size() << endl;
       */
       
-      //cout << checkLine[2] << " vs " << DI << endl;
+      //cout << checkLine[2] << " vs " << DI << "  " << checkLine[3] << " vs " << sampleIcs_left.size() << "  " << checkLine[4] << " vs " << sampleIcs_right.size() << endl;
 
       CPPUNIT_ASSERT( fabs( utils::str2<num_t>(checkLine[2]) - DI ) < 1e-5 );
       CPPUNIT_ASSERT( utils::str2<size_t>(checkLine[3]) == sampleIcs_left.size() );

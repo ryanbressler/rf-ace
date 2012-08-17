@@ -149,12 +149,6 @@ Treedata::Treedata(string fileName, options::General_options* parameters):
     // NOTE: could be replaced with a hash table
     name2idx_[featureHeaders[i]] = i;
 
-    // Get name for the i'th feature
-    //features_[i].name = featureHeaders[i];
-
-    // Get type for the i'th feature
-    //features_[i].isNumerical = isFeatureNumerical[i];
-
     if ( isFeatureNumerical[i] ) {
 
       vector<num_t> data;
@@ -167,15 +161,6 @@ Treedata::Treedata(string fileName, options::General_options* parameters):
     } else {
 
       features_[i] = Feature(rawMatrix[i],featureHeaders[i]);
-
-      // If type is categorical, read the raw data as string literals
-      // NOTE: mapping and backMapping store the information how to translate
-      //       the raw data (string literals) to the internal format (numbers) 
-      //       and back
-      //datadefs::strv2catv(rawMatrix[i], 
-      //			  features_[i].data, 
-      //			  features_[i].mapping, 
-      //			  features_[i].backMapping);
 
     }
 
@@ -913,8 +898,7 @@ num_t Treedata::numericalFeatureSplit(const size_t targetIdx,
       mu_right -= ( tv[i] - mu_right ) / n_right;
 
       // If the sample is repeated and we can continue, continue
-      if ( n_left < minSamples || 
-	   (i + 1 < n_tot - minSamples && fv[ i + 1 ] == fv[ i ]) ) {
+      if ( n_left < minSamples || (n_left < n_tot - minSamples && fv[ i + 1 ] == fv[ i ]) ) {
         continue;
       }
       
@@ -962,14 +946,15 @@ num_t Treedata::numericalFeatureSplit(const size_t targetIdx,
       --n_right;
 
       // If we have repeated samples and can continue, continue
-      if ( n_left < minSamples || 
-	   (i + 1 > n_tot - minSamples && fv[ i + 1 ] == fv[ i ]) ) {
+      if ( n_left < minSamples || (n_left < n_tot - minSamples && fv[ i + 1 ] == fv[ i ]) ) {
         continue;
       }
 
       // If the split point "i-1" yields a better split than the previous one,
       // update se_best and bestSplitIdx
       num_t DI = math::deltaImpurity_class(sf_tot,n_tot,sf_left,n_left,sf_right,n_right);
+      //cout << " tv=" << features_[targetIdx].backMapping[tv[i]] << " fv=" << fv[i] << " nl=" << n_left << " sfl=" << sf_left << " nr=" << n_right << " sfr=" << sf_right << " nt=" << n_tot << " sft=" << sf_tot << " DI=" << DI << endl;
+      
       if ( DI > DI_best ) {
         bestSplitIdx = i;
 	DI_best = DI;

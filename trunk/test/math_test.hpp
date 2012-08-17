@@ -21,6 +21,7 @@ class MathTest : public CppUnit::TestFixture {
   //CPPUNIT_TEST( test_incrementDecrementSquaredError );
   CPPUNIT_TEST( test_incrementDecrementSquaredFrequency );
   CPPUNIT_TEST( test_numericalError );
+  CPPUNIT_TEST( test_deltaImpurity_class );
   CPPUNIT_TEST( test_categoricalError );
   CPPUNIT_TEST_SUITE_END();
   
@@ -38,6 +39,7 @@ public:
   void test_gamma();
   //void test_incrementDecrementSquaredError();
   void test_incrementDecrementSquaredFrequency();
+  void test_deltaImpurity_class();
   void test_numericalError();
   void test_categoricalError();
 
@@ -364,6 +366,12 @@ void MathTest::test_incrementDecrementSquaredFrequency() {
     CPPUNIT_ASSERT( sqFreq == 10 - i );
   }
 
+
+}
+
+void MathTest::test_deltaImpurity_class() {
+
+  CPPUNIT_ASSERT( fabs( math::deltaImpurity_class(25900,278,9,3,25393,275) - 0.007815518677275 ) < 1e-10 );
 
 }
 

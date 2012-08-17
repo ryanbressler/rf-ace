@@ -168,7 +168,7 @@ namespace math {
 
 
     // Check if the value already exists in the frequency map
-    map<num_t,size_t>::const_iterator it(freq.find(x_n));
+    map<num_t,size_t>::iterator it(freq.find(x_n));
     if(it == freq.end()) {
 
       // If not, squared frequency becomes updated by 1
@@ -180,7 +180,7 @@ namespace math {
       // Otherwise the squared frequency becomes updated by 
       // 2*freq + 1
       sqFreq += 2*freq[x_n] + 1;
-      ++freq[x_n];
+      it->second++; //freq[x_n];
 
     }
   }
@@ -225,6 +225,8 @@ namespace math {
 				   const size_t n_left,
 				   const size_t sf_right,
 				   const size_t n_right) {
+
+    //cout << - 1.0 * sf_tot   / ( 1.0 * n_tot * n_tot   ) << " + " << 1.0 * sf_left  / ( 1.0 * n_tot * n_left  ) << " + " << 1.0 * sf_right / ( 1.0 * n_tot * n_right ) << endl;
 
     return( - 1.0 * sf_tot   / ( n_tot * n_tot   ) 
 	    + 1.0 * sf_left  / ( n_tot * n_left  )

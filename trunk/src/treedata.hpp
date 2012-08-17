@@ -43,8 +43,6 @@ public:
 
   ~Treedata();
 
-  
-
   // Takes a set of features that are to be retained in the Treedata object.
   // Others will be removed.
   void whiteList(const set<string>& featureNames);
