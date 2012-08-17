@@ -55,7 +55,7 @@ void printPredictionToFile(StochasticForest& SF, Treedata& treeDataTest, const s
 void printHeader(ostream& out) {
   out << endl
       << "-----------------------------------------------------------" << endl
-      << "|  RF-ACE version:  1.0.5, May 29 2012                    |" << endl
+      << "|  RF-ACE version:  1.0.6, Aug 17 2012                    |" << endl
       << "|    Compile date:  " << __DATE__ << ", " << __TIME__ << "                 |" << endl 
       << "|   Report issues:  code.google.com/p/rf-ace/issues/list  |" << endl
       << "-----------------------------------------------------------" << endl
