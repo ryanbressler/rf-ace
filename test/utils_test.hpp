@@ -21,6 +21,13 @@ class UtilsTest : public CppUnit::TestFixture {
   CPPUNIT_TEST( test_split );
   CPPUNIT_TEST( test_permute );
   CPPUNIT_TEST( test_splitRange );
+
+  // NEW
+  CPPUNIT_TEST( test_strv2catv );
+  CPPUNIT_TEST( test_strv2numv );
+  CPPUNIT_TEST( test_sortDataAndMakeRef );
+  CPPUNIT_TEST( test_sortFromRef );
+
   CPPUNIT_TEST_SUITE_END();
   
 public:
@@ -37,6 +44,13 @@ public:
   void test_split();
   void test_permute();
   void test_splitRange();
+
+  // NEW
+  void test_strv2catv();
+  void test_strv2numv();
+  void test_sortDataAndMakeRef();
+  void test_sortFromRef();
+  
   
 };
 
@@ -254,6 +268,119 @@ void UtilsTest::test_splitRange() {
 
 
 }
+
+void UtilsTest::test_strv2catv() {
+  vector<string> strvec(51,"");
+  vector<datadefs::num_t> catvec(51,0.0);
+  map<string,datadefs::num_t> mapping;
+  map<datadefs::num_t,string> backMapping;
+  strvec[0] = "a";
+  strvec[1] = "b";
+  strvec[2] = "c";
+  strvec[3] = "A";
+  strvec[50] = "NaN";
+  utils::strv2catv(strvec, catvec, mapping, backMapping);
+
+  CPPUNIT_ASSERT(catvec[0] == 0.0);
+  CPPUNIT_ASSERT(catvec[1] == 1.0);
+  CPPUNIT_ASSERT(catvec[2] == 2.0);
+  CPPUNIT_ASSERT(catvec[3] == 3.0);
+  for (int i = 4; i < 50; ++i) {
+    CPPUNIT_ASSERT(4.0);
+  }
+  CPPUNIT_ASSERT(datadefs::isNAN(catvec[50]));
+
+  CPPUNIT_ASSERT( mapping["a"] == 0.0 );
+  CPPUNIT_ASSERT( mapping["b"] == 1.0 );
+  CPPUNIT_ASSERT( mapping["c"] == 2.0 );
+  CPPUNIT_ASSERT( mapping["A"] == 3.0 );
+  CPPUNIT_ASSERT( mapping[""]  == 4.0 );
+
+  CPPUNIT_ASSERT( backMapping[0.0] == "a" );
+  CPPUNIT_ASSERT( backMapping[1.0] == "b" );
+  CPPUNIT_ASSERT( backMapping[2.0] == "c" );
+  CPPUNIT_ASSERT( backMapping[3.0] == "A" );
+  CPPUNIT_ASSERT( backMapping[4.0]  == "" );
+
+}
+
+void UtilsTest::test_strv2numv() {
+  vector<string> strvec(51,"3.0");
+  vector<datadefs::num_t> catvec(51,0.0);
+  strvec[0] = "0.0";
+  strvec[1] = "1.0";
+  strvec[2] = "2.0";
+  strvec[3] = "0.00";
+  strvec[50] = "NaN";
+  utils::strv2numv(strvec, catvec);
+
+  CPPUNIT_ASSERT(catvec[0] == 0.0);
+  CPPUNIT_ASSERT(catvec[1] == 1.0);
+  CPPUNIT_ASSERT(catvec[2] == 2.0);
+  CPPUNIT_ASSERT(catvec[3] == 0.0);
+  for (int i = 4; i < 50; ++i) {
+    CPPUNIT_ASSERT(catvec[i] == 3.0);
+  }
+  CPPUNIT_ASSERT(datadefs::isNAN(catvec[50]));
+}
+
+void UtilsTest::test_sortDataAndMakeRef() {
+  vector<datadefs::num_t> data;
+  vector<size_t> refIcs;
+  data.push_back(0.0);
+  for (int i = 0; i < 50; ++i) {
+    data.push_back(static_cast<datadefs::num_t>(i));
+  }
+
+  for (int i = 49; i > -1; --i) { // Deliberately of length data.size() - 1
+    refIcs.push_back(static_cast<size_t>(i));
+  } // This allocation should be irrelevant. We keep it here deliberately to
+    //  ensure the results are flattened in a safe manner; we expect a bounds
+    //  checker to complain violently should that not be the case.
+
+  utils::sortDataAndMakeRef(true, data, refIcs);
+  CPPUNIT_ASSERT(data[0] == 0.0);
+  CPPUNIT_ASSERT(refIcs[0] == 0);
+  for (int i = 1; i < 51; ++i) {
+    CPPUNIT_ASSERT(data[i] == static_cast<datadefs::num_t>(i-1));
+    CPPUNIT_ASSERT(refIcs[i] == i);
+  }
+
+  utils::sortDataAndMakeRef(false, data, refIcs);
+  for (int i = 0; i < 50; ++i) {
+    CPPUNIT_ASSERT(data[i] == static_cast<datadefs::num_t>(49-i));
+    CPPUNIT_ASSERT(refIcs[i] == 50-i);
+  }
+  CPPUNIT_ASSERT(data[50] == 0.0);
+  CPPUNIT_ASSERT(refIcs[50] == 0);
+
+  // Check for correct behavior with an empty data list and arbitrary refIcs
+  data.clear();
+  utils::sortDataAndMakeRef(true, data, refIcs);
+  CPPUNIT_ASSERT(data.size() == 0);
+  CPPUNIT_ASSERT(refIcs.size() == 0);
+
+  utils::sortDataAndMakeRef(false, data, refIcs);
+  CPPUNIT_ASSERT(data.size() == 0);
+  CPPUNIT_ASSERT(refIcs.size() == 0);
+
+  // NaNs are not checked as sorting targets, as their behavior is currently undefined
+}
+
+void UtilsTest::test_sortFromRef() {
+  vector<int> data(50,0);
+  vector<size_t> refIcs(50,0);
+  for (int i = 0; i < 50; ++i) {
+    data[i] = i;
+    refIcs[i] = 49-i;
+  }
+
+  utils::sortFromRef<int>(data,refIcs);
+  for (int i = 0; i < 50; ++i) {
+    CPPUNIT_ASSERT(data[i] == 49-i);
+  }
+}
+
 
 // Registers the fixture into the test 'registry'
 CPPUNIT_TEST_SUITE_REGISTRATION( UtilsTest );

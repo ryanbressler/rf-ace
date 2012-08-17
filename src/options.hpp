@@ -9,8 +9,6 @@
 #include <thread>
 #include "argparse.hpp"
 #include "datadefs.hpp"
-#include "treedata.hpp"
-#include "utils.hpp"
 #include "distributions.hpp"
 
 using namespace std;
@@ -48,7 +46,7 @@ namespace options {
   const size_t     RF_DEFAULT_NODE_SIZE = 3;
   const num_t      RF_DEFAULT_IN_BOX_FRACTION = 1.0;
   const num_t      RF_DEFAULT_SAMPLE_WITH_REPLACEMENT = true;
-  const bool       RF_DEFAULT_USE_CONTRASTS = true;
+  const bool       RF_DEFAULT_USE_CONTRASTS = false;
   const bool       RF_DEFAULT_IS_RANDOM_SPLIT = true;
   const num_t      RF_DEFAULT_SHRINKAGE = 0.0;
 

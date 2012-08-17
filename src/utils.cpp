@@ -15,12 +15,90 @@ vector<num_t> utils::removeNANs(vector<num_t> x) {
 
 string utils::num2str(const num_t x) {
 
+  if ( datadefs::isNAN(x) ) return( datadefs::STR_NAN );
+  
   stringstream ss;
   ss << x;
-
+  
   return( ss.str() );
   
 }
+
+void utils::strv2numv(const vector<string>& strvec,
+                         vector<datadefs::num_t>& numvec) {
+  size_t n = strvec.size();
+  numvec.resize(n);
+  
+  for(size_t strIdx = 0; strIdx < n; ++strIdx) {
+    numvec[strIdx] = utils::str2<datadefs::num_t>(strvec[strIdx]);
+  }
+}
+
+void utils::strv2catv(const vector<string>& strvec,
+		      vector<datadefs::num_t>& catvec,
+		      map<string,datadefs::num_t>& mapping,
+		      map<datadefs::num_t,string>& backMapping) {
+  
+  size_t n = strvec.size();
+  catvec.resize(n);
+
+  mapping.clear();
+  backMapping.clear();
+
+  num_t val = 0.0;
+
+  //Map unique strings to values and store values in catvec as doubles
+  for(size_t strIdx = 0; strIdx < n; ++strIdx) {
+
+    //If the string is not NaN ...
+    if(!datadefs::isNAN_STR(strvec[strIdx])) {
+      map<string,num_t>::iterator it;
+
+      //Try to find the string in the map. If it's not found, extend the map...
+      it = mapping.find(strvec[strIdx]);
+      if(it == mapping.end()) {
+        mapping.insert(pair<string,num_t>(strvec[strIdx],val));
+        backMapping.insert(pair<num_t,string>(val,strvec[strIdx]));
+        catvec[strIdx] = val;
+        val += 1.0;
+      } else {
+        catvec[strIdx] = it->second;
+      }
+
+    } else {    //If the string is defined to NaN, however...
+      catvec[strIdx] = datadefs::NUM_NAN;
+    }
+  }
+
+}
+
+void utils::sortDataAndMakeRef(const bool isIncreasingOrder,
+			       vector<num_t>& data,
+			       vector<size_t>& refIcs) {
+
+  //assert(v.size() == ref_ics.size());
+  vector<pair<num_t,size_t> > pairedv(data.size()); // !! Understandibility:
+                                                    // !! consider a typedef
+                                                    // !! pairedv, leaving the
+                                                    // !! actual variable name
+                                                    // !! as something more
+                                                    // !! descriptive.
+
+  refIcs = utils::range(data.size());
+
+  datadefs::make_pairedv<num_t,size_t>(data,refIcs,pairedv);
+
+  //pairedv.erase(remove_if(pairedv.begin(),pairedv.end(),&datadefs::pairedIsNAN), pairedv.end());
+
+  if(isIncreasingOrder) {
+    sort(pairedv.begin(),pairedv.end(),datadefs::increasingOrder<size_t>());
+  } else {
+    sort(pairedv.begin(),pairedv.end(),datadefs::decreasingOrder<size_t>());
+  }
+
+  datadefs::separate_pairedv<num_t,size_t>(pairedv,data,refIcs);
+}
+
 
 // Removes all newline and any trailing characters
 string utils::chomp(const string& str, const string& nl) {

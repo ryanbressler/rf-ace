@@ -16,13 +16,13 @@
 class DataDefsTest : public CppUnit::TestFixture {
   CPPUNIT_TEST_SUITE( DataDefsTest );
   CPPUNIT_TEST( test_size_tIsSigned);
-  CPPUNIT_TEST( test_strv2catv );
-  CPPUNIT_TEST( test_strv2numv );
+  //CPPUNIT_TEST( test_strv2catv );
+  //CPPUNIT_TEST( test_strv2numv );
   CPPUNIT_TEST( test_cardinality );
   CPPUNIT_TEST( test_countRealValues );
   CPPUNIT_TEST( test_map_data );
   //CPPUNIT_TEST( test_max_idx );
-  CPPUNIT_TEST( test_sortDataAndMakeRef );
+  //CPPUNIT_TEST( test_sortDataAndMakeRef );
   CPPUNIT_TEST( test_isNAN );
   CPPUNIT_TEST( test_containsNAN );
   CPPUNIT_TEST( test_increasingOrderOperator );
@@ -30,7 +30,7 @@ class DataDefsTest : public CppUnit::TestFixture {
   CPPUNIT_TEST( test_freqIncreasingOrderOperator );
   CPPUNIT_TEST( test_make_pairedv );
   CPPUNIT_TEST( test_separate_pairedv );
-  CPPUNIT_TEST( test_sortFromRef );
+  //CPPUNIT_TEST( test_sortFromRef );
   CPPUNIT_TEST_SUITE_END();
   
 public:
@@ -38,13 +38,13 @@ public:
   void tearDown();
   
   void test_size_tIsSigned();
-  void test_strv2catv();
-  void test_strv2numv();
+  //void test_strv2catv();
+  //void test_strv2numv();
   void test_cardinality();
   void test_countRealValues();
   void test_map_data();
   //void test_max_idx();
-  void test_sortDataAndMakeRef();
+  //void test_sortDataAndMakeRef();
   void test_percentile();
   void test_isNAN();
   void test_containsNAN();
@@ -53,7 +53,7 @@ public:
   void test_freqIncreasingOrderOperator();
   void test_make_pairedv();
   void test_separate_pairedv();
-  void test_sortFromRef();
+  //void test_sortFromRef();
 };
 
 void DataDefsTest::setUp() {}
@@ -65,60 +65,6 @@ void DataDefsTest::test_size_tIsSigned() {
   CPPUNIT_ASSERT(!numeric_limits<size_t>::is_signed);
 }
 
-void DataDefsTest::test_strv2catv() {
-  vector<string> strvec(51,"");
-  vector<datadefs::num_t> catvec(51,0.0);
-  map<string,datadefs::num_t> mapping;
-  map<datadefs::num_t,string> backMapping;
-  strvec[0] = "a";
-  strvec[1] = "b";
-  strvec[2] = "c";
-  strvec[3] = "A";
-  strvec[50] = "NaN";
-  datadefs::strv2catv(strvec, catvec, mapping, backMapping);
-
-  CPPUNIT_ASSERT(catvec[0] == 0.0);
-  CPPUNIT_ASSERT(catvec[1] == 1.0);
-  CPPUNIT_ASSERT(catvec[2] == 2.0);
-  CPPUNIT_ASSERT(catvec[3] == 3.0);
-  for (int i = 4; i < 50; ++i) {
-    CPPUNIT_ASSERT(4.0);
-  }
-  CPPUNIT_ASSERT(datadefs::isNAN(catvec[50]));
-
-  CPPUNIT_ASSERT( mapping["a"] == 0.0 );
-  CPPUNIT_ASSERT( mapping["b"] == 1.0 );
-  CPPUNIT_ASSERT( mapping["c"] == 2.0 );
-  CPPUNIT_ASSERT( mapping["A"] == 3.0 );
-  CPPUNIT_ASSERT( mapping[""]  == 4.0 );
-
-  CPPUNIT_ASSERT( backMapping[0.0] == "a" );
-  CPPUNIT_ASSERT( backMapping[1.0] == "b" );
-  CPPUNIT_ASSERT( backMapping[2.0] == "c" );
-  CPPUNIT_ASSERT( backMapping[3.0] == "A" );
-  CPPUNIT_ASSERT( backMapping[4.0]  == "" );
-
-}
-
-void DataDefsTest::test_strv2numv() {
-  vector<string> strvec(51,"3.0");
-  vector<datadefs::num_t> catvec(51,0.0);
-  strvec[0] = "0.0";
-  strvec[1] = "1.0";
-  strvec[2] = "2.0";
-  strvec[3] = "0.00";
-  strvec[50] = "NaN";
-  datadefs::strv2numv(strvec, catvec);
-
-  CPPUNIT_ASSERT(catvec[0] == 0.0);
-  CPPUNIT_ASSERT(catvec[1] == 1.0);
-  CPPUNIT_ASSERT(catvec[2] == 2.0);
-  CPPUNIT_ASSERT(catvec[3] == 0.0);
-  for (int i = 4; i < 50; ++i) {
-    CPPUNIT_ASSERT(catvec[i] == 3.0);
-  }
-  CPPUNIT_ASSERT(datadefs::isNAN(catvec[50]));
-}
 
 void DataDefsTest::test_cardinality() {
   vector<datadefs::num_t> data;
@@ -226,58 +172,6 @@ void DataDefsTest::test_map_data() {
   CPPUNIT_ASSERT(datamap.size() == 0);
   CPPUNIT_ASSERT(nRealValues == 0);
 }
-
-void DataDefsTest::test_sortDataAndMakeRef() {
-  vector<datadefs::num_t> data;
-  vector<size_t> refIcs;
-  data.push_back(0.0);
-  for (int i = 0; i < 50; ++i) {
-    data.push_back(static_cast<datadefs::num_t>(i));
-  }
-  
-  for (int i = 49; i > -1; --i) { // Deliberately of length data.size() - 1
-    refIcs.push_back(static_cast<size_t>(i));
-  } // This allocation should be irrelevant. We keep it here deliberately to
-    //  ensure the results are flattened in a safe manner; we expect a bounds
-    //  checker to complain violently should that not be the case. 
-
-  datadefs::sortDataAndMakeRef(true, data, refIcs);
-  CPPUNIT_ASSERT(data[0] == 0.0);
-  CPPUNIT_ASSERT(refIcs[0] == 0);
-  for (int i = 1; i < 51; ++i) {
-    CPPUNIT_ASSERT(data[i] == static_cast<datadefs::num_t>(i-1));
-    CPPUNIT_ASSERT(refIcs[i] == i);
-  }
-
-  datadefs::sortDataAndMakeRef(false, data, refIcs);
-  for (int i = 0; i < 50; ++i) {
-    CPPUNIT_ASSERT(data[i] == static_cast<datadefs::num_t>(49-i));
-    CPPUNIT_ASSERT(refIcs[i] == 50-i);
-  }
-  CPPUNIT_ASSERT(data[50] == 0.0);
-  CPPUNIT_ASSERT(refIcs[50] == 0);
-
-  // Check for correct behavior with an empty data list and arbitrary refIcs
-  data.clear();
-  datadefs::sortDataAndMakeRef(true, data, refIcs);
-  CPPUNIT_ASSERT(data.size() == 0);
-  CPPUNIT_ASSERT(refIcs.size() == 0);
-  
-  datadefs::sortDataAndMakeRef(false, data, refIcs);
-  CPPUNIT_ASSERT(data.size() == 0);
-  CPPUNIT_ASSERT(refIcs.size() == 0);
-
-  // NaNs are not checked as sorting targets, as their behavior is currently undefined
-}
-
-/*
-  void DataDefsTest::test_max_idx() {
-  
-  CPPUNIT_ASSERT( datadefs::MAX_IDX == numeric_limits<size_t>::max() - 1 );
-  
-  }
-*/
-
 
 void DataDefsTest::test_isNAN() {
 
@@ -456,20 +350,6 @@ void DataDefsTest::test_separate_pairedv() {
     CPPUNIT_ASSERT(strcmp(v2[i].c_str(),"a") == 0);
     CPPUNIT_ASSERT(p[i].first == 1);
     CPPUNIT_ASSERT(strcmp(p[i].second.c_str(),"a") == 0);
-  }
-}
-
-void DataDefsTest::test_sortFromRef() {
-  vector<int> data(50,0);
-  vector<size_t> refIcs(50,0);
-  for (int i = 0; i < 50; ++i) {
-    data[i] = i;
-    refIcs[i] = 49-i;
-  }
-  
-  datadefs::sortFromRef<int>(data,refIcs);
-  for (int i = 0; i < 50; ++i) {
-    CPPUNIT_ASSERT(data[i] == 49-i);
   }
 }
 

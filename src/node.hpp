@@ -12,6 +12,7 @@
 #include "datadefs.hpp"
 #include "treedata.hpp"
 #include "options.hpp"
+#include "utils.hpp"
 
 using namespace std;
 using datadefs::num_t;
