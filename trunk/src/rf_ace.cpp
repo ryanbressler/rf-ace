@@ -80,6 +80,10 @@ int main(const int argc, char* const argv[]) {
 
   if ( gen_op.isFilter ) {
 
+    if ( gen_op.nPerms > 1 ) {
+      gen_op.useContrasts = true;
+    }
+
     rf_ace_filter(gen_op);
 
   } else if ( gen_op.isSet(gen_op.recombinePerms_s,gen_op.recombinePerms_l) ) {
@@ -148,8 +152,8 @@ void rf_ace_filter(options::General_options& gen_op) {
   // If there are more than one permutation, we can compute the p-values and thus sort wrt. them
   if ( gen_op.nPerms > 1 ) {
     bool isIncreasingOrder = true;
-    datadefs::sortDataAndMakeRef(isIncreasingOrder,pValues,featureIcs);
-    datadefs::sortFromRef<num_t>(importanceValues,featureIcs);
+    utils::sortDataAndMakeRef(isIncreasingOrder,pValues,featureIcs);
+    utils::sortFromRef<num_t>(importanceValues,featureIcs);
     
     // Apply p-value adjustment with the Benjamini-Hochberg method if needed
     if ( gen_op.isAdjustedPValue ) {
@@ -159,8 +163,8 @@ void rf_ace_filter(options::General_options& gen_op) {
 
   } else { // ... otherwise we can sort wrt. importance scores
     bool isIncreasingOrder = false;
-    datadefs::sortDataAndMakeRef(isIncreasingOrder,importanceValues,featureIcs);
-    datadefs::sortFromRef<num_t>(pValues,featureIcs);
+    utils::sortDataAndMakeRef(isIncreasingOrder,importanceValues,featureIcs);
+    utils::sortFromRef<num_t>(pValues,featureIcs);
   }
 
   size_t nIncludedFeatures = 0;
@@ -356,7 +360,7 @@ StochasticForest rf_ace_build_predictor(Treedata& trainData, options::General_op
   setEnforcedForestParameters(trainData,gen_op);
 
   // We never want to use contrasts when we are building a predictor
-  gen_op.useContrasts = false;
+  //gen_op.useContrasts = false;
 
   printGeneralSetup(trainData,gen_op);
 
@@ -482,12 +486,12 @@ void rf_ace(options::General_options& gen_op) {
 
 void setEnforcedForestParameters(Treedata& treeData, options::General_options& gen_op) {
 
-  size_t targetIdx = treeData.getFeatureIdx(gen_op.targetStr);
-
-  // Allow trees to grow to maximal depth, if not told otherwise
-  gen_op.setIfNotSet(gen_op.nMaxLeaves_s,gen_op.nMaxLeaves_l,gen_op.nMaxLeaves,treeData.nRealSamples(targetIdx));
-  
   if ( gen_op.modelType == options::RF ) {
+
+    size_t targetIdx = treeData.getFeatureIdx(gen_op.targetStr);
+
+    // Allow trees to grow to maximal depth, if not told otherwise
+    gen_op.setIfNotSet(gen_op.nMaxLeaves_s,gen_op.nMaxLeaves_l,gen_op.nMaxLeaves,treeData.nRealSamples(targetIdx));
 
     // RF mTry is by default set to 10% of features
     gen_op.setIfNotSet(gen_op.mTry_s,gen_op.mTry_l,gen_op.mTry,static_cast<size_t>(0.1*treeData.nFeatures()));

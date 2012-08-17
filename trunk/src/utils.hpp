@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <set>
+#include <map>
 #include <string>
 #include <istream>
 #include <sstream>
@@ -77,6 +78,35 @@ namespace utils {
   
   string num2str(const num_t x);
 
+  void strv2numv(const vector<string>& strvec,
+		 vector<datadefs::num_t>& numvec);
+
+  void strv2catv(const vector<string>& strvec, 
+		 vector<datadefs::num_t>& catvec, 
+		 map<string,datadefs::num_t>& mapping, 
+		 map<datadefs::num_t,string>& backMapping);
+
+  void sortDataAndMakeRef(const bool isIncreasingOrder,
+			  vector<datadefs::num_t>& data,
+			  vector<size_t>& refIcs);
+
+  /**
+   * Sorts a given input data vector of type T based on a given reference
+   * ordering of type vector<int>.
+   !! Correctness: this will fail if any of the contents of refIcs fall outside
+       of the normal scope of vector<T>& data.
+  */
+  template <typename T> void sortFromRef(vector<T>& data,
+                                         vector<size_t> const& refIcs
+                                         ) {
+    assert(data.size() == refIcs.size());
+    vector<T> foo = data;
+    int n = data.size();
+    for (int i = 0; i < n; ++i) {
+      data[i] = foo[refIcs[i]];
+    }
+  }
+    
   template <typename T>
   T str2(const string& str) {
 

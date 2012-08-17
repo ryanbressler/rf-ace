@@ -30,7 +30,7 @@ Feature::Feature(const vector<num_t>& newData, const string& newName) {
 
 Feature::Feature(const vector<string>& newStringData, const string& newName) {
 
-  datadefs::strv2catv(newStringData,data,mapping,backMapping);
+  utils::strv2catv(newStringData,data,mapping,backMapping);
   
   name = newName;
   isNumerical = false;
@@ -154,7 +154,7 @@ Treedata::Treedata(string fileName, options::General_options* parameters):
       vector<num_t> data;
 
       // If type is numerical, read the raw data as numbers
-      datadefs::strv2numv(rawMatrix[i],data);
+      utils::strv2numv(rawMatrix[i],data);
 
       features_[i] = Feature(data,featureHeaders[i]);
 
@@ -230,7 +230,12 @@ void Treedata::whiteList(const vector<bool>& keepFeatureIcs) {
   }
 
   vector<Feature> featureCopy = features_;
-  features_.resize(2*nFeaturesNew);
+
+  if ( parameters_->useContrasts ) {
+    features_.resize(2*nFeaturesNew);
+  } else {
+    features_.resize(nFeaturesNew);
+  }
 
   unordered_map<string,size_t> name2idxCopy = name2idx_;
 
@@ -254,22 +259,25 @@ void Treedata::whiteList(const vector<bool>& keepFeatureIcs) {
     features_[ iter ] = featureCopy[ name2idxCopy[featureName] ];
     name2idx_[ featureName ] = iter;
 
-    featureName.append("_CONTRAST");
+    if ( parameters_->useContrasts ) {
+      featureName.append("_CONTRAST");
+      
+      if ( name2idxCopy.find(featureName) == name2idxCopy.end() ) {
+	cerr << "Treedata::keepFeatures() -- feature '" << featureName << "' does not exist" << endl;
+	exit(1);
+      }
+      
+      features_[ nFeaturesNew + iter ] = featureCopy[ name2idxCopy[featureName] ];
+      name2idx_[ featureName ] = nFeaturesNew + iter; 
 
-    if ( name2idxCopy.find(featureName) == name2idxCopy.end() ) {
-      cerr << "Treedata::keepFeatures() -- feature '" << featureName << "' does not exist" << endl;
-      exit(1);
     }
-
-    features_[ nFeaturesNew + iter ] = featureCopy[ name2idxCopy[featureName] ];
-    name2idx_[ featureName ] = nFeaturesNew + iter; 
 
     ++iter;
 
   }
 
   assert( iter == nFeaturesNew );
-  assert( 2*iter == features_.size() );
+  //assert( 2*iter == features_.size() );
   
 }
 
@@ -1507,10 +1515,10 @@ void Treedata::replaceFeatureData(const size_t featureIdx, const vector<string>&
   //features_[featureIdx].sortOrder.clear();
 
   // The string literal data needs some processing 
-  datadefs::strv2catv(rawFeatureData,
-		      features_[featureIdx].data,
-		      features_[featureIdx].mapping,
-		      features_[featureIdx].backMapping);
+  utils::strv2catv(rawFeatureData,
+		   features_[featureIdx].data,
+		   features_[featureIdx].mapping,
+		   features_[featureIdx].backMapping);
 }
 
 
