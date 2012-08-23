@@ -10,6 +10,7 @@
 #include <cassert>
 #include <iostream>
 #include <algorithm>
+#include <unordered_map>
 #include "errno.hpp"
 
 using namespace std;
@@ -22,6 +23,8 @@ namespace datadefs {
   // Numerical data type
   typedef double num_t; /** Baseline numeric representation used throughout
                          *   RF-ACE. Currently, double. */
+
+  typedef unordered_map<size_t,unordered_map<size_t,size_t> > ftable_t;
 
   extern const num_t NUM_NAN;       /** Numeric representation of not-a-number */
   extern const string STR_NAN;

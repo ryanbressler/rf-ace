@@ -38,6 +38,8 @@ public:
 
   size_t nTrees();
 
+  RootNode* tree(const size_t treeIdx) { return( rootNodes_[treeIdx] ); }
+
   inline set<size_t> getFeaturesInForest() { return( featuresInForest_ ); }
 
   inline string getTargetName() { return( parameters_->targetStr ); }
