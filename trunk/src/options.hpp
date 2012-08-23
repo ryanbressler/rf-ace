@@ -22,6 +22,7 @@ namespace options {
   const bool       GENERAL_DEFAULT_PRINT_HELP = false;
   const bool       GENERAL_DEFAULT_IS_FILTER = false;
   const size_t     GENERAL_DEFAULT_RECOMBINE_PERMS = 0;
+  const num_t      GENERAL_DEFAULT_CONTRAST_FRACTION = 0.01;
   const bool       GENERAL_DEFAULT_REPORT_CONTRASTS = false;
   const char       GENERAL_DEFAULT_DATA_DELIMITER = '\t';
   const char       GENERAL_DEFAULT_HEADER_DELIMITER = ':';
@@ -87,6 +88,7 @@ namespace options {
     // I/O related and general paramters
     bool printHelp; const string printHelp_s; const string printHelp_l;
     bool isFilter; const string isFilter_s; const string isFilter_l;
+    num_t contrastFraction; const string contrastFraction_s; const string contrastFraction_l;
     bool reportContrasts; const string reportContrasts_s; const string reportContrasts_l;
     string input; const string input_s; const string input_l;
     string output; const string output_s; const string output_l;
@@ -96,6 +98,7 @@ namespace options {
     string blackList; const string blackList_s; const string blackList_l;
     string predictionData; const string predictionData_s; const string predictionData_l;
     string log; const string log_s; const string log_l;
+    string pairInteractionOutput; const string pairInteractionOutput_s; const string pairInteractionOutput_l;
     char dataDelimiter; const string dataDelimiter_s; const string dataDelimiter_l;
     char headerDelimiter; const string headerDelimiter_s; const string headerDelimiter_l;
     size_t pruneFeatures; const string pruneFeatures_s; const string pruneFeatures_l;
@@ -135,7 +138,8 @@ namespace options {
       // I/O and general parameters
       printHelp(GENERAL_DEFAULT_PRINT_HELP),printHelp_s("h"),printHelp_l("help"),
       isFilter(GENERAL_DEFAULT_IS_FILTER),isFilter_s("f"),isFilter_l("filter"),
-      reportContrasts(GENERAL_DEFAULT_REPORT_CONTRASTS),reportContrasts_s("C"),reportContrasts_l("listAllContrasts"),
+      contrastFraction(GENERAL_DEFAULT_CONTRAST_FRACTION),contrastFraction_s("C"),contrastFraction_l("contrastFraction"),
+      reportContrasts(GENERAL_DEFAULT_REPORT_CONTRASTS),reportContrasts_s("R"),reportContrasts_l("listAllContrasts"),
       input(""),input_s("I"),input_l("input"),
       output(""),output_s("O"),output_l("output"),
       forestInput(""),forestInput_s("F"),forestInput_l("forestInput"),
@@ -144,6 +148,7 @@ namespace options {
       blackList(""),blackList_s("B"),blackList_l("blackList"),
       predictionData(""),predictionData_s("T"),predictionData_l("test"),
       log(""),log_s("L"),log_l("log"),
+      pairInteractionOutput(""),pairInteractionOutput_s("P"),pairInteractionOutput_l("pairInteraction"),
       dataDelimiter(GENERAL_DEFAULT_DATA_DELIMITER),dataDelimiter_s("D"),dataDelimiter_l("dataDelim"),
       headerDelimiter(GENERAL_DEFAULT_HEADER_DELIMITER),headerDelimiter_s("H"),headerDelimiter_l("headDelim"),
       pruneFeatures(GENERAL_DEFAULT_MIN_SAMPLES),pruneFeatures_s("X"),pruneFeatures_l("pruneFeatures"),
@@ -248,6 +253,7 @@ namespace options {
       parser_.getFlag(printHelp_s, printHelp_l, printHelp);
       parser_.getFlag(isFilter_s,isFilter_l,isFilter);
       parser_.getArgument<size_t>(recombinePerms_s,recombinePerms_l,recombinePerms);
+      parser_.getArgument<num_t>(contrastFraction_s, contrastFraction_l, contrastFraction);
       parser_.getFlag(reportContrasts_s,reportContrasts_l,reportContrasts);
       parser_.getArgument<string>(input_s, input_l, input);
       parser_.getArgument<string>(targetStr_s, targetStr_l, targetStr);
@@ -256,8 +262,9 @@ namespace options {
       parser_.getArgument<string>(whiteList_s, whiteList_l, whiteList);
       parser_.getArgument<string>(blackList_s, blackList_l, blackList);
       parser_.getArgument<string>(predictionData_s, predictionData_l, predictionData);
-      parser_.getArgument<string>(log_s,log_l,log);
-      string dataDelimiter,headerDelimiter;
+      parser_.getArgument<string>(log_s, log_l, log);
+      parser_.getArgument<string>(pairInteractionOutput_s, pairInteractionOutput_l, pairInteractionOutput);
+      string dataDelimiter, headerDelimiter;
       parser_.getArgument<string>(dataDelimiter_s, dataDelimiter_l, dataDelimiter);
       parser_.getArgument<string>(headerDelimiter_s, headerDelimiter_l, headerDelimiter);
       parser_.getArgument<size_t>(pruneFeatures_s, pruneFeatures_l, pruneFeatures);
@@ -407,7 +414,9 @@ namespace options {
 	cout << printOpt(pValueThreshold_s,pValueThreshold_l) << "= " << pValueThreshold << " (upper limit)" <<endl;
 	cout << printOpt(normalizeImportanceValues_s,normalizeImportanceValues_l) << "= ";
 	if ( normalizeImportanceValues ) { cout << "YES" << endl; } else { cout << "NO" << endl; }
+	cout << printOpt(contrastFraction_s,contrastFraction_l) << "= " << contrastFraction << endl;
 	cout << printOpt(importanceThreshold_s,importanceThreshold_l) << "= " << importanceThreshold << " (lower limit)" << endl;
+	cout << printOpt(pairInteractionOutput_s,pairInteractionOutput_l) << "= "; if(pairInteractionOutput != "") { cout << pairInteractionOutput << endl; } else { cout << "NOT SET" << endl; }
 	cout << endl;
       }
       
@@ -464,6 +473,8 @@ namespace options {
 	   << " " << "Seed (positive integer) for the Mersenne Twister random number generator" << endl;
       cout << " -" << modelType_s << " / --" << modelType_l << setw( maxWidth - modelType_l.size() )
 	   << " " << "Model Type: RF (default), GBT, or CART" << endl;
+      cout << " -" << nThreads_s << " / --" << nThreads_l << setw( maxWidth - nThreads_l.size() ) 
+	   << " " << "Number of threads allocated for RF-ACE (default " << GENERAL_DEFAULT_N_THREADS << ")" << endl;
       cout << endl;
 
       cout << "STOCHASTIC FOREST ARGUMENTS:" << endl;
@@ -492,10 +503,14 @@ namespace options {
 	   << " " << "[Filter only] Importance threshold in statistical test (default " << ST_DEFAULT_IMPORTANCE_THRESHOLD << ")" << endl;
       cout << " -" << isAdjustedPValue_s << " / --" << isAdjustedPValue_l << setw( maxWidth - isAdjustedPValue_l.size() ) 
 	   << " " << "[Filter only] set this flag if wou want Benjamini-Hochberg multiple testing correction (default OFF)" << endl;
+      cout << " -" << contrastFraction_s << " / --" << contrastFraction_l << setw( maxWidth - contrastFraction_l.size() )
+	   << " " << "[Filter only] Fraction of randomly sampled artificial contrasts for statistical testing (default " << GENERAL_DEFAULT_CONTRAST_FRACTION << ")" << endl;
       cout << " -" << reportAllFeatures_s << " / --" << reportAllFeatures_l << setw( maxWidth - reportAllFeatures_l.size() )
            << " " << "[Filter only] Set this flag if you want the association file to list all features regardless of statistical significance (default OFF)" << endl; 
       cout << " -" << reportContrasts_s << " / --" << reportContrasts_l << setw( maxWidth - reportContrasts_l.size() )
 	   << " " << "[Filter only] Set this flag if you want to report contrasts in the output association file (default OFF)" << endl;
+      cout << " -" << pairInteractionOutput_s << " / --" << pairInteractionOutput_l << setw( maxWidth - pairInteractionOutput_l.size() )
+	   << " " << "[Filter only] Print feature pair interaction frequency in this file" << endl;
       cout << endl;
 
       cout << "EXAMPLES:" << endl << endl;

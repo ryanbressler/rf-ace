@@ -303,7 +303,7 @@ void StochasticForest::growNumericalGBT() {
   vector<num_t> curTargetData = trueTargetData; 
 
   // Set the initial prediction to zero.
-  vector<num_t> prediction(nSamples, 0.0);
+  vector<num_t> prediction(nSamples, 2.0);
 
   //size_t nNodes;
 
@@ -514,7 +514,7 @@ void StochasticForest::getImportanceValues(vector<num_t>& importanceValues, vect
 
     if ( parameters_->normalizeImportanceValues ) {
       if ( oobError < datadefs::EPS ) {
-	importanceValues[featureIdx] = datadefs::NUM_INF;
+	importanceValues[featureIdx] /= datadefs::EPS;
       } else {
 	importanceValues[featureIdx] /= oobError;
       }
@@ -574,17 +574,17 @@ void predictNumPerThread(Treedata* testData,
     for ( size_t treeIdx = 0; treeIdx < nTrees; ++treeIdx ) {
       predictionVec[treeIdx] = rootNodes[treeIdx]->getTestPrediction(testData,sampleIdx);
     }
-    //if ( parameters->modelType == options::GBT ) {
-    //  (*predictions)[sampleIdx] = 0.0;
-    //  (*confidence)[sampleIdx] = 0.0;
-    //  for ( size_t treeIdx = 0; treeIdx < nTrees; ++treeIdx ) {
-    //	(*predictions)[sampleIdx] += parameters->shrinkage * predictionVec[treeIdx];
+    if ( parameters->modelType == options::GBT ) {
+      (*predictions)[sampleIdx] = 2.0;
+      (*confidence)[sampleIdx] = 0.0;
+      for ( size_t treeIdx = 0; treeIdx < nTrees; ++treeIdx ) {
+    	(*predictions)[sampleIdx] += parameters->shrinkage * predictionVec[treeIdx];
 	// MISSING: confidence
-    //  }
-    //} else {
-    (*predictions)[sampleIdx] = math::mean(predictionVec);
-    (*confidence)[sampleIdx] = sqrt(math::var(predictionVec,(*predictions)[sampleIdx]));
-    //}
+      }
+    } else {
+      (*predictions)[sampleIdx] = math::mean(predictionVec);
+      (*confidence)[sampleIdx] = sqrt(math::var(predictionVec,(*predictions)[sampleIdx]));
+    }
     
   }
 }

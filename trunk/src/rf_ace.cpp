@@ -10,6 +10,8 @@
 #include <iomanip>
 #include <algorithm>
 #include <map>
+#include <unordered_map>
+#include <set>
 
 #include "rf_ace.hpp"
 #include "stochasticforest.hpp"
@@ -24,6 +26,7 @@
 
 using namespace std;
 using datadefs::num_t;
+using datadefs::ftable_t;
 
 statistics::RF_statistics executeRandomForest(Treedata& treeData,
 					      options::General_options& gen_op,
@@ -51,6 +54,10 @@ void printAssociationsToFile(options::General_options& gen_op,
 
 
 void printPredictionToFile(StochasticForest& SF, Treedata& treeDataTest, const string& targetName, const string& fileName);
+
+void updateFeatureFrequency(ftable_t& frequency, StochasticForest* SF);
+
+void printPairInteractionsToFile(Treedata* trainData, ftable_t& frequency, const string& fileName, options::General_options& gen_op);
 
 void printHeader(ostream& out) {
   out << endl
@@ -274,6 +281,8 @@ statistics::RF_statistics executeRandomForest(Treedata& treeData,
   size_t targetIdx = treeData.getFeatureIdx(gen_op.targetStr);
   assert( targetIdx != treeData.end() );
 
+  ftable_t frequency;
+
   for(size_t permIdx = 0; permIdx < gen_op.nPerms; ++permIdx) {
     
     progress.update(1.0*permIdx/gen_op.nPerms);
@@ -293,6 +302,10 @@ statistics::RF_statistics executeRandomForest(Treedata& treeData,
     // Store the new percentile value in the vector contrastImportanceSample
     contrastImportanceSample[permIdx] = math::mean( contrastImportanceMat[permIdx] );
     
+    if ( gen_op.isSet(gen_op.pairInteractionOutput_s,gen_op.pairInteractionOutput_l) ) {
+      updateFeatureFrequency(frequency,&SF);
+    }
+
   }
   
   assert( !datadefs::containsNAN(contrastImportanceSample) );
@@ -345,6 +358,10 @@ statistics::RF_statistics executeRandomForest(Treedata& treeData,
   
   // Resize importance value container to proper dimensions
   importanceValues.resize( treeData.nFeatures() );
+
+  if ( gen_op.isSet(gen_op.pairInteractionOutput_s,gen_op.pairInteractionOutput_l) ) {
+    printPairInteractionsToFile(&treeData,frequency,gen_op.pairInteractionOutput,gen_op);
+  }
   
   // Return statistics
   return( RF_stat );
@@ -718,4 +735,75 @@ void printPredictionToFile(StochasticForest& SF, Treedata& treeDataTest, const s
   
 }
 
+void updateFeatureFrequency(ftable_t& frequency, StochasticForest* SF) {
+
+  // We loop through all the trees
+  for ( size_t treeIdx = 0; treeIdx < SF->nTrees(); ++treeIdx ) {
+
+    set<size_t> featuresInTree = SF->tree(treeIdx)->getFeaturesInTree();
+
+    for ( set<size_t>::const_iterator it1(featuresInTree.begin() ); it1 != featuresInTree.end(); ++it1 ) {
+      set<size_t>::const_iterator it2( it1 );
+      ++it2;
+      while ( it2 != featuresInTree.end() ) {
+
+        size_t lokey,hikey;
+        if ( *it1 <= *it2 ) {
+          lokey = *it1;
+          hikey = *it2;
+        } else {
+          lokey = *it2;
+          hikey = *it1;
+        }
+
+	if ( frequency.find(lokey) == frequency.end() || frequency[lokey].find(hikey) == frequency[lokey].end() ) {
+          frequency[lokey][hikey] = 1;
+	} else {
+          ++frequency[lokey][hikey];
+	}
+
+        ++it2;
+
+      }
+    }
+
+  }
+
+}
+
+template<typename T, size_t pos, bool isAscending>
+struct SortBy {
+
+  bool operator()(const vector<T>& a, const vector<T>& b) {
+    return( isAscending ? a[pos] < b[pos] : a[pos] > b[pos] );
+  }
+  
+};
+
+void printPairInteractionsToFile(Treedata* trainData, ftable_t& frequency, const string& fileName, options::General_options& gen_op) {
+
+  ofstream toFile(fileName.c_str());
+
+  vector<vector<size_t> > fTuples;
+
+  for ( ftable_t::const_iterator it1( frequency.begin() ); it1 != frequency.end(); ++it1 ) {
+    for ( unordered_map<size_t,size_t>::const_iterator it2( it1->second.begin()); it2 != it1->second.end(); ++it2 ) {
+      fTuples.push_back( {it1->first,it2->first,it2->second} );
+      //toFile << trainData->getFeatureName( it1->first ) << "\t" << trainData->getFeatureName( it2->first ) << "\t" << it2->second << endl;
+    }
+  }
+
+  SortBy<size_t,2,false> sorter;
+
+  //cout << sorter(fTuples[0],fTuples[1]) << endl;
+
+  sort(fTuples.begin(),fTuples.end(),sorter);
+
+  for ( size_t i = 0; i < fTuples.size(); ++i ) {
+    toFile << trainData->getFeatureName( fTuples[i][0] ) << "\t" << trainData->getFeatureName( fTuples[i][1] ) << "\t" << 100.0 * fTuples[i][2] / ( gen_op.nPerms * gen_op.nTrees ) << endl;
+  }
+
+  toFile.close();
+  
+}
 
