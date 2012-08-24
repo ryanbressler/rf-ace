@@ -68,6 +68,10 @@ private:
 
   options::General_options* parameters_;
 
+  // Experimental parameters for making GBT working
+  vector<num_t> GBTfactors_;
+  num_t GBTconstant_;
+
   // Chosen target to regress on
   //string targetName_;
   bool isTargetNumerical_;

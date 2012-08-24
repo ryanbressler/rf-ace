@@ -12,6 +12,7 @@
 #include <map>
 #include <unordered_map>
 #include <set>
+//#include <tuple>
 
 #include "rf_ace.hpp"
 #include "stochasticforest.hpp"
@@ -398,6 +399,11 @@ StochasticForest rf_ace_build_predictor(Treedata& trainData, options::General_op
 
   StochasticForest SF(&trainData,&gen_op);
   cout << "DONE" << endl << endl;
+
+  if ( gen_op.modelType == options::GBT ) {
+    cout << "GBT diagnostics disabled temporarily" << endl;
+    return( SF );
+  }
 
   size_t targetIdx = trainData.getFeatureIdx(gen_op.targetStr);
   vector<num_t> data = utils::removeNANs(trainData.getFeatureData(targetIdx));
