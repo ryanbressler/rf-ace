@@ -7,12 +7,14 @@
 #include <ctime>
 #include "datadefs.hpp"
 
+using namespace std;
+
 namespace distributions {
 
-  typedef std::mt19937 Engine;
+  typedef mt19937 Engine;
   // typedef std::ranlux_base_01 Engine;
 
-  inline unsigned int generateSeed() { return( std::clock() + std::time(0) ); }
+  inline unsigned int generateSeed() { return( clock() + time(0) ); }
 
   class RandInt {
   public:
@@ -40,7 +42,7 @@ namespace distributions {
   private:
     
     Engine eng_;
-    std::uniform_int<size_t> rand_;
+    uniform_int<size_t> rand_;
     
   };
   

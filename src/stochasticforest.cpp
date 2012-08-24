@@ -291,9 +291,6 @@ void StochasticForest::growNumericalGBT() {
 
   size_t targetIdx = trainData_->getFeatureIdx( parameters_->targetStr );
   
-  //A function pointer to a function "mean()" that is used to compute the node predictions with
-  //RootNode::PredictionFunctionType predictionFunctionType = RootNode::MEAN;
-
   size_t nSamples = trainData_->nSamples();
   // save a copy of the target column because it will be overwritten
   vector<num_t> trueTargetData = trainData_->getFeatureData(targetIdx);
@@ -302,10 +299,12 @@ void StochasticForest::growNumericalGBT() {
   // reference to the target column, will overwrite it
   vector<num_t> curTargetData = trueTargetData; 
 
-  // Set the initial prediction to zero.
-  vector<num_t> prediction(nSamples, 2.0);
+  vector<size_t> sampleIcs = utils::range(nSamples);
+  GBTconstant_ = math::mean( trainData_->getFilteredFeatureData(targetIdx,sampleIcs) );
+  GBTfactors_.resize(parameters_->nTrees);
 
-  //size_t nNodes;
+  // Set the initial prediction to be the mean
+  vector<num_t> prediction(nSamples, GBTconstant_);
 
   for ( size_t treeIdx = 0; treeIdx < parameters_->nTrees; ++treeIdx ) {
     // current target is the negative gradient of the loss function
@@ -322,10 +321,19 @@ void StochasticForest::growNumericalGBT() {
     // What kind of a prediction does the new tree produce?
     vector<num_t> curPrediction = rootNodes_[treeIdx]->getTrainPrediction(); //StochasticForest::predictDatasetByTree(treeIdx);
 
+    num_t h1 = 0.0;
+    num_t h2 = 0.0;
+    for (size_t i = 0; i < nSamples; i++ ) {
+      h1 += curTargetData[i] * curPrediction[i];
+      h2 += pow(curPrediction[i],2);
+    }
+
+    GBTfactors_[treeIdx] = h1 / h2;
+
     // Calculate the current total prediction adding the newly generated tree
     num_t sqErrorSum = 0.0;
-    for (size_t i=0; i<nSamples; i++) {
-      prediction[i] = prediction[i] + parameters_->shrinkage * curPrediction[i];
+    for (size_t i = 0; i < nSamples; i++ ) {
+      prediction[i] = prediction[i] + parameters_->shrinkage * GBTfactors_[treeIdx] * curPrediction[i];
 
       // diagnostics
       num_t iError = trueTargetData[i]-prediction[i];
@@ -338,6 +346,11 @@ void StochasticForest::growNumericalGBT() {
   // GBT-forest is now done!
   // restore true target
   trainData_->replaceFeatureData(targetIdx,trueTargetData);
+
+  //cout << " GBTconstant: " << GBTconstant_ << endl;
+  //cout << "  GBTfactors: ";
+  //utils::write(cout,GBTfactors_.begin(),GBTfactors_.end());
+  //cout << endl;
 }
 
 // Grow a GBT "forest" for a categorical target variable
@@ -566,7 +579,9 @@ void predictNumPerThread(Treedata* testData,
 			 options::General_options* parameters, 
 			 vector<size_t>& sampleIcs, 
 			 vector<num_t>* predictions, 
-			 vector<num_t>* confidence) {
+			 vector<num_t>* confidence,
+			 num_t GBTconstant,
+			 vector<num_t>& GBTfactors) {
   size_t nTrees = rootNodes.size();
   for ( size_t i = 0; i < sampleIcs.size(); ++i ) {
     size_t sampleIdx = sampleIcs[i];
@@ -575,10 +590,10 @@ void predictNumPerThread(Treedata* testData,
       predictionVec[treeIdx] = rootNodes[treeIdx]->getTestPrediction(testData,sampleIdx);
     }
     if ( parameters->modelType == options::GBT ) {
-      (*predictions)[sampleIdx] = 2.0;
+      (*predictions)[sampleIdx] = GBTconstant;
       (*confidence)[sampleIdx] = 0.0;
       for ( size_t treeIdx = 0; treeIdx < nTrees; ++treeIdx ) {
-    	(*predictions)[sampleIdx] += parameters->shrinkage * predictionVec[treeIdx];
+    	(*predictions)[sampleIdx] += parameters->shrinkage * GBTfactors[treeIdx] * predictionVec[treeIdx];
 	// MISSING: confidence
       }
     } else {
@@ -637,7 +652,7 @@ void StochasticForest::predict(Treedata* testData, vector<num_t>& predictions, v
 
   for ( size_t threadIdx = 0; threadIdx < parameters_->nThreads; ++threadIdx ) {
     // We only launch a thread if there are any samples allocated for prediction
-    threads.push_back( thread(predictNumPerThread,testData,rootNodes_,parameters_,sampleIcs[threadIdx],&predictions,&confidence) );
+    threads.push_back( thread(predictNumPerThread,testData,rootNodes_,parameters_,sampleIcs[threadIdx],&predictions,&confidence,GBTconstant_,GBTfactors_) );
   }
 
   // Join all launched threads
