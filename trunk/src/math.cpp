@@ -81,7 +81,8 @@ void math::adjustPValues(vector<num_t>& pValues, const size_t nTests) {
    Two-sample t-test
 */
 num_t math::ttest(const vector<num_t>& x,
-		  const vector<num_t>& y) {
+		  const vector<num_t>& y,
+		  const bool WS) {
 
   // Sample mean and variance of x
   num_t mean_x = math::mean(x);
@@ -104,13 +105,24 @@ num_t math::ttest(const vector<num_t>& x,
   }
 
   // Degrees of freedom
-  size_t v = n_x + n_y - 2;
+  size_t v;
 
-  // Pooled standard deviation
-  num_t sp = sqrt(((n_x-1) * var_x + (n_y-1) * var_y) / v);
+  // Standard deviation
+  num_t s;
+
+  if ( !WS ) {
+    v = n_x + n_y - 2;
+    num_t sp = sqrt(((n_x-1) * var_x + (n_y-1) * var_y) / v);
+    s = sp * sqrt(1.0 / n_x + 1.0 / n_y);
+  } else {
+    num_t h1 = pow(var_x / n_x + var_y / n_y,2);
+    num_t h2 = pow( var_x / n_x, 2) / (n_x - 1) + pow(var_y/n_y,2)/(n_y-1);
+    v = static_cast<size_t>( round( h1 / h2 ) );
+    s = sqrt( var_x / n_x + var_y / n_y );
+  }
 
   // If pooled standard deviation is zero...
-  if ( fabs(sp) < datadefs::EPS ) {
+  if ( fabs(s) < datadefs::EPS ) {
     if ( mean_x > mean_y ) {
       return( datadefs::EPS ); // ... and x larger than y => p = EPS 
     } else if ( fabs( mean_x - mean_y ) < datadefs::EPS ) {
@@ -121,7 +133,7 @@ num_t math::ttest(const vector<num_t>& x,
   }
 
   // T-test statistic
-  num_t tvalue = (mean_x - mean_y) / (sp * sqrt(1.0 / n_x + 1.0 / n_y));
+  num_t tvalue = (mean_x - mean_y) / s;
 
   // Transformed t-test statistic
   num_t ttrans = v / ( pow(tvalue,2) + v ); 

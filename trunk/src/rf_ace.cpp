@@ -401,7 +401,7 @@ StochasticForest rf_ace_build_predictor(Treedata& trainData, options::General_op
   cout << "DONE" << endl << endl;
 
   if ( gen_op.modelType == options::GBT ) {
-    cout << "GBT diagnostics disabled temporarily" << endl;
+    cout << "GBT diagnostics disabled temporarily" << endl << endl;
     return( SF );
   }
 

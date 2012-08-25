@@ -33,7 +33,8 @@ namespace math {
      NOTE: see http://en.wikipedia.org/wiki/Student's_t-test
   */
   num_t ttest(const vector<num_t>& x,
-              const vector<num_t>& y);
+              const vector<num_t>& y,
+	      const bool WS = false);
 
   /**
      Regularized incomplete Beta function
