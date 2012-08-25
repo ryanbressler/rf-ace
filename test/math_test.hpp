@@ -108,14 +108,20 @@ void MathTest::test_ttest() {
 
   // While increasing larger and larger samples, we expect
   // p-value to decrease gradually
-  CPPUNIT_ASSERT( fabs( math::ttest(x,y) - 0.08 ) < 0.01 );
-  CPPUNIT_ASSERT( fabs( math::ttest(y,x) - 0.92 ) < 0.01 );
+  CPPUNIT_ASSERT( fabs( math::ttest(x,y) - 0.078466097923427 ) < 1e-5 );
+  CPPUNIT_ASSERT( fabs( math::ttest(y,x) - 0.921533902076573 ) < 1e-5 );
+  CPPUNIT_ASSERT( fabs( math::ttest(x,y,true) - 0.078466097923427 ) < 1e-5 );
+  CPPUNIT_ASSERT( fabs( math::ttest(y,x,true) - 0.921533902076573 ) < 1e-5 );
   x.push_back(16.0);
-  CPPUNIT_ASSERT( fabs( math::ttest(x,y) - 0.04 ) < 0.01 );
-  CPPUNIT_ASSERT( fabs( math::ttest(y,x) - 0.96 ) < 0.01 );
+  CPPUNIT_ASSERT( fabs( math::ttest(x,y) - 0.044077929403175 ) < 1e-5 );
+  CPPUNIT_ASSERT( fabs( math::ttest(y,x) - 0.955922070596825 ) < 1e-5 );
+  CPPUNIT_ASSERT( fabs( math::ttest(x,y,true) - 0.043411097004321 ) < 1e-5 );
+  CPPUNIT_ASSERT( fabs( math::ttest(y,x,true) - 0.956588902995679 ) < 1e-5 );
   y.pop_back();
-  CPPUNIT_ASSERT( fabs( math::ttest(x,y) - 0.02 ) < 0.01 );
-  CPPUNIT_ASSERT( fabs( math::ttest(y,x) - 0.98 ) < 0.01 );
+  CPPUNIT_ASSERT( fabs( math::ttest(x,y) - 0.021736196542511 ) < 1e-5 );
+  CPPUNIT_ASSERT( fabs( math::ttest(y,x) - 0.978263803457489 ) < 1e-5 );
+  CPPUNIT_ASSERT( fabs( math::ttest(x,y,true) - 0.019925334730836 ) < 1e-5 );
+  CPPUNIT_ASSERT( fabs( math::ttest(y,x,true) - 0.980074665269164 ) < 1e-5 );
   x.push_back(17.0);
   CPPUNIT_ASSERT( fabs( math::ttest(x,y) - 0.01 ) < 0.01 );
   x.push_back(18.0);
