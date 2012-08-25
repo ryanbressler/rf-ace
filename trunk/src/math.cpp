@@ -105,19 +105,19 @@ num_t math::ttest(const vector<num_t>& x,
   }
 
   // Degrees of freedom
-  size_t v;
+  num_t v;
 
   // Standard deviation
   num_t s;
 
   if ( !WS ) {
-    v = n_x + n_y - 2;
+    v = static_cast<num_t>( n_x + n_y - 2 );
     num_t sp = sqrt(((n_x-1) * var_x + (n_y-1) * var_y) / v);
     s = sp * sqrt(1.0 / n_x + 1.0 / n_y);
   } else {
     num_t h1 = pow(var_x / n_x + var_y / n_y,2);
     num_t h2 = pow( var_x / n_x, 2) / (n_x - 1) + pow(var_y/n_y,2)/(n_y-1);
-    v = static_cast<size_t>( round( h1 / h2 ) );
+    v = h1 / h2 ;
     s = sqrt( var_x / n_x + var_y / n_y );
   }
 

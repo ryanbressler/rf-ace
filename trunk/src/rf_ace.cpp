@@ -338,8 +338,9 @@ statistics::RF_statistics executeRandomForest(Treedata& treeData,
 
     } else {
       
-      // Perform t-test against the contrast sample
-      pValues[featureIdx] = math::ttest(featureImportanceSample,contrastImportanceSample);
+      // Perform WS-approximated t-test against the contrast sample
+      bool WS = true;
+      pValues[featureIdx] = math::ttest(featureImportanceSample,contrastImportanceSample,WS);
       
     }
 
