@@ -3,7 +3,7 @@
 
 #include <cstdlib>
 #include <vector>
-#include <random>
+#include <tr1/random>
 #include <ctime>
 #include "datadefs.hpp"
 
@@ -11,7 +11,7 @@ using namespace std;
 
 namespace distributions {
 
-  typedef mt19937 Engine;
+  typedef tr1::mt19937 Engine;
   // typedef std::ranlux_base_01 Engine;
 
   inline unsigned int generateSeed() { return( clock() + time(0) ); }
@@ -42,7 +42,7 @@ namespace distributions {
   private:
     
     Engine eng_;
-    uniform_int<size_t> rand_;
+    tr1::uniform_int<size_t> rand_;
     
   };
   
