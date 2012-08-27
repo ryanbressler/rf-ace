@@ -732,50 +732,6 @@ size_t StochasticForest::nNodes(const size_t treeIdx) {
   return( rootNodes_[treeIdx]->nNodes() );
 }
 
-/*
-  map<size_t,map<size_t,size_t> > StochasticForest::featureFrequency() {
-
-  // The output variable that stores all the frequencies 
-  // of the features in the trees
-  map<size_t,map<size_t,size_t> > frequency;
-
-  // We loop through all the trees
-  for ( size_t treeIdx = 0; treeIdx < parameters_->nTrees; ++treeIdx ) {
-  
-  set<size_t> featuresInTree = rootNodes_[treeIdx]->getFeaturesInTree();
-  
-    for ( set<size_t>::const_iterator it1(featuresInTree.begin() ); it1 != featuresInTree.end(); ++it1 ) {
-      set<size_t>::const_iterator it2( it1 );
-      ++it2;
-      while ( it2 != featuresInTree.end() ) {
-	
-	size_t lokey,hikey;
-	if ( *it1 <= *it2 ) { 
-	  lokey = *it1;
-	  hikey = *it2;
-	} else {
-	  lokey = *it2;
-	  hikey = *it1;
-	}
-
-	if ( frequency.find(lokey) == frequency.end() ) {
-	  frequency[lokey][hikey] = 1;
-	} else {
-	  ++frequency[lokey][hikey];
-	}
-
-	++it2;
-
-      }
-      }
-
-  }
-  
-
-  return(frequency);
-  }
-*/
-
 /**
    Returns the number of trees in the forest
 */
