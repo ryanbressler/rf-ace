@@ -63,7 +63,7 @@ void printPairInteractionsToFile(Treedata* trainData, ftable_t& frequency, const
 void printHeader(ostream& out) {
   out << endl
       << "-----------------------------------------------------------" << endl
-      << "|  RF-ACE version:  1.0.6, Aug 17 2012                    |" << endl
+      << "|  RF-ACE version:  1.0.7, Aug 28 2012                    |" << endl
       << "|    Compile date:  " << __DATE__ << ", " << __TIME__ << "                 |" << endl 
       << "|   Report issues:  code.google.com/p/rf-ace/issues/list  |" << endl
       << "-----------------------------------------------------------" << endl
