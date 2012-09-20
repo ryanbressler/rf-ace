@@ -24,10 +24,13 @@
 #include "progress.hpp"
 #include "math.hpp"
 #include "distributions.hpp"
+#include "timer.hpp"
 
 using namespace std;
 using datadefs::num_t;
 using datadefs::ftable_t;
+
+Timer* TIMER_G = NULL;
 
 statistics::RF_statistics executeRandomForest(Treedata& treeData,
 					      options::General_options& gen_op,
@@ -72,6 +75,8 @@ void printHeader(ostream& out) {
 
 int main(const int argc, char* const argv[]) {
 
+  TIMER_G = new Timer();
+
   // Store the start time just before the analysis
   clock_t timeStart( time(0) );
   
@@ -115,6 +120,8 @@ int main(const int argc, char* const argv[]) {
 
   cout << endl;
   cout << time(0) - timeStart << " seconds elapsed." << endl << endl;
+
+  delete TIMER_G;
 
 }
 
@@ -301,7 +308,7 @@ statistics::RF_statistics executeRandomForest(Treedata& treeData,
     math::setUnion(featuresInAllForests,SF.getFeaturesInForest());
     
     // Store the new percentile value in the vector contrastImportanceSample
-    contrastImportanceSample[permIdx] = math::mean( contrastImportanceMat[permIdx] );
+    contrastImportanceSample[permIdx] = math::mean( utils::removeNANs( contrastImportanceMat[permIdx] ) );
     
     if ( gen_op.isSet(gen_op.pairInteractionOutput_s,gen_op.pairInteractionOutput_l) ) {
       updateFeatureFrequency(frequency,&SF);
@@ -325,10 +332,12 @@ statistics::RF_statistics executeRandomForest(Treedata& treeData,
     vector<num_t> featureImportanceSample(gen_op.nPerms);
     
     // Extract the sample for the real feature
-    for(size_t permIdx = 0; permIdx < gen_op.nPerms; ++permIdx) {
+    for ( size_t permIdx = 0; permIdx < gen_op.nPerms; ++permIdx ) {
       featureImportanceSample[permIdx] = importanceMat[permIdx][featureIdx];
     }
     
+    featureImportanceSample = utils::removeNANs(featureImportanceSample);
+
     assert( !datadefs::containsNAN(featureImportanceSample) );
 
     // If sample size is too small, assign p-value to 1.0
@@ -340,7 +349,13 @@ statistics::RF_statistics executeRandomForest(Treedata& treeData,
       
       // Perform WS-approximated t-test against the contrast sample
       bool WS = true;
-      pValues[featureIdx] = math::ttest(featureImportanceSample,contrastImportanceSample,WS);
+      
+      //cout << "contrastMinDepthSample:";
+      //utils::write(cout,contrastImportanceSample.begin(),contrastImportanceSample.end());
+      //cout << endl << "minDepthSample:";
+      //utils::write(cout,featureImportanceSample.begin(),featureImportanceSample.end());
+      //cout << endl;
+      pValues[featureIdx] = math::ttest(contrastImportanceSample,featureImportanceSample,WS);
       
     }
 

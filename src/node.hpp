@@ -7,6 +7,8 @@
 
 #include <cstdlib>
 #include <vector>
+#include <queue>
+#include <map>
 #include <set>
 #include <string>
 #include "datadefs.hpp"
@@ -60,13 +62,26 @@ public:
 #ifndef TEST__
 protected:
 #endif
-  
+
+  template<class T>
+  struct gt {
+    bool operator()(T& a, T& b) {
+      return( a > b ); 
+    }
+  };
+    
+  typedef map<size_t,vector<size_t> > medianDistToRoot_t;
+
+  typedef map<size_t,priority_queue<size_t,vector<size_t>,gt<size_t> > > minDistToRoot_t;
+
   void recursiveNodeSplit(Treedata* treeData,
                           const size_t targetIdx,
 			  const PredictionFunctionType& predictionFunctionType,
 			  vector<size_t> featureIcs,
 			  const vector<size_t>& sampleIcs,
-                          set<size_t>& featuresInTree,
+			  const size_t treeDepth,
+			  set<size_t>& featuresInTree,
+                          minDistToRoot_t& minDistToRoot,
                           size_t* nLeaves);
 
   bool regularSplitterSeek(Treedata* treeData,

@@ -4,6 +4,7 @@
 #include <fstream>
 #include <iomanip>
 #include <thread>
+#include <stack>
 
 #include "stochasticforest.hpp"
 #include "datadefs.hpp"
@@ -207,13 +208,10 @@ void growTreesPerThread(vector<RootNode*>& rootNodes) {
 
 void StochasticForest::learnRF() {
 
-  // We force the shrinkage to equal to one over the number of trees
-  //parameters_->shrinkage = 1.0 / parameters_->nTrees;
-
   // If we use contrasts, we need to permute them before using
-  if(parameters_->useContrasts) {
-    trainData_->permuteContrasts(parameters_->randIntGens[0]);
-  }
+  //if(parameters_->useContrasts) {
+  //  trainData_->permuteContrasts(parameters_->randIntGens[0]);
+  //}
 
   if ( parameters_->isRandomSplit && parameters_->mTry == 0 ) {
     cerr << "StochasticForest::learnRF() -- for randomized splits mTry must be greater than 0" << endl;
@@ -321,9 +319,9 @@ void StochasticForest::growNumericalGBT() {
 
   for ( size_t treeIdx = 0; treeIdx < parameters_->nTrees; ++treeIdx ) {
     // current target is the negative gradient of the loss function
-    // for square loss, it is target minus current prediction
+    // for square loss, it is 2 * ( target - prediction )
     for (size_t i = 0; i < nSamples; i++ ) {
-      curTargetData[i] = trueTargetData[i] - prediction[i];
+      curTargetData[i] = 2 * ( trueTargetData[i] - prediction[i] );
     }
 
     trainData_->replaceFeatureData(targetIdx,curTargetData);
@@ -332,7 +330,7 @@ void StochasticForest::growNumericalGBT() {
     rootNodes_[treeIdx]->growTree();
 
     // What kind of a prediction does the new tree produce?
-    vector<num_t> curPrediction = rootNodes_[treeIdx]->getTrainPrediction(); //StochasticForest::predictDatasetByTree(treeIdx);
+    vector<num_t> curPrediction = rootNodes_[treeIdx]->getTrainPrediction(); 
 
     num_t h1 = 0.0;
     num_t h2 = 0.0;
@@ -341,16 +339,16 @@ void StochasticForest::growNumericalGBT() {
       h2 += pow(curPrediction[i],2);
     }
 
-    GBTfactors_[treeIdx] = h1 / h2;
+    GBTfactors_[treeIdx] = parameters_->shrinkage * h1 / h2;
 
     // Calculate the current total prediction adding the newly generated tree
-    num_t sqErrorSum = 0.0;
+    //num_t sqErrorSum = 0.0;
     for (size_t i = 0; i < nSamples; i++ ) {
-      prediction[i] = prediction[i] + parameters_->shrinkage * GBTfactors_[treeIdx] * curPrediction[i];
+      prediction[i] = prediction[i] + GBTfactors_[treeIdx] * curPrediction[i];
 
       // diagnostics
-      num_t iError = trueTargetData[i]-prediction[i];
-      sqErrorSum += iError*iError;
+      //num_t iError = trueTargetData[i]-prediction[i];
+      //sqErrorSum += iError*iError;
 
     }
 
@@ -509,6 +507,9 @@ num_t StochasticForest::getOobError() {
 }
 
 void StochasticForest::getImportanceValues(vector<num_t>& importanceValues, vector<num_t>& contrastImportanceValues) {
+
+  this->getMeanMinimalDepthValues(importanceValues,contrastImportanceValues);
+  return;
   
   if ( featuresInForest_.size() == 0 ) {
     cout << "NOTE: forest is empty!" << endl;
@@ -606,7 +607,7 @@ void predictNumPerThread(Treedata* testData,
       (*predictions)[sampleIdx] = GBTconstant;
       (*confidence)[sampleIdx] = 0.0;
       for ( size_t treeIdx = 0; treeIdx < nTrees; ++treeIdx ) {
-    	(*predictions)[sampleIdx] += parameters->shrinkage * GBTfactors[treeIdx] * predictionVec[treeIdx];
+    	(*predictions)[sampleIdx] += GBTfactors[treeIdx] * predictionVec[treeIdx];
 	// MISSING: confidence
       }
     } else {
@@ -768,3 +769,71 @@ size_t StochasticForest::nTrees() {
   return( rootNodes_.size() );
 }
 
+void StochasticForest::getMeanMinimalDepthValues(vector<num_t>& depthValues, vector<num_t>& contrastDepthValues) {
+
+  //cout << "NOTE: experimental work with mean minimal depths!" << endl;
+
+  if ( featuresInForest_.size() == 0 ) {
+    cout << "NOTE: featuresInForest_ is empty!" << endl;
+  }
+
+  size_t nRealFeatures = trainData_->nFeatures();
+  size_t nAllFeatures = 2*nRealFeatures;
+
+  depthValues.clear();
+  depthValues.resize(nAllFeatures,0.0);
+
+  //vector<vector<num_t> > depthMatrix(nAllFeatures,vector<num_t>(this->nTrees(),-1.0*(this->nNodes()+1.0)/(2.0*this->nTrees())));
+
+  vector<size_t> featureCounts(nAllFeatures,0);
+
+  for ( size_t treeIdx = 0; treeIdx < this->nTrees(); ++treeIdx ) {
+
+    //stack<pair<Node*,size_t> > nodesToCheck;
+    //nodesToCheck.push( pair<Node*,size_t>(rootNodes_[treeIdx],0) );
+    
+    //while ( !nodesToCheck.empty() ) {
+      
+    //pair<Node*,size_t> curNode = nodesToCheck.top(); nodesToCheck.pop();
+      
+    //if ( curNode.first->hasChildren() ) {
+
+    //size_t featureIdx = trainData_->getFeatureIdx( curNode.first->splitterName() );
+
+    //cout << curNode.first->splitterName() << " => " << featureIdx << endl;
+    
+    //assert( featureIdx != trainData_->end() );
+    
+    vector<pair<size_t,size_t> > minDistPairs = rootNodes_[treeIdx]->getMinDistFeatures();
+
+    for ( size_t i = 0; i < minDistPairs.size(); ++i ) {
+
+      size_t featureIdx = minDistPairs[i].first;
+      size_t newDepthValue = minDistPairs[i].second;
+      
+      ++featureCounts[featureIdx];
+
+      depthValues[featureIdx] += 1.0 * ( newDepthValue - depthValues[featureIdx] ) / featureCounts[featureIdx];
+      
+      //nodesToCheck.push( pair<Node*,size_t>(curNode.first->leftChild(),curNode.second+1) );
+      //	nodesToCheck.push( pair<Node*,size_t>(curNode.first->rightChild(),curNode.second+1) );
+      //}
+    }
+    
+  }
+  
+  for ( size_t featureIdx = 0; featureIdx < nAllFeatures; ++featureIdx ) {
+    if ( featureCounts[featureIdx] == 0 ) {
+      depthValues[featureIdx] = datadefs::NUM_NAN;
+    } 
+  }
+  
+  contrastDepthValues.resize(nRealFeatures);
+
+  copy(depthValues.begin() + nRealFeatures,
+       depthValues.end(),
+       contrastDepthValues.begin());
+
+  depthValues.resize(nRealFeatures);
+
+}

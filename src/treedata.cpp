@@ -47,6 +47,10 @@ Treedata::Treedata(const vector<Feature>& features, options::General_options* pa
 
   assert( nFeatures > 0 );
 
+  // If we have contrasts, there would be 2*nFeatures, in which case
+  // 4*nFeatures results in a reasonable max load factor of 0.5
+  name2idx_.rehash(4*nFeatures);
+
   size_t nSamples = features_[0].data.size();
 
   for ( size_t featureIdx = 0; featureIdx < nFeatures; ++featureIdx ) {
@@ -136,6 +140,10 @@ Treedata::Treedata(string fileName, options::General_options* parameters):
 
   features_.resize(nFeatures);
 
+  // If we have contrasts, there would be 2*nFeatures, in which case
+  // 4*nFeatures results in a reasonable max load factor of 0.5
+  name2idx_.rehash(4*nFeatures);
+
   // Start reading data to the final container "features_"
   for(size_t i = 0; i < nFeatures; ++i) {
     
@@ -199,7 +207,12 @@ void Treedata::whiteList(const set<string>& featureNames ) {
   vector<bool> keepFeatureIcs(this->nFeatures(),false);
 
   for ( set<string>::const_iterator it( featureNames.begin() ); it != featureNames.end(); ++it ) {
-    keepFeatureIcs[this->getFeatureIdx(*it)] = true;
+    size_t featureIdx = this->getFeatureIdx(*it);
+    if ( featureIdx == this->end() ) {
+      cout << "WARNING: whitelisted feature '" << *it << "' does not exist!" << endl;
+    } else {
+      keepFeatureIcs[featureIdx] = true;
+    }
   }
 
   this->whiteList(keepFeatureIcs);
@@ -211,7 +224,12 @@ void Treedata::blackList(const set<string>& featureNames ) {
   vector<bool> keepFeatureIcs(this->nFeatures(),true);
   
   for ( set<string>::const_iterator it( featureNames.begin() ); it != featureNames.end(); ++it ) {
-    keepFeatureIcs[this->getFeatureIdx(*it)] = false;
+    size_t featureIdx = this->getFeatureIdx(*it);
+    if ( featureIdx == this->end() ) {
+      cout << "WARNING: blacklisted feature '" << *it << "' does not exist!" << endl;
+    } else {
+      keepFeatureIcs[featureIdx] = false;
+    }
   }
   
   this->whiteList(keepFeatureIcs);

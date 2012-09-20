@@ -1,4 +1,5 @@
 #include <string>
+#include "math.hpp"
 #include "rootnode.hpp"
 #include "datadefs.hpp"
 
@@ -98,10 +99,24 @@ void RootNode::growTree() {
     parameters_->mTry = featureIcs.size();
   }
 
+  size_t treeDist = 0;
+
   //Start the recursive node splitting from the root node. This will generate the tree.
-  this->recursiveNodeSplit(trainData_,targetIdx,predictionFunctionType,featureIcs,bootstrapIcs_,featuresInTree_,&nLeaves);
+  this->recursiveNodeSplit(trainData_,targetIdx,predictionFunctionType,featureIcs,bootstrapIcs_,treeDist,featuresInTree_,minDistToRoot_,&nLeaves);
   
   nNodes_ = 2 * nLeaves - 1;
+
+}
+
+vector<pair<size_t,size_t> > RootNode::getMinDistFeatures() {
+
+  vector<pair<size_t,size_t> > minDistFeatures;
+
+  for ( minDistToRoot_t::const_iterator it( minDistToRoot_.begin() ); it != minDistToRoot_.end(); ++it ) {
+    minDistFeatures.push_back( pair<size_t,size_t>(it->first,it->second.top()) );
+  }
+
+  return(minDistFeatures);
 
 }
 
@@ -155,7 +170,7 @@ num_t RootNode::getPermutedTrainPrediction(const size_t featureIdx,
   assert( trainData_ );
 
   // If we have the feature in the tree...
-  if ( featuresInTree_.find(featureIdx) != featuresInTree_.end() ) {
+  if ( minDistToRoot_.find(featureIdx) != minDistToRoot_.end() ) {
 
     // We make the prediction by permuting the splitter with the feature!
     return( this->percolate(trainData_,sampleIdx,featureIdx)->getTrainPrediction() );
