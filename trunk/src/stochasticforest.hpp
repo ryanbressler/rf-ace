@@ -26,6 +26,8 @@ public:
   void getImportanceValues(vector<num_t>& importanceValues,
                            vector<num_t>& contrastImportanceValues);
     
+  void getMeanMinimalDepthValues(vector<num_t>& depthValues, vector<num_t>& contrastDepthValues);
+
   void predict(Treedata* treeDataTest, vector<string>& predictions, vector<num_t>& confidence);
   void predict(Treedata* treeDataTest, vector<num_t>& predictions, vector<num_t>& confidence);
 

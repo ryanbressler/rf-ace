@@ -221,7 +221,9 @@ void Node::recursiveNodeSplit(Treedata* treeData,
 			      const PredictionFunctionType& predictionFunctionType,
 			      vector<size_t> featureIcs,
 			      const vector<size_t>& sampleIcs,
+			      const size_t treeDepth,
 			      set<size_t>& featuresInTree,
+			      minDistToRoot_t& minDistToRoot,
 			      size_t* nLeaves) {
 
   if ( false ) {
@@ -277,7 +279,7 @@ void Node::recursiveNodeSplit(Treedata* treeData,
     for(size_t i = 0; i < parameters_->mTry; ++i) {
       
       // If the sampled feature is a contrast... 
-      if( parameters_->randIntGens[threadIdx_].uniform() < 0.01 ) { // %1 sampling rate
+      if( parameters_->randIntGens[threadIdx_].uniform() < 0.5 ) { // %1 sampling rate
 	
 	featureSampleIcs[i] += treeData->nFeatures();
       }
@@ -304,11 +306,14 @@ void Node::recursiveNodeSplit(Treedata* treeData,
     return;
   }
   
+  minDistToRoot[splitFeatureIdx].push(treeDepth);
+
   featuresInTree.insert(splitFeatureIdx);
+
   *nLeaves += 1;
   
-  leftChild_->recursiveNodeSplit(treeData,targetIdx,predictionFunctionType,featureIcs,sampleIcs_left,featuresInTree,nLeaves);
-  rightChild_->recursiveNodeSplit(treeData,targetIdx,predictionFunctionType,featureIcs,sampleIcs_right,featuresInTree,nLeaves);
+  leftChild_->recursiveNodeSplit(treeData,targetIdx,predictionFunctionType,featureIcs,sampleIcs_left,treeDepth+1,featuresInTree,minDistToRoot,nLeaves);
+  rightChild_->recursiveNodeSplit(treeData,targetIdx,predictionFunctionType,featureIcs,sampleIcs_right,treeDepth+1,featuresInTree,minDistToRoot,nLeaves);
   
 }
 

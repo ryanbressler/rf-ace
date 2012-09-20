@@ -11,6 +11,7 @@
 class treeDataTest : public CppUnit::TestFixture {
   CPPUNIT_TEST_SUITE( treeDataTest );
   CPPUNIT_TEST( test_name2idxMap );
+  CPPUNIT_TEST( test_idx2name2idx );
   CPPUNIT_TEST( test_getFeatureData );
   CPPUNIT_TEST( test_getFilteredFeatureData );
   CPPUNIT_TEST( test_getFilteredAndSortedFeatureDataPair3 );
@@ -33,6 +34,7 @@ public:
   void tearDown();
   void test_permuteContrasts();
   void test_name2idxMap();
+  void test_idx2name2idx();
   void test_getFeatureData();
   void test_getFilteredFeatureData();
   void test_getFilteredAndSortedFeatureDataPair3();
@@ -161,6 +163,16 @@ void treeDataTest::test_name2idxMap() {
   CPPUNIT_ASSERT( treeData.name2idx_["C:F5_CONTRAST"] == 10 );
   CPPUNIT_ASSERT( treeData.name2idx_["N:F6_CONTRAST"] == 11 );
   
+}
+
+void treeDataTest::test_idx2name2idx() {
+
+  Treedata::Treedata treeData("test_103by300_mixed_nan_matrix.afm",&parameters_);
+
+  for ( size_t i = 0; i < 2*treeData.nFeatures(); ++i ) {
+    CPPUNIT_ASSERT( treeData.getFeatureIdx( treeData.getFeatureName(i) ) != treeData.end() );
+  }
+
 }
 
 void treeDataTest::test_getFeatureData() {

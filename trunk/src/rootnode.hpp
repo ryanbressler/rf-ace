@@ -5,6 +5,7 @@
 #include <map>
 #include <vector>
 #include <set>
+#include <utility>
 #include "node.hpp"
 #include "treedata.hpp"
 #include "options.hpp"
@@ -35,7 +36,16 @@ public:
 
   size_t nOobSamples();
 
-  set<size_t> getFeaturesInTree() { return(featuresInTree_); }
+  set<size_t> getFeaturesInTree() { return( featuresInTree_ ); }
+
+    //    set<size_t> featuresInTree;
+    //for ( minDistToRoot_t::const_iterator it( minDistToRoot_.begin() ); it != minDistToRoot_.end(); ++it ) {
+    // featuresInTree.insert( it->first );
+    // }
+    //return( featuresInTree );
+    //} // { assert(false); } //return(featuresInTree_); }
+
+  vector<pair<size_t,size_t> > getMinDistFeatures();
 
 #ifndef TEST__
 private:
@@ -48,6 +58,8 @@ private:
   vector<size_t> oobIcs_;
 
   set<size_t> featuresInTree_;
+
+  minDistToRoot_t minDistToRoot_;
 
   vector<num_t> trainPredictionCache_;
 

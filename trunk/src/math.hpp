@@ -18,7 +18,52 @@ namespace math {
   /**
      Returns the p'th percentile of the data vector x
   */
-  num_t percentile(vector<num_t> x, const num_t p);
+  template<class T>
+  T percentile(vector<T> x, const num_t p) {
+
+    // If the data vector has length 0, return
+    if ( x.size() == 0 ) {
+      cerr << "math::percentile() -- cannot compute with vector of length 0!" << endl;
+      exit(1);
+    }
+
+    T prc;
+
+    // Sort data to increasing order
+    sort(x.begin(),x.end());
+
+    // Exact index without rounding
+    T k = ( x.size() - 1 ) * p;
+
+    // Lower bound of the index
+    T f = floor(k);
+
+    // Upper bound of the index
+    T c = ceil(k);
+
+    // If the upper and lower bounds are equal,
+    // we can calculate the percentile directly
+    // by the index k
+    if(fabs(f - c) < datadefs::EPS) {
+      prc = x[static_cast<size_t>(k)];
+    } else {
+
+      // Otherwise we will interpolate linearly based on the
+      // distances from the intermediate point (k) to both
+      // bounds: ceil->k and k->floor
+      T d0 = x[static_cast<size_t>(f)] * (c - k);
+      T d1 = x[static_cast<size_t>(c)] * (k - f);
+
+      // This operation equals to the weighted average,
+      // which in other words is the interpolated percentile
+      // we were after
+      prc = d0 + d1;
+    }
+
+    // Finally return the calculated percentile
+    return( prc );
+    
+  }
 
   /**
      Error function
