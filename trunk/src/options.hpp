@@ -22,7 +22,7 @@ namespace options {
   const bool       GENERAL_DEFAULT_PRINT_HELP = false;
   const bool       GENERAL_DEFAULT_IS_FILTER = false;
   const size_t     GENERAL_DEFAULT_RECOMBINE_PERMS = 0;
-  const num_t      GENERAL_DEFAULT_CONTRAST_FRACTION = 0.01;
+  const num_t      GENERAL_DEFAULT_CONTRAST_FRACTION = 0.5;
   const bool       GENERAL_DEFAULT_REPORT_CONTRASTS = false;
   const char       GENERAL_DEFAULT_DATA_DELIMITER = '\t';
   const char       GENERAL_DEFAULT_HEADER_DELIMITER = ':';
