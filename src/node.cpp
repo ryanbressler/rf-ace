@@ -279,7 +279,7 @@ void Node::recursiveNodeSplit(Treedata* treeData,
     for(size_t i = 0; i < parameters_->mTry; ++i) {
       
       // If the sampled feature is a contrast... 
-      if( parameters_->randIntGens[threadIdx_].uniform() < 0.5 ) { // %1 sampling rate
+      if( parameters_->randIntGens[threadIdx_].uniform() < parameters_->contrastFraction ) { // %1 sampling rate
 	
 	featureSampleIcs[i] += treeData->nFeatures();
       }

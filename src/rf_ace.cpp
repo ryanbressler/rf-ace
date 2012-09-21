@@ -77,9 +77,6 @@ int main(const int argc, char* const argv[]) {
 
   TIMER_G = new Timer();
 
-  // Store the start time just before the analysis
-  clock_t timeStart( time(0) );
-  
   printHeader(cout);
   
   // Structs that store all the user-specified command-line arguments
@@ -118,9 +115,7 @@ int main(const int argc, char* const argv[]) {
 
   }
 
-  cout << endl;
-  cout << time(0) - timeStart << " seconds elapsed." << endl << endl;
-
+  TIMER_G->print();
   delete TIMER_G;
 
 }
@@ -291,6 +286,8 @@ statistics::RF_statistics executeRandomForest(Treedata& treeData,
 
   ftable_t frequency;
 
+  TIMER_G->tic("MODEL_BUILD");
+
   for(size_t permIdx = 0; permIdx < gen_op.nPerms; ++permIdx) {
     
     progress.update(1.0*permIdx/gen_op.nPerms);
@@ -316,6 +313,9 @@ statistics::RF_statistics executeRandomForest(Treedata& treeData,
 
   }
   
+  TIMER_G->toc("MODEL_BUILD");
+  TIMER_G->tic("MODEL_TEST");
+
   assert( !datadefs::containsNAN(contrastImportanceSample) );
   
   // Notify if the sample size of the null distribution is very low
@@ -380,6 +380,8 @@ statistics::RF_statistics executeRandomForest(Treedata& treeData,
     printPairInteractionsToFile(&treeData,frequency,gen_op.pairInteractionOutput,gen_op);
   }
   
+  TIMER_G->toc("MODEL_TEST");
+
   // Return statistics
   return( RF_stat );
   
