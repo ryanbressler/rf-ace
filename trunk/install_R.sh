@@ -1,9 +1,12 @@
 #!/bin/bash
 
-#PKG_CPPFLAGS=-std=c++0x
+## Prepare C++ compiler flags
 PKG_CPPFLAGS=`Rscript -e "Rcpp:::CxxFlags()"`
 PKG_CPPFLAGS=`echo -n $PKG_CPPFLAGS " -std=c++0x"`
-export PKG_CPPFLAGS #=`Rscript -e 'Rcpp:::CxxFlags()'`
-export PKG_LIBS=`Rscript -e 'Rcpp:::LdFlags()'`
+export PKG_CPPFLAGS
 
-R CMD SHLIB -o rf_ace_R.so src/rf_ace_R.cpp src/treedata.cpp
+## Prepare library flags
+export PKG_LIBS=`Rscript -e "Rcpp:::LdFlags()"`
+
+## Make shared library
+R CMD SHLIB -o lib/rf_ace_R.so src/rf_ace_R.cpp src/treedata.cpp
