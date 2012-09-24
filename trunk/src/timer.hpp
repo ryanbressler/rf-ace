@@ -7,6 +7,8 @@
 #include <cassert>
 #include <ctime>
 #include <cmath>
+#include <map>
+
 #include "datadefs.hpp"
 
 using namespace std;
