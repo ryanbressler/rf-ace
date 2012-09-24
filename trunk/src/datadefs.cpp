@@ -21,7 +21,7 @@ const datadefs::num_t datadefs::NUM_INF = numeric_limits<double>::infinity();
 const size_t datadefs::MAX_IDX = numeric_limits<int32_t>::max() - 1;
 const size_t datadefs::MAX_THREADS = thread::hardware_concurrency();
 const datadefs::num_t datadefs::EPS = 1e-18; //1e-12;
-const datadefs::num_t datadefs::PI = 3.1415926535;
+const datadefs::num_t datadefs::NUM_PI = 3.1415926535;
 const datadefs::num_t datadefs::A = 0.140012;
 const datadefs::num_t datadefs::LOG_OF_MAX_NUM = 70.0; /** !! Potentially
                                                         * spurious. Do you mean

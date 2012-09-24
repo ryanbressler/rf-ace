@@ -6,7 +6,7 @@
 library("Rcpp");
 
 # Load the dynamic library containing the C++ program
-dyn.load("src/rf_ace.so");
+dyn.load("lib/rf_ace_R.so");
 
 rf_ace <- function(a,b) {
   .Call("rf_ace",a,b);
