@@ -45,7 +45,7 @@ namespace datadefs {
                                      *   with properties given here:
                                      *   http://homepages.physik.uni-muenchen.de/~Winitzki/erf-approx.pdf
                                      */
-  extern const num_t PI;            /** Numeric representation of PI */
+  extern const num_t NUM_PI;            /** Numeric representation of PI */
   extern const num_t LOG_OF_MAX_NUM;/** Numeric representation of the log of
                                      *   MAX_NUM !! ?? */
 

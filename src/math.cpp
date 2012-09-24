@@ -234,7 +234,7 @@ num_t math::erf(const num_t x) {
     sgn = 1.0;
   }
 
-  return( sgn*sqrt(1.0 - exp(-x2*(4.0/datadefs::PI+datadefs::A*x2) / (1+datadefs::A*x2))) );
+  return( sgn*sqrt(1.0 - exp(-x2*(4.0/datadefs::NUM_PI + datadefs::A*x2) / (1+datadefs::A*x2))) );
 
 }
 

@@ -10,9 +10,9 @@
 
 #include "math.hpp"
 #include "utils.hpp"
-#include "timer.hpp"
+//#include "timer.hpp"
 
-extern Timer* TIMER_G;
+//extern Timer* TIMER_G;
 
 using namespace std;
 
@@ -86,7 +86,7 @@ Treedata::Treedata(const vector<Feature>& features, options::General_options* pa
 Treedata::Treedata(string fileName, options::General_options* parameters):
   parameters_(parameters) {
 
-  TIMER_G->tic("READ");
+  //TIMER_G->tic("READ");
 
   //Initialize stream to read from file
   ifstream featurestream;
@@ -184,7 +184,7 @@ Treedata::Treedata(string fileName, options::General_options* parameters):
     this->permuteContrasts(parameters_->randIntGens[0]);
   }
   
-  TIMER_G->toc("READ");
+  //TIMER_G->toc("READ");
 
 }
 
