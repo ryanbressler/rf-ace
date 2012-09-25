@@ -47,7 +47,7 @@ void rf_ace_recombine(options::General_options& gen_op);
 
 void setEnforcedForestParameters(Treedata& treeData, options::General_options& gen_op); 
 
-void printGeneralSetup(Treedata& treeData, const options::General_options& gen_op); 
+//void printGeneralSetup(Treedata& treeData, const options::General_options& gen_op); 
 
 void printAssociationsToFile(options::General_options& gen_op, 
 			     Treedata& treeData,
@@ -63,21 +63,23 @@ void updateFeatureFrequency(ftable_t& frequency, StochasticForest* SF);
 
 void printPairInteractionsToFile(Treedata* trainData, ftable_t& frequency, const string& fileName, options::General_options& gen_op);
 
-void printHeader(ostream& out) {
+/*
+  void printHeader(ostream& out) {
   out << endl
-      << "-----------------------------------------------------------" << endl
-      << "|  RF-ACE version:  1.0.7, Aug 28 2012                    |" << endl
-      << "|    Compile date:  " << __DATE__ << ", " << __TIME__ << "                 |" << endl 
-      << "|   Report issues:  code.google.com/p/rf-ace/issues/list  |" << endl
-      << "-----------------------------------------------------------" << endl
-      << endl;
-}
+  << "-----------------------------------------------------------" << endl
+  << "|  RF-ACE version:  1.0.7, Aug 28 2012                    |" << endl
+  << "|    Compile date:  " << __DATE__ << ", " << __TIME__ << "                 |" << endl 
+  << "|   Report issues:  code.google.com/p/rf-ace/issues/list  |" << endl
+  << "-----------------------------------------------------------" << endl
+  << endl;
+  }
+*/
 
 int main(const int argc, char* const argv[]) {
 
   TIMER_G = new Timer();
 
-  printHeader(cout);
+  rface::printHeader(cout);
   
   // Structs that store all the user-specified command-line arguments
   options::General_options gen_op(argc,argv);
@@ -133,14 +135,14 @@ void rf_ace_filter(options::General_options& gen_op) {
   rface::pruneFeatureSpace(treeData,gen_op);
 
   // Some default and enforced parameter settings for RF, CART, and GBT
-  setEnforcedForestParameters(treeData,gen_op);
+  rface::setEnforcedForestParameters(treeData,gen_op);
 
   if(treeData.nSamples() < 2 * gen_op.nodeSize) {
     cerr << "Not enough samples (" << treeData.nSamples() << ") to perform a single split" << endl;
     exit(1);
   }
   
-  printGeneralSetup(treeData,gen_op);
+  rface::printGeneralSetup(treeData,gen_op);
 
   gen_op.printParameters();
 
@@ -239,7 +241,8 @@ void rf_ace_filter(options::General_options& gen_op) {
   
 }
 
-void printGeneralSetup(Treedata& treeData, const options::General_options& gen_op) {
+/*
+  void printGeneralSetup(Treedata& treeData, const options::General_options& gen_op) {
   
   // After masking, it's safe to refer to features as indices
   // TODO: rf_ace.cpp: this should be made obsolete; instead of indices, use the feature headers
@@ -255,7 +258,8 @@ void printGeneralSetup(Treedata& treeData, const options::General_options& gen_o
   cout << " - " << nAllFeatures << " features" << endl;
   cout << " - " << treeData.nRealSamples(targetIdx) << " samples / " << treeData.nSamples() << " ( " << 100.0 * ( 1 - realFraction ) << " % missing )" << endl;
   
-}
+  }
+*/
 
 
 statistics::RF_statistics executeRandomForest(Treedata& treeData,
@@ -387,67 +391,69 @@ statistics::RF_statistics executeRandomForest(Treedata& treeData,
   
 }
 
-StochasticForest rf_ace_build_predictor(Treedata& trainData, options::General_options& gen_op) {
-
+/*
+  StochasticForest rf_ace_build_predictor(Treedata& trainData, options::General_options& gen_op) {
+  
   rface::updateTargetStr(trainData,gen_op);
-
+  
   rface::pruneFeatureSpace(trainData,gen_op);
-
+  
   setEnforcedForestParameters(trainData,gen_op);
-
+  
   // We never want to use contrasts when we are building a predictor
   //gen_op.useContrasts = false;
-
-  printGeneralSetup(trainData,gen_op);
-
+  
+  rface::printGeneralSetup(trainData,gen_op);
+  
   gen_op.printParameters();
-
+  
   gen_op.validateParameters();
-
+  
   if ( gen_op.modelType == options::RF ) {
-    cout << "===> Growing RF predictor... " << flush;
+  cout << "===> Growing RF predictor... " << flush;
   } else if ( gen_op.modelType == options::GBT ) {
-    cout << "===> Growing GBT predictor... " << flush;
+  cout << "===> Growing GBT predictor... " << flush;
   } else if ( gen_op.modelType == options::CART ) {
-    cout << "===> Growing CART predictor... " << flush;
+  cout << "===> Growing CART predictor... " << flush;
   } else {
-    cerr << "Unknown forest type!" << endl;
-    exit(1);
+  cerr << "Unknown forest type!" << endl;
+  exit(1);
   }
-
+  
   StochasticForest SF(&trainData,&gen_op);
   cout << "DONE" << endl << endl;
-
+  
   if ( gen_op.modelType == options::GBT ) {
-    cout << "GBT diagnostics disabled temporarily" << endl << endl;
-    return( SF );
+  cout << "GBT diagnostics disabled temporarily" << endl << endl;
+  return( SF );
   }
-
+  
   size_t targetIdx = trainData.getFeatureIdx(gen_op.targetStr);
   vector<num_t> data = utils::removeNANs(trainData.getFeatureData(targetIdx));
-
+  
   num_t oobError = SF.getOobError();
   num_t ibOobError =  SF.getError();
-
+  
   cout << "RF training error measures (NULL == no model):" << endl;
   if ( trainData.isFeatureNumerical(targetIdx) ) {
-    num_t nullError = math::var(data);
-    cout << "              NULL std = " << sqrt( nullError ) << endl;
-    cout << "               OOB std = " << sqrt( oobError ) << endl;
-    cout << "            IB+OOB std = " << sqrt( ibOobError ) << endl;
-    cout << "  % explained by model = " << 1 - oobError / nullError << " = 1 - (OOB var) / (NULL var)" << endl;
+  num_t nullError = math::var(data);
+  cout << "              NULL std = " << sqrt( nullError ) << endl;
+  cout << "               OOB std = " << sqrt( oobError ) << endl;
+  cout << "            IB+OOB std = " << sqrt( ibOobError ) << endl;
+  cout << "  % explained by model = " << 1 - oobError / nullError << " = 1 - (OOB var) / (NULL var)" << endl;
   } else {
-    num_t nullError = math::nMismatches( data, math::mode(data) );
-    cout << "       NULL % mispred. = " << 1.0 * nullError / data.size() << endl;
-    cout << "        OOB % mispred. = " << oobError << endl;
-    cout << "     IB+OOB % mispred. = " << ibOobError << endl;
-    cout << "  % explained by model = " << 1 - oobError / nullError << " ( 1 - (OOB # mispred.) / (NULL # mispred.) )" << endl;
+  num_t nullError = math::nMismatches( data, math::mode(data) );
+  cout << "       NULL % mispred. = " << 1.0 * nullError / data.size() << endl;
+  cout << "        OOB % mispred. = " << oobError << endl;
+  cout << "     IB+OOB % mispred. = " << ibOobError << endl;
+  cout << "  % explained by model = " << 1 - oobError / nullError << " ( 1 - (OOB # mispred.) / (NULL # mispred.) )" << endl;
   }
   cout << endl;
-
+  
   return( SF );
-
-}
+  
+  }
+*/
 
 void rf_ace(options::General_options& gen_op) {
   
@@ -458,7 +464,7 @@ void rf_ace(options::General_options& gen_op) {
     Treedata trainData(gen_op.input,&gen_op);
     cout << "DONE" << endl;
     
-    StochasticForest SF = rf_ace_build_predictor(trainData,gen_op);
+    StochasticForest SF = rface::buildPredictor(trainData,gen_op);
 
     if ( gen_op.isSet(gen_op.predictionData_s,gen_op.predictionData_l) ) {
       
@@ -525,30 +531,32 @@ void rf_ace(options::General_options& gen_op) {
 
 }
 
-void setEnforcedForestParameters(Treedata& treeData, options::General_options& gen_op) {
-
+/*
+  void setEnforcedForestParameters(Treedata& treeData, options::General_options& gen_op) {
+  
   if ( gen_op.modelType == options::RF ) {
-
-    size_t targetIdx = treeData.getFeatureIdx(gen_op.targetStr);
-
-    // Allow trees to grow to maximal depth, if not told otherwise
-    gen_op.setIfNotSet(gen_op.nMaxLeaves_s,gen_op.nMaxLeaves_l,gen_op.nMaxLeaves,treeData.nRealSamples(targetIdx));
-
-    // RF mTry is by default set to 10% of features
-    gen_op.setIfNotSet(gen_op.mTry_s,gen_op.mTry_l,gen_op.mTry,static_cast<size_t>(0.1*treeData.nFeatures()));
-
-    // Minimum mTry is 1
-    if ( gen_op.mTry < 1 ) {
-      gen_op.mTry = 1;
-    }
-
-  } else if ( gen_op.modelType == options::CART ) {
-
-    // In CART mode only one tree is grown
-    gen_op.nTrees = 1;
+  
+  size_t targetIdx = treeData.getFeatureIdx(gen_op.targetStr);
+  
+  // Allow trees to grow to maximal depth, if not told otherwise
+  gen_op.setIfNotSet(gen_op.nMaxLeaves_s,gen_op.nMaxLeaves_l,gen_op.nMaxLeaves,treeData.nRealSamples(targetIdx));
+  
+  // RF mTry is by default set to 10% of features
+  gen_op.setIfNotSet(gen_op.mTry_s,gen_op.mTry_l,gen_op.mTry,static_cast<size_t>(0.1*treeData.nFeatures()));
+  
+  // Minimum mTry is 1
+  if ( gen_op.mTry < 1 ) {
+  gen_op.mTry = 1;
   }
-
-}
+  
+  } else if ( gen_op.modelType == options::CART ) {
+  
+  // In CART mode only one tree is grown
+  gen_op.nTrees = 1;
+  }
+  
+  }
+*/
 
 vector<string> readFeatureMask(const string& fileName);
 

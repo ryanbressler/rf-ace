@@ -1,9 +1,7 @@
 #!/bin/bash
 
 ## Prepare C++ compiler flags
-PKG_CPPFLAGS=`Rscript -e "Rcpp:::CxxFlags()"`
-PKG_CPPFLAGS=`echo -n $PKG_CPPFLAGS " -std=c++0x"`
-export PKG_CPPFLAGS
+export PKG_CPPFLAGS="`Rscript -e 'Rcpp:::CxxFlags()'` -std=c++0x -Wall -Wextra -pedantic"
 
 ## Prepare library flags
 export PKG_LIBS=`Rscript -e "Rcpp:::LdFlags()"`
