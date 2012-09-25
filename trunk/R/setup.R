@@ -1,6 +1,11 @@
 
+# Helper function to check if a package is installed
+is.installed <- function(mypkg) is.element(mypkg, installed.packages()[,1]) 
+
 # Only needed when running for for the first time
-#install.packages("Rcpp", dependencies = TRUE);
+if ( ! is.installed("Rcpp") ) {
+  install.packages("Rcpp", dependencies = TRUE);
+}
 
 # Load library
 library("Rcpp");
