@@ -379,7 +379,7 @@ namespace options {
       return( out.str() );
     }
     
-    void printParameters() {
+    void print() {
 
       cout << endl;
       cout << "General configuration:" << endl;

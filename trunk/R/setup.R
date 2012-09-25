@@ -8,8 +8,12 @@ library("Rcpp");
 # Load the dynamic library containing the C++ program
 dyn.load("lib/rf_ace_R.so");
 
-rf_ace <- function(a,b) {
-  .Call("rf_ace",a,b);
+rface.train <- function(trainData, target, nTrees = 100, mTry = 10, nodeSize = 3, nMaxLeaves = 1000) {
+  .Call("rfaceTrain", trainData, as.character(target), nTrees, mTry, nodeSize, nMaxLeaves);
+}
+
+rface.predict <- function(predictor,testData) {
+  .Call("rfacePredict",predictor,testData);
 }
 
 
