@@ -144,7 +144,7 @@ void rf_ace_filter(options::General_options& gen_op) {
   
   rface::printGeneralSetup(treeData,gen_op);
 
-  gen_op.printParameters();
+  gen_op.print();
 
   gen_op.validateParameters();
       
@@ -220,7 +220,7 @@ void rf_ace_filter(options::General_options& gen_op) {
   if ( gen_op.log != "" ) {
     
     ofstream toLogFile(gen_op.log.c_str());
-    printHeader(toLogFile);
+    rface::printHeader(toLogFile);
     RF_stat.print(toLogFile);
     toLogFile.close();
     
