@@ -12,7 +12,6 @@
 #include <map>
 #include <unordered_map>
 #include <set>
-//#include <tuple>
 
 #include "rf_ace.hpp"
 #include "stochasticforest.hpp"
@@ -842,7 +841,17 @@ void printPairInteractionsToFile(Treedata* trainData, ftable_t& frequency, const
 #ifdef RFACER
 #include <Rcpp.h>
 
+vector<Feature> parseDataFrame(SEXP in) {
+
+  vector<Feature> foo;
+
+  return(foo);
+
+}
+
 RcppExport SEXP rfaceTrain(SEXP trainDataFile, SEXP targetStr, SEXP nTrees, SEXP mTry, SEXP nodeSize, SEXP nMaxLeaves) {
+
+  vector<Feature> parseDataFrame(trainDataFile);
 
   rface::printHeader(cout);
 
