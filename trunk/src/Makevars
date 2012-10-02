@@ -1,0 +1,8 @@
+## Prepare C++ compiler flags
+PKG_CPPFLAGS=$(shell ${R_HOME}/bin/Rscript -e 'Rcpp:::CxxFlags()') -std=c++0x -Wall -Wextra -pedantic -pthread 
+
+## Prepare library flags
+PKG_LIBS=$(shell ${R_HOME}/bin/Rscript -e 'Rcpp:::LdFlags()')
+
+## Make shared library
+## R CMD SHLIB -o lib/rf_ace_R.so src/rf_ace_R.cpp src/progress.cpp src/statistics.cpp src/math.cpp src/stochasticforest.cpp src/rootnode.cpp src/node.cpp src/treedata.cpp src/datadefs.cpp src/utils.cpp src/distributions.cpp
