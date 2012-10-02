@@ -7,3 +7,4 @@ Author: Timo Erkkila
 Maintainer: Timo Erkkila <timo.erkkila@gmail.com>
 Description: Random Forests with Artificial Contrast Ensembles
 License: Apache 2.0
+Depends: Rcpp
