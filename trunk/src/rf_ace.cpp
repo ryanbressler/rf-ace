@@ -62,18 +62,6 @@ void updateFeatureFrequency(ftable_t& frequency, StochasticForest* SF);
 
 void printPairInteractionsToFile(Treedata* trainData, ftable_t& frequency, const string& fileName, options::General_options& gen_op);
 
-/*
-  void printHeader(ostream& out) {
-  out << endl
-  << "-----------------------------------------------------------" << endl
-  << "|  RF-ACE version:  1.0.7, Aug 28 2012                    |" << endl
-  << "|    Compile date:  " << __DATE__ << ", " << __TIME__ << "                 |" << endl 
-  << "|   Report issues:  code.google.com/p/rf-ace/issues/list  |" << endl
-  << "-----------------------------------------------------------" << endl
-  << endl;
-  }
-*/
-
 int main(const int argc, char* const argv[]) {
 
   TIMER_G = new Timer();
@@ -841,17 +829,55 @@ void printPairInteractionsToFile(Treedata* trainData, ftable_t& frequency, const
 #ifdef RFACER
 #include <Rcpp.h>
 
-vector<Feature> parseDataFrame(SEXP in) {
+void parseDataFrame(SEXP dataFrameObj, vector<Feature>& dataMatrix, vector<string>& sampleHeaders) {
 
-  vector<Feature> foo;
+  Rcpp::DataFrame df(dataFrameObj);
 
-  return(foo);
+  //Rcpp::CharacterVector colNames = df.attr("names");
+  //Rcpp::CharacterVector rowNames = df.attr("row.names");
+
+  vector<string> featureHeaders = df.attr("names");
+  vector<string> foo = df.attr("row.names");
+  sampleHeaders = foo;
+
+  dataMatrix.resize( 0 );
+
+  //cout << "nf = " << featureHeaders.size() << endl;
+  //cout << "ns = " << sampleHeaders.size() << endl;
+
+  // Read one column of information, which in this case is assumed to be one sample
+  for ( size_t i = 0; i < featureHeaders.size(); ++i ) {
+    Rcpp::List vec = df[i];
+    assert(vec.length() == sampleHeaders.size() );
+    //cout << " " << foo[0] << flush;
+    //cout << " df[" << i << "].length() = " << vec.length() << endl;
+    if ( featureHeaders[i].substr(0,2) != "N:" ) {
+      vector<string> sVec(sampleHeaders.size());
+      for ( size_t j = 0; j < sampleHeaders.size(); ++j ) {
+	//cout << Rcpp::as<string>(vec[j]) << endl;
+	sVec[j] = Rcpp::as<string>(vec[j]);
+      }
+      //cout << "sVec = ";
+      //utils::write(cout,sVec.begin(),sVec.end());
+      //cout << endl;
+      dataMatrix.push_back( Feature(sVec,featureHeaders[i]) );
+    } else {
+      vector<num_t> sVec(sampleHeaders.size());
+      for ( size_t j = 0; j < sampleHeaders.size(); ++j ) {
+        sVec[j] = Rcpp::as<num_t>(vec[j]);
+      }
+      dataMatrix.push_back( Feature(sVec,featureHeaders[i]) );
+    }
+    
+    //  cout << "df[" << j << "," << i << "] = " << Rcpp::as<num_t>(vec[j]) << endl;
+    // }
+  }
+
+  assert( dataMatrix.size() == featureHeaders.size() );
 
 }
 
-RcppExport SEXP rfaceTrain(SEXP trainDataFile, SEXP targetStr, SEXP nTrees, SEXP mTry, SEXP nodeSize, SEXP nMaxLeaves) {
-
-  vector<Feature> parseDataFrame(trainDataFile);
+RcppExport SEXP rfaceTrain(SEXP trainDataFrameObj, SEXP targetStr, SEXP nTrees, SEXP mTry, SEXP nodeSize, SEXP nMaxLeaves) {
 
   rface::printHeader(cout);
 
@@ -867,7 +893,16 @@ RcppExport SEXP rfaceTrain(SEXP trainDataFile, SEXP targetStr, SEXP nTrees, SEXP
   params.nodeSize   = Rcpp::as<size_t>(nodeSize);
   params.nMaxLeaves = Rcpp::as<size_t>(nMaxLeaves);
 
-  Treedata trainData(Rcpp::as<string>(trainDataFile),&params);
+  vector<Feature> dataMatrix;
+  vector<string> sampleHeaders;
+
+  TIMER_G->tic("READ");
+  parseDataFrame(trainDataFrameObj,dataMatrix,sampleHeaders);
+  TIMER_G->toc("READ");
+
+  //return(Rcpp::wrap(NULL));
+
+  Treedata trainData(dataMatrix,&params,sampleHeaders);
 
   rface::updateTargetStr(trainData,params);
 
@@ -892,7 +927,7 @@ RcppExport SEXP rfaceTrain(SEXP trainDataFile, SEXP targetStr, SEXP nTrees, SEXP
     exit(1);
   }
 
-  Rcpp::XPtr<StochasticForest> predictor( new StochasticForest(&trainData,&params) );
+  Rcpp::XPtr<StochasticForest> predictor( new StochasticForest(&trainData,&params), true );
   cout << "DONE" << endl << endl;
 
   if ( params.modelType == options::GBT ) {
@@ -931,7 +966,7 @@ RcppExport SEXP rfaceTrain(SEXP trainDataFile, SEXP targetStr, SEXP nTrees, SEXP
 
 }
 
-RcppExport SEXP rfacePredict(SEXP predictorObj, SEXP testDataFile) {
+RcppExport SEXP rfacePredict(SEXP predictorObj, SEXP testDataFrameObj) {
 
   Rcpp::XPtr<StochasticForest> predictor(predictorObj);
 
@@ -939,9 +974,14 @@ RcppExport SEXP rfacePredict(SEXP predictorObj, SEXP testDataFile) {
 
   options::General_options params;
 
-  Treedata testData(Rcpp::as<string>(testDataFile),&params);
+  vector<Feature> testDataMatrix;
+  vector<string> sampleHeaders;
 
-  //predictor->predict(&testData,prediction,confidence);
+  parseDataFrame(testDataFrameObj,testDataMatrix,sampleHeaders);
+
+  Treedata testData(testDataMatrix,&params,sampleHeaders);
+
+  predictor->predict(&testData,prediction,confidence);
 
   return Rcpp::wrap(NULL);
 
