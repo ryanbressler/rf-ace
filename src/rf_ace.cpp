@@ -877,21 +877,6 @@ void parseDataFrame(SEXP dataFrameObj, vector<Feature>& dataMatrix, vector<strin
 
 }
 
-/*
-  RcppExport SEXP makeParams(SEXP targetStr, SEXP nTrees, SEXP mTry, SEXP nodeSize, SEXP nMaxLeaves) {
-  
-  Rcpp::XPtr<options::General_options> params( new options::General_options, true );
-  
-  params->targetStr  = Rcpp::as<string>(targetStr);
-  params->nTrees     = Rcpp::as<size_t>(nTrees);
-  params->mTry       = Rcpp::as<size_t>(mTry);
-  params->nodeSize   = Rcpp::as<size_t>(nodeSize);
-  params->nMaxLeaves = Rcpp::as<size_t>(nMaxLeaves);
-  
-  return(params);
-  
-  }
-*/
 
 RcppExport SEXP rfaceTrain(SEXP trainDataFrameObj, SEXP targetStr, SEXP nTrees, SEXP mTry, SEXP nodeSize, SEXP nMaxLeaves) {
 
@@ -991,8 +976,6 @@ RcppExport SEXP rfacePredict(SEXP predictorObj, SEXP testDataFrameObj) {
   Rcpp::XPtr<StochasticForest> predictor(predictorObj);
   //Rcpp::XPtr<options::General_options> params(paramsObj);
 
-  vector<num_t> prediction,confidence;
-
   vector<Feature> testDataMatrix;
   vector<string> sampleHeaders;
 
@@ -1000,9 +983,30 @@ RcppExport SEXP rfacePredict(SEXP predictorObj, SEXP testDataFrameObj) {
 
   Treedata testData(testDataMatrix,predictor->params(),sampleHeaders);
 
+  string targetName = predictor->params()->targetStr;
+  size_t targetIdx = testData.getFeatureIdx(targetName);
+  
+
+  vector<string> trueData(testData.nSamples(),datadefs::STR_NAN);
+  if ( targetIdx != testData.end() ) {
+    trueData = testData.getRawFeatureData(targetIdx);
+  }
+
+  vector<string> prediction;
+  vector<num_t> confidence;
   predictor->predict(&testData,prediction,confidence);
 
-  return Rcpp::wrap(NULL);
+  Rcpp::List predictions;
+
+  for(size_t i = 0; i < prediction.size(); ++i) {
+    predictions.push_back( Rcpp::List::create(Rcpp::Named("target")=targetName,
+					      Rcpp::Named("sample")=testData.getSampleName(i),
+					      Rcpp::Named("true")=trueData[i],
+					      Rcpp::Named("prediction")=prediction[i],
+					      Rcpp::Named("error")=confidence[i]));
+  }
+
+  return predictions;
 
 }
 
