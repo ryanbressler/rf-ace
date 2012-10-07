@@ -1,4 +1,5 @@
 rface.predict <-
-function(predictor,testData) {
-  .Call("rfacePredict",predictor,testData);
+function(predictorObj,testData) {
+  predictions <- .Call("rfacePredict",predictorObj,testData);
+  return(predictions)
 }
