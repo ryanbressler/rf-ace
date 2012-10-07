@@ -1,7 +1,5 @@
 ## Prepare C++ compiler flags
-PKG_CPPFLAGS=$(shell ${R_HOME}/bin/Rscript -e 'Rcpp:::CxxFlags()') -std=c++0x -Wall -Wextra -pedantic -DRFACER
-
-THREAD_FLAGS=-pthread
+PKG_CPPFLAGS=$(shell ${R_HOME}/bin/Rscript -e 'Rcpp:::CxxFlags()') -std=c++0x -Wall -Wextra -pedantic -DRFACER -pthread
 
 ## Prepare library flags
 PKG_LIBS=$(shell ${R_HOME}/bin/Rscript -e 'Rcpp:::LdFlags()')
