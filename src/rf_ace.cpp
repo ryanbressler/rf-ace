@@ -272,8 +272,8 @@ statistics::RF_statistics executeRandomForest(Treedata& treeData,
   clock_t timeStart( time(0) );
   contrastImportanceSample.resize(gen_op.nPerms);
   
-  size_t targetIdx = treeData.getFeatureIdx(gen_op.targetStr);
-  assert( targetIdx != treeData.end() );
+  //size_t targetIdx = treeData.getFeatureIdx(gen_op.targetStr);
+  //assert( targetIdx != treeData.end() );
 
   ftable_t frequency;
 
@@ -283,7 +283,7 @@ statistics::RF_statistics executeRandomForest(Treedata& treeData,
     
     progress.update(1.0*permIdx/gen_op.nPerms);
     
-    StochasticForest SF(&treeData,&gen_op);
+    StochasticForest SF(&treeData,gen_op);
 
     // Get the number of nodes in each tree in the forest
     for ( size_t treeIdx = 0; treeIdx < SF.nTrees(); ++treeIdx ) {
@@ -497,7 +497,7 @@ void rf_ace(options::General_options& gen_op) {
     exit(1);
   }
 
-  StochasticForest SF(&gen_op);
+  StochasticForest SF(gen_op);
 
   cout << "===> Making predictions with test data... " << flush;
 
@@ -877,6 +877,22 @@ void parseDataFrame(SEXP dataFrameObj, vector<Feature>& dataMatrix, vector<strin
 
 }
 
+/*
+  RcppExport SEXP makeParams(SEXP targetStr, SEXP nTrees, SEXP mTry, SEXP nodeSize, SEXP nMaxLeaves) {
+  
+  Rcpp::XPtr<options::General_options> params( new options::General_options, true );
+  
+  params->targetStr  = Rcpp::as<string>(targetStr);
+  params->nTrees     = Rcpp::as<size_t>(nTrees);
+  params->mTry       = Rcpp::as<size_t>(mTry);
+  params->nodeSize   = Rcpp::as<size_t>(nodeSize);
+  params->nMaxLeaves = Rcpp::as<size_t>(nMaxLeaves);
+  
+  return(params);
+  
+  }
+*/
+
 RcppExport SEXP rfaceTrain(SEXP trainDataFrameObj, SEXP targetStr, SEXP nTrees, SEXP mTry, SEXP nodeSize, SEXP nMaxLeaves) {
 
   rface::printHeader(cout);
@@ -904,18 +920,22 @@ RcppExport SEXP rfaceTrain(SEXP trainDataFrameObj, SEXP targetStr, SEXP nTrees, 
 
   Treedata trainData(dataMatrix,&params,sampleHeaders);
 
+  //StochasticForest predictor = rface::buildPredictor(trainData,params);
+
+  //Rcpp::XPtr<StochasticForest> predictorObj( &predictor, true );
+
   rface::updateTargetStr(trainData,params);
-
+  
   rface::pruneFeatureSpace(trainData,params);
-
+  
   //rface::setEnforcedForestParameters(trainData,params);
-
+  
   rface::printGeneralSetup(trainData,params);
-
+  
   params.print();
-
+  
   params.validateParameters();
-
+  
   if ( params.modelType == options::RF ) {
     cout << "===> Growing RF predictor... " << flush;
   } else if ( params.modelType == options::GBT ) {
@@ -926,21 +946,21 @@ RcppExport SEXP rfaceTrain(SEXP trainDataFrameObj, SEXP targetStr, SEXP nTrees, 
     cerr << "Unknown forest type!" << endl;
     exit(1);
   }
-
-  Rcpp::XPtr<StochasticForest> predictor( new StochasticForest(&trainData,&params), true );
+  
+  Rcpp::XPtr<StochasticForest> predictor( new StochasticForest(&trainData,params), true );
   cout << "DONE" << endl << endl;
-
+  
   if ( params.modelType == options::GBT ) {
     cout << "GBT diagnostics disabled temporarily" << endl << endl;
     return predictor;
   }
-
+  
   size_t targetIdx = trainData.getFeatureIdx(params.targetStr);
   vector<num_t> data = utils::removeNANs(trainData.getFeatureData(targetIdx));
-
+  
   num_t oobError = predictor->getOobError();
   num_t ibOobError =  predictor->getError();
-
+  
   cout << "RF training error measures (NULL == no model):" << endl;
   if ( trainData.isFeatureNumerical(targetIdx) ) {
     num_t nullError = math::var(data);
@@ -969,17 +989,16 @@ RcppExport SEXP rfaceTrain(SEXP trainDataFrameObj, SEXP targetStr, SEXP nTrees, 
 RcppExport SEXP rfacePredict(SEXP predictorObj, SEXP testDataFrameObj) {
 
   Rcpp::XPtr<StochasticForest> predictor(predictorObj);
+  //Rcpp::XPtr<options::General_options> params(paramsObj);
 
   vector<num_t> prediction,confidence;
-
-  options::General_options params;
 
   vector<Feature> testDataMatrix;
   vector<string> sampleHeaders;
 
   parseDataFrame(testDataFrameObj,testDataMatrix,sampleHeaders);
 
-  Treedata testData(testDataMatrix,&params,sampleHeaders);
+  Treedata testData(testDataMatrix,predictor->params(),sampleHeaders);
 
   predictor->predict(&testData,prediction,confidence);
 

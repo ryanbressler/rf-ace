@@ -218,7 +218,7 @@ namespace rface {
       exit(1);
     }
     
-    StochasticForest SF(&trainData,&gen_op);
+    StochasticForest SF(&trainData,gen_op);
     cout << "DONE" << endl << endl;
     
     if ( gen_op.modelType == options::GBT ) {
