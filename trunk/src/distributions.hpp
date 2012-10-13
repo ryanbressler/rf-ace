@@ -13,7 +13,7 @@ namespace distributions {
 
   typedef tr1::mt19937 Engine;
   // typedef std::ranlux_base_01 Engine;
-
+  
   inline unsigned int generateSeed() { return( clock() + time(0) ); }
 
   class RandInt {
@@ -46,6 +46,10 @@ namespace distributions {
     
   };
   
+  typedef map<datadefs::num_t,size_t> icdf_t;
+
+  //icdf_t 
+
 }
 
 #endif

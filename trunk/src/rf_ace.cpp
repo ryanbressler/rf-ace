@@ -878,7 +878,7 @@ void parseDataFrame(SEXP dataFrameObj, vector<Feature>& dataMatrix, vector<strin
 }
 
 
-RcppExport SEXP rfaceTrain(SEXP trainDataFrameObj, SEXP targetStr, SEXP nTrees, SEXP mTry, SEXP nodeSize, SEXP nMaxLeaves) {
+RcppExport SEXP rfaceTrain(SEXP trainDataFrameObj, SEXP targetStr, SEXP nTrees, SEXP mTry, SEXP nodeSize, SEXP nMaxLeaves, SEXP nThreads) {
 
   rface::printHeader(cout);
 
@@ -893,6 +893,9 @@ RcppExport SEXP rfaceTrain(SEXP trainDataFrameObj, SEXP targetStr, SEXP nTrees, 
   params.mTry       = Rcpp::as<size_t>(mTry);
   params.nodeSize   = Rcpp::as<size_t>(nodeSize);
   params.nMaxLeaves = Rcpp::as<size_t>(nMaxLeaves);
+  params.nThreads   = Rcpp::as<size_t>(nThreads);
+
+  params.initRandIntGens();
 
   vector<Feature> dataMatrix;
   vector<string> sampleHeaders;
