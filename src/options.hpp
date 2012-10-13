@@ -217,6 +217,23 @@ namespace options {
       //}
     }
 
+    void initRandIntGens() {
+
+      if ( isMaxThreads ) {
+        if ( datadefs::MAX_THREADS == 0 ) {
+          cout << "Cannot extract information about maximum available threads. Using " << nThreads << " threads instead." << endl;
+        } else {
+          nThreads = datadefs::MAX_THREADS;
+        }
+      }
+
+      randIntGens.resize(nThreads);
+      for ( size_t threadIdx = 0; threadIdx < nThreads; ++threadIdx ) {
+        randIntGens[threadIdx].seed(seed + threadIdx);
+      }
+
+    }
+
     void loadUserParams() {
 
       // If forest type is explicitly specified, update it
@@ -286,18 +303,7 @@ namespace options {
       parser_.getArgument<size_t>(nThreads_s, nThreads_l, nThreads);
       parser_.getFlag(isMaxThreads_s, isMaxThreads_l, isMaxThreads);
 
-      if ( isMaxThreads ) {
-	if ( datadefs::MAX_THREADS == 0 ) {
-	  cout << "Cannot extract information about maximum available threads. Using " << nThreads << " threads instead." << endl;
-	} else {
-	  nThreads = datadefs::MAX_THREADS;
-	}
-      }
-      
-      randIntGens.resize(nThreads);
-      for ( size_t threadIdx = 0; threadIdx < nThreads; ++threadIdx ) {
-	randIntGens[threadIdx].seed(seed + threadIdx);
-      }
+      this->initRandIntGens();
 
       // Random Forest related parameters
       parser_.getArgument<size_t>( nTrees_s, nTrees_l, nTrees );
