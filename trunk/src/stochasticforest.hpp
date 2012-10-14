@@ -70,6 +70,8 @@ private:
   // Pointer to treeData_ object, stores all the feature data with which the trees are grown (i.e. training data)
   Treedata* trainData_;
 
+  vector<string> categories_;
+
   options::General_options params_;
 
   // Experimental parameters for making GBT working

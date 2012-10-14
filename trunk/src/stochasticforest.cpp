@@ -17,7 +17,11 @@ StochasticForest::StochasticForest(Treedata* trainData, options::General_options
   params_(params),
   rootNodes_(params_.nTrees) {
 
-  isTargetNumerical_ = trainData_->isFeatureNumerical(trainData_->getFeatureIdx(params_.targetStr));
+  size_t targetIdx = trainData_->getFeatureIdx(params_.targetStr);
+
+  isTargetNumerical_ = trainData_->isFeatureNumerical(targetIdx);
+
+  categories_ = trainData_->categories(targetIdx);
 
   // Grows the forest
   if ( params_.modelType == options::RF ) {
@@ -177,13 +181,9 @@ void StochasticForest::printToFile(const string& fileName) {
     toFile << "FOREST=CART";
   }
 
-  size_t targetIdx = trainData_->getFeatureIdx( params_.targetStr );
-  
-  vector<string> categories = trainData_->categories(targetIdx);
-
   toFile << ",TARGET=" << "\"" << params_.targetStr << "\"";
   toFile << ",NTREES=" << params_.nTrees;
-  toFile << ",CATEGORIES=" << "\""; utils::write(toFile,categories.begin(),categories.end(),','); toFile << "\"";
+  toFile << ",CATEGORIES=" << "\""; utils::write(toFile,categories_.begin(),categories_.end(),','); toFile << "\"";
   toFile << ",SHRINKAGE=" << params_.shrinkage << endl;
 
   // Save each tree in the forest

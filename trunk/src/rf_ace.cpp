@@ -877,6 +877,28 @@ void parseDataFrame(SEXP dataFrameObj, vector<Feature>& dataMatrix, vector<strin
 
 }
 
+RcppExport void rfaceSave(SEXP predictorObj, SEXP fileName) {
+
+  Rcpp::XPtr<StochasticForest> predictor(predictorObj);
+
+  predictor->printToFile(Rcpp::as<string>(fileName));
+
+}
+
+RcppExport SEXP rfaceLoad(SEXP predictorFile, SEXP nThreads) {
+
+  options::General_options params;
+
+  params.forestInput = Rcpp::as<string>(predictorFile);
+  params.nThreads = Rcpp::as<size_t>(nThreads);
+
+  params.initRandIntGens();
+
+  Rcpp::XPtr<StochasticForest> predictor( new StochasticForest(params), true);
+
+  return(predictor);
+
+}
 
 RcppExport SEXP rfaceTrain(SEXP trainDataFrameObj, SEXP targetStr, SEXP nTrees, SEXP mTry, SEXP nodeSize, SEXP nMaxLeaves, SEXP nThreads) {
 
@@ -976,6 +998,10 @@ RcppExport SEXP rfaceTrain(SEXP trainDataFrameObj, SEXP targetStr, SEXP nTrees, 
 
 RcppExport SEXP rfacePredict(SEXP predictorObj, SEXP testDataFrameObj) {
 
+  TIMER_G = new Timer();
+
+  TIMER_G->tic("PREDICTION");
+
   Rcpp::XPtr<StochasticForest> predictor(predictorObj);
   //Rcpp::XPtr<options::General_options> params(paramsObj);
 
@@ -1008,6 +1034,12 @@ RcppExport SEXP rfacePredict(SEXP predictorObj, SEXP testDataFrameObj) {
 					      Rcpp::Named("prediction")=prediction[i],
 					      Rcpp::Named("error")=confidence[i]));
   }
+
+  TIMER_G->toc("PREDICTION");
+  TIMER_G->print();
+
+  delete TIMER_G;
+
 
   return predictions;
 
