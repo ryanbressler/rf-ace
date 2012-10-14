@@ -209,6 +209,7 @@ namespace options {
       } 
 
       this->loadUserParams();
+      
     }
     
     ~General_options() {
@@ -225,6 +226,11 @@ namespace options {
         } else {
           nThreads = datadefs::MAX_THREADS;
         }
+      }
+
+      // If no seed was provided, generate one
+      if ( seed == GENERAL_DEFAULT_SEED ) {
+        seed = distributions::generateSeed();
       }
 
       randIntGens.resize(nThreads);
@@ -295,17 +301,10 @@ namespace options {
 
       parser_.getArgument<int>(seed_s, seed_l, seed);
       
-      // If no seed was provided, generate one
-      if ( seed == GENERAL_DEFAULT_SEED ) {
-	seed = distributions::generateSeed();
-      }
-
       parser_.getArgument<size_t>(nThreads_s, nThreads_l, nThreads);
       parser_.getFlag(isMaxThreads_s, isMaxThreads_l, isMaxThreads);
 
-      this->initRandIntGens();
-
-      // Random Forest related parameters
+      // Random Forest parameters
       parser_.getArgument<size_t>( nTrees_s, nTrees_l, nTrees );
       parser_.getArgument<size_t>( mTry_s, mTry_l, mTry );
       parser_.getArgument<size_t>( nMaxLeaves_s, nMaxLeaves_l, nMaxLeaves );
@@ -319,6 +318,8 @@ namespace options {
       parser_.getFlag(normalizeImportanceValues_s, normalizeImportanceValues_l, normalizeImportanceValues);
       parser_.getArgument<num_t>(importanceThreshold_s, importanceThreshold_l, importanceThreshold);
       parser_.getFlag(reportAllFeatures_s, reportAllFeatures_l, reportAllFeatures);
+
+      this->initRandIntGens();
 
     }
 
