@@ -45,8 +45,15 @@ namespace distributions {
     tr1::uniform_int<size_t> rand_;
     
   };
-  
-  typedef map<datadefs::num_t,size_t> icdf_t;
+ 
+  class InvCDF {
+  public:
+    InvCDF(const vector<datadefs::num_t>& weights);
+    ~InvCDF();
+    size_t at(const datadefs::num_t prob);
+  private:
+    map<datadefs::num_t,size_t> icdf_;
+  };
 
   //icdf_t 
 
