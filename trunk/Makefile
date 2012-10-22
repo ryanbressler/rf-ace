@@ -1,4 +1,4 @@
-COMPILER = g++44
+COMPILER = g++
 CFLAGS = -O2 -std=c++0x -Wall -Wextra -pedantic -Isrc/
 TFLAGS = -pthread
 SOURCEFILES = src/progress.cpp src/statistics.cpp src/math.cpp src/stochasticforest.cpp src/rootnode.cpp src/node.cpp src/treedata.cpp src/datadefs.cpp src/utils.cpp src/distributions.cpp
