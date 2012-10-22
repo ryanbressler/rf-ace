@@ -56,7 +56,7 @@ void StochasticForestTest::test_treeDataPercolation() {
   Treedata::Treedata testData("testdata.tsv",&parameters_);
 
   // Next load a test predictor
-  StochasticForest SF(&parameters_);
+  StochasticForest SF(parameters_);
 
   vector<num_t> prediction,confidence;
   
@@ -109,7 +109,7 @@ void StochasticForestTest::test_CART() {
 
   parameters_.nMaxLeaves = 2;
 
-  StochasticForest CART(&treeData,&parameters_);
+  StochasticForest CART(&treeData,parameters_);
 
   CPPUNIT_ASSERT( CART.rootNodes_[0]->splitter_.name == "N:input" );
 

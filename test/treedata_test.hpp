@@ -767,7 +767,7 @@ void treeDataTest::test_fullSplitterSweep() {
   //size_t targetIdx = treeData->getFeatureIdx("N:output");
   size_t minSamples = 3;
 
-  vector<string> sweepFiles = {"test_fullSplitterSweep.txt","test_fullSplitterSweep_C:class.txt"};
+  vector<string> sweepFiles = {"test_fullSplitterSweep.txt","test_fullSplitterSweep_class.txt"};
 
   for ( size_t f = 0; f < sweepFiles.size(); ++f ) {
 

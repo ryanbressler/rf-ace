@@ -9,6 +9,9 @@ class DistributionsTest : public CppUnit::TestFixture {
   CPPUNIT_TEST_SUITE( DistributionsTest );
   CPPUNIT_TEST( test_randint );
   CPPUNIT_TEST( test_uniform );
+  CPPUNIT_TEST( test_invcdf1 );
+  CPPUNIT_TEST( test_invcdf2 );
+  CPPUNIT_TEST( test_invcdf3 );
   CPPUNIT_TEST_SUITE_END();
   
 public:
@@ -17,6 +20,9 @@ public:
   
   void test_randint();
   void test_uniform();
+  void test_invcdf1();
+  void test_invcdf2();
+  void test_invcdf3();
   
 private:
 
@@ -84,7 +90,7 @@ void DistributionsTest::test_uniform() {
 
   for ( size_t i = 0; i < 100000; ++i ) {
     datadefs::num_t r = randInt_.uniform();
-    CPPUNIT_ASSERT( 0.0 <= r && r <= 1.0 );
+    CPPUNIT_ASSERT( 0.0 <= r && r < 1.0 );
 
     //cout << " " << r; 
 
@@ -101,7 +107,53 @@ void DistributionsTest::test_uniform() {
 
 }
 
+void DistributionsTest::test_invcdf1() {
 
+  distributions::InvCDF icdf({0.2,0.2,0.2,0.2,0.2});
+
+  CPPUNIT_ASSERT( icdf.at(0.00) == 0 );
+  CPPUNIT_ASSERT( icdf.at(0.05) == 0 );
+  CPPUNIT_ASSERT( icdf.at(0.15) == 0 );
+  CPPUNIT_ASSERT( icdf.at(0.25) == 1 );
+  CPPUNIT_ASSERT( icdf.at(0.35) == 1 );
+  CPPUNIT_ASSERT( icdf.at(0.45) == 2 );
+  CPPUNIT_ASSERT( icdf.at(0.55) == 2 );
+  CPPUNIT_ASSERT( icdf.at(0.65) == 3 );
+  CPPUNIT_ASSERT( icdf.at(0.75) == 3 );
+  CPPUNIT_ASSERT( icdf.at(0.85) == 4 );
+  CPPUNIT_ASSERT( icdf.at(0.95) == 4 );
+  CPPUNIT_ASSERT( icdf.at(0.999999999999) == 4 );
+
+}
+
+void DistributionsTest::test_invcdf2() {
+  
+  distributions::InvCDF icdf({1,2,3,0,4});
+
+  CPPUNIT_ASSERT( icdf.at(0.00) == 0 );
+  CPPUNIT_ASSERT( icdf.at(0.05) == 0 );
+  CPPUNIT_ASSERT( icdf.at(0.15) == 1 );
+  CPPUNIT_ASSERT( icdf.at(0.25) == 1 );
+  CPPUNIT_ASSERT( icdf.at(0.35) == 2 );
+  CPPUNIT_ASSERT( icdf.at(0.45) == 2 );
+  CPPUNIT_ASSERT( icdf.at(0.55) == 2 );
+  CPPUNIT_ASSERT( icdf.at(0.65) == 4 );
+  CPPUNIT_ASSERT( icdf.at(0.75) == 4 );
+  CPPUNIT_ASSERT( icdf.at(0.85) == 4 );
+  CPPUNIT_ASSERT( icdf.at(0.95) == 4 );
+  CPPUNIT_ASSERT( icdf.at(0.99999999999) == 4 );
+
+} 
+
+void DistributionsTest::test_invcdf3() {
+
+  distributions::InvCDF icdf({0,0,1,0,0});
+
+  for ( size_t i = 0; i < 100; ++i ) {
+    CPPUNIT_ASSERT( icdf.at(static_cast<datadefs::num_t>(0.01*i)) == 2 );
+  }
+
+}
 
 
 // Registers the fixture into the test 'registry'
