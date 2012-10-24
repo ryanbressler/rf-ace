@@ -5,10 +5,11 @@
 #include <algorithm>
 #include <iostream>
 #include <limits>
-#include <thread>
-//#include <regex>
 
-//#include "utils.hpp" // This will be removed after all utilities currently under datadefs are properly relocated
+#ifndef NOTHREADS
+#include <thread>
+#endif
+
 
 using namespace std;
 
@@ -19,7 +20,6 @@ const datadefs::num_t datadefs::NUM_NAN = numeric_limits<double>::quiet_NaN();//
 const string datadefs::STR_NAN = "NA";
 const datadefs::num_t datadefs::NUM_INF = numeric_limits<double>::infinity();
 const size_t datadefs::MAX_IDX = numeric_limits<int32_t>::max() - 1;
-const size_t datadefs::MAX_THREADS = thread::hardware_concurrency();
 const datadefs::num_t datadefs::EPS = 1e-18; //1e-12;
 const datadefs::num_t datadefs::NUM_PI = 3.1415926535;
 const datadefs::num_t datadefs::A = 0.140012;
@@ -36,6 +36,15 @@ const string initNANs[] = {"NA","NAN","NAN%","NANQ","NANS","QNAN","SNAN","1.#SNA
 const set<datadefs::NAN_t> datadefs::NANs(initNANs,initNANs+12);
 
 const string datadefs::CONTRAST = "CONTRAST";
+
+#ifndef NOTHREADS
+const size_t datadefs::MAX_THREADS = thread::hardware_concurrency();
+#endif
+
+#ifdef NOTHREADS 
+const size_t datadefs::MAX_THREADS = 1;
+#endif
+
 
 ////////////////////////////////////////////////////////////
 // HELPER FUNCTIONS
