@@ -18,6 +18,9 @@ rf-ace-i386: $(SOURCEFILES)
 rf-ace-amd64: $(SOURCEFILES)
 	$(COMPILER) $(CFLAGS) -m64 src/rf_ace.cpp $(SOURCEFILES) $(TFLAGS) -o bin/rf-ace-amd64
 
+no-threads: $(SOURCEFILES)
+	$(COMPILER) $(CFLAGS) -DNOTHREADS src/rf_ace.cpp $(SOURCEFILES) -o bin/rf-ace
+
 debug: $(SOURCEFILES)
 	$(COMPILER) $(CFLAGS) src/rf_ace.cpp $(SOURCEFILES) $(TFLAGS) -o bin/rf-ace -ggdb
 

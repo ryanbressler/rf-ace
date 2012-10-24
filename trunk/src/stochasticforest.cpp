@@ -3,14 +3,18 @@
 #include <iostream>
 #include <fstream>
 #include <iomanip>
-#include <thread>
 #include <stack>
+
+#ifndef NOTHREADS
+#include <thread>
+#endif
 
 #include "stochasticforest.hpp"
 #include "datadefs.hpp"
 #include "argparse.hpp"
 #include "utils.hpp"
 #include "math.hpp"
+
 
 StochasticForest::StochasticForest(Treedata* trainData, options::General_options& params):
   trainData_(trainData),
@@ -222,6 +226,10 @@ void StochasticForest::learnRF() {
   assert( params_.nTrees > 0);
   assert( rootNodes_.size() == params_.nTrees );
 
+#ifndef NOTHREADS
+  assert( params_.nThreads == 1 );
+#endif
+
   if ( params_.nThreads == 1 ) {
 
     vector<size_t> treeIcs = utils::range(params_.nTrees);
@@ -233,7 +241,9 @@ void StochasticForest::learnRF() {
       rootNodes_[treeIdx]->growTree();
     }
 
-  } else {
+  } 
+#ifndef NOTHREADS  
+  else {
     
     vector<vector<size_t> > treeIcs = utils::splitRange(params_.nTrees,params_.nThreads);
     
@@ -262,6 +272,7 @@ void StochasticForest::learnRF() {
       threads[threadIdx].join();
     }
   }
+#endif
 }
 
 void StochasticForest::learnGBT() {
@@ -625,6 +636,10 @@ void StochasticForest::predict(Treedata* testData, vector<string>& predictions, 
   assert( !this->isTargetNumerical() );
   assert( params_.nThreads > 0 );
 
+#ifndef NOTHREADS
+  assert( params_.nThreads == 1 );
+#endif
+
   size_t nSamples = testData->nSamples();
 
   predictions.resize(nSamples);
@@ -636,7 +651,9 @@ void StochasticForest::predict(Treedata* testData, vector<string>& predictions, 
     
     predictCatPerThread(testData,rootNodes_,&params_,sampleIcs,&predictions,&confidence);
       
-  } else {
+  } 
+#ifndef NOTHREADS
+else {
     
     vector<vector<size_t> > sampleIcs = utils::splitRange(nSamples,params_.nThreads);
     
@@ -654,6 +671,7 @@ void StochasticForest::predict(Treedata* testData, vector<string>& predictions, 
       threads[threadIdx].join();
     }
   }
+#endif
 }
 
 
@@ -662,6 +680,9 @@ void StochasticForest::predict(Treedata* testData, vector<num_t>& predictions, v
   //assert( params_.modelType != options::GBT );
   assert( this->isTargetNumerical() );
   assert( params_.nThreads > 0 );
+#ifndef NOTHREADS
+  assert( params_.nThreads == 1 );
+#endif
 
   size_t nSamples = testData->nSamples();
 
@@ -674,7 +695,9 @@ void StochasticForest::predict(Treedata* testData, vector<num_t>& predictions, v
     //cout << "1 thread!" << endl;
     predictNumPerThread(testData,rootNodes_,&params_,sampleIcs,&predictions,&confidence,GBTconstant_,GBTfactors_);
     
-  } else {
+  } 
+#ifndef NOTHREADS
+else {
     //cout << "More threads!" << endl;
     vector<vector<size_t> > sampleIcs = utils::splitRange(nSamples,params_.nThreads);
     
@@ -690,6 +713,7 @@ void StochasticForest::predict(Treedata* testData, vector<num_t>& predictions, v
       threads[threadIdx].join();
     }  
   }
+#endif
 }
   
 
@@ -789,21 +813,6 @@ void StochasticForest::getMeanMinimalDepthValues(vector<num_t>& depthValues, vec
 
   for ( size_t treeIdx = 0; treeIdx < this->nTrees(); ++treeIdx ) {
 
-    //stack<pair<Node*,size_t> > nodesToCheck;
-    //nodesToCheck.push( pair<Node*,size_t>(rootNodes_[treeIdx],0) );
-    
-    //while ( !nodesToCheck.empty() ) {
-      
-    //pair<Node*,size_t> curNode = nodesToCheck.top(); nodesToCheck.pop();
-      
-    //if ( curNode.first->hasChildren() ) {
-
-    //size_t featureIdx = trainData_->getFeatureIdx( curNode.first->splitterName() );
-
-    //cout << curNode.first->splitterName() << " => " << featureIdx << endl;
-    
-    //assert( featureIdx != trainData_->end() );
-    
     vector<pair<size_t,size_t> > minDistPairs = rootNodes_[treeIdx]->getMinDistFeatures();
 
     for ( size_t i = 0; i < minDistPairs.size(); ++i ) {
@@ -815,9 +824,6 @@ void StochasticForest::getMeanMinimalDepthValues(vector<num_t>& depthValues, vec
 
       depthValues[featureIdx] += 1.0 * ( newDepthValue - depthValues[featureIdx] ) / featureCounts[featureIdx];
       
-      //nodesToCheck.push( pair<Node*,size_t>(curNode.first->leftChild(),curNode.second+1) );
-      //	nodesToCheck.push( pair<Node*,size_t>(curNode.first->rightChild(),curNode.second+1) );
-      //}
     }
     
   }
