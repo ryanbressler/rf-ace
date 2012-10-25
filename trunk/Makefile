@@ -34,7 +34,7 @@ test: $(SOURCEFILES) $(TESTFILES)
 	rm -f bin/test; $(COMPILER) $(TESTFLAGS) test/run_tests.cpp $(SOURCEFILES) $(TFLAGS) -o bin/test -ggdb; ./bin/test
 
 test-no-threads: $(SOURCEFILES)
-	rm -f bin/test; $(COMPILER) $(TESTFLAGS) -DNOTHREADS test/run_tests.cpp $(SOURCEFILES) -o bin/test -ggdb; .bin/test  
+	rm -f bin/test; $(COMPILER) $(TESTFLAGS) -DNOTHREADS test/run_tests.cpp $(SOURCEFILES) -o bin/test -ggdb; ./bin/test  
 
 clean:
 	rm -rf bin/rf-ace bin/benchmark bin/GBT_benchmark bin/test bin/*.dSYM/ src/*.o

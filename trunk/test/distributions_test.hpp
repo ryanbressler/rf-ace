@@ -3,6 +3,7 @@
 
 #include <cppunit/extensions/HelperMacros.h>
 #include "distributions.hpp"
+#include "math.hpp"
 #include <unordered_map>
 
 class DistributionsTest : public CppUnit::TestFixture {
@@ -12,6 +13,7 @@ class DistributionsTest : public CppUnit::TestFixture {
   CPPUNIT_TEST( test_invcdf1 );
   CPPUNIT_TEST( test_invcdf2 );
   CPPUNIT_TEST( test_invcdf3 );
+  CPPUNIT_TEST( test_invcdf4 );
   CPPUNIT_TEST_SUITE_END();
   
 public:
@@ -23,7 +25,8 @@ public:
   void test_invcdf1();
   void test_invcdf2();
   void test_invcdf3();
-  
+  void test_invcdf4();
+
 private:
 
   distributions::RandInt randInt_;
@@ -155,6 +158,27 @@ void DistributionsTest::test_invcdf3() {
 
 }
 
+void DistributionsTest::test_invcdf4() {
+
+  vector<datadefs::num_t> weights = {1,2,3,5,3,1,0,1e-5};
+
+  datadefs::num_t sum = math::mean(weights) * weights.size();
+
+  distributions::InvCDF icdf(weights);
+
+  vector<datadefs::num_t> PMFest(8,0.0);
+
+  distributions::RandInt randInt;
+
+  for ( size_t i = 0; i < 1e7; ++i ) {
+    PMFest[ icdf.at(randInt.uniform()) ] += 1e-7;
+  }
+
+  for ( size_t i = 0; i < 8; ++i ) {
+    CPPUNIT_ASSERT( fabs( PMFest[i] - weights[i] / sum ) < 0.01 );
+  }
+
+}
 
 // Registers the fixture into the test 'registry'
 CPPUNIT_TEST_SUITE_REGISTRATION( DistributionsTest );
