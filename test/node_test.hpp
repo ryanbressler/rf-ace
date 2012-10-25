@@ -55,7 +55,7 @@ void NodeTest::test_setSplitter() {
   
   //Splitter::Splitter splitter(0.5);
   
-  Node::Node node(&parameters_,threadIdx_);
+  Node node(&parameters_,threadIdx_);
     
   node.setSplitter("foo",splitLeftLeqValue);
   
@@ -68,14 +68,14 @@ void NodeTest::test_setSplitter() {
 
 void NodeTest::test_percolateData() {
   
-  Node::Node node0(&parameters_,threadIdx_);
+  Node node0(&parameters_,threadIdx_);
   //Splitter splitter("foo",0.1);
   node0.setSplitter("foo",0.1);
   //CPPUNIT_ASSERT( node0.leftChild() == node0.percolate(0.09) );
   //CPPUNIT_ASSERT( node0.rightChild() == node0.percolate(0.11) );
   //CPPUNIT_ASSERT( NULL == node0.percolateData(datadefs::NUM_NAN));
 
-  Node::Node node1(&parameters_,threadIdx_);
+  Node node1(&parameters_,threadIdx_);
   
   set<string> leftValues;
   set<string> rightValues;

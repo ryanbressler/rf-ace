@@ -53,7 +53,7 @@ void StochasticForestTest::test_treeDataPercolation() {
   parameters_.forestInput = "test_predictor.sf";
 
   // First we need some data
-  Treedata::Treedata testData("testdata.tsv",&parameters_);
+  Treedata testData("testdata.tsv",&parameters_);
 
   // Next load a test predictor
   StochasticForest SF(parameters_);

@@ -87,7 +87,7 @@ void treeDataTest::test_permuteContrasts() {
   
   string fileName = "test_6by10_mixed_matrix.tsv";
   
-  Treedata::Treedata treeData(fileName,&parameters_);
+  Treedata treeData(fileName,&parameters_);
   
   //treeData.permuteContrasts();
 
@@ -130,7 +130,7 @@ void treeDataTest::test_name2idxMap() {
 
   string fileName = "test_6by10_mixed_matrix.tsv";
 
-  Treedata::Treedata treeData(fileName,&parameters_);
+  Treedata treeData(fileName,&parameters_);
 
   CPPUNIT_ASSERT( treeData.name2idx_.size() == 2*treeData.nFeatures() );
   CPPUNIT_ASSERT( treeData.features_.size() == 2*treeData.nFeatures() );
@@ -167,7 +167,7 @@ void treeDataTest::test_name2idxMap() {
 
 void treeDataTest::test_idx2name2idx() {
 
-  Treedata::Treedata treeData("test_103by300_mixed_nan_matrix.afm",&parameters_);
+  Treedata treeData("test_103by300_mixed_nan_matrix.afm",&parameters_);
 
   for ( size_t i = 0; i < 2*treeData.nFeatures(); ++i ) {
     CPPUNIT_ASSERT( treeData.getFeatureIdx( treeData.getFeatureName(i) ) != treeData.end() );
@@ -194,7 +194,7 @@ void treeDataTest::test_getFilteredFeatureData() {
   
   string fileName = "test_6by10_mixed_matrix.tsv";
   
-  Treedata::Treedata treeData(fileName,&parameters_);
+  Treedata treeData(fileName,&parameters_);
 
 
   /*
@@ -278,7 +278,7 @@ void treeDataTest::test_getFilteredAndSortedFeatureDataPair3() {
 
   string fileName = "test_6by10_mixed_matrix.tsv";
 
-  Treedata::Treedata treeData(fileName,&parameters_);
+  Treedata treeData(fileName,&parameters_);
 
   /*
     N:F1    nA      8.5     3.4     7.2     5       6       7       11      9       NA
