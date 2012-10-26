@@ -46,16 +46,19 @@ namespace distributions {
     
   };
  
-  class InvCDF {
+  class PMF {
   public:
-    InvCDF(const vector<datadefs::num_t>& weights);
-    ~InvCDF();
-    size_t at(const datadefs::num_t prob);
+    PMF(const vector<datadefs::num_t>& weights);
+    ~PMF();
+    size_t icdf(const datadefs::num_t prob);
   private:
     map<datadefs::num_t,size_t> icdf_;
   };
 
   //icdf_t 
+
+  // This is for reference -- will be consumed by the PMF class for efficient implementation of PMF.icdf()
+  void walkersalias(int n,double *p, int nans, int *ans);
 
 }
 
