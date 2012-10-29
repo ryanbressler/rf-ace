@@ -416,14 +416,6 @@ public:
 
       SF.getImportanceValues(importanceMat[permIdx],contrastImportanceMat[permIdx]);
 
-      cout << "Importances: ";
-      utils::write(cout,importanceMat[permIdx].begin(),importanceMat[permIdx].end());
-      cout << endl;
-      
-      cout << "Contrast importances: ";
-      utils::write(cout,contrastImportanceMat[permIdx].begin(),contrastImportanceMat[permIdx].end());
-      cout << endl;
-
       // Will update featuresInAllForests to contain all features in the current forest
       math::setUnion(featuresInAllForests,SF.getFeaturesInForest());
 
@@ -472,12 +464,6 @@ public:
 
 	// Perform WS-approximated t-test against the contrast sample
 	bool WS = true;
-
-	cout << "contrastMinDepthSample:";
-	utils::write(cout,contrastImportanceSample.begin(),contrastImportanceSample.end());
-	cout << endl << "minDepthSample:";
-	utils::write(cout,featureImportanceSample.begin(),featureImportanceSample.end());
-	cout << endl;
 	pValues[featureIdx] = math::ttest(contrastImportanceSample,featureImportanceSample,WS);
 
       }

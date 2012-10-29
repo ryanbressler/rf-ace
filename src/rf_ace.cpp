@@ -13,6 +13,84 @@
 using namespace std;
 using datadefs::num_t;
 
+struct ProgramLogic {
+  bool filter;
+  bool recombine;
+  bool trainModel;
+  bool testModel;
+  bool saveModel;
+  bool loadModel;
+  void parse(options::General_options* params) {
+    
+    bool isTargetSet     = params->isSet(params->targetStr_s,params->targetStr_l);
+    bool isFilterSet     = params->isFilter;
+    bool isRecombineSet  = params->isSet(params->recombinePerms_s,params->recombinePerms_l);
+    bool isInputSet      = params->isSet(params->input_s,params->input_l);
+    bool isPredDataSet   = params->isSet(params->predictionData_s,params->predictionData_l);
+    bool isOutputSet     = params->isSet(params->output_s,params->output_l);
+    bool isForestFileSet = params->isSet(params->forestInput_s,params->forestInput_l);
+
+    bool getAssociations = isFilterSet || isRecombineSet;
+
+    if ( isFilterSet && isRecombineSet ) {
+      cerr << "ERROR: cannot have both --filter and --recombine set, choose either one!" << endl;
+      exit(1);
+    }
+
+    this->filter     =  isFilterSet     &&  isInputSet    && isTargetSet      && isOutputSet;
+    this->recombine  =  isRecombineSet  &&  isInputSet    && isOutputSet;
+    this->trainModel = !getAssociations &&  isInputSet    && isTargetSet;
+    this->testModel  = !getAssociations &&  isPredDataSet && isOutputSet;
+    this->saveModel  = !getAssociations &&  isInputSet    && isTargetSet      && isOutputSet;
+    this->loadModel  = !getAssociations && !isInputSet    && isForestFileSet  && isOutputSet;
+
+    if ( this->recombine && params->recombinePerms == 0 ) {
+      cerr << "Currently the number of permutations to be recombined ( -"
+           << params->recombinePerms_s << " / --" << params->recombinePerms_l << endl
+           << " ) needs to be explicitly specified." << endl;
+      exit(1);
+    }
+
+    if ( isFilterSet && !isTargetSet ) {
+      cerr << "ERROR: unable to apply filter without a target!" << endl;
+      exit(1);
+    }
+
+    if ( this->trainModel && !isTargetSet ) {
+      cerr << "ERROR: unable to train a model without a target!" << endl;
+      exit(1);
+    }
+
+    if ( ! ( this->trainModel || this->loadModel ) && ( this->saveModel ) ) {
+      cerr << "ERROR: unable to load/train model for saving!" << endl;
+      exit(1);
+    }
+
+    if ( ! ( this->trainModel || this->loadModel ) && ( this->testModel ) ) {
+      cerr << "ERROR: unable to load/train model for testing!" << endl;
+      exit(1);
+    }
+
+    if ( ! ( this->filter || this->recombine || this->trainModel || this->testModel || this->saveModel || this->loadModel ) ) {
+      cerr << "ERROR: unable to resolve execution logic!" << endl;
+      params->helpHint();
+      exit(1);
+    }
+
+  }
+
+  void print() {
+    cout << "Parsed program logic:" << endl
+	 << "  - filter     == " << this->filter << endl
+	 << "  - recombine  == " << this->recombine << endl
+	 << "  - trainModel == " << this->trainModel << endl
+	 << "  - testModel  == " << this->testModel << endl
+	 << "  - saveModel  == " << this->saveModel << endl
+	 << "  - loadModel  == " << this->loadModel << endl << endl;
+  }
+
+} programLogic;
+
 int main(const int argc, char* const argv[]) {
 
   options::General_options params(argc,argv);
@@ -23,36 +101,38 @@ int main(const int argc, char* const argv[]) {
     return(EXIT_SUCCESS);
   }
 
+  programLogic.parse(&params);
+  programLogic.print();
+
   RFACE rface(params);
 
-  if ( params.isFilter ) {
+  if ( programLogic.filter ) {
 
-    // Read train data into Treedata object
     cout << "===> Reading file '" << params.input << "', please wait... " << flush;
     Treedata treeData(params.input,&params);
     cout << "DONE" << endl;
 
     rface.filter(treeData);
 
-  } else if ( params.isSet(params.recombinePerms_s,params.recombinePerms_l) ) {
+  } else if ( programLogic.recombine ) {
     
     cout << " *(EXPERIMENTAL) RF-ACE RECOMBINER (" << params.recombinePerms << " permutations) ACTIVATED* " << endl;
         
-    if ( params.recombinePerms == 0 ) {
-      cerr << "Currently the number of permutations to be recombined ( -" 
-	   << params.recombinePerms_s << " / --" << params.recombinePerms_l << endl
-	   << " ) needs to be explicitly specified." << endl;
-      exit(1);
-    }
-
     rface.recombine();
 
   } else {
 
+    if ( programLogic.trainModel ) {}
+    if ( programLogic.testModel ) {}
+    if ( programLogic.saveModel ) {}
+    if ( programLogic.loadModel ) {}
+    
+    // Will need to split this one into smaller chunks
     rface.trainAndTest();
 
   }
 
+  return( EXIT_SUCCESS );
 
 }
 

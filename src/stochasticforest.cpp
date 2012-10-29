@@ -795,15 +795,8 @@ size_t StochasticForest::nTrees() {
 
 void StochasticForest::getMeanMinimalDepthValues(vector<num_t>& depthValues, vector<num_t>& contrastDepthValues) {
 
-  //cout << "NOTE: experimental work with mean minimal depths!" << endl;
-
   if ( featuresInForest_.size() == 0 ) {
     cout << "NOTE: featuresInForest_ is empty!" << endl;
-  }
-
-  if ( !params_->useContrasts ) {
-    cerr << "ERROR: cannot calculate importance if contrasts aren't used!" << endl;
-    exit(1);
   }
 
   size_t nRealFeatures = trainData_->nFeatures();
@@ -811,8 +804,6 @@ void StochasticForest::getMeanMinimalDepthValues(vector<num_t>& depthValues, vec
 
   depthValues.clear();
   depthValues.resize(nAllFeatures,0.0);
-
-  //vector<vector<num_t> > depthMatrix(nAllFeatures,vector<num_t>(this->nTrees(),-1.0*(this->nNodes()+1.0)/(2.0*this->nTrees())));
 
   vector<size_t> featureCounts(nAllFeatures,0);
 
