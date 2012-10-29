@@ -13,10 +13,10 @@ using namespace std;
 class StochasticForest {
 public:
   
-  StochasticForest(Treedata* treeData, options::General_options& params);
+  StochasticForest(Treedata* treeData, options::General_options* params);
   
   // Load an existing forest
-  StochasticForest(options::General_options& params);
+  StochasticForest(options::General_options* params);
 
   ~StochasticForest();
   
@@ -44,12 +44,12 @@ public:
 
   inline set<size_t> getFeaturesInForest() { return( featuresInForest_ ); }
 
-  inline string getTargetName() { return( params_.targetStr ); }
+  inline string getTargetName() { return( params_->targetStr ); }
   inline bool isTargetNumerical() { return( isTargetNumerical_ ); }
 
   void printToFile(const string& fileName);
 
-  options::General_options* params() { return(&params_); }
+  //options::General_options* params() { return(&params_); }
 
 #ifndef TEST__
 private:
@@ -72,7 +72,7 @@ private:
 
   vector<string> categories_;
 
-  options::General_options params_;
+  options::General_options* params_;
 
   // Experimental parameters for making GBT working
   vector<num_t> GBTfactors_;

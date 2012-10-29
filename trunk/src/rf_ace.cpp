@@ -12,47 +12,44 @@
 
 using namespace std;
 using datadefs::num_t;
-using datadefs::ftable_t;
 
 int main(const int argc, char* const argv[]) {
 
-  RFACE rface;
+  options::General_options params(argc,argv);
 
-  rface.printHeader(cout);
-  
-  // Structs that store all the user-specified command-line arguments
-  options::General_options gen_op(argc,argv);
-  
   // With no input arguments the help is printed
-  if ( argc == 1 || gen_op.printHelp ) {
-    gen_op.help();
+  if ( argc == 1 || params.printHelp ) {
+    params.help();
     return(EXIT_SUCCESS);
   }
 
-  if ( gen_op.isFilter ) {
+  RFACE rface(params);
 
-    if ( gen_op.nPerms > 1 ) {
-      gen_op.useContrasts = true;
-    }
+  if ( params.isFilter ) {
 
-    rface.filter(gen_op);
+    // Read train data into Treedata object
+    cout << "===> Reading file '" << params.input << "', please wait... " << flush;
+    Treedata treeData(params.input,&params);
+    cout << "DONE" << endl;
 
-  } else if ( gen_op.isSet(gen_op.recombinePerms_s,gen_op.recombinePerms_l) ) {
+    rface.filter(treeData);
+
+  } else if ( params.isSet(params.recombinePerms_s,params.recombinePerms_l) ) {
     
-    cout << " *(EXPERIMENTAL) RF-ACE RECOMBINER (" << gen_op.recombinePerms << " permutations) ACTIVATED* " << endl;
+    cout << " *(EXPERIMENTAL) RF-ACE RECOMBINER (" << params.recombinePerms << " permutations) ACTIVATED* " << endl;
         
-    if ( gen_op.recombinePerms == 0 ) {
+    if ( params.recombinePerms == 0 ) {
       cerr << "Currently the number of permutations to be recombined ( -" 
-	   << gen_op.recombinePerms_s << " / --" << gen_op.recombinePerms_l << endl
+	   << params.recombinePerms_s << " / --" << params.recombinePerms_l << endl
 	   << " ) needs to be explicitly specified." << endl;
       exit(1);
     }
 
-    rface.recombine(gen_op);
+    rface.recombine();
 
   } else {
 
-    rface.trainAndTest(gen_op);
+    rface.trainAndTest();
 
   }
 

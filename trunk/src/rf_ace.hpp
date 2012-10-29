@@ -13,13 +13,8 @@
 #include <unordered_map>
 #include <set>
 #include <cstdlib>
-#include <iostream>
-#include <fstream>
-#include <set>
 #include <string>
 #include <vector>
-#include <stdio.h>
-#include <ctime>
 
 #include "stochasticforest.hpp"
 #include "treedata.hpp"
@@ -31,6 +26,8 @@
 #include "progress.hpp"
 #include "distributions.hpp"
 #include "timer.hpp"
+// #include "log.h"
+
 
 using namespace std;
 using datadefs::num_t;
@@ -42,8 +39,11 @@ class RFACE {
 
 public:
 
-  RFACE() {
+  RFACE(options::General_options& params) {
     
+    // Structs that store all the user-specified command-line arguments
+    params_ = new options::General_options(params);
+
     timer_ = new Timer();
     
   }
@@ -51,6 +51,7 @@ public:
   ~RFACE() {
 
     delete timer_;
+    delete params_;
     
   }
 
@@ -64,53 +65,53 @@ public:
 	<< endl;
   }
 
-  void pruneFeatureSpace(Treedata& treeData, const options::General_options& gen_op) {
+  void pruneFeatureSpace(Treedata& treeData) {
 
-    size_t targetIdx = treeData.getFeatureIdx(gen_op.targetStr);
+    size_t targetIdx = treeData.getFeatureIdx(params_->targetStr);
 
     if ( treeData.nRealSamples(targetIdx) == 0 ) {
-      cerr << "Target feature '" << gen_op.targetStr << "' does not have any real samples!" << endl;
+      cerr << "Target feature '" << params_->targetStr << "' does not have any real samples!" << endl;
       exit(1);
     }
     
-    if ( gen_op.whiteList != "" ) {
+    if ( params_->whiteList != "" ) {
       
-      cout << "===> Reading whitelist '" << gen_op.whiteList << "', please wait... " << flush;
-      set<string> whiteFeatureNames = utils::readFeatureMask(treeData,gen_op.whiteList);
+      cout << "===> Reading whitelist '" << params_->whiteList << "', please wait... " << flush;
+      set<string> whiteFeatureNames = utils::readFeatureMask(treeData,params_->whiteList);
       cout << "DONE" << endl;
       cout << "===> Applying feature mask, removing " << treeData.nFeatures() - whiteFeatureNames.size()
 	   << " / " << treeData.nFeatures() << " features, please wait... " << flush;
       
       // Add the target feature into the white list, otherwise it may get removed
-      whiteFeatureNames.insert(gen_op.targetStr);
+      whiteFeatureNames.insert(params_->targetStr);
 
       treeData.whiteList(whiteFeatureNames);
       cout << "DONE" << endl;
     } 
 
-    if ( gen_op.blackList != "" ) {
+    if ( params_->blackList != "" ) {
       
-      cout << "===> Reading blacklist '" << gen_op.blackList << "', please wait... " << flush;
-      set<string> blackFeatureNames = utils::readFeatureMask(treeData,gen_op.blackList);
+      cout << "===> Reading blacklist '" << params_->blackList << "', please wait... " << flush;
+      set<string> blackFeatureNames = utils::readFeatureMask(treeData,params_->blackList);
       cout << "DONE" << endl;
       cout << "===> Applying blacklist, keeping " << treeData.nFeatures() - blackFeatureNames.size()
 	   << " / " << treeData.nFeatures() << " features, please wait... " << flush;
 
       // Remove the target feature from the black list, otherwise it will get removed
-      if ( blackFeatureNames.find(gen_op.targetStr) != blackFeatureNames.end() ) {
+      if ( blackFeatureNames.find(params_->targetStr) != blackFeatureNames.end() ) {
 	cout << " Target found in the blacklist -- omitting... " << flush;
-	blackFeatureNames.erase(gen_op.targetStr);
+	blackFeatureNames.erase(params_->targetStr);
       }
       
       treeData.blackList(blackFeatureNames);
       cout << "DONE" << endl;
     }
     
-    if ( gen_op.pruneFeatures ) {
+    if ( params_->pruneFeatures ) {
       
-      cout << "===> Pruning features with less than " << gen_op.pruneFeatures << " real samples... " << flush;
+      cout << "===> Pruning features with less than " << params_->pruneFeatures << " real samples... " << flush;
       size_t nFeaturesOld = treeData.nFeatures();
-      utils::pruneFeatures(treeData,gen_op.targetStr,gen_op.pruneFeatures);
+      utils::pruneFeatures(treeData,params_->targetStr,params_->pruneFeatures);
       cout << "DONE, " << nFeaturesOld - treeData.nFeatures() << " features ( "
 	   << ( 100.0*(nFeaturesOld - treeData.nFeatures()) / nFeaturesOld ) << "% ) pruned" << endl;
       
@@ -119,7 +120,7 @@ public:
     if ( treeData.nFeatures() == 0 ) {
       cout << "All features were removed!" << endl;
 
-      ofstream toLogFile(gen_op.log.c_str());
+      ofstream toLogFile(params_->log.c_str());
 
       toLogFile << "All features were removed!" << endl;
 
@@ -131,11 +132,11 @@ public:
     
   }
 
-  void updateTargetStr(Treedata& treeData, options::General_options& gen_op) {
+  void updateTargetStr(Treedata& treeData) {
 
     // Check if the target is specified as an index
     int integer;
-    if ( datadefs::isInteger(gen_op.targetStr,integer) ) {
+    if ( datadefs::isInteger(params_->targetStr,integer) ) {
       
       if ( integer < 0 || integer >= static_cast<int>( treeData.nFeatures() ) ) {
 	cerr << "Feature index (" << integer << ") must be within bounds 0 ... " << treeData.nFeatures() - 1 << endl;
@@ -143,23 +144,23 @@ public:
       }
       
       // Extract the name of the feature, as upon masking the indices will become rearranged
-      gen_op.targetStr = treeData.getFeatureName(static_cast<size_t>(integer));
+      params_->targetStr = treeData.getFeatureName(static_cast<size_t>(integer));
       
     }
 
   }
 
-  void updateMTry(Treedata& treeData, options::General_options& gen_op) {
-    if ( gen_op.mTry == options::RF_DEFAULT_M_TRY ) {
-      gen_op.mTry = static_cast<size_t>( floor(0.1*treeData.nFeatures()) );
+  void updateMTry(Treedata& treeData) {
+    if ( params_->mTry == options::RF_DEFAULT_M_TRY ) {
+      params_->mTry = static_cast<size_t>( floor(0.1*treeData.nFeatures()) );
     }
   }
 
-  void printGeneralSetup(Treedata& treeData, const options::General_options& gen_op) {
+  void printGeneralSetup(Treedata& treeData) {
 
     // After masking, it's safe to refer to features as indices
     // TODO: rf_ace.cpp: this should be made obsolete; instead of indices, use the feature headers
-    size_t targetIdx = treeData.getFeatureIdx(gen_op.targetStr);
+    size_t targetIdx = treeData.getFeatureIdx(params_->targetStr);
 
     size_t nAllFeatures = treeData.nFeatures();
     size_t nRealSamples = treeData.nRealSamples(targetIdx);
@@ -173,68 +174,68 @@ public:
 
   }
 
-  void setEnforcedForestParameters(Treedata& treeData, options::General_options& gen_op) {
+  void setEnforcedForestParameters(Treedata& treeData) {
 
-    if ( gen_op.modelType == options::RF ) {
+    if ( params_->modelType == options::RF ) {
 
-      size_t targetIdx = treeData.getFeatureIdx(gen_op.targetStr);
+      size_t targetIdx = treeData.getFeatureIdx(params_->targetStr);
 
       // Allow trees to grow to maximal depth, if not told otherwise
-      gen_op.setIfNotSet(gen_op.nMaxLeaves_s,gen_op.nMaxLeaves_l,gen_op.nMaxLeaves,treeData.nRealSamples(targetIdx));
+      params_->setIfNotSet(params_->nMaxLeaves_s,params_->nMaxLeaves_l,params_->nMaxLeaves,treeData.nRealSamples(targetIdx));
 
       // RF mTry is by default set to 10% of features
-      gen_op.setIfNotSet(gen_op.mTry_s,gen_op.mTry_l,gen_op.mTry,static_cast<size_t>(0.1*treeData.nFeatures()));
+      params_->setIfNotSet(params_->mTry_s,params_->mTry_l,params_->mTry,static_cast<size_t>(0.1*treeData.nFeatures()));
 
       // Minimum mTry is 1
-      if ( gen_op.mTry < 1 ) {
-	gen_op.mTry = 1;
+      if ( params_->mTry < 1 ) {
+	params_->mTry = 1;
       }
 
-    } else if ( gen_op.modelType == options::CART ) {
+    } else if ( params_->modelType == options::CART ) {
 
       // In CART mode only one tree is grown
-      gen_op.nTrees = 1;
+      params_->nTrees = 1;
     }
 
   }
 
-  StochasticForest buildPredictor(Treedata& trainData, options::General_options& gen_op) {
+  StochasticForest buildPredictor(Treedata& trainData) {
     
-    updateTargetStr(trainData,gen_op);
+    updateTargetStr(trainData);
     
-    pruneFeatureSpace(trainData,gen_op);
+    pruneFeatureSpace(trainData);
     
-    setEnforcedForestParameters(trainData,gen_op);
+    setEnforcedForestParameters(trainData);
     
     // We never want to use contrasts when we are building a predictor
-    //gen_op.useContrasts = false;
+    //params_->useContrasts = false;
     
-    printGeneralSetup(trainData,gen_op);
+    printGeneralSetup(trainData);
     
-    gen_op.print();
+    params_->print();
     
-    gen_op.validateParameters();
+    params_->validateParameters();
     
-    if ( gen_op.modelType == options::RF ) {
+    if ( params_->modelType == options::RF ) {
       cout << "===> Growing RF predictor... " << flush;
-    } else if ( gen_op.modelType == options::GBT ) {
+    } else if ( params_->modelType == options::GBT ) {
       cout << "===> Growing GBT predictor... " << flush;
-    } else if ( gen_op.modelType == options::CART ) {
+    } else if ( params_->modelType == options::CART ) {
       cout << "===> Growing CART predictor... " << flush;
     } else {
       cerr << "Unknown forest type!" << endl;
       exit(1);
     }
     
-    StochasticForest SF(&trainData,gen_op);
+    StochasticForest SF(&trainData,params_);
     cout << "DONE" << endl << endl;
     
-    if ( gen_op.modelType == options::GBT ) {
+    if ( params_->modelType == options::GBT ) {
       cout << "GBT diagnostics disabled temporarily" << endl << endl;
       return( SF );
     }
     
-    size_t targetIdx = trainData.getFeatureIdx(gen_op.targetStr);
+    size_t targetIdx = trainData.getFeatureIdx(params_->targetStr);
     vector<num_t> data = utils::removeNANs(trainData.getFeatureData(targetIdx));
 
     num_t oobError = SF.getOobError();
@@ -260,31 +261,26 @@ public:
 
   }
 
-  void filter(options::General_options& gen_op) {
+  void filter(Treedata& treeData) {
 
     statistics::RF_statistics RF_stat;
 
-    // Read train data into Treedata object
-    cout << "===> Reading file '" << gen_op.input << "', please wait... " << flush;
-    Treedata treeData(gen_op.input,&gen_op);
-    cout << "DONE" << endl;
-
-    this->updateTargetStr(treeData,gen_op);
-    this->pruneFeatureSpace(treeData,gen_op);
+    this->updateTargetStr(treeData);
+    this->pruneFeatureSpace(treeData);
 
     // Some default and enforced parameter settings for RF, CART, and GBT
-    this->setEnforcedForestParameters(treeData,gen_op);
+    this->setEnforcedForestParameters(treeData);
 
-    if(treeData.nSamples() < 2 * gen_op.nodeSize) {
+    if(treeData.nSamples() < 2 * params_->nodeSize) {
       cerr << "Not enough samples (" << treeData.nSamples() << ") to perform a single split" << endl;
       exit(1);
     }
 
-    this->printGeneralSetup(treeData,gen_op);
+    this->printGeneralSetup(treeData);
 
-    gen_op.print();
+    params_->print();
 
-    gen_op.validateParameters();
+    params_->validateParameters();
 
     vector<num_t> pValues;
     vector<num_t> importanceValues;
@@ -292,7 +288,7 @@ public:
     set<size_t> featuresInAllForests;
 
     cout << "===> Uncovering associations... " << flush;
-    RF_stat = executeRandomForest(treeData,gen_op,pValues,importanceValues,contrastImportanceSample,featuresInAllForests);
+    RF_stat = executeRandomForest(treeData,pValues,importanceValues,contrastImportanceSample,featuresInAllForests);
     cout << "DONE" << endl;
 
     // Initialize mapping vector to identity mapping: range 0,1,...,N-1
@@ -300,13 +296,13 @@ public:
     vector<size_t> featureIcs = utils::range( treeData.nFeatures() );
 
     // If there are more than one permutation, we can compute the p-values and thus sort wrt. them
-    if ( gen_op.nPerms > 1 ) {
+    if ( params_->nPerms > 1 ) {
       bool isIncreasingOrder = true;
       utils::sortDataAndMakeRef(isIncreasingOrder,pValues,featureIcs);
       utils::sortFromRef<num_t>(importanceValues,featureIcs);
 
       // Apply p-value adjustment with the Benjamini-Hochberg method if needed
-      if ( gen_op.isAdjustedPValue ) {
+      if ( params_->isAdjustedPValue ) {
 	size_t nTests = treeData.nFeatures() - 1;
 	math::adjustPValues(pValues,nTests);
       }
@@ -322,11 +318,11 @@ public:
     for ( size_t i = 0; i < treeData.nFeatures(); ++i ) {
 
       // If we don't want to report all features in the association file...
-      if ( !gen_op.reportAllFeatures ) {
+      if ( !params_->reportAllFeatures ) {
 
 	bool featureNotInForests = featuresInAllForests.find(featureIcs[i]) == featuresInAllForests.end();
-	bool tooHighPValue = gen_op.nPerms > 1 && pValues[i] > gen_op.pValueThreshold;
-	bool tooLowImportance = importanceValues[i] < gen_op.importanceThreshold;
+	bool tooHighPValue = params_->nPerms > 1 && pValues[i] > params_->pValueThreshold;
+	bool tooLowImportance = importanceValues[i] < params_->importanceThreshold;
 
 	if ( featureNotInForests || tooLowImportance || tooHighPValue ) {
 	  continue;
@@ -334,7 +330,7 @@ public:
       }
 
       // In any case, we will omit target feature from the association list
-      if ( gen_op.targetStr == treeData.getFeatureName(featureIcs[i]) ) {
+      if ( params_->targetStr == treeData.getFeatureName(featureIcs[i]) ) {
 	continue;
       }
 
@@ -348,16 +344,15 @@ public:
     importanceValues.resize(nIncludedFeatures);
     featureIcs.resize(nIncludedFeatures);
 
-    printAssociationsToFile(gen_op,
-			    treeData,
+    printAssociationsToFile(treeData,
 			    featureIcs,
 			    pValues,
 			    importanceValues,
 			    contrastImportanceSample);
 
-    if ( gen_op.log != "" ) {
+    if ( params_->log != "" ) {
 
-      ofstream toLogFile(gen_op.log.c_str());
+      ofstream toLogFile(params_->log.c_str());
       this->printHeader(toLogFile);
       RF_stat.print(toLogFile);
       toLogFile.close();
@@ -371,7 +366,7 @@ public:
     size_t nFeatures = treeData.nFeatures();
 
     cout << endl
-	 << "Significant associations (" << nIncludedFeatures << "/" << nFeatures - 1 << ") written to file '" << gen_op.output << "'. Format:" << endl
+	 << "Significant associations (" << nIncludedFeatures << "/" << nFeatures - 1 << ") written to file '" << params_->output << "'. Format:" << endl
 	 << "TARGET   PREDICTOR   P-VALUE   IMPORTANCE   CORRELATION   NSAMPLES" << endl
 	 << endl
 	 << "RF-ACE completed successfully." << endl
@@ -380,16 +375,15 @@ public:
   }
 
   statistics::RF_statistics executeRandomForest(Treedata& treeData,
-						options::General_options& gen_op,
 						vector<num_t>& pValues,
 						vector<num_t>& importanceValues,
 						vector<num_t>& contrastImportanceSample,
 						set<size_t>& featuresInAllForests) {
 
-    vector<vector<size_t> > nodeMat(gen_op.nPerms,vector<size_t>(gen_op.nTrees));
+    vector<vector<size_t> > nodeMat(params_->nPerms,vector<size_t>(params_->nTrees));
 
-    vector<vector<num_t> >         importanceMat( gen_op.nPerms, vector<num_t>(treeData.nFeatures()) );
-    vector<vector<num_t> > contrastImportanceMat( gen_op.nPerms, vector<num_t>(treeData.nFeatures()) );
+    vector<vector<num_t> >         importanceMat( params_->nPerms, vector<num_t>(treeData.nFeatures()) );
+    vector<vector<num_t> > contrastImportanceMat( params_->nPerms, vector<num_t>(treeData.nFeatures()) );
 
     size_t nFeatures = treeData.nFeatures();
 
@@ -400,20 +394,20 @@ public:
 
     Progress progress;
     clock_t timeStart( time(0) );
-    contrastImportanceSample.resize(gen_op.nPerms);
+    contrastImportanceSample.resize(params_->nPerms);
 
-    //size_t targetIdx = treeData.getFeatureIdx(gen_op.targetStr);
+    //size_t targetIdx = treeData.getFeatureIdx(params_->targetStr);
     //assert( targetIdx != treeData.end() );
 
     ftable_t frequency;
 
     timer_->tic("MODEL_BUILD");
 
-    for(size_t permIdx = 0; permIdx < gen_op.nPerms; ++permIdx) {
+    for(size_t permIdx = 0; permIdx < params_->nPerms; ++permIdx) {
 
-      progress.update(1.0*permIdx/gen_op.nPerms);
+      progress.update(1.0*permIdx/params_->nPerms);
 
-      StochasticForest SF(&treeData,gen_op);
+      StochasticForest SF(&treeData,params_);
 
       // Get the number of nodes in each tree in the forest
       for ( size_t treeIdx = 0; treeIdx < SF.nTrees(); ++treeIdx ) {
@@ -422,13 +416,21 @@ public:
 
       SF.getImportanceValues(importanceMat[permIdx],contrastImportanceMat[permIdx]);
 
+      cout << "Importances: ";
+      utils::write(cout,importanceMat[permIdx].begin(),importanceMat[permIdx].end());
+      cout << endl;
+      
+      cout << "Contrast importances: ";
+      utils::write(cout,contrastImportanceMat[permIdx].begin(),contrastImportanceMat[permIdx].end());
+      cout << endl;
+
       // Will update featuresInAllForests to contain all features in the current forest
       math::setUnion(featuresInAllForests,SF.getFeaturesInForest());
 
       // Store the new percentile value in the vector contrastImportanceSample
       contrastImportanceSample[permIdx] = math::mean( utils::removeNANs( contrastImportanceMat[permIdx] ) );
 
-      if ( gen_op.isSet(gen_op.pairInteractionOutput_s,gen_op.pairInteractionOutput_l) ) {
+      if ( params_->isSet(params_->pairInteractionOutput_s,params_->pairInteractionOutput_l) ) {
 	updateFeatureFrequency(frequency,&SF);
       }
 
@@ -440,7 +442,7 @@ public:
     assert( !datadefs::containsNAN(contrastImportanceSample) );
 
     // Notify if the sample size of the null distribution is very low
-    if ( gen_op.nPerms > 1 && contrastImportanceSample.size() < 5 ) {
+    if ( params_->nPerms > 1 && contrastImportanceSample.size() < 5 ) {
       cerr << " Too few samples drawn ( " << contrastImportanceSample.size()
 	   << " < 5 ) from the null distribution. Consider adding more permutations. Quitting..."
 	   << endl;
@@ -450,10 +452,10 @@ public:
     // Loop through each feature and calculate p-value for each
     for(size_t featureIdx = 0; featureIdx < treeData.nFeatures(); ++featureIdx) {
 
-      vector<num_t> featureImportanceSample(gen_op.nPerms);
+      vector<num_t> featureImportanceSample(params_->nPerms);
 
       // Extract the sample for the real feature
-      for ( size_t permIdx = 0; permIdx < gen_op.nPerms; ++permIdx ) {
+      for ( size_t permIdx = 0; permIdx < params_->nPerms; ++permIdx ) {
 	featureImportanceSample[permIdx] = importanceMat[permIdx][featureIdx];
       }
 
@@ -471,11 +473,11 @@ public:
 	// Perform WS-approximated t-test against the contrast sample
 	bool WS = true;
 
-	//cout << "contrastMinDepthSample:";
-	//utils::write(cout,contrastImportanceSample.begin(),contrastImportanceSample.end());
-	//cout << endl << "minDepthSample:";
-	//utils::write(cout,featureImportanceSample.begin(),featureImportanceSample.end());
-	//cout << endl;
+	cout << "contrastMinDepthSample:";
+	utils::write(cout,contrastImportanceSample.begin(),contrastImportanceSample.end());
+	cout << endl << "minDepthSample:";
+	utils::write(cout,featureImportanceSample.begin(),featureImportanceSample.end());
+	cout << endl;
 	pValues[featureIdx] = math::ttest(contrastImportanceSample,featureImportanceSample,WS);
 
       }
@@ -497,8 +499,8 @@ public:
     // Resize importance value container to proper dimensions
     importanceValues.resize( treeData.nFeatures() );
 
-    if ( gen_op.isSet(gen_op.pairInteractionOutput_s,gen_op.pairInteractionOutput_l) ) {
-      printPairInteractionsToFile(&treeData,frequency,gen_op.pairInteractionOutput,gen_op);
+    if ( params_->isSet(params_->pairInteractionOutput_s,params_->pairInteractionOutput_l) ) {
+      printPairInteractionsToFile(&treeData,frequency,params_->pairInteractionOutput);
     }
 
     timer_->toc("MODEL_TEST");
@@ -508,27 +510,27 @@ public:
 
   }
 
-  void trainAndTest(options::General_options& gen_op) {
+  void trainAndTest() {
 
-    if ( gen_op.isSet(gen_op.input_s,gen_op.input_l) ) {
+    if ( params_->isSet(params_->input_s,params_->input_l) ) {
 
       // Read train data into Treedata object
-      cout << "===> Reading file '" << gen_op.input << "', please wait... " << flush;
-      Treedata trainData(gen_op.input,&gen_op);
+      cout << "===> Reading file '" << params_->input << "', please wait... " << flush;
+      Treedata trainData(params_->input,params_);
       cout << "DONE" << endl;
 
-      StochasticForest SF = this->buildPredictor(trainData,gen_op);
+      StochasticForest SF = this->buildPredictor(trainData);
 
-      if ( gen_op.isSet(gen_op.predictionData_s,gen_op.predictionData_l) ) {
+      if ( params_->isSet(params_->predictionData_s,params_->predictionData_l) ) {
 
 	cout << "===> Making predictions with test data... " << flush;
 
-	Treedata treeDataTest(gen_op.predictionData,&gen_op);
+	Treedata treeDataTest(params_->predictionData,params_);
 
-	printPredictionToFile(SF,treeDataTest,gen_op.targetStr,gen_op.output);
+	printPredictionToFile(SF,treeDataTest,params_->targetStr,params_->output);
 
 	cout << "DONE" << endl << endl;
-	cout << "Prediction file '" << gen_op.output << "' created. Format:" << endl
+	cout << "Prediction file '" << params_->output << "' created. Format:" << endl
 	     << "TARGET   SAMPLE_ID  TRUE_DATA(*)  PREDICTION    CONFIDENCE(**)" << endl
 	     << endl
 	     << "  (*): should target variable have true data for test samples, write them," << endl
@@ -541,10 +543,10 @@ public:
       } else {
 
 	cout << "===> Writing predictor to file... " << flush;
-	SF.printToFile( gen_op.output );
+	SF.printToFile( params_->output );
 	cout << "DONE" << endl
 	     << endl
-	     << "RF-ACE predictor built and saved to a file '" << gen_op.output << "'" << endl
+	     << "RF-ACE predictor built and saved to a file '" << params_->output << "'" << endl
 	     << endl;
 
       }
@@ -553,26 +555,26 @@ public:
 
     }
 
-    if ( !gen_op.isSet(gen_op.forestInput_s,gen_op.forestInput_l) ) {
+    if ( !params_->isSet(params_->forestInput_s,params_->forestInput_l) ) {
       cerr << "If no input data is specified, forest file for prediction is assumed" << endl;
       exit(1);
     }
 
-    if ( !gen_op.isSet(gen_op.predictionData_s,gen_op.predictionData_l) ) {
+    if ( !params_->isSet(params_->predictionData_s,params_->predictionData_l) ) {
       cerr << "If forest predictor is given as input, prediction data is assumed" << endl;
       exit(1);
     }
 
-    StochasticForest SF(gen_op);
+    StochasticForest SF(params_);
 
     cout << "===> Making predictions with test data... " << flush;
 
-    Treedata treeDataTest(gen_op.predictionData,&gen_op);
+    Treedata treeDataTest(params_->predictionData,params_);
 
-    printPredictionToFile(SF,treeDataTest,gen_op.targetStr,gen_op.output);
+    printPredictionToFile(SF,treeDataTest,params_->targetStr,params_->output);
 
     cout << "DONE" << endl << endl;
-    cout << "Prediction file '" << gen_op.output << "' created. Format:" << endl
+    cout << "Prediction file '" << params_->output << "' created. Format:" << endl
 	 << "TARGET   SAMPLE_ID  TRUE_DATA(*)  PREDICTION    CONFIDENCE(**)" << endl
 	 << endl
 	 << "  (*): should target variable have true data for test samples, write them," << endl
@@ -584,8 +586,7 @@ public:
 
   }
 
-  void printAssociationsToFile(options::General_options& gen_op,
-			       Treedata& treeData,
+  void printAssociationsToFile(Treedata& treeData,
 			       vector<size_t>& featureIcs,
 			       vector<num_t>& pValues,
 			       vector<num_t>& importanceValues,
@@ -596,9 +597,9 @@ public:
     assert( featureIcs.size() == pValues.size() );
     assert( featureIcs.size() == importanceValues.size() );
 
-    ofstream toAssociationFile(gen_op.output.c_str());
+    ofstream toAssociationFile(params_->output.c_str());
 
-    size_t targetIdx = treeData.getFeatureIdx(gen_op.targetStr);
+    size_t targetIdx = treeData.getFeatureIdx(params_->targetStr);
 
     for ( size_t i = 0; i < featureIcs.size(); ++i ) {
 
@@ -608,15 +609,15 @@ public:
       num_t correlation = treeData.pearsonCorrelation(targetIdx,featureIcs[i]);
       size_t sampleCount = treeData.nRealSamples(targetIdx,featureIcs[i]);
 
-      toAssociationFile << gen_op.targetStr.c_str() << "\t" << featureName
+      toAssociationFile << params_->targetStr.c_str() << "\t" << featureName
 			<< "\t" << scientific << pValues[i] << "\t" << scientific << importanceValues[i] << "\t"
 			<< scientific << correlation << "\t" << sampleCount << endl;
 
     }
 
-    if ( gen_op.reportContrasts ) {
+    if ( params_->reportContrasts ) {
       for ( size_t i = 0; i < contrastImportanceSample.size(); ++i ) {
-	toAssociationFile << gen_op.targetStr << "\t" << datadefs::CONTRAST
+	toAssociationFile << params_->targetStr << "\t" << datadefs::CONTRAST
 			  << "\t" << scientific << 1.0 << "\t" << scientific << contrastImportanceSample[i] << "\t"
 			  << scientific << 0.0 << "\t" << 0 << endl;
       }
@@ -626,10 +627,10 @@ public:
 
   }
 
-  void recombine(options::General_options& gen_op) {
+  void recombine() {
 
     // Read all lines from file
-    vector<string> associations = utils::readListFromFile(gen_op.input,'\n');
+    vector<string> associations = utils::readListFromFile(params_->input,'\n');
 
     // Initialize containers for storing the maps from associated features to
     // variables
@@ -641,7 +642,7 @@ public:
     vector<string> association = utils::split(associations[0],'\t');
 
     // ... and from the first association extract the target feature
-    gen_op.targetStr = association[0];
+    params_->targetStr = association[0];
 
     // Go through all associations in the list and update the map containers
     for ( size_t i = 0; i < associations.size(); ++i ) {
@@ -655,7 +656,7 @@ public:
       // Make sure the target feature is listed as first in each entry in the file
       // that is to be recombined (thus, we know that the entries are related to
       // the same variable)
-      assert( gen_op.targetStr == association[0] );
+      assert( params_->targetStr == association[0] );
 
       // Extract the importance value ...
       num_t importanceValue = utils::str2<num_t>(association[3]);
@@ -680,7 +681,7 @@ public:
     vector<size_t> sampleCounts(nRealFeatures);
 
     vector<num_t> contrastImportanceSample = associationMap[datadefs::CONTRAST];
-    contrastImportanceSample.resize(gen_op.recombinePerms,0.0);
+    contrastImportanceSample.resize(params_->recombinePerms,0.0);
 
     // Notify if the sample size of the null distribution is very low
     if ( contrastImportanceSample.size() < 5 ) {
@@ -698,14 +699,14 @@ public:
       // For clarity map the iterator into more representative variable names
       string featureName = it->first;
       vector<num_t> importanceSample = it->second;
-      importanceSample.resize(gen_op.recombinePerms,0.0);
+      importanceSample.resize(params_->recombinePerms,0.0);
 
       num_t pValue = math::ttest(importanceSample,contrastImportanceSample);
       num_t importanceValue = math::mean(importanceSample);
 
       bool featureIsContrast = featureName == datadefs::CONTRAST;
-      bool tooHighPValue = gen_op.nPerms > 1 && pValue > gen_op.pValueThreshold;
-      bool tooLowImportance = importanceValue < gen_op.importanceThreshold;
+      bool tooHighPValue = params_->nPerms > 1 && pValue > params_->pValueThreshold;
+      bool tooLowImportance = importanceValue < params_->importanceThreshold;
 
       if ( tooLowImportance ||
          tooHighPValue ||
@@ -729,11 +730,11 @@ public:
     correlations.resize(nIncludedFeatures);
     sampleCounts.resize(nIncludedFeatures);
 
-    ofstream toAssociationFile(gen_op.output.c_str());
+    ofstream toAssociationFile(params_->output.c_str());
 
     for ( size_t i = 0; i < featureNames.size(); ++i ) {
 
-      toAssociationFile << gen_op.targetStr.c_str() << "\t" << featureNames[i]
+      toAssociationFile << params_->targetStr.c_str() << "\t" << featureNames[i]
 			<< "\t" << scientific << pValues[i] << "\t" << scientific << importanceValues[i] << "\t"
 			<< scientific << correlations[i] << "\t" << sampleCounts[i] << endl;
 
@@ -835,7 +836,7 @@ public:
 
   };
 
-  void printPairInteractionsToFile(Treedata* trainData, ftable_t& frequency, const string& fileName, options::General_options& gen_op) {
+  void printPairInteractionsToFile(Treedata* trainData, ftable_t& frequency, const string& fileName) {
 
     ofstream toFile(fileName.c_str());
 
@@ -855,7 +856,7 @@ public:
     sort(fTuples.begin(),fTuples.end(),sorter);
 
     for ( size_t i = 0; i < fTuples.size(); ++i ) {
-      toFile << trainData->getFeatureName( fTuples[i][0] ) << "\t" << trainData->getFeatureName( fTuples[i][1] ) << "\t" << 100.0 * fTuples[i][2] / ( gen_op.nPerms * gen_op.nTrees ) << endl;
+      toFile << trainData->getFeatureName( fTuples[i][0] ) << "\t" << trainData->getFeatureName( fTuples[i][1] ) << "\t" << 100.0 * fTuples[i][2] / ( params_->nPerms * params_->nTrees ) << endl;
     }
 
     toFile.close();
@@ -866,6 +867,7 @@ public:
 private:
 
   Timer* timer_;
+  options::General_options* params_;
   
 };
 
