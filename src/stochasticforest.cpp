@@ -201,7 +201,7 @@ void StochasticForest::printToFile(const string& fileName) {
   
 }
 
-void growTreesPerThread(vector<RootNode*>& rootNodes) {
+void growTreesPerThread(const vector<RootNode*>& rootNodes) {
    
   for ( size_t i = 0; i < rootNodes.size(); ++i ) {
     rootNodes[i]->growTree();
@@ -212,11 +212,6 @@ void growTreesPerThread(vector<RootNode*>& rootNodes) {
 
 void StochasticForest::learnRF() {
 
-  // If we use contrasts, we need to permute them before using
-  //if(params_->useContrasts) {
-  //  trainData_->permuteContrasts(params_->randIntGens[0]);
-  //}
-
   if ( params_->isRandomSplit && params_->mTry == 0 ) {
     cerr << "StochasticForest::learnRF() -- for randomized splits mTry must be greater than 0" << endl;
     exit(1);
@@ -226,7 +221,7 @@ void StochasticForest::learnRF() {
   assert( params_->nTrees > 0);
   assert( rootNodes_.size() == params_->nTrees );
 
-#ifndef NOTHREADS
+#ifdef NOTHREADS
   assert( params_->nThreads == 1 );
 #endif
 
@@ -257,7 +252,7 @@ void StochasticForest::learnRF() {
       for ( size_t i = 0; i < treeIcsPerThread.size(); ++i ) {
 	
 	rootNodes_[treeIcsPerThread[i]] = new RootNode(trainData_,
-						       &params_,
+						       params_,
 						       threadIdx);
 	
 	rootNodesPerThread[i] = rootNodes_[treeIcsPerThread[i]];
@@ -574,9 +569,9 @@ void StochasticForest::getImportanceValues(vector<num_t>& importanceValues, vect
 }
 
 void predictCatPerThread(Treedata* testData, 
-			 vector<RootNode*>& rootNodes, 
+			 const vector<RootNode*>& rootNodes, 
 			 options::General_options* parameters,
-			 vector<size_t>& sampleIcs, 
+			 const vector<size_t>& sampleIcs, 
 			 vector<string>* predictions, 
 			 vector<num_t>* confidence) {
   size_t nTrees = rootNodes.size();
@@ -600,7 +595,7 @@ void predictCatPerThread(Treedata* testData,
 
 
 void predictNumPerThread(Treedata* testData, 
-			 vector<RootNode*>& rootNodes, 
+			 const vector<RootNode*>& rootNodes, 
 			 options::General_options* parameters, 
 			 vector<size_t>& sampleIcs, 
 			 vector<num_t>* predictions, 
@@ -636,7 +631,7 @@ void StochasticForest::predict(Treedata* testData, vector<string>& predictions, 
   assert( !this->isTargetNumerical() );
   assert( params_->nThreads > 0 );
 
-#ifndef NOTHREADS
+#ifdef NOTHREADS
   assert( params_->nThreads == 1 );
 #endif
 
@@ -662,7 +657,7 @@ else {
     for ( size_t threadIdx = 0; threadIdx < params_->nThreads; ++threadIdx ) {
       // We only launch a thread if there are any samples allocated for prediction
       if ( sampleIcs.size() > 0 ) {
-	threads.push_back( thread(predictCatPerThread,testData,rootNodes_,&params_,sampleIcs[threadIdx],&predictions,&confidence) );
+	threads.push_back( thread(predictCatPerThread,testData,rootNodes_,params_,sampleIcs[threadIdx],&predictions,&confidence) );
       }
     }
     
@@ -705,7 +700,7 @@ else {
     
     for ( size_t threadIdx = 0; threadIdx < params_->nThreads; ++threadIdx ) {
       // We only launch a thread if there are any samples allocated for prediction
-      threads.push_back( thread(predictNumPerThread,testData,rootNodes_,&params_,sampleIcs[threadIdx],&predictions,&confidence,GBTconstant_,GBTfactors_) );
+      threads.push_back( thread(predictNumPerThread,testData,rootNodes_,params_,sampleIcs[threadIdx],&predictions,&confidence,GBTconstant_,GBTfactors_) );
     }
     
     // Join all launched threads
