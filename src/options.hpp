@@ -31,6 +31,7 @@ namespace options {
   const ForestType GENERAL_DEFAULT_MODEL_TYPE = RF;
   const size_t     GENERAL_DEFAULT_N_THREADS = 1;
   const bool       GENERAL_DEFAULT_IS_MAX_THREADS = false;
+  const num_t      GENERAL_DEFAULT_FEATURE_WEIGHT = 0;
 
   // Statistical test default configuration
   const size_t     ST_DEFAULT_N_PERMS = 20;
@@ -78,9 +79,6 @@ namespace options {
   
   class Base_options {
     
-    //private:
-    //ArgParse* parser_;
-    
   public:
     // EXPERIMENTAL
     size_t recombinePerms; const string recombinePerms_s; const string recombinePerms_l;
@@ -105,6 +103,7 @@ namespace options {
     int seed; string seed_s; string seed_l;
     size_t nThreads; const string nThreads_s; const string nThreads_l;
     bool isMaxThreads; const string isMaxThreads_s; const string isMaxThreads_l;
+    num_t defaultFeatureWeight; const string defaultFeatureWeights_s; const string defaultFeatureWeight_l;
 
     // Forest Type
     ForestType modelType; const string modelType_s; const string modelType_l;
@@ -193,7 +192,9 @@ namespace options {
         setCARTDefaults();
       }
 
-      this->loadUserParams(); 
+      this->setDefaults();
+      this->initRandIntGens();
+      this->resolveParamLogic();
     }
     
     General_options(const int argc, char* const argv[]):
@@ -208,14 +209,25 @@ namespace options {
 	setCARTDefaults();
       } 
 
+      this->setDefaults();
       this->loadUserParams();
-      
+      this->initRandIntGens();
+      this->resolveParamLogic();
     }
     
-    ~General_options() {
-      //if ( parser_ ) {
-      //delete parser_;
-      //}
+    ~General_options() { }
+
+    void setDefaults() {
+      if ( modelType == RF ) {
+        setRFDefaults();
+      } else if ( modelType == GBT ) {
+        setGBTDefaults();
+      } else if ( modelType == CART ) {
+        setCARTDefaults();
+      } else {
+        cerr << "Unknown forest type!" << endl;
+        exit(1);
+      }
     }
 
     void initRandIntGens() {
@@ -240,6 +252,13 @@ namespace options {
 
     }
 
+    void resolveParamLogic() {
+      if ( nPerms > 1 ) {
+	useContrasts = true;
+      }
+    }
+
+
     void loadUserParams() {
 
       // If forest type is explicitly specified, update it
@@ -248,25 +267,17 @@ namespace options {
         parser_.getArgument<string>(modelType_s, modelType_l, modelTypeAsStr);
         if ( modelTypeAsStr == "RF" ) {
           modelType = RF;
-        } else if ( modelTypeAsStr == "GBT" ) {
+	  this->setRFDefaults();
+	} else if ( modelTypeAsStr == "GBT" ) {
           modelType = GBT;
+	  this->setGBTDefaults();
         } else if ( modelTypeAsStr == "CART" ) {
           modelType = CART;
+	  this->setCARTDefaults();
         } else {
           cerr << "Invalid Forest Type!" << endl;
           exit(1);
         }
-      }
-
-      if ( modelType == RF ) {
-        setRFDefaults();
-      } else if ( modelType == GBT ) {
-        setGBTDefaults();
-      } else if ( modelType == CART ) {
-	setCARTDefaults();
-      } else {
-	cerr << "Unknown forest type!" << endl;
-	exit(1);
       }
             
       // EXPERIMENTAL PARAMETERS
@@ -319,7 +330,7 @@ namespace options {
       parser_.getArgument<num_t>(importanceThreshold_s, importanceThreshold_l, importanceThreshold);
       parser_.getFlag(reportAllFeatures_s, reportAllFeatures_l, reportAllFeatures);
 
-      this->initRandIntGens();
+      //this->initRandIntGens();
 
     }
 
