@@ -122,13 +122,57 @@ int main(const int argc, char* const argv[]) {
 
   } else {
 
-    if ( programLogic.trainModel ) {}
-    if ( programLogic.testModel ) {}
-    if ( programLogic.saveModel ) {}
-    if ( programLogic.loadModel ) {}
+    if ( programLogic.loadModel ) {
+
+      rface.load(params.forestInput);
+      
+    }
+
+    if ( programLogic.trainModel ) {
+
+      // Read train data into Treedata object
+      cout << "===> Reading train file '" << params.input << "', please wait... " << flush;
+      Treedata trainData(params.input,&params);
+      cout << "DONE" << endl;
+      
+      rface.train(trainData);
+      
+    }
+
+    if ( programLogic.testModel ) {
+
+      cout << "===> Reading test file '" << params.predictionData << "', please wait..." << flush;
+      Treedata testData(params.predictionData,&params);
+      cout << "DONE" << endl;
+      
+      cout << "===> Making predictions with test data... " << flush;
+      rface.test(testData);
+      cout << "DONE" << endl;
+
+      cout << "Prediction file '" << params.output << "' created. Format:" << endl
+	   << "TARGET   SAMPLE_ID  TRUE_DATA(*)  PREDICTION    CONFIDENCE(**)" << endl
+	   << endl
+	   << "  (*): should target variable have true data for test samples, write them," << endl
+	   << "       otherwise write NA" << endl
+	   << " (**): confidence is the st.dev for regression and % of mispred. for classification" << endl
+	   << endl
+	   << "RF-ACE completed successfully." << endl
+	   << endl;
+
+
+    }
+
+    if ( programLogic.saveModel ) {
+
+      cout << "===> Writing predictor to file... " << flush;
+      rface.save( params.output );
+      cout << "DONE" << endl
+	   << endl
+	   << "RF-ACE predictor built and saved to a file '" << params.output << "'" << endl
+	   << endl;
+
+    }
     
-    // Will need to split this one into smaller chunks
-    rface.trainAndTest();
 
   }
 

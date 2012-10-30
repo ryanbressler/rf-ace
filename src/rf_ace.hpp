@@ -39,7 +39,7 @@ class RFACE {
 
 public:
 
-  RFACE(options::General_options& params) {
+  RFACE(options::General_options& params): trainedModel_(NULL) {
     
     // Structs that store all the user-specified command-line arguments
     params_ = new options::General_options(params);
@@ -50,8 +50,14 @@ public:
 
   ~RFACE() {
 
+    timer_->print();
     delete timer_;
     delete params_;
+
+    if ( trainedModel_ ) {
+      delete trainedModel_;
+      trainedModel_ = NULL;
+    }
     
   }
 
@@ -199,16 +205,18 @@ public:
 
   }
 
-  StochasticForest buildPredictor(Treedata& trainData) {
+  void train(Treedata& trainData) {
     
+    if ( trainedModel_ ) {
+      delete trainedModel_;
+      trainedModel_ = NULL;
+    }
+
     updateTargetStr(trainData);
     
     pruneFeatureSpace(trainData);
     
     setEnforcedForestParameters(trainData);
-    
-    // We never want to use contrasts when we are building a predictor
-    //params_->useContrasts = false;
     
     printGeneralSetup(trainData);
     
@@ -227,19 +235,19 @@ public:
       exit(1);
     }
     
-    StochasticForest SF(&trainData,params_);
+    trainedModel_ = new StochasticForest(&trainData,params_);
     cout << "DONE" << endl << endl;
     
     if ( params_->modelType == options::GBT ) {
       cout << "GBT diagnostics disabled temporarily" << endl << endl;
-      return( SF );
+      return;
     }
     
     size_t targetIdx = trainData.getFeatureIdx(params_->targetStr);
     vector<num_t> data = utils::removeNANs(trainData.getFeatureData(targetIdx));
 
-    num_t oobError = SF.getOobError();
-    num_t ibOobError =  SF.getError();
+    num_t oobError = trainedModel_->getOobError();
+    num_t ibOobError =  trainedModel_->getError();
     
     cout << "RF training error measures (NULL == no model):" << endl;
     if ( trainData.isFeatureNumerical(targetIdx) ) {
@@ -256,8 +264,6 @@ public:
       cout << "  % explained by model = " << 1 - oobError / nullError << " ( 1 - (OOB # mispred.) / (NULL # mispred.) )" << endl;
     }
     cout << endl;
-
-    return( SF );
 
   }
 
@@ -496,82 +502,32 @@ public:
 
   }
 
-  void trainAndTest() {
+  void test(Treedata& testData) {
 
-    if ( params_->isSet(params_->input_s,params_->input_l) ) {
+    assert(trainedModel_);
 
-      // Read train data into Treedata object
-      cout << "===> Reading file '" << params_->input << "', please wait... " << flush;
-      Treedata trainData(params_->input,params_);
-      cout << "DONE" << endl;
-
-      StochasticForest SF = this->buildPredictor(trainData);
-
-      if ( params_->isSet(params_->predictionData_s,params_->predictionData_l) ) {
-
-	cout << "===> Making predictions with test data... " << flush;
-
-	Treedata treeDataTest(params_->predictionData,params_);
-
-	printPredictionToFile(SF,treeDataTest,params_->targetStr,params_->output);
-
-	cout << "DONE" << endl << endl;
-	cout << "Prediction file '" << params_->output << "' created. Format:" << endl
-	     << "TARGET   SAMPLE_ID  TRUE_DATA(*)  PREDICTION    CONFIDENCE(**)" << endl
-	     << endl
-	     << "  (*): should target variable have true data for test samples, write them," << endl
-	     << "       otherwise write NA" << endl
-	     << " (**): confidence is the st.dev for regression and % of mispred. for classification" << endl
-	     << endl
-	     << "RF-ACE completed successfully." << endl
-	     << endl;
-
-      } else {
-
-	cout << "===> Writing predictor to file... " << flush;
-	SF.printToFile( params_->output );
-	cout << "DONE" << endl
-	     << endl
-	     << "RF-ACE predictor built and saved to a file '" << params_->output << "'" << endl
-	     << endl;
-
-      }
-
-      return;
-
+    printPredictionToFile(*trainedModel_,testData,params_->targetStr,params_->output);
+	
+  }
+  
+  void load(const string& file) {
+    
+    if ( trainedModel_ ) {
+      delete trainedModel_;
+      trainedModel_ = NULL;
     }
-
-    if ( !params_->isSet(params_->forestInput_s,params_->forestInput_l) ) {
-      cerr << "If no input data is specified, forest file for prediction is assumed" << endl;
-      exit(1);
-    }
-
-    if ( !params_->isSet(params_->predictionData_s,params_->predictionData_l) ) {
-      cerr << "If forest predictor is given as input, prediction data is assumed" << endl;
-      exit(1);
-    }
-
-    StochasticForest SF(params_);
-
-    cout << "===> Making predictions with test data... " << flush;
-
-    Treedata treeDataTest(params_->predictionData,params_);
-
-    printPredictionToFile(SF,treeDataTest,params_->targetStr,params_->output);
-
-    cout << "DONE" << endl << endl;
-    cout << "Prediction file '" << params_->output << "' created. Format:" << endl
-	 << "TARGET   SAMPLE_ID  TRUE_DATA(*)  PREDICTION    CONFIDENCE(**)" << endl
-	 << endl
-	 << "  (*): should target variable have true data for test samples, write them," << endl
-	 << "       otherwise write NA" << endl
-	 << " (**): confidence is the st.dev for regression and % of mispred. for classification" << endl
-	 << endl
-	 << "RF-ACE completed successfully." << endl
-	 << endl;
-
+    
+    trainedModel_ = new StochasticForest(params_);
   }
 
+  void save(const string& file) {
+
+    assert(trainedModel_);
+    
+    trainedModel_->printToFile( file );
+
+  }
+  
   void printAssociationsToFile(Treedata& treeData,
 			       vector<size_t>& featureIcs,
 			       vector<num_t>& pValues,
@@ -851,6 +807,8 @@ public:
 
 
 private:
+
+  StochasticForest* trainedModel_;
 
   Timer* timer_;
   options::General_options* params_;
