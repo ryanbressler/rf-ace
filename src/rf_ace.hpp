@@ -267,7 +267,7 @@ public:
 
   }
 
-  void filter(Treedata& treeData) {
+  void filter(Treedata& treeData, const vector<num_t>& weights) {
 
     statistics::RF_statistics RF_stat;
 

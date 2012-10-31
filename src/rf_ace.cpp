@@ -14,12 +14,14 @@ using namespace std;
 using datadefs::num_t;
 
 struct ProgramLogic {
+
   bool filter;
   bool recombine;
   bool trainModel;
   bool testModel;
   bool saveModel;
   bool loadModel;
+
   void parse(options::General_options* params) {
     
     bool isTargetSet     = params->isSet(params->targetStr_s,params->targetStr_l);
@@ -91,6 +93,8 @@ struct ProgramLogic {
 
 } programLogic;
 
+vector<num_t> readFeatureWeights(Treedata& treeData, const string& fileName, const num_t featureWeight);
+
 int main(const int argc, char* const argv[]) {
 
   options::General_options params(argc,argv);
@@ -112,7 +116,9 @@ int main(const int argc, char* const argv[]) {
     Treedata treeData(params.input,&params);
     cout << "DONE" << endl;
 
-    rface.filter(treeData);
+    vector<num_t> weights = readFeatureWeights(treeData,params.featureWeightFile,params.defaultFeatureWeight);
+    
+    rface.filter(treeData,weights);
 
   } else if ( programLogic.recombine ) {
     
@@ -180,6 +186,35 @@ int main(const int argc, char* const argv[]) {
 
 }
 
+vector<num_t> readFeatureWeights(Treedata& treeData, const string& fileName, const num_t defaulFeatureWeight) {
+
+  if ( fileName == "" ) {
+    return( vector<num_t>(treeData.nFeatures(),1) );
+  } else {
+    
+    vector<num_t> weights(treeData.nFeatures(),defaulFeatureWeight);
+    
+    vector<string> weightStrings = utils::readListFromFile(fileName,'\n');
+    
+    for ( size_t i = 0; i < weightStrings.size(); ++i ) {
+      vector<string> weightPair = utils::split(weightStrings[i],'\t');
+      string featureName = weightPair[0];
+      size_t featureIdx = treeData.getFeatureIdx(featureName);
+      
+      if ( featureIdx == treeData.end() ) {
+	cerr << "Unknown feature name in feature weights: " << featureName << endl;
+	exit(1);
+      }
+      
+      weights[featureIdx] = utils::str2<num_t>(weightPair[1]);
+      
+    }
+    
+    return( weights );
+
+  }
+
+}
 
 #ifdef RFACER
 #include <Rcpp.h>
