@@ -16,24 +16,32 @@
 #include "math.hpp"
 
 
-StochasticForest::StochasticForest(Treedata* trainData, options::General_options* params):
+StochasticForest::StochasticForest(Treedata* trainData, const vector<num_t>& featureWeights, options::General_options* params):
   trainData_(trainData),
   params_(params),
   rootNodes_(params_->nTrees) {
 
   size_t targetIdx = trainData_->getFeatureIdx(params_->targetStr);
 
+  assert( targetIdx != trainData_->end() );
+
   isTargetNumerical_ = trainData_->isFeatureNumerical(targetIdx);
 
   categories_ = trainData_->categories(targetIdx);
 
+  assert( trainData->nFeatures() == featureWeights.size() );
+
+  assert( fabs(featureWeights[targetIdx]) < datadefs::EPS );
+
+  distributions::PMF pmf(featureWeights);
+
   // Grows the forest
   if ( params_->modelType == options::RF ) {
-    this->learnRF();
+    this->learnRF(pmf);
   } else if ( params_->modelType == options::GBT ) {
-    this->learnGBT();
+    this->learnGBT(pmf);
   } else if ( params_->modelType == options::CART ) {
-    this->learnRF();
+    this->learnRF(pmf);
   } else {
     cerr << "Unknown model to be learned!" << endl;
     exit(1);
@@ -50,6 +58,7 @@ StochasticForest::StochasticForest(Treedata* trainData, options::General_options
 }
 
 StochasticForest::StochasticForest(options::General_options* params):
+  trainData_(NULL),
   params_(params) {
 
   ifstream forestStream( params_->forestInput.c_str() );
@@ -115,7 +124,7 @@ StochasticForest::StochasticForest(options::General_options* params):
     // If the node is rootnode, we will create a new RootNode object and assign a reference to it in forestMap
     if ( nodeMap["NODE"] == "*" ) {
       size_t threadIdx = 0;
-      rootNodes_[treeIdx] = new RootNode(NULL,params_,threadIdx);
+      rootNodes_[treeIdx] = new RootNode(params_,threadIdx);
       forestMap[treeIdx]["*"] = rootNodes_[treeIdx];
     }
       
@@ -201,16 +210,17 @@ void StochasticForest::printToFile(const string& fileName) {
   
 }
 
-void growTreesPerThread(const vector<RootNode*>& rootNodes) {
+void growTreesPerThread(const vector<RootNode*>& rootNodes, Treedata* trainData, distributions::PMF* pmf) {
    
   for ( size_t i = 0; i < rootNodes.size(); ++i ) {
-    rootNodes[i]->growTree();
+    rootNodes[i]->growTree(trainData,pmf);
   }
 
 }
 
 
-void StochasticForest::learnRF() {
+
+void StochasticForest::learnRF(distributions::PMF& pmf) {
 
   if ( params_->isRandomSplit && params_->mTry == 0 ) {
     cerr << "StochasticForest::learnRF() -- for randomized splits mTry must be greater than 0" << endl;
@@ -232,8 +242,8 @@ void StochasticForest::learnRF() {
     size_t threadIdx = 0;
     
     for ( size_t treeIdx = 0; treeIdx < rootNodes_.size(); ++treeIdx ) {
-      rootNodes_[treeIdx] = new RootNode(trainData_,params_,threadIdx);
-      rootNodes_[treeIdx]->growTree();
+      rootNodes_[treeIdx] = new RootNode(params_,threadIdx);
+      rootNodes_[treeIdx]->growTree(trainData_,&pmf);
     }
 
   } 
@@ -251,16 +261,14 @@ void StochasticForest::learnRF() {
       
       for ( size_t i = 0; i < treeIcsPerThread.size(); ++i ) {
 	
-	rootNodes_[treeIcsPerThread[i]] = new RootNode(trainData_,
-						       params_,
-						       threadIdx);
+	rootNodes_[treeIcsPerThread[i]] = new RootNode(params_,threadIdx);
 	
 	rootNodesPerThread[i] = rootNodes_[treeIcsPerThread[i]];
 	
 	//rootNodes_[treeIcsPerThread[i]]->growTree();
       }
       
-      threads.push_back( thread(growTreesPerThread,rootNodesPerThread) ); //thread(this->growTrees,treeIcsPerThread[threadIdx],threadIdx);
+      threads.push_back( thread(growTreesPerThread,rootNodesPerThread,trainData,&pmf) ); //thread(this->growTrees,treeIcsPerThread[threadIdx],threadIdx);
     }
     
     for ( size_t threadIdx = 0; threadIdx < threads.size(); ++threadIdx ) {
@@ -270,7 +278,7 @@ void StochasticForest::learnRF() {
 #endif
 }
 
-void StochasticForest::learnGBT() {
+void StochasticForest::learnGBT(distributions::PMF& pmf) {
  
 
   //size_t targetIdx = trainData_->getFeatureIdx( params_->targetStr );
@@ -289,22 +297,21 @@ void StochasticForest::learnGBT() {
   //Allocates memory for the root nodes. With all these parameters, the RootNode is now able to take full control of the splitting process
   rootNodes_.resize( params_->nTrees );
   for(size_t treeIdx = 0; treeIdx < params_->nTrees; ++treeIdx) {
-    rootNodes_[treeIdx] = new RootNode(trainData_,
-				       params_,
+    rootNodes_[treeIdx] = new RootNode(params_,
 				       threadIdx);
   }
     
   if ( isTargetNumerical_ ) {
-    this->growNumericalGBT();
+    this->growNumericalGBT(pmf);
   } else {
-    this->growCategoricalGBT();
+    this->growCategoricalGBT(pmf);
   }
 
 }
 
 
 // Grow a GBT "forest" for a numerical target variable
-void StochasticForest::growNumericalGBT() {
+void StochasticForest::growNumericalGBT(distributions::PMF& pmf) {
 
   size_t targetIdx = trainData_->getFeatureIdx( params_->targetStr );
   
@@ -333,7 +340,7 @@ void StochasticForest::growNumericalGBT() {
     trainData_->replaceFeatureData(targetIdx,curTargetData);
 
     // Grow a tree to predict the current target
-    rootNodes_[treeIdx]->growTree();
+    rootNodes_[treeIdx]->growTree(trainData_,&pmf);
 
     // What kind of a prediction does the new tree produce?
     vector<num_t> curPrediction = rootNodes_[treeIdx]->getTrainPrediction(); 
@@ -371,7 +378,7 @@ void StochasticForest::growNumericalGBT() {
 }
 
 // Grow a GBT "forest" for a categorical target variable
-void StochasticForest::growCategoricalGBT() {
+void StochasticForest::growCategoricalGBT(distributions::PMF& pmf) {
   
   size_t targetIdx = trainData_->getFeatureIdx( params_->targetStr );
   size_t nCategories = trainData_->nCategories( targetIdx );
@@ -423,7 +430,7 @@ void StochasticForest::growCategoricalGBT() {
       // Grow a tree to predict the current target
       size_t treeIdx = m * nCategories + k; // tree index
       //size_t nNodes;
-      rootNodes_[treeIdx]->growTree();
+      rootNodes_[treeIdx]->growTree(trainData_,&pmf);
 
       //cout << "Tree " << treeIdx << " ready, predicting OOB samples..." << endl;
 

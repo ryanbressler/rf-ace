@@ -219,7 +219,7 @@ string Node::getRawTrainPrediction() {
 void Node::recursiveNodeSplit(Treedata* treeData,
 			      const size_t targetIdx,
 			      const PredictionFunctionType& predictionFunctionType,
-			      vector<size_t> featureIcs,
+			      distributions::PMF* pmf,
 			      const vector<size_t>& sampleIcs,
 			      const size_t treeDepth,
 			      set<size_t>& featuresInTree,
@@ -263,14 +263,20 @@ void Node::recursiveNodeSplit(Treedata* treeData,
     return;
   }
 
-  vector<size_t> featureSampleIcs = featureIcs;
+  vector<size_t> featureSampleIcs(parameters_->mTry);
 
   if(parameters_->isRandomSplit) {
 
-    utils::permute(featureSampleIcs,parameters_->randIntGens[threadIdx_]);
+    // featureSampleIcs.resize(parameters_->mTry);
+
+    for ( size_t i = 0; i < parameters_->mTry; ++i ) {
+      featureSampleIcs[i] = pmf->icdf( parameters_->randIntGens[threadIdx_].uniform() );
+    }
+
+    // utils::permute(featureSampleIcs,parameters_->randIntGens[threadIdx_]);
 
     // Take only the first ones
-    featureSampleIcs.resize(parameters_->mTry);
+    // featureSampleIcs.resize(parameters_->mTry);
 
   }
 
@@ -312,8 +318,8 @@ void Node::recursiveNodeSplit(Treedata* treeData,
 
   *nLeaves += 1;
   
-  leftChild_->recursiveNodeSplit(treeData,targetIdx,predictionFunctionType,featureIcs,sampleIcs_left,treeDepth+1,featuresInTree,minDistToRoot,nLeaves);
-  rightChild_->recursiveNodeSplit(treeData,targetIdx,predictionFunctionType,featureIcs,sampleIcs_right,treeDepth+1,featuresInTree,minDistToRoot,nLeaves);
+  leftChild_->recursiveNodeSplit(treeData,targetIdx,predictionFunctionType,pmf,sampleIcs_left,treeDepth+1,featuresInTree,minDistToRoot,nLeaves);
+  rightChild_->recursiveNodeSplit(treeData,targetIdx,predictionFunctionType,pmf,sampleIcs_right,treeDepth+1,featuresInTree,minDistToRoot,nLeaves);
   
 }
 

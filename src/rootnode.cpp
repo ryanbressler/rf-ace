@@ -3,28 +3,25 @@
 #include "rootnode.hpp"
 #include "datadefs.hpp"
 
-RootNode::RootNode(Treedata* trainData,
-		   options::General_options* parameters,
+RootNode::RootNode(options::General_options* parameters,
 		   size_t threadIdx): 
   Node(parameters,threadIdx),
   //parameters_(parameters),
   //threadIdx_(threadIdx),
-  trainData_(trainData),
+  //trainData_(trainData),
   nNodes_(1) {
 
   trainPredictionCache_.clear();
-  
-  if ( trainData_ ) {
-    trainPredictionCache_.resize(trainData_->nSamples(),datadefs::NUM_NAN);    
-  } 
   
 }
 
 RootNode::~RootNode() { /* EMPTY DESTRUCTOR */ }
 
-void RootNode::growTree() {
+void RootNode::growTree(Treedata* trainData, distributions::PMF* pmf) {
 
-  assert( trainData_ );
+  trainData_ = trainData;
+  
+  trainPredictionCache_.resize(trainData_->nSamples(),datadefs::NUM_NAN);
 
   parameters_->validateParameters();
 
@@ -80,8 +77,8 @@ void RootNode::growTree() {
 
   featuresInTree_.clear();
 
-  vector<size_t> featureIcs = utils::range( trainData_->nFeatures() );
-  featureIcs.erase( featureIcs.begin() + targetIdx );
+  // vector<size_t> featureIcs = utils::range( trainData_->nFeatures() );
+  // featureIcs.erase( featureIcs.begin() + targetIdx );
 
   PredictionFunctionType predictionFunctionType;
 
@@ -96,13 +93,14 @@ void RootNode::growTree() {
   size_t nLeaves = 1;
 
   if ( !parameters_->isRandomSplit ) {
-    parameters_->mTry = featureIcs.size();
+    cerr << "RootNode::growTree() -- Only random splits are allowed at the moment!" << endl;
+    exit(1);
   }
 
   size_t treeDist = 0;
 
   //Start the recursive node splitting from the root node. This will generate the tree.
-  this->recursiveNodeSplit(trainData_,targetIdx,predictionFunctionType,featureIcs,bootstrapIcs_,treeDist,featuresInTree_,minDistToRoot_,&nLeaves);
+  this->recursiveNodeSplit(trainData_,targetIdx,predictionFunctionType,pmf,bootstrapIcs_,treeDist,featuresInTree_,minDistToRoot_,&nLeaves);
   
   nNodes_ = 2 * nLeaves - 1;
 

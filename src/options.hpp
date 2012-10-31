@@ -305,6 +305,10 @@ namespace options {
       parser_.getArgument<string>(dataDelimiter_s, dataDelimiter_l, dataDelimiter);
       parser_.getArgument<string>(headerDelimiter_s, headerDelimiter_l, headerDelimiter);
       parser_.getArgument<size_t>(pruneFeatures_s, pruneFeatures_l, pruneFeatures);
+
+      parser_.getArgument<string>(featureWeightFile_s, featureWeightFile_l, featureWeightFile);
+      parser_.getArgument<num_t>(defaultFeatureWeight_s, defaultFeatureWeight_l, defaultFeatureWeight);
+
       stringstream ss(dataDelimiter);
       ss >> dataDelimiter;
 

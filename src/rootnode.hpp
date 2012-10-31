@@ -9,17 +9,17 @@
 #include "node.hpp"
 #include "treedata.hpp"
 #include "options.hpp"
+#include "distributions.hpp"
 
 class RootNode : public Node {
 public:
 
-  RootNode(Treedata* trainData,
-	   options::General_options* parameters,
+  RootNode(options::General_options* parameters,
 	   const size_t threadIdx);
 
   ~RootNode();
 
-  void growTree();
+  void growTree(Treedata* trainData, distributions::PMF* pmf);
   
   size_t nNodes();
 

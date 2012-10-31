@@ -93,7 +93,7 @@ struct ProgramLogic {
 
 } programLogic;
 
-vector<num_t> readFeatureWeights(Treedata& treeData, const string& fileName, const num_t featureWeight);
+vector<num_t> readFeatureWeights(Treedata& treeData, const size_t targetIdx, const string& fileName, const num_t featureWeight);
 
 int main(const int argc, char* const argv[]) {
 
@@ -116,9 +116,13 @@ int main(const int argc, char* const argv[]) {
     Treedata treeData(params.input,&params);
     cout << "DONE" << endl;
 
-    vector<num_t> weights = readFeatureWeights(treeData,params.featureWeightFile,params.defaultFeatureWeight);
+    size_t targetIdx = treeData.getFeatureIdx(params.targetStr);
+
+    assert( targetIdx != treeData.end() );
+
+    vector<num_t> featureWeights = readFeatureWeights(treeData,targetIdx,params.featureWeightFile,params.defaultFeatureWeight);
     
-    rface.filter(treeData,weights);
+    rface.filter(treeData,featureWeights);
 
   } else if ( programLogic.recombine ) {
     
@@ -140,8 +144,14 @@ int main(const int argc, char* const argv[]) {
       cout << "===> Reading train file '" << params.input << "', please wait... " << flush;
       Treedata trainData(params.input,&params);
       cout << "DONE" << endl;
+
+      size_t targetIdx = trainData.getFeatureIdx(params.targetStr);
+
+      assert( targetIdx != trainData.end() );
       
-      rface.train(trainData);
+      vector<num_t> featureWeights = readFeatureWeights(trainData,targetIdx,params.featureWeightFile,params.defaultFeatureWeight);
+
+      rface.train(trainData,featureWeights);
       
     }
 
@@ -186,13 +196,15 @@ int main(const int argc, char* const argv[]) {
 
 }
 
-vector<num_t> readFeatureWeights(Treedata& treeData, const string& fileName, const num_t defaulFeatureWeight) {
+vector<num_t> readFeatureWeights(Treedata& treeData, const size_t targetIdx, const string& fileName, const num_t defaulFeatureWeight) {
+
+  vector<num_t> weights(0);
 
   if ( fileName == "" ) {
-    return( vector<num_t>(treeData.nFeatures(),1) );
+    weights.resize(treeData.nFeatures(),1);
   } else {
     
-    vector<num_t> weights(treeData.nFeatures(),defaulFeatureWeight);
+    weights.resize(treeData.nFeatures(),defaulFeatureWeight);
     
     vector<string> weightStrings = utils::readListFromFile(fileName,'\n');
     
@@ -208,11 +220,15 @@ vector<num_t> readFeatureWeights(Treedata& treeData, const string& fileName, con
       
       weights[featureIdx] = utils::str2<num_t>(weightPair[1]);
       
+      cout << "read " << featureName << " => " << weights[featureIdx] << endl;
+
     }
     
-    return( weights );
-
   }
+
+  weights[targetIdx] = 0;
+
+  return(weights);
 
 }
 
