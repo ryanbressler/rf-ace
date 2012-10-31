@@ -103,7 +103,8 @@ namespace options {
     int seed; string seed_s; string seed_l;
     size_t nThreads; const string nThreads_s; const string nThreads_l;
     bool isMaxThreads; const string isMaxThreads_s; const string isMaxThreads_l;
-    num_t defaultFeatureWeight; const string defaultFeatureWeights_s; const string defaultFeatureWeight_l;
+    num_t defaultFeatureWeight; const string defaultFeatureWeight_s; const string defaultFeatureWeight_l;
+    string featureWeightFile; const string featureWeightFile_s; const string featureWeightFile_l;
 
     // Forest Type
     ForestType modelType; const string modelType_s; const string modelType_l;
@@ -154,6 +155,8 @@ namespace options {
       seed(GENERAL_DEFAULT_SEED),seed_s("S"),seed_l("seed"),
       nThreads(GENERAL_DEFAULT_N_THREADS),nThreads_s("e"),nThreads_l("nThreads"),
       isMaxThreads(GENERAL_DEFAULT_IS_MAX_THREADS),isMaxThreads_s("R"),isMaxThreads_l("maxThreads"),
+      defaultFeatureWeight(GENERAL_DEFAULT_FEATURE_WEIGHT),defaultFeatureWeight_s("d"),defaultFeatureWeight_l("defaultWeight"),
+      featureWeightFile(""),featureWeightFile_s("w"),featureWeightFile_l("featureWeights"),
       // Forest Type
       modelType(GENERAL_DEFAULT_MODEL_TYPE),modelType_s("M"),modelType_l("modelType"),
       // Random Forest related parameters
