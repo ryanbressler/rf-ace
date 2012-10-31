@@ -15,6 +15,7 @@
 #include "treedata.hpp"
 #include "options.hpp"
 #include "utils.hpp"
+#include "distributions.hpp"
 
 using namespace std;
 using datadefs::num_t;
@@ -77,7 +78,7 @@ protected:
   void recursiveNodeSplit(Treedata* treeData,
                           const size_t targetIdx,
 			  const PredictionFunctionType& predictionFunctionType,
-			  vector<size_t> featureIcs,
+			  distributions::PMF* pmf,
 			  const vector<size_t>& sampleIcs,
 			  const size_t treeDepth,
 			  set<size_t>& featuresInTree,

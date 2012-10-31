@@ -205,7 +205,7 @@ public:
 
   }
 
-  void train(Treedata& trainData) {
+  void train(Treedata& trainData, const vector<num_t>& featureWeights) {
     
     if ( trainedModel_ ) {
       delete trainedModel_;
@@ -235,7 +235,7 @@ public:
       exit(1);
     }
     
-    trainedModel_ = new StochasticForest(&trainData,params_);
+    trainedModel_ = new StochasticForest(&trainData,featureWeights,params_);
     cout << "DONE" << endl << endl;
     
     if ( params_->modelType == options::GBT ) {
@@ -267,12 +267,12 @@ public:
 
   }
 
-  void filter(Treedata& treeData, const vector<num_t>& weights) {
+  void filter(Treedata& treeData, const vector<num_t>& featureWeights) {
 
     statistics::RF_statistics RF_stat;
 
     this->updateTargetStr(treeData);
-    this->pruneFeatureSpace(treeData);
+    //this->pruneFeatureSpace(treeData);
 
     // Some default and enforced parameter settings for RF, CART, and GBT
     this->setEnforcedForestParameters(treeData);
@@ -294,7 +294,7 @@ public:
     set<size_t> featuresInAllForests;
 
     cout << "===> Uncovering associations... " << flush;
-    RF_stat = executeRandomForest(treeData,pValues,importanceValues,contrastImportanceSample,featuresInAllForests);
+    RF_stat = executeRandomForest(treeData,featureWeights,pValues,importanceValues,contrastImportanceSample,featuresInAllForests);
     cout << "DONE" << endl;
 
     // Initialize mapping vector to identity mapping: range 0,1,...,N-1
@@ -381,6 +381,7 @@ public:
   }
 
   statistics::RF_statistics executeRandomForest(Treedata& treeData,
+						const vector<num_t>& featureWeights,
 						vector<num_t>& pValues,
 						vector<num_t>& importanceValues,
 						vector<num_t>& contrastImportanceSample,
@@ -413,7 +414,7 @@ public:
 
       progress.update(1.0*permIdx/params_->nPerms);
 
-      StochasticForest SF(&treeData,params_);
+      StochasticForest SF(&treeData,featureWeights,params_);
 
       // Get the number of nodes in each tree in the forest
       for ( size_t treeIdx = 0; treeIdx < SF.nTrees(); ++treeIdx ) {

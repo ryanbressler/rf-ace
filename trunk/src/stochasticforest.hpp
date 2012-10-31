@@ -13,7 +13,7 @@ using namespace std;
 class StochasticForest {
 public:
   
-  StochasticForest(Treedata* treeData, options::General_options* params);
+  StochasticForest(Treedata* treeData, const vector<num_t>& featureWeights, options::General_options* params);
   
   // Load an existing forest
   StochasticForest(options::General_options* params);
@@ -55,11 +55,11 @@ public:
 private:
 #endif
   
-  void learnRF();
-  void learnGBT();
+  void learnRF(distributions::PMF& pmf);
+  void learnGBT(distributions::PMF& pmf);
 
-  void growNumericalGBT();
-  void growCategoricalGBT();
+  void growNumericalGBT(distributions::PMF& pmf);
+  void growCategoricalGBT(distributions::PMF& pmf);
 
   // TODO: StochasticForest::transformLogistic() should be moved elsewhere
   void transformLogistic(size_t nCategories, vector<num_t>& prediction, vector<num_t>& probability);
