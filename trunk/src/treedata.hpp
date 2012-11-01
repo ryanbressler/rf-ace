@@ -43,18 +43,6 @@ public:
 
   ~Treedata();
 
-  // Takes a set of features that are to be retained in the Treedata object.
-  // Others will be removed.
-  void whiteList(const set<string>& featureNames);
-
-  // Takes a set of features that are to be removed from the Treedata object.
-  // Others will be retained.
-  void blackList(const set<string>& featureNames);
-
-  // Takes a boolean vector of flags that mark which feature is to be removed (0) and
-  // which to be retained (1) in the Treedata object.
-  void whiteList(const vector<bool>& featureIcs);
-
   // Returns the number of features
   size_t nFeatures();
 

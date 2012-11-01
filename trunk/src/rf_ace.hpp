@@ -71,73 +71,7 @@ public:
 	<< endl;
   }
 
-  void pruneFeatureSpace(Treedata& treeData) {
-
-    size_t targetIdx = treeData.getFeatureIdx(params_->targetStr);
-
-    if ( treeData.nRealSamples(targetIdx) == 0 ) {
-      cerr << "Target feature '" << params_->targetStr << "' does not have any real samples!" << endl;
-      exit(1);
-    }
-    
-    if ( params_->whiteList != "" ) {
-      
-      cout << "===> Reading whitelist '" << params_->whiteList << "', please wait... " << flush;
-      set<string> whiteFeatureNames = utils::readFeatureMask(treeData,params_->whiteList);
-      cout << "DONE" << endl;
-      cout << "===> Applying feature mask, removing " << treeData.nFeatures() - whiteFeatureNames.size()
-	   << " / " << treeData.nFeatures() << " features, please wait... " << flush;
-      
-      // Add the target feature into the white list, otherwise it may get removed
-      whiteFeatureNames.insert(params_->targetStr);
-
-      treeData.whiteList(whiteFeatureNames);
-      cout << "DONE" << endl;
-    } 
-
-    if ( params_->blackList != "" ) {
-      
-      cout << "===> Reading blacklist '" << params_->blackList << "', please wait... " << flush;
-      set<string> blackFeatureNames = utils::readFeatureMask(treeData,params_->blackList);
-      cout << "DONE" << endl;
-      cout << "===> Applying blacklist, keeping " << treeData.nFeatures() - blackFeatureNames.size()
-	   << " / " << treeData.nFeatures() << " features, please wait... " << flush;
-
-      // Remove the target feature from the black list, otherwise it will get removed
-      if ( blackFeatureNames.find(params_->targetStr) != blackFeatureNames.end() ) {
-	cout << " Target found in the blacklist -- omitting... " << flush;
-	blackFeatureNames.erase(params_->targetStr);
-      }
-      
-      treeData.blackList(blackFeatureNames);
-      cout << "DONE" << endl;
-    }
-    
-    if ( params_->pruneFeatures ) {
-      
-      cout << "===> Pruning features with less than " << params_->pruneFeatures << " real samples... " << flush;
-      size_t nFeaturesOld = treeData.nFeatures();
-      utils::pruneFeatures(treeData,params_->targetStr,params_->pruneFeatures);
-      cout << "DONE, " << nFeaturesOld - treeData.nFeatures() << " features ( "
-	   << ( 100.0*(nFeaturesOld - treeData.nFeatures()) / nFeaturesOld ) << "% ) pruned" << endl;
-      
-    }
-
-    if ( treeData.nFeatures() == 0 ) {
-      cout << "All features were removed!" << endl;
-
-      ofstream toLogFile(params_->log.c_str());
-
-      toLogFile << "All features were removed!" << endl;
-
-      toLogFile.close();
-
-      exit(0);
-
-    }
-    
-  }
-
+  
   void updateTargetStr(Treedata& treeData) {
 
     // Check if the target is specified as an index
@@ -154,12 +88,6 @@ public:
       
     }
 
-  }
-
-  void updateMTry(Treedata& treeData) {
-    if ( params_->mTry == options::RF_DEFAULT_M_TRY ) {
-      params_->mTry = static_cast<size_t>( floor(0.1*treeData.nFeatures()) );
-    }
   }
 
   void printGeneralSetup(Treedata& treeData) {
@@ -212,9 +140,9 @@ public:
       trainedModel_ = NULL;
     }
 
+    params_->useContrasts = false;
+
     updateTargetStr(trainData);
-    
-    pruneFeatureSpace(trainData);
     
     setEnforcedForestParameters(trainData);
     
@@ -272,7 +200,8 @@ public:
     statistics::RF_statistics RF_stat;
 
     this->updateTargetStr(treeData);
-    //this->pruneFeatureSpace(treeData);
+
+    params_->useContrasts = true;
 
     // Some default and enforced parameter settings for RF, CART, and GBT
     this->setEnforcedForestParameters(treeData);
