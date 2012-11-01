@@ -92,8 +92,6 @@ namespace options {
     string output; const string output_s; const string output_l;
     string forestInput; const string forestInput_s; const string forestInput_l;
     string targetStr; const string targetStr_s; const string targetStr_l;
-    string whiteList; const string whiteList_s; const string whiteList_l;
-    string blackList; const string blackList_s; const string blackList_l;
     string predictionData; const string predictionData_s; const string predictionData_l;
     string log; const string log_s; const string log_l;
     string pairInteractionOutput; const string pairInteractionOutput_s; const string pairInteractionOutput_l;
@@ -144,8 +142,6 @@ namespace options {
       output(""),output_s("O"),output_l("output"),
       forestInput(""),forestInput_s("F"),forestInput_l("forestInput"),
       targetStr(""),targetStr_s("i"),targetStr_l("target"),
-      whiteList(""),whiteList_s("W"),whiteList_l("whiteList"),
-      blackList(""),blackList_s("B"),blackList_l("blackList"),
       predictionData(""),predictionData_s("T"),predictionData_l("test"),
       log(""),log_s("L"),log_l("log"),
       pairInteractionOutput(""),pairInteractionOutput_s("P"),pairInteractionOutput_l("pairInteraction"),
@@ -296,8 +292,6 @@ namespace options {
       parser_.getArgument<string>(targetStr_s, targetStr_l, targetStr);
       parser_.getArgument<string>(output_s, output_l, output);
       parser_.getArgument<string>(forestInput_s, forestInput_l, forestInput);
-      parser_.getArgument<string>(whiteList_s, whiteList_l, whiteList);
-      parser_.getArgument<string>(blackList_s, blackList_l, blackList);
       parser_.getArgument<string>(predictionData_s, predictionData_l, predictionData);
       parser_.getArgument<string>(log_s, log_l, log);
       parser_.getArgument<string>(pairInteractionOutput_s, pairInteractionOutput_l, pairInteractionOutput);
@@ -357,28 +351,6 @@ namespace options {
         cerr << "P-value threshold in statistical test must be within 0...1" << endl;
         exit(1);
       }
-
-      // Print help and exit if input file is not specified
-      /*
-	if ( input == "" ) {
-	cerr << "Input file not specified" << endl;
-	this->helpHint();
-	exit(1);
-	}
-	
-	// Print help and exit if target index is not specified
-	if ( !this->isSet(recombinePerms_s,recombinePerms_l) && targetStr == "" ) {
-	cerr << "target not specified" << endl;
-	this->helpHint();
-	exit(1);
-	}
-	
-	if ( output == "" ) {
-	cerr << "You forgot to specify an output file!" << endl;
-	this->helpHint();
-	exit(1);
-	}
-      */
 
       assert( nTrees > 0 );
 
@@ -484,10 +456,10 @@ namespace options {
 	   << " " << "[Prediction only] Test data file (.afm or .arff) for prediction" << endl;
       cout << " -" << log_s << " / --" << log_l << setw( maxWidth - log_l.size() )
            << " " << "Log output file" << endl;
-      cout << " -" << whiteList_s << " / --" << whiteList_l << setw( maxWidth - whiteList_l.size() )
-           << " " << "White list of features to be included in the input file(s)." << endl;
-      cout << " -" << blackList_s << " / --" << blackList_l << setw( maxWidth - blackList_l.size() )
-           << " " << "Black list of features to be excluded from the input file(s)." << endl;
+      cout << " -" << featureWeightFile_s << " / --" << featureWeightFile_l << setw( maxWidth - featureWeightFile_l.size() )
+           << " " << "File specifying positive feature weights applied in sampling of tree splitters." << endl;
+      cout << " -" << defaultFeatureWeight_s << " / --" << defaultFeatureWeight_l << setw( maxWidth - defaultFeatureWeight_l.size() )
+           << " " << "If feature weights apply, default weight (" << GENERAL_DEFAULT_FEATURE_WEIGHT << ") is applied to other features." << endl;
       cout << " -" << dataDelimiter_s << " / --" << dataDelimiter_l << setw( maxWidth - dataDelimiter_l.size() )
            << " " << "[AFM only] Data delimiter (default \\t)" << endl;
       cout << " -" << headerDelimiter_s << " / --" << headerDelimiter_l << setw( maxWidth - headerDelimiter_l.size() )

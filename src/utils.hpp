@@ -9,7 +9,7 @@
 #include <sstream>
 #include <cstdlib>
 #include "datadefs.hpp"
-#include "treedata.hpp"
+//#include "treedata.hpp"
 #include "distributions.hpp"
 
 using namespace std;
@@ -65,12 +65,6 @@ namespace utils {
       ++startIt;
     }
   }
-
-  // WILL BECOME OBSOLETE
-  set<string> readFeatureMask(Treedata& treeData, const string& fileName);
-
-  // MAY BECOME OBSOLETE
-  void pruneFeatures(Treedata& treeData, const string& targetName, const size_t minSamples);
 
   void filterSort(const bool isIncreasingOrder,
 		  vector<num_t>& data,

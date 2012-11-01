@@ -43,7 +43,7 @@ struct ProgramLogic {
     this->recombine  =  isRecombineSet  &&  isInputSet    && isOutputSet;
     this->trainModel = !getAssociations &&  isInputSet    && isTargetSet;
     this->testModel  = !getAssociations &&  isPredDataSet && isOutputSet;
-    this->saveModel  = !getAssociations &&  isInputSet    && isTargetSet      && isOutputSet;
+    this->saveModel  = !getAssociations &&  isInputSet    && isTargetSet      && !isPredDataSet && isOutputSet;
     this->loadModel  = !getAssociations && !isInputSet    && isForestFileSet  && isOutputSet;
 
     if ( this->recombine && params->recombinePerms == 0 ) {
