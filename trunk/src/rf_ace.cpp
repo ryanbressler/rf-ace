@@ -13,183 +13,171 @@
 using namespace std;
 using datadefs::num_t;
 
-struct ProgramLogic {
+void printHeader(ostream& out) {
+  out << endl
+      << "-----------------------------------------------------------" << endl
+      << "|  RF-ACE version:  1.0.7, Aug 28 2012                    |" << endl
+      << "|    Compile date:  " << __DATE__ << ", " << __TIME__ << "                 |" << endl
+      << "|   Report issues:  code.google.com/p/rf-ace/issues/list  |" << endl
+      << "-----------------------------------------------------------" << endl
+      << endl;
+}
 
-  bool filter;
-  bool recombine;
-  bool trainModel;
-  bool testModel;
-  bool saveModel;
-  bool loadModel;
-
-  void parse(options::General_options* params) {
-    
-    bool isTargetSet     = params->isSet(params->targetStr_s,params->targetStr_l);
-    bool isFilterSet     = params->isFilter;
-    bool isRecombineSet  = params->isSet(params->recombinePerms_s,params->recombinePerms_l);
-    bool isInputSet      = params->isSet(params->input_s,params->input_l);
-    bool isPredDataSet   = params->isSet(params->predictionData_s,params->predictionData_l);
-    bool isOutputSet     = params->isSet(params->output_s,params->output_l);
-    bool isForestFileSet = params->isSet(params->forestInput_s,params->forestInput_l);
-
-    bool getAssociations = isFilterSet || isRecombineSet;
-
-    if ( isFilterSet && isRecombineSet ) {
-      cerr << "ERROR: cannot have both --filter and --recombine set, choose either one!" << endl;
-      exit(1);
-    }
-
-    this->filter     =  isFilterSet     &&  isInputSet    && isTargetSet      && isOutputSet;
-    this->recombine  =  isRecombineSet  &&  isInputSet    && isOutputSet;
-    this->trainModel = !getAssociations &&  isInputSet    && isTargetSet;
-    this->testModel  = !getAssociations &&  isPredDataSet && isOutputSet;
-    this->saveModel  = !getAssociations &&  isInputSet    && isTargetSet      && !isPredDataSet && isOutputSet;
-    this->loadModel  = !getAssociations && !isInputSet    && isForestFileSet  && isOutputSet;
-
-    if ( this->recombine && params->recombinePerms == 0 ) {
-      cerr << "Currently the number of permutations to be recombined ( -"
-           << params->recombinePerms_s << " / --" << params->recombinePerms_l << endl
-           << " ) needs to be explicitly specified." << endl;
-      exit(1);
-    }
-
-    if ( isFilterSet && !isTargetSet ) {
-      cerr << "ERROR: unable to apply filter without a target!" << endl;
-      exit(1);
-    }
-
-    if ( this->trainModel && !isTargetSet ) {
-      cerr << "ERROR: unable to train a model without a target!" << endl;
-      exit(1);
-    }
-
-    if ( ! ( this->trainModel || this->loadModel ) && ( this->saveModel ) ) {
-      cerr << "ERROR: unable to load/train model for saving!" << endl;
-      exit(1);
-    }
-
-    if ( ! ( this->trainModel || this->loadModel ) && ( this->testModel ) ) {
-      cerr << "ERROR: unable to load/train model for testing!" << endl;
-      exit(1);
-    }
-
-    if ( ! ( this->filter || this->recombine || this->trainModel || this->testModel || this->saveModel || this->loadModel ) ) {
-      cerr << "ERROR: unable to resolve execution logic!" << endl;
-      params->helpHint();
-      exit(1);
-    }
-
-  }
-
-  void print() {
-    cout << "Parsed program logic:" << endl
-	 << "  - filter     == " << this->filter << endl
-	 << "  - recombine  == " << this->recombine << endl
-	 << "  - trainModel == " << this->trainModel << endl
-	 << "  - testModel  == " << this->testModel << endl
-	 << "  - saveModel  == " << this->saveModel << endl
-	 << "  - loadModel  == " << this->loadModel << endl << endl;
-  }
-
-} programLogic;
+size_t getTargetIdx(Treedata& treeData, const string& targetAsStr);
 
 vector<num_t> readFeatureWeights(Treedata& treeData, const size_t targetIdx, const string& fileName, const num_t featureWeight);
 
+void printDataStatistics(Treedata& treeData, const size_t targetIdx);
+
+void writeFilterOutputToFile(Treedata& treeData, const string& fileName);
+
 int main(const int argc, char* const argv[]) {
 
-  options::General_options params(argc,argv);
+  printHeader(cout);
+
+  Options options;
+  options.load(argc,argv);
+
+  options.print();
 
   // With no input arguments the help is printed
-  if ( argc == 1 || params.printHelp ) {
-    params.help();
+  if ( argc == 1 || options.generalOptions.printHelp ) {
+    options.help();
     return(EXIT_SUCCESS);
   }
 
-  programLogic.parse(&params);
-  programLogic.print();
+  RFACE rface;
 
-  RFACE rface(params);
+  RFACE::FilterOutput filterOutput;
+  RFACE::TestOutput testOutput;
 
-  if ( programLogic.filter ) {
 
-    cout << "===> Reading file '" << params.input << "', please wait... " << flush;
-    Treedata treeData(params.input,&params);
+
+  if ( options.io.filterDataFile != "" ) {
+
+    cout << "===> Reading file '" << options.io.filterDataFile << "' for filtering, please wait... " << flush;
+    Treedata filterData(options.io.filterDataFile,options.generalOptions.dataDelimiter,options.generalOptions.headerDelimiter,options.forestOptions.useContrasts);
     cout << "DONE" << endl;
 
-    size_t targetIdx = treeData.getFeatureIdx(params.targetStr);
+    size_t targetIdx = getTargetIdx(filterData,options.generalOptions.targetStr);
 
-    assert( targetIdx != treeData.end() );
+    assert( targetIdx != filterData.end() );
 
-    vector<num_t> featureWeights = readFeatureWeights(treeData,targetIdx,params.featureWeightFile,params.defaultFeatureWeight);
+    cout << endl;
+    printDataStatistics(filterData,targetIdx);
+
+    vector<num_t> featureWeights = readFeatureWeights(filterData,targetIdx,options.io.featureWeightsFile,options.generalOptions.defaultFeatureWeight);
     
-    rface.filter(treeData,featureWeights);
+    filterOutput = rface.filter(&filterData,targetIdx,featureWeights,&options.forestOptions,&options.filterOptions,&options.generalOptions);
 
-  } else if ( programLogic.recombine ) {
+  } 
+
+
+
+  if ( options.io.associationsFile != "" ) {
     
-    cout << " *(EXPERIMENTAL) RF-ACE RECOMBINER (" << params.recombinePerms << " permutations) ACTIVATED* " << endl;
+    writeFilterOutputToFile(filterOutput,options.io.associationsFile);
+    
+    cout << endl
+         << "Significant associations (" << filterOutput.nSignificantFeatures << "/" << filterOutput.nAllFeatures << ") written to file '" << options.io.associationsFile << "'. Format:" << endl
+         << "TARGET   PREDICTOR   P-VALUE   IMPORTANCE   CORRELATION   NSAMPLES" << endl
+         << endl
+         << "RF-ACE completed successfully." << endl
+         << endl;
+  } 
+
+
+
+  if ( false ) {
+    
+    //cout << " *(EXPERIMENTAL) RF-ACE RECOMBINER (" << params.recombinePerms << " permutations) ACTIVATED* " << endl;
         
-    rface.recombine();
-
-  } else {
-
-    if ( programLogic.loadModel ) {
-
-      rface.load(params.forestInput);
-      
-    }
-
-    if ( programLogic.trainModel ) {
-
-      // Read train data into Treedata object
-      cout << "===> Reading train file '" << params.input << "', please wait... " << flush;
-      Treedata trainData(params.input,&params);
-      cout << "DONE" << endl;
-
-      size_t targetIdx = trainData.getFeatureIdx(params.targetStr);
-
-      assert( targetIdx != trainData.end() );
-      
-      vector<num_t> featureWeights = readFeatureWeights(trainData,targetIdx,params.featureWeightFile,params.defaultFeatureWeight);
-
-      rface.train(trainData,featureWeights);
-      
-    }
-
-    if ( programLogic.testModel ) {
-
-      cout << "===> Reading test file '" << params.predictionData << "', please wait..." << flush;
-      Treedata testData(params.predictionData,&params);
-      cout << "DONE" << endl;
-      
-      cout << "===> Making predictions with test data... " << flush;
-      rface.test(testData);
-      cout << "DONE" << endl;
-
-      cout << "Prediction file '" << params.output << "' created. Format:" << endl
-	   << "TARGET   SAMPLE_ID  TRUE_DATA(*)  PREDICTION    CONFIDENCE(**)" << endl
-	   << endl
-	   << "  (*): should target variable have true data for test samples, write them," << endl
-	   << "       otherwise write NA" << endl
-	   << " (**): confidence is the st.dev for regression and % of mispred. for classification" << endl
-	   << endl
-	   << "RF-ACE completed successfully." << endl
-	   << endl;
+    //rface.recombine();
+  }
 
 
-    }
-
-    if ( programLogic.saveModel ) {
-
-      cout << "===> Writing predictor to file... " << flush;
-      rface.save( params.output );
-      cout << "DONE" << endl
-	   << endl
-	   << "RF-ACE predictor built and saved to a file '" << params.output << "'" << endl
-	   << endl;
-
-    }
+  
+  if ( options.io.loadForestFile != "" ) {
     
+    rface.load(options.io.loadForestFile);
+    
+  }
 
+
+  
+  if ( options.io.trainDataFile != "" ) {
+    
+    // Read train data into Treedata object
+    cout << "===> Reading train file '" << options.io.trainDataFile << "', please wait... " << flush;
+    Treedata trainData(options.io.trainDataFile,options.generalOptions.dataDelimiter,options.generalOptions.headerDelimiter,options.forestOptions.useContrasts);
+    cout << "DONE" << endl;
+    
+    size_t targetIdx = getTargetIdx(trainData,options.generalOptions.targetStr);
+    
+    assert( targetIdx != trainData.end() );
+    
+    vector<num_t> featureWeights = readFeatureWeights(trainData,targetIdx,options.io.featureWeightsFile,options.generalOptions.defaultFeatureWeight);
+    
+    rface.train(trainData,targetIdx,featureWeights,&options.forestOptions,&options.generalOptions);
+    
+    vector<num_t> data = utils::removeNANs(trainData.getFeatureData(targetIdx));
+    
+    num_t oobError = 0; //trainedModel->getOobError();
+    num_t ibOobError = 0;// trainedModel->getError();
+    
+    cout << "RF training error measures (NULL == no model):" << endl;
+    if ( trainData.isFeatureNumerical(targetIdx) ) {
+      num_t nullError = math::var(data);
+      cout << "              NULL std = " << sqrt( nullError ) << endl;
+      cout << "               OOB std = " << sqrt( oobError ) << endl;
+      cout << "            IB+OOB std = " << sqrt( ibOobError ) << endl;
+      cout << "  % explained by model = " << 1 - oobError / nullError << " = 1 - (OOB var) / (NULL var)" << endl;
+    } else {
+      num_t nullError = math::nMismatches( data, math::mode(data) );
+      cout << "       NULL % mispred. = " << 1.0 * nullError / data.size() << endl;
+      cout << "        OOB % mispred. = " << oobError << endl;
+      cout << "     IB+OOB % mispred. = " << ibOobError << endl;
+      cout << "  % explained by model = " << 1 - oobError / nullError << " ( 1 - (OOB # mispred.) / (NULL # mispred.) )" << endl;
+    }
+    cout << endl;
+    
+  }
+  
+  if ( options.io.testDataFile != "" ) {
+    
+    cout << "===> Reading test file '" << options.io.testDataFile << "', please wait..." << flush;
+    Treedata testData(options.io.testDataFile,options.generalOptions.dataDelimiter,options.generalOptions.headerDelimiter,options.forestOptions.useContrasts);
+    cout << "DONE" << endl;
+    
+    cout << "===> Making predictions with test data... " << flush;
+    testOutput = rface.test(testData,options.generalOptions.nThreads);
+    cout << "DONE" << endl;
+    
+  }
+
+  if ( options.io.predictionsFile) {
+    printPredictionToFile(testOutput,options.io.predictionsFile);
+    
+    cout << "Prediction file '" << options.io.predictionsFile << "' created. Format:" << endl
+	 << "TARGET   SAMPLE_ID  TRUE_DATA(*)  PREDICTION    CONFIDENCE(**)" << endl
+	 << endl
+	 << "  (*): should target variable have true data for test samples, write them," << endl
+	 << "       otherwise write NA" << endl
+	 << " (**): confidence is the st.dev for regression and % of mispred. for classification" << endl
+	 << endl
+	 << "RF-ACE completed successfully." << endl
+	 << endl; 
+  }
+  
+  if ( options.io.saveForestFile ) {
+    
+    cout << "===> Writing predictor to file... " << flush;
+    rface.save( options.io.saveForestFile );
+    cout << "DONE" << endl
+	 << endl
+	 << "RF-ACE predictor built and saved to a file '" << options.io.saveForestFile << "'" << endl
+	 << endl;
+    
   }
 
   return( EXIT_SUCCESS );
@@ -232,3 +220,125 @@ vector<num_t> readFeatureWeights(Treedata& treeData, const size_t targetIdx, con
 
 }
 
+void printDataStatistics(Treedata& treeData, const size_t targetIdx) {
+
+  size_t nAllFeatures = treeData.nFeatures();
+  size_t nRealSamples = treeData.nRealSamples(targetIdx);
+  num_t realFraction = 1.0*nRealSamples / treeData.nSamples();
+
+  cout << " - " << nAllFeatures << " features" << endl;
+  cout << " - " << treeData.nRealSamples(targetIdx) << " samples / " << treeData.nSamples() << " ( " << 100.0 * ( 1 - realFraction ) << " % missing )" << endl;
+
+}
+
+size_t getTargetIdx(Treedata& treeData, const string& targetAsStr) {
+
+  // Check if the target is specified as an index
+  int integer;
+  if ( datadefs::isInteger(targetAsStr,integer) ) {
+
+    if ( integer < 0 || integer >= static_cast<int>( treeData.nFeatures() ) ) {
+      cerr << "Feature index (" << integer << ") must be within bounds 0 ... " << treeData.nFeatures() - 1 << endl;
+      exit(1);
+    }
+
+    // Extract the name of the feature, as upon masking the indices will become rearranged
+    return( treeData.getFeatureName(static_cast<size_t>(integer)) );
+
+  }
+
+}
+
+void writeFilterOutputToFile(Treedata& filterData, const size_t targetIdx, FilterOptions& filterOptions, RFACE::FilterOutput& filterOutput, const string& fileName) {
+
+  // Initialize mapping vector to identity mapping: range 0,1,...,N-1
+  // NOTE: when not sorting we use the identity map, otherwise the sorted map
+  vector<size_t> featureIcs = utils::range( filterData.nFeatures() );
+
+  // If there are more than one permutation, we can compute the p-values and thus sort wrt. them
+  //if ( filterOptions->nPerms > 1 ) {
+  bool isIncreasingOrder = true;
+  utils::sortDataAndMakeRef(isIncreasingOrder,filterOutput.pValues,featureIcs);
+  utils::sortFromRef<num_t>(filterOutput.importanceValues,featureIcs);
+  
+  // Apply p-value adjustment with the Benjamini-Hochberg method if needed
+  if ( filterOptions.isAdjustedPValue ) {
+    size_t nTests = filterData.nFeatures() - 1;
+    math::adjustPValues(filterOutput.pValues,nTests);
+  }
+  
+  size_t nIncludedFeatures = 0;
+
+  for ( size_t i = 0; i < filterData.nFeatures(); ++i ) {
+
+    // If we don't want to report all features in the association file...
+    if ( !filterOptions.reportAllFeatures ) {
+
+      //      bool featureNotInForests = featuresInAllForests.find(featureIcs[i]) == featuresInAllForests.end();
+      bool tooHighPValue = filterOptions.nPerms > 1 && filterOutput.pValues[i] > filterOptions.pValueThreshold;
+      bool tooLowImportance = filterOutput.importanceValues[i] < filterOptions.importanceThreshold;
+
+      if ( tooLowImportance || tooHighPValue ) {
+	continue;
+      }
+    }
+
+    // In any case, we will omit target feature from the association list
+    if ( i == targetIdx ) {
+      continue;
+    }
+
+    filterOutput.pValues[nIncludedFeatures] = filterOutput.pValues[i];
+    filterOutput.importanceValues[nIncludedFeatures] = filterOutput.importanceValues[i];
+    featureIcs[nIncludedFeatures] = featureIcs[i];
+    ++nIncludedFeatures;
+  }
+
+  ofstream toAssociationFile(fileName.c_str());
+  
+  string targetName = filterData.getFeatureName(targetIdx);
+
+  for ( size_t i = 0; i < nIncludedFeatures; ++i ) {
+    
+    assert(featureIcs[i] != targetIdx);
+    
+    string featureName = treeData.getFeatureName(featureIcs[i]);
+    num_t correlation = treeData.pearsonCorrelation(targetIdx,featureIcs[i]);
+    size_t sampleCount = treeData.nRealSamples(targetIdx,featureIcs[i]);
+    
+    toAssociationFile << targetName << "\t" << featureName << "\t" 
+		      << scientific << filterOutput.pValues[i] << "\t" << scientific << filterOutput.importanceValues[i] << "\t"
+		      << scientific << correlation << "\t" << sampleCount << endl;
+    
+  }
+  
+  toAssociationFile.close();
+  
+}
+
+
+void printPredictionToFile(RFACE::TestOutput& testOutput, const string& fileName) {
+
+  ofstream toPredictionFile(fileName.c_str());
+
+  if ( testOutput.isTargetNumerical ) {
+
+    for(size_t i = 0; i < testOutput.numPredictions.size(); ++i) {
+      toPredictionFile << testOutput.targetName << "\t" << testOutput.sampleNames[i] << "\t"
+		       << testOutput.numTrueData[i] << "\t" << testOutput.numPredictions[i] << "\t"
+		       << setprecision(3) << testOutput.confidence[i] << endl;
+    }
+
+  } else {
+
+    for(size_t i = 0; i < testOutput.prediction.size(); ++i) {
+      toPredictionFile << testOutput.targetName << "\t" << testOutput.sampleNames[i] << "\t"
+		       << testOutput.catTrueData[i] << "\t" << testOutput.catPredictions[i] << "\t"
+		       << setprecision(3) << testOutput.confidence[i] << endl;
+    }
+
+  }
+
+  toPredictionFile.close();
+
+}

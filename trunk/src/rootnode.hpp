@@ -14,36 +14,28 @@
 class RootNode : public Node {
 public:
 
-  RootNode(options::General_options* parameters,
-	   const size_t threadIdx);
+  RootNode();
 
   ~RootNode();
 
-  void growTree(Treedata* trainData, distributions::PMF* pmf);
+  void growTree(Treedata* trainData, const size_t targetIdx, const distributions::PMF* pmf, const ForestOptions* forestOptions, distributions::Random* random);
   
   size_t nNodes();
 
   num_t getTestPrediction(Treedata* treeData, const size_t sampleIdx);
   string getRawTestPrediction(Treedata* treeData, const size_t sampleIdx);
 
-  num_t getTrainPrediction(const size_t sampleIdx);
-  num_t getPermutedTrainPrediction(const size_t featureIdx,
-				   const size_t sampleIdx);
+  //num_t getTrainPrediction(const size_t sampleIdx);
+  //num_t getPermutedTrainPrediction(const size_t featureIdx,
+  //				   const size_t sampleIdx);
   
-  vector<num_t> getTrainPrediction();
+  //vector<num_t> getTrainPrediction();
 
   vector<size_t> getOobIcs();
 
   size_t nOobSamples();
 
   set<size_t> getFeaturesInTree() { return( featuresInTree_ ); }
-
-    //    set<size_t> featuresInTree;
-    //for ( minDistToRoot_t::const_iterator it( minDistToRoot_.begin() ); it != minDistToRoot_.end(); ++it ) {
-    // featuresInTree.insert( it->first );
-    // }
-    //return( featuresInTree );
-    //} // { assert(false); } //return(featuresInTree_); }
 
   vector<pair<size_t,size_t> > getMinDistFeatures();
 
@@ -52,7 +44,7 @@ private:
 #endif
 
   // Parameters that are generated only when a tree is grown
-  Treedata* trainData_;
+  //Treedata* trainData_;
   size_t nNodes_;
   vector<size_t> bootstrapIcs_;
   vector<size_t> oobIcs_;
@@ -61,7 +53,7 @@ private:
 
   minDistToRoot_t minDistToRoot_;
 
-  vector<num_t> trainPredictionCache_;
+  //vector<num_t> trainPredictionCache_;
 
 };
 

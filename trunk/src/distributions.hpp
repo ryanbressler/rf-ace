@@ -16,23 +16,21 @@ namespace distributions {
   
   inline unsigned int generateSeed() { return( clock() + time(0) ); }
 
-  class RandInt {
+  class Random {
   public:
     
     // Initialize the generator
-    RandInt();
-    RandInt(size_t seed);
+    Random();
+    Random(size_t seed);
     
     // Destructor
-    ~RandInt();
+    ~Random();
     
     void seed(size_t seed);
     
     // Return random int
-    size_t operator()() {
-      return( rand_(eng_) );
-    }
-    
+    size_t integer();
+
     // Generate and normalize random int
     datadefs::num_t uniform();
     
@@ -50,7 +48,7 @@ namespace distributions {
   public:
     PMF(const vector<datadefs::num_t>& weights);
     ~PMF();
-    size_t icdf(const datadefs::num_t prob);
+    size_t icdf(const datadefs::num_t prob) const;
   private:
     map<datadefs::num_t,size_t> icdf_;
   };

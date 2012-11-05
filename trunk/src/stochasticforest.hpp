@@ -13,26 +13,28 @@ using namespace std;
 class StochasticForest {
 public:
   
-  StochasticForest(Treedata* treeData, const vector<num_t>& featureWeights, options::General_options* params);
+  StochasticForest();
   
-  // Load an existing forest
-  StochasticForest(options::General_options* params);
-
   ~StochasticForest();
+
+  void learnRF(Treedata* trainData, const size_t targetIdx, const ForestOptions* forestOptions, const vector<num_t>& featureWeights, vector<distributions::Random>& randoms);
+  void learnGBT(Treedata* trainData, const size_t targetIdx, const ForestOptions* forestOptions, const vector<num_t>& featureWeights, vector<distributions::Random>& randoms);
+
+  void loadForest(const string& fileName);
   
-  num_t getError() { return(0.0); }
-  num_t getOobError();
+  //num_t getError() { return(0.0); }
+  //num_t getOobError();
 
   void getImportanceValues(vector<num_t>& importanceValues,
                            vector<num_t>& contrastImportanceValues);
     
-  void getMeanMinimalDepthValues(vector<num_t>& depthValues, vector<num_t>& contrastDepthValues);
+  void getMeanMinimalDepthValues(Treedata* trainData, vector<num_t>& depthValues, vector<num_t>& contrastDepthValues);
 
-  void predict(Treedata* treeDataTest, vector<string>& predictions, vector<num_t>& confidence);
-  void predict(Treedata* treeDataTest, vector<num_t>& predictions, vector<num_t>& confidence);
+  void predict(Treedata* treeDataTest, vector<string>& predictions, vector<num_t>& confidence, const size_t nThreads = 1);
+  void predict(Treedata* treeDataTest, vector<num_t>& predictions, vector<num_t>& confidence, const size_t nThreads = 1);
 
-  vector<num_t> getOobPredictions();
-  vector<num_t> getPermutedOobPredictions(const size_t featureIdx);
+  //vector<num_t> getOobPredictions();
+  //vector<num_t> getPermutedOobPredictions(const size_t featureIdx);
 
   //Counts the number of nodes in the forest
   size_t nNodes();
@@ -44,10 +46,10 @@ public:
 
   inline set<size_t> getFeaturesInForest() { return( featuresInForest_ ); }
 
-  inline string getTargetName() { return( params_->targetStr ); }
+  inline string getTargetName() { return( targetName_ ); }
   inline bool isTargetNumerical() { return( isTargetNumerical_ ); }
 
-  void printToFile(const string& fileName);
+  void saveForest(const string& fileName);
 
   //options::General_options* params() { return(&params_); }
 
@@ -55,11 +57,8 @@ public:
 private:
 #endif
   
-  void learnRF(distributions::PMF& pmf);
-  void learnGBT(distributions::PMF& pmf);
-
-  void growNumericalGBT(distributions::PMF& pmf);
-  void growCategoricalGBT(distributions::PMF& pmf);
+  void growNumericalGBT(Treedata* trainData, const size_t targetIdx, const ForestOptions* forestOptions, const distributions::PMF* pmf, vector<distributions::Random>& randoms);
+  void growCategoricalGBT(Treedata* trainData, const size_t targetIdx, const ForestOptions* forestOptions, const distributions::PMF* pmf, vector<distributions::Random>& randoms);
 
   // TODO: StochasticForest::transformLogistic() should be moved elsewhere
   void transformLogistic(size_t nCategories, vector<num_t>& prediction, vector<num_t>& probability);
@@ -67,19 +66,21 @@ private:
   num_t error(const vector<num_t>& data1,
 	      const vector<num_t>& data2); 
 
+  ForestOptions::ForestType forestType_;
+
   // Pointer to treeData_ object, stores all the feature data with which the trees are grown (i.e. training data)
-  Treedata* trainData_;
+  //Treedata* trainData_;
 
   vector<string> categories_;
 
-  options::General_options* params_;
+  //ForestOptions* params_;
 
   // Experimental parameters for making GBT working
   vector<num_t> GBTfactors_;
   num_t GBTconstant_;
 
   // Chosen target to regress on
-  //string targetName_;
+  string targetName_;
   bool isTargetNumerical_;
 
   // Root nodes for every tree
