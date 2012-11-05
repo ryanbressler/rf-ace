@@ -35,11 +35,11 @@ class Treedata  {
 public:
 
   // Initializes the object 
-  Treedata(const vector<Feature>& features, options::General_options* parameters, const vector<string>& sampleHeaders = vector<string>(0) );
+  Treedata(const vector<Feature>& features, const bool useContrasts, const vector<string>& sampleHeaders = vector<string>(0) );
 
   // Initializes the object and reads in a data matrix
   // NOTE: will permute the contrasts, which is why it needs the RNG
-  Treedata(string fileName, options::General_options* parameters);
+  Treedata(string fileName, const char dataDelimiter, const char headerDelimiter, const bool useContrasts);
 
   ~Treedata();
 
@@ -137,7 +137,7 @@ public:
   
   // Generates a bootstrap sample from the real samples of featureIdx. Samples not in the bootstrap sample will be stored in oob_ics,
   // and the number of oob samples is stored in noob.
-  void bootstrapFromRealSamples(distributions::RandInt& randInt,
+  void bootstrapFromRealSamples(distributions::Random* random,
 				const bool withReplacement, 
                                 const num_t sampleSize, 
                                 const size_t featureIdx, 
@@ -145,7 +145,7 @@ public:
                                 vector<size_t>& oobIcs);
 
   void createContrasts();
-  void permuteContrasts(distributions::RandInt& randInt);
+  void permuteContrasts(distributions::Random* random);
 
   bool isFeatureNumerical(const size_t featureIdx);
 
@@ -165,7 +165,9 @@ private:
 	       vector<vector<string> >& rawMatrix, 
 	       vector<string>& featureHeaders, 
 	       vector<string>& sampleHeaders, 
-	       vector<bool>& isFeatureNumerical);
+	       vector<bool>& isFeatureNumerical,
+	       const char dataDelimiter,
+	       const char headerDelimiter);
   
   void readARFF(ifstream& featurestream, 
 		vector<vector<string> >& rawMatrix, 
@@ -174,13 +176,13 @@ private:
 
   void parseARFFattribute(const string& str, string& attributeName, bool& isFeatureNumerical);
 
-  bool isValidNumericalHeader(const string& str);
-  bool isValidCategoricalHeader(const string& str);
-  bool isValidFeatureHeader(const string& str);
+  bool isValidNumericalHeader(const string& str, const char headerDelimiter);
+  bool isValidCategoricalHeader(const string& str, const char hederDelimiter);
+  bool isValidFeatureHeader(const string& str, const char headerDelimiter);
 
   template <typename T> void transpose(vector<vector<T> >& mat);
 
-  options::General_options* parameters_;
+  bool useContrasts_;
   
   vector<Feature> features_;
   vector<string> sampleHeaders_;

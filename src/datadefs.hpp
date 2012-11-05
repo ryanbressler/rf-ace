@@ -54,6 +54,61 @@ namespace datadefs {
   extern const set<NAN_t> NANs;     /** The complete set of string
                                      *   representations of NAN */
   extern const string CONTRAST;
+
+  // Random Forest default configuration
+  extern const size_t     RF_DEFAULT_N_TREES;
+  extern const size_t     RF_DEFAULT_M_TRY;
+  extern const size_t     RF_DEFAULT_N_MAX_LEAVES;
+  extern const size_t     RF_DEFAULT_NODE_SIZE;
+  extern const num_t      RF_DEFAULT_IN_BOX_FRACTION;
+  extern const num_t      RF_DEFAULT_SAMPLE_WITH_REPLACEMENT;
+  extern const bool       RF_DEFAULT_USE_CONTRASTS;
+  extern const num_t      RF_DEFAULT_CONTRAST_FRACTION;
+  extern const bool       RF_DEFAULT_IS_RANDOM_SPLIT;
+  extern const num_t      RF_DEFAULT_SHRINKAGE;
+
+  // Gradient Boosting Trees default configuration
+  extern const size_t     GBT_DEFAULT_N_TREES;
+  extern const size_t     GBT_DEFAULT_M_TRY;
+  extern const size_t     GBT_DEFAULT_N_MAX_LEAVES;
+  extern const size_t     GBT_DEFAULT_NODE_SIZE;
+  extern const num_t      GBT_DEFAULT_IN_BOX_FRACTION;
+  extern const num_t      GBT_DEFAULT_SAMPLE_WITH_REPLACEMENT;
+  extern const bool       GBT_DEFAULT_USE_CONTRASTS;
+  extern const num_t      GBT_DEFAULT_CONTRAST_FRACTION;
+  extern const bool       GBT_DEFAULT_IS_RANDOM_SPLIT;
+  extern const num_t      GBT_DEFAULT_SHRINKAGE;
+
+  // CART default configuration
+  extern const size_t     CART_DEFAULT_N_TREES;
+  extern const size_t     CART_DEFAULT_M_TRY;
+  extern const size_t     CART_DEFAULT_N_MAX_LEAVES;
+  extern const size_t     CART_DEFAULT_NODE_SIZE;
+  extern const num_t      CART_DEFAULT_IN_BOX_FRACTION;
+  extern const num_t      CART_DEFAULT_SAMPLE_WITH_REPLACEMENT;
+  extern const bool       CART_DEFAULT_USE_CONTRASTS;
+  extern const num_t      CART_DEFAULT_CONTRAST_FRACTION;
+  extern const bool       CART_DEFAULT_IS_RANDOM_SPLIT;
+  extern const num_t      CART_DEFAULT_SHRINKAGE;
+
+  // Statistical test default configuration
+  extern const size_t     FILTER_DEFAULT_N_PERMS;
+  extern const num_t      FILTER_DEFAULT_P_VALUE_THRESHOLD;
+  extern const bool       FILTER_DEFAULT_IS_ADJUSTED_P_VALUE;
+  extern const num_t      FILTER_DEFAULT_IMPORTANCE_THRESHOLD;
+  extern const bool       FILTER_NORMALIZE_IMPORTANCE_VALUES;
+  extern const bool       FILTER_DEFAULT_REPORT_NONEXISTENT_FEATURES;
+
+  // Default general configuration
+  extern const bool       GENERAL_DEFAULT_PRINT_HELP;
+  extern const char       GENERAL_DEFAULT_DATA_DELIMITER;
+  extern const char       GENERAL_DEFAULT_HEADER_DELIMITER;
+  extern const size_t     GENERAL_DEFAULT_MIN_SAMPLES;
+  extern const int        GENERAL_DEFAULT_SEED;
+  extern const size_t     GENERAL_DEFAULT_N_THREADS;
+  extern const bool       GENERAL_DEFAULT_IS_MAX_THREADS;
+  extern const num_t      GENERAL_DEFAULT_FEATURE_WEIGHT;
+
   
   ////////////////////////////////////////////////////////////
   // METHOD DECLARATIONS

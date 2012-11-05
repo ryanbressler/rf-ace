@@ -10,9 +10,7 @@
 using namespace std;
 using datadefs::num_t;
 
-Node::Node(options::General_options* parameters, const size_t threadIdx):
-  parameters_(parameters),
-  threadIdx_(threadIdx),
+Node::Node():
   trainPrediction_(datadefs::NUM_NAN),
   rawTrainPrediction_(datadefs::STR_NAN),
   leftChild_(NULL),
@@ -64,8 +62,8 @@ void Node::setSplitter(const string& splitterName,
   splitter_.isNumerical = true;
   splitter_.leftLeqValue = splitLeftLeqValue;
 
-  leftChild_ = new Node(parameters_,threadIdx_);
-  rightChild_ = new Node(parameters_,threadIdx_);
+  leftChild_ = new Node();
+  rightChild_ = new Node();
 
   if ( false ) {
     cout << "NEW " << leftChild_ << endl;
@@ -91,8 +89,8 @@ void Node::setSplitter(const string& splitterName,
   splitter_.leftValues = leftSplitValues;
   splitter_.rightValues = rightSplitValues;
 
-  leftChild_ = new Node(parameters_,threadIdx_);
-  rightChild_ = new Node(parameters_,threadIdx_);
+  leftChild_ = new Node();
+  rightChild_ = new Node();
 
   if ( false ) {
     cout << "NEW " << leftChild_ << endl;
@@ -115,7 +113,9 @@ Node* Node::percolate(Treedata* testData, const size_t sampleIdx, const size_t s
     if ( scrambleFeatureIdx != featureIdx ) {
       data = testData->getFeatureData(featureIdx,sampleIdx);
     } else {
-      data = testData->getFeatureData(featureIdx, parameters_->randIntGens[threadIdx_]() % testData->nSamples() );
+      cerr << "Randomized prediction is not available!" << endl;
+      exit(1);
+      // data = testData->getFeatureData(featureIdx, random_->integer() % testData->nSamples() );
     }
     if ( datadefs::isNAN(data) ) { return( this ); }
     return( data <= splitter_.leftLeqValue ? 
@@ -127,7 +127,9 @@ Node* Node::percolate(Treedata* testData, const size_t sampleIdx, const size_t s
     if ( scrambleFeatureIdx != featureIdx ) {
       data = testData->getRawFeatureData(featureIdx,sampleIdx);
     } else {
-      data = testData->getRawFeatureData(featureIdx, parameters_->randIntGens[threadIdx_]() % testData->nSamples() );
+      cerr << "randomized prediction is not available!" << endl;
+      exit(1);
+      // data = testData->getRawFeatureData(featureIdx, random_->integer() % testData->nSamples() );
     }
     if ( datadefs::isNAN_STR(data) ) { return( this ); }
     // Return left child if splits left
@@ -218,8 +220,10 @@ string Node::getRawTrainPrediction() {
 
 void Node::recursiveNodeSplit(Treedata* treeData,
 			      const size_t targetIdx,
+			      const ForestOptions* forestOptions,
+			      distributions::Random* random,
 			      const PredictionFunctionType& predictionFunctionType,
-			      distributions::PMF* pmf,
+			      const distributions::PMF* pmf,
 			      const vector<size_t>& sampleIcs,
 			      const size_t treeDepth,
 			      set<size_t>& featuresInTree,
@@ -229,7 +233,7 @@ void Node::recursiveNodeSplit(Treedata* treeData,
   if ( false ) {
     cout << "REC " << this << endl;
     cout << " " << treeData << endl;
-    cout << " " << parameters_ << endl;
+    cout << " " << forestOptions << endl;
     cout << " " << nLeaves << endl;
   }
 
@@ -257,42 +261,41 @@ void Node::recursiveNodeSplit(Treedata* treeData,
 
   size_t nSamples = sampleIcs.size();
 
-  assert( *nLeaves <= parameters_->nMaxLeaves );
+  assert( *nLeaves <= forestOptions->nMaxLeaves );
 
-  if ( nSamples < 2 * parameters_->nodeSize || *nLeaves == parameters_->nMaxLeaves ) {
+  if ( nSamples < 2 * forestOptions->nodeSize || *nLeaves == forestOptions->nMaxLeaves ) {
     return;
   }
 
-  vector<size_t> featureSampleIcs(parameters_->mTry);
+  vector<size_t> featureSampleIcs( forestOptions->mTry );
 
-  if(parameters_->isRandomSplit) {
+  if ( forestOptions->isRandomSplit ) {
 
-    // featureSampleIcs.resize(parameters_->mTry);
+    // featureSampleIcs.resize(parameters->mTry);
 
-    for ( size_t i = 0; i < parameters_->mTry; ++i ) {
-      featureSampleIcs[i] = pmf->icdf( parameters_->randIntGens[threadIdx_].uniform() );
+    for ( size_t i = 0; i < forestOptions->mTry; ++i ) {
+      featureSampleIcs[i] = pmf->icdf( random->uniform() );
     }
 
-    // utils::permute(featureSampleIcs,parameters_->randIntGens[threadIdx_]);
+    // utils::permute(featureSampleIcs,parameters->randIntGens[threadIdx_]);
 
     // Take only the first ones
-    // featureSampleIcs.resize(parameters_->mTry);
+    // featureSampleIcs.resize(parameters->mTry);
 
   }
 
-  // With 1% sampling rate assign contrasts
-  if(parameters_->useContrasts) {
-    for(size_t i = 0; i < parameters_->mTry; ++i) {
+  if ( forestOptions->useContrasts ) {
+    for ( size_t i = 0; i < forestOptions->mTry; ++i ) {
       
       // If the sampled feature is a contrast... 
-      if( parameters_->randIntGens[threadIdx_].uniform() < parameters_->contrastFraction ) { // %1 sampling rate
+      if ( random->uniform() < forestOptions->contrastFraction ) { // p% sampling rate
 	
 	featureSampleIcs[i] += treeData->nFeatures();
       }
     }
   } 
 
-  assert( featureSampleIcs.size() == parameters_->mTry );
+  // assert( featureSampleIcs.size() == forestOptions->mTry );
   
   vector<size_t> sampleIcs_left,sampleIcs_right;
 
@@ -301,6 +304,7 @@ void Node::recursiveNodeSplit(Treedata* treeData,
   
   bool foundSplit = this->regularSplitterSeek(treeData,
 					      targetIdx,
+					      forestOptions,
 					      sampleIcs,
 					      featureSampleIcs,
 					      splitFeatureIdx,
@@ -318,13 +322,14 @@ void Node::recursiveNodeSplit(Treedata* treeData,
 
   *nLeaves += 1;
   
-  leftChild_->recursiveNodeSplit(treeData,targetIdx,predictionFunctionType,pmf,sampleIcs_left,treeDepth+1,featuresInTree,minDistToRoot,nLeaves);
-  rightChild_->recursiveNodeSplit(treeData,targetIdx,predictionFunctionType,pmf,sampleIcs_right,treeDepth+1,featuresInTree,minDistToRoot,nLeaves);
+  leftChild_->recursiveNodeSplit(treeData,targetIdx,forestOptions,random,predictionFunctionType,pmf,sampleIcs_left,treeDepth+1,featuresInTree,minDistToRoot,nLeaves);
+  rightChild_->recursiveNodeSplit(treeData,targetIdx,forestOptions,random,predictionFunctionType,pmf,sampleIcs_right,treeDepth+1,featuresInTree,minDistToRoot,nLeaves);
   
 }
 
 bool Node::regularSplitterSeek(Treedata* treeData,
 			       const size_t targetIdx,
+			       const ForestOptions* forestOptions,
 			       const vector<size_t>& sampleIcs,
 			       const vector<size_t>& featureSampleIcs,
 			       size_t& splitFeatureIdx,
@@ -365,7 +370,7 @@ bool Node::regularSplitterSeek(Treedata* treeData,
 
       newSplitFitness = treeData->numericalFeatureSplit(targetIdx,
 							newSplitFeatureIdx,
-							parameters_->nodeSize,
+							forestOptions->nodeSize,
 							newSampleIcs_left,
 							newSampleIcs_right,
 							newSplitValue);
@@ -373,7 +378,7 @@ bool Node::regularSplitterSeek(Treedata* treeData,
 
       newSplitFitness = treeData->categoricalFeatureSplit(targetIdx,
 							  newSplitFeatureIdx,
-							  parameters_->nodeSize,
+							  forestOptions->nodeSize,
 							  newSampleIcs_left,
 							  newSampleIcs_right,
 							  newSplitValues_left,
@@ -381,8 +386,8 @@ bool Node::regularSplitterSeek(Treedata* treeData,
     }
 
     if( newSplitFitness > splitFitness &&
-	newSampleIcs_left.size() >= parameters_->nodeSize &&
-	newSampleIcs_right.size() >= parameters_->nodeSize ) {
+	newSampleIcs_left.size() >= forestOptions->nodeSize &&
+	newSampleIcs_right.size() >= forestOptions->nodeSize ) {
       
       splitFitness = newSplitFitness;
       splitFeatureIdx = newSplitFeatureIdx;

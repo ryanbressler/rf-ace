@@ -128,11 +128,11 @@ namespace utils {
   vector<vector<size_t> > splitRange(const size_t nElements, const size_t nSplits);
 
   template<typename T>
-  void permute(vector<T>& data, distributions::RandInt& randInt) {
+  void permute(vector<T>& data, distributions::Random* random) {
     
     // Permute indices
     for (size_t i = 0; i < data.size(); ++i) {
-      size_t j = randInt() % (i + 1);
+      size_t j = random->integer() % (i + 1);
       T temp = data[i];
       data[i] = data[j];
       data[j] = temp;

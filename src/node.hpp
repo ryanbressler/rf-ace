@@ -23,7 +23,7 @@ using datadefs::num_t;
 class Node {
 public:
   //Initializes node.
-  Node(options::General_options* parameters, const size_t threadIdx);
+  Node();
   ~Node();
 
   //Gets the splitter for the node
@@ -77,8 +77,10 @@ protected:
 
   void recursiveNodeSplit(Treedata* treeData,
                           const size_t targetIdx,
+			  const ForestOptions* forestOptions,
+			  distributions::Random* random,
 			  const PredictionFunctionType& predictionFunctionType,
-			  distributions::PMF* pmf,
+			  const distributions::PMF* pmf,
 			  const vector<size_t>& sampleIcs,
 			  const size_t treeDepth,
 			  set<size_t>& featuresInTree,
@@ -87,6 +89,7 @@ protected:
 
   bool regularSplitterSeek(Treedata* treeData,
 			   const size_t targetIdx,
+			   const ForestOptions* forestOptions,
 			   const vector<size_t>& sampleIcs,
 			   const vector<size_t>& featureSampleIcs,
 			   size_t& splitFeatureIdx,
@@ -94,8 +97,10 @@ protected:
 			   vector<size_t>& sampleIcs_right,
 			   num_t& splitFitness);
 
-  options::General_options* parameters_;
-  size_t threadIdx_;
+  //ForestOptions* parameters_;
+  //size_t threadIdx_;
+
+  // distributions::Random* random_;
 
 #ifndef TEST__
 private:

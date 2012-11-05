@@ -15,53 +15,38 @@
 #include "utils.hpp"
 #include "math.hpp"
 
-
-StochasticForest::StochasticForest(Treedata* trainData, const vector<num_t>& featureWeights, options::General_options* params):
-  trainData_(trainData),
-  params_(params),
-  rootNodes_(params_->nTrees) {
-
-  size_t targetIdx = trainData_->getFeatureIdx(params_->targetStr);
-
-  assert( targetIdx != trainData_->end() );
-
-  isTargetNumerical_ = trainData_->isFeatureNumerical(targetIdx);
-
-  categories_ = trainData_->categories(targetIdx);
-
-  assert( trainData->nFeatures() == featureWeights.size() );
-
-  assert( fabs(featureWeights[targetIdx]) < datadefs::EPS );
-
-  distributions::PMF pmf(featureWeights);
-
-  // Grows the forest
-  if ( params_->modelType == options::RF ) {
-    this->learnRF(pmf);
-  } else if ( params_->modelType == options::GBT ) {
-    this->learnGBT(pmf);
-  } else if ( params_->modelType == options::CART ) {
-    this->learnRF(pmf);
-  } else {
-    cerr << "Unknown model to be learned!" << endl;
-    exit(1);
-  }
-
-  // Get features in the forest for fast look-up
-  for ( size_t treeIdx = 0; treeIdx < rootNodes_.size(); ++treeIdx ) {
-    set<size_t> featuresInTree = rootNodes_[treeIdx]->getFeaturesInTree();
-    for ( set<size_t>::const_iterator it(featuresInTree.begin()); it != featuresInTree.end(); ++it ) {
-      featuresInForest_.insert(*it);
-    }
-  }
+StochasticForest::StochasticForest():
+  forestType_(ForestOptions::ForestType::UNKNOWN) {
 
 }
 
-StochasticForest::StochasticForest(options::General_options* params):
-  trainData_(NULL),
-  params_(params) {
+/*
+  void StochasticForest::learnRF(Treedata* trainData, const size_t targetIdx, ForestOptions* params, const vector<num_t>& featureWeights) {
+  
+  isTargetNumerical_ = trainData_->isFeatureNumerical(targetIdx);
+  
+  categories_ = trainData_->categories(targetIdx);
+  
+  assert( trainData->nFeatures() == featureWeights.size() );
+  
+  assert( fabs(featureWeights[targetIdx]) < datadefs::EPS );
+  
+  distributions::PMF pmf(featureWeights);
+  
+  // Get features in the forest for fast look-up
+  for ( size_t treeIdx = 0; treeIdx < rootNodes_.size(); ++treeIdx ) {
+  set<size_t> featuresInTree = rootNodes_[treeIdx]->getFeaturesInTree();
+  for ( set<size_t>::const_iterator it(featuresInTree.begin()); it != featuresInTree.end(); ++it ) {
+  featuresInForest_.insert(*it);
+  }
+  }
+  
+  }
+*/
 
-  ifstream forestStream( params_->forestInput.c_str() );
+void StochasticForest::loadForest(const string& fileName) {
+
+  ifstream forestStream( fileName.c_str() );
   assert(forestStream.good());
   
   string newLine("");
@@ -70,34 +55,34 @@ StochasticForest::StochasticForest(options::General_options* params):
   map<string,string> forestSetup = utils::parse(newLine,',','=','"');
 
   if ( forestSetup["FOREST"] == "GBT" ) {    
-    params_->modelType = options::GBT;
+    forestType_ = ForestOptions::ForestType::GBT;
   } else if ( forestSetup["FOREST"] == "RF" ) {
-    params_->modelType = options::RF;
+    forestType_ = ForestOptions::ForestType::RF;
   } else if ( forestSetup["FOREST"] == "CART" ) {
-    params_->modelType = options::CART;
+    forestType_ = ForestOptions::ForestType::CART;
   } else {
     cerr << "Unknown forest type: " << forestSetup["FOREST"] << endl;
     exit(1);
   }
 
   assert( forestSetup.find("NTREES") != forestSetup.end() );
-  params_->nTrees = static_cast<size_t>( utils::str2<int>(forestSetup["NTREES"]) );
-  rootNodes_.resize(params_->nTrees);
+  size_t nTrees = static_cast<size_t>( utils::str2<int>(forestSetup["NTREES"]) );
+  rootNodes_.resize( nTrees );
 
   assert( forestSetup.find("TARGET") != forestSetup.end() );
-  params_->targetStr = forestSetup["TARGET"];
+  targetName_ = forestSetup["TARGET"];
 
   assert( forestSetup.find("CATEGORIES") != forestSetup.end() );
   isTargetNumerical_ = utils::split(forestSetup["CATEGORIES"],',').size() == 0 ;
 
-  assert( forestSetup.find("SHRINKAGE") != forestSetup.end() );
-  params_->shrinkage = utils::str2<num_t>(forestSetup["SHRINKAGE"]);
+  //assert( forestSetup.find("SHRINKAGE") != forestSetup.end() );
+  //size_t shrinkage_ = utils::str2<num_t>(forestSetup["SHRINKAGE"]);
   
   assert( forestStream.good() );
  
   int treeIdx = -1;
 
-  vector<map<string,Node*> > forestMap( params_->nTrees );
+  vector<map<string,Node*> > forestMap( nTrees );
 
   // Read the forest
   while ( getline(forestStream,newLine) ) {
@@ -123,8 +108,7 @@ StochasticForest::StochasticForest(options::General_options* params):
 
     // If the node is rootnode, we will create a new RootNode object and assign a reference to it in forestMap
     if ( nodeMap["NODE"] == "*" ) {
-      size_t threadIdx = 0;
-      rootNodes_[treeIdx] = new RootNode(params_,threadIdx);
+      rootNodes_[treeIdx] = new RootNode();
       forestMap[treeIdx]["*"] = rootNodes_[treeIdx];
     }
       
@@ -181,27 +165,29 @@ StochasticForest::~StochasticForest() {
 
 /* Prints the forest into a file, so that the forest can be loaded for later use (e.g. prediction).
  */
-void StochasticForest::printToFile(const string& fileName) {
+void StochasticForest::saveForest(const string& fileName) {
 
   // Open stream for writing
   ofstream toFile( fileName.c_str() );
 
-  if ( params_->modelType == options::GBT ) {
+  if ( forestType_ == ForestOptions::ForestType::GBT ) {
     toFile << "FOREST=GBT";
-  } else if ( params_->modelType == options::RF ) {
+  } else if ( forestType_ == ForestOptions::ForestType::RF ) {
     toFile << "FOREST=RF"; 
-  } else if ( params_->modelType == options::CART ) {
+  } else if ( forestType_ == ForestOptions::ForestType::CART ) {
     toFile << "FOREST=CART";
   }
 
-  toFile << ",TARGET=" << "\"" << params_->targetStr << "\"";
-  toFile << ",NTREES=" << params_->nTrees;
-  toFile << ",CATEGORIES=" << "\""; utils::write(toFile,categories_.begin(),categories_.end(),','); toFile << "\"";
-  toFile << ",SHRINKAGE=" << params_->shrinkage << endl;
+  toFile << ",TARGET=" << "\"" << targetName_ << "\"";
+  toFile << ",NTREES=" << rootNodes_.size();
+  toFile << ",CATEGORIES=" << "\""; utils::write(toFile,categories_.begin(),categories_.end(),','); toFile << "\"" << endl;
+  //toFile << ",SHRINKAGE=" << shrinkage_ << endl;
 
   // Save each tree in the forest
   for ( size_t treeIdx = 0; treeIdx < rootNodes_.size(); ++treeIdx ) {
-    toFile << "TREE=" << treeIdx << endl;
+    toFile << "TREE=" << treeIdx;
+    if ( forestType_ == ForestOptions::ForestType::GBT ) { cout << ",GBT_CONSTANT=" << GBTconstant_ <<",GBT_FACTOR=" << GBTfactors_[treeIdx]; } 
+    cout << endl;
     rootNodes_[treeIdx]->print(toFile);
   }
   
@@ -210,47 +196,63 @@ void StochasticForest::printToFile(const string& fileName) {
   
 }
 
-void growTreesPerThread(const vector<RootNode*>& rootNodes, Treedata* trainData, distributions::PMF* pmf) {
+void growTreesPerThread(const vector<RootNode*>& rootNodes, Treedata* trainData, const size_t targetIdx, const ForestOptions* forestOptions, const distributions::PMF* pmf, distributions::Random* random) {
    
   for ( size_t i = 0; i < rootNodes.size(); ++i ) {
-    rootNodes[i]->growTree(trainData,pmf);
+    rootNodes[i]->growTree(trainData,targetIdx,forestOptions,pmf,random);
   }
 
 }
 
 
 
-void StochasticForest::learnRF(distributions::PMF& pmf) {
+void StochasticForest::learnRF(Treedata* trainData, const size_t targetIdx, const ForestOptions* forestOptions, const vector<num_t>& featureWeights, vector<distributions::Random>& randoms) {
 
-  if ( params_->isRandomSplit && params_->mTry == 0 ) {
+  targetName_ = trainData->getFeatureName(targetIdx);
+
+  isTargetNumerical_ = trainData->isFeatureNumerical(targetIdx);
+
+  categories_ = trainData->categories(targetIdx);
+
+  assert( trainData->nFeatures() == featureWeights.size() );
+
+  assert( fabs(featureWeights[targetIdx]) < datadefs::EPS );
+
+  rootNodes_.resize(forestOptions->nTrees);
+
+  distributions::PMF pmf(featureWeights);
+
+  if ( forestOptions->isRandomSplit && forestOptions->mTry == 0 ) {
     cerr << "StochasticForest::learnRF() -- for randomized splits mTry must be greater than 0" << endl;
     exit(1);
   }
 
-  assert( params_->nThreads > 0);
-  assert( params_->nTrees > 0);
-  assert( rootNodes_.size() == params_->nTrees );
+  size_t nThreads = randoms.size();
+
+  assert( nThreads > 0);
+  assert( forestOptions->nTrees > 0);
+  assert( rootNodes_.size() == forestOptions->nTrees );
 
 #ifdef NOTHREADS
-  assert( params_->nThreads == 1 );
+  assert( nThreads == 1 );
 #endif
 
-  if ( params_->nThreads == 1 ) {
+  if ( nThreads == 1 ) {
 
-    vector<size_t> treeIcs = utils::range(params_->nTrees);
+    vector<size_t> treeIcs = utils::range(forestOptions->nTrees);
     
     size_t threadIdx = 0;
     
     for ( size_t treeIdx = 0; treeIdx < rootNodes_.size(); ++treeIdx ) {
-      rootNodes_[treeIdx] = new RootNode(params_,threadIdx);
-      rootNodes_[treeIdx]->growTree(trainData_,&pmf);
+      rootNodes_[treeIdx] = new RootNode();
+      rootNodes_[treeIdx]->growTree(trainData,targetIdx,forestOptions,&pmf,&randoms[0]);
     }
 
   } 
 #ifndef NOTHREADS  
   else {
     
-    vector<vector<size_t> > treeIcs = utils::splitRange(params_->nTrees,params_->nThreads);
+    vector<vector<size_t> > treeIcs = utils::splitRange(forestOptions->nTrees,nThreads);
     
     vector<thread> threads;
     
@@ -261,7 +263,7 @@ void StochasticForest::learnRF(distributions::PMF& pmf) {
       
       for ( size_t i = 0; i < treeIcsPerThread.size(); ++i ) {
 	
-	rootNodes_[treeIcsPerThread[i]] = new RootNode(params_,threadIdx);
+	rootNodes_[treeIcsPerThread[i]] = new RootNode();
 	
 	rootNodesPerThread[i] = rootNodes_[treeIcsPerThread[i]];
 	
@@ -276,74 +278,92 @@ void StochasticForest::learnRF(distributions::PMF& pmf) {
     }
   }
 #endif
-}
 
-void StochasticForest::learnGBT(distributions::PMF& pmf) {
- 
-
-  //size_t targetIdx = trainData_->getFeatureIdx( params_->targetStr );
-  //size_t nCategories = trainData_->nCategories(params_->targetStr); //targetSupport_.size();
-
-  if ( !isTargetNumerical_ ) {
-    params_->nTrees *= trainData_->nCategories(trainData_->getFeatureIdx(params_->targetStr)); //nCategories;
+  // Get features in the forest for fast look-up
+  for ( size_t treeIdx = 0; treeIdx < rootNodes_.size(); ++treeIdx ) {
+    set<size_t> featuresInTree = rootNodes_[treeIdx]->getFeaturesInTree();
+    for ( set<size_t>::const_iterator it(featuresInTree.begin()); it != featuresInTree.end(); ++it ) {
+      featuresInForest_.insert(*it);
+    }
   }
 
-  // This is required since the number of trees became multiplied by the number of classes
-  rootNodes_.resize( params_->nTrees );
+
+}
+
+void StochasticForest::learnGBT(Treedata* trainData, const size_t targetIdx, const ForestOptions* forestOptions, const vector<num_t>& featureWeights, vector<distributions::Random>& randoms) {
+ 
+  targetName_ = trainData->getFeatureName(targetIdx);
+
+  isTargetNumerical_ = trainData_->isFeatureNumerical(targetIdx);
+
+  categories_ = trainData_->categories(targetIdx);
+
+  assert( trainData->nFeatures() == featureWeights.size() );
+
+  assert( fabs(featureWeights[targetIdx]) < datadefs::EPS );
+
+  distributions::PMF pmf(featureWeights);
+
+  if ( !isTargetNumerical_ ) {
+    rootNodes_.resize( forestOptions->nTrees * trainData_->nCategories(targetIdx) ); //nCategories;
+  } else {
+    rootNodes_.resize( forestOptions->nTrees );
+  }
 
   // No multithreading at the moment
   size_t threadIdx = 0;
 
   //Allocates memory for the root nodes. With all these parameters, the RootNode is now able to take full control of the splitting process
-  rootNodes_.resize( params_->nTrees );
-  for(size_t treeIdx = 0; treeIdx < params_->nTrees; ++treeIdx) {
-    rootNodes_[treeIdx] = new RootNode(params_,
-				       threadIdx);
+  for(size_t treeIdx = 0; treeIdx < rootNodes_.size(); ++treeIdx) {
+    rootNodes_[treeIdx] = new RootNode();
   }
     
   if ( isTargetNumerical_ ) {
-    this->growNumericalGBT(pmf);
+    this->growNumericalGBT(trainData,targetIdx,forestOptions,pmf,randoms);
   } else {
-    this->growCategoricalGBT(pmf);
+    this->growCategoricalGBT(trainData,targetIdx,forestOptions,pmf,randoms);
   }
 
 }
 
 
 // Grow a GBT "forest" for a numerical target variable
-void StochasticForest::growNumericalGBT(distributions::PMF& pmf) {
+void StochasticForest::growNumericalGBT(Treedata* trainData, const size_t targetIdx, const ForestOptions* forestOptions, const distributions::PMF* pmf, vector<distributions::Random>& randoms) {
 
-  size_t targetIdx = trainData_->getFeatureIdx( params_->targetStr );
-  
-  size_t nSamples = trainData_->nSamples();
+  assert( randoms.size() == 1 );
+
+  size_t nSamples = trainData->nSamples();
   // save a copy of the target column because it will be overwritten
-  vector<num_t> trueTargetData = trainData_->getFeatureData(targetIdx);
+  vector<num_t> trueTargetData = trainData->getFeatureData(targetIdx);
 
   // Target for GBT is different for each tree
   // reference to the target column, will overwrite it
   vector<num_t> curTargetData = trueTargetData; 
 
   vector<size_t> sampleIcs = utils::range(nSamples);
-  GBTconstant_ = math::mean( trainData_->getFilteredFeatureData(targetIdx,sampleIcs) );
-  GBTfactors_.resize(params_->nTrees);
+  GBTconstant_ = math::mean( trainData->getFilteredFeatureData(targetIdx,sampleIcs) );
+  GBTfactors_.resize(forestOptions->nTrees);
 
   // Set the initial prediction to be the mean
   vector<num_t> prediction(nSamples, GBTconstant_);
 
-  for ( size_t treeIdx = 0; treeIdx < params_->nTrees; ++treeIdx ) {
+  for ( size_t treeIdx = 0; treeIdx < rootNodes_.size(); ++treeIdx ) {
     // current target is the negative gradient of the loss function
     // for square loss, it is 2 * ( target - prediction )
     for (size_t i = 0; i < nSamples; i++ ) {
       curTargetData[i] = 2 * ( trueTargetData[i] - prediction[i] );
     }
 
-    trainData_->replaceFeatureData(targetIdx,curTargetData);
+    trainData->replaceFeatureData(targetIdx,curTargetData);
 
     // Grow a tree to predict the current target
-    rootNodes_[treeIdx]->growTree(trainData_,&pmf);
+    rootNodes_[treeIdx]->growTree(trainData,targetIdx,&pmf,forestOptions,&randoms[0]);
 
     // What kind of a prediction does the new tree produce?
-    vector<num_t> curPrediction = rootNodes_[treeIdx]->getTrainPrediction(); 
+    vector<num_t> curPrediction(nSamples); // = rootNodes_[treeIdx]->getTrainPrediction(); 
+    for ( size_t i = 0; i < nSamples; ++i ) {
+      curPrediction[i] = rootNodes_[treeIdx]->getTestPrediction(trainData,i);
+    }
 
     num_t h1 = 0.0;
     num_t h2 = 0.0;
@@ -352,7 +372,7 @@ void StochasticForest::growNumericalGBT(distributions::PMF& pmf) {
       h2 += pow(curPrediction[i],2);
     }
 
-    GBTfactors_[treeIdx] = params_->shrinkage * h1 / h2;
+    GBTfactors_[treeIdx] = forestOptions->shrinkage * h1 / h2;
 
     // Calculate the current total prediction adding the newly generated tree
     //num_t sqErrorSum = 0.0;
@@ -369,7 +389,7 @@ void StochasticForest::growNumericalGBT(distributions::PMF& pmf) {
 
   // GBT-forest is now done!
   // restore true target
-  trainData_->replaceFeatureData(targetIdx,trueTargetData);
+  trainData->replaceFeatureData(targetIdx,trueTargetData);
 
   //cout << " GBTconstant: " << GBTconstant_ << endl;
   //cout << "  GBTfactors: ";
@@ -378,16 +398,16 @@ void StochasticForest::growNumericalGBT(distributions::PMF& pmf) {
 }
 
 // Grow a GBT "forest" for a categorical target variable
-void StochasticForest::growCategoricalGBT(distributions::PMF& pmf) {
+void StochasticForest::growCategoricalGBT(Treedata* trainData, const size_t targetIdx, const ForestOptions* forestOptions, const distributions::PMF* pmf, vector<distributions::Random>& randoms) {
   
-  size_t targetIdx = trainData_->getFeatureIdx( params_->targetStr );
-  size_t nCategories = trainData_->nCategories( targetIdx );
+  //size_t targetIdx = trainData_->getFeatureIdx( params_->targetStr );
+  size_t nCategories = categories_.size(); //trainData_->nCategories( targetIdx );
 
   // Save a copy of the target column because it will be overwritten later.
   // We also know that it must be categorical.
-  size_t nSamples = trainData_->nSamples();
-  vector<num_t> trueTargetData = trainData_->getFeatureData(targetIdx);
-  vector<string> trueRawTargetData = trainData_->getRawFeatureData(targetIdx);
+  size_t nSamples = trainData->nSamples();
+  vector<num_t> trueTargetData = trainData->getFeatureData(targetIdx);
+  vector<string> trueRawTargetData = trainData->getRawFeatureData(targetIdx);
   
   // Target for GBT is different for each tree.
   // We use the original target column to save each temporary target.
@@ -407,46 +427,54 @@ void StochasticForest::growCategoricalGBT(distributions::PMF& pmf) {
 
   // Each iteration consists of numClasses_ trees,
   // each of those predicting the probability residual for each class.
-  size_t numIterations = params_->nTrees / nCategories;
+  size_t numIterations = forestOptions->nTrees / nCategories;
 
-  for (size_t m=0; m < numIterations; ++m) {
+  for ( size_t m = 0; m < numIterations; ++m ) {
     // Multiclass logistic transform of class probabilities from current probability estimates.
-    for (size_t i=0; i < nSamples; ++i) {
+    for ( size_t i = 0; i < nSamples; ++i ) {
       StochasticForest::transformLogistic(nCategories, prediction[i], curProbability[i]);
       // each prediction[i] is a vector<num_t>(numClasses_)
     }
 
     // construct a tree for each class
-    for (size_t k = 0; k < nCategories; ++k) {
+    for ( size_t k = 0; k < nCategories; ++k ) {
       // target for class k is ...
-      for (size_t i = 0; i < nSamples; ++i) {
+      for ( size_t i = 0; i < nSamples; ++i ) {
         // ... the difference between true target and current prediction
         curTargetData[i] = ( k == trueTargetData[i] ) - curProbability[i][k];
       }
 
       // For each tree the target data becomes the recently computed residuals
-      trainData_->replaceFeatureData(targetIdx,curTargetData);
+      trainData->replaceFeatureData(targetIdx,curTargetData);
 
       // Grow a tree to predict the current target
       size_t treeIdx = m * nCategories + k; // tree index
       //size_t nNodes;
-      rootNodes_[treeIdx]->growTree(trainData_,&pmf);
+      rootNodes_[treeIdx]->growTree(trainData,targetIdx,pmf,forestOptions,&randoms[0]);
 
       //cout << "Tree " << treeIdx << " ready, predicting OOB samples..." << endl;
 
       // What kind of a prediction does the new tree produce
       // out of the whole training data set?
-      curPrediction[k] = rootNodes_[treeIdx]->getTrainPrediction(); //StochasticForest::predictDatasetByTree(treeIdx);
+      curPrediction[k] = vector<num_t>(nSamples); //rootNodes_[treeIdx]->getTrainPrediction(); 
+      for ( size_t i = 0; i < nSamples; ++i ) {
+	curPrediction[k][i] = rootNodes_[treeIdx]->getTestPrediction(trainData,i);
+      }
+
+      cerr << "Categorical GBT predictor broken!" << endl;
+      exit(1);
+
+      //StochasticForest::predictDatasetByTree(treeIdx);
       // Calculate the current total prediction adding the newly generated tree
       for (size_t i = 0; i < nSamples; i++) {
-        prediction[i][k] = prediction[i][k] + params_->shrinkage * curPrediction[k][i];
+        prediction[i][k] = prediction[i][k] + 0 * curPrediction[k][i];
       }
     }
   }
   
   // GBT-forest is now done!
   // restore the true target
-  trainData_->replaceFeatureData(targetIdx,trueRawTargetData);
+  trainData->replaceFeatureData(targetIdx,trueRawTargetData);
 }
 
 void StochasticForest::transformLogistic(size_t nCategories, vector<num_t>& prediction, vector<num_t>& probability) {
@@ -507,77 +535,80 @@ num_t StochasticForest::error(const vector<num_t>& data1,
 
 }
 
-
-num_t StochasticForest::getOobError() {
-
+/*
+  num_t StochasticForest::getOobError() {
+  
   vector<num_t> oobPredictions = this->getOobPredictions();
   
   size_t targetIdx = trainData_->getFeatureIdx(params_->targetStr);
   vector<num_t> trueData = trainData_->getFeatureData(targetIdx);
-
+  
   return( this->error(oobPredictions,trueData) );
   
-}
+  }
+*/
 
-void StochasticForest::getImportanceValues(vector<num_t>& importanceValues, vector<num_t>& contrastImportanceValues) {
-
+/*
+  void StochasticForest::getImportanceValues(vector<num_t>& importanceValues, vector<num_t>& contrastImportanceValues) {
+  
   this->getMeanMinimalDepthValues(importanceValues,contrastImportanceValues);
   return;
   
   if ( featuresInForest_.size() == 0 ) {
-    cout << "NOTE: forest is empty!" << endl;
+  cout << "NOTE: forest is empty!" << endl;
   }
   
   vector<num_t> oobPredictions = this->getOobPredictions();
   
   size_t nRealFeatures = trainData_->nFeatures();
   size_t nAllFeatures = 2*nRealFeatures;
-
+  
   size_t targetIdx = trainData_->getFeatureIdx(params_->targetStr);
-
+  
   vector<num_t> trueData = trainData_->getFeatureData(targetIdx);
-
+  
   importanceValues.clear();
   importanceValues.resize(nAllFeatures,0.0);
-
+  
   num_t oobError = this->error(oobPredictions,trueData);
-
+  
   for ( set<size_t>::const_iterator it(featuresInForest_.begin()); it != featuresInForest_.end(); ++it ) {
-
-    size_t featureIdx = *it;
-
-    vector<num_t> permutedOobPredictions = this->getPermutedOobPredictions(featureIdx);
-
-    num_t permutedOobError = this->error(permutedOobPredictions,trueData);
-
-    importanceValues[featureIdx] = permutedOobError - oobError;
-
-    if ( params_->normalizeImportanceValues ) {
-      if ( oobError < datadefs::EPS ) {
-	importanceValues[featureIdx] /= datadefs::EPS;
-      } else {
-	importanceValues[featureIdx] /= oobError;
-      }
-    }
-
+  
+  size_t featureIdx = *it;
+  
+  vector<num_t> permutedOobPredictions = this->getPermutedOobPredictions(featureIdx);
+  
+  num_t permutedOobError = this->error(permutedOobPredictions,trueData);
+  
+  importanceValues[featureIdx] = permutedOobError - oobError;
+  
+  if ( params_->normalizeImportanceValues ) {
+  if ( oobError < datadefs::EPS ) {
+  importanceValues[featureIdx] /= datadefs::EPS;
+  } else {
+  importanceValues[featureIdx] /= oobError;
   }
-
+  }
+  
+  }
+  
   assert( !datadefs::containsNAN(importanceValues) );
-
-
+  
+  
   contrastImportanceValues.resize(nRealFeatures);
-
+  
   copy(importanceValues.begin() + nRealFeatures,
-       importanceValues.end(),
-       contrastImportanceValues.begin());
-
+  importanceValues.end(),
+  contrastImportanceValues.begin());
+  
   importanceValues.resize(nRealFeatures);
-
-}
+  
+  }
+*/
 
 void predictCatPerThread(Treedata* testData, 
 			 const vector<RootNode*>& rootNodes, 
-			 options::General_options* parameters,
+			 const ForestOptions::ForestType& forestType,
 			 const vector<size_t>& sampleIcs, 
 			 vector<string>* predictions, 
 			 vector<num_t>* confidence) {
@@ -588,7 +619,7 @@ void predictCatPerThread(Treedata* testData,
     for ( size_t treeIdx = 0; treeIdx < nTrees; ++treeIdx ) {
       predictionVec[treeIdx] = rootNodes[treeIdx]->getRawTestPrediction(testData,sampleIdx);
     }
-    if ( parameters->modelType == options::GBT ) {
+    if ( forestType == ForestOptions::ForestType::GBT ) {
       cerr << "Prediction of categorical target with GBTs not yet implemented!" << endl;
       exit(1);
       // MISSING: prediction
@@ -603,7 +634,7 @@ void predictCatPerThread(Treedata* testData,
 
 void predictNumPerThread(Treedata* testData, 
 			 const vector<RootNode*>& rootNodes, 
-			 options::General_options* parameters, 
+			 const ForestOptions::ForestType& forestType, 
 			 vector<size_t>& sampleIcs, 
 			 vector<num_t>* predictions, 
 			 vector<num_t>* confidence,
@@ -616,7 +647,7 @@ void predictNumPerThread(Treedata* testData,
     for ( size_t treeIdx = 0; treeIdx < nTrees; ++treeIdx ) {
       predictionVec[treeIdx] = rootNodes[treeIdx]->getTestPrediction(testData,sampleIdx);
     }
-    if ( parameters->modelType == options::GBT ) {
+    if ( forestType == ForestOptions::ForestType::GBT ) {
       (*predictions)[sampleIdx] = GBTconstant;
       (*confidence)[sampleIdx] = 0.0;
       for ( size_t treeIdx = 0; treeIdx < nTrees; ++treeIdx ) {
@@ -632,14 +663,14 @@ void predictNumPerThread(Treedata* testData,
 }
 
 
-void StochasticForest::predict(Treedata* testData, vector<string>& predictions, vector<num_t>& confidence) {
+void StochasticForest::predict(Treedata* testData, vector<string>& predictions, vector<num_t>& confidence, const size_t nThreads) {
 
-  assert( params_->modelType != options::GBT );
+  assert( forestType_ != ForestOptions::ForestType::GBT );
   assert( !this->isTargetNumerical() );
-  assert( params_->nThreads > 0 );
+  assert( nThreads > 0 );
 
 #ifdef NOTHREADS
-  assert( params_->nThreads == 1 );
+  assert( nThreads == 1 );
 #endif
 
   size_t nSamples = testData->nSamples();
@@ -647,24 +678,24 @@ void StochasticForest::predict(Treedata* testData, vector<string>& predictions, 
   predictions.resize(nSamples);
   confidence.resize(nSamples);
 
-  if ( params_->nThreads == 1 ) {
+  if ( nThreads == 1 ) {
     
     vector<size_t> sampleIcs = utils::range(nSamples);
     
-    predictCatPerThread(testData,rootNodes_,params_,sampleIcs,&predictions,&confidence);
+    predictCatPerThread(testData,rootNodes_,forestType_,sampleIcs,&predictions,&confidence);
       
   } 
 #ifndef NOTHREADS
 else {
     
-    vector<vector<size_t> > sampleIcs = utils::splitRange(nSamples,params_->nThreads);
+    vector<vector<size_t> > sampleIcs = utils::splitRange(nSamples,nThreads);
     
     vector<thread> threads;
     
-    for ( size_t threadIdx = 0; threadIdx < params_->nThreads; ++threadIdx ) {
+    for ( size_t threadIdx = 0; threadIdx < nThreads; ++threadIdx ) {
       // We only launch a thread if there are any samples allocated for prediction
       if ( sampleIcs.size() > 0 ) {
-	threads.push_back( thread(predictCatPerThread,testData,rootNodes_,params_,sampleIcs[threadIdx],&predictions,&confidence) );
+	threads.push_back( thread(predictCatPerThread,testData,rootNodes_,forestType_,sampleIcs[threadIdx],&predictions,&confidence) );
       }
     }
     
@@ -677,13 +708,13 @@ else {
 }
 
 
-void StochasticForest::predict(Treedata* testData, vector<num_t>& predictions, vector<num_t>& confidence) {
+void StochasticForest::predict(Treedata* testData, vector<num_t>& predictions, vector<num_t>& confidence, const size_t nThreads) {
 
   //assert( params_->modelType != options::GBT );
   assert( this->isTargetNumerical() );
-  assert( params_->nThreads > 0 );
+  assert( nThreads > 0 );
 #ifndef NOTHREADS
-  assert( params_->nThreads == 1 );
+  assert( nThreads == 1 );
 #endif
 
   size_t nSamples = testData->nSamples();
@@ -691,23 +722,23 @@ void StochasticForest::predict(Treedata* testData, vector<num_t>& predictions, v
   predictions.resize(nSamples);
   confidence.resize(nSamples);
 
-  if ( params_->nThreads == 1 ) {
+  if ( nThreads == 1 ) {
 
     vector<size_t> sampleIcs = utils::range(nSamples);
     //cout << "1 thread!" << endl;
-    predictNumPerThread(testData,rootNodes_,params_,sampleIcs,&predictions,&confidence,GBTconstant_,GBTfactors_);
+    predictNumPerThread(testData,rootNodes_,forestType_,sampleIcs,&predictions,&confidence,GBTconstant_,GBTfactors_);
     
   } 
 #ifndef NOTHREADS
 else {
     //cout << "More threads!" << endl;
-    vector<vector<size_t> > sampleIcs = utils::splitRange(nSamples,params_->nThreads);
+    vector<vector<size_t> > sampleIcs = utils::splitRange(nSamples,nThreads);
     
     vector<thread> threads;
     
-    for ( size_t threadIdx = 0; threadIdx < params_->nThreads; ++threadIdx ) {
+    for ( size_t threadIdx = 0; threadIdx < nThreads; ++threadIdx ) {
       // We only launch a thread if there are any samples allocated for prediction
-      threads.push_back( thread(predictNumPerThread,testData,rootNodes_,params_,sampleIcs[threadIdx],&predictions,&confidence,GBTconstant_,GBTfactors_) );
+      threads.push_back( thread(predictNumPerThread,testData,rootNodes_,forestType_,sampleIcs[threadIdx],&predictions,&confidence,GBTconstant_,GBTfactors_) );
     }
     
     // Join all launched threads
@@ -718,50 +749,53 @@ else {
 #endif
 }
   
-
-vector<num_t> StochasticForest::getOobPredictions() {
+/*
+  vector<num_t> StochasticForest::getOobPredictions() {
   
   size_t nSamples = trainData_->nSamples();
   size_t nTrees = this->nTrees();
   vector<vector<num_t> > predictionMatrix(nSamples);
   vector<num_t> predictions(nSamples);
   for ( size_t treeIdx = 0; treeIdx < nTrees; ++treeIdx ) {
-    vector<size_t> oobIcs = rootNodes_[treeIdx]->getOobIcs();
-    for ( vector<size_t>::const_iterator it( oobIcs.begin() ); it != oobIcs.end(); ++it ) {
-      size_t sampleIdx = *it;
-      predictionMatrix[sampleIdx].push_back( rootNodes_[treeIdx]->getTrainPrediction(sampleIdx) );
-    }
+  vector<size_t> oobIcs = rootNodes_[treeIdx]->getOobIcs();
+  for ( vector<size_t>::const_iterator it( oobIcs.begin() ); it != oobIcs.end(); ++it ) {
+  size_t sampleIdx = *it;
+  predictionMatrix[sampleIdx].push_back( rootNodes_[treeIdx]->getTrainPrediction(sampleIdx) );
+  }
   }
   
   for ( size_t sampleIdx = 0; sampleIdx < nSamples; ++sampleIdx ) {
-    predictions[sampleIdx] = this->isTargetNumerical() ? math::mean(predictionMatrix[sampleIdx]) : math::mode(predictionMatrix[sampleIdx]);
+  predictions[sampleIdx] = this->isTargetNumerical() ? math::mean(predictionMatrix[sampleIdx]) : math::mode(predictionMatrix[sampleIdx]);
   }
-
+  
   return( predictions );
+  
+  }
+*/
 
-}
-
-vector<num_t> StochasticForest::getPermutedOobPredictions(const size_t featureIdx) {
-
+/*
+  vector<num_t> StochasticForest::getPermutedOobPredictions(const size_t featureIdx) {
+  
   size_t nSamples = trainData_->nSamples();
   size_t nTrees = this->nTrees();
   vector<vector<num_t> > predictionMatrix(nSamples);
   vector<num_t> predictions(nSamples);
   for ( size_t treeIdx = 0; treeIdx < nTrees; ++treeIdx ) {
-    vector<size_t> oobIcs = rootNodes_[treeIdx]->getOobIcs();
-    for ( vector<size_t>::const_iterator it( oobIcs.begin() ); it != oobIcs.end(); ++it ) {
-      size_t sampleIdx = *it;
-      predictionMatrix[sampleIdx].push_back( rootNodes_[treeIdx]->getPermutedTrainPrediction(featureIdx,sampleIdx) );
-    }
+  vector<size_t> oobIcs = rootNodes_[treeIdx]->getOobIcs();
+  for ( vector<size_t>::const_iterator it( oobIcs.begin() ); it != oobIcs.end(); ++it ) {
+  size_t sampleIdx = *it;
+  predictionMatrix[sampleIdx].push_back( rootNodes_[treeIdx]->getPermutedTrainPrediction(featureIdx,sampleIdx) );
   }
-
+  }
+  
   for ( size_t sampleIdx = 0; sampleIdx < nSamples; ++sampleIdx ) {
-    predictions[sampleIdx] = this->isTargetNumerical() ? math::mean(predictionMatrix[sampleIdx]) : math::mode(predictionMatrix[sampleIdx]);
+  predictions[sampleIdx] = this->isTargetNumerical() ? math::mean(predictionMatrix[sampleIdx]) : math::mode(predictionMatrix[sampleIdx]);
   }
-
+  
   return( predictions );
   
-}
+  }
+*/
 
 /**
    Returns a vector of node counts in the trees of the forest
@@ -795,13 +829,13 @@ size_t StochasticForest::nTrees() {
   return( rootNodes_.size() );
 }
 
-void StochasticForest::getMeanMinimalDepthValues(vector<num_t>& depthValues, vector<num_t>& contrastDepthValues) {
+void StochasticForest::getMeanMinimalDepthValues(Treedata* trainData, vector<num_t>& depthValues, vector<num_t>& contrastDepthValues) {
 
   if ( featuresInForest_.size() == 0 ) {
     cout << "NOTE: featuresInForest_ is empty!" << endl;
   }
 
-  size_t nRealFeatures = trainData_->nFeatures();
+  size_t nRealFeatures = trainData->nFeatures();
   size_t nAllFeatures = 2*nRealFeatures;
 
   depthValues.clear();

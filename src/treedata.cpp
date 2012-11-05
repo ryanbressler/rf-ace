@@ -41,8 +41,8 @@ Feature::Feature(const vector<string>& newStringData, const string& newName) {
 }
 
 
-Treedata::Treedata(const vector<Feature>& features, options::General_options* parameters, const vector<string>& sampleHeaders):
-  parameters_(parameters),
+Treedata::Treedata(const vector<Feature>& features, const bool useContrasts, const vector<string>& sampleHeaders):
+  useContrasts_(useContrasts),
   features_(features),
   sampleHeaders_(sampleHeaders) {
 
@@ -70,9 +70,9 @@ Treedata::Treedata(const vector<Feature>& features, options::General_options* pa
 
   assert( sampleHeaders_.size() == nSamples );
 
-  if ( parameters_->useContrasts ) {
+  if ( useContrasts_ ) {
     this->createContrasts(); // Doubles matrix size
-    this->permuteContrasts(parameters_->randIntGens[0]);
+    // this->permuteContrasts(random);
   }
   
 }
@@ -83,10 +83,8 @@ Treedata::Treedata(const vector<Feature>& features, options::General_options* pa
    NOTE: dataDelimiter and headerDelimiter are used only when the format is AFM, for 
    ARFF default delimiter (comma) is used 
 */
-Treedata::Treedata(string fileName, options::General_options* parameters):
-  parameters_(parameters) {
-
-  //TIMER_G->tic("READ");
+Treedata::Treedata(string fileName, const char dataDelimiter, const char headerDelimiter, const bool useContrasts):
+  useContrasts_(useContrasts) {
 
   //Initialize stream to read from file
   ifstream featurestream;
@@ -113,7 +111,9 @@ Treedata::Treedata(string fileName, options::General_options* parameters):
 		      rawMatrix,
 		      featureHeaders,
 		      sampleHeaders_,
-		      isFeatureNumerical);
+		      isFeatureNumerical,
+		      dataDelimiter,
+		      headerDelimiter);
     
   } else if(fileType == ARFF) {
     
@@ -136,7 +136,9 @@ Treedata::Treedata(string fileName, options::General_options* parameters):
 		      rawMatrix,
 		      featureHeaders,
 		      sampleHeaders_,
-		      isFeatureNumerical);
+		      isFeatureNumerical,
+		      dataDelimiter,
+		      headerDelimiter);
     
   }      
 
@@ -179,13 +181,11 @@ Treedata::Treedata(string fileName, options::General_options* parameters):
 
   } 
  
-  if ( parameters_->useContrasts ) {
+  if ( useContrasts_ ) {
     this->createContrasts(); // Doubles matrix size
-    this->permuteContrasts(parameters_->randIntGens[0]);
+    //this->permuteContrasts(random);
   }
   
-  //TIMER_G->toc("READ");
-
 }
 
 Treedata::~Treedata() {
@@ -230,7 +230,9 @@ void Treedata::readAFM(ifstream& featurestream,
 		       vector<vector<string> >& rawMatrix, 
 		       vector<string>& featureHeaders, 
 		       vector<string>& sampleHeaders,
-		       vector<bool>& isFeatureNumerical) {
+		       vector<bool>& isFeatureNumerical,
+		       const char dataDelimiter,
+		       const char headerDelimiter) {
 
   string field;
   string row;
@@ -241,17 +243,17 @@ void Treedata::readAFM(ifstream& featurestream,
   isFeatureNumerical.clear();
 
   //Remove upper left element from the matrix as useless
-  getline(featurestream,field,parameters_->dataDelimiter);
+  getline(featurestream,field,dataDelimiter);
 
   //Next read the first row, which should contain the column headers
   getline(featurestream,row);
   stringstream ss( utils::chomp(row) );
   bool isFeaturesAsRows = true;
   vector<string> columnHeaders;
-  while ( getline(ss,field,parameters_->dataDelimiter) ) {
+  while ( getline(ss,field,dataDelimiter) ) {
 
     // If at least one of the column headers is a valid feature header, we assume features are stored as columns
-    if ( isFeaturesAsRows && isValidFeatureHeader(field) ) {
+    if ( isFeaturesAsRows && isValidFeatureHeader(field,headerDelimiter) ) {
       isFeaturesAsRows = false;
     }
     columnHeaders.push_back(field);
@@ -279,12 +281,12 @@ void Treedata::readAFM(ifstream& featurestream,
     ss << row;
 
     //Read the next row header from the stream
-    getline(ss,field,parameters_->dataDelimiter);
+    getline(ss,field,dataDelimiter);
     rowHeaders.push_back(field);
 
     vector<string> rawVector(nColumns);
     for(size_t i = 0; i < nColumns; ++i) {
-      getline(ss,rawVector[i],parameters_->dataDelimiter);
+      getline(ss,rawVector[i],dataDelimiter);
       rawVector[i] = utils::trim(rawVector[i]);
     }
     assert(!ss.fail());
@@ -315,7 +317,7 @@ void Treedata::readAFM(ifstream& featurestream,
   size_t nFeatures = featureHeaders.size();
   isFeatureNumerical.resize(nFeatures);
   for(size_t i = 0; i < nFeatures; ++i) {
-    if(Treedata::isValidNumericalHeader(featureHeaders[i])) {
+    if(Treedata::isValidNumericalHeader(featureHeaders[i],headerDelimiter)) {
       isFeatureNumerical[i] = true;
     } else {
       isFeatureNumerical[i] = false;
@@ -429,30 +431,30 @@ void Treedata::parseARFFattribute(const string& str, string& attributeName, bool
   //attributeName = prefix;
 }
 
-bool Treedata::isValidNumericalHeader(const string& str) {
+bool Treedata::isValidNumericalHeader(const string& str, const char headerDelimiter) {
   
   stringstream ss(str);
   string typeStr;
-  getline(ss,typeStr,parameters_->headerDelimiter);
-
+  getline(ss,typeStr,headerDelimiter);
+  
   return(  typeStr == "N" );
 }
 
-bool Treedata::isValidCategoricalHeader(const string& str) {
-
+bool Treedata::isValidCategoricalHeader(const string& str, const char headerDelimiter) {
+  
   stringstream ss(str);
   string typeStr;
-  getline(ss,typeStr,parameters_->headerDelimiter);
-
+  getline(ss,typeStr,headerDelimiter);
+  
   return( typeStr == "C" || typeStr == "B" );
 }
 
-bool Treedata::isValidFeatureHeader(const string& str) {
-  return( isValidNumericalHeader(str) || isValidCategoricalHeader(str) );
+bool Treedata::isValidFeatureHeader(const string& str, const char headerDelimiter) {
+  return( isValidNumericalHeader(str,headerDelimiter) || isValidCategoricalHeader(str,headerDelimiter) );
 }
 
 size_t Treedata::nFeatures() {
-  return( parameters_->useContrasts ? features_.size() / 2 : features_.size() );
+  return( useContrasts_ ? features_.size() / 2 : features_.size() );
 }
 
 size_t Treedata::nSamples() {
@@ -518,7 +520,7 @@ void Treedata::print(const size_t featureIdx) {
 }
 
 
-void Treedata::permuteContrasts(distributions::RandInt& randInt) {
+void Treedata::permuteContrasts(distributions::Random* random) {
 
   size_t nFeatures = this->nFeatures();
   size_t nSamples = this->nSamples();
@@ -529,7 +531,7 @@ void Treedata::permuteContrasts(distributions::RandInt& randInt) {
 
     vector<num_t> filteredData = this->getFilteredFeatureData(i,sampleIcs);
     
-    utils::permute(filteredData,randInt);
+    utils::permute(filteredData,random);
     //this->permute<num_t>(filteredData);
 
     //datadefs::print(features_[i].data);
@@ -618,31 +620,7 @@ template <typename T> void Treedata::transpose(vector<vector<T> >& mat) {
   }
 }
 
-/*
-  void Treedata::permute(vector<size_t>& ics) {
-  for (size_t i = 0; i < ics.size(); ++i) {
-  size_t j = randomInteger_() % (i + 1);
-  ics[i] = ics[j];
-  ics[j] = i;
-  }
-  }
-  
-  void Treedata::permute(vector<num_t>& data) {
-  size_t n = data.size();
-  vector<size_t> ics(n);
-  
-  Treedata::permute(ics);
-  
-  for(size_t i = 0; i < n; ++i) {
-  num_t temp = data[i];
-  data[i] = data[ics[i]];
-  data[ics[i]] = temp;
-  }
-  }
-*/
-
-
-void Treedata::bootstrapFromRealSamples(distributions::RandInt& randInt,
+void Treedata::bootstrapFromRealSamples(distributions::Random* random,
 					const bool withReplacement, 
                                         const num_t sampleSize, 
                                         const size_t featureIdx, 
@@ -658,7 +636,7 @@ void Treedata::bootstrapFromRealSamples(distributions::RandInt& randInt,
 
   //First we collect all indices that correspond to real samples
   vector<size_t> allIcs;
-  for(size_t i = 0; i < Treedata::nSamples(); ++i) {
+  for(size_t i = 0; i < this->nSamples(); ++i) {
     if(!datadefs::isNAN(features_[featureIdx].data[i])) {
       allIcs.push_back(i);
     }
@@ -673,11 +651,11 @@ void Treedata::bootstrapFromRealSamples(distributions::RandInt& randInt,
   if(withReplacement) {
     //Draw nSamples random integers from range of allIcs
     for(size_t sampleIdx = 0; sampleIdx < nSamples; ++sampleIdx) {
-      ics[sampleIdx] = allIcs[ randInt() % nRealSamples ];
+      ics[sampleIdx] = allIcs[ random->integer() % nRealSamples ];
     }
   } else {  //If sampled without replacement...
     vector<size_t> foo = utils::range(nRealSamples);
-    utils::permute(foo,randInt);
+    utils::permute(foo,random);
     for(size_t i = 0; i < nSamples; ++i) {
       ics[i] = allIcs[foo[i]];
     }

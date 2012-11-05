@@ -2,27 +2,31 @@
 
 using datadefs::num_t;
 
-distributions::RandInt::RandInt():
+distributions::Random::Random():
   rand_(0,datadefs::MAX_IDX) {
   this->seed( distributions::generateSeed() );
 }
 
-distributions::RandInt::RandInt(size_t seed):
+distributions::Random::Random(size_t seed):
   rand_(0,datadefs::MAX_IDX) {
 
   this->seed(seed);
 
 }
 
-distributions::RandInt::~RandInt() {
+distributions::Random::~Random() {
   
 }
 
-void distributions::RandInt::seed(size_t seed) {
+void distributions::Random::seed(size_t seed) {
   eng_.seed(seed);
 }
 
-num_t distributions::RandInt::uniform() {
+size_t distributions::Random::integer() {
+  return( rand_(eng_) );
+}
+
+num_t distributions::Random::uniform() {
 
   return( 1.0 * rand_(eng_) / datadefs::MAX_IDX );
 
@@ -54,7 +58,7 @@ distributions::PMF::~PMF() {
   
 }
 
-size_t distributions::PMF::icdf(const num_t prob) {
+size_t distributions::PMF::icdf(const num_t prob) const {
   assert(prob >= 0.0 && prob < 1.0);
 
   return( icdf_.upper_bound(prob)->second );
