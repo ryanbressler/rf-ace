@@ -1,7 +1,7 @@
 COMPILER = g++
 CFLAGS = -O2 -std=c++0x -Wall -Wextra -pedantic -Isrc/
 TFLAGS = -pthread
-SOURCEFILES = src/progress.cpp src/statistics.cpp src/math.cpp src/stochasticforest.cpp src/rootnode.cpp src/node.cpp src/treedata.cpp src/datadefs.cpp src/utils.cpp src/distributions.cpp
+SOURCEFILES = src/datadefs.cpp src/progress.cpp src/statistics.cpp src/math.cpp src/stochasticforest.cpp src/rootnode.cpp src/node.cpp src/treedata.cpp src/utils.cpp src/distributions.cpp
 STATICFLAGS = -static-libgcc -static
 TESTFILES = test/distributions_test.hpp test/argparse_test.hpp test/datadefs_test.hpp test/stochasticforest_test.hpp test/utils_test.hpp test/math_test.hpp test/rootnode_test.hpp test/node_test.hpp test/treedata_test.hpp
 TESTFLAGS = -std=c++0x -L${HOME}/lib/ -L/usr/local/lib -lcppunit -ldl -pedantic -I${HOME}/include/ -I/usr/local/include -Itest/ -Isrc/
@@ -19,7 +19,7 @@ rf-ace-amd64: $(SOURCEFILES)
 	$(COMPILER) $(CFLAGS) -m64 src/rf_ace.cpp $(SOURCEFILES) $(TFLAGS) -o bin/rf-ace-amd64
 
 no-threads: $(SOURCEFILES)
-	$(COMPILER) $(CFLAGS) -DNOTHREADS src/rf_ace.cpp $(SOURCEFILES) -o bin/rf-ace
+	$(COMPILER) $(CFLAGS) -DNOTHREADS $(SOURCEFILES) src/rf_ace.cpp -o bin/rf-ace
 
 debug: $(SOURCEFILES)
 	$(COMPILER) $(CFLAGS) src/rf_ace.cpp $(SOURCEFILES) $(TFLAGS) -o bin/rf-ace -ggdb

@@ -19,7 +19,7 @@ public:
   ~HelpStyler() {}
   
   void printHelpLine(const string& shortOpt, const string& longOpt, const string& description) {
-    cout << " -" << shortOpt << " / --" << longOpt << setw( maxWidth_ - longOpt.length() ) << description << endl;
+    cout << " -" << shortOpt << " / --" << longOpt << setw( maxWidth_ - longOpt.length() ) << " " << description << endl;
   }
   
   void printHelpHint(const string& shortOpt, const string& longOpt) {
@@ -72,17 +72,21 @@ public:
   void load(const int argc, char* const argv[]) {
     ArgParse parser(argc,argv);
 
-    string forestTypeAsStr = "";
-    parser.getArgument<string>(forestType_s, forestType_l, forestTypeAsStr);
-    if ( forestTypeAsStr == "RF" ) {
-      forestType = ForestType::RF;
-    } else if ( forestTypeAsStr == "GBT" ) {
-      forestType = ForestType::GBT;
-    } else if ( forestTypeAsStr == "CART" ) {
-      forestType = ForestType::CART;
-    } else {
-      cerr << "GeneralOptions::load() -- unknown forest type: " << forestTypeAsStr << endl;
-      exit(1);
+    bool isSet = false;
+    parser.getFlag(forestType_s, forestType_l, isSet);
+    if ( isSet ) {
+      string forestTypeAsStr = "";
+      parser.getArgument<string>(forestType_s, forestType_l, forestTypeAsStr);
+      if ( forestTypeAsStr == "RF" ) {
+	forestType = ForestType::RF;
+      } else if ( forestTypeAsStr == "GBT" ) {
+	forestType = ForestType::GBT;
+      } else if ( forestTypeAsStr == "CART" ) {
+	forestType = ForestType::CART;
+      } else {
+	cerr << "GeneralOptions::load() -- unknown forest type: " << forestTypeAsStr << endl;
+	exit(1);
+      }
     }
 
     parser.getArgument<size_t>( nTrees_s, nTrees_l, nTrees );
