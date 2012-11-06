@@ -22,7 +22,7 @@
 #include "utils.hpp"
 #include "math.hpp"
 #include "datadefs.hpp"
-#include "statistics.hpp"
+//#include "statistics.hpp"
 #include "progress.hpp"
 #include "distributions.hpp"
 #include "timer.hpp"
@@ -62,10 +62,14 @@ public:
 
 
   struct FilterOutput {
+    size_t nAllFeatures;
+    size_t nSignificantFeatures;
     string targetName;
     vector<string> featureNames;
     vector<num_t> pValues;
-    vector<num_t> importanceValues;
+    vector<num_t> importances;
+    vector<num_t> correlations;
+    vector<num_t> sampleCounts;
   };
 
   struct TestOutput {
@@ -151,10 +155,11 @@ public:
 
     size_t nFeatures = filterData->nFeatures();
 
-    //filterOutput.pValues.clear();
+    filterOutput.targetName = filterData->getFeatureName(targetIdx);
     filterOutput.pValues.resize(nFeatures,1.0);
-    filterOutput.importanceValues.resize(2*nFeatures);
-    //featuresInAllForests.clear();
+    filterOutput.importances.resize(nFeatures);
+    filterOutput.sampleCounts.resize(nFeatures);
+    filterOutput.correlations.resize(nFeatures);
 
     Progress progress;
     vector<num_t> contrastImportanceSample(filterOptions->nPerms);
@@ -200,7 +205,7 @@ public:
     
     // Loop through each feature and calculate p-value for each
     for ( size_t featureIdx = 0; featureIdx < filterData->nFeatures(); ++featureIdx ) {
-      
+
       vector<num_t> featureImportanceSample(filterOptions->nPerms);
       
       // Extract the sample for the real feature
@@ -223,31 +228,63 @@ public:
 	bool WS = true;
 	filterOutput.pValues[featureIdx] = math::ttest(contrastImportanceSample,featureImportanceSample,WS);
 	
-      }
-      
-      // If for some reason the t-test returns NAN, turn that into 1.0
-      // NOTE: 1.0 is better number than NAN when sorting
-      if ( datadefs::isNAN( filterOutput.pValues[featureIdx] ) ) {
-	filterOutput.pValues[featureIdx] = 1.0;
+	// If for some reason the t-test returns NAN, turn that into 1.0
+	// NOTE: 1.0 is better number than NAN when sorting
+	if ( datadefs::isNAN( filterOutput.pValues[featureIdx] ) ) {
+	  filterOutput.pValues[featureIdx] = 1.0;
+	}
       }
       
       // Calculate mean importace score from the sample
-      filterOutput.importanceValues[featureIdx] = math::mean(featureImportanceSample);
+      filterOutput.importances[featureIdx] = math::mean(featureImportanceSample);
+      filterOutput.correlations[featureIdx] = filterData->pearsonCorrelation(targetIdx,featureIdx);
+      filterOutput.sampleCounts[featureIdx] = filterData->nRealSamples(targetIdx,featureIdx);
+      filterOutput.featureNames[featureIdx] = filterData->getFeatureName(featureIdx);
       
     }
     
-    // Resize importance value container to proper dimensions
-    filterOutput.importanceValues.resize( filterData->nFeatures() );
+    sortFilterOutput(&filterOutput);
     
-    //if ( params_->isSet(params_->pairInteractionOutput_s,params_->pairInteractionOutput_l) ) {
-    //  printPairInteractionsToFile(&treeData,frequency,params_->pairInteractionOutput);
-    //}
-    
+    size_t nSelectedFeatures = 0;
+
+    for ( size_t i = 0; i < nFeatures; ++i ) {
+
+      if ( filterOutput.pValues[i] > filterOptions->pValueThreshold || filterOutput.importances[i] > filterOptions->importanceThreshold || i == targetIdx ) {
+	continue;
+      }
+
+      filterOutput.pValues[nSelectedFeatures] = filterOutput.pValues[i];
+      filterOutput.importances[nSelectedFeatures] = filterOutput.importances[i];
+      filterOutput.correlations[nSelectedFeatures] = filterOutput.correlations[i];
+      filterOutput.sampleCounts[nSelectedFeatures] = filterOutput.sampleCounts[i];
+      filterOutput.featureNames[nSelectedFeatures] = filterOutput.featureNames[i];
+
+    }
+
+    filterOutput.nAllFeatures = nFeatures - 1;
+    filterOutput.nSignificantFeatures = nSelectedFeatures;
+    filterOutput.pValues.resize(nSelectedFeatures);
+    filterOutput.importances.resize(nSelectedFeatures);
+    filterOutput.correlations.resize(nSelectedFeatures);
+    filterOutput.sampleCounts.resize(nSelectedFeatures);
+    filterOutput.featureNames.resize(nSelectedFeatures);
+
     timer_->toc("MODEL_TEST");
     
-    // Return statistics
-    //return( RF_stat );
-    
+  }
+
+  void sortFilterOutput(FilterOutput* filterOutput) {
+
+    vector<size_t> sortIcs = utils::range(filterOutput->pValues.size());
+
+    bool isIncreasingOrder = true;
+
+    utils::sortDataAndMakeRef(isIncreasingOrder,filterOutput->pValues,sortIcs);
+    utils::sortFromRef(filterOutput->importances,sortIcs);
+    utils::sortFromRef(filterOutput->correlations,sortIcs);
+    utils::sortFromRef(filterOutput->sampleCounts,sortIcs);
+    utils::sortFromRef(filterOutput->featureNames,sortIcs);
+
   }
 
   TestOutput test(Treedata* testData,const size_t nThreads) {

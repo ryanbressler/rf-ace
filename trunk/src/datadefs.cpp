@@ -46,50 +46,59 @@ const size_t datadefs::MAX_THREADS = 1;
 #endif
 
 // Random Forest default configuration
-const size_t          RF_DEFAULT_N_TREES = 100;
-const size_t          RF_DEFAULT_M_TRY = 0;
-const size_t          RF_DEFAULT_N_MAX_LEAVES = 0;
-const size_t          RF_DEFAULT_NODE_SIZE = 3;
-const datadefs::num_t RF_DEFAULT_IN_BOX_FRACTION = 1.0;
-const datadefs::num_t RF_DEFAULT_SAMPLE_WITH_REPLACEMENT = true;
-const bool            RF_DEFAULT_USE_CONTRASTS = false;
-const datadefs::num_t RF_DEFAULT_CONTRAST_FRACTION = 0.5;
-const bool            RF_DEFAULT_IS_RANDOM_SPLIT = true;
-const datadefs::num_t RF_DEFAULT_SHRINKAGE = 0.0;
+const size_t          datadefs::RF_DEFAULT_N_TREES = 100;
+const size_t          datadefs::RF_DEFAULT_M_TRY = 0;
+const size_t          datadefs::RF_DEFAULT_N_MAX_LEAVES = 0;
+const size_t          datadefs::RF_DEFAULT_NODE_SIZE = 3;
+const datadefs::num_t datadefs::RF_DEFAULT_IN_BOX_FRACTION = 1.0;
+const datadefs::num_t datadefs::RF_DEFAULT_SAMPLE_WITH_REPLACEMENT = true;
+const bool            datadefs::RF_DEFAULT_USE_CONTRASTS = false;
+const datadefs::num_t datadefs::RF_DEFAULT_CONTRAST_FRACTION = 0.5;
+const bool            datadefs::RF_DEFAULT_IS_RANDOM_SPLIT = true;
+const datadefs::num_t datadefs::RF_DEFAULT_SHRINKAGE = 0.0;
 
 // Gradient Boosting Trees default configuration
-const size_t          GBT_DEFAULT_N_TREES = 100;
-const size_t          GBT_DEFAULT_M_TRY = 0;
-const size_t          GBT_DEFAULT_N_MAX_LEAVES = 6;
-const size_t          GBT_DEFAULT_NODE_SIZE = 3;
-const datadefs::num_t GBT_DEFAULT_IN_BOX_FRACTION = 0.5;
-const datadefs::num_t GBT_DEFAULT_SAMPLE_WITH_REPLACEMENT = false;
-const bool            GBT_DEFAULT_USE_CONTRASTS = false;
-const datadefs::num_t GBT_DEFAULT_CONTRAST_FRACTION = 0.5;
-const bool            GBT_DEFAULT_IS_RANDOM_SPLIT = false;
-const datadefs::num_t GBT_DEFAULT_SHRINKAGE = 0.1;
+const size_t          datadefs::GBT_DEFAULT_N_TREES = 100;
+const size_t          datadefs::GBT_DEFAULT_M_TRY = 0;
+const size_t          datadefs::GBT_DEFAULT_N_MAX_LEAVES = 6;
+const size_t          datadefs::GBT_DEFAULT_NODE_SIZE = 3;
+const datadefs::num_t datadefs::GBT_DEFAULT_IN_BOX_FRACTION = 0.5;
+const datadefs::num_t datadefs::GBT_DEFAULT_SAMPLE_WITH_REPLACEMENT = false;
+const bool            datadefs::GBT_DEFAULT_USE_CONTRASTS = false;
+const datadefs::num_t datadefs::GBT_DEFAULT_CONTRAST_FRACTION = 0.5;
+const bool            datadefs::GBT_DEFAULT_IS_RANDOM_SPLIT = false;
+const datadefs::num_t datadefs::GBT_DEFAULT_SHRINKAGE = 0.1;
 
 // CART default configuration
-const size_t          CART_DEFAULT_N_TREES = 1;
-const size_t          CART_DEFAULT_M_TRY = 0;
-const size_t          CART_DEFAULT_N_MAX_LEAVES = 0;
-const size_t          CART_DEFAULT_NODE_SIZE = 3;
-const datadefs::num_t CART_DEFAULT_IN_BOX_FRACTION = 1.0;
-const datadefs::num_t CART_DEFAULT_SAMPLE_WITH_REPLACEMENT = false;
-const bool            CART_DEFAULT_USE_CONTRASTS = false;
-const datadefs::num_t CART_DEFAULT_CONTRAST_FRACTION = 0.5;
-const bool            CART_DEFAULT_IS_RANDOM_SPLIT = false;
-const datadefs::num_t CART_DEFAULT_SHRINKAGE = 0;
+const size_t          datadefs::CART_DEFAULT_N_TREES = 1;
+const size_t          datadefs::CART_DEFAULT_M_TRY = 0;
+const size_t          datadefs::CART_DEFAULT_N_MAX_LEAVES = 0;
+const size_t          datadefs::CART_DEFAULT_NODE_SIZE = 3;
+const datadefs::num_t datadefs::CART_DEFAULT_IN_BOX_FRACTION = 1.0;
+const datadefs::num_t datadefs::CART_DEFAULT_SAMPLE_WITH_REPLACEMENT = false;
+const bool            datadefs::CART_DEFAULT_USE_CONTRASTS = false;
+const datadefs::num_t datadefs::CART_DEFAULT_CONTRAST_FRACTION = 0.5;
+const bool            datadefs::CART_DEFAULT_IS_RANDOM_SPLIT = false;
+const datadefs::num_t datadefs::CART_DEFAULT_SHRINKAGE = 0;
+
+// Statistical test default configuration
+const size_t          datadefs::FILTER_DEFAULT_N_PERMS = 20;
+const datadefs::num_t datadefs::FILTER_DEFAULT_P_VALUE_THRESHOLD = 0.05;
+const bool            datadefs::FILTER_DEFAULT_IS_ADJUSTED_P_VALUE = false;
+const datadefs::num_t datadefs::FILTER_DEFAULT_IMPORTANCE_THRESHOLD = 10;
+const bool            datadefs::FILTER_NORMALIZE_IMPORTANCE_VALUES = false;
+const bool            datadefs::FILTER_DEFAULT_REPORT_NONEXISTENT_FEATURES = false;
+
 
 // Default general configuration
-const bool            GENERAL_DEFAULT_PRINT_HELP = false;
-const char            GENERAL_DEFAULT_DATA_DELIMITER = '\t';
-const char            GENERAL_DEFAULT_HEADER_DELIMITER = ':';
-const size_t          GENERAL_DEFAULT_MIN_SAMPLES = 5;
-const int             GENERAL_DEFAULT_SEED = -1;
-const size_t          GENERAL_DEFAULT_N_THREADS = 1;
-const bool            GENERAL_DEFAULT_IS_MAX_THREADS = false;
-const datadefs::num_t GENERAL_DEFAULT_FEATURE_WEIGHT = 0;
+const bool            datadefs::GENERAL_DEFAULT_PRINT_HELP = false;
+const char            datadefs::GENERAL_DEFAULT_DATA_DELIMITER = '\t';
+const char            datadefs::GENERAL_DEFAULT_HEADER_DELIMITER = ':';
+const size_t          datadefs::GENERAL_DEFAULT_MIN_SAMPLES = 5;
+const int             datadefs::GENERAL_DEFAULT_SEED = -1;
+const size_t          datadefs::GENERAL_DEFAULT_N_THREADS = 1;
+const bool            datadefs::GENERAL_DEFAULT_IS_MAX_THREADS = false;
+const datadefs::num_t datadefs::GENERAL_DEFAULT_FEATURE_WEIGHT = 0;
 
 
 ////////////////////////////////////////////////////////////

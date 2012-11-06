@@ -29,7 +29,9 @@ vector<num_t> readFeatureWeights(Treedata& treeData, const size_t targetIdx, con
 
 void printDataStatistics(Treedata& treeData, const size_t targetIdx);
 
-void writeFilterOutputToFile(Treedata& treeData, const string& fileName);
+void writeFilterOutputToFile(RFACE::FilterOutput& filterOutput, const string& fileName);
+
+void printPredictionsToFile(RFACE::TestOutput& testOutput, const string& fileName);
 
 int main(const int argc, char* const argv[]) {
 
@@ -50,8 +52,6 @@ int main(const int argc, char* const argv[]) {
 
   RFACE::FilterOutput filterOutput;
   RFACE::TestOutput testOutput;
-
-
 
   if ( options.io.filterDataFile != "" ) {
 
@@ -150,13 +150,13 @@ int main(const int argc, char* const argv[]) {
     cout << "DONE" << endl;
     
     cout << "===> Making predictions with test data... " << flush;
-    testOutput = rface.test(testData,options.generalOptions.nThreads);
+    testOutput = rface.test(&testData,options.generalOptions.nThreads);
     cout << "DONE" << endl;
     
   }
 
-  if ( options.io.predictionsFile) {
-    printPredictionToFile(testOutput,options.io.predictionsFile);
+  if ( options.io.predictionsFile != "" ) {
+    printPredictionsToFile(testOutput,options.io.predictionsFile);
     
     cout << "Prediction file '" << options.io.predictionsFile << "' created. Format:" << endl
 	 << "TARGET   SAMPLE_ID  TRUE_DATA(*)  PREDICTION    CONFIDENCE(**)" << endl
@@ -169,7 +169,7 @@ int main(const int argc, char* const argv[]) {
 	 << endl; 
   }
   
-  if ( options.io.saveForestFile ) {
+  if ( options.io.saveForestFile != "" ) {
     
     cout << "===> Writing predictor to file... " << flush;
     rface.save( options.io.saveForestFile );
@@ -243,72 +243,34 @@ size_t getTargetIdx(Treedata& treeData, const string& targetAsStr) {
     }
 
     // Extract the name of the feature, as upon masking the indices will become rearranged
-    return( treeData.getFeatureName(static_cast<size_t>(integer)) );
+    return( static_cast<size_t>(integer) );
+
+  } else {
+    
+    size_t targetIdx = treeData.getFeatureIdx(targetAsStr);
+
+    if ( targetIdx == treeData.end() ) {
+      cerr << "Target " << targetAsStr << " not found in data!" << endl;
+      exit(1);
+    }
+
+    return( targetIdx );
 
   }
 
 }
 
-void writeFilterOutputToFile(Treedata& filterData, const size_t targetIdx, FilterOptions& filterOptions, RFACE::FilterOutput& filterOutput, const string& fileName) {
+void writeFilterOutputToFile(RFACE::FilterOutput& filterOutput, const string& fileName) {
 
-  // Initialize mapping vector to identity mapping: range 0,1,...,N-1
-  // NOTE: when not sorting we use the identity map, otherwise the sorted map
-  vector<size_t> featureIcs = utils::range( filterData.nFeatures() );
-
-  // If there are more than one permutation, we can compute the p-values and thus sort wrt. them
-  //if ( filterOptions->nPerms > 1 ) {
-  bool isIncreasingOrder = true;
-  utils::sortDataAndMakeRef(isIncreasingOrder,filterOutput.pValues,featureIcs);
-  utils::sortFromRef<num_t>(filterOutput.importanceValues,featureIcs);
-  
-  // Apply p-value adjustment with the Benjamini-Hochberg method if needed
-  if ( filterOptions.isAdjustedPValue ) {
-    size_t nTests = filterData.nFeatures() - 1;
-    math::adjustPValues(filterOutput.pValues,nTests);
-  }
-  
-  size_t nIncludedFeatures = 0;
-
-  for ( size_t i = 0; i < filterData.nFeatures(); ++i ) {
-
-    // If we don't want to report all features in the association file...
-    if ( !filterOptions.reportAllFeatures ) {
-
-      //      bool featureNotInForests = featuresInAllForests.find(featureIcs[i]) == featuresInAllForests.end();
-      bool tooHighPValue = filterOptions.nPerms > 1 && filterOutput.pValues[i] > filterOptions.pValueThreshold;
-      bool tooLowImportance = filterOutput.importanceValues[i] < filterOptions.importanceThreshold;
-
-      if ( tooLowImportance || tooHighPValue ) {
-	continue;
-      }
-    }
-
-    // In any case, we will omit target feature from the association list
-    if ( i == targetIdx ) {
-      continue;
-    }
-
-    filterOutput.pValues[nIncludedFeatures] = filterOutput.pValues[i];
-    filterOutput.importanceValues[nIncludedFeatures] = filterOutput.importanceValues[i];
-    featureIcs[nIncludedFeatures] = featureIcs[i];
-    ++nIncludedFeatures;
-  }
+  size_t nFeatures = filterOutput.pValues.size();
 
   ofstream toAssociationFile(fileName.c_str());
-  
-  string targetName = filterData.getFeatureName(targetIdx);
 
-  for ( size_t i = 0; i < nIncludedFeatures; ++i ) {
-    
-    assert(featureIcs[i] != targetIdx);
-    
-    string featureName = treeData.getFeatureName(featureIcs[i]);
-    num_t correlation = treeData.pearsonCorrelation(targetIdx,featureIcs[i]);
-    size_t sampleCount = treeData.nRealSamples(targetIdx,featureIcs[i]);
-    
-    toAssociationFile << targetName << "\t" << featureName << "\t" 
-		      << scientific << filterOutput.pValues[i] << "\t" << scientific << filterOutput.importanceValues[i] << "\t"
-		      << scientific << correlation << "\t" << sampleCount << endl;
+  for ( size_t i = 0; i < nFeatures; ++i ) {
+
+    toAssociationFile << filterOutput.targetName << "\t" << filterOutput.featureNames[i] << "\t" 
+		      << scientific << filterOutput.pValues[i] << "\t" << scientific << filterOutput.importances[i] << "\t"
+		      << scientific << filterOutput.correlations[i] << "\t" << filterOutput.sampleCounts[i] << endl;
     
   }
   
@@ -317,7 +279,7 @@ void writeFilterOutputToFile(Treedata& filterData, const size_t targetIdx, Filte
 }
 
 
-void printPredictionToFile(RFACE::TestOutput& testOutput, const string& fileName) {
+void printPredictionsToFile(RFACE::TestOutput& testOutput, const string& fileName) {
 
   ofstream toPredictionFile(fileName.c_str());
 
@@ -331,7 +293,7 @@ void printPredictionToFile(RFACE::TestOutput& testOutput, const string& fileName
 
   } else {
 
-    for(size_t i = 0; i < testOutput.prediction.size(); ++i) {
+    for(size_t i = 0; i < testOutput.catPredictions.size(); ++i) {
       toPredictionFile << testOutput.targetName << "\t" << testOutput.sampleNames[i] << "\t"
 		       << testOutput.catTrueData[i] << "\t" << testOutput.catPredictions[i] << "\t"
 		       << setprecision(3) << testOutput.confidence[i] << endl;

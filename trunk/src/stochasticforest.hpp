@@ -51,7 +51,6 @@ public:
 
   void saveForest(const string& fileName);
 
-  //options::General_options* params() { return(&params_); }
 
 #ifndef TEST__
 private:
@@ -68,12 +67,7 @@ private:
 
   ForestOptions::ForestType forestType_;
 
-  // Pointer to treeData_ object, stores all the feature data with which the trees are grown (i.e. training data)
-  //Treedata* trainData_;
-
   vector<string> categories_;
-
-  //ForestOptions* params_;
 
   // Experimental parameters for making GBT working
   vector<num_t> GBTfactors_;
