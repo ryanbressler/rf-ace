@@ -55,15 +55,16 @@ int main(const int argc, char* const argv[]) {
 
   if ( options.io.filterDataFile != "" ) {
 
+    bool useContrasts = true;
     cout << "===> Reading file '" << options.io.filterDataFile << "' for filtering, please wait... " << flush;
-    Treedata filterData(options.io.filterDataFile,options.generalOptions.dataDelimiter,options.generalOptions.headerDelimiter,options.forestOptions.useContrasts);
+    Treedata filterData(options.io.filterDataFile,options.generalOptions.dataDelimiter,options.generalOptions.headerDelimiter,useContrasts);
     cout << "DONE" << endl;
 
     size_t targetIdx = getTargetIdx(filterData,options.generalOptions.targetStr);
 
     assert( targetIdx != filterData.end() );
 
-    cout << endl;
+    cout << "Data statistics:" << endl;
     printDataStatistics(filterData,targetIdx);
 
     vector<num_t> featureWeights = readFeatureWeights(filterData,targetIdx,options.io.featureWeightsFile,options.generalOptions.defaultFeatureWeight);
@@ -109,7 +110,7 @@ int main(const int argc, char* const argv[]) {
     
     // Read train data into Treedata object
     cout << "===> Reading train file '" << options.io.trainDataFile << "', please wait... " << flush;
-    Treedata trainData(options.io.trainDataFile,options.generalOptions.dataDelimiter,options.generalOptions.headerDelimiter,options.forestOptions.useContrasts);
+    Treedata trainData(options.io.trainDataFile,options.generalOptions.dataDelimiter,options.generalOptions.headerDelimiter);
     cout << "DONE" << endl;
     
     size_t targetIdx = getTargetIdx(trainData,options.generalOptions.targetStr);
@@ -146,7 +147,7 @@ int main(const int argc, char* const argv[]) {
   if ( options.io.testDataFile != "" ) {
     
     cout << "===> Reading test file '" << options.io.testDataFile << "', please wait..." << flush;
-    Treedata testData(options.io.testDataFile,options.generalOptions.dataDelimiter,options.generalOptions.headerDelimiter,options.forestOptions.useContrasts);
+    Treedata testData(options.io.testDataFile,options.generalOptions.dataDelimiter,options.generalOptions.headerDelimiter);
     cout << "DONE" << endl;
     
     cout << "===> Making predictions with test data... " << flush;
@@ -222,12 +223,15 @@ vector<num_t> readFeatureWeights(Treedata& treeData, const size_t targetIdx, con
 
 void printDataStatistics(Treedata& treeData, const size_t targetIdx) {
 
-  size_t nAllFeatures = treeData.nFeatures();
+  cout << "here" << endl;
+
+  size_t nSamples = treeData.nSamples();
+  size_t nFeatures = treeData.nFeatures();
   size_t nRealSamples = treeData.nRealSamples(targetIdx);
   num_t realFraction = 1.0*nRealSamples / treeData.nSamples();
 
-  cout << " - " << nAllFeatures << " features" << endl;
-  cout << " - " << treeData.nRealSamples(targetIdx) << " samples / " << treeData.nSamples() << " ( " << 100.0 * ( 1 - realFraction ) << " % missing )" << endl;
+  cout << " - " << nFeatures << " features" << endl;
+  cout << " - " << nRealSamples << " samples / " << nSamples << " ( " << 100.0 * ( 1 - realFraction ) << " % missing )" << endl;
 
 }
 
@@ -253,6 +257,8 @@ size_t getTargetIdx(Treedata& treeData, const string& targetAsStr) {
       cerr << "Target " << targetAsStr << " not found in data!" << endl;
       exit(1);
     }
+
+    cout << "returning..." << endl;
 
     return( targetIdx );
 
