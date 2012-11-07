@@ -137,6 +137,18 @@ public:
     shrinkage             = datadefs::CART_DEFAULT_SHRINKAGE;
   }
 
+  void validate() {
+
+    assert( forestType != ForestOptions::ForestType::UNKNOWN );
+    assert( nTrees != 0 );
+    assert( mTry != 0 );
+    assert( nMaxLeaves != 0 );
+    assert( nodeSize != 0 );
+    assert( 0.0 <= contrastFraction && contrastFraction < 1.0 );
+    assert( 0.0 <= inBoxFraction && inBoxFraction <= 1.0 );
+  }
+
+
   void help() {
     cout << "Forest Options:" << endl;
     this->printHelpLine(forestType_s,forestType_l,"Forest type: RF (default), GBT, or CART");
@@ -172,18 +184,18 @@ public:
   // Statistical test related parameters
   size_t nPerms; const string nPerms_s; const string nPerms_l;
   num_t pValueThreshold; const string pValueThreshold_s; const string pValueThreshold_l;
-  bool isAdjustedPValue; const string isAdjustedPValue_s; const string isAdjustedPValue_l;
-  bool normalizeImportanceValues; const string normalizeImportanceValues_s; const string normalizeImportanceValues_l;
+  //bool isAdjustedPValue; const string isAdjustedPValue_s; const string isAdjustedPValue_l;
+  //bool normalizeImportanceValues; const string normalizeImportanceValues_s; const string normalizeImportanceValues_l;
   num_t importanceThreshold; const string importanceThreshold_s; const string importanceThreshold_l;
-  bool reportAllFeatures; const string reportAllFeatures_s; const string reportAllFeatures_l;
+  //bool reportAllFeatures; const string reportAllFeatures_s; const string reportAllFeatures_l;
 
   FilterOptions():
     nPerms(datadefs::FILTER_DEFAULT_N_PERMS),nPerms_s("p"),nPerms_l("nPerms"),
     pValueThreshold(datadefs::FILTER_DEFAULT_P_VALUE_THRESHOLD),pValueThreshold_s("t"),pValueThreshold_l("pValueTh"),
-    isAdjustedPValue(datadefs::FILTER_DEFAULT_IS_ADJUSTED_P_VALUE),isAdjustedPValue_s("d"),isAdjustedPValue_l("adjustP"),
-    normalizeImportanceValues(datadefs::FILTER_NORMALIZE_IMPORTANCE_VALUES),normalizeImportanceValues_s("r"),normalizeImportanceValues_l("normImportance"),
-    importanceThreshold(datadefs::FILTER_DEFAULT_IMPORTANCE_THRESHOLD),importanceThreshold_s("o"),importanceThreshold_l("importanceTh"),
-    reportAllFeatures(datadefs::FILTER_DEFAULT_REPORT_NONEXISTENT_FEATURES),reportAllFeatures_s("A"),reportAllFeatures_l("listAllFeatures") {}
+    //isAdjustedPValue(datadefs::FILTER_DEFAULT_IS_ADJUSTED_P_VALUE),isAdjustedPValue_s("d"),isAdjustedPValue_l("adjustP"),
+    //normalizeImportanceValues(datadefs::FILTER_NORMALIZE_IMPORTANCE_VALUES),normalizeImportanceValues_s("r"),normalizeImportanceValues_l("normImportance"),
+    importanceThreshold(datadefs::FILTER_DEFAULT_IMPORTANCE_THRESHOLD),importanceThreshold_s("o"),importanceThreshold_l("importanceTh") {}
+    //reportAllFeatures(datadefs::FILTER_DEFAULT_REPORT_NONEXISTENT_FEATURES),reportAllFeatures_s("A"),reportAllFeatures_l("listAllFeatures") {}
 
   ~FilterOptions() {}
 
@@ -191,29 +203,34 @@ public:
     ArgParse parser(argc,argv);
     parser.getArgument<size_t>(nPerms_s,nPerms_l,nPerms);
     parser.getArgument<num_t>(pValueThreshold_s,pValueThreshold_l,pValueThreshold);
-    parser.getArgument<bool>(isAdjustedPValue_s,isAdjustedPValue_l,isAdjustedPValue);
+    //parser.getArgument<bool>(isAdjustedPValue_s,isAdjustedPValue_l,isAdjustedPValue);
     parser.getArgument<num_t>(importanceThreshold_s,importanceThreshold_l,importanceThreshold);
-    parser.getArgument<bool>(normalizeImportanceValues_s,normalizeImportanceValues_l,normalizeImportanceValues);
-    parser.getArgument<bool>(reportAllFeatures_s,reportAllFeatures_l,reportAllFeatures);
+    //parser.getArgument<bool>(normalizeImportanceValues_s,normalizeImportanceValues_l,normalizeImportanceValues);
+    //parser.getArgument<bool>(reportAllFeatures_s,reportAllFeatures_l,reportAllFeatures);
+  }
+
+  void validate() {
+    assert( nPerms >= 5 );
+    assert( 0 <= pValueThreshold && pValueThreshold <= 1.0 );
   }
 
   void help() {
     cout << "Filter Options:" << endl;
     this->printHelpLine(nPerms_s,nPerms_l,"Number of permutations in statistical test");
     this->printHelpLine(pValueThreshold_s,pValueThreshold_l,"P-value threshold in statistical test");
-    this->printHelpLine(isAdjustedPValue_s,isAdjustedPValue_l,"Flag to turn ON Benjamini-Hochberg multiple testing correction");
+    //this->printHelpLine(isAdjustedPValue_s,isAdjustedPValue_l,"Flag to turn ON Benjamini-Hochberg multiple testing correction");
     this->printHelpLine(importanceThreshold_s,importanceThreshold_l,"Importance threshold");
-    this->printHelpLine(normalizeImportanceValues_s,normalizeImportanceValues_l,"Flag to turn ON normalization of importance scores");
-    this->printHelpLine(reportAllFeatures_s,reportAllFeatures_l,"Flag to turn ON reporting of all features, regardless of statistical significance");
+    //this->printHelpLine(normalizeImportanceValues_s,normalizeImportanceValues_l,"Flag to turn ON normalization of importance scores");
+    //this->printHelpLine(reportAllFeatures_s,reportAllFeatures_l,"Flag to turn ON reporting of all features, regardless of statistical significance");
   }
 
   void print() {
     cout << "nPerms = " << nPerms << endl;
     cout << "pValueThreshold = " << pValueThreshold << endl;
-    cout << "isAdjustedPValue = " << isAdjustedPValue << endl;
-    cout << "normalizeImportanceValues = " << normalizeImportanceValues << endl;
+    //cout << "isAdjustedPValue = " << isAdjustedPValue << endl;
+    //cout << "normalizeImportanceValues = " << normalizeImportanceValues << endl;
     cout << "importanceThreshold = " << importanceThreshold << endl;
-    cout << "reportAllFeatures = " << reportAllFeatures << endl;
+    //cout << "reportAllFeatures = " << reportAllFeatures << endl;
   }
 
 };
@@ -335,6 +352,15 @@ public:
     parser.getArgument<int>(seed_s, seed_l, seed);
     parser.getArgument<size_t>(nThreads_s, nThreads_l, nThreads);
     parser.getFlag(isMaxThreads_s, isMaxThreads_l, isMaxThreads);
+  }
+
+  void validate() {
+    assert( targetStr != "" );
+    //assert( dataDelimiter != '' );
+    //assert( headerDelimiter != '' );
+    assert( defaultFeatureWeight >= 0.0 );
+    assert( nThreads >= 1 );
+    //assert( seed >= 0 );
   }
 
   void help() {

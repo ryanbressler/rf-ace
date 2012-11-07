@@ -89,6 +89,13 @@ public:
 	     ForestOptions* forestOptions, 
 	     GeneralOptions* generalOptions) {
     
+    forestOptions->useContrasts = false;
+
+    forestOptions->validate();
+    generalOptions->validate();
+
+    assert( ! forestOptions->useContrasts );
+
     if ( trainedModel_ ) {
       delete trainedModel_;
       trainedModel_ = NULL;
@@ -116,7 +123,13 @@ public:
 		      ForestOptions* forestOptions,
 		      FilterOptions* filterOptions,
 		      GeneralOptions* generalOptions) {
-    
+
+    cout << "Enforcing use of contrasts..." << endl;
+    forestOptions->useContrasts = true;
+
+    forestOptions->validate();
+    filterOptions->validate();
+    generalOptions->validate();
         
     assert( forestOptions->useContrasts );
 
@@ -148,7 +161,7 @@ public:
 			   FilterOutput& filterOutput,
 			   vector<distributions::Random>& randoms) {
     
-    vector<vector<size_t> > nodeMat(filterOptions->nPerms,vector<size_t>(forestOptions->nTrees));
+    //vector<vector<size_t> > nodeMat(filterOptions->nPerms,vector<size_t>(forestOptions->nTrees));
 
     vector<vector<num_t> >         importanceMat( filterOptions->nPerms, vector<num_t>(filterData->nFeatures()) );
     vector<vector<num_t> > contrastImportanceMat( filterOptions->nPerms, vector<num_t>(filterData->nFeatures()) );
@@ -160,6 +173,7 @@ public:
     filterOutput.importances.resize(nFeatures);
     filterOutput.sampleCounts.resize(nFeatures);
     filterOutput.correlations.resize(nFeatures);
+    filterOutput.featureNames.resize(nFeatures);
 
     Progress progress;
     vector<num_t> contrastImportanceSample(filterOptions->nPerms);
@@ -179,9 +193,9 @@ public:
       SF.learnRF(filterData,targetIdx,forestOptions,featureWeights,randoms);
 
       // Get the number of nodes in each tree in the forest
-      for ( size_t treeIdx = 0; treeIdx < SF.nTrees(); ++treeIdx ) {
-	nodeMat[permIdx][treeIdx] = SF.nNodes(treeIdx);
-      }
+      //for ( size_t treeIdx = 0; treeIdx < SF.nTrees(); ++treeIdx ) {
+      //nodeMat[permIdx][treeIdx] = SF.nNodes(treeIdx);
+      //}
 
       SF.getMeanMinimalDepthValues(filterData,importanceMat[permIdx],contrastImportanceMat[permIdx]);
 
@@ -240,16 +254,19 @@ public:
       filterOutput.correlations[featureIdx] = filterData->pearsonCorrelation(targetIdx,featureIdx);
       filterOutput.sampleCounts[featureIdx] = filterData->nRealSamples(targetIdx,featureIdx);
       filterOutput.featureNames[featureIdx] = filterData->getFeatureName(featureIdx);
-      
     }
     
     sortFilterOutput(&filterOutput);
     
+    cout << "pValues: ";
+    utils::write(cout,filterOutput.pValues.begin(),filterOutput.pValues.end());
+    cout << endl;
+
     size_t nSelectedFeatures = 0;
 
     for ( size_t i = 0; i < nFeatures; ++i ) {
 
-      if ( filterOutput.pValues[i] > filterOptions->pValueThreshold || filterOutput.importances[i] > filterOptions->importanceThreshold || i == targetIdx ) {
+      if ( filterOutput.pValues[i] > filterOptions->pValueThreshold || filterOutput.importances[i] > filterOptions->importanceThreshold ) {
 	continue;
       }
 
@@ -258,7 +275,7 @@ public:
       filterOutput.correlations[nSelectedFeatures] = filterOutput.correlations[i];
       filterOutput.sampleCounts[nSelectedFeatures] = filterOutput.sampleCounts[i];
       filterOutput.featureNames[nSelectedFeatures] = filterOutput.featureNames[i];
-
+      ++nSelectedFeatures;
     }
 
     filterOutput.nAllFeatures = nFeatures - 1;
@@ -288,7 +305,7 @@ public:
   }
 
   TestOutput test(Treedata* testData,const size_t nThreads) {
-    
+
     assert(trainedModel_);
 
     TestOutput testOutput;
@@ -420,9 +437,16 @@ public:
     }
   */
 
-  vector<distributions::Random> makeRandomNumberGenerators(const size_t nThreads, const size_t seed) {
+  vector<distributions::Random> makeRandomNumberGenerators(const size_t nThreads, int seed) {
 
-    vector<distributions::Random> randoms;
+    assert( nThreads >= 1 );
+
+    vector<distributions::Random> randoms(nThreads);
+
+    if ( seed < 0 ) {
+      cout << "Using random seed" << endl;
+      seed = distributions::generateSeed();
+    }
 
     for ( size_t threadIdx = 0; threadIdx < nThreads; ++threadIdx ) {
       randoms[threadIdx].seed(seed + threadIdx);
