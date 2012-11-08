@@ -39,7 +39,8 @@ class RFACE {
 
 public:
 
-  RFACE() {
+  RFACE():
+    trainedModel_(NULL) {
     
     timer_ = new Timer();
     
@@ -258,10 +259,6 @@ public:
     
     sortFilterOutput(&filterOutput);
     
-    cout << "pValues: ";
-    utils::write(cout,filterOutput.pValues.begin(),filterOutput.pValues.end());
-    cout << endl;
-
     size_t nSelectedFeatures = 0;
 
     for ( size_t i = 0; i < nFeatures; ++i ) {

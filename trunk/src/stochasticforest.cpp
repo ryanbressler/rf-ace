@@ -149,6 +149,9 @@ void StochasticForest::saveForest(const string& fileName) {
     toFile << "FOREST=RF"; 
   } else if ( forestType_ == ForestOptions::ForestType::CART ) {
     toFile << "FOREST=CART";
+  } else {
+    cerr << "StochasticForest::saveForest() -- Unknown forest type!" << endl;
+    exit(1);
   }
 
   toFile << ",TARGET=" << "\"" << targetName_ << "\"";
@@ -159,8 +162,8 @@ void StochasticForest::saveForest(const string& fileName) {
   // Save each tree in the forest
   for ( size_t treeIdx = 0; treeIdx < rootNodes_.size(); ++treeIdx ) {
     toFile << "TREE=" << treeIdx;
-    if ( forestType_ == ForestOptions::ForestType::GBT ) { cout << ",GBT_CONSTANT=" << GBTconstant_ <<",GBT_FACTOR=" << GBTfactors_[treeIdx]; } 
-    cout << endl;
+    if ( forestType_ == ForestOptions::ForestType::GBT ) { toFile << ",GBT_CONSTANT=" << GBTconstant_ <<",GBT_FACTOR=" << GBTfactors_[treeIdx]; } 
+    toFile << endl;
     rootNodes_[treeIdx]->print(toFile);
   }
   
@@ -180,6 +183,8 @@ void growTreesPerThread(vector<RootNode*>& rootNodes, Treedata* trainData, const
 
 
 void StochasticForest::learnRF(Treedata* trainData, const size_t targetIdx, const ForestOptions* forestOptions, const vector<num_t>& featureWeights, vector<distributions::Random>& randoms) {
+
+  forestType_ = ForestOptions::ForestType::RF;
 
   targetName_ = trainData->getFeatureName(targetIdx);
 
@@ -263,6 +268,8 @@ void StochasticForest::learnRF(Treedata* trainData, const size_t targetIdx, cons
 
 void StochasticForest::learnGBT(Treedata* trainData, const size_t targetIdx, const ForestOptions* forestOptions, const vector<num_t>& featureWeights, vector<distributions::Random>& randoms) {
  
+  forestType_ = ForestOptions::ForestType::GBT;
+
   targetName_ = trainData->getFeatureName(targetIdx);
 
   isTargetNumerical_ = trainData->isFeatureNumerical(targetIdx);
