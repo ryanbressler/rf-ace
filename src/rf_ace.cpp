@@ -16,7 +16,7 @@ using datadefs::num_t;
 void printHeader(ostream& out) {
   out << endl
       << "-----------------------------------------------------------" << endl
-      << "|  RF-ACE version:  1.0.7, Aug 28 2012                    |" << endl
+      << "|  RF-ACE version:  1.1.0, Aug 28 2012                    |" << endl
       << "|    Compile date:  " << __DATE__ << ", " << __TIME__ << "                 |" << endl
       << "|   Report issues:  code.google.com/p/rf-ace/issues/list  |" << endl
       << "-----------------------------------------------------------" << endl
@@ -87,17 +87,6 @@ int main(const int argc, char* const argv[]) {
          << endl;
   } 
 
-
-
-  if ( false ) {
-    
-    //cout << " *(EXPERIMENTAL) RF-ACE RECOMBINER (" << params.recombinePerms << " permutations) ACTIVATED* " << endl;
-        
-    //rface.recombine();
-  }
-
-
-  
   if ( options.io.loadForestFile != "" ) {
     
     rface.load(options.io.loadForestFile);
@@ -181,8 +170,10 @@ int main(const int argc, char* const argv[]) {
     
   }
 
+  rface.printTimer();
+  
   return( EXIT_SUCCESS );
-
+  
 }
 
 vector<num_t> readFeatureWeights(Treedata& treeData, const size_t targetIdx, const string& fileName, const num_t defaulFeatureWeight) {
@@ -257,8 +248,6 @@ size_t getTargetIdx(Treedata& treeData, const string& targetAsStr) {
       cerr << "Target " << targetAsStr << " not found in data!" << endl;
       exit(1);
     }
-
-    cout << "returning..." << endl;
 
     return( targetIdx );
 
