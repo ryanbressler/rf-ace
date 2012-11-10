@@ -222,7 +222,7 @@ void UtilsTest::test_split() {
 
 void UtilsTest::test_permute() {
 
-  distributions::RandInt rand(0);
+  distributions::Random rand(0);
 
   num_t initData[] = {1.0,3.1,2.2,4.2,4.1,6.5,7.5,3,2};
 
@@ -232,7 +232,7 @@ void UtilsTest::test_permute() {
     vector<datadefs::num_t> data(initData,initData+8);
     vector<datadefs::num_t> dataOrig = data;
     
-    utils::permute(data,rand);
+    utils::permute(data,&rand);
     
     bool anyChange = false;
     

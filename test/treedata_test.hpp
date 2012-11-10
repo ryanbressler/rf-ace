@@ -17,8 +17,6 @@ class treeDataTest : public CppUnit::TestFixture {
   CPPUNIT_TEST( test_getFilteredAndSortedFeatureDataPair3 );
   CPPUNIT_TEST( test_parseARFF );
   CPPUNIT_TEST( test_parseARFF_extended ); 
-  CPPUNIT_TEST( test_keepFeatures );
-  CPPUNIT_TEST( test_removeFeatures );
   CPPUNIT_TEST( test_numericalFeatureSplitsNumericalTarget );
   CPPUNIT_TEST( test_numericalFeatureSplitsCategoricalTarget );
   CPPUNIT_TEST( test_numericalFeatureSplitsCategoricalTarget2 );
@@ -40,8 +38,6 @@ public:
   void test_getFilteredAndSortedFeatureDataPair3();
   void test_parseARFF();
   void test_parseARFF_extended();
-  void test_keepFeatures();
-  void test_removeFeatures();
   void test_numericalFeatureSplitsNumericalTarget();
   void test_numericalFeatureSplitsCategoricalTarget();
   void test_numericalFeatureSplitsCategoricalTarget2();
@@ -56,21 +52,24 @@ private:
   Treedata* treeData_;
   Treedata* treeData_103by300NaN_;
 
-  distributions::RandInt randInt_;
+  distributions::Random random_;
 
-  options::General_options parameters_;
+  //options::General_options parameters_;
   size_t threadIdx_;
+
+  bool useContrasts_;
 
 };
 
 void treeDataTest::setUp() {
 
-  randInt_.seed(0);
+  random_.seed(0);
 
-  treeData_ = new Treedata("test_103by300_mixed_matrix.afm",&parameters_);
-  treeData_103by300NaN_ = new Treedata("test_103by300_mixed_nan_matrix.afm",&parameters_);
+  useContrasts_ = true;
 
-  parameters_.useContrasts = true;
+  treeData_ = new Treedata("test_103by300_mixed_matrix.afm",'\t',':',useContrasts_);
+  treeData_103by300NaN_ = new Treedata("test_103by300_mixed_nan_matrix.afm",'\t',':',useContrasts_);
+
   threadIdx_ = 0;
 
 }
@@ -87,9 +86,9 @@ void treeDataTest::test_permuteContrasts() {
   
   string fileName = "test_6by10_mixed_matrix.tsv";
   
-  Treedata treeData(fileName,&parameters_);
+  Treedata treeData(fileName,'\t',':',useContrasts_);
   
-  //treeData.permuteContrasts();
+  treeData.permuteContrasts(&random_);
 
   CPPUNIT_ASSERT( treeData.features_.size() == 2*6 );
   
@@ -130,7 +129,7 @@ void treeDataTest::test_name2idxMap() {
 
   string fileName = "test_6by10_mixed_matrix.tsv";
 
-  Treedata treeData(fileName,&parameters_);
+  Treedata treeData(fileName,'\t',':',useContrasts_);
 
   CPPUNIT_ASSERT( treeData.name2idx_.size() == 2*treeData.nFeatures() );
   CPPUNIT_ASSERT( treeData.features_.size() == 2*treeData.nFeatures() );
@@ -167,7 +166,7 @@ void treeDataTest::test_name2idxMap() {
 
 void treeDataTest::test_idx2name2idx() {
 
-  Treedata treeData("test_103by300_mixed_nan_matrix.afm",&parameters_);
+  Treedata treeData("test_103by300_mixed_nan_matrix.afm",'\t',':',useContrasts_);
 
   for ( size_t i = 0; i < 2*treeData.nFeatures(); ++i ) {
     CPPUNIT_ASSERT( treeData.getFeatureIdx( treeData.getFeatureName(i) ) != treeData.end() );
@@ -177,7 +176,7 @@ void treeDataTest::test_idx2name2idx() {
 
 void treeDataTest::test_getFeatureData() {
 
-  Treedata treedata("test_2by8_numerical_matrix.tsv",&parameters_);
+  Treedata treedata("test_2by8_numerical_matrix.tsv",'\t',':');
 
   vector<size_t> sampleIcs = utils::range(8);
 
@@ -194,7 +193,7 @@ void treeDataTest::test_getFilteredFeatureData() {
   
   string fileName = "test_6by10_mixed_matrix.tsv";
   
-  Treedata treeData(fileName,&parameters_);
+  Treedata treeData(fileName,'\t',':');
 
 
   /*
@@ -278,7 +277,7 @@ void treeDataTest::test_getFilteredAndSortedFeatureDataPair3() {
 
   string fileName = "test_6by10_mixed_matrix.tsv";
 
-  Treedata treeData(fileName,&parameters_);
+  Treedata treeData(fileName,'\t',':');
 
   /*
     N:F1    nA      8.5     3.4     7.2     5       6       7       11      9       NA
@@ -375,7 +374,7 @@ void treeDataTest::test_getFilteredAndSortedFeatureDataPair3() {
 
 void treeDataTest::test_parseARFF() {
   
-  Treedata treeData("test_5by10_numeric_matrix.arff",&parameters_);
+  Treedata treeData("test_5by10_numeric_matrix.arff",'\t',':');
 
   /*
     0.8147, 1.0000,  0.0596, 0.9160, 6.0000
@@ -480,71 +479,7 @@ void treeDataTest::test_parseARFF() {
 
 void treeDataTest::test_parseARFF_extended() {
 
-  Treedata treeData("test_12by21_categorical_matrix.arff",&parameters_);
-
-}
-
-void treeDataTest::test_keepFeatures() {
-  
-  Treedata treedata("test_6by10_mixed_matrix.tsv",&parameters_);
-
-  // Feature names in the matrix are N:F1 N:F2 C:F3 N:F4 C:F5 N:F6
-
-  set<string> keepFeatureNames;
-  keepFeatureNames.insert("N:F2");
-  keepFeatureNames.insert("C:F5");
-
-  treedata.whiteList(keepFeatureNames);
-
-  size_t featureIdx;
-  featureIdx = treedata.getFeatureIdx("N:F2");
-  featureIdx = treedata.getFeatureIdx("C:F5");
-
-  CPPUNIT_ASSERT( treedata.nFeatures() == keepFeatureNames.size() );
-  CPPUNIT_ASSERT( treedata.nSamples() == 10 );
-
-  // Internally, treedata also stores the contrasts, doubling the number of features
-  CPPUNIT_ASSERT( treedata.name2idx_.size() == 2*treedata.nFeatures() );
-
-  for ( size_t i = 0; i < treedata.nFeatures(); ++i ) {
-    string featureName = treedata.getFeatureName(i);
-    CPPUNIT_ASSERT( featureName.append("_CONTRAST") == treedata.getFeatureName( treedata.nFeatures() + i ));
-  }
- 
-
-}
-
-void treeDataTest::test_removeFeatures() {
-
-  Treedata treedata("test_6by10_mixed_matrix.tsv",&parameters_);
-
-  // Feature names in the matrix are N:F1 N:F2 C:F3 N:F4 C:F5 N:F6
-
-  set<string> removeFeatureNames;
-  removeFeatureNames.insert("N:F2");
-  removeFeatureNames.insert("C:F5");
-  
-  size_t nFeaturesOld = treedata.nFeatures();
-
-  treedata.blackList(removeFeatureNames);
-
-  size_t featureIdx;
-  featureIdx = treedata.getFeatureIdx("N:F1");
-  featureIdx = treedata.getFeatureIdx("C:F3");
-  featureIdx = treedata.getFeatureIdx("N:F4");
-  featureIdx = treedata.getFeatureIdx("N:F6");
-
-  CPPUNIT_ASSERT( treedata.nFeatures() == nFeaturesOld - removeFeatureNames.size() );
-  CPPUNIT_ASSERT( treedata.nSamples() == 10 );
-
-  // Internally, treedata also stores the contrasts, doubling the number of features
-  CPPUNIT_ASSERT( treedata.name2idx_.size() == 2*treedata.nFeatures() );
-
-  for ( size_t i = 0; i < treedata.nFeatures(); ++i ) {
-    string featureName = treedata.getFeatureName(i);
-    CPPUNIT_ASSERT( featureName.append("_CONTRAST") == treedata.getFeatureName( treedata.nFeatures() + i ));
-  }
-
+  Treedata treeData("test_12by21_categorical_matrix.arff",'\t',':');
 
 }
 
@@ -697,7 +632,7 @@ void treeDataTest::test_categoricalFeatureSplitsNumericalTarget() {
     
     datadefs::num_t leftFraction = 1.0*sampleIcs_left.size() / ( sampleIcs_left.size() + sampleIcs_right.size() );
     
-    Node node(&parameters_,threadIdx_);
+    Node node('\t',':',threadIdx_);
     node.setSplitter("foo",rawSplitValues_left,rawSplitValues_right);
     
     CPPUNIT_ASSERT( node.percolate(treeData_,1) == node.rightChild() );
@@ -747,7 +682,7 @@ void treeDataTest::test_categoricalFeatureSplitsCategoricalTarget() {
 
   datadefs::num_t leftFraction = 1.0*sampleIcs_left.size() / ( sampleIcs_left.size() + sampleIcs_right.size() );
 
-  Node node(&parameters_,threadIdx_);
+  Node node;
   node.setSplitter("C:noise_6",rawSplitValues_left,rawSplitValues_right);
 
   CPPUNIT_ASSERT( node.percolate(treeData_,0) == node.leftChild() );
@@ -839,7 +774,7 @@ void treeDataTest::test_bootstrapRealSamples() {
 
   for ( size_t i = 0; i < 1000; ++i ) {
 
-    treeData_->bootstrapFromRealSamples(randInt_,withReplacement,sampleSize,featureIdx,ics,oobIcs);
+    treeData_->bootstrapFromRealSamples(&random_,withReplacement,sampleSize,featureIdx,ics,oobIcs);
 
     oobFraction += 1.0 * oobIcs.size(); 
 

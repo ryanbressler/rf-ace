@@ -29,14 +29,14 @@ public:
 
 private:
 
-  distributions::RandInt randInt_;
+  distributions::Random random_;
 
 };
 
 void DistributionsTest::setUp() {
 
   //cout << "Testing distributions.hpp: " << flush;
-  randInt_.seed(0);
+  random_.seed(0);
 
 }
 
@@ -49,16 +49,16 @@ void DistributionsTest::tearDown() {
 void DistributionsTest::test_randint() {
 
   // Make two identical random integer generators
-  distributions::RandInt randGen1(0);
-  distributions::RandInt randGen2(0);
+  distributions::Random randGen1(0);
+  distributions::Random randGen2(0);
 
   // Test that rand1 and rand2 stay in sync
   for ( size_t i = 0; i < 1000; ++i ) {
     
-    size_t r1 = randGen1();
-    size_t r2 = randGen2();
+    size_t r1 = randGen1.integer();
+    size_t r2 = randGen2.integer();
     //cout << " " << r1 << "-" << r2 << " ";
-    CPPUNIT_ASSERT( randGen1() == randGen2() );
+    CPPUNIT_ASSERT( randGen1.integer() == randGen2.integer() );
   }
 
   unordered_map<size_t,size_t> hist;
@@ -71,7 +71,7 @@ void DistributionsTest::test_randint() {
 
   for ( size_t i = 0; i < 100000; ++i ) {
     //size_t r = rand1() % maxIdx;
-    ++hist[ randGen1() % maxIdx ];
+    ++hist[ randGen1.integer() % maxIdx ];
   }
 
   size_t nZeroCounts = 0;
@@ -92,7 +92,7 @@ void DistributionsTest::test_uniform() {
   datadefs::num_t r_max = 0.0;
 
   for ( size_t i = 0; i < 100000; ++i ) {
-    datadefs::num_t r = randInt_.uniform();
+    datadefs::num_t r = random_.uniform();
     CPPUNIT_ASSERT( 0.0 <= r && r < 1.0 );
 
     //cout << " " << r; 
@@ -168,10 +168,10 @@ void DistributionsTest::test_invcdf4() {
 
   vector<datadefs::num_t> PMFest(8,0.0);
 
-  distributions::RandInt randInt;
+  distributions::Random random;
 
   for ( size_t i = 0; i < 1e7; ++i ) {
-    PMFest[ pmf.icdf(randInt.uniform()) ] += 1e-7;
+    PMFest[ pmf.icdf(random.uniform()) ] += 1e-7;
   }
 
   for ( size_t i = 0; i < 8; ++i ) {
