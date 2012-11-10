@@ -29,15 +29,18 @@ public:
 private:
 
   Treedata* trainData_;
-  options::General_options parameters_;
+  ForestOptions forestOptions_;
+  vector<distributions::Random> randoms_;
 
 };
 
 void StochasticForestTest::setUp() {
   
-  parameters_.setCARTDefaults();
+  forestOptions_.setCARTDefaults();
   
-  trainData_ = new Treedata("test_103by300_mixed_matrix.afm",&parameters_);
+  trainData_ = new Treedata("test_103by300_mixed_matrix.afm",'\t',':');
+
+  randoms_.resize(1);
   
 }
 
@@ -50,13 +53,12 @@ void StochasticForestTest::tearDown() {
 void StochasticForestTest::test_treeDataPercolation() {
 
 
-  parameters_.forestInput = "test_predictor.sf";
-
   // First we need some data
-  Treedata testData("testdata.tsv",&parameters_);
+  Treedata testData("testdata.tsv",'\t',':');
 
   // Next load a test predictor
-  StochasticForest SF(parameters_);
+  StochasticForest SF;
+  SF.loadForest("test_predictor.sf");
 
   vector<num_t> prediction,confidence;
   
@@ -103,13 +105,16 @@ void StochasticForestTest::test_error() {
 
 void StochasticForestTest::test_CART() {
  
-  parameters_.targetStr = "N:output";
+  Treedata treeData("test_103by300_mixed_nan_matrix.afm",'\t',':');
 
-  Treedata treeData("test_103by300_mixed_nan_matrix.afm",&parameters_);
+  forestOptions_.nMaxLeaves = 2;
 
-  parameters_.nMaxLeaves = 2;
+  StochasticForest CART;
 
-  StochasticForest CART(&treeData,parameters_);
+  vector<num_t> featureWeights(treeData.nFeatures(),1);
+  featureWeights[0] = 0;
+
+  CART.learnRF(&treeData,0,&forestOptions_,featureWeights,randoms_);
 
   CPPUNIT_ASSERT( CART.rootNodes_[0]->splitter_.name == "N:input" );
 

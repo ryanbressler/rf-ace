@@ -267,34 +267,33 @@ void Node::recursiveNodeSplit(Treedata* treeData,
     return;
   }
 
-  vector<size_t> featureSampleIcs( forestOptions->mTry );
+  vector<size_t> featureSampleIcs;
 
   if ( forestOptions->isRandomSplit ) {
 
-    // featureSampleIcs.resize(parameters->mTry);
+    featureSampleIcs.resize(forestOptions->mTry);
 
     for ( size_t i = 0; i < forestOptions->mTry; ++i ) {
       featureSampleIcs[i] = pmf->icdf( random->uniform() );
     }
 
-    // utils::permute(featureSampleIcs,parameters->randIntGens[threadIdx_]);
+    if ( forestOptions->useContrasts ) {
+      for ( size_t i = 0; i < forestOptions->mTry; ++i ) {
+	
+	// If the sampled feature is a contrast... 
+	if ( random->uniform() < forestOptions->contrastFraction ) { // p% sampling rate
+	  
+	  featureSampleIcs[i] += treeData->nFeatures();
+	}
+      }
+    } 
+  } else {
 
-    // Take only the first ones
-    // featureSampleIcs.resize(parameters->mTry);
+    featureSampleIcs = utils::range(treeData->nFeatures());
+
+    featureSampleIcs.erase(featureSampleIcs.begin()+targetIdx);
 
   }
-
-  if ( forestOptions->useContrasts ) {
-    for ( size_t i = 0; i < forestOptions->mTry; ++i ) {
-      
-      // If the sampled feature is a contrast... 
-      if ( random->uniform() < forestOptions->contrastFraction ) { // p% sampling rate
-	
-	featureSampleIcs[i] += treeData->nFeatures();
-      }
-    }
-  } 
-
   // assert( featureSampleIcs.size() == forestOptions->mTry );
   
   vector<size_t> sampleIcs_left,sampleIcs_right;

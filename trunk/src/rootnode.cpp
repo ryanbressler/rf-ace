@@ -76,11 +76,6 @@ void RootNode::growTree(Treedata* trainData, const size_t targetIdx, const distr
 
   size_t nLeaves = 1;
 
-  if ( !forestOptions->isRandomSplit ) {
-    cerr << "RootNode::growTree() -- Only random splits are allowed at the moment!" << endl;
-    exit(1);
-  }
-
   size_t treeDist = 0;
 
   //Start the recursive node splitting from the root node. This will generate the tree.
