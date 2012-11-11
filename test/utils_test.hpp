@@ -8,6 +8,7 @@
 #include "datadefs.hpp"
 #include "utils.hpp"
 #include "distributions.hpp"
+#include "hash.hpp"
 
 class UtilsTest : public CppUnit::TestFixture {
   CPPUNIT_TEST_SUITE( UtilsTest );
@@ -22,11 +23,11 @@ class UtilsTest : public CppUnit::TestFixture {
   CPPUNIT_TEST( test_permute );
   CPPUNIT_TEST( test_splitRange );
 
-  // NEW
   CPPUNIT_TEST( test_strv2catv );
   CPPUNIT_TEST( test_strv2numv );
   CPPUNIT_TEST( test_sortDataAndMakeRef );
   CPPUNIT_TEST( test_sortFromRef );
+  CPPUNIT_TEST( test_text2tokens );
 
   CPPUNIT_TEST_SUITE_END();
   
@@ -44,12 +45,11 @@ public:
   void test_split();
   void test_permute();
   void test_splitRange();
-
-  // NEW
   void test_strv2catv();
   void test_strv2numv();
   void test_sortDataAndMakeRef();
   void test_sortFromRef();
+  void test_text2tokens();
   
   
 };
@@ -381,6 +381,23 @@ void UtilsTest::test_sortFromRef() {
   }
 }
 
+void UtilsTest::test_text2tokens() {
+
+  //char text[] = "I want to, tokenizE  This!!.; it's so rad@";
+
+  //vector<string> tokens = utils::text2tokens(text);
+
+  string text = "I want to, tokenizE  This!!.; it's so rad@";
+
+  vector<uint32_t> hashes = utils::hashText(text);
+
+  CPPUNIT_ASSERT( hashes.size() == 4 );
+  CPPUNIT_ASSERT( hashes[0] == hashfun::hsieh("want",4) );
+  CPPUNIT_ASSERT( hashes[1] == hashfun::hsieh("tokenize",8) );
+  CPPUNIT_ASSERT( hashes[2] == hashfun::hsieh("this",4) );
+  CPPUNIT_ASSERT( hashes[3] == hashfun::hsieh("rad",3) );
+
+}
 
 // Registers the fixture into the test 'registry'
 CPPUNIT_TEST_SUITE_REGISTRATION( UtilsTest );

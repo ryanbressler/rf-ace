@@ -28,7 +28,7 @@ size_t distributions::Random::integer() {
 
 num_t distributions::Random::uniform() {
 
-  return( 1.0 * rand_(eng_) / datadefs::MAX_IDX );
+  return( 1.0 * rand_(eng_) / ( datadefs::MAX_IDX + 1 ) );
 
 }
 

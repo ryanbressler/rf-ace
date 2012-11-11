@@ -1,9 +1,21 @@
 #include "utils.hpp"
 
+#include <stdio.h>
+#include <string.h>
 #include <sstream>
 #include <fstream>
 #include <algorithm>
+#include <string>
 #include <ios>
+
+#include "hash.hpp"
+
+string utils::tolower(const string& str) {
+
+  string strcopy(str);
+  transform(strcopy.begin(),strcopy.end(),strcopy.begin(),::tolower);
+  return(strcopy);
+}
 
 // Returns a copy of input vector x with NAN-entries removed
 // NOTE: is just a wrapper of the algorithm "remove_if"
@@ -214,6 +226,23 @@ vector<string> utils::split(istream& streamObj, const char delimiter, const stri
 
   return( items );
 
+}
+
+vector<uint32_t> utils::hashText(const string& text) {
+
+  vector<uint32_t> hashes;
+
+  char const* p = text.c_str();
+  char const* q = strpbrk(p+1,datadefs::tokenDelimiters);
+  for ( ; q != NULL; q = strpbrk(p,datadefs::tokenDelimiters) ) {
+    if ( distance(p,q) > 2 ) {
+      string token(p,q);
+      hashes.push_back( hashfun::hsieh(utils::tolower(token).c_str(),token.length()) );
+    }
+    p = q + 1;
+  }
+  
+  return(hashes);
 }
 
 vector<string> utils::readListFromFile(const string& fileName, const char delimiter) {

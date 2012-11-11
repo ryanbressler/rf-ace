@@ -8,6 +8,7 @@
 #include <istream>
 #include <sstream>
 #include <cstdlib>
+#include <bitset>
 #include "datadefs.hpp"
 //#include "treedata.hpp"
 #include "distributions.hpp"
@@ -18,6 +19,8 @@ using datadefs::num_t;
 class Treedata;
 
 namespace utils {
+
+  string tolower(const string& str);
 
   // Removes missing values from the provided data vector
   vector<num_t> removeNANs(vector<num_t> x);
@@ -40,6 +43,8 @@ namespace utils {
 			   const char delimiter,
 			   const char separator,
 			   const char comment);
+
+  vector<uint32_t> hashText(const string& text);
   
   // Splits a delimited string
   vector<string> split(const string& str, const char delimiter, const string& wh = " ");
