@@ -53,6 +53,9 @@ namespace datadefs {
   typedef string NAN_t;             /** Used to represent NANs as a string */
   extern const set<NAN_t> NANs;     /** The complete set of string
                                      *   representations of NAN */
+
+  extern const char tokenDelimiters[];
+
   extern const string CONTRAST;
 
   // Random Forest default configuration
