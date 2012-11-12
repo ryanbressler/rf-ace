@@ -2,6 +2,7 @@
 #define TEST__
 #endif
 
+#include "rface_test.hpp"
 #include "distributions_test.hpp"
 #include "argparse_test.hpp"
 #include "datadefs_test.hpp"

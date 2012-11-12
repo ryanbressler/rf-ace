@@ -69,7 +69,11 @@ int main(const int argc, char* const argv[]) {
 
     vector<num_t> featureWeights = readFeatureWeights(filterData,targetIdx,options.io.featureWeightsFile,options.generalOptions.defaultFeatureWeight);
     
-    filterOutput = rface.filter(&filterData,targetIdx,featureWeights,&options.forestOptions,&options.filterOptions,&options.generalOptions);
+    if ( options.generalOptions.seed < 0 ) {
+      options.generalOptions.seed = distributions::generateSeed();
+    }
+
+    filterOutput = rface.filter(&filterData,targetIdx,featureWeights,&options.forestOptions,&options.filterOptions,options.generalOptions.seed,options.generalOptions.nThreads);
 
   } 
 
@@ -108,7 +112,11 @@ int main(const int argc, char* const argv[]) {
     
     vector<num_t> featureWeights = readFeatureWeights(trainData,targetIdx,options.io.featureWeightsFile,options.generalOptions.defaultFeatureWeight);
     
-    rface.train(trainData,targetIdx,featureWeights,&options.forestOptions,&options.generalOptions);
+    if ( options.generalOptions.seed < 0 ) {
+      options.generalOptions.seed = distributions::generateSeed();
+    }
+
+    rface.train(trainData,targetIdx,featureWeights,&options.forestOptions,options.generalOptions.seed,options.generalOptions.nThreads);
     
     vector<num_t> data = utils::removeNANs(trainData.getFeatureData(targetIdx));
     
