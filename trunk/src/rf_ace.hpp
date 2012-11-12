@@ -88,12 +88,12 @@ public:
 	     const size_t targetIdx, 
 	     const vector<num_t>& featureWeights, 
 	     ForestOptions* forestOptions, 
-	     GeneralOptions* generalOptions) {
+	     const int seed = 0,
+	     const size_t nThreads = 1) {
     
     forestOptions->useContrasts = false;
 
     forestOptions->validate();
-    generalOptions->validate();
 
     assert( ! forestOptions->useContrasts );
 
@@ -102,7 +102,7 @@ public:
       trainedModel_ = NULL;
     }
     
-    vector<distributions::Random> randoms = this->makeRandomNumberGenerators(generalOptions->nThreads,generalOptions->seed);
+    vector<distributions::Random> randoms = this->makeRandomNumberGenerators(nThreads,seed);
     
     trainedModel_ = new StochasticForest();
 
@@ -123,15 +123,14 @@ public:
 		      const vector<num_t>& featureWeights, 
 		      ForestOptions* forestOptions,
 		      FilterOptions* filterOptions,
-		      GeneralOptions* generalOptions) {
+		      const int seed = 0,
+		      const size_t nThreads = 1) {
 
-    cout << "Enforcing use of contrasts..." << endl;
     forestOptions->useContrasts = true;
 
     forestOptions->validate();
     filterOptions->validate();
-    generalOptions->validate();
-        
+
     assert( forestOptions->useContrasts );
 
     if ( filterData->nSamples() < 2 * forestOptions->nodeSize ) {
@@ -144,7 +143,7 @@ public:
     vector<num_t> contrastImportanceSample;
     set<size_t> featuresInAllForests;
 
-    vector<distributions::Random> randoms = makeRandomNumberGenerators(generalOptions->nThreads,generalOptions->seed);
+    vector<distributions::Random> randoms = makeRandomNumberGenerators(nThreads,seed);
 
     cout << "===> Uncovering associations... " << flush;
     executeRandomForest(filterData,targetIdx,featureWeights,forestOptions,filterOptions,filterOutput,randoms);
@@ -301,7 +300,7 @@ public:
 
   }
 
-  TestOutput test(Treedata* testData,const size_t nThreads) {
+  TestOutput test(Treedata* testData,const size_t nThreads = 1) {
 
     assert(trainedModel_);
 
@@ -441,8 +440,7 @@ public:
     vector<distributions::Random> randoms(nThreads);
 
     if ( seed < 0 ) {
-      cout << "Using random seed" << endl;
-      seed = distributions::generateSeed();
+      cerr << "Invalid random seed (" << seed << ")" << endl;
     }
 
     for ( size_t threadIdx = 0; threadIdx < nThreads; ++threadIdx ) {

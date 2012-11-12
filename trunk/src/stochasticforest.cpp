@@ -185,15 +185,11 @@ void growTreesPerThread(vector<RootNode*>& rootNodes, Treedata* trainData, const
 void StochasticForest::learnRF(Treedata* trainData, const size_t targetIdx, const ForestOptions* forestOptions, const vector<num_t>& featureWeights, vector<distributions::Random>& randoms) {
 
   forestType_ = ForestOptions::ForestType::RF;
-
   targetName_ = trainData->getFeatureName(targetIdx);
-
   isTargetNumerical_ = trainData->isFeatureNumerical(targetIdx);
-
   categories_ = trainData->categories(targetIdx);
 
   assert( trainData->nFeatures() == featureWeights.size() );
-
   assert( fabs(featureWeights[targetIdx]) < datadefs::EPS );
 
   rootNodes_.resize(forestOptions->nTrees);
@@ -232,7 +228,7 @@ void StochasticForest::learnRF(Treedata* trainData, const size_t targetIdx, cons
     
     vector<thread> threads;
     
-    for ( size_t threadIdx = 0; threadIdx < params_->nThreads; ++threadIdx ) {
+    for ( size_t threadIdx = 0; threadIdx < nThreads; ++threadIdx ) {
       
       vector<size_t>& treeIcsPerThread = treeIcs[threadIdx];
       vector<RootNode*> rootNodesPerThread(treeIcsPerThread.size());
@@ -246,7 +242,7 @@ void StochasticForest::learnRF(Treedata* trainData, const size_t targetIdx, cons
 	//rootNodes_[treeIcsPerThread[i]]->growTree();
       }
       
-      threads.push_back( thread(growTreesPerThread,rootNodesPerThread,trainData,&pmf,&randoms[threadIdx]) ); //thread(this->growTrees,treeIcsPerThread[threadIdx],threadIdx);
+      threads.push_back( thread(growTreesPerThread,rootNodesPerThread,trainData,targetIdx,forestOptions,&pmf,&randoms[threadIdx]) ); //thread(this->growTrees,treeIcsPerThread[threadIdx],threadIdx);
     }
     
     for ( size_t threadIdx = 0; threadIdx < threads.size(); ++threadIdx ) {
