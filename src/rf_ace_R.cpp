@@ -4,8 +4,9 @@
 
 #include "rf_ace.hpp"
 #include "treedata.hpp"
-#include "utils.hpp"
+//#include "utils.hpp"
 #include "datadefs.hpp"
+#include "options.hpp"
 
 using namespace std;
 using datadefs::num_t;
@@ -62,16 +63,16 @@ RcppExport void rfaceSave(SEXP rfaceObj, SEXP fileName) {
 
   Rcpp::XPtr<RFACE> rface(rfaceObj);
 
-  rface->saveForest(Rcpp::as<string>(fileName));
+  rface->save(Rcpp::as<string>(fileName));
 
 }
 
-RcppExport SEXP rfaceLoad(SEXP rfaceFile, SEXP nThreads) {
+RcppExport SEXP rfaceLoad(SEXP rfaceFile) {
 
   
   Rcpp::XPtr<RFACE> rface( new RFACE, true);
 
-  rface->loadForest(Rcpp::as<string>(rfaceFile));
+  rface->load(Rcpp::as<string>(rfaceFile));
 
   return(rface);
 
@@ -81,14 +82,15 @@ RcppExport SEXP rfaceTrain(SEXP trainDataFrameObj, SEXP targetStrR, SEXP nTreesR
 
   ForestOptions forestOptions;
 
-  targetStr = Rcpp::as<string>(targetStrR);
+  string targetStr = Rcpp::as<string>(targetStrR);
   forestOptions.nTrees     = Rcpp::as<size_t>(nTreesR);
   forestOptions.mTry       = Rcpp::as<size_t>(mTryR);
   forestOptions.nodeSize   = Rcpp::as<size_t>(nodeSizeR);
   forestOptions.nMaxLeaves = Rcpp::as<size_t>(nMaxLeavesR);
-  nThreads   = Rcpp::as<size_t>(nThreadsR);
+  size_t nThreads = Rcpp::as<size_t>(nThreadsR);
 
   vector<Feature> dataMatrix;
+  vector<string> sampleHeaders;
 
   parseDataFrame(trainDataFrameObj,dataMatrix,sampleHeaders);
 
@@ -99,7 +101,7 @@ RcppExport SEXP rfaceTrain(SEXP trainDataFrameObj, SEXP targetStrR, SEXP nTreesR
 
   if ( targetIdx == trainData.end() ) {
     int integer;
-    if ( utils::isInteger(targetStr,integer) && integer >= 0 && integer < trainData.nFeatures() ) {
+    if ( datadefs::isInteger(targetStr,integer) && integer >= 0 && integer < static_cast<int>(trainData.nFeatures()) ) {
       targetIdx = static_cast<size_t>(integer);
     } else {
       cerr << "Invalid target: " << targetStr << endl;
@@ -114,9 +116,39 @@ RcppExport SEXP rfaceTrain(SEXP trainDataFrameObj, SEXP targetStrR, SEXP nTreesR
 
   int seed = 0;
 
-  rface->train(trainData,targetIdx,featureWeights,forestOptions,seed,nThreads);
+  rface->train(trainData,targetIdx,featureWeights,&forestOptions,seed,nThreads);
 
   return(rface);
 
 }
 
+RcppExport SEXP rfacePredict(SEXP rfaceObj, SEXP testDataFrameObj, SEXP nThreadsR) {
+
+  size_t nThreads = Rcpp::as<size_t>(nThreadsR);
+
+  Rcpp::XPtr<RFACE> rface(rfaceObj);
+
+  vector<Feature> testDataMatrix;
+  vector<string> sampleHeaders;
+
+  parseDataFrame(testDataFrameObj,testDataMatrix,sampleHeaders);
+
+  bool useContrasts = false;
+
+  Treedata testData(testDataMatrix,useContrasts,sampleHeaders);
+
+  RFACE::TestOutput testOutput = rface->test(&testData,nThreads);
+
+  Rcpp::List predictions;
+
+  for(size_t i = 0; i < testData.nSamples(); ++i) {
+    predictions.push_back( Rcpp::List::create(Rcpp::Named("target")=testOutput.targetName,
+                                              Rcpp::Named("sample")=testOutput.sampleNames[i],
+                                              Rcpp::Named("true")=testOutput.numTrueData[i],
+                                              Rcpp::Named("prediction")=testOutput.numPredictions[i],
+                                              Rcpp::Named("error")=testOutput.confidence[i]));
+  }
+
+  return(predictions);
+
+}
