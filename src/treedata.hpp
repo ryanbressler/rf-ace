@@ -35,7 +35,7 @@ class Treedata  {
 public:
 
   // Initializes the object 
-  Treedata(const vector<Feature>& features, const bool useContrasts, const vector<string>& sampleHeaders = vector<string>(0));
+  Treedata(const vector<Feature>& features, bool useContrasts = false, const vector<string>& sampleHeaders = vector<string>(0));
 
   // Initializes the object and reads in a data matrix
   // NOTE: will permute the contrasts, which is why it needs the RNG

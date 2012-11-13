@@ -4,6 +4,11 @@
 
 #include "rf_ace.hpp"
 #include "treedata.hpp"
+#include "utils.hpp"
+#include "datadefs.hpp"
+
+using namespace std;
+using datadefs::num_t;
 
 void parseDataFrame(SEXP dataFrameObj, vector<Feature>& dataMatrix, vector<string>& sampleHeaders) {
 
@@ -57,120 +62,61 @@ RcppExport void rfaceSave(SEXP rfaceObj, SEXP fileName) {
 
   Rcpp::XPtr<RFACE> rface(rfaceObj);
 
-  rface->save(Rcpp::as<string>(fileName));
+  rface->saveForest(Rcpp::as<string>(fileName));
 
 }
 
 RcppExport SEXP rfaceLoad(SEXP rfaceFile, SEXP nThreads) {
 
-  options::General_options params;
+  
+  Rcpp::XPtr<RFACE> rface( new RFACE, true);
 
-  params.forestInput = Rcpp::as<string>(predictorFile);
-  params.nThreads = Rcpp::as<size_t>(nThreads);
-
-  params.initRandIntGens();
-
-  Rcpp::XPtr<RFACE> rface( new RFACE(params), true);
-
-  rface->load(Rcpp::as<string>(rfaceFile));
+  rface->loadForest(Rcpp::as<string>(rfaceFile));
 
   return(rface);
 
 }
 
-RcppExport SEXP rfaceTrain(SEXP trainDataFrameObj, SEXP targetStr, SEXP nTrees, SEXP mTry, SEXP nodeSize, SEXP nMaxLeaves, SEXP nThreads) {
+RcppExport SEXP rfaceTrain(SEXP trainDataFrameObj, SEXP targetStrR, SEXP nTreesR, SEXP mTryR, SEXP nodeSizeR, SEXP nMaxLeavesR, SEXP nThreadsR) {
 
-  rface.printHeader(cout);
+  ForestOptions forestOptions;
 
-  TIMER_G = new Timer();
-
-  TIMER_G->tic("TOTAL");
-
-  options::General_options params;
-
-  params.targetStr  = Rcpp::as<string>(targetStr);
-  params.nTrees     = Rcpp::as<size_t>(nTrees);
-  params.mTry       = Rcpp::as<size_t>(mTry);
-  params.nodeSize   = Rcpp::as<size_t>(nodeSize);
-  params.nMaxLeaves = Rcpp::as<size_t>(nMaxLeaves);
-  params.nThreads   = Rcpp::as<size_t>(nThreads);
-
-  params.initRandIntGens();
+  targetStr = Rcpp::as<string>(targetStrR);
+  forestOptions.nTrees     = Rcpp::as<size_t>(nTreesR);
+  forestOptions.mTry       = Rcpp::as<size_t>(mTryR);
+  forestOptions.nodeSize   = Rcpp::as<size_t>(nodeSizeR);
+  forestOptions.nMaxLeaves = Rcpp::as<size_t>(nMaxLeavesR);
+  nThreads   = Rcpp::as<size_t>(nThreadsR);
 
   vector<Feature> dataMatrix;
-  vector<string> sampleHeaders;
 
-  TIMER_G->tic("READ");
   parseDataFrame(trainDataFrameObj,dataMatrix,sampleHeaders);
-  TIMER_G->toc("READ");
 
-  //return(Rcpp::wrap(NULL));
+  bool useContrasts = false;
+  Treedata trainData(dataMatrix,useContrasts,sampleHeaders);
 
-  Treedata trainData(dataMatrix,&params,sampleHeaders);
+  size_t targetIdx = trainData.getFeatureIdx(targetStr);
 
-  //StochasticForest predictor = rface.buildPredictor(trainData,params);
-
-  //Rcpp::XPtr<StochasticForest> predictorObj( &predictor, true );
-
-  rface.updateTargetStr(trainData,params);
-
-  rface.pruneFeatureSpace(trainData,params);
-
-  //rface.setEnforcedForestParameters(trainData,params);
-
-  rface.printGeneralSetup(trainData,params);
-
-  params.print();
-
-  params.validateParameters();
-
-  if ( params.modelType == options::RF ) {
-    cout << "===> Growing RF predictor... " << flush;
-  } else if ( params.modelType == options::GBT ) {
-    cout << "===> Growing GBT predictor... " << flush;
-  } else if ( params.modelType == options::CART ) {
-    cout << "===> Growing CART predictor... " << flush;
-  } else {
-    cerr << "Unknown forest type!" << endl;
-    exit(1);
+  if ( targetIdx == trainData.end() ) {
+    int integer;
+    if ( utils::isInteger(targetStr,integer) && integer >= 0 && integer < trainData.nFeatures() ) {
+      targetIdx = static_cast<size_t>(integer);
+    } else {
+      cerr << "Invalid target: " << targetStr << endl;
+      exit(1);
+    }
   }
 
-  Rcpp::XPtr<StochasticForest> predictor( new StochasticForest(&trainData,params), true );
-  cout << "DONE" << endl << endl;
+  Rcpp::XPtr<RFACE> rface( new RFACE, true);
 
-  if ( params.modelType == options::GBT ) {
-    cout << "GBT diagnostics disabled temporarily" << endl << endl;
-    return predictor;
-  }
+  vector<num_t> featureWeights(trainData.nFeatures(),1.0);
+  featureWeights[targetIdx] = 0.0;
 
-  size_t targetIdx = trainData.getFeatureIdx(params.targetStr);
-  vector<num_t> data = utils::removeNANs(trainData.getFeatureData(targetIdx));
+  int seed = 0;
 
-  num_t oobError = predictor->getOobError();
-  num_t ibOobError =  predictor->getError();
+  rface->train(trainData,targetIdx,featureWeights,forestOptions,seed,nThreads);
 
-  cout << "RF training error measures (NULL == no model):" << endl;
-  if ( trainData.isFeatureNumerical(targetIdx) ) {
-    num_t nullError = math::var(data);
-    cout << "              NULL std = " << sqrt( nullError ) << endl;
-    cout << "               OOB std = " << sqrt( oobError ) << endl;
-    cout << "            IB+OOB std = " << sqrt( ibOobError ) << endl;
-    cout << "  % explained by model = " << 1 - oobError / nullError << " = 1 - (OOB var) / (NULL var)" << endl;
-  } else {
-    num_t nullError = math::nMismatches( data, math::mode(data) );
-    cout << "       NULL % mispred. = " << 1.0 * nullError / data.size() << endl;
-    cout << "        OOB % mispred. = " << oobError << endl;
-    cout << "     IB+OOB % mispred. = " << ibOobError << endl;
-    cout << "  % explained by model = " << 1 - oobError / nullError << " ( 1 - (OOB # mispred.) / (NULL # mispred.) )" << endl;
-  }
-  cout << endl;
-
-  TIMER_G->toc("TOTAL");
-  TIMER_G->print();
-
-  delete TIMER_G;
-
-  return predictor;
+  return(rface);
 
 }
 
