@@ -24,6 +24,7 @@ class treeDataTest : public CppUnit::TestFixture {
   CPPUNIT_TEST( test_categoricalFeatureSplitsCategoricalTarget );
   CPPUNIT_TEST( test_fullSplitterSweep );
   CPPUNIT_TEST( test_bootstrapRealSamples );
+  CPPUNIT_TEST( test_replaceFeatureData );
   CPPUNIT_TEST( test_end );
   CPPUNIT_TEST_SUITE_END();
   
@@ -45,6 +46,7 @@ public:
   void test_categoricalFeatureSplitsCategoricalTarget();
   void test_fullSplitterSweep();
   void test_bootstrapRealSamples();
+  void test_replaceFeatureData();
   void test_end();
 
 private:
@@ -793,6 +795,16 @@ void treeDataTest::test_bootstrapRealSamples() {
 void treeDataTest::test_end() {
 
   CPPUNIT_ASSERT( treeData_->getFeatureIdx("IDontExist") == treeData_->end() );
+
+}
+
+void treeDataTest::test_replaceFeatureData() {
+
+  treeData_->replaceFeatureData(0,vector<num_t>(treeData_->nSamples(),0.0));
+
+  for ( size_t i = 0; i < treeData_->nSamples(); ++i ) {
+    CPPUNIT_ASSERT( treeData_->getFeatureData(0,i) == 0.0 );
+  }
 
 }
 

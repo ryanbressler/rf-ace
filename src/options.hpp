@@ -79,10 +79,13 @@ public:
       parser.getArgument<string>(forestType_s, forestType_l, forestTypeAsStr);
       if ( forestTypeAsStr == "RF" ) {
 	forestType = ForestType::RF;
+	this->setRFDefaults();
       } else if ( forestTypeAsStr == "GBT" ) {
 	forestType = ForestType::GBT;
+	this->setGBTDefaults();
       } else if ( forestTypeAsStr == "CART" ) {
 	forestType = ForestType::CART;
+	this->setCARTDefaults();
       } else {
 	cerr << "GeneralOptions::load() -- unknown forest type: " << forestTypeAsStr << endl;
 	exit(1);
