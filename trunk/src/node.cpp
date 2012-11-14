@@ -292,7 +292,6 @@ void Node::recursiveNodeSplit(Treedata* treeData,
     featureSampleIcs = utils::range(treeData->nFeatures());
 
     featureSampleIcs.erase(featureSampleIcs.begin()+targetIdx);
-
   }
   // assert( featureSampleIcs.size() == forestOptions->mTry );
   

@@ -340,22 +340,18 @@ void StochasticForest::growNumericalGBT(Treedata* trainData, const size_t target
 
     num_t h1 = 0.0;
     num_t h2 = 0.0;
-    for (size_t i = 0; i < nSamples; i++ ) {
-      h1 += curTargetData[i] * curPrediction[i];
-      h2 += pow(curPrediction[i],2);
+    for ( size_t i = 0; i < nSamples; i++ ) {
+      if ( ! datadefs::isNAN(curTargetData[i]) ) {
+	h1 += curTargetData[i] * curPrediction[i];
+	h2 += pow(curPrediction[i],2);
+      }
     }
 
     GBTfactors_[treeIdx] = forestOptions->shrinkage * h1 / h2;
 
     // Calculate the current total prediction adding the newly generated tree
-    //num_t sqErrorSum = 0.0;
     for (size_t i = 0; i < nSamples; i++ ) {
       prediction[i] = prediction[i] + GBTfactors_[treeIdx] * curPrediction[i];
-
-      // diagnostics
-      //num_t iError = trueTargetData[i]-prediction[i];
-      //sqErrorSum += iError*iError;
-
     }
 
   }
@@ -364,10 +360,6 @@ void StochasticForest::growNumericalGBT(Treedata* trainData, const size_t target
   // restore true target
   trainData->replaceFeatureData(targetIdx,trueTargetData);
 
-  //cout << " GBTconstant: " << GBTconstant_ << endl;
-  //cout << "  GBTfactors: ";
-  //utils::write(cout,GBTfactors_.begin(),GBTfactors_.end());
-  //cout << endl;
 }
 
 // Grow a GBT "forest" for a categorical target variable
