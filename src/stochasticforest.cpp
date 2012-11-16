@@ -424,8 +424,11 @@ void StochasticForest::growCategoricalGBT(Treedata* trainData, const size_t targ
       // target for class k is ...
       for ( size_t i = 0; i < nSamples; ++i ) {
         // ... the difference between true target and current prediction
-        curTargetData[i] = ( categories_[k] == trueRawTargetData[i] ) - curProbability[i][k];
+        curTargetData[i] = 2 * ( categories_[k] == trueRawTargetData[i] ) - curProbability[i][k];
       }
+
+      // utils::write(cout,curTargetData.begin(),curTargetData.end());
+      // cout << endl;
 
       // For each tree the target data becomes the recently computed residuals
       trainData->replaceFeatureData(targetIdx,curTargetData);
@@ -453,7 +456,7 @@ void StochasticForest::growCategoricalGBT(Treedata* trainData, const size_t targ
 	}
       }
 
-      GBTfactors_[k] = forestOptions->shrinkage * h1 / (2*h2);
+      GBTfactors_[treeIdx] = forestOptions->shrinkage * h1 / (2*h2);
 
       // Calculate the current total prediction adding the newly generated tree
       for (size_t i = 0; i < nSamples; i++) {
