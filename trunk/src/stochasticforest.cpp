@@ -373,8 +373,14 @@ void StochasticForest::growNumericalGBT(Treedata* trainData, const size_t target
 // Grow a GBT "forest" for a categorical target variable
 void StochasticForest::growCategoricalGBT(Treedata* trainData, const size_t targetIdx, const ForestOptions* forestOptions, const distributions::PMF* pmf, vector<distributions::Random>& randoms) {
   
+  size_t nTrees = rootNodes_.size();
+
   //size_t targetIdx = trainData_->getFeatureIdx( params_->targetStr );
   size_t nCategories = categories_.size(); //trainData_->nCategories( targetIdx );
+
+  // Each iteration consists of numClasses_ trees,
+  // each of those predicting the probability residual for each class.
+  size_t numIterations = nTrees / nCategories;
 
   // Save a copy of the target column because it will be overwritten later.
   // We also know that it must be categorical.
@@ -408,10 +414,6 @@ void StochasticForest::growCategoricalGBT(Treedata* trainData, const size_t targ
 
   vector< vector<num_t> > curProbability( nSamples, vector<num_t>( nCategories ) );
 
-  // Each iteration consists of numClasses_ trees,
-  // each of those predicting the probability residual for each class.
-  size_t numIterations = forestOptions->nTrees / nCategories;
-
   for ( size_t m = 0; m < numIterations; ++m ) {
     // Multiclass logistic transform of class probabilities from current probability estimates.
     for ( size_t i = 0; i < nSamples; ++i ) {
@@ -435,7 +437,7 @@ void StochasticForest::growCategoricalGBT(Treedata* trainData, const size_t targ
 
       // Grow a tree to predict the current target
       size_t treeIdx = m * nCategories + k; // tree index
-      //size_t nNodes;
+      //cout << " " << treeIdx;
       rootNodes_[treeIdx]->growTree(trainData,targetIdx,pmf,forestOptions,&randoms[0]);
 
       //cout << "Tree " << treeIdx << " ready, predicting OOB samples..." << endl;
