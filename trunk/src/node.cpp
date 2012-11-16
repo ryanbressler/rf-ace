@@ -249,6 +249,7 @@ void Node::recursiveNodeSplit(Treedata* treeData,
     this->setTrainPrediction( trainPrediction, rawTrainPrediction );
   } else if ( predictionFunctionType == GAMMA ) {
     num_t trainPrediction = math::gamma(trainData, treeData->nCategories(targetIdx) );
+    assert( !datadefs::isNAN(trainPrediction) );
     string rawTrainPrediction = utils::num2str(trainPrediction);
     this->setTrainPrediction( trainPrediction, rawTrainPrediction );
   } else {

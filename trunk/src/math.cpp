@@ -267,7 +267,8 @@ num_t math::pearsonCorrelation(const vector<num_t>& x,
 num_t math::gamma(const vector<num_t>& x, const size_t nCategories) {
   
   size_t n = x.size();
-  assert(n > 0);
+  assert( n > 0 );
+  assert( nCategories > 0 );
   
   num_t numerator = 0.0;
   num_t denominator = 0.0;
