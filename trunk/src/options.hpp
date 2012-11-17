@@ -251,7 +251,10 @@ public:
   string pairInteractionsFile; const string pairInteractionsFile_s; const string pairInteractionsFile_l;
   string logFile; const string logFile_s; const string logFile_l;
   string featureWeightsFile; const string featureWeightsFile_s; const string featureWeightsFile_l;
-
+  string whiteListFile; const string whiteListFile_s; const string whiteListFile_l;
+  string blackListFile; const string blackListFile_s; const string blackListFile_l;
+  
+  
   IO():
     filterDataFile_s("F"), filterDataFile_l("filterData"),
     trainDataFile_s("I"), trainDataFile_l("trainData"),
@@ -262,7 +265,9 @@ public:
     predictionsFile_s("P"), predictionsFile_l("predictions"),
     pairInteractionsFile_s("R"), pairInteractionsFile_l("pairInteractions"),
     logFile_s("G"), logFile_l("log"),
-    featureWeightsFile_s("W"), featureWeightsFile_l("featureWeights") {}
+    featureWeightsFile_s("w"), featureWeightsFile_l("featureWeights"),
+    whiteListFile_s("W"), whiteListFile_l("whiteList"),
+    blackListFile_s("B"), blackListFile_l("blackList") {}
 
   ~IO() {}
 
@@ -278,6 +283,8 @@ public:
     parser.getArgument<string>(pairInteractionsFile_s,pairInteractionsFile_l,pairInteractionsFile);
     parser.getArgument<string>(logFile_s,logFile_l,logFile);
     parser.getArgument<string>(featureWeightsFile_s,featureWeightsFile_l,featureWeightsFile);
+    parser.getArgument<string>(whiteListFile_s,whiteListFile_l,whiteListFile);
+    parser.getArgument<string>(blackListFile_s,blackListFile_l,blackListFile);
   }
 
   void help() {
@@ -285,6 +292,8 @@ public:
     this->printHelpLine(filterDataFile_s,filterDataFile_l,"Load data file (.afm or .arff) for feature selection");
     this->printHelpLine(trainDataFile_s,trainDataFile_l,"Load data file (.afm or .arff) for training a model");
     this->printHelpLine(featureWeightsFile_s,featureWeightsFile_l,"Load feature weights from file");
+    this->printHelpLine(whiteListFile_s,whiteListFile_l,"Load white list from file");
+    this->printHelpLine(blackListFile_s,blackListFile_l,"Load black list from file");
     this->printHelpLine(testDataFile_s,testDataFile_l,"Load data file (.afm or .arff) for testing a model");
     this->printHelpLine(loadForestFile_s,loadForestFile_l,"Load model from file (.sf)");
     this->printHelpLine(saveForestFile_s,saveForestFile_l,"Save model to file (.sf)");
@@ -305,6 +314,23 @@ public:
     cout << "pairInteractionsFile = " << pairInteractionsFile << endl;
     cout << "logFile = " << logFile << endl;
     cout << "featureWeightsFile = " << featureWeightsFile << endl;
+    cout << "whiteListFile = " << whiteListFile << endl;
+    cout << "blackListFile = " << blackListFile << endl;
+  }
+  
+  void validate() {
+    
+    size_t iter = 0;
+
+    iter += featureWeightsFile != "" ? 1 : 0 ;
+    iter += whiteListFile != "" ? 1 : 0 ;
+    iter += blackListFile != "" ? 1 : 0 ;
+
+    if ( iter > 1 ) {
+      cerr << "ERROR: Specify only one of the following: feature weights, whitelist, or blacklist" << endl;
+      exit(1);
+    }
+
   }
 
 };
@@ -417,6 +443,7 @@ public:
     io.help();
     filterOptions.help();
     generalOptions.help();
+    this->printExamples();
   
   }
 
@@ -430,22 +457,18 @@ public:
 
   void printExamples() {
     
+    cout << endl;
     cout << "EXAMPLES:" << endl << endl;
+
+    cout << "bin/rf-ace --" << io.filterDataFile_l << " data.arff --" << generalOptions.targetStr_l << " target --" << io.associationsFile_l << " associations.tsv" << endl << endl;
     
-    cout << "Performing feature selection using 'target' as the target variable:" << endl
-	 << "bin/rf-ace --filter -I data.arff -i target -O associations.tsv" << endl << endl;
+    cout << "bin/rf-ace --" << io.filterDataFile_l << " data.arff --" << generalOptions.targetStr_l << " 5 --" << filterOptions.nPerms_l << " 50 --" << filterOptions.pValueThreshold_l << " 0.001 --" << io.associationsFile_l << " associations.tsv" << endl << endl;
     
-    cout << "Performing feature selection with 50 permutations and p-value threshold of 0.001:" << endl
-	 << "bin/rf-ace --filter -I data.arff -i 5 -p 50 -t 0.001 -O associations.tsv" << endl << endl;
+    cout << "bin/rf-ace --" << io.trainDataFile_l << " data.arff " << generalOptions.targetStr_l << " target --" << io.testDataFile_l << " testdata.arff " << forestOptions.nTrees_l << " 1000 --" << forestOptions.mTry_l << " 10 --" << io.predictionsFile_l << " predictions.tsv" << endl << endl;
     
-    cout << "Building Random Forest with 1000 trees and mTry of 10 and predicting with test data:" << endl
-	 << "bin/rf-ace -I data.arff -i target -T testdata.arff -n 1000 -m 10 -O predictions.tsv" << endl << endl;
+    cout << "bin/rf-ace --" << io.trainDataFile_l << " data.arff --" << generalOptions.targetStr_l << " target --" << io.saveForestFile_l << " model.sf" << endl << endl;
     
-    cout << "Building Random Forest predictor and saving it to a file for later use:" << endl
-	 << "bin/rf-ace -I data.arff -i target -O rf_predictor.sf" << endl << endl;
-    
-    cout << "Loading Random Forest predictor from file and predicting with test data:" << endl
-	 << "bin/rf-ace -F rf_predictor.sf -T testdata.arff -O predictions.tsv" << endl << endl;
+    cout << "bin/rf-ace --" << io.loadForestFile_l << " model.sf --" << io.testDataFile_l << " testdata.arff --" << io.predictionsFile_l << " predictions.tsv" << endl << endl;
     
   }
   

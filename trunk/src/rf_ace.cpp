@@ -25,7 +25,7 @@ void printHeader(ostream& out) {
 
 size_t getTargetIdx(Treedata& treeData, const string& targetAsStr);
 
-vector<num_t> readFeatureWeights(Treedata& treeData, const size_t targetIdx, const string& fileName, const num_t featureWeight);
+vector<num_t> readFeatureWeights(const Treedata& treeData, const size_t targetIdx, const Options& options);
 
 void printDataStatistics(Treedata& treeData, const size_t targetIdx);
 
@@ -40,7 +40,9 @@ int main(const int argc, char* const argv[]) {
   Options options;
   options.load(argc,argv);
 
-  options.print();
+  // options.print();
+
+  options.io.validate();
 
   // With no input arguments the help is printed
   if ( argc == 1 || options.generalOptions.printHelp ) {
@@ -67,7 +69,7 @@ int main(const int argc, char* const argv[]) {
     cout << "Data statistics:" << endl;
     printDataStatistics(filterData,targetIdx);
 
-    vector<num_t> featureWeights = readFeatureWeights(filterData,targetIdx,options.io.featureWeightsFile,options.generalOptions.defaultFeatureWeight);
+    vector<num_t> featureWeights = readFeatureWeights(filterData,targetIdx,options);
     
     if ( options.generalOptions.seed < 0 ) {
       options.generalOptions.seed = distributions::generateSeed();
@@ -110,7 +112,7 @@ int main(const int argc, char* const argv[]) {
     
     assert( targetIdx != trainData.end() );
     
-    vector<num_t> featureWeights = readFeatureWeights(trainData,targetIdx,options.io.featureWeightsFile,options.generalOptions.defaultFeatureWeight);
+    vector<num_t> featureWeights = readFeatureWeights(trainData,targetIdx,options);
     
     if ( options.generalOptions.seed < 0 ) {
       options.generalOptions.seed = distributions::generateSeed();
@@ -184,32 +186,59 @@ int main(const int argc, char* const argv[]) {
   
 }
 
-vector<num_t> readFeatureWeights(Treedata& treeData, const size_t targetIdx, const string& fileName, const num_t defaulFeatureWeight) {
 
+
+vector<num_t> readFeatureWeights(const Treedata& treeData, const size_t targetIdx, const Options& options) {
+
+  size_t nFeatures = treeData.nFeatures();
   vector<num_t> weights(0);
 
-  if ( fileName == "" ) {
-    weights.resize(treeData.nFeatures(),1);
-  } else {
+  if ( options.io.whiteListFile == "" && options.io.blackListFile == "" && options.io.featureWeightsFile == "" ) {
+    weights.resize(nFeatures,1.0);
+  }
+
+  if ( options.io.whiteListFile != "" ) {
+    weights.resize(nFeatures,0.0);
+    vector<string> featureNames = utils::readListFromFile(options.io.whiteListFile,'\n');
+    for ( size_t i = 0; i < featureNames.size(); ++i ) {
+      size_t featureIdx = treeData.getFeatureIdx(featureNames[i]);
+      if ( featureIdx == treeData.end() ) {
+	cout << "WARNING: could not locate feature '" << featureNames[i] << "'" << endl;
+      } else { 
+	weights[featureIdx] = 1.0;
+      }
+    }
+  }
+
+  if ( options.io.blackListFile != "" ) {
+    weights.resize(nFeatures,1.0);
+    vector<string> featureNames = utils::readListFromFile(options.io.blackListFile,'\n');
+    for ( size_t i = 0; i < featureNames.size(); ++i ) {
+      size_t featureIdx = treeData.getFeatureIdx(featureNames[i]);
+      if ( featureIdx == treeData.end() ) {
+        cout << "WARNING: could not locate feature '" << featureNames[i] << "'" << endl;
+      } else {
+        weights[featureIdx] = 0.0;
+      }
+    }
+  }
+
+
+  if ( options.io.featureWeightsFile != "" ) {
     
-    weights.resize(treeData.nFeatures(),defaulFeatureWeight);
+    weights.resize(nFeatures,options.generalOptions.defaultFeatureWeight);
     
-    vector<string> weightStrings = utils::readListFromFile(fileName,'\n');
+    vector<string> weightStrings = utils::readListFromFile(options.io.featureWeightsFile,'\n');
     
     for ( size_t i = 0; i < weightStrings.size(); ++i ) {
       vector<string> weightPair = utils::split(weightStrings[i],'\t');
       string featureName = weightPair[0];
       size_t featureIdx = treeData.getFeatureIdx(featureName);
-      
       if ( featureIdx == treeData.end() ) {
-	cerr << "Unknown feature name in feature weights: " << featureName << endl;
-	exit(1);
+	cout << "Unknown feature name in feature weights: " << featureName << endl;
+      } else {
+	weights[featureIdx] = utils::str2<num_t>(weightPair[1]);
       }
-      
-      weights[featureIdx] = utils::str2<num_t>(weightPair[1]);
-      
-      cout << "read " << featureName << " => " << weights[featureIdx] << endl;
-
     }
     
   }

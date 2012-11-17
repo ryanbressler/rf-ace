@@ -453,11 +453,11 @@ bool Treedata::isValidFeatureHeader(const string& str, const char headerDelimite
   return( isValidNumericalHeader(str,headerDelimiter) || isValidCategoricalHeader(str,headerDelimiter) );
 }
 
-size_t Treedata::nFeatures() {
+size_t Treedata::nFeatures() const {
   return( useContrasts_ ? features_.size() / 2 : features_.size() );
 }
 
-size_t Treedata::nSamples() {
+size_t Treedata::nSamples() const {
   return( sampleHeaders_.size() );
 }
 
@@ -474,7 +474,7 @@ num_t Treedata::pearsonCorrelation(size_t featureIdx1, size_t featureIdx2) {
 
 }
 
-size_t Treedata::getFeatureIdx(const string& featureName) {
+size_t Treedata::getFeatureIdx(const string& featureName) const {
   
   unordered_map<string,size_t>::const_iterator it( name2idx_.find(featureName) );
   
