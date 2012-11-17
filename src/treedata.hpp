@@ -44,17 +44,17 @@ public:
   ~Treedata();
 
   // Returns the number of features
-  size_t nFeatures();
+  size_t nFeatures() const;
 
   // Calculates Pearson Correlation
   // TODO: WILL BECOME OBSOLETE
   num_t pearsonCorrelation(size_t featureidx1, size_t featureidx2);
 
   // Returns feature index, given the name
-  size_t getFeatureIdx(const string& featureName);
+  size_t getFeatureIdx(const string& featureName) const;
 
   // A value denoting the "one-over-last" feature in matrix
-  size_t end() { return( datadefs::MAX_IDX ); }
+  size_t end() const { return( datadefs::MAX_IDX ); }
 
   // Returns feature name, given the index
   string getFeatureName(const size_t featureIdx);
@@ -63,7 +63,7 @@ public:
   string getSampleName(const size_t sampleIdx);
 
   // Returns the number of samples
-  size_t nSamples();
+  size_t nSamples() const;
 
   // Returns the number of real samples the feature has
   size_t nRealSamples(const size_t featureIdx);
