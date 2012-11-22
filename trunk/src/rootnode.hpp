@@ -51,7 +51,9 @@ private:
 
   set<size_t> featuresInTree_;
 
-  minDistToRoot_t minDistToRoot_;
+  //minDistToRoot_t minDistToRoot_;
+
+  vector<size_t> minDistToRoot_;
 
   //vector<num_t> trainPredictionCache_;
 

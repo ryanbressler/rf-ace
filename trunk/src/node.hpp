@@ -64,17 +64,6 @@ public:
 protected:
 #endif
 
-  template<class T>
-  struct gt {
-    bool operator()(T& a, T& b) {
-      return( a > b ); 
-    }
-  };
-    
-  typedef map<size_t,vector<size_t> > medianDistToRoot_t;
-
-  typedef map<size_t,priority_queue<size_t,vector<size_t>,gt<size_t> > > minDistToRoot_t;
-
   void recursiveNodeSplit(Treedata* treeData,
                           const size_t targetIdx,
 			  const ForestOptions* forestOptions,
@@ -84,7 +73,7 @@ protected:
 			  const vector<size_t>& sampleIcs,
 			  const size_t treeDepth,
 			  set<size_t>& featuresInTree,
-                          minDistToRoot_t& minDistToRoot,
+			  vector<size_t>& minDistToRoot,
                           size_t* nLeaves);
 
   bool regularSplitterSeek(Treedata* treeData,
@@ -96,11 +85,6 @@ protected:
 			   vector<size_t>& sampleIcs_left,
 			   vector<size_t>& sampleIcs_right,
 			   num_t& splitFitness);
-
-  //ForestOptions* parameters_;
-  //size_t threadIdx_;
-
-  // distributions::Random* random_;
 
 #ifndef TEST__
 private:

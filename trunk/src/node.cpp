@@ -227,7 +227,7 @@ void Node::recursiveNodeSplit(Treedata* treeData,
 			      const vector<size_t>& sampleIcs,
 			      const size_t treeDepth,
 			      set<size_t>& featuresInTree,
-			      minDistToRoot_t& minDistToRoot,
+			      vector<size_t>& minDistToRoot,
 			      size_t* nLeaves) {
 
   if ( false ) {
@@ -316,8 +316,10 @@ void Node::recursiveNodeSplit(Treedata* treeData,
   if ( !foundSplit ) {
     return;
   }
-  
-  minDistToRoot[splitFeatureIdx].push(treeDepth);
+
+  if ( minDistToRoot[splitFeatureIdx] > treeDepth ) {
+    minDistToRoot[splitFeatureIdx] = treeDepth;
+  }
 
   featuresInTree.insert(splitFeatureIdx);
 
