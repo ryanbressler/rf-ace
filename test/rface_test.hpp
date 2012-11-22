@@ -9,6 +9,9 @@
 class RFACETest : public CppUnit::TestFixture {
   CPPUNIT_TEST_SUITE( RFACETest );
   CPPUNIT_TEST( test_filter );
+  CPPUNIT_TEST( test_trainRF );
+  CPPUNIT_TEST( test_trainGBT );;
+  CPPUNIT_TEST( test_test );
   CPPUNIT_TEST_SUITE_END();
 
 public:
@@ -16,6 +19,9 @@ public:
   void tearDown();
   
   void test_filter();
+  void test_trainRF();
+  void test_trainGBT();
+  void test_test();
 
 private:
 
@@ -56,7 +62,7 @@ void RFACETest::test_filter() {
 
   ForestOptions forestOptions;
 
-  forestOptions.nTrees = 100;
+  forestOptions.nTrees = 10;
   forestOptions.mTry = 10;
   forestOptions.nMaxLeaves = 100;
 
@@ -65,6 +71,48 @@ void RFACETest::test_filter() {
   RFACE::FilterOutput filterOutput = rface_->filter(filterData_,targetIdx,featureWeights,&forestOptions,&filterOptions);
 
 }
+
+void RFACETest::test_trainRF() {
+  
+  vector<num_t> featureWeights(trainData_->nFeatures(),1.0);
+  featureWeights[0] = 0;
+
+  ForestOptions forestOptions;
+
+  forestOptions.forestType = ForestOptions::ForestType::RF;
+  forestOptions.nTrees = 10;
+  forestOptions.mTry = 10;
+  forestOptions.nMaxLeaves = 100;
+
+  for ( size_t targetIdx = 0; targetIdx < trainData_->nFeatures(); ++targetIdx ) {
+    vector<num_t> featureWeights(trainData_->nFeatures(),1.0);
+    featureWeights[targetIdx] = 0;
+    rface_->train(trainData_,targetIdx,featureWeights,&forestOptions);
+  }
+
+}
+
+void RFACETest::test_trainGBT() {
+
+  ForestOptions forestOptions;
+
+  forestOptions.forestType = ForestOptions::ForestType::GBT;
+  forestOptions.nTrees = 10;
+  forestOptions.mTry = 10;
+  forestOptions.nMaxLeaves = 100;
+
+  for ( size_t targetIdx = 0; targetIdx < trainData_->nFeatures(); ++targetIdx ) {
+    vector<num_t> featureWeights(trainData_->nFeatures(),1.0);
+    featureWeights[targetIdx] = 0;
+    rface_->train(trainData_,targetIdx,featureWeights,&forestOptions);
+  }
+
+}
+
+void RFACETest::test_test() {
+
+}
+
 
 // Registers the fixture into the test 'registry'
 CPPUNIT_TEST_SUITE_REGISTRATION( RFACETest ); 

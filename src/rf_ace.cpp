@@ -119,7 +119,7 @@ int main(const int argc, char* const argv[]) {
       options.generalOptions.seed = distributions::generateSeed();
     }
 
-    rface.train(trainData,targetIdx,featureWeights,&options.forestOptions,options.generalOptions.seed,options.generalOptions.nThreads);
+    rface.train(&trainData,targetIdx,featureWeights,&options.forestOptions,options.generalOptions.seed,options.generalOptions.nThreads);
     
     vector<num_t> data = utils::removeNANs(trainData.getFeatureData(targetIdx));
     

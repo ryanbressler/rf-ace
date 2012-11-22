@@ -84,7 +84,7 @@ public:
     vector<string> sampleNames;
   };
   
-  void train(Treedata& trainData, 
+  void train(Treedata* trainData, 
 	     const size_t targetIdx, 
 	     const vector<num_t>& featureWeights, 
 	     ForestOptions* forestOptions, 
@@ -107,11 +107,11 @@ public:
     trainedModel_ = new StochasticForest();
 
     if ( forestOptions->forestType == ForestOptions::ForestType::RF ) {
-      trainedModel_->learnRF(&trainData,targetIdx,forestOptions,featureWeights,randoms);
+      trainedModel_->learnRF(trainData,targetIdx,forestOptions,featureWeights,randoms);
     } else if ( forestOptions->forestType == ForestOptions::ForestType::GBT ) {
-      trainedModel_->learnGBT(&trainData,targetIdx,forestOptions,featureWeights,randoms);
+      trainedModel_->learnGBT(trainData,targetIdx,forestOptions,featureWeights,randoms);
     } else if ( forestOptions->forestType == ForestOptions::ForestType::CART ) {
-      trainedModel_->learnRF(&trainData,targetIdx,forestOptions,featureWeights,randoms);
+      trainedModel_->learnRF(trainData,targetIdx,forestOptions,featureWeights,randoms);
     } else {
       cerr << "Unknown forest type!" << endl;
       exit(1);

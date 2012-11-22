@@ -4,23 +4,14 @@
 #include "datadefs.hpp"
 
 RootNode::RootNode(): 
-  //Node(random),
-  //parameters_(parameters),
-  //threadIdx_(threadIdx),
-  //trainData_(trainData),
-  nNodes_(1) {
-
-  //trainPredictionCache_.clear();
-  
-}
+  nNodes_(1),
+  bootstrapIcs_(0),
+  oobIcs_(0),
+  minDistToRoot_(0) { /* EMPTY CONSTRUCTOR */ }
 
 RootNode::~RootNode() { /* EMPTY DESTRUCTOR */ }
 
 void RootNode::growTree(Treedata* trainData, const size_t targetIdx, const distributions::PMF* pmf, const ForestOptions* forestOptions, distributions::Random* random) {
-
-  //trainData_ = trainData;
-  
-  //trainPredictionCache_.resize(trainData_->nSamples(),datadefs::NUM_NAN);
 
   if ( this->hasChildren() ) {
     this->deleteTree();
@@ -61,9 +52,6 @@ void RootNode::growTree(Treedata* trainData, const size_t targetIdx, const distr
 
   featuresInTree_.clear();
 
-  // vector<size_t> featureIcs = utils::range( trainData_->nFeatures() );
-  // featureIcs.erase( featureIcs.begin() + targetIdx );
-
   PredictionFunctionType predictionFunctionType;
 
   if ( trainData->isFeatureNumerical(targetIdx) ) {
@@ -78,6 +66,9 @@ void RootNode::growTree(Treedata* trainData, const size_t targetIdx, const distr
 
   size_t treeDist = 0;
 
+  minDistToRoot_.clear();
+  minDistToRoot_.resize(2*trainData->nFeatures(),datadefs::MAX_IDX);
+
   //Start the recursive node splitting from the root node. This will generate the tree.
   this->recursiveNodeSplit(trainData,targetIdx,forestOptions,random,predictionFunctionType,pmf,bootstrapIcs_,treeDist,featuresInTree_,minDistToRoot_,&nLeaves);
   
@@ -89,8 +80,9 @@ vector<pair<size_t,size_t> > RootNode::getMinDistFeatures() {
 
   vector<pair<size_t,size_t> > minDistFeatures;
 
-  for ( minDistToRoot_t::const_iterator it( minDistToRoot_.begin() ); it != minDistToRoot_.end(); ++it ) {
-    minDistFeatures.push_back( pair<size_t,size_t>(it->first,it->second.top()) );
+  for ( set<size_t>::const_iterator it( featuresInTree_.begin() ); it != featuresInTree_.end(); ++it ) {
+    size_t featureIdx = *it;
+    minDistFeatures.push_back( pair<size_t,size_t>(featureIdx,minDistToRoot_[featureIdx]) );
   }
 
   return(minDistFeatures);
@@ -98,17 +90,14 @@ vector<pair<size_t,size_t> > RootNode::getMinDistFeatures() {
 }
 
 size_t RootNode::nNodes() {
-  //assert( trainData_ );
   return( nNodes_ );
 }
 
 vector<size_t> RootNode::getOobIcs() {
-  //assert( trainData_ );
   return( oobIcs_ );
 }
 
 size_t RootNode::nOobSamples() {
-  //assert( trainData_ );
   return( oobIcs_.size() ); 
 }
 
