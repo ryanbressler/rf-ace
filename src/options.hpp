@@ -167,13 +167,13 @@ public:
       exit(1);
     }
     
-    if ( useContrasts && ( contrastFraction < 0.0 || contrastFraction >= 1.0 ) ) {
-      cerr << "ERROR: contrastFraction must be between 0..1" << endl;
+    if ( useContrasts && ( contrastFraction <= 0.0 || contrastFraction >= 1.0 ) ) {
+      cerr << "ERROR: contrastFraction must be between (0,1)" << endl;
       exit(1);
     }
     
-    if ( inBoxFraction < 0.0 || inBoxFraction >= 1.0 ) {
-      cerr << "ERROR: inBoxFraction must be between 0..1" << endl;
+    if ( inBoxFraction <= 0.0 || inBoxFraction > 1.0 ) {
+      cerr << "ERROR: inBoxFraction must be between (0,1]" << endl;
       exit(1);
     }
   }

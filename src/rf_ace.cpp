@@ -252,7 +252,7 @@ vector<num_t> readFeatureWeights(const Treedata& treeData, const size_t targetId
 
 void printDataStatistics(Treedata& treeData, const size_t targetIdx) {
 
-  cout << "here" << endl;
+  cout << endl << "Data statistics:" << endl;
 
   size_t nSamples = treeData.nSamples();
   size_t nFeatures = treeData.nFeatures();
@@ -260,7 +260,7 @@ void printDataStatistics(Treedata& treeData, const size_t targetIdx) {
   num_t realFraction = 1.0*nRealSamples / treeData.nSamples();
 
   cout << " - " << nFeatures << " features" << endl;
-  cout << " - " << nRealSamples << " samples / " << nSamples << " ( " << 100.0 * ( 1 - realFraction ) << " % missing )" << endl;
+  cout << " - " << nRealSamples << " samples / " << nSamples << " ( " << 100.0 * ( 1 - realFraction ) << " % missing )" << endl << endl;
 
 }
 
