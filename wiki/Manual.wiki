@@ -73,11 +73,11 @@ Read more about [http://www.cs.waikato.ac.nz/~ml/weka/arff.html ARFF specificati
 
 
 = Identify important features from data using RF-ACE = 
-RF-ACE performs feature selection for a given target and feature matrix using `rf-ace` as follows:
+RF-ACE performs feature selection for a given target and feature matrix using `rf-ace` with nTrees=10, mTry=10, and nMaxLeaves=100 as follows:
 {{{
-bin/rf-ace --filter -I data.arff -i target -O associations.tsv
+bin/rf-ace --filterData data.arff --target target --nTrees 100 --mTry 10 --nMaxLeaves 100 --associations associations.tsv
 }}}   
-The parameter `-I / --traindata` is used to specify the feature matrix, `-i / --target` to specify the target, and `-O / --associations` to specify the output file for associations. `-F / --filter` specifies that we do feature selection instead of data prediction. The format of the association list is as follows (one entry per row):
+The format of the association list is as follows (one entry per row):
 {{{
 TARGET    PREDICTOR    P-VALUE    IMPORTANCE    CORRELATION    NSAMPLES
 }}} 
@@ -86,30 +86,30 @@ where `NSAMPLES` is the number of non-missing samples shared by the target and p
 == Giving target feature as an integer ==
 It is possible to replace the name of the feature as the argument for `-i / --target` with a `0`-base integer pointing to the proper row/column of the data file. So valid arguments for `-i` are `0,1,...,N-1`, where `N-1` is the number of features in the input data file. The following command would take the first feature in the file as the target feature and regard others as candidate predictors:
 {{{
-bin/rf-ace --filter -I data.arff -i 0 -O associations.tsv
+bin/rf-ace --filterData data.arff --target 0 --nTrees 100 --mTry 10 --nMaxLeaves 100 --associations associations.tsv
 }}}
 
 == Tuning parameters of the statistical test ==
-By default `rf-ace` assigns the p-value threshold to `0.05`, but which can be manually tuned by the `-t / --pthreshold` parameter like so:
+By default `rf-ace` assigns the p-value threshold to `0.05`, but which can be manually tuned by the `-t / --pValueTh` parameter like so:
 {{{
-bin/rf-ace --filter -I data.arff -i target -O associations.tsv -t 0.001
+bin/rf-ace --filterData data.arff --target target --nTrees 100 --mTry 10 --nMaxLeaves 100 --associations associations.tsv --pValueTh 0.001
 }}}
-If you would like to have more permutations (default `20`) sampled for the t-test, you can do that using the parameter `-p / --nperms` like so:
+If you would like to have more permutations (default `20`) sampled for the t-test, you can do that using the parameter `-p / --nPerms` like so:
 {{{
-bin/rf-ace --filter -I data.arff -i target -O associations.tsv -p 50
+bin/rf-ace --filterData data.arff --target target --nTrees 100 --mTry 10 --nMaxLeaves 100 --associations associations.tsv --nPerms 50
 }}}
 In many circumstances, however, it is not recommended to reduce the number of permutations; consider `20` to be the lower limit at which the statistical test behaves robustly across wide range of situations. If RF-ACE recognizes the number of permutations is not sufficient for the t-test, an error will be raised and the program exits; increasing the number of permutations for the t-test will most likely remedy the issue.
 
 == Trimming feature space ==
 `rf-ace` provides a suite of tools to remove features from the candidate list of predictors under specified conditions. 
 === Removing features with too few samples overlapping with the target ===
-As the input data can be sparse, and depending on which target has been selected, it may become favorable to remove features that are too sparse for reliable analysis. By default `rf-ace-filter` removes features with less than `5` non-missing samples shared by the feature and target, but which can be set to any other value using the parameter `-X / --pruneFeatures` like so:
+As the input data can be sparse, and depending on which target has been selected, it may become favorable to remove features that are too sparse for reliable analysis. By default `rf-ace` removes features with less than `5` non-missing samples shared by the feature and target, but which can be set to any other value using the parameter `-X / --pruneFeatures` like so:
 {{{
-bin/rf-ace --filter -I data.arff -i target -O associations.tsv -X 60
+bin/rf-ace --filterData data.arff --target target --nTrees 100 --mTry 10 --nMaxLeaves 100 --associations associations.tsv --pruneFeatures 60
 }}}
 which would thus cause features with less than `60` intersecting non-missing samples to be removed from analysis.
 === Blacklisting features ===
-In some cases the input data contains features that for some reason are not suited for as predictors, but whose explicit removal from the input data may be unfavorable. If that is the case, then one can invoke the blacklisting parameter `-B / --blacklist` like so:
+In some cases the input data contains features that for some reason are not suited for as predictors, but whose explicit removal from the input data may be unfavorable. If that is the case, then one can invoke the blacklisting parameter `-B / --blackList` like so:
 {{{
-bin/rf-ace --filter -I data.arff -i target -O associations.tsv -B blacklist.txt
+bin/rf-ace --filterData data.arff --target target --nTrees 100 --mTry 10 --nMaxLeaves 100 --associations associations.tsv --blackList blacklist.txt
 }}} 
