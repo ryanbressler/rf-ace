@@ -109,3 +109,23 @@ In some cases the input data contains features that for some reason are not suit
 {{{
 bin/rf-ace --filterData data.arff --target target --nTrees 100 --mTry 10 --nMaxLeaves 100 --associations associations.tsv --blackList blacklist.txt
 }}} 
+
+= Train a Random Forest (RF) model & predict =
+
+{{{
+bin/rf-ace --trainData data.arff --target target -n 100 -m 10 -a 100 --testData testdata.arff --predictions predictions.tsv
+}}}
+
+{{{
+bin/rf-ace --trainData data.arff --target target --forestType RF -n 100 -m 10 -a 100 --testData testdata.arff --predictions predictions.tsv
+}}}
+
+= Train a Gradient Boosting Tree (GBT) model & predict =
+
+{{{
+bin/rf-ace --trainData data.arff --target target --forestType GBT -n 100 -a 10 --shrinkage 0.01 --testData testdata.arff --predictions predictions.tsv
+}}}
+
+= Train a model and save to file =
+
+= Load a model and make predictions =
