@@ -486,11 +486,11 @@ void StochasticForest::transformLogistic(size_t nCategories, vector<num_t>& pred
 
   num_t expSum = 0.0;
   size_t k;
-  for(k=0; k < nCategories; ++k) {
+  for ( k=0; k < nCategories; ++k ) {
     expPrediction[k] = exp( prediction[k] - *maxPrediction ); // scale by maximum
     expSum += expPrediction[k];
   }
-  for(k = 0; k < nCategories; ++k) {
+  for ( k = 0; k < nCategories; ++k ) {
     probability[k] = expPrediction[k] / expSum;
   }
 }
