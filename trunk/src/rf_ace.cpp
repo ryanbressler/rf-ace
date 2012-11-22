@@ -66,7 +66,6 @@ int main(const int argc, char* const argv[]) {
 
     assert( targetIdx != filterData.end() );
 
-    cout << "Data statistics:" << endl;
     printDataStatistics(filterData,targetIdx);
 
     vector<num_t> featureWeights = readFeatureWeights(filterData,targetIdx,options);
@@ -111,6 +110,8 @@ int main(const int argc, char* const argv[]) {
     size_t targetIdx = getTargetIdx(trainData,options.generalOptions.targetStr);
     
     assert( targetIdx != trainData.end() );
+
+    printDataStatistics(trainData,targetIdx);
     
     vector<num_t> featureWeights = readFeatureWeights(trainData,targetIdx,options);
     

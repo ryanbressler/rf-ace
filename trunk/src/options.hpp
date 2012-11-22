@@ -139,18 +139,44 @@ public:
     nodeSize              = datadefs::CART_DEFAULT_NODE_SIZE;
     shrinkage             = datadefs::CART_DEFAULT_SHRINKAGE;
   }
-
+  
   void validate() {
-
-    assert( forestType != ForestOptions::ForestType::UNKNOWN );
-    assert( nTrees != 0 );
-    assert( mTry != 0 );
-    assert( nMaxLeaves != 0 );
-    assert( nodeSize != 0 );
-    assert( 0.0 <= contrastFraction && contrastFraction < 1.0 );
-    assert( 0.0 <= inBoxFraction && inBoxFraction <= 1.0 );
+    
+    if ( forestType == ForestOptions::ForestType::UNKNOWN ) {
+      cerr << "ERROR: forest type must be set!" << endl;
+      exit(1);
+    }
+    
+    if ( nTrees == 0 ) {
+      cerr << "ERROR: the number of trees must be set!" << endl;
+      exit(1);
+    } 
+    
+    if ( isRandomSplit && mTry == 0 ) {
+      cerr << "ERROR: For random split mTry must be set!" << endl;
+      exit(1);
+    }
+    
+    if ( nMaxLeaves == 0 ) {
+      cerr << "ERROR: nMaxLeaves must be set!" << endl;
+      exit(1);
+    }
+    
+    if ( nodeSize == 0 ) {
+      cerr << "ERROR: nodeSize must be set!" << endl;
+      exit(1);
+    }
+    
+    if ( useContrasts && ( contrastFraction < 0.0 || contrastFraction >= 1.0 ) ) {
+      cerr << "ERROR: contrastFraction must be between 0..1" << endl;
+      exit(1);
+    }
+    
+    if ( inBoxFraction < 0.0 || inBoxFraction >= 1.0 ) {
+      cerr << "ERROR: inBoxFraction must be between 0..1" << endl;
+      exit(1);
+    }
   }
-
 
   void help() {
     cout << "Forest Options:" << endl;
@@ -260,7 +286,7 @@ public:
     trainDataFile_s("I"), trainDataFile_l("trainData"),
     testDataFile_s("T"), testDataFile_l("testData"),
     loadForestFile_s("L"), loadForestFile_l("loadForest"),
-    saveForestFile_s("S"), saveForestFile_l("saveForest"),
+    saveForestFile_s("V"), saveForestFile_l("saveForest"),
     associationsFile_s("A"), associationsFile_l("associations"),
     predictionsFile_s("P"), predictionsFile_l("predictions"),
     pairInteractionsFile_s("R"), pairInteractionsFile_l("pairInteractions"),
@@ -458,17 +484,14 @@ public:
   void printExamples() {
     
     cout << endl;
-    cout << "EXAMPLES:" << endl << endl;
-
-    cout << "bin/rf-ace --" << io.filterDataFile_l << " data.arff --" << generalOptions.targetStr_l << " target --" << io.associationsFile_l << " associations.tsv" << endl << endl;
+    cout << "Feature selection examples:" << endl
+	 << "bin/rf-ace --" << io.filterDataFile_l << " data.arff --" << generalOptions.targetStr_l << " target --" << io.associationsFile_l << " associations.tsv" << endl
+	 << "bin/rf-ace --" << io.filterDataFile_l << " data.arff --" << generalOptions.targetStr_l << " 5 --" << filterOptions.nPerms_l << " 50 --" << filterOptions.pValueThreshold_l << " 0.001 --" << io.associationsFile_l << " associations.tsv" << endl << endl;
     
-    cout << "bin/rf-ace --" << io.filterDataFile_l << " data.arff --" << generalOptions.targetStr_l << " 5 --" << filterOptions.nPerms_l << " 50 --" << filterOptions.pValueThreshold_l << " 0.001 --" << io.associationsFile_l << " associations.tsv" << endl << endl;
-    
-    cout << "bin/rf-ace --" << io.trainDataFile_l << " data.arff " << generalOptions.targetStr_l << " target --" << io.testDataFile_l << " testdata.arff " << forestOptions.nTrees_l << " 1000 --" << forestOptions.mTry_l << " 10 --" << io.predictionsFile_l << " predictions.tsv" << endl << endl;
-    
-    cout << "bin/rf-ace --" << io.trainDataFile_l << " data.arff --" << generalOptions.targetStr_l << " target --" << io.saveForestFile_l << " model.sf" << endl << endl;
-    
-    cout << "bin/rf-ace --" << io.loadForestFile_l << " model.sf --" << io.testDataFile_l << " testdata.arff --" << io.predictionsFile_l << " predictions.tsv" << endl << endl;
+    cout << "Model training & prediction examples:" << endl
+	 << "bin/rf-ace --" << io.trainDataFile_l << " data.arff --" << generalOptions.targetStr_l << " target --" << io.testDataFile_l << " testdata.arff --" << forestOptions.nTrees_l << " 1000 --" << forestOptions.mTry_l << " 10 --" << io.predictionsFile_l << " predictions.tsv" << endl
+	 << "bin/rf-ace --" << io.trainDataFile_l << " data.arff --" << generalOptions.targetStr_l << " target --" << io.saveForestFile_l << " model.sf" << endl
+	 << "bin/rf-ace --" << io.loadForestFile_l << " model.sf --" << io.testDataFile_l << " testdata.arff --" << io.predictionsFile_l << " predictions.tsv" << endl << endl;
     
   }
   
