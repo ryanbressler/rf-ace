@@ -1,10 +1,6 @@
 #summary Manual pages.
 
-*The manual pages have been written on the basis of RF-ACE version 1.0.5*
-
-= Description =
-
-RF-ACE is an efficient C++ implementation of a robust machine learning algorithm for uncovering multivariate associations from large and diverse data sets. RF-ACE natively handles numerical and categorical data with missing values, and potentially large quantities of noninformative features are handled gracefully utilizing artificial contrast features, bootstrapping, and p-value estimation.
+*The manual pages have been written on the basis of RF-ACE version 1.1.0, which is to be released soon*
 
 = Installation =
 
