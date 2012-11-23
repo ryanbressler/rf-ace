@@ -117,7 +117,7 @@ RcppExport SEXP rfaceTrain(SEXP trainDataFrameObj, SEXP targetStrR, SEXP nTreesR
 
   int seed = 0;
 
-  rface->train(trainData,targetIdx,featureWeights,&forestOptions,seed,nThreads);
+  rface->train(&trainData,targetIdx,featureWeights,&forestOptions,seed,nThreads);
 
   return(rface);
 
