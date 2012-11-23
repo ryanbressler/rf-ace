@@ -67,6 +67,45 @@ When the feature matrix is as ARFF, the aforementioned constraints for feature h
 
 Read more about [http://www.cs.waikato.ac.nz/~ml/weka/arff.html ARFF specification].      
 
+= Parameter print-out =
+
+{{{
+Forest Options:
+ -f / --forestType       Forest type: RF (default), GBT, or CART
+ -n / --nTrees           [RF and GBT only] Number of trees in the forest
+ -m / --mTry             [RF only] Fraction of randomly drawn features per node split
+ -a / --nMaxLeaves       Maximum number of leaves per tree
+ -s / --nodeSize         Smallest number of train samples per leaf node
+ -k / --shrinkage        [GBT only] Shrinkage applied to evolving the residual
+ -c / --contrastFraction [Filter only] controls the percentage of contrast features sampled to approximate the null distribution
+File Options:
+ -F / --filterData       Load data file (.afm or .arff) for feature selection
+ -I / --trainData        Load data file (.afm or .arff) for training a model
+ -w / --featureWeights   Load feature weights from file
+ -W / --whiteList        Load white list from file
+ -B / --blackList        Load black list from file
+ -T / --testData         Load data file (.afm or .arff) for testing a model
+ -L / --loadForest       Load model from file (.sf)
+ -V / --saveForest       Save model to file (.sf)
+ -A / --associations     Save associations to file
+ -P / --predictions      Save predictions to file
+ -R / --pairInteractions Save pair interactions to file
+ -G / --log              Save log to file
+Filter Options:
+ -p / --nPerms           Number of permutations in statistical test
+ -t / --pValueTh         P-value threshold in statistical test
+ -o / --importanceTh     Importance threshold
+General Options:
+ -i / --target           Name or index for the variable to make modeling for
+ -D / --dataDelim        [AFM only] Field delimiter
+ -H / --headDelim        [AFM only] Feature type and name delimiter
+ -X / --pruneFeatures    Prune Features
+ -S / --seed             Seed for random number generator
+ -e / --nThreads         Number of threads if using multithreading
+ -R / --maxThreads       Flag to make use of all available threads
+ -d / --defaultWeight    Default feature weight, if using feature weighting
+
+}}}
 
 = Identify important features from data using RF-ACE = 
 RF-ACE performs feature selection for a given target and feature matrix using `rf-ace` with nTrees=10, mTry=10, and nMaxLeaves=100 as follows:
