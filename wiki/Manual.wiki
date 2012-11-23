@@ -77,7 +77,7 @@ Forest Options:
  -a / --nMaxLeaves       Maximum number of leaves per tree
  -s / --nodeSize         Smallest number of train samples per leaf node
  -k / --shrinkage        [GBT only] Shrinkage applied to evolving the residual
- -c / --contrastFraction [Filter only] controls the percentage of contrast features sampled to approximate the null distribution
+ -c / --contrastFraction [Filter only] the fraction of contrast features sampled to approximate the null distribution
 File Options:
  -F / --filterData       Load data file (.afm or .arff) for feature selection
  -I / --trainData        Load data file (.afm or .arff) for training a model
