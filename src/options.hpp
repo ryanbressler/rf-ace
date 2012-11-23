@@ -186,7 +186,7 @@ public:
     this->printHelpLine(nMaxLeaves_s,nMaxLeaves_l,"Maximum number of leaves per tree");
     this->printHelpLine(nodeSize_s,nodeSize_l,"Smallest number of train samples per leaf node");
     this->printHelpLine(shrinkage_s,shrinkage_l,"[GBT only] Shrinkage applied to evolving the residual");
-    this->printHelpLine(contrastFraction_s,contrastFraction_l,"[Filter only] controls the percentage of contrast features sampled to approximate the null distribution");
+    this->printHelpLine(contrastFraction_s,contrastFraction_l,"[Filter only] the fraction of contrast features sampled to approximate the null distribution");
   }
 
   void print() {
