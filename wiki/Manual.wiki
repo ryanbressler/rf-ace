@@ -104,7 +104,6 @@ General Options:
  -e / --nThreads         Number of threads if using multithreading
  -R / --maxThreads       Flag to make use of all available threads
  -d / --defaultWeight    Default feature weight, if using feature weighting
-
 }}}
 
 = Identify important features from data using RF-ACE = 
@@ -127,11 +126,11 @@ bin/rf-ace --filterData data.arff --target 0 --nTrees 100 --mTry 10 --nMaxLeaves
 == Tuning parameters of the statistical test ==
 By default `rf-ace` assigns the p-value threshold to `0.05`, but which can be manually tuned by the `-t / --pValueTh` parameter like so:
 {{{
-bin/rf-ace --filterData data.arff --target target --nTrees 100 --mTry 10 --nMaxLeaves 100 --associations associations.tsv --pValueTh 0.001
+bin/rf-ace --filterData data.arff -i target -n 100 -m 10 -a 100 --associations associations.tsv --pValueTh 0.001
 }}}
 If you would like to have more permutations (default `20`) sampled for the t-test, you can do that using the parameter `-p / --nPerms` like so:
 {{{
-bin/rf-ace --filterData data.arff --target target --nTrees 100 --mTry 10 --nMaxLeaves 100 --associations associations.tsv --nPerms 50
+bin/rf-ace --filterData data.arff -i target -n 100 -m 10 -a 100 --associations associations.tsv --nPerms 50
 }}}
 In many circumstances, however, it is not recommended to reduce the number of permutations; consider `20` to be the lower limit at which the statistical test behaves robustly across wide range of situations. If RF-ACE recognizes the number of permutations is not sufficient for the t-test, an error will be raised and the program exits; increasing the number of permutations for the t-test will most likely remedy the issue.
 
@@ -140,29 +139,29 @@ In many circumstances, however, it is not recommended to reduce the number of pe
 === Removing features with too few samples overlapping with the target ===
 As the input data can be sparse, and depending on which target has been selected, it may become favorable to remove features that are too sparse for reliable analysis. By default `rf-ace` removes features with less than `5` non-missing samples shared by the feature and target, but which can be set to any other value using the parameter `-X / --pruneFeatures` like so:
 {{{
-bin/rf-ace --filterData data.arff --target target --nTrees 100 --mTry 10 --nMaxLeaves 100 --associations associations.tsv --pruneFeatures 60
+bin/rf-ace --filterData data.arff -i target -n 100 -m 10 -a 100 --associations associations.tsv --pruneFeatures 60
 }}}
 which would thus cause features with less than `60` intersecting non-missing samples to be removed from analysis.
 === Blacklisting features ===
 In some cases the input data contains features that for some reason are not suited for as predictors, but whose explicit removal from the input data may be unfavorable. If that is the case, then one can invoke the blacklisting parameter `-B / --blackList` like so:
 {{{
-bin/rf-ace --filterData data.arff --target target --nTrees 100 --mTry 10 --nMaxLeaves 100 --associations associations.tsv --blackList blacklist.txt
+bin/rf-ace --filterData data.arff -i target --nTrees 100 --mTry 10 --nMaxLeaves 100 --associations associations.tsv --blackList blacklist.txt
 }}} 
 
 = Train a Random Forest (RF) model & predict =
 
 {{{
-bin/rf-ace --trainData data.arff --target target -n 100 -m 10 -a 100 --testData testdata.arff --predictions predictions.tsv
+bin/rf-ace --trainData data.arff -i target -n 100 -m 10 -a 100 --testData testdata.arff --predictions predictions.tsv
 }}}
 
 {{{
-bin/rf-ace --trainData data.arff --target target --forestType RF -n 100 -m 10 -a 100 --testData testdata.arff --predictions predictions.tsv
+bin/rf-ace --trainData data.arff -i target --forestType RF -n 100 -m 10 -a 100 --testData testdata.arff --predictions predictions.tsv
 }}}
 
 = Train a Gradient Boosting Tree (GBT) model & predict =
 
 {{{
-bin/rf-ace --trainData data.arff --target target --forestType GBT -n 100 -a 10 --shrinkage 0.01 --testData testdata.arff --predictions predictions.tsv
+bin/rf-ace --trainData data.arff -i target --forestType GBT -n 100 -a 10 --shrinkage 0.01 --testData testdata.arff --predictions predictions.tsv
 }}}
 
 = Train a model and save to file =
