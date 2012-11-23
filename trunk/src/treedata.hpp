@@ -17,9 +17,12 @@
 using namespace std;
 using datadefs::num_t;
 
-struct Feature {
+class Feature {
+public:
+
+  enum Type {NUM,CAT,TEXT,UNKNOWN} type;
+
   vector<num_t> data;
-  //vector<size_t> sortOrder;
   bool isNumerical;
   map<string,num_t> mapping;
   map<num_t,string> backMapping;

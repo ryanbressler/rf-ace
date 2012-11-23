@@ -2,7 +2,7 @@
 #define STOCHASTICFOREST_HPP
 
 #include <cstdlib>
-//#include <thread>
+#include <fstream>
 #include "rootnode.hpp"
 #include "treedata.hpp"
 #include "options.hpp"
@@ -49,7 +49,7 @@ public:
   inline string getTargetName() { return( targetName_ ); }
   inline bool isTargetNumerical() { return( isTargetNumerical_ ); }
 
-  void saveForest(const string& fileName);
+  void saveForest(ofstream& toFile);
 
 
 #ifndef TEST__

@@ -9,6 +9,7 @@
 #include "rf_ace.hpp"
 #include "datadefs.hpp"
 #include "options.hpp"
+#include "timer.hpp"
 
 using namespace std;
 using datadefs::num_t;
@@ -40,7 +41,7 @@ int main(const int argc, char* const argv[]) {
   Options options;
   options.load(argc,argv);
 
-  // options.print();
+  Timer timer;
 
   options.io.validate();
 
@@ -54,6 +55,8 @@ int main(const int argc, char* const argv[]) {
 
   RFACE::FilterOutput filterOutput;
   RFACE::TestOutput testOutput;
+
+  timer.tic("Total time elapsed");
 
   if ( options.io.filterDataFile != "" ) {
 
@@ -74,11 +77,11 @@ int main(const int argc, char* const argv[]) {
       options.generalOptions.seed = distributions::generateSeed();
     }
 
-    filterOutput = rface.filter(&filterData,targetIdx,featureWeights,&options.forestOptions,&options.filterOptions,options.generalOptions.seed,options.generalOptions.nThreads);
+    filterOutput = rface.filter(&filterData,targetIdx,featureWeights,&options.forestOptions,&options.filterOptions,options.generalOptions.seed,options.generalOptions.nThreads,options.io.saveForestFile);
+
+    options.io.saveForestFile = "";
 
   } 
-
-
 
   if ( options.io.associationsFile != "" ) {
     
@@ -181,7 +184,9 @@ int main(const int argc, char* const argv[]) {
     
   }
 
-  rface.printTimer();
+  timer.toc("Total time elapsed");
+
+  timer.print();
   
   return( EXIT_SUCCESS );
   
