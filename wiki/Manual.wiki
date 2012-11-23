@@ -143,7 +143,7 @@ which would thus cause features with less than `60` intersecting non-missing sam
 === Blacklisting features ===
 In some cases the input data contains features that for some reason are not suited for as predictors, but whose explicit removal from the input data may be unfavorable. If that is the case, then one can invoke the blacklisting parameter `-B / --blackList` like so:
 {{{
-bin/rf-ace --filterData data.arff -i target --nTrees 100 --mTry 10 --nMaxLeaves 100 --associations associations.tsv --blackList blacklist.txt
+bin/rf-ace --filterData data.arff -i target -n 100 -m 10 -a 100 --associations associations.tsv --blackList blacklist.txt
 }}} 
 
 = Train a Random Forest (RF) model & predict =
@@ -153,13 +153,13 @@ bin/rf-ace --trainData data.arff -i target -n 100 -m 10 -a 100 --testData testda
 }}}
 
 {{{
-bin/rf-ace --trainData data.arff -i target --forestType RF -n 100 -m 10 -a 100 --testData testdata.arff --predictions predictions.tsv
+bin/rf-ace -I data.arff -i target --forestType RF -n 100 -m 10 -a 100 --testData testdata.arff --predictions predictions.tsv
 }}}
 
 = Train a Gradient Boosting Tree (GBT) model & predict =
 
 {{{
-bin/rf-ace --trainData data.arff -i target --forestType GBT -n 100 -a 10 --shrinkage 0.01 --testData testdata.arff --predictions predictions.tsv
+bin/rf-ace -I data.arff -i target --f GBT -n 100 -a 10 --shrinkage 0.01 -T testdata.arff --predictions predictions.tsv
 }}}
 
 = Train a model and save to file =
