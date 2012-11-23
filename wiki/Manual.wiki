@@ -153,13 +153,13 @@ bin/rf-ace --trainData data.arff -i target -n 100 -m 10 -a 100 --testData testda
 }}}
 
 {{{
-bin/rf-ace -I data.arff -i target --forestType RF -n 100 -m 10 -a 100 --testData testdata.arff --predictions predictions.tsv
+bin/rf-ace -I data.arff -i target -f RF -n 100 -m 10 -a 100 -T testdata.arff -P predictions.tsv
 }}}
 
 = Train a Gradient Boosting Tree (GBT) model & predict =
 
 {{{
-bin/rf-ace -I data.arff -i target --f GBT -n 100 -a 10 --shrinkage 0.01 -T testdata.arff --predictions predictions.tsv
+bin/rf-ace -I data.arff -i target --f GBT -n 100 -a 10 --shrinkage 0.01 -T testdata.arff -P predictions.tsv
 }}}
 
 = Train a model and save to file =
