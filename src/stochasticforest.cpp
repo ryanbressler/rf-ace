@@ -138,10 +138,7 @@ StochasticForest::~StochasticForest() {
 
 /* Prints the forest into a file, so that the forest can be loaded for later use (e.g. prediction).
  */
-void StochasticForest::saveForest(const string& fileName) {
-
-  // Open stream for writing
-  ofstream toFile( fileName.c_str() );
+void StochasticForest::saveForest(ofstream& toFile) {
 
   if ( forestType_ == ForestOptions::ForestType::GBT ) {
     toFile << "FOREST=GBT";

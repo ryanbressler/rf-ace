@@ -22,12 +22,8 @@
 #include "utils.hpp"
 #include "math.hpp"
 #include "datadefs.hpp"
-//#include "statistics.hpp"
 #include "progress.hpp"
 #include "distributions.hpp"
-#include "timer.hpp"
-// #include "log.h"
-
 
 using namespace std;
 using datadefs::num_t;
@@ -41,14 +37,9 @@ public:
 
   RFACE():
     trainedModel_(NULL) {
-    
-    timer_ = new Timer();
-    
   }
 
   ~RFACE() {
-
-    delete timer_;
 
     if ( trainedModel_ ) {
       delete trainedModel_;
@@ -56,11 +47,6 @@ public:
     }
     
   }
-
-  void printTimer() {
-    timer_->print();
-  }
-
 
   struct FilterOutput {
     size_t nAllFeatures;
@@ -124,7 +110,8 @@ public:
 		      ForestOptions* forestOptions,
 		      FilterOptions* filterOptions,
 		      const int seed = 0,
-		      const size_t nThreads = 1) {
+		      const size_t nThreads = 1,
+		      const string& forestFile = "" ) {
 
     forestOptions->useContrasts = true;
 
@@ -146,7 +133,7 @@ public:
     vector<distributions::Random> randoms = makeRandomNumberGenerators(nThreads,seed);
 
     cout << "===> Uncovering associations... " << flush;
-    executeRandomForest(filterData,targetIdx,featureWeights,forestOptions,filterOptions,filterOutput,randoms);
+    executeRandomForest(filterData,targetIdx,featureWeights,forestOptions,filterOptions,filterOutput,randoms,forestFile);
     cout << "DONE" << endl;
 
     return( filterOutput );
@@ -159,7 +146,8 @@ public:
 			   ForestOptions* forestOptions,
 			   FilterOptions* filterOptions,
 			   FilterOutput& filterOutput,
-			   vector<distributions::Random>& randoms) {
+			   vector<distributions::Random>& randoms,
+			   const string& forestFile) {
     
     //vector<vector<size_t> > nodeMat(filterOptions->nPerms,vector<size_t>(forestOptions->nTrees));
 
@@ -180,7 +168,11 @@ public:
 
     ftable_t frequency;
 
-    timer_->tic("MODEL_BUILD");
+    ofstream toFile;
+    if ( forestFile != "" ) {
+      toFile.open(forestFile.c_str());
+      toFile.close();
+    }
 
     for(size_t permIdx = 0; permIdx < filterOptions->nPerms; ++permIdx) {
 
@@ -192,10 +184,12 @@ public:
 
       SF.learnRF(filterData,targetIdx,forestOptions,featureWeights,randoms);
 
-      // Get the number of nodes in each tree in the forest
-      //for ( size_t treeIdx = 0; treeIdx < SF.nTrees(); ++treeIdx ) {
-      //nodeMat[permIdx][treeIdx] = SF.nNodes(treeIdx);
-      //}
+      if ( forestFile != "" ) {
+	//ofstream toFile;
+	toFile.open(forestFile.c_str(),ios::app);
+	SF.saveForest(toFile);
+	toFile.close();
+      }
 
       SF.getMeanMinimalDepthValues(filterData,importanceMat[permIdx],contrastImportanceMat[permIdx]);
 
@@ -203,9 +197,6 @@ public:
       contrastImportanceSample[permIdx] = math::mean( utils::removeNANs( contrastImportanceMat[permIdx] ) );
 
     }
-
-    timer_->toc("MODEL_BUILD");
-    timer_->tic("MODEL_TEST");
 
     assert( !datadefs::containsNAN(contrastImportanceSample) );
 
@@ -282,8 +273,6 @@ public:
     filterOutput.sampleCounts.resize(nSelectedFeatures);
     filterOutput.featureNames.resize(nSelectedFeatures);
 
-    timer_->toc("MODEL_TEST");
-    
   }
 
   void sortFilterOutput(FilterOutput* filterOutput) {
@@ -355,7 +344,9 @@ public:
 
     assert(trainedModel_);
     
-    trainedModel_->saveForest( fileName );
+    ofstream toFile(fileName);
+
+    trainedModel_->saveForest( toFile );
 
   }
   
@@ -456,8 +447,6 @@ private:
 
   StochasticForest* trainedModel_;
 
-  Timer* timer_;
-  
 };
 
 #endif
