@@ -64,8 +64,6 @@ RcppExport void rfaceSave(SEXP rfaceObj, SEXP fileName) {
 
   rface->save(Rcpp::as<string>(fileName));
 
-  return;
-
 }
 
 RcppExport SEXP rfaceLoad(SEXP rfaceFile) {
