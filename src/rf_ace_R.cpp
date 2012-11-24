@@ -77,7 +77,7 @@ RcppExport SEXP rfaceLoad(SEXP rfaceFile) {
 
 }
 
-RcppExport SEXP rfaceTrain(SEXP trainDataFrameObj, SEXP targetStrR, SEXP nTreesR, SEXP mTryR, SEXP nodeSizeR, SEXP nMaxLeavesR, SEXP nThreadsR) {
+RcppExport SEXP rfaceTrain(SEXP trainDataFrameObj, SEXP targetStrR, SEXP featureWeightsR, SEXP nTreesR, SEXP mTryR, SEXP nodeSizeR, SEXP nMaxLeavesR, SEXP nThreadsR) {
 
   ForestOptions forestOptions;
 
@@ -110,7 +110,13 @@ RcppExport SEXP rfaceTrain(SEXP trainDataFrameObj, SEXP targetStrR, SEXP nTreesR
 
   Rcpp::XPtr<RFACE> rface( new RFACE, true);
 
-  vector<num_t> featureWeights(trainData.nFeatures(),1.0);
+  Rcpp::NumericVector foo(featureWeightsR);
+  vector<num_t> featureWeights(foo.size());
+  for ( size_t i = 0; i < featureWeights.size(); ++i ) {
+    featureWeights[i] = foo[i];
+  }
+
+  //vector<num_t> featureWeights(trainData.nFeatures(),1.0);
   featureWeights[targetIdx] = 0.0;
 
   int seed = 0;
