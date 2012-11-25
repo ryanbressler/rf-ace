@@ -157,3 +157,66 @@ RcppExport SEXP rfacePredict(SEXP rfaceObj, SEXP testDataFrameObj, SEXP nThreads
   return(predictions);
 
 }
+
+RcppExport SEXP rfaceFilter(SEXP filterDataFrameObj,  SEXP targetStrR, SEXP featureWeightsR, SEXP nTreesR, SEXP mTryR, SEXP nodeSizeR, SEXP nMaxLeavesR, SEXP nThreadsR) {
+
+  string targetStr = Rcpp::as<string>(targetStrR);
+
+  ForestOptions forestOptions;
+  forestOptions.nTrees = Rcpp::as<size_t>(nTreesR);
+  forestOptions.mTry = Rcpp::as<size_t>(mTryR);
+  forestOptions.nodeSize = Rcpp::as<size_t>(nodeSizeR);
+  forestOptions.nMaxLeaves = Rcpp::as<size_t>(nMaxLeavesR);
+
+  size_t nThreads = Rcpp::as<size_t>(nThreadsR);
+
+  FilterOptions filterOptions;
+
+  vector<Feature> dataMatrix;
+  vector<string> sampleHeaders;
+
+  parseDataFrame(filterDataFrameObj,dataMatrix,sampleHeaders);
+
+  bool useContrasts = true;
+
+  Treedata filterData(dataMatrix,useContrasts,sampleHeaders);
+ 
+  size_t seed = 0;
+
+  size_t targetIdx = filterData.getFeatureIdx(targetStr);
+
+  if ( targetIdx == filterData.end() ) {
+    int integer;
+    if ( datadefs::isInteger(targetStr,integer) && integer >= 0 && integer < static_cast<int>(filterData.nFeatures()) ) {
+      targetIdx = static_cast<size_t>(integer);
+    } else {
+      cerr << "Invalid target: " << targetStr << endl;
+      exit(1);
+    }
+  }
+
+  Rcpp::NumericVector foo(featureWeightsR);
+  vector<num_t> featureWeights(foo.size());
+  for ( size_t i = 0; i < featureWeights.size(); ++i ) {
+    featureWeights[i] = foo[i];
+  }
+  featureWeights[targetIdx] = 0.0;
+
+  RFACE rface;
+
+  RFACE::FilterOutput filterOutput = rface.filter(&filterData,targetIdx,featureWeights,&forestOptions,&filterOptions,seed,nThreads);
+
+  Rcpp::List filterOutputR;
+  
+  for(size_t i = 0; i < filterOutput.nSignificantFeatures; ++i) {
+    filterOutputR.push_back( Rcpp::List::create(Rcpp::Named("featureName")=filterOutput.featureNames[i],
+						Rcpp::Named("pValue")=filterOutput.pValues[i],
+						Rcpp::Named("importance")=filterOutput.importances[i],
+						Rcpp::Named("correlation")=filterOutput.correlations[i],
+						Rcpp::Named("nSamples")=filterOutput.sampleCounts[i]));
+  }
+  
+
+  return(filterOutputR);
+  
+}
