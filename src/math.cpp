@@ -282,7 +282,7 @@ num_t math::gamma(const vector<num_t>& x, const size_t nCategories) {
   if ( fabs(denominator) <= datadefs::EPS ) {
     return( datadefs::LOG_OF_MAX_NUM * numerator );
   } else {
-    return( 1.0*(nCategories - 1)*numerator / (1.0*nCategories*denominator) );
+    return( (numerator*(nCategories - 1)) / (denominator*nCategories) );
   }
   
 }
