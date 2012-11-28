@@ -9,6 +9,7 @@
 #include <map>
 #include <fstream>
 #include <unordered_map>
+#include <bitset>
 
 #include "datadefs.hpp"
 #include "distributions.hpp"
@@ -20,19 +21,32 @@ using datadefs::num_t;
 class Feature {
 public:
 
-  enum Type {NUM,CAT,TEXT,UNKNOWN} type;
-
+  enum Type {NUM,CAT,TXT,UNKNOWN};
+  
   vector<num_t> data;
-  bool isNumerical;
+  //bool isNumerical;
   map<string,num_t> mapping;
   map<num_t,string> backMapping;
   string name;
-
+  
   Feature();
   Feature(const vector<num_t>& newData, const string& newName);
-  Feature(const vector<string>& newStringData, const string& newName);
-
+  Feature(const vector<string>& newStringData, const string& newName, bool doHash = false);
+  ~Feature();
+  
+  bool isNumerical(); 
+  bool isCategorical();
+  bool isTextual();
+  
+private:
+  
+  Type type_;
+  
+  vector<vector<bool> > hashLookUp_;
+  vector<vector<uint32_t> > hashList_; 
+  
 };
+
 
 class Treedata  {
 public:
@@ -151,6 +165,8 @@ public:
   void permuteContrasts(distributions::Random* random);
 
   bool isFeatureNumerical(const size_t featureIdx);
+  bool isFeatureCategorical(const size_t featureIdx);
+  bool isFeatureTextual(const size_t featureIdx);
 
   void replaceFeatureData(const size_t featureIdx, const vector<num_t>& featureData);
   void replaceFeatureData(const size_t featureIdx, const vector<string>& rawFeatureData);
