@@ -8,7 +8,7 @@
 #include <istream>
 #include <sstream>
 #include <cstdlib>
-#include <bitset>
+//#include <bitset>
 #include "datadefs.hpp"
 //#include "treedata.hpp"
 #include "distributions.hpp"

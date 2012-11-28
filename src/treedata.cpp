@@ -16,28 +16,66 @@
 
 using namespace std;
 
-Feature::Feature() {
+Feature::Feature():
+  type_(Feature::Type::UNKNOWN) {
 
   
 }
 
-Feature::Feature(const vector<num_t>& newData, const string& newName) {
+Feature::Feature(const vector<num_t>& newData, const string& newName):
+  type_(Feature::Type::NUM) {
 
   data = newData;
   name = newName;
-  isNumerical = true;
+  //isNumerical = true;
   mapping.clear();
   backMapping.clear();
 
 }
 
-Feature::Feature(const vector<string>& newStringData, const string& newName) {
+Feature::Feature(const vector<string>& newStringData, const string& newName, bool doHash):
+  type_( doHash ? Feature::Type::TXT : Feature::Type::CAT ) { 
 
-  utils::strv2catv(newStringData,data,mapping,backMapping);
-  
-  name = newName;
-  isNumerical = false;
+  if ( type_ == Feature::Type::CAT ) {
+    
+    utils::strv2catv(newStringData,data,mapping,backMapping);
+    
+    name = newName;
+    //isNumerical = false;
+    
+  } else {
+    
+    size_t nSamples = newStringData.size();
+    
+    hashLookUp_.resize(nSamples,vector<bool>(2^28,false));
+    hashList_.resize(nSamples);
+    
+    for ( size_t i = 0; i < nSamples; ++i ) {
+      
+      hashList_[i] = utils::hashText(newStringData[i]);
+      
+      for ( size_t j = 0; j < hashList_.size(); ++j ) {
+	hashLookUp_[i][ hashList_[i][j] ] = true;
+      } 
+      
+    }
+    
+  }
 
+}
+
+Feature::~Feature() { }
+
+bool Feature::isNumerical() { 
+  return( type_ == Feature::Type::NUM ? true : false ); 
+}
+
+bool Feature::isCategorical() { 
+  return( type_ == Feature::Type::CAT ? true : false ); 
+}
+
+bool Feature::isTextual() { 
+  return( type_ == Feature::Type::TXT ? true : false );
 }
 
 
@@ -546,7 +584,15 @@ void Treedata::permuteContrasts(distributions::Random* random) {
 }
 
 bool Treedata::isFeatureNumerical(const size_t featureIdx) {
-  return(features_[featureIdx].isNumerical);
+  return( features_[featureIdx].isNumerical() );
+}
+
+bool Treedata::isFeatureCategorical(const size_t featureIdx) {
+  return( features_[featureIdx].isCategorical() );
+}
+
+bool Treedata::isFeatureTextual(const size_t featureIdx) {
+  return( features_[featureIdx].isTextual() );
 }
 
 size_t Treedata::nRealSamples(const size_t featureIdx) { 
@@ -1356,7 +1402,7 @@ string Treedata::getRawFeatureData(const size_t featureIdx, const num_t data) {
   }
   
   // If input feature is numerical, we just represent the numeric value as string
-  if ( features_[featureIdx].isNumerical ) {
+  if ( features_[featureIdx].isNumerical() ) {
     //stringstream ss;
     //ss << data;
     //return( ss.str() );
@@ -1392,18 +1438,20 @@ void Treedata::replaceFeatureData(const size_t featureIdx, const vector<num_t>& 
     exit(1);
   }
 
+  features_[featureIdx] = Feature(featureData,features_[featureIdx].name);
+
   // Since the data that was passed is numerical, we set isNumerical to true
-  features_[featureIdx].isNumerical = true;
+  //features_[featureIdx].isNumerical = true;
 
   // Data that is stored is directly the input data
-  features_[featureIdx].data = featureData;
+  //features_[featureIdx].data = featureData;
 
   // Update sort indices for fast lookup
   //this->updateSortOrder(featureIdx);
 
   // Since the data is not categorical, there's no need to provide mappings
-  features_[featureIdx].mapping.clear();
-  features_[featureIdx].backMapping.clear();
+  //features_[featureIdx].mapping.clear();
+  //features_[featureIdx].backMapping.clear();
 
 }
 
@@ -1414,17 +1462,19 @@ void Treedata::replaceFeatureData(const size_t featureIdx, const vector<string>&
     exit(1);
   }
 
+  features_[featureIdx] = Feature(rawFeatureData,features_[featureIdx].name);
+
   // Since the data that was passed are string literals, we set isNumerical to false
-  features_[featureIdx].isNumerical = false;
+  //features_[featureIdx].isNumerical = false;
 
   // Categorical data does not need sorting, thus, it doesn't benefit from the sort indices either
   //features_[featureIdx].sortOrder.clear();
 
   // The string literal data needs some processing 
-  utils::strv2catv(rawFeatureData,
-		   features_[featureIdx].data,
-		   features_[featureIdx].mapping,
-		   features_[featureIdx].backMapping);
+  //utils::strv2catv(rawFeatureData,
+  //		   features_[featureIdx].data,
+  //		   features_[featureIdx].mapping,
+  //		   features_[featureIdx].backMapping);
 }
 
 
