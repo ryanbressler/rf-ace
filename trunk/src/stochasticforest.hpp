@@ -25,9 +25,7 @@ public:
   //num_t getError() { return(0.0); }
   //num_t getOobError();
 
-  void getImportanceValues(vector<num_t>& importanceValues,
-                           vector<num_t>& contrastImportanceValues);
-    
+  //void getImportanceValues(Treedata* trainData, vector<num_t>& importanceValues, vector<num_t>& contrastImportanceValues);
   void getMeanMinimalDepthValues(Treedata* trainData, vector<num_t>& depthValues, vector<num_t>& contrastDepthValues);
 
   void predict(Treedata* treeDataTest, vector<string>& predictions, vector<num_t>& confidence, const size_t nThreads = 1);
