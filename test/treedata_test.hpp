@@ -25,6 +25,7 @@ class treeDataTest : public CppUnit::TestFixture {
   CPPUNIT_TEST( test_fullSplitterSweep );
   CPPUNIT_TEST( test_bootstrapRealSamples );
   CPPUNIT_TEST( test_replaceFeatureData );
+  CPPUNIT_TEST( test_hashFeature );
   CPPUNIT_TEST( test_end );
   CPPUNIT_TEST_SUITE_END();
   
@@ -47,6 +48,7 @@ public:
   void test_fullSplitterSweep();
   void test_bootstrapRealSamples();
   void test_replaceFeatureData();
+  void test_hashFeature();
   void test_end();
 
 private:
@@ -805,6 +807,12 @@ void treeDataTest::test_replaceFeatureData() {
   for ( size_t i = 0; i < treeData_->nSamples(); ++i ) {
     CPPUNIT_ASSERT( treeData_->getFeatureData(0,i) == 0.0 );
   }
+
+}
+
+void treeDataTest::test_hashFeature() {
+
+  
 
 }
 
