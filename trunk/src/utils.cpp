@@ -248,7 +248,11 @@ vector<uint32_t> utils::hashText(const string& text) {
 vector<string> utils::readListFromFile(const string& fileName, const char delimiter) {
   
   ifstream streamObj( fileName.c_str() );
-  assert(streamObj.good());
+
+  if ( ! streamObj.good() ) {
+    cerr << "ERROR: file '" << fileName << "' could not be opened for reading. Check that the file exists and is not corrupted." << endl;
+    exit(1);
+  }
   
   return( utils::split(streamObj,delimiter) );
 }
