@@ -17,9 +17,7 @@
 using namespace std;
 
 Feature::Feature():
-  type_(Feature::Type::UNKNOWN) {
-
-  
+  type_(Feature::Type::UNKNOWN) {  
 }
 
 Feature::Feature(const vector<num_t>& newData, const string& newName):
@@ -41,22 +39,16 @@ Feature::Feature(const vector<string>& newStringData, const string& newName, boo
     utils::strv2catv(newStringData,data,mapping,backMapping);
     
     name = newName;
-    //isNumerical = false;
     
   } else {
     
     size_t nSamples = newStringData.size();
     
-    hashLookUp_.resize(nSamples,vector<bool>(2^28,false));
-    hashList_.resize(nSamples);
+    hashList.resize(nSamples);
     
     for ( size_t i = 0; i < nSamples; ++i ) {
       
-      hashList_[i] = utils::hashText(newStringData[i]);
-      
-      for ( size_t j = 0; j < hashList_.size(); ++j ) {
-	hashLookUp_[i][ hashList_[i][j] ] = true;
-      } 
+      hashList[i] = utils::hashText(newStringData[i]);
       
     }
     
@@ -66,15 +58,15 @@ Feature::Feature(const vector<string>& newStringData, const string& newName, boo
 
 Feature::~Feature() { }
 
-bool Feature::isNumerical() { 
+bool Feature::isNumerical() const { 
   return( type_ == Feature::Type::NUM ? true : false ); 
 }
 
-bool Feature::isCategorical() { 
+bool Feature::isCategorical() const { 
   return( type_ == Feature::Type::CAT ? true : false ); 
 }
 
-bool Feature::isTextual() { 
+bool Feature::isTextual() const { 
   return( type_ == Feature::Type::TXT ? true : false );
 }
 
@@ -805,6 +797,16 @@ void Treedata::getFilteredFeatureDataPair(const size_t featureIdx1,
   featureData1.resize(nReal);
   featureData2.resize(nReal);
   sampleIcs.resize(nReal);
+
+}
+
+num_t Treedata::hashFeatureSplit(const size_t targetIdx,
+				 const size_t featureIdx,
+				 const size_t minSamples,
+				 vector<size_t>& sampleIcs_left,
+				 vector<size_t>& sampleIcs_right) {
+
+  
 
 }
 

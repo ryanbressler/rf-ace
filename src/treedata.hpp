@@ -9,7 +9,6 @@
 #include <map>
 #include <fstream>
 #include <unordered_map>
-#include <bitset>
 
 #include "datadefs.hpp"
 #include "distributions.hpp"
@@ -21,12 +20,12 @@ using datadefs::num_t;
 class Feature {
 public:
 
-  enum Type {NUM,CAT,TXT,UNKNOWN};
+  enum Type { NUM, CAT, TXT, UNKNOWN };
   
   vector<num_t> data;
-  //bool isNumerical;
   map<string,num_t> mapping;
   map<num_t,string> backMapping;
+  vector<vector<uint32_t> > hashList;
   string name;
   
   Feature();
@@ -34,16 +33,13 @@ public:
   Feature(const vector<string>& newStringData, const string& newName, bool doHash = false);
   ~Feature();
   
-  bool isNumerical(); 
-  bool isCategorical();
-  bool isTextual();
+  bool isNumerical() const; 
+  bool isCategorical() const;
+  bool isTextual() const;
   
 private:
-  
+
   Type type_;
-  
-  vector<vector<bool> > hashLookUp_;
-  vector<vector<uint32_t> > hashList_; 
   
 };
 
@@ -104,6 +100,12 @@ public:
 
   vector<num_t> getFilteredFeatureData(const size_t featureIdx,
 				       vector<size_t>& sampleIcs);
+
+  num_t hashFeatureSplit(const size_t targetIdx,
+			 const size_t featureIdx,
+			 const size_t minSamples,
+			 vector<size_t>& sampleIcs_left,
+			 vector<size_t>& sampleIcs_right);
 
   num_t numericalFeatureSplit(const size_t targetIdx,
 			      const size_t featureIdx,
