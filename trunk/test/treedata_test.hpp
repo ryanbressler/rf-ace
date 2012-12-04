@@ -812,7 +812,7 @@ void treeDataTest::test_replaceFeatureData() {
 
 void treeDataTest::test_hashFeature() {
 
-  
+  Feature hashFeature;
 
 }
 

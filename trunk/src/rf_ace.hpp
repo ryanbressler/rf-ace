@@ -198,11 +198,13 @@ public:
 
     }
 
-    assert( !datadefs::containsNAN(contrastImportanceSample) );
+    contrastImportanceSample = utils::removeNANs( contrastImportanceSample );
+
+    //assert( !datadefs::containsNAN(contrastImportanceSample) );
 
     // Notify if the sample size of the null distribution is very low
     if ( filterOptions->nPerms > 1 && contrastImportanceSample.size() < 5 ) {
-      cerr << " Too few samples drawn ( " << contrastImportanceSample.size()
+      cerr << " WARNING: Too few samples drawn ( " << contrastImportanceSample.size()
 	   << " < 5 ) from the null distribution. Consider adding more permutations. Quitting..."
 	   << endl;
       exit(0);
