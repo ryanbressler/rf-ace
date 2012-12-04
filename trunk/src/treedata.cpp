@@ -132,7 +132,7 @@ Treedata::Treedata(string fileName, const char dataDelimiter, const char headerD
   // NOTE: should be optimized to scale for large data sets
   vector<vector<string> > rawMatrix;
   vector<string> featureHeaders;
-  vector<bool> isFeatureNumerical;
+  vector<Feature::Type> featureTypes;
   if(fileType == AFM) {
     
     // Reads from the AFM stream and inserts 
@@ -141,7 +141,7 @@ Treedata::Treedata(string fileName, const char dataDelimiter, const char headerD
 		      rawMatrix,
 		      featureHeaders,
 		      sampleHeaders_,
-		      isFeatureNumerical,
+		      featureTypes,
 		      dataDelimiter,
 		      headerDelimiter);
     
@@ -152,7 +152,7 @@ Treedata::Treedata(string fileName, const char dataDelimiter, const char headerD
     Treedata::readARFF(featurestream,
 		       rawMatrix,
 		       featureHeaders,
-		       isFeatureNumerical);
+		       featureTypes);
 
     // ARFF doesn't contain sample headers 
     sampleHeaders_.clear();
@@ -166,7 +166,7 @@ Treedata::Treedata(string fileName, const char dataDelimiter, const char headerD
 		      rawMatrix,
 		      featureHeaders,
 		      sampleHeaders_,
-		      isFeatureNumerical,
+		      featureTypes,
 		      dataDelimiter,
 		      headerDelimiter);
     
@@ -194,7 +194,7 @@ Treedata::Treedata(string fileName, const char dataDelimiter, const char headerD
     // NOTE: could be replaced with a hash table
     name2idx_[featureHeaders[i]] = i;
 
-    if ( isFeatureNumerical[i] ) {
+    if ( featureTypes[i] == Feature::Type::NUM ) {
 
       vector<num_t> data;
 
@@ -203,10 +203,18 @@ Treedata::Treedata(string fileName, const char dataDelimiter, const char headerD
 
       features_[i] = Feature(data,featureHeaders[i]);
 
-    } else {
+    } else if ( featureTypes[i] == Feature::Type::CAT ) {
 
       features_[i] = Feature(rawMatrix[i],featureHeaders[i]);
 
+    } else if ( featureTypes[i] == Feature::Type::TXT ) {
+
+      bool doHash = true;
+      features_[i] = Feature(rawMatrix[i],featureHeaders[i],doHash);
+
+    } else {
+      cerr << "ERROR: unknown feature type for feature with header '" << featureHeaders[i] << "'" << endl;
+      exit(1);
     }
 
   } 
@@ -260,17 +268,19 @@ void Treedata::readAFM(ifstream& featurestream,
 		       vector<vector<string> >& rawMatrix, 
 		       vector<string>& featureHeaders, 
 		       vector<string>& sampleHeaders,
-		       vector<bool>& isFeatureNumerical,
+		       vector<Feature::Type>& featureTypes,
 		       const char dataDelimiter,
 		       const char headerDelimiter) {
 
   string field;
   string row;
 
+  assert( headerDelimiter != ' ' );
+
   rawMatrix.clear();
   featureHeaders.clear();
   sampleHeaders.clear();
-  isFeatureNumerical.clear();
+  featureTypes.clear();
 
   //Remove upper left element from the matrix as useless
   getline(featurestream,field,dataDelimiter);
@@ -283,7 +293,7 @@ void Treedata::readAFM(ifstream& featurestream,
   while ( getline(ss,field,dataDelimiter) ) {
 
     // If at least one of the column headers is a valid feature header, we assume features are stored as columns
-    if ( isFeaturesAsRows && isValidFeatureHeader(field,headerDelimiter) ) {
+    if ( isFeaturesAsRows && isValidFeatureHeader(field) ) {
       isFeaturesAsRows = false;
     }
     columnHeaders.push_back(field);
@@ -345,17 +355,22 @@ void Treedata::readAFM(ifstream& featurestream,
   }
 
   size_t nFeatures = featureHeaders.size();
-  isFeatureNumerical.resize(nFeatures);
+  featureTypes.resize(nFeatures);
   for(size_t i = 0; i < nFeatures; ++i) {
-    if(Treedata::isValidNumericalHeader(featureHeaders[i],headerDelimiter)) {
-      isFeatureNumerical[i] = true;
+    if(Treedata::isValidNumericalHeader(featureHeaders[i])) {
+      featureTypes[i] = Feature::Type::NUM;
+    } else if ( this->isValidCategoricalHeader(featureHeaders[i]) ) {
+      featureTypes[i] = Feature::Type::CAT;
+    } else if ( this->isValidTextHeader(featureHeaders[i]) ) {
+      featureTypes[i] = Feature::Type::TXT;
     } else {
-      isFeatureNumerical[i] = false;
+      cerr << "ERROR: unknown feature type with feature header '" << featureHeaders[i] << "'" << endl;
+      exit(1);
     }
   }
 }
 
-void Treedata::readARFF(ifstream& featurestream, vector<vector<string> >& rawMatrix, vector<string>& featureHeaders, vector<bool>& isFeatureNumerical) {
+void Treedata::readARFF(ifstream& featurestream, vector<vector<string> >& rawMatrix, vector<string>& featureHeaders, vector<Feature::Type>& featureTypes) {
 
   string row;
 
@@ -366,7 +381,7 @@ void Treedata::readARFF(ifstream& featurestream, vector<vector<string> >& rawMat
   //TODO: add Treedata::clearData(...)
   rawMatrix.clear();
   featureHeaders.clear();
-  isFeatureNumerical.clear();
+  featureTypes.clear();
   
   //Read one line from the ARFF file
   while ( getline(featurestream,row) ) {
@@ -391,7 +406,11 @@ void Treedata::readARFF(ifstream& featurestream, vector<vector<string> >& rawMat
       //cout << "found attribute header: " << row << endl;
       Treedata::parseARFFattribute(row,attributeName,isNumerical);
       featureHeaders.push_back(attributeName);
-      isFeatureNumerical.push_back(isNumerical);
+      if ( isNumerical ) {
+	featureTypes.push_back(Feature::Type::NUM);
+      } else {
+	featureTypes.push_back(Feature::Type::CAT);
+      }
       
     } else if(!hasData && rowU.compare(0,5,"@DATA") == 0) {    //Read data header
       
@@ -461,26 +480,32 @@ void Treedata::parseARFFattribute(const string& str, string& attributeName, bool
   //attributeName = prefix;
 }
 
-bool Treedata::isValidNumericalHeader(const string& str, const char headerDelimiter) {
-  
-  stringstream ss(str);
-  string typeStr;
-  getline(ss,typeStr,headerDelimiter);
-  
-  return(  typeStr == "N" );
+bool Treedata::isValidNumericalHeader(const string& str) {
+  if ( str.size() > 0 ) {
+    return( str[0] == 'N' );
+  } else {
+    return( false );
+  }
 }
 
-bool Treedata::isValidCategoricalHeader(const string& str, const char headerDelimiter) {
-  
-  stringstream ss(str);
-  string typeStr;
-  getline(ss,typeStr,headerDelimiter);
-  
-  return( typeStr == "C" || typeStr == "B" );
+bool Treedata::isValidCategoricalHeader(const string& str) {
+  if ( str.size() > 0 ) {
+    return( str[0] == 'C' || str[0] == 'B' );
+  } else {
+    return(false);
+  }
 }
 
-bool Treedata::isValidFeatureHeader(const string& str, const char headerDelimiter) {
-  return( isValidNumericalHeader(str,headerDelimiter) || isValidCategoricalHeader(str,headerDelimiter) );
+bool Treedata::isValidTextHeader(const string& str) {
+  if ( str.size() > 0 ) {
+    return( str[0] == 'T' );
+  } else {
+    return(false);
+  }
+}
+
+bool Treedata::isValidFeatureHeader(const string& str) {
+  return( isValidNumericalHeader(str) || isValidCategoricalHeader(str) || isValidTextHeader(str) );
 }
 
 size_t Treedata::nFeatures() const {

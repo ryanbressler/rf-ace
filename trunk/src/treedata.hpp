@@ -188,20 +188,22 @@ private:
 	       vector<vector<string> >& rawMatrix, 
 	       vector<string>& featureHeaders, 
 	       vector<string>& sampleHeaders, 
-	       vector<bool>& isFeatureNumerical,
+	       vector<Feature::Type>& featureTypes,
 	       const char dataDelimiter,
 	       const char headerDelimiter);
   
   void readARFF(ifstream& featurestream, 
 		vector<vector<string> >& rawMatrix, 
 		vector<string>& featureHeaders, 
-		vector<bool>& isFeatureNumerical);
+		vector<Feature::Type>& featureTypes);
 
   void parseARFFattribute(const string& str, string& attributeName, bool& isFeatureNumerical);
 
-  bool isValidNumericalHeader(const string& str, const char headerDelimiter);
-  bool isValidCategoricalHeader(const string& str, const char hederDelimiter);
-  bool isValidFeatureHeader(const string& str, const char headerDelimiter);
+  bool isValidNumericalHeader(const string& str);
+  bool isValidCategoricalHeader(const string& str);
+  bool isValidTextHeader(const string& str);
+  bool isValidFeatureHeader(const string& str);
+
 
   template <typename T> void transpose(vector<vector<T> >& mat);
 
