@@ -215,15 +215,15 @@ public:
   num_t pValueThreshold; const string pValueThreshold_s; const string pValueThreshold_l;
   //bool isAdjustedPValue; const string isAdjustedPValue_s; const string isAdjustedPValue_l;
   //bool normalizeImportanceValues; const string normalizeImportanceValues_s; const string normalizeImportanceValues_l;
-  num_t importanceThreshold; const string importanceThreshold_s; const string importanceThreshold_l;
+  //num_t importanceThreshold; const string importanceThreshold_s; const string importanceThreshold_l;
   //bool reportAllFeatures; const string reportAllFeatures_s; const string reportAllFeatures_l;
 
   FilterOptions():
     nPerms(datadefs::FILTER_DEFAULT_N_PERMS),nPerms_s("p"),nPerms_l("nPerms"),
-    pValueThreshold(datadefs::FILTER_DEFAULT_P_VALUE_THRESHOLD),pValueThreshold_s("t"),pValueThreshold_l("pValueTh"),
+    pValueThreshold(datadefs::FILTER_DEFAULT_P_VALUE_THRESHOLD),pValueThreshold_s("t"),pValueThreshold_l("pValueTh") {}
     //isAdjustedPValue(datadefs::FILTER_DEFAULT_IS_ADJUSTED_P_VALUE),isAdjustedPValue_s("d"),isAdjustedPValue_l("adjustP"),
     //normalizeImportanceValues(datadefs::FILTER_NORMALIZE_IMPORTANCE_VALUES),normalizeImportanceValues_s("r"),normalizeImportanceValues_l("normImportance"),
-    importanceThreshold(datadefs::FILTER_DEFAULT_IMPORTANCE_THRESHOLD),importanceThreshold_s("o"),importanceThreshold_l("importanceTh") {}
+    //importanceThreshold(datadefs::FILTER_DEFAULT_IMPORTANCE_THRESHOLD),importanceThreshold_s("o"),importanceThreshold_l("importanceTh") {}
     //reportAllFeatures(datadefs::FILTER_DEFAULT_REPORT_NONEXISTENT_FEATURES),reportAllFeatures_s("A"),reportAllFeatures_l("listAllFeatures") {}
 
   ~FilterOptions() {}
@@ -233,7 +233,7 @@ public:
     parser.getArgument<size_t>(nPerms_s,nPerms_l,nPerms);
     parser.getArgument<num_t>(pValueThreshold_s,pValueThreshold_l,pValueThreshold);
     //parser.getArgument<bool>(isAdjustedPValue_s,isAdjustedPValue_l,isAdjustedPValue);
-    parser.getArgument<num_t>(importanceThreshold_s,importanceThreshold_l,importanceThreshold);
+    //parser.getArgument<num_t>(importanceThreshold_s,importanceThreshold_l,importanceThreshold);
     //parser.getArgument<bool>(normalizeImportanceValues_s,normalizeImportanceValues_l,normalizeImportanceValues);
     //parser.getArgument<bool>(reportAllFeatures_s,reportAllFeatures_l,reportAllFeatures);
   }
@@ -248,7 +248,7 @@ public:
     this->printHelpLine(nPerms_s,nPerms_l,"Number of permutations in statistical test");
     this->printHelpLine(pValueThreshold_s,pValueThreshold_l,"P-value threshold in statistical test");
     //this->printHelpLine(isAdjustedPValue_s,isAdjustedPValue_l,"Flag to turn ON Benjamini-Hochberg multiple testing correction");
-    this->printHelpLine(importanceThreshold_s,importanceThreshold_l,"Importance threshold");
+    //this->printHelpLine(importanceThreshold_s,importanceThreshold_l,"Importance threshold");
     //this->printHelpLine(normalizeImportanceValues_s,normalizeImportanceValues_l,"Flag to turn ON normalization of importance scores");
     //this->printHelpLine(reportAllFeatures_s,reportAllFeatures_l,"Flag to turn ON reporting of all features, regardless of statistical significance");
   }
@@ -258,7 +258,7 @@ public:
     cout << "pValueThreshold = " << pValueThreshold << endl;
     //cout << "isAdjustedPValue = " << isAdjustedPValue << endl;
     //cout << "normalizeImportanceValues = " << normalizeImportanceValues << endl;
-    cout << "importanceThreshold = " << importanceThreshold << endl;
+    //cout << "importanceThreshold = " << importanceThreshold << endl;
     //cout << "reportAllFeatures = " << reportAllFeatures << endl;
   }
 

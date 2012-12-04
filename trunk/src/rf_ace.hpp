@@ -255,7 +255,7 @@ public:
 
     for ( size_t i = 0; i < nFeatures; ++i ) {
 
-      if ( filterOutput.pValues[i] > filterOptions->pValueThreshold || filterOutput.importances[i] > filterOptions->importanceThreshold ) {
+      if ( filterOutput.pValues[i] > filterOptions->pValueThreshold ) {
 	continue;
       }
 

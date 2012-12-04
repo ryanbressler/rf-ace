@@ -228,16 +228,16 @@ vector<string> utils::split(istream& streamObj, const char delimiter, const stri
 
 }
 
-vector<uint32_t> utils::hashText(const string& text) {
+unordered_set<uint32_t> utils::hashText(const string& text) {
 
-  vector<uint32_t> hashes;
+  unordered_set<uint32_t> hashes;
 
   char const* p = text.c_str();
   char const* q = strpbrk(p+1,datadefs::tokenDelimiters);
   for ( ; q != NULL; q = strpbrk(p,datadefs::tokenDelimiters) ) {
     if ( distance(p,q) > 2 ) {
       string token(p,q);
-      hashes.push_back( hashfun::hsieh(utils::tolower(token).c_str(),token.length()) );
+      hashes.insert( hashfun::hsieh(utils::tolower(token).c_str(),token.length()) );
     }
     p = q + 1;
   }
