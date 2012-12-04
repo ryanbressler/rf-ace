@@ -812,7 +812,15 @@ void treeDataTest::test_replaceFeatureData() {
 
 void treeDataTest::test_hashFeature() {
 
-  Feature hashFeature;
+  vector<string> textData(3,"");
+
+  textData[0] = "I am a random, text that is going to be hashed!";
+  textData[1] = "I am a another random text";
+  textData[2] = "This is something, completely different";
+
+  bool doHash = true;
+
+  Feature hashFeature(textData,"T:foo",doHash);
 
 }
 

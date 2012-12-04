@@ -5,6 +5,7 @@
 #include <vector>
 #include <string>
 #include <algorithm>
+#include <unordered_set>
 #include "datadefs.hpp"
 #include "utils.hpp"
 #include "distributions.hpp"
@@ -389,13 +390,14 @@ void UtilsTest::test_text2tokens() {
 
   string text = "I want to, tokenizE  This!!.; it's so rad@";
 
-  vector<uint32_t> hashes = utils::hashText(text);
+  unordered_set<uint32_t> hashes = utils::hashText(text);
+  unordered_set<uint32_t>::const_iterator it = hashes.begin();
 
   CPPUNIT_ASSERT( hashes.size() == 4 );
-  CPPUNIT_ASSERT( hashes[0] == hashfun::hsieh("want",4) );
-  CPPUNIT_ASSERT( hashes[1] == hashfun::hsieh("tokenize",8) );
-  CPPUNIT_ASSERT( hashes[2] == hashfun::hsieh("this",4) );
-  CPPUNIT_ASSERT( hashes[3] == hashfun::hsieh("rad",3) );
+  CPPUNIT_ASSERT( hashes.find( hashfun::hsieh("want",4) ) != hashes.end() );
+  CPPUNIT_ASSERT( hashes.find( hashfun::hsieh("tokenize",8) ) != hashes.end() );
+  CPPUNIT_ASSERT( hashes.find( hashfun::hsieh("this",4) ) != hashes.end() );
+  CPPUNIT_ASSERT( hashes.find( hashfun::hsieh("rad",3) ) != hashes.end() );
 
 }
 

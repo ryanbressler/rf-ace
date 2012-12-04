@@ -8,7 +8,7 @@
 #include <istream>
 #include <sstream>
 #include <cstdlib>
-//#include <bitset>
+#include <unordered_set>
 #include "datadefs.hpp"
 //#include "treedata.hpp"
 #include "distributions.hpp"
@@ -44,7 +44,7 @@ namespace utils {
 			   const char separator,
 			   const char comment);
 
-  vector<uint32_t> hashText(const string& text);
+  unordered_set<uint32_t> hashText(const string& text);
   
   // Splits a delimited string
   vector<string> split(const string& str, const char delimiter, const string& wh = " ");

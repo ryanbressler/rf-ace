@@ -89,7 +89,7 @@ int main(const int argc, char* const argv[]) {
     
     cout << endl
          << "Significant associations (" << filterOutput.nSignificantFeatures << "/" << filterOutput.nAllFeatures << ") written to file '" << options.io.associationsFile << "'. Format:" << endl
-         << "TARGET   PREDICTOR   P-VALUE   IMPORTANCE   CORRELATION   NSAMPLES" << endl
+         << "TARGET   PREDICTOR   P-VALUE   MEAN.MIN.DEPTH   CORRELATION   NSAMPLES" << endl
          << endl
          << "RF-ACE completed successfully." << endl
          << endl;

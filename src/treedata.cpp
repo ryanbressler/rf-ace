@@ -44,11 +44,11 @@ Feature::Feature(const vector<string>& newStringData, const string& newName, boo
     
     size_t nSamples = newStringData.size();
     
-    hashList.resize(nSamples);
+    hashSet.resize(nSamples);
     
     for ( size_t i = 0; i < nSamples; ++i ) {
       
-      hashList[i] = utils::hashText(newStringData[i]);
+      hashSet[i] = utils::hashText(newStringData[i]);
       
     }
     
@@ -802,10 +802,59 @@ void Treedata::getFilteredFeatureDataPair(const size_t featureIdx1,
 
 num_t Treedata::hashFeatureSplit(const size_t targetIdx,
 				 const size_t featureIdx,
+				 const uint32_t hashIdx,
 				 const size_t minSamples,
 				 vector<size_t>& sampleIcs_left,
 				 vector<size_t>& sampleIcs_right) {
 
+  
+  size_t n_tot = sampleIcs_right.size();
+
+  sampleIcs_left.resize( n_tot );
+
+  size_t n_left = 0;
+  size_t n_right = 0;
+
+  vector<num_t> tv;
+
+  tv.resize( n_tot );
+
+  for ( size_t i = 0; i < n_tot; ++i ) {
+    unordered_set<uint32_t>& hl = features_[featureIdx].hashSet[sampleIcs_right[i]];
+    if ( hl.find(hashIdx) != hl.end() ) {
+      sampleIcs_left[n_left++] = sampleIcs_right[i];
+    } else {
+      sampleIcs_right[n_right++] = sampleIcs_right[i];
+    }
+    tv[i] = features_[targetIdx].data[i];
+  }
+
+  if ( n_left < minSamples || n_right < minSamples ) {
+    return( datadefs::NUM_NAN );
+  }
+
+  sampleIcs_left.resize(n_left);
+  sampleIcs_right.resize(n_right);
+
+  if ( this->isFeatureNumerical(targetIdx) ) {
+
+    num_t mu_left = 0.0;
+    num_t mu_right = 0.0;
+    num_t mu_tot = math::mean(tv);
+
+    for ( size_t i = 0; i < n_left; ++i ) {
+      mu_left  += tv[sampleIcs_left[i]] / n_left;
+    }
+    
+    for ( size_t i = 0; i < n_right; ++i ) {
+      mu_right += tv[sampleIcs_right[i]] / n_right;  
+    }
+
+    return( math::deltaImpurity_regr(mu_tot,n_tot,mu_left,n_left,mu_right,n_right) );
+    
+  } else {
+    return( datadefs::NUM_NAN );
+  }
   
 
 }

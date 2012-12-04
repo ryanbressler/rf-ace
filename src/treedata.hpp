@@ -9,6 +9,7 @@
 #include <map>
 #include <fstream>
 #include <unordered_map>
+#include <unordered_set>
 
 #include "datadefs.hpp"
 #include "distributions.hpp"
@@ -25,7 +26,7 @@ public:
   vector<num_t> data;
   map<string,num_t> mapping;
   map<num_t,string> backMapping;
-  vector<vector<uint32_t> > hashList;
+  vector<unordered_set<uint32_t> > hashSet;
   string name;
   
   Feature();
@@ -103,6 +104,7 @@ public:
 
   num_t hashFeatureSplit(const size_t targetIdx,
 			 const size_t featureIdx,
+			 const uint32_t hashIdx,
 			 const size_t minSamples,
 			 vector<size_t>& sampleIcs_left,
 			 vector<size_t>& sampleIcs_right);
