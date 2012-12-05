@@ -21,6 +21,11 @@ public:
   void printHelpLine(const string& shortOpt, const string& longOpt, const string& description) {
     cout << " -" << shortOpt << " / --" << longOpt << setw( maxWidth_ - longOpt.length() ) << " " << description << endl;
   }
+
+  template<typename T>
+  void printOption(const string& shortOpt, const string& longOpt, const T& value) {
+    cout << " -" << shortOpt << " / --" << longOpt << setw( maxWidth_ - longOpt.length() ) << " = " << value << endl;
+  }
   
   void printHelpHint(const string& shortOpt, const string& longOpt) {
     cout << endl;
@@ -190,21 +195,30 @@ public:
   }
 
   void print() {
-    cout << "forestType = ";
-    if ( forestType == ForestType::RF ) { cout << "RF"; } else if ( forestType == ForestType::GBT ) { cout << "GBT"; } else { cout << "CART"; }
+    if ( forestType == ForestType::RF ) { 
+      cout << "RF configuration:" << endl;
+      this->printOption(nTrees_s,nTrees_l,nTrees);
+      this->printOption(mTry_s,mTry_l,mTry);
+      this->printOption(nodeSize_s,nodeSize_l,nodeSize);
+      this->printOption(nMaxLeaves_s,nMaxLeaves_l,nMaxLeaves);
+    } else if ( forestType == ForestType::GBT ) { 
+      cout << "GBT configuration:" << endl;
+      this->printOption(nTrees_s,nTrees_l,nTrees);
+      this->printOption(mTry_s,mTry_l,mTry);
+      this->printOption(nodeSize_s,nodeSize_l,nodeSize);
+      this->printOption(nMaxLeaves_s,nMaxLeaves_l,nMaxLeaves);
+      this->printOption(shrinkage_s,shrinkage_l,shrinkage);
+    } else if ( forestType == ForestType::CART ) {
+      cout << "CART configuration:" << endl;
+      this->printOption(nodeSize_s,nodeSize_l,nodeSize);
+      this->printOption(nMaxLeaves_s,nMaxLeaves_l,nMaxLeaves);
+    } else {
+      cerr << "ERROR: unknown model type to print parameters for!" << endl;
+      exit(1);
+    }
     cout << endl;
-    cout << "nTrees = " << nTrees << endl;
-    cout << "mTry = " << mTry << endl;
-    cout << "nMaxLeaves = " << nMaxLeaves << endl;
-    cout << "nodeSize = " << nodeSize << endl;
-    cout << "shrinkage = " << shrinkage << endl;
-    cout << "contrastFraction = " << contrastFraction << endl;
-    cout << "inBoxFraction = " << inBoxFraction << endl;
-    cout << "sampleWithReplacement = " << sampleWithReplacement << endl;
-    cout << "isRandomSplit = " << isRandomSplit << endl;
-    cout << "useContrasts = " << useContrasts << endl;
   }
-
+   
 };
 
 class FilterOptions : public HelpStyler {
@@ -254,8 +268,10 @@ public:
   }
 
   void print() {
-    cout << "nPerms = " << nPerms << endl;
-    cout << "pValueThreshold = " << pValueThreshold << endl;
+    cout << "Filter options:" << endl;
+    this->printOption(nPerms_s,nPerms_l,nPerms);
+    this->printOption(pValueThreshold_s,pValueThreshold_l,pValueThreshold);
+    cout << endl;
     //cout << "isAdjustedPValue = " << isAdjustedPValue << endl;
     //cout << "normalizeImportanceValues = " << normalizeImportanceValues << endl;
     //cout << "importanceThreshold = " << importanceThreshold << endl;

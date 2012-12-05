@@ -45,6 +45,8 @@ int main(const int argc, char* const argv[]) {
 
   options.io.validate();
 
+  options.forestOptions.print();
+
   // With no input arguments the help is printed
   if ( argc == 1 || options.generalOptions.printHelp ) {
     options.help();
@@ -59,6 +61,8 @@ int main(const int argc, char* const argv[]) {
   timer.tic("Total time elapsed");
 
   if ( options.io.filterDataFile != "" ) {
+
+    options.filterOptions.print();
 
     bool useContrasts = true;
     cout << "===> Reading file '" << options.io.filterDataFile << "' for filtering, please wait... " << flush;
