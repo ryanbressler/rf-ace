@@ -909,101 +909,21 @@ num_t Treedata::numericalFeatureSplit(const size_t targetIdx,
     return( DI_best );
   }
 
-  int bestSplitIdx = -1;
+  size_t bestSplitIdx = datadefs::MAX_IDX;
 
   //If the target is numerical, we use the incremental squared error formula
   if ( this->isFeatureNumerical(targetIdx) ) {
 
-    // We start with all samples on the left branch
-    num_t mu_tot = math::mean(tv);
-    num_t mu_left = 0.0;
-    num_t mu_right = mu_tot;
-
-    // Make sure the squared error didn't become corrupted by NANs
-    assert( !datadefs::isNAN(mu_tot) );
-
-    // Add samples one by one from left to right until we hit the
-    // minimum allowed size of the branch
-    for( size_t i = 0; i < n_tot - minSamples; ++i ) {
-
-      // Add n'th sample tv[i] from left to right and update
-      // mean and squared error
-      ++n_left;
-      --n_right;
-      mu_left  += ( tv[i] - mu_left  ) / n_left;
-      mu_right -= ( tv[i] - mu_right ) / n_right;
-
-      // If the sample is repeated and we can continue, continue
-      if ( n_left < minSamples || (n_left < n_tot - minSamples && fv[ i + 1 ] == fv[ i ]) ) {
-        continue;
-      }
-      
-      // If the current split point yields a better split than the best,
-      // update DI_best and bestSplitIdx
-      num_t DI = math::deltaImpurity_regr(mu_tot,n_tot,mu_left,n_left,mu_right,n_right);
-      //cout << "(" << n_left << "," << tv[i] << "," << DI << ")"; 
-      if (  DI > DI_best ) {
-
-        bestSplitIdx = i;
-        DI_best = DI;
-
-      }
-
-    }
-
-    // Make sure there were no NANs to corrupt the results
-    assert( !datadefs::isNAN(DI_best) );
-
+    DI_best = utils::numericalFeatureSplitsNumericalTarget(tv,fv,minSamples,bestSplitIdx);
 
   } else { // Otherwise we use the iterative gini index formula to update impurity scores while we traverse "right"
 
-    map<num_t,size_t> freq_right;
-    size_t sf_right = 0;
-    
-    for ( size_t i = 0; i < n_tot; ++i ) {
-      math::incrementSquaredFrequency(tv[i],freq_right,sf_right);
-    }
-
-    size_t sf_tot = sf_right;
-
-    map<num_t,size_t> freq_left;
-    size_t sf_left = 0;
-
-    // Add samples one by one from right to left until we hit the
-    // minimum allowed size of the branch
-    for( size_t i = 0; i < n_tot - minSamples; ++i ) {
-
-      // Add n'th sample tv[i] from right to left and update
-      // mean and squared frequency
-      math::incrementSquaredFrequency(tv[i],freq_left,sf_left);
-      ++n_left;
-
-      math::decrementSquaredFrequency(tv[i],freq_right,sf_right);
-      --n_right;
-
-      // If we have repeated samples and can continue, continue
-      if ( n_left < minSamples || (n_left < n_tot - minSamples && fv[ i + 1 ] == fv[ i ]) ) {
-        continue;
-      }
-
-      // If the split point "i-1" yields a better split than the previous one,
-      // update se_best and bestSplitIdx
-      num_t DI = math::deltaImpurity_class(sf_tot,n_tot,sf_left,n_left,sf_right,n_right);
-      //cout << " tv=" << features_[targetIdx].backMapping[tv[i]] << " fv=" << fv[i] << " nl=" << n_left << " sfl=" << sf_left << " nr=" << n_right << " sfr=" << sf_right << " nt=" << n_tot << " sft=" << sf_tot << " DI=" << DI << endl;
-      
-      if ( DI > DI_best ) {
-        bestSplitIdx = i;
-	DI_best = DI;
-      }
-
-    }
-    
-    assert( !datadefs::isNAN(DI_best) );
+    DI_best = utils::numericalFeatureSplitsCategoricalTarget(tv,fv,minSamples,bestSplitIdx);
 
   }
 
 
-  if ( bestSplitIdx == -1 ) {
+  if ( bestSplitIdx == datadefs::MAX_IDX ) {
     DI_best = 0.0;
     return( DI_best );
   }

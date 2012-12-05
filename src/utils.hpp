@@ -10,7 +10,7 @@
 #include <cstdlib>
 #include <unordered_set>
 #include "datadefs.hpp"
-//#include "treedata.hpp"
+//#include "math.hpp"
 #include "distributions.hpp"
 
 using namespace std;
@@ -142,7 +142,17 @@ namespace utils {
     }
 
   }
-  
+
+  num_t numericalFeatureSplitsNumericalTarget(const vector<num_t>& tv,
+					      const vector<num_t>& fv,
+					      const size_t minSamples,
+					      size_t& splitIdx);
+
+  num_t numericalFeatureSplitsCategoricalTarget(const vector<num_t>& tv,
+						const vector<num_t>& fv,
+						const size_t minSamples,
+						size_t& splitIdx);
+
 }
 
 #endif
