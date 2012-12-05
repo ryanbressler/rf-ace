@@ -964,196 +964,36 @@ num_t Treedata::categoricalFeatureSplit(const size_t targetIdx,
   sampleIcs_left.clear();
   this->getFilteredFeatureDataPair(targetIdx,featureIdx,sampleIcs_right,tv,fv);
 
-  //cout << " => " << sampleIcs_right.size() << endl;
-
-  // Map all feature categories to the corresponding samples and represent it as map. The map is used to assign samples to left and right branches
-  map<num_t,vector<size_t> > fmap_right;
-  map<num_t,vector<size_t> > fmap_left;
-
-  size_t n_tot = 0;
-  datadefs::map_data(fv,fmap_right,n_tot);
-  size_t n_right = n_tot;
-  size_t n_left = 0;
+  size_t n_tot = fv.size();
 
   if(n_tot < 2 * minSamples) {
     DI_best = 0.0;
     return( DI_best );
   }
 
+  
+  map<num_t,vector<size_t> > fmap_right;
+  map<num_t,vector<size_t> > fmap_left;
+
   if ( this->isFeatureNumerical(targetIdx) ) {
 
-    num_t mu_tot = math::mean(tv);
-    num_t mu_right = mu_tot;
-    num_t mu_left = 0.0;
-
-    while ( fmap_right.size() > 1 ) {
-
-      map<num_t,vector<size_t> >::iterator it_best( fmap_right.end() );
-
-      // We test each category one by one and see if the fitness becomes improved
-      for ( map<num_t,vector<size_t> >::iterator it( fmap_right.begin() ); it != fmap_right.end() ; ++it ) {
-	
-        //cout << "Testing to split with feature '" << treedata->getRawFeatureData(featureIdx,it->first) << "'" << endl;
-	
-        // Take samples from right and put them left
-        //cout << "from right to left: [";
-	size_t n_left_c = n_left;
-	size_t n_right_c = n_right;
-	num_t mu_left_c = mu_left;
-	num_t mu_right_c = mu_right;
-	
-        for(size_t i = 0; i < it->second.size(); ++i) {
-          //cout << " " << it->second[i];
-	  
-	  ++n_left_c;
-	  --n_right_c;
-	  mu_left_c  += ( tv[ it->second[i] ] - mu_left_c  ) / n_left_c;
-	  mu_right_c -= ( tv[ it->second[i] ] - mu_right_c ) / n_right_c;
-	  
-        }
-        //cout << " ]" << endl;
-	
-        //If the split reduces impurity even further, save the point
-	num_t DI = math::deltaImpurity_regr(mu_tot,n_tot,mu_left_c,n_left_c,mu_right_c,n_right_c);
-        if ( DI > DI_best ) { //&& n_left >= minSamples && n_right >= minSamples )
-	  
-          it_best = it;
-          DI_best = DI;
-        }
-
-      }
-
-      // After testing all categories,
-      // if we couldn't find any split that would reduce impurity,
-      // we'll exit the loop
-      if ( it_best == fmap_right.end() ) {
-        //cout << " -- STOP --" << endl;
-        break;
-      }
-      
-      // Otherwise move samples from right to left
-      for(size_t i = 0; i < it_best->second.size(); ++i) {
-        //cout << " " << it->second[i];
-
-	++n_left;
-	--n_right;
-	mu_left  += ( tv[ it_best->second[i] ] - mu_left  ) / n_left;
-	mu_right -= ( tv[ it_best->second[i] ] - mu_right ) / n_right;
-
-      }
-
-      // Update the maps
-      fmap_left.insert( *it_best );
-      fmap_right.erase( it_best->first );
-
-    }
-
-    // Calculate the final split fitness
-    //splitFitness = this->getNumericalSplitFitness(se_tot,se_best);
+    DI_best = utils::categoricalFeatureSplitsNumericalTarget(tv,fv,minSamples,fmap_left,fmap_right);
 
   } else {
 
-    map<num_t,size_t> freq_left,freq_right;
-    size_t sf_left = 0;
-    size_t sf_right = 0;
-
-    for( size_t i = 0; i < n_tot; ++i ) {
-      math::incrementSquaredFrequency(tv[i], freq_right, sf_right);
-    }
-
-    size_t sf_tot = sf_right;
-
-    while ( fmap_right.size() > 1 ) {
-
-      map<num_t,vector<size_t> >::iterator it_best( fmap_right.end() );
-      //cout << "There are " << fmap_right.size() << " categories on right" << endl;
-
-      // We test each category one by one and see if the fitness becomes improved
-      for ( map<num_t,vector<size_t> >::iterator it( fmap_right.begin() ); it != fmap_right.end() ; ++it ) {
-
-        //cout << "Testing to split with feature '" << treedata->getRawFeatureData(featureIdx,it->first) << "'" << endl;
-
-        // Take samples from right and put them left
-        //cout << "from right to left: [";
-        for(size_t i = 0; i < it->second.size(); ++i) {
-
-          // Add sample to left
-          ++n_left;
-	  math::incrementSquaredFrequency(tv[ it->second[i] ], freq_left, sf_left);
-
-          // Remove sample from right
-          --n_right;
-	  math::decrementSquaredFrequency(tv[ it->second[i] ], freq_right, sf_right);
-
-        }
-        //cout << " ]" << endl;
-
-        //If the impurity becomes reduced even further, save the point
-	num_t DI = math::deltaImpurity_class(sf_tot,n_tot,sf_left,n_left,sf_right,n_right);
-        if ( DI > DI_best ) { //&& n_left >= minSamples && n_right >= minSamples )
-
-          it_best = it;
-	  DI_best = DI;
-        }
-
-        // Take samples from left and put them right
-        //cout << "From left to right: [";
-        for(size_t i = 0; i < it->second.size(); ++i) {
-
-          // Add sample to right
-          ++n_right;
-	  math::incrementSquaredFrequency(tv[ it->second[i] ], freq_right, sf_right);
-
-          // Remove sample from left
-          --n_left;
-	  math::decrementSquaredFrequency(tv[ it->second[i] ], freq_left, sf_left);
-
-        }
-        //cout << " ]" << endl;
-
-      }
-
-      // After testing all categories,
-      // if we couldn't find any split that would reduce impurity,
-      // we'll exit the loop
-      if ( it_best == fmap_right.end() ) {
-        //cout << " -- STOP --" << endl;
-        break;
-      }
-
-      // Take samples from right and put them left
-      for(size_t i = 0; i < it_best->second.size(); ++i) {
-
-        // Add sample to left
-        ++n_left;
-	math::incrementSquaredFrequency(tv[ it_best->second[i] ], freq_left, sf_left);
-
-        // Remove sample from right
-        --n_right;
-	math::decrementSquaredFrequency(tv[ it_best->second[i] ], freq_right, sf_right);
-
-      }
-
-      // Update the maps
-      fmap_left.insert( *it_best );
-      fmap_right.erase( it_best->first );
-
-    }
+    DI_best = utils::categoricalFeatureSplitsCategoricalTarget(tv,fv,minSamples,fmap_left,fmap_right);
 
   }
 
-  if( n_left < minSamples || n_right < minSamples ) {
-    DI_best = 0.0;
-    return( DI_best );
+  if ( fabs(DI_best) < datadefs::EPS ) {
+    return(DI_best);
   }
 
   // Assign samples and categories on the left. First store the original sample indices
   vector<size_t> sampleIcs = sampleIcs_right;
 
-  assert( n_left + n_right == n_tot );
-
   // Then populate the left side (sample indices and split values)
-  sampleIcs_left.resize(n_left);
+  sampleIcs_left.resize(n_tot);
   splitValues_left.clear();
   size_t iter = 0;
   for ( map<num_t,vector<size_t> >::const_iterator it(fmap_left.begin()); it != fmap_left.end(); ++it ) {
@@ -1163,11 +1003,12 @@ num_t Treedata::categoricalFeatureSplit(const size_t targetIdx,
     }
     splitValues_left.insert( it->first );
   }
-  assert( iter == n_left);
+  sampleIcs_left.resize(iter);
+  //assert( iter == n_left);
   assert( splitValues_left.size() == fmap_left.size() );
 
   // Last populate the right side (sample indices and split values)
-  sampleIcs_right.resize(n_right);
+  sampleIcs_right.resize(n_tot);
   splitValues_right.clear();
   iter = 0;
   for ( map<num_t,vector<size_t> >::const_iterator it(fmap_right.begin()); it != fmap_right.end(); ++it ) {
@@ -1177,8 +1018,8 @@ num_t Treedata::categoricalFeatureSplit(const size_t targetIdx,
     }
     splitValues_right.insert( it->first );
   }
-
-  assert( iter == n_right );
+  sampleIcs_right.resize(iter);
+  //assert( iter == n_right );
   assert( splitValues_right.size() == fmap_right.size() );
 
   return( DI_best );
