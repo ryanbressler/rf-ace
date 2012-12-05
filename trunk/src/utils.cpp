@@ -9,6 +9,7 @@
 #include <ios>
 
 #include "hash.hpp"
+#include "math.hpp"
 
 string utils::tolower(const string& str) {
 
@@ -362,6 +363,109 @@ vector<vector<size_t> > utils::splitRange(const size_t nElements, const size_t n
 
 }
 
+num_t utils::numericalFeatureSplitsNumericalTarget(const vector<num_t>& tv,
+						   const vector<num_t>& fv,
+						   const size_t minSamples,
+						   size_t& splitIdx) {
 
+  size_t n_tot = tv.size();
+  size_t n_left = 0;
+  size_t n_right = n_tot;
 
+  // We start with all samples on the left branch
+  num_t mu_tot = math::mean(tv);
+  num_t mu_left = 0.0;
+  num_t mu_right = mu_tot;
 
+  // Make sure the squared error didn't become corrupted by NANs
+  assert( !datadefs::isNAN(mu_tot) );
+
+  num_t DI_best = 0.0;
+
+  // Add samples one by one from left to right until we hit the
+  // minimum allowed size of the branch
+  for( size_t i = 0; i < n_tot - minSamples; ++i ) {
+
+    // Add n'th sample tv[i] from left to right and update
+    // mean and squared error
+    ++n_left;
+    --n_right;
+    mu_left  += ( tv[i] - mu_left  ) / n_left;
+    mu_right -= ( tv[i] - mu_right ) / n_right;
+
+    // If the sample is repeated and we can continue, continue
+    if ( n_left < minSamples || (n_left < n_tot - minSamples && fv[ i + 1 ] == fv[ i ]) ) {
+      continue;
+    }
+
+    // If the current split point yields a better split than the best,
+    // update DI_best and bestSplitIdx
+    num_t DI = math::deltaImpurity_regr(mu_tot,n_tot,mu_left,n_left,mu_right,n_right);
+    //cout << "(" << n_left << "," << tv[i] << "," << DI << ")";
+    if (  DI > DI_best ) {
+
+      splitIdx = i;
+      DI_best = DI;
+
+    }
+
+  }
+
+  return(DI_best);
+}
+
+num_t utils::numericalFeatureSplitsCategoricalTarget(const vector<num_t>& tv,
+						     const vector<num_t>& fv,
+						     const size_t minSamples,
+						     size_t& splitIdx) {
+ 
+  size_t n_tot = tv.size();
+  size_t n_left = 0;
+  size_t n_right = n_tot;
+ 
+  map<num_t,size_t> freq_right;
+  size_t sf_right = 0;
+  
+  for ( size_t i = 0; i < n_tot; ++i ) {
+    math::incrementSquaredFrequency(tv[i],freq_right,sf_right);
+  }
+  
+  size_t sf_tot = sf_right;
+  
+  map<num_t,size_t> freq_left;
+  size_t sf_left = 0;
+
+  num_t DI_best = 0.0;
+  
+  // Add samples one by one from right to left until we hit the
+  // minimum allowed size of the branch
+  for( size_t i = 0; i < n_tot - minSamples; ++i ) {
+    
+    // Add n'th sample tv[i] from right to left and update
+    // mean and squared frequency
+    math::incrementSquaredFrequency(tv[i],freq_left,sf_left);
+    ++n_left;
+    
+    math::decrementSquaredFrequency(tv[i],freq_right,sf_right);
+    --n_right;
+    
+    // If we have repeated samples and can continue, continue
+    if ( n_left < minSamples || (n_left < n_tot - minSamples && fv[ i + 1 ] == fv[ i ]) ) {
+      continue;
+    }
+    
+    // If the split point "i-1" yields a better split than the previous one,
+    // update se_best and bestSplitIdx
+    num_t DI = math::deltaImpurity_class(sf_tot,n_tot,sf_left,n_left,sf_right,n_right);
+    //cout << " tv=" << features_[targetIdx].backMapping[tv[i]] << " fv=" << fv[i] << " nl=" << n_left << " sfl=" << sf_left << " nr=" << n_right << " sfr=" << sf_right << " nt=" << n_tot << " sft=" << sf_tot << " DI=" << DI << endl;
+    
+    if ( DI > DI_best ) {
+      splitIdx = i;
+      DI_best = DI;
+    }
+    
+  }
+  
+  return(DI_best);
+  
+}
