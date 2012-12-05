@@ -65,7 +65,7 @@ int main(const int argc, char* const argv[]) {
     options.filterOptions.print();
 
     bool useContrasts = true;
-    cout << "===> Reading file '" << options.io.filterDataFile << "' for filtering, please wait... " << flush;
+    cout << "Reading file '" << options.io.filterDataFile << "' for filtering, please wait... " << flush;
     Treedata filterData(options.io.filterDataFile,options.generalOptions.dataDelimiter,options.generalOptions.headerDelimiter,useContrasts);
     cout << "DONE" << endl;
 
@@ -110,7 +110,7 @@ int main(const int argc, char* const argv[]) {
   if ( options.io.trainDataFile != "" ) {
     
     // Read train data into Treedata object
-    cout << "===> Reading train file '" << options.io.trainDataFile << "', please wait... " << flush;
+    cout << "Reading train file '" << options.io.trainDataFile << "', please wait... " << flush;
     Treedata trainData(options.io.trainDataFile,options.generalOptions.dataDelimiter,options.generalOptions.headerDelimiter);
     cout << "DONE" << endl;
     
@@ -153,11 +153,11 @@ int main(const int argc, char* const argv[]) {
   
   if ( options.io.testDataFile != "" ) {
     
-    cout << "===> Reading test file '" << options.io.testDataFile << "', please wait..." << flush;
+    cout << "Reading test file '" << options.io.testDataFile << "', please wait..." << flush;
     Treedata testData(options.io.testDataFile,options.generalOptions.dataDelimiter,options.generalOptions.headerDelimiter);
     cout << "DONE" << endl;
     
-    cout << "===> Making predictions with test data... " << flush;
+    cout << "Making predictions with test data... " << flush;
     testOutput = rface.test(&testData,options.generalOptions.nThreads);
     cout << "DONE" << endl;
     
@@ -179,7 +179,7 @@ int main(const int argc, char* const argv[]) {
   
   if ( options.io.saveForestFile != "" ) {
     
-    cout << "===> Writing predictor to file... " << flush;
+    cout << "Writing predictor to file... " << flush;
     rface.save( options.io.saveForestFile );
     cout << "DONE" << endl
 	 << endl
@@ -261,15 +261,14 @@ vector<num_t> readFeatureWeights(const Treedata& treeData, const size_t targetId
 
 void printDataStatistics(Treedata& treeData, const size_t targetIdx) {
 
-  cout << endl << "Data statistics:" << endl;
+  //cout << endl << "Data statistics:" << endl;
 
   size_t nSamples = treeData.nSamples();
   size_t nFeatures = treeData.nFeatures();
   size_t nRealSamples = treeData.nRealSamples(targetIdx);
   num_t realFraction = 1.0*nRealSamples / treeData.nSamples();
 
-  cout << " - " << nFeatures << " features" << endl;
-  cout << " - " << nRealSamples << " samples / " << nSamples << " ( " << 100.0 * ( 1 - realFraction ) << " % missing )" << endl << endl;
+  cout << endl << "Feature '" << treeData.getFeatureName(targetIdx) << "' chosen as target with " << nRealSamples << " / " << nSamples << " samples ( " << 100.0 * ( 1 - realFraction ) << " % missing ) among " << nFeatures << " features" << endl;
 
 }
 
@@ -310,9 +309,12 @@ void writeFilterOutputToFile(RFACE::FilterOutput& filterOutput, const string& fi
 
   for ( size_t i = 0; i < nFeatures; ++i ) {
 
+    toAssociationFile.setf(ios::scientific);
     toAssociationFile << filterOutput.targetName << "\t" << filterOutput.featureNames[i] << "\t" 
-		      << scientific << filterOutput.pValues[i] << "\t" << scientific << filterOutput.importances[i] << "\t"
-		      << scientific << filterOutput.correlations[i] << "\t" << filterOutput.sampleCounts[i] << endl;
+		      << filterOutput.pValues[i] << "\t" << filterOutput.importances[i] << "\t"
+		      << filterOutput.correlations[i] << flush;
+    toAssociationFile.unsetf(ios::scientific);
+    toAssociationFile << "\t" << filterOutput.sampleCounts[i] << endl;
     
   }
   

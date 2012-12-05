@@ -132,7 +132,7 @@ public:
 
     vector<distributions::Random> randoms = makeRandomNumberGenerators(nThreads,seed);
 
-    cout << "===> Uncovering associations... " << flush;
+    cout << endl << "Uncovering associations... " << flush;
     executeRandomForest(filterData,targetIdx,featureWeights,forestOptions,filterOptions,filterOutput,randoms,forestFile);
     cout << "DONE" << endl;
 
