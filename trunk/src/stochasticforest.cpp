@@ -877,12 +877,11 @@ void StochasticForest::getMeanMinimalDepthValues(Treedata* trainData,
   depthValues.clear();
   depthValues.resize(nAllFeatures, 0.0);
 
-  vector < size_t > featureCounts(nAllFeatures, 0);
+  vector<size_t> featureCounts(nAllFeatures, 0);
 
   for (size_t treeIdx = 0; treeIdx < this->nTrees(); ++treeIdx) {
 
-    vector < pair<size_t, size_t> > minDistPairs =
-        rootNodes_[treeIdx]->getMinDistFeatures();
+    vector<pair<size_t,size_t> > minDistPairs = rootNodes_[treeIdx]->getMinDistFeatures();
 
     for (size_t i = 0; i < minDistPairs.size(); ++i) {
 
@@ -891,8 +890,7 @@ void StochasticForest::getMeanMinimalDepthValues(Treedata* trainData,
 
       ++featureCounts[featureIdx];
 
-      depthValues[featureIdx] += 1.0 * (newDepthValue - depthValues[featureIdx])
-          / featureCounts[featureIdx];
+      depthValues[featureIdx] += 1.0 * (newDepthValue - depthValues[featureIdx]) / featureCounts[featureIdx];
 
     }
 

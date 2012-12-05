@@ -170,7 +170,7 @@ public:
 
   bool isFeatureNumerical(const size_t featureIdx);
   bool isFeatureCategorical(const size_t featureIdx);
-  bool isFeatureTextual(const size_t featureIdx);
+  bool isFeatureTextual(const size_t featureId);
 
   void replaceFeatureData(const size_t featureIdx, const vector<num_t>& featureData);
   void replaceFeatureData(const size_t featureIdx, const vector<string>& rawFeatureData);
@@ -199,10 +199,10 @@ private:
 
   void parseARFFattribute(const string& str, string& attributeName, bool& isFeatureNumerical);
 
-  bool isValidNumericalHeader(const string& str);
-  bool isValidCategoricalHeader(const string& str);
-  bool isValidTextHeader(const string& str);
-  bool isValidFeatureHeader(const string& str);
+  bool isValidNumericalHeader(const string& str, const char headerDelimiter);
+  bool isValidCategoricalHeader(const string& str, const char headerDelimiter);
+  bool isValidTextHeader(const string& str, const char headerDelimiter);
+  bool isValidFeatureHeader(const string& str, const char headerDelimiter);
 
 
   template <typename T> void transpose(vector<vector<T> >& mat);

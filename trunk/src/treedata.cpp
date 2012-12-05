@@ -293,7 +293,7 @@ void Treedata::readAFM(ifstream& featurestream,
   while ( getline(ss,field,dataDelimiter) ) {
 
     // If at least one of the column headers is a valid feature header, we assume features are stored as columns
-    if ( isFeaturesAsRows && isValidFeatureHeader(field) ) {
+    if ( isFeaturesAsRows && isValidFeatureHeader(field,headerDelimiter) ) {
       isFeaturesAsRows = false;
     }
     columnHeaders.push_back(field);
@@ -357,11 +357,11 @@ void Treedata::readAFM(ifstream& featurestream,
   size_t nFeatures = featureHeaders.size();
   featureTypes.resize(nFeatures);
   for(size_t i = 0; i < nFeatures; ++i) {
-    if(Treedata::isValidNumericalHeader(featureHeaders[i])) {
+    if(Treedata::isValidNumericalHeader(featureHeaders[i],headerDelimiter)) {
       featureTypes[i] = Feature::Type::NUM;
-    } else if ( this->isValidCategoricalHeader(featureHeaders[i]) ) {
+    } else if ( this->isValidCategoricalHeader(featureHeaders[i],headerDelimiter) ) {
       featureTypes[i] = Feature::Type::CAT;
-    } else if ( this->isValidTextHeader(featureHeaders[i]) ) {
+    } else if ( this->isValidTextHeader(featureHeaders[i],headerDelimiter) ) {
       featureTypes[i] = Feature::Type::TXT;
     } else {
       cerr << "ERROR: unknown feature type with feature header '" << featureHeaders[i] << "'" << endl;
@@ -480,32 +480,32 @@ void Treedata::parseARFFattribute(const string& str, string& attributeName, bool
   //attributeName = prefix;
 }
 
-bool Treedata::isValidNumericalHeader(const string& str) {
-  if ( str.size() > 0 ) {
-    return( str[0] == 'N' );
+bool Treedata::isValidNumericalHeader(const string& str, const char headerDelimiter) {
+  if ( str.size() > 1 ) {
+    return( str[0] == 'N' && str[1] == headerDelimiter );
   } else {
     return( false );
   }
 }
 
-bool Treedata::isValidCategoricalHeader(const string& str) {
-  if ( str.size() > 0 ) {
-    return( str[0] == 'C' || str[0] == 'B' );
+bool Treedata::isValidCategoricalHeader(const string& str, const char headerDelimiter) {
+  if ( str.size() > 1 ) {
+    return( ( str[0] == 'C' || str[0] == 'B' ) && str[1] == headerDelimiter );
   } else {
     return(false);
   }
 }
 
-bool Treedata::isValidTextHeader(const string& str) {
-  if ( str.size() > 0 ) {
-    return( str[0] == 'T' );
+bool Treedata::isValidTextHeader(const string& str, const char headerDelimiter) {
+  if ( str.size() > 1 ) {
+    return( str[0] == 'T' && str[1] == headerDelimiter );
   } else {
     return(false);
   }
 }
 
-bool Treedata::isValidFeatureHeader(const string& str) {
-  return( isValidNumericalHeader(str) || isValidCategoricalHeader(str) || isValidTextHeader(str) );
+bool Treedata::isValidFeatureHeader(const string& str, const char headerDelimiter) {
+  return( isValidNumericalHeader(str,headerDelimiter) || isValidCategoricalHeader(str,headerDelimiter) || isValidTextHeader(str,headerDelimiter) );
 }
 
 size_t Treedata::nFeatures() const {
