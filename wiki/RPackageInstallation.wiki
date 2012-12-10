@@ -4,8 +4,14 @@
 = Installing from source =
 
 * Install Rcpp from CRAN
-* Download the latest RF-ACE source and save it to directory "rfacer/"
-* Call "R CMD INSTALL rfacer" in the directory where "rfacer/" exists 
+* Download the latest RF-ACE source and save it to directory `rfacer/`
+
+In the directory below `rfacer/`, call  
+{{{
+R CMD INSTALL rfacer
+}}} 
+to get 
+in the directory where "rfacer/" exists 
 
 Now, once you include library "rfacer" in the R script, you should have access to the following functions
 
@@ -13,7 +19,11 @@ Now, once you include library "rfacer" in the R script, you should have access t
 
 Not available yet -- stay tuned!
 
-= R Interface =
+= Using RF-ACE through R =
+You should now have the RF-ACE package installed. To gain access to the contents of the package in R, call
+{{{
+library(rfacer)
+}}}
 
 * rface.filter()
 * rface.train()
