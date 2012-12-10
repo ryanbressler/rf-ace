@@ -2,31 +2,48 @@
 #labels R,Package,Installation
 
 = Installing from source =
-
-* Install Rcpp from CRAN
-* Download the latest RF-ACE source and save it to directory `rfacer/`
-
-In the directory below `rfacer/`, call  
+The R package of RF-ACE depends on `Rcpp`, which can be installed from CRAN. After `Rcpp` is installed, download the latest RF-ACE source and save it to directory `rfacer/`; this is important since the name of the directory is tied to the name of the package. You can use SVN to grab the source:
+{{{
+svn checkout http://rf-ace.googlecode.com/svn/trunk/ rfacer
+}}}
+Next, compile the source into a package. In the directory below `rfacer/`, call  
 {{{
 R CMD INSTALL rfacer
 }}} 
-to get 
-in the directory where "rfacer/" exists 
-
-Now, once you include library "rfacer" in the R script, you should have access to the following functions
+and you're done!
 
 = Installing from CRAN =
 
 Not available yet -- stay tuned!
 
 = Using RF-ACE through R =
-You should now have the RF-ACE package installed. To gain access to the contents of the package in R, call
+The R package offers functionality similar to that of the underlying program; some features are still missing but will be added in the future. To gain access to the contents of the package in R, call
 {{{
 library(rfacer)
 }}}
+Below is a small R script that demonstrates the use of `rfacer`
+{{{
+# Load the package
+library(rfacer)
 
-* rface.filter()
-* rface.train()
-* rface.test()
-* rface.save()
-* rface.load()
+# Loads a file into a data frame
+data <- read.afm("test_103by300_mixed_nan_matrix.afm")
+
+# Perform feature selection with default parameters
+associations <- rface.filter(data,"N:output")
+
+# Train a RF predictor with default parameters
+predictorObj1 <- rface.train(data,"N:output")
+
+# Predict with train data
+predictions1 <- rface.predict(predictorObj1,data)
+
+# Save the predictor
+rface.save(predictorObj1,"predictor.sf")
+
+# Load the same predictor (equals to predictor1)
+predictorObj2 <- rface.load("predictor.sf")
+
+# Make predictions with the loaded predictor (equals to predictions1)
+predictions2 <- rface.predict(predictorObj2,data)
+}}}
