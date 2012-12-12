@@ -28,7 +28,7 @@ void StochasticForest::loadForest(const string& fileName) {
   string newLine("");
   getline(forestStream, newLine);
 
-  map < string, string > forestSetup = utils::parse(newLine, ',', '=', '"');
+  map<string,string> forestSetup = utils::parse(newLine, ',', '=', '"');
 
   if (forestSetup["FOREST"] == "GBT") {
     forestType_ = ForestOptions::ForestType::GBT;
@@ -71,7 +71,12 @@ void StochasticForest::loadForest(const string& fileName) {
     if (newLine.compare(0, 5, "TREE=") == 0) {
       ++treeIdx;
       //cout << treeIdx << " vs " << newLine << " => " << utils::str2int(utils::split(newLine,'=')[1]) << endl;
-      assert(treeIdx == utils::str2<int>(utils::split(newLine, '=')[1]));
+      //assert(treeIdx == utils::str2<int>(utils::split(newLine, '=')[1]));
+      if ( forestType_ == ForestOptions::ForestType::GBT ) {
+	map<string,string> GBTSetup = utils::parse(newLine, ',', '=', '"');
+	GBTfactors_.push_back( utils::str2<num_t>(GBTSetup["GBT_FACTOR"]) );
+	GBTconstant_.push_back( utils::str2<num_t>(GBTSetup["GBT_CONSTANT"]) );
+      }
       continue;
     }
 
@@ -681,23 +686,26 @@ void predictNumPerThread(Treedata* testData,
       (*predictions)[sampleIdx] = GBTconstant[0];
       (*confidence)[sampleIdx] = 0.0;
       for (size_t treeIdx = 0; treeIdx < nTrees; ++treeIdx) {
-        (*predictions)[sampleIdx] += GBTfactors[treeIdx] * predictionVec[treeIdx];
-        // MISSING: confidence
+	predictionVec[treeIdx] *= GBTfactors[treeIdx];
+        (*predictions)[sampleIdx] += predictionVec[treeIdx];
       }
     } else {
       (*predictions)[sampleIdx] = math::mean(predictionVec);
-      (*confidence)[sampleIdx] = sqrt(math::var(predictionVec, (*predictions)[sampleIdx]));
     }
-
+    (*confidence)[sampleIdx]  = sqrt(math::var(predictionVec));
   }
 }
 
-void StochasticForest::predict(Treedata* testData, vector<string>& predictions,
-    vector<num_t>& confidence, const size_t nThreads) {
+void StochasticForest::predict(Treedata* testData, vector<string>& predictions,vector<num_t>& confidence, size_t nThreads) {
 
-  //assert( forestType_ != ForestOptions::ForestType::GBT );
-  assert(!this->isTargetNumerical());
-  assert(nThreads > 0);
+  assert( nThreads > 0 );
+
+  if ( forestType_ == ForestOptions::ForestType::GBT && nThreads != 1 ) {
+    cout << "NOTE: GBT does not support multithreading. Turning threads OFF... " << flush;
+    nThreads = 1;
+  }
+  
+  assert( this->isTargetNumerical() );
 
 #ifdef NOTHREADS
   assert( nThreads == 1 );
@@ -710,26 +718,22 @@ void StochasticForest::predict(Treedata* testData, vector<string>& predictions,
 
   if (nThreads == 1) {
 
-    vector < size_t > sampleIcs = utils::range(nSamples);
+    vector<size_t> sampleIcs = utils::range(nSamples);
 
-    predictCatPerThread(testData, rootNodes_, forestType_, sampleIcs,
-        &predictions, &confidence, categories_, GBTconstant_, GBTfactors_);
+    predictCatPerThread(testData, rootNodes_, forestType_, sampleIcs, &predictions, &confidence, categories_, GBTconstant_, GBTfactors_);
 
   }
 #ifndef NOTHREADS
   else {
 
-    vector < vector<size_t> > sampleIcs = utils::splitRange(nSamples, nThreads);
+    vector<vector<size_t> > sampleIcs = utils::splitRange(nSamples, nThreads);
 
-    vector < thread > threads;
+    vector<thread> threads;
 
     for (size_t threadIdx = 0; threadIdx < nThreads; ++threadIdx) {
       // We only launch a thread if there are any samples allocated for prediction
       if (sampleIcs.size() > 0) {
-        threads.push_back(
-            thread(predictCatPerThread, testData, rootNodes_, forestType_,
-                sampleIcs[threadIdx], &predictions, &confidence, categories_,
-                GBTconstant_, GBTfactors_));
+        threads.push_back( thread(predictCatPerThread, testData, rootNodes_, forestType_, sampleIcs[threadIdx], &predictions, &confidence, categories_, GBTconstant_, GBTfactors_) );
       }
     }
 
@@ -741,14 +745,19 @@ void StochasticForest::predict(Treedata* testData, vector<string>& predictions,
 #endif
 }
 
-void StochasticForest::predict(Treedata* testData, vector<num_t>& predictions,
-    vector<num_t>& confidence, const size_t nThreads) {
+void StochasticForest::predict(Treedata* testData, vector<num_t>& predictions,vector<num_t>& confidence, size_t nThreads) {
 
-  //assert( params_->modelType != options::GBT );
-  assert(this->isTargetNumerical());
-  assert(nThreads > 0);
-#ifndef NOTHREADS
-  assert(nThreads == 1);
+  assert( nThreads > 0 );
+
+  if ( forestType_ == ForestOptions::ForestType::GBT && nThreads != 1 ) {
+    cout << "NOTE: GBT does not support multithreading. Turning threads OFF... " << flush;
+    nThreads = 1;
+  }
+
+  assert( this->isTargetNumerical() );
+
+#ifdef NOTHREADS
+  assert( nThreads == 1 );
 #endif
 
   size_t nSamples = testData->nSamples();
@@ -758,25 +767,21 @@ void StochasticForest::predict(Treedata* testData, vector<num_t>& predictions,
 
   if (nThreads == 1) {
 
-    vector < size_t > sampleIcs = utils::range(nSamples);
+    vector<size_t> sampleIcs = utils::range(nSamples);
     //cout << "1 thread!" << endl;
-    predictNumPerThread(testData, rootNodes_, forestType_, sampleIcs,
-        &predictions, &confidence, GBTconstant_, GBTfactors_);
+    predictNumPerThread(testData, rootNodes_, forestType_, sampleIcs, &predictions, &confidence, GBTconstant_, GBTfactors_);
 
   }
 #ifndef NOTHREADS
   else {
     //cout << "More threads!" << endl;
-    vector < vector<size_t> > sampleIcs = utils::splitRange(nSamples, nThreads);
+    vector<vector<size_t> > sampleIcs = utils::splitRange(nSamples, nThreads);
 
-    vector < thread > threads;
+    vector<thread> threads;
 
     for (size_t threadIdx = 0; threadIdx < nThreads; ++threadIdx) {
       // We only launch a thread if there are any samples allocated for prediction
-      threads.push_back(
-          thread(predictNumPerThread, testData, rootNodes_, forestType_,
-              sampleIcs[threadIdx], &predictions, &confidence, GBTconstant_,
-              GBTfactors_));
+      threads.push_back( thread(predictNumPerThread, testData, rootNodes_, forestType_, sampleIcs[threadIdx], &predictions, &confidence, GBTconstant_, GBTfactors_));
     }
 
     // Join all launched threads
