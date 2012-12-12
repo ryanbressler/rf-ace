@@ -39,6 +39,9 @@ public:
                    const set<string>& leftSplitValues,
                    const set<string>& rightSplitValues);
 
+  void setSplitter(const string& splitterName,
+		   const uint32_t hashIdx);
+
   //Given a value, descends to either one of the child nodes, if existing, otherwise returns a pointer to the current node
   Node* percolate(Treedata* testData, const size_t sampleIdx, const size_t scrambleFeatureIdx = datadefs::MAX_IDX);
 
@@ -79,6 +82,7 @@ protected:
   bool regularSplitterSeek(Treedata* treeData,
 			   const size_t targetIdx,
 			   const ForestOptions* forestOptions,
+			   distributions::Random* random,
 			   const vector<size_t>& sampleIcs,
 			   const vector<size_t>& featureSampleIcs,
 			   size_t& splitFeatureIdx,
@@ -94,26 +98,12 @@ private:
   struct Splitter {
 
     string name;
-    bool isNumerical;
+    //bool isNumerical;
+    Feature::Type type;
+    uint32_t hashValue;
     num_t leftLeqValue;
     set<string> leftValues;
     set<string> rightValues;
-
-    void print() {
-      cout << "Splitter:" << endl
-	//<< " idx    = " << idx << endl
-	   << " name   = " << name << endl;
-      if ( isNumerical ) {
-	cout << " lVal   = " << leftLeqValue << endl;
-      } else {
-	cout << " lVals  = ";
-	utils::write(cout,leftValues.begin(),leftValues.end());
-	cout << endl << " rVals  = ";
-	utils::write(cout,rightValues.begin(),rightValues.end());
-	cout << endl;
-      }
-      
-    }
     
   } splitter_;
 

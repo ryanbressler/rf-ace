@@ -55,7 +55,7 @@ void StochasticForest::loadForest(const string& fileName) {
 
   int treeIdx = -1;
 
-  vector < map<string, Node*> > forestMap(nTrees);
+  vector<map<string,Node*> > forestMap(nTrees);
 
   // Read the forest
   while (getline(forestStream, newLine)) {
@@ -77,7 +77,7 @@ void StochasticForest::loadForest(const string& fileName) {
 
     //cout << newLine << endl;
 
-    map < string, string > nodeMap = utils::parse(newLine, ',', '=', '"');
+    map<string,string> nodeMap = utils::parse(newLine, ',', '=', '"');
 
     // If the node is rootnode, we will create a new RootNode object and assign a reference to it in forestMap
     if (nodeMap["NODE"] == "*") {
@@ -103,19 +103,22 @@ void StochasticForest::loadForest(const string& fileName) {
       //size_t featureIdx = trainData_->getFeatureIdx(nodeMap["SPLITTER"]);
 
       // If the splitter is numerical...
-      if (nodeMap["SPLITTERTYPE"] == "NUMERICAL") {
+      if ( nodeMap["SPLITTERTYPE"] == "NUMERICAL" ) {
 
-        nodep->setSplitter(nodeMap["SPLITTER"],
-            utils::str2<num_t>(nodeMap["LVALUES"]));
+        nodep->setSplitter(nodeMap["SPLITTER"],utils::str2<num_t>(nodeMap["LVALUES"]));
 
+      } else if ( nodeMap["SPLITTERTYPE"] == "CATEGORICAL" ){
+
+        set<string> splitLeftValues = utils::keys(nodeMap["LVALUES"], ':');
+        set<string> splitRightValues = utils::keys(nodeMap["RVALUES"], ':');
+
+        nodep->setSplitter(nodeMap["SPLITTER"], splitLeftValues, splitRightValues);
+
+      } else if ( nodeMap["SPLITTERTYPE"] == "TEXTUAL" ) {
+	nodep->setSplitter(nodeMap["SPLITTER"], utils::str2<uint32_t>(nodeMap["LVALUES"]));
       } else {
-
-        set < string > splitLeftValues = utils::keys(nodeMap["LVALUES"], ':');
-        set < string > splitRightValues = utils::keys(nodeMap["RVALUES"], ':');
-
-        nodep->setSplitter(nodeMap["SPLITTER"], splitLeftValues,
-            splitRightValues);
-
+	cerr << "ERROR: incompatible splitter type '" << nodeMap["SPLITTERTYPE"] << endl;
+	exit(1);
       }
 
       forestMap[treeIdx][nodeMap["NODE"] + "L"] = nodep->leftChild();

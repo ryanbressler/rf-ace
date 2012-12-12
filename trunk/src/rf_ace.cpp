@@ -45,13 +45,13 @@ int main(const int argc, char* const argv[]) {
 
   options.io.validate();
 
-  options.forestOptions.print();
-
   // With no input arguments the help is printed
   if ( argc == 1 || options.generalOptions.printHelp ) {
     options.help();
     return(EXIT_SUCCESS);
   }
+
+  options.forestOptions.print();
 
   RFACE rface;
 

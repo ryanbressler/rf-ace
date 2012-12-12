@@ -388,12 +388,12 @@ void UtilsTest::test_text2tokens() {
 
   //vector<string> tokens = utils::text2tokens(text);
 
-  string text = "I want to, tokenizE  This!!.; it's so rad@";
+  string text = "I want to, tokenizE  This!!.; it's so rad";
 
   unordered_set<uint32_t> hashes = utils::hashText(text);
   unordered_set<uint32_t>::const_iterator it = hashes.begin();
 
-  CPPUNIT_ASSERT( hashes.size() == 4 );
+  CPPUNIT_ASSERT( hashes.size() == 9 );
   CPPUNIT_ASSERT( hashes.find( hashfun::hsieh("want",4) ) != hashes.end() );
   CPPUNIT_ASSERT( hashes.find( hashfun::hsieh("tokenize",8) ) != hashes.end() );
   CPPUNIT_ASSERT( hashes.find( hashfun::hsieh("this",4) ) != hashes.end() );
