@@ -51,8 +51,6 @@ int main(const int argc, char* const argv[]) {
     return(EXIT_SUCCESS);
   }
 
-  options.forestOptions.print();
-
   RFACE rface;
 
   RFACE::FilterOutput filterOutput;
@@ -61,6 +59,8 @@ int main(const int argc, char* const argv[]) {
   timer.tic("Total time elapsed");
 
   if ( options.io.filterDataFile != "" ) {
+
+    options.forestOptions.print();
 
     options.filterOptions.print();
 
@@ -108,6 +108,8 @@ int main(const int argc, char* const argv[]) {
 
   
   if ( options.io.trainDataFile != "" ) {
+
+    options.forestOptions.print();
     
     // Read train data into Treedata object
     cout << "Reading train file '" << options.io.trainDataFile << "', please wait... " << flush;
