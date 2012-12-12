@@ -70,6 +70,36 @@ bool Feature::isTextual() const {
   return( type_ == Feature::Type::TXT ? true : false );
 }
 
+uint32_t Feature::getHash(const size_t sampleIdx, const size_t integer) const {
+
+  assert( type_ == Feature::Type::TXT );
+
+  size_t pos = integer % this->hashSet[sampleIdx].size();
+
+  unordered_set<uint32_t>::const_iterator it(this->hashSet[sampleIdx].begin());
+  for ( size_t i = 0; i < pos; ++i ) {
+    it++;
+  }
+
+  return(*it);
+
+}
+
+bool Feature::hasHash(const size_t sampleIdx, const uint32_t hashIdx) const {
+
+  return( this->hashSet[sampleIdx].find(hashIdx) != this->hashSet[sampleIdx].end() );
+  
+}
+
+uint32_t Treedata::getHash(const size_t featureIdx, const size_t sampleIdx, const size_t integer) const {
+  return( features_[featureIdx].getHash(sampleIdx,integer) );
+}
+
+bool Treedata::hasHash(const size_t featureIdx, const size_t sampleIdx, const uint32_t hashIdx) const {
+
+  return( features_[featureIdx].hasHash(sampleIdx,hashIdx) );
+
+}
 
 Treedata::Treedata(const vector<Feature>& features, const bool useContrasts, const vector<string>& sampleHeaders):
   useContrasts_(useContrasts),
@@ -240,7 +270,7 @@ void Treedata::createContrasts() {
   // Generate contrast features
   for(size_t i = nFeatures; i < 2*nFeatures; ++i) {
     features_[i] = features_[ i - nFeatures ];
-    features_[i].name = features_[ i - nFeatures ].name;
+    //features_[i].name = features_[ i - nFeatures ].name;
     features_[i].name.append("_CONTRAST");
     name2idx_[ features_[i].name ] = i;
   }
@@ -309,6 +339,7 @@ void Treedata::readAFM(ifstream& featurestream,
   //vector<string> sampleHeaders; // THIS WILL BE DEFINED AS ONE OF THE INPUT ARGUMENTS
 
   //Go through the rest of the rows
+  size_t iter = 0;
   while ( getline(featurestream,row) ) {
 
     row = utils::chomp(row);
@@ -329,9 +360,12 @@ void Treedata::readAFM(ifstream& featurestream,
       getline(ss,rawVector[i],dataDelimiter);
       rawVector[i] = utils::trim(rawVector[i]);
     }
-    assert(!ss.fail());
-    assert(ss.eof());
+    if ( ss.fail() || !ss.eof()) {
+      cerr << "ERROR: incorrectly formatted line " << iter << ". Make sure the line contains expected number of fields (" << nColumns << ")" << endl;
+      exit(1);
+    }
     rawMatrix.push_back(rawVector);
+    ++iter;
   }
 
   //If the data is row-formatted...
@@ -1026,6 +1060,82 @@ num_t Treedata::categoricalFeatureSplit(const size_t targetIdx,
 
 }
 
+num_t Treedata::textualFeatureSplit(const size_t targetIdx,
+				    const size_t featureIdx,
+				    const uint32_t hashIdx,
+				    const size_t minSamples,
+				    vector<size_t>& sampleIcs_left,
+				    vector<size_t>& sampleIcs_right) {
+
+
+  assert(features_[featureIdx].isTextual());
+
+  sampleIcs_left.clear();
+
+  size_t n_left = 0;
+  size_t n_right = 0;
+  size_t n_tot = sampleIcs_right.size();
+
+  num_t DI_best = 0.0;
+
+  if ( this->isFeatureNumerical(targetIdx) ) {
+  
+    num_t mu_left = 0.0;
+    num_t mu_right = 0.0;
+    num_t mu_tot = 0.0;
+  
+    for ( size_t i = 0; i < sampleIcs_right.size(); ++i ) {
+      unordered_set<uint32_t>& hs = features_[featureIdx].hashSet[sampleIcs_right[i]];
+      num_t x = features_[targetIdx].data[sampleIcs_right[i]];
+      if ( hs.find(hashIdx) != hs.end() ) {
+	sampleIcs_left[n_left++] = sampleIcs_right[i];
+	mu_left += ( x - mu_left ) / n_left;
+      } else {
+	sampleIcs_right[n_right++] = sampleIcs_right[i];
+	mu_right += ( x - mu_right ) / n_right;
+      }
+      mu_tot += x / n_tot;
+    }
+    
+    DI_best = math::deltaImpurity_regr(mu_tot,n_tot,mu_left,n_left,mu_right,n_right);
+
+  } else {
+
+    map<num_t,size_t> freq_left,freq_right,freq_tot;
+
+    size_t sf_left = 0;
+    size_t sf_right = 0;
+    size_t sf_tot = 0;
+
+    for ( size_t i = 0; i < sampleIcs_right.size(); ++i ) {
+      unordered_set<uint32_t>& hs = features_[featureIdx].hashSet[sampleIcs_right[i]];
+      num_t x = features_[targetIdx].data[sampleIcs_right[i]];
+      if ( hs.find(hashIdx) != hs.end() ) {
+        sampleIcs_left[n_left++] = sampleIcs_right[i];
+	math::incrementSquaredFrequency(x,freq_left,sf_left);
+      } else {
+        sampleIcs_right[n_right++] = sampleIcs_right[i];
+	math::incrementSquaredFrequency(x,freq_right,sf_right);
+      }
+      math::incrementSquaredFrequency(x,freq_tot,sf_tot);
+    }
+
+    DI_best = math::deltaImpurity_class(sf_tot,n_tot,sf_left,n_left,sf_right,n_right);
+
+  }
+
+  assert(n_tot == n_left + n_right);
+
+  if ( n_left < minSamples || n_right < minSamples ) {
+    return(0.0);
+  }
+
+  sampleIcs_left.resize(n_left);
+  sampleIcs_right.resize(n_right);
+  
+  return(DI_best);
+  
+}
 
 /*
   void Treedata::getFilteredAndSortedFeatureDataPair(const size_t targetIdx, 

@@ -235,14 +235,20 @@ unordered_set<uint32_t> utils::hashText(const string& text) {
 
   char const* p = text.c_str();
   char const* q = strpbrk(p+1,datadefs::tokenDelimiters);
-  for ( ; q != NULL; q = strpbrk(p,datadefs::tokenDelimiters) ) {
-    if ( distance(p,q) > 2 ) {
+  for ( ; ; q = strpbrk(p,datadefs::tokenDelimiters) ) {
+    if ( distance(p,q) > 0 ) {
       string token(p,q);
       hashes.insert( hashfun::hsieh(utils::tolower(token).c_str(),token.length()) );
     }
-    p = q + 1;
+    if ( q != NULL ) {
+      p = q + 1;
+    } else {
+      string token2(p);
+      hashes.insert( hashfun::hsieh(utils::tolower(token2).c_str(),token2.length()) );
+      break;
+    }
   }
-  
+   
   return(hashes);
 }
 

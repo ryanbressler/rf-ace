@@ -60,7 +60,7 @@ void NodeTest::test_setSplitter() {
   node.setSplitter("foo",splitLeftLeqValue);
   
   //CPPUNIT_ASSERT( node.splitterIdx() == splitterIdx );
-  CPPUNIT_ASSERT( node.splitter_.isNumerical );
+  CPPUNIT_ASSERT( node.splitter_.type == Feature::Type::NUM );
   CPPUNIT_ASSERT( fabs(node.splitter_.leftLeqValue - splitLeftLeqValue) < datadefs::EPS );
   //CPPUNIT_ASSERT( fabs(node.splitter_.leftFraction - leftFraction) < datadefs::EPS );
   

@@ -59,7 +59,8 @@ void Node::setSplitter(const string& splitterName,
   }
 
   splitter_.name = splitterName;
-  splitter_.isNumerical = true;
+  //splitter_.isNumerical = true;
+  splitter_.type = Feature::Type::NUM;
   splitter_.leftLeqValue = splitLeftLeqValue;
 
   leftChild_ = new Node();
@@ -85,7 +86,7 @@ void Node::setSplitter(const string& splitterName,
   }
 
   splitter_.name = splitterName;
-  splitter_.isNumerical = false;
+  splitter_.type = Feature::Type::CAT;
   splitter_.leftValues = leftSplitValues;
   splitter_.rightValues = rightSplitValues;
 
@@ -99,6 +100,25 @@ void Node::setSplitter(const string& splitterName,
 
 }
 
+void Node::setSplitter(const string& splitterName,
+		       const uint32_t hashIdx) {
+
+  if ( this->hasChildren() ) {
+    cerr << "Node::setSplitter() -- cannot set a splitter to a node twice!" << endl;
+    exit(1);
+  }
+
+  splitter_.name = splitterName;
+  splitter_.type = Feature::Type::TXT;
+  splitter_.hashValue = hashIdx;
+
+  if ( false ) {
+    cout << "NEW " << leftChild_ << endl;
+    cout << "NEW " << rightChild_ << endl;
+  }
+
+
+}
 
 Node* Node::percolate(Treedata* testData, const size_t sampleIdx, const size_t scrambleFeatureIdx) {
   
@@ -108,7 +128,7 @@ Node* Node::percolate(Treedata* testData, const size_t sampleIdx, const size_t s
 
   if ( featureIdx == testData->end() ) { return( this ); }
 
-  if ( splitter_.isNumerical ) {
+  if ( splitter_.type == Feature::Type::NUM ) {
     num_t data;
     if ( scrambleFeatureIdx != featureIdx ) {
       data = testData->getFeatureData(featureIdx,sampleIdx);
@@ -122,7 +142,7 @@ Node* Node::percolate(Treedata* testData, const size_t sampleIdx, const size_t s
 	    this->leftChild()->percolate(testData,sampleIdx,scrambleFeatureIdx) : 
 	    this->rightChild()->percolate(testData,sampleIdx,scrambleFeatureIdx) );
     
-  } else {
+  } else if ( splitter_.type == Feature::Type::CAT ){
     string data;
     if ( scrambleFeatureIdx != featureIdx ) {
       data = testData->getRawFeatureData(featureIdx,sampleIdx);
@@ -144,6 +164,13 @@ Node* Node::percolate(Treedata* testData, const size_t sampleIdx, const size_t s
     // Else return this
     return( this );
 
+  } else {
+
+    if ( testData->hasHash(featureIdx,sampleIdx,splitter_.hashValue) ) {
+      return( this->leftChild()->percolate(testData,sampleIdx,scrambleFeatureIdx) );
+    } else {
+      return( this->rightChild()->percolate(testData,sampleIdx,scrambleFeatureIdx) );
+    }
   }
    
 }
@@ -166,18 +193,20 @@ void Node::print(string& traversal, ofstream& toFile) {
   
   if ( this->hasChildren() ) {
     
-    string splitterType = splitter_.isNumerical ? "NUMERICAL" : "CATEGORICAL";
+    toFile << ",SPLITTER=" << "\"" << splitter_.name << "\"";
 
-    toFile << ",SPLITTER=" << "\"" << splitter_.name << "\""
-	   << ",SPLITTERTYPE=" << splitterType;
-
-    if ( splitter_.isNumerical ) {
-      toFile << ",LVALUES=" << splitter_.leftLeqValue
+    if (splitter_.type == Feature::Type::NUM ) {
+      toFile << ",SPLITTERTYPE=NUMERICAL"
+	     << ",LVALUES=" << splitter_.leftLeqValue 
 	     << ",RVALUES=" << splitter_.leftLeqValue << endl;
-    } else {
-
-      toFile << ",LVALUES=" << "\""; utils::write(toFile,splitter_.leftValues.begin(),splitter_.leftValues.end(),':'); toFile << "\""
+    } else if ( splitter_.type == Feature::Type::CAT ) {
+      toFile << ",SPLITTERTYPE=CATEGORICAL" 
+	     << ",LVALUES=" << "\""; utils::write(toFile,splitter_.leftValues.begin(),splitter_.leftValues.end(),':'); toFile << "\""
 	     << ",RVALUES=" << "\""; utils::write(toFile,splitter_.rightValues.begin(),splitter_.rightValues.end(),':'); toFile << "\"" << endl;
+    } else {
+      toFile << ",SPLITTERTYPE=TEXTUAL"
+	     << ",LVALUES=" << splitter_.hashValue
+	     << ",RVALUES==" << splitter_.hashValue << endl;
     }
     
     string traversalLeft = traversal;
@@ -249,9 +278,6 @@ void Node::recursiveNodeSplit(Treedata* treeData,
     this->setTrainPrediction( trainPrediction, rawTrainPrediction );
   } else if ( predictionFunctionType == GAMMA ) {
     num_t trainPrediction = math::gamma(trainData, treeData->nCategories(targetIdx) );
-    //utils::write(cout,trainData.begin(),trainData.end());
-    //cout << endl;
-    //assert( !datadefs::isNAN(trainPrediction) );
     string rawTrainPrediction = utils::num2str(trainPrediction);
     this->setTrainPrediction( trainPrediction, rawTrainPrediction );
   } else {
@@ -284,8 +310,9 @@ void Node::recursiveNodeSplit(Treedata* treeData,
       for ( size_t i = 0; i < forestOptions->mTry; ++i ) {
 	
 	// If the sampled feature is a contrast... 
-	if ( random->uniform() < forestOptions->contrastFraction ) { // p% sampling rate
+	if ( random->uniform() < forestOptions->contrastFraction && !treeData->isFeatureTextual(featureSampleIcs[i]) ) { // p% sampling rate
 	  
+	  // Contrast features in Treedata are indexed with an offset of the number of features: nFeatures
 	  featureSampleIcs[i] += treeData->nFeatures();
 	}
       }
@@ -306,6 +333,7 @@ void Node::recursiveNodeSplit(Treedata* treeData,
   bool foundSplit = this->regularSplitterSeek(treeData,
 					      targetIdx,
 					      forestOptions,
+					      random,
 					      sampleIcs,
 					      featureSampleIcs,
 					      splitFeatureIdx,
@@ -333,6 +361,7 @@ void Node::recursiveNodeSplit(Treedata* treeData,
 bool Node::regularSplitterSeek(Treedata* treeData,
 			       const size_t targetIdx,
 			       const ForestOptions* forestOptions,
+			       distributions::Random* random,
 			       const vector<size_t>& sampleIcs,
 			       const vector<size_t>& featureSampleIcs,
 			       size_t& splitFeatureIdx,
@@ -346,6 +375,7 @@ bool Node::regularSplitterSeek(Treedata* treeData,
   num_t splitValue = datadefs::NUM_NAN;
   set<num_t> splitValues_left; 
   set<num_t> splitValues_right;
+  uint32_t hashIdx = 0;
 
   // Initialize split fitness to lowest possible value
   splitFitness = 0.0;
@@ -357,7 +387,7 @@ bool Node::regularSplitterSeek(Treedata* treeData,
     size_t newSplitFeatureIdx = featureSampleIcs[i];
 
     // Get type of the splitter
-    bool isFeatureNumerical = treeData->isFeatureNumerical(newSplitFeatureIdx);
+    // bool isFeatureNumerical = treeData->isFeatureNumerical(newSplitFeatureIdx);
 
     // We don't want that the program tests to split data with itself
     assert( newSplitFeatureIdx != targetIdx );
@@ -367,9 +397,10 @@ bool Node::regularSplitterSeek(Treedata* treeData,
     num_t newSplitValue;
     set<num_t> newSplitValues_left;
     set<num_t> newSplitValues_right;
+    uint32_t newHashIdx = 0;
     num_t newSplitFitness = 0.0;
 
-    if ( isFeatureNumerical ) {
+    if ( treeData->isFeatureNumerical(newSplitFeatureIdx) ) {
 
       newSplitFitness = treeData->numericalFeatureSplit(targetIdx,
 							newSplitFeatureIdx,
@@ -377,7 +408,8 @@ bool Node::regularSplitterSeek(Treedata* treeData,
 							newSampleIcs_left,
 							newSampleIcs_right,
 							newSplitValue);
-    } else {
+
+    } else if ( treeData->isFeatureCategorical(newSplitFeatureIdx) ) {
 
       newSplitFitness = treeData->categoricalFeatureSplit(targetIdx,
 							  newSplitFeatureIdx,
@@ -386,6 +418,21 @@ bool Node::regularSplitterSeek(Treedata* treeData,
 							  newSampleIcs_right,
 							  newSplitValues_left,
 							  newSplitValues_right);
+    } else if ( treeData->isFeatureTextual(newSplitFeatureIdx) ) {
+
+      // Choose random sample
+      size_t sampleIdx = random->integer() % sampleIcs_right.size();
+
+      // Choose random hash from the randomly selected sample
+      newHashIdx = treeData->getHash(newSplitFeatureIdx,sampleIdx,random->integer());
+
+      newSplitFitness = treeData->textualFeatureSplit(targetIdx,
+						      newSplitFeatureIdx,
+						      newHashIdx,
+						      forestOptions->nodeSize,
+						      newSampleIcs_left,
+						      newSampleIcs_right);
+
     }
 
     if( newSplitFitness > splitFitness &&
@@ -397,6 +444,7 @@ bool Node::regularSplitterSeek(Treedata* treeData,
       splitValue = newSplitValue;
       splitValues_left = newSplitValues_left;
       splitValues_right = newSplitValues_right;
+      hashIdx = newHashIdx;
       sampleIcs_left = newSampleIcs_left;
       sampleIcs_right = newSampleIcs_right;
     }    
@@ -412,7 +460,7 @@ bool Node::regularSplitterSeek(Treedata* treeData,
 
     this->setSplitter(treeData->getFeatureName(splitFeatureIdx),splitValue);
 
-  } else {
+  } else if ( treeData->isFeatureCategorical(splitFeatureIdx) ){
     
     set<string> rawSplitValues_left,rawSplitValues_right;
 
@@ -426,7 +474,12 @@ bool Node::regularSplitterSeek(Treedata* treeData,
 
     this->setSplitter(treeData->getFeatureName(splitFeatureIdx),rawSplitValues_left,rawSplitValues_right);
 
+  } else if ( treeData->isFeatureTextual(splitFeatureIdx) ) {
+    
+    this->setSplitter(treeData->getFeatureName(splitFeatureIdx),hashIdx);
+
   }
+
 
   return(true);
 
