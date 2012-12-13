@@ -34,11 +34,11 @@ Feature::Feature(const vector<num_t>& newData, const string& newName):
 Feature::Feature(const vector<string>& newStringData, const string& newName, bool doHash):
   type_( doHash ? Feature::Type::TXT : Feature::Type::CAT ) { 
 
+  name = newName;
+
   if ( type_ == Feature::Type::CAT ) {
     
     utils::strv2catv(newStringData,data,mapping,backMapping);
-    
-    name = newName;
     
   } else {
     
@@ -73,16 +73,22 @@ bool Feature::isTextual() const {
 uint32_t Feature::getHash(const size_t sampleIdx, const size_t integer) const {
 
   assert( type_ == Feature::Type::TXT );
-
+  
+  cout << "Finding hash from sample " << sampleIdx << flush;
+  
   size_t pos = integer % this->hashSet[sampleIdx].size();
 
+  cout << " => pos " << pos << flush;
+  
   unordered_set<uint32_t>::const_iterator it(this->hashSet[sampleIdx].begin());
   for ( size_t i = 0; i < pos; ++i ) {
     it++;
   }
+  
+  cout << " => hash " << *it << endl;
 
   return(*it);
-
+  
 }
 
 bool Feature::hasHash(const size_t sampleIdx, const uint32_t hashIdx) const {
@@ -1070,11 +1076,11 @@ num_t Treedata::textualFeatureSplit(const size_t targetIdx,
 
   assert(features_[featureIdx].isTextual());
 
-  sampleIcs_left.clear();
-
   size_t n_left = 0;
   size_t n_right = 0;
   size_t n_tot = sampleIcs_right.size();
+
+  sampleIcs_left.resize(n_tot);
 
   num_t DI_best = 0.0;
 
@@ -1083,14 +1089,19 @@ num_t Treedata::textualFeatureSplit(const size_t targetIdx,
     num_t mu_left = 0.0;
     num_t mu_right = 0.0;
     num_t mu_tot = 0.0;
+
+    cout << "Treedata::textualFeatureSplit with numerical target" << endl;
   
-    for ( size_t i = 0; i < sampleIcs_right.size(); ++i ) {
+    for ( size_t i = 0; i < n_tot; ++i ) {
+      cout << "Throwing sample " << sampleIcs_right[i] << flush;
       unordered_set<uint32_t>& hs = features_[featureIdx].hashSet[sampleIcs_right[i]];
       num_t x = features_[targetIdx].data[sampleIcs_right[i]];
       if ( hs.find(hashIdx) != hs.end() ) {
+	cout << "left" << endl;
 	sampleIcs_left[n_left++] = sampleIcs_right[i];
 	mu_left += ( x - mu_left ) / n_left;
       } else {
+	cout << "right" << endl;
 	sampleIcs_right[n_right++] = sampleIcs_right[i];
 	mu_right += ( x - mu_right ) / n_right;
       }
