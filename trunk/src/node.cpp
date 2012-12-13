@@ -112,6 +112,9 @@ void Node::setSplitter(const string& splitterName,
   splitter_.type = Feature::Type::TXT;
   splitter_.hashValue = hashIdx;
 
+  leftChild_ = new Node();
+  rightChild_ = new Node();
+
   if ( false ) {
     cout << "NEW " << leftChild_ << endl;
     cout << "NEW " << rightChild_ << endl;
@@ -206,7 +209,7 @@ void Node::print(string& traversal, ofstream& toFile) {
     } else {
       toFile << ",SPLITTERTYPE=TEXTUAL"
 	     << ",LVALUES=" << splitter_.hashValue
-	     << ",RVALUES==" << splitter_.hashValue << endl;
+	     << ",RVALUES=" << splitter_.hashValue << endl;
     }
     
     string traversalLeft = traversal;
@@ -285,6 +288,7 @@ void Node::recursiveNodeSplit(Treedata* treeData,
     exit(1);
   }
 
+
   assert( !datadefs::isNAN(trainPrediction_) );
   assert( !datadefs::isNAN_STR(rawTrainPrediction_) );
 
@@ -329,7 +333,7 @@ void Node::recursiveNodeSplit(Treedata* treeData,
 
   size_t splitFeatureIdx;
   num_t splitFitness;
-  
+
   bool foundSplit = this->regularSplitterSeek(treeData,
 					      targetIdx,
 					      forestOptions,
@@ -418,18 +422,18 @@ bool Node::regularSplitterSeek(Treedata* treeData,
 							  newSampleIcs_right,
 							  newSplitValues_left,
 							  newSplitValues_right);
-    } else if ( treeData->isFeatureTextual(newSplitFeatureIdx) ) {
+    } else if ( treeData->isFeatureTextual(newSplitFeatureIdx) && newSampleIcs_right.size() > 0 ) {
 
-      cout << "Sampling a hash feature among samples: " << flush;
+      //cout << "Sampling a hash feature among samples: " << flush;
       //utils::write()
 
       // Choose random sample
-      size_t sampleIdx = random->integer() % sampleIcs_right.size();
+      size_t sampleIdx = random->integer() % newSampleIcs_right.size();
 
       // Choose random hash from the randomly selected sample
       newHashIdx = treeData->getHash(newSplitFeatureIdx,sampleIdx,random->integer());
 
-      cout << "Sampling a hash idx (" << sampleIdx << "," << newHashIdx << ") from feature " << newSplitFeatureIdx << " (" << treeData->getFeatureName(newSplitFeatureIdx) << "): " << flush; 
+      //cout << "Sampling a hash idx (" << sampleIdx << "," << newHashIdx << ") from feature " << newSplitFeatureIdx << " (" << treeData->getFeatureName(newSplitFeatureIdx) << "): " << flush; 
 
       newSplitFitness = treeData->textualFeatureSplit(targetIdx,
 						      newSplitFeatureIdx,
@@ -438,7 +442,7 @@ bool Node::regularSplitterSeek(Treedata* treeData,
 						      newSampleIcs_left,
 						      newSampleIcs_right);
 
-      cout << "fitness " << newSplitFitness << endl;
+      //cout << "fitness " << newSplitFitness << endl;
 
     }
 
@@ -486,7 +490,6 @@ bool Node::regularSplitterSeek(Treedata* treeData,
     this->setSplitter(treeData->getFeatureName(splitFeatureIdx),hashIdx);
 
   }
-
 
   return(true);
 

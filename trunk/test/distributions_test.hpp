@@ -14,6 +14,7 @@ class DistributionsTest : public CppUnit::TestFixture {
   CPPUNIT_TEST( test_invcdf2 );
   CPPUNIT_TEST( test_invcdf3 );
   CPPUNIT_TEST( test_invcdf4 );
+  CPPUNIT_TEST( test_invcdf5 );
   CPPUNIT_TEST_SUITE_END();
   
 public:
@@ -26,6 +27,7 @@ public:
   void test_invcdf2();
   void test_invcdf3();
   void test_invcdf4();
+  void test_invcdf5();
 
 private:
 
@@ -176,6 +178,20 @@ void DistributionsTest::test_invcdf4() {
 
   for ( size_t i = 0; i < 8; ++i ) {
     CPPUNIT_ASSERT( fabs( PMFest[i] - weights[i] / sum ) < 0.01 );
+  }
+
+}
+
+void DistributionsTest::test_invcdf5() {
+
+  vector<datadefs::num_t> weights = {0,1};
+
+  distributions::PMF pmf(weights);
+
+  distributions::Random random;
+
+  for ( size_t i = 0; i < 100; ++i ) {
+    CPPUNIT_ASSERT( pmf.icdf(random.uniform()) == 1 );
   }
 
 }
