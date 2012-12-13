@@ -74,19 +74,13 @@ uint32_t Feature::getHash(const size_t sampleIdx, const size_t integer) const {
 
   assert( type_ == Feature::Type::TXT );
   
-  cout << "Finding hash from sample " << sampleIdx << flush;
-  
   size_t pos = integer % this->hashSet[sampleIdx].size();
 
-  cout << " => pos " << pos << flush;
-  
   unordered_set<uint32_t>::const_iterator it(this->hashSet[sampleIdx].begin());
   for ( size_t i = 0; i < pos; ++i ) {
     it++;
   }
   
-  cout << " => hash " << *it << endl;
-
   return(*it);
   
 }
@@ -1090,18 +1084,13 @@ num_t Treedata::textualFeatureSplit(const size_t targetIdx,
     num_t mu_right = 0.0;
     num_t mu_tot = 0.0;
 
-    cout << "Treedata::textualFeatureSplit with numerical target" << endl;
-  
     for ( size_t i = 0; i < n_tot; ++i ) {
-      cout << "Throwing sample " << sampleIcs_right[i] << flush;
       unordered_set<uint32_t>& hs = features_[featureIdx].hashSet[sampleIcs_right[i]];
       num_t x = features_[targetIdx].data[sampleIcs_right[i]];
       if ( hs.find(hashIdx) != hs.end() ) {
-	cout << "left" << endl;
 	sampleIcs_left[n_left++] = sampleIcs_right[i];
 	mu_left += ( x - mu_left ) / n_left;
       } else {
-	cout << "right" << endl;
 	sampleIcs_right[n_right++] = sampleIcs_right[i];
 	mu_right += ( x - mu_right ) / n_right;
       }
