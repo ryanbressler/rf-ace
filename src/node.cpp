@@ -420,11 +420,16 @@ bool Node::regularSplitterSeek(Treedata* treeData,
 							  newSplitValues_right);
     } else if ( treeData->isFeatureTextual(newSplitFeatureIdx) ) {
 
+      cout << "Sampling a hash feature among samples: " << flush;
+      //utils::write()
+
       // Choose random sample
       size_t sampleIdx = random->integer() % sampleIcs_right.size();
 
       // Choose random hash from the randomly selected sample
       newHashIdx = treeData->getHash(newSplitFeatureIdx,sampleIdx,random->integer());
+
+      cout << "Sampling a hash idx (" << sampleIdx << "," << newHashIdx << ") from feature " << newSplitFeatureIdx << " (" << treeData->getFeatureName(newSplitFeatureIdx) << "): " << flush; 
 
       newSplitFitness = treeData->textualFeatureSplit(targetIdx,
 						      newSplitFeatureIdx,
@@ -432,6 +437,8 @@ bool Node::regularSplitterSeek(Treedata* treeData,
 						      forestOptions->nodeSize,
 						      newSampleIcs_left,
 						      newSampleIcs_right);
+
+      cout << "fitness " << newSplitFitness << endl;
 
     }
 

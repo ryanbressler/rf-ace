@@ -94,7 +94,6 @@ protected:
 private:
 #endif
 
-  
   struct Splitter {
 
     string name;
