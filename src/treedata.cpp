@@ -912,7 +912,9 @@ num_t Treedata::hashFeatureSplit(const size_t targetIdx,
     return( math::deltaImpurity_regr(mu_tot,n_tot,mu_left,n_left,mu_right,n_right) );
     
   } else {
-    return( datadefs::NUM_NAN );
+
+    
+
   }
   
 
