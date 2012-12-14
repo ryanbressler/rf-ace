@@ -49,7 +49,6 @@ public:
 
   void saveForest(ofstream& toFile);
 
-
 #ifndef TEST__
 private:
 #endif

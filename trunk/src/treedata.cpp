@@ -91,6 +91,31 @@ bool Feature::hasHash(const size_t sampleIdx, const uint32_t hashIdx) const {
   
 }
 
+num_t Feature::entropy() const {
+
+  size_t nSamples = hashSet.size();
+
+  unordered_map<uint32_t,size_t> visited_keys;
+
+  for ( size_t i = 0; i < nSamples; ++i ) {
+    for ( unordered_set<uint32_t>::const_iterator it(hashSet[i].begin()); it != hashSet[i].end(); ++it ) {
+      visited_keys[*it]++;
+    }
+  }
+  
+  unordered_map<uint32_t,size_t>::const_iterator it(visited_keys.begin());
+
+  num_t entropy = 0.0;
+
+  for ( ; it != visited_keys.end(); ++it ) {
+    num_t f = static_cast<num_t>(it->second) / static_cast<num_t>(nSamples);
+    entropy -= f * log(f) + (1-f)*log(1-f);
+  }
+
+  return(entropy);
+
+}
+
 uint32_t Treedata::getHash(const size_t featureIdx, const size_t sampleIdx, const size_t integer) const {
   return( features_[featureIdx].getHash(sampleIdx,integer) );
 }
@@ -98,6 +123,12 @@ uint32_t Treedata::getHash(const size_t featureIdx, const size_t sampleIdx, cons
 bool Treedata::hasHash(const size_t featureIdx, const size_t sampleIdx, const uint32_t hashIdx) const {
 
   return( features_[featureIdx].hasHash(sampleIdx,hashIdx) );
+
+}
+
+num_t Treedata::getFeatureEntropy(const size_t featureIdx) const {
+
+  return( features_[featureIdx].entropy() );
 
 }
 
@@ -575,7 +606,7 @@ size_t Treedata::getFeatureIdx(const string& featureName) const {
   return( it->second );
 }
 
-string Treedata::getFeatureName(const size_t featureIdx) {
+string Treedata::getFeatureName(const size_t featureIdx) const {
   return( features_.at(featureIdx).name );
 }
 
@@ -634,15 +665,15 @@ void Treedata::permuteContrasts(distributions::Random* random) {
 
 }
 
-bool Treedata::isFeatureNumerical(const size_t featureIdx) {
+bool Treedata::isFeatureNumerical(const size_t featureIdx) const {
   return( features_[featureIdx].isNumerical() );
 }
 
-bool Treedata::isFeatureCategorical(const size_t featureIdx) {
+bool Treedata::isFeatureCategorical(const size_t featureIdx) const {
   return( features_[featureIdx].isCategorical() );
 }
 
-bool Treedata::isFeatureTextual(const size_t featureIdx) {
+bool Treedata::isFeatureTextual(const size_t featureIdx) const {
   return( features_[featureIdx].isTextual() );
 }
 
@@ -859,66 +890,6 @@ void Treedata::getFilteredFeatureDataPair(const size_t featureIdx1,
 
 }
 
-num_t Treedata::hashFeatureSplit(const size_t targetIdx,
-				 const size_t featureIdx,
-				 const uint32_t hashIdx,
-				 const size_t minSamples,
-				 vector<size_t>& sampleIcs_left,
-				 vector<size_t>& sampleIcs_right) {
-
-  
-  size_t n_tot = sampleIcs_right.size();
-
-  sampleIcs_left.resize( n_tot );
-
-  size_t n_left = 0;
-  size_t n_right = 0;
-
-  vector<num_t> tv;
-
-  tv.resize( n_tot );
-
-  for ( size_t i = 0; i < n_tot; ++i ) {
-    unordered_set<uint32_t>& hl = features_[featureIdx].hashSet[sampleIcs_right[i]];
-    if ( hl.find(hashIdx) != hl.end() ) {
-      sampleIcs_left[n_left++] = sampleIcs_right[i];
-    } else {
-      sampleIcs_right[n_right++] = sampleIcs_right[i];
-    }
-    tv[i] = features_[targetIdx].data[i];
-  }
-
-  if ( n_left < minSamples || n_right < minSamples ) {
-    return( datadefs::NUM_NAN );
-  }
-
-  sampleIcs_left.resize(n_left);
-  sampleIcs_right.resize(n_right);
-
-  if ( this->isFeatureNumerical(targetIdx) ) {
-
-    num_t mu_left = 0.0;
-    num_t mu_right = 0.0;
-    num_t mu_tot = math::mean(tv);
-
-    for ( size_t i = 0; i < n_left; ++i ) {
-      mu_left  += tv[sampleIcs_left[i]] / n_left;
-    }
-    
-    for ( size_t i = 0; i < n_right; ++i ) {
-      mu_right += tv[sampleIcs_right[i]] / n_right;  
-    }
-
-    return( math::deltaImpurity_regr(mu_tot,n_tot,mu_left,n_left,mu_right,n_right) );
-    
-  } else {
-
-    
-
-  }
-  
-
-}
 
 // !! Correctness, Inadequate Abstraction: kill this method with fire. Refactor, REFACTOR, _*REFACTOR*_.
 num_t Treedata::numericalFeatureSplit(const size_t targetIdx,
