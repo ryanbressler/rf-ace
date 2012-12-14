@@ -41,6 +41,8 @@ public:
 
   uint32_t getHash(const size_t sampleIdx, const size_t integer) const;
   bool hasHash(const size_t sampleIdx, const uint32_t hashIdx) const;
+
+  num_t entropy() const;
   
 private:
 
@@ -75,7 +77,9 @@ public:
   size_t end() const { return( datadefs::MAX_IDX ); }
 
   // Returns feature name, given the index
-  string getFeatureName(const size_t featureIdx);
+  string getFeatureName(const size_t featureIdx) const;
+
+  num_t getFeatureEntropy(const size_t fatureIdx) const;
 
   // Returns sample name, given sample index
   string getSampleName(const size_t sampleIdx);
@@ -108,13 +112,6 @@ public:
 
   uint32_t getHash(const size_t featureIdx, const size_t sampleIdx, const size_t integer) const;
   bool hasHash(const size_t featureIdx, const size_t sampleIdx, const uint32_t hashIdx) const;
-
-  num_t hashFeatureSplit(const size_t targetIdx,
-			 const size_t featureIdx,
-			 const uint32_t hashIdx,
-			 const size_t minSamples,
-			 vector<size_t>& sampleIcs_left,
-			 vector<size_t>& sampleIcs_right);
 
   num_t numericalFeatureSplit(const size_t targetIdx,
 			      const size_t featureIdx,
@@ -182,9 +179,9 @@ public:
   void createContrasts();
   void permuteContrasts(distributions::Random* random);
 
-  bool isFeatureNumerical(const size_t featureIdx);
-  bool isFeatureCategorical(const size_t featureIdx);
-  bool isFeatureTextual(const size_t featureIdx);
+  bool isFeatureNumerical(const size_t featureIdx) const;
+  bool isFeatureCategorical(const size_t featureIdx) const;
+  bool isFeatureTextual(const size_t featureIdx) const;
 
   void replaceFeatureData(const size_t featureIdx, const vector<num_t>& featureData);
   void replaceFeatureData(const size_t featureIdx, const vector<string>& rawFeatureData);
