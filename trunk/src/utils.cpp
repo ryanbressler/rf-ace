@@ -8,7 +8,7 @@
 #include <string>
 #include <ios>
 
-#include "hash.hpp"
+#include "murmurhash3.hpp"
 #include "math.hpp"
 
 string utils::tolower(const string& str) {
@@ -238,13 +238,17 @@ unordered_set<uint32_t> utils::hashText(const string& text) {
   for ( ; ; q = strpbrk(p,datadefs::tokenDelimiters) ) {
     if ( distance(p,q) > 0 ) {
       string token(p,q);
-      hashes.insert( hashfun::hsieh(utils::tolower(token).c_str(),token.length()) );
+      uint32_t h;
+      MurmurHash3_x86_32(utils::tolower(token).c_str(),token.length(),0,&h);
+      hashes.insert( h );
     }
     if ( q != NULL ) {
       p = q + 1;
     } else {
       string token2(p);
-      hashes.insert( hashfun::hsieh(utils::tolower(token2).c_str(),token2.length()) );
+      uint32_t h;
+      MurmurHash3_x86_32(utils::tolower(token2).c_str(),token2.length(),0,&h);
+      hashes.insert( h );
       break;
     }
   }
