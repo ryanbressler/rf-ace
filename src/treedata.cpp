@@ -109,7 +109,9 @@ num_t Feature::entropy() const {
 
   for ( ; it != visited_keys.end(); ++it ) {
     num_t f = static_cast<num_t>(it->second) / static_cast<num_t>(nSamples);
-    entropy -= f * log(f) + (1-f)*log(1-f);
+    if ( fabs(f) > datadefs::EPS ) {
+      entropy -= f * log(f) + (1-f)*log(1-f);
+    }
   }
 
   return(entropy);
