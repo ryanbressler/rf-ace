@@ -284,7 +284,6 @@ Treedata::Treedata(string fileName, const char dataDelimiter, const char headerD
  
   if ( useContrasts_ ) {
     this->createContrasts(); // Doubles matrix size
-    //this->permuteContrasts(random);
   }
   
 }
@@ -303,7 +302,6 @@ void Treedata::createContrasts() {
   // Generate contrast features
   for(size_t i = nFeatures; i < 2*nFeatures; ++i) {
     features_[i] = features_[ i - nFeatures ];
-    //features_[i].name = features_[ i - nFeatures ].name;
     features_[i].name.append("_CONTRAST");
     name2idx_[ features_[i].name ] = i;
   }
@@ -649,6 +647,8 @@ void Treedata::permuteContrasts(distributions::Random* random) {
 
   for ( size_t i = nFeatures; i < 2*nFeatures; ++i ) {
     
+    if ( this->isFeatureTextual(i) ) { continue; }
+
     vector<size_t> sampleIcs = utils::range( nSamples );
 
     vector<num_t> filteredData = this->getFilteredFeatureData(i,sampleIcs);

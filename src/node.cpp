@@ -314,7 +314,7 @@ void Node::recursiveNodeSplit(Treedata* treeData,
       for ( size_t i = 0; i < forestOptions->mTry; ++i ) {
 	
 	// If the sampled feature is a contrast... 
-	if ( random->uniform() < forestOptions->contrastFraction && !treeData->isFeatureTextual(featureSampleIcs[i]) ) { // p% sampling rate
+	if ( ! treeData->isFeatureTextual(featureSampleIcs[i]) && random->uniform() < forestOptions->contrastFraction ) { // p% sampling rate
 	  
 	  // Contrast features in Treedata are indexed with an offset of the number of features: nFeatures
 	  featureSampleIcs[i] += treeData->nFeatures();
@@ -389,9 +389,6 @@ bool Node::regularSplitterSeek(Treedata* treeData,
     
     // Get split feature index
     size_t newSplitFeatureIdx = featureSampleIcs[i];
-
-    // Get type of the splitter
-    // bool isFeatureNumerical = treeData->isFeatureNumerical(newSplitFeatureIdx);
 
     // We don't want that the program tests to split data with itself
     assert( newSplitFeatureIdx != targetIdx );
