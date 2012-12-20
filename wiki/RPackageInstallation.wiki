@@ -21,7 +21,13 @@ The R package offers functionality similar to that of the underlying program; so
 {{{
 library(rfacer)
 }}}
-Below is a small R script that demonstrates the use of `rfacer`
+This will load the following functions to the namespace:
+ * rface.filter
+ * rface.train
+ * rface.predict
+ * rface.save
+ * rface.load
+Check the corresponding R documentation of the functions with `?rface.train` etc. Below is a small R script that demonstrates the use of `rfacer`
 {{{
 # Load the package
 library(rfacer)
