@@ -1,4 +1,4 @@
-#Frequently Asked Questions
+#summary Frequently Asked Questions
 
 == Q:Where is Windows support? ==
 Since the addition of multithreading, I have been having difficulties compiling the source under Windows. This is because Visual Studio compiler doesn't recognize the `-pthread` option. The lack of support to multithreading might sometimes also arise under Linux, for which there is already a simple solution (check the next question!) 
