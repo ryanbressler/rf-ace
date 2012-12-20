@@ -163,10 +163,13 @@ bin/rf-ace -L forest.sf -T testdata.arff -P predictions.tsv
 = Train a Gradient Boosting Tree (GBT) model & predict =
 RF-ACE uses Random Forest as the default model for training and prediction; the model used can be specified explicitly using the forest type option `-f / --forestType`:
 {{{
-bin/rf-ace -I data.arff -i target -f RF -n 100 -m 10 -V forest.sf
+bin/rf-ace -I data.arff -i target -f RF -n 100 -m 10 -V forest_RF.sf
 }}}
 which trains a Random Forest model, or 
 {{{
-bin/rf-ace -I data.arff -i target -f GBT -n 100 -a 10 -k 0.01 -T testdata.arff -P predictions.tsv
+bin/rf-ace -I data.arff -i target -f GBT -n 100 -a 10 -k 0.01 -V forest_GBT.sf
 }}}
-which trains a Gradient Boosting Tree model with `-a / --nodeSize` of 10, and `-k / --shrinkage` of 0.01. 
+which trains a Gradient Boosting Tree model with `-a / --nodeSize` of 10, and `-k / --shrinkage` of 0.01. Using the trained and saved GBT predictor happens the same way as with RFs:
+{{{
+bin/rf-ace -L forest_GBT.sf -T testdata.arff -P predictions.tsv
+}}}
