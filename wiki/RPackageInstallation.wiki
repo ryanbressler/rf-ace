@@ -6,7 +6,7 @@ The R package of RF-ACE depends on `Rcpp`, which can be installed from CRAN. Aft
 {{{
 svn checkout http://rf-ace.googlecode.com/svn/trunk/ rfacer
 }}}
-Next, compile the source into a package. In the directory below `rfacer/`, call  
+Next, compile the source into a package. In the directory above `rfacer/`, call  
 {{{
 R CMD INSTALL rfacer
 }}} 
