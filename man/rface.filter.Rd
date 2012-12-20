@@ -1,22 +1,22 @@
-\name{rface.train}
-\alias{rface.train}
+\name{rface.filter}
+\alias{rface.filter}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{
- Builds an RF-ACE predictor object.
+ Apply feature selection with RF-ACE.
 }
 \description{
- Builds an RF-ACE predictor object.
+ Apply feature selection with RF-ACE.
 }
 \usage{
- predictorObj <- rface.train(trainData, target, featureWeights = as.vector(rep(1,length(colnames(trainData)))), nTrees = 100, mTry = 10, nodeSize = 3, nMaxLeaves = 1000, nThreads = 1)
+ associations <- rface.filter(filterData, target, featureWeights = as.vector(rep(1,length(colnames(filterData)))), nTrees = 100, mTry = 10, nodeSize = 3, nMaxLeaves = 1000, nThreads = 1)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
-  \item{trainData}{
-  A data.frame storing the training data. trainData[featureName] stores a vector of strings (categorical feature) or floats (numerical feature).
+  \item{filterData}{
+  A data.frame storing the data for feature selection. filterData[featureName] stores a vector of strings (categorical feature) or floats (numerical feature).
 }
   \item{target}{
-  An integer or string, pointing to a feature in trainData, i.e. trainData[target].
+  An integer or string, pointing to a feature in filterData, i.e. filterData[target].
 }
   \item{featureWeights}{
   A vector of nonnegative weights for the features; affects the sampling distribution. By default all features get weight 1 corresponding uniform sampling.
@@ -60,7 +60,7 @@ Timo Erkkila
 %% ~Make other sections like Warning with \section{Warning }{....} ~
 
 \seealso{
-  \code{ \link{read.afm}, \link{rface.filter}, \link{rface.predict}, \link{rface.save}, \link{rface.load} }
+  \code{ \link{read.afm}, \link{rface.train}, \link{rface.predict}, \link{rface.save}, \link{rface.load} }
 }
 \examples{
 
@@ -72,12 +72,12 @@ Timo Erkkila
   
   nThreads <- 4;
 
-  trainData <- read.afm(afmFile);
+  filterData <- read.afm(afmFile);
 
-  predictorObj <- rface.train(trainData, target, nTrees = nTrees, mTry = mTry, nThreads = nThreads);
+  associations <- rface.filter(filterData, target, nTrees = nTrees, mTry = mTry, nThreads = nThreads);
 
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.
 \keyword{ read.afm }
-\keyword{ rface.predict }
+\keyword{ rface.filter }
