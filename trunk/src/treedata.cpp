@@ -614,6 +614,21 @@ string Treedata::getSampleName(const size_t sampleIdx) {
   return( sampleHeaders_.at(sampleIdx) );
 }
 
+vector<num_t> Treedata::getFeatureWeights() const {
+
+  vector<num_t> weights(this->nFeatures(),1.0);
+
+  for ( size_t i = 0; i < this->nFeatures(); ++i ) {
+    if ( this->isFeatureTextual(i) ) {
+      num_t entropy = this->getFeatureEntropy(i);
+      cout << "Feature '" << this->getFeatureName(i) << "' is textual and has sqrt(entropy) " << sqrtf(entropy) << endl;
+      weights[i] = sqrtf(entropy);
+    }
+  }
+
+  return(weights);
+
+}
 
 void Treedata::print() {
   cout << "Printing feature matrix (missing values encoded to " << datadefs::NUM_NAN << "):" << endl;

@@ -206,14 +206,9 @@ vector<num_t> readFeatureWeights(const Treedata& treeData, const size_t targetId
   vector<num_t> weights(0);
 
   if ( options.io.whiteListFile == "" && options.io.blackListFile == "" && options.io.featureWeightsFile == "" ) {
-    weights.resize(nFeatures,1.0);
-    for ( size_t i = 0; i < treeData.nFeatures(); ++i ) {
-      if ( treeData.isFeatureTextual(i) ) {
-	num_t entropy = treeData.getFeatureEntropy(i);
-	cout << "Feature '" << treeData.getFeatureName(i) << "' is textual and has sqrt(entropy) " << sqrtf(entropy) << endl;
-	weights[i] = sqrtf(entropy);
-      }
-    }
+
+    weights = treeData.getFeatureWeights();
+
   }
 
   if ( options.io.whiteListFile != "" ) {

@@ -146,14 +146,24 @@ RcppExport SEXP rfacePredict(SEXP rfaceObj, SEXP testDataFrameObj, SEXP nThreads
 
   Rcpp::List predictions;
 
-  for(size_t i = 0; i < testData.nSamples(); ++i) {
-    predictions.push_back( Rcpp::List::create(Rcpp::Named("target")=testOutput.targetName,
-                                              Rcpp::Named("sample")=testOutput.sampleNames[i],
-                                              Rcpp::Named("true")=testOutput.numTrueData[i],
-                                              Rcpp::Named("prediction")=testOutput.numPredictions[i],
-                                              Rcpp::Named("error")=testOutput.confidence[i]));
-  }
+  if ( testOutput.isTargetNumerical ) {
+    
+    predictions = Rcpp::List::create(Rcpp::Named("targetName")=testOutput.targetName,
+				     Rcpp::Named("sampleNames")=testOutput.sampleNames,
+				     Rcpp::Named("trueData")=testOutput.numTrueData,
+				     Rcpp::Named("predData")=testOutput.numPredictions,
+				     Rcpp::Named("predError")=testOutput.confidence);
+    
+  } else {
 
+    predictions = Rcpp::List::create(Rcpp::Named("targetName")=testOutput.targetName,
+				     Rcpp::Named("sampleNames")=testOutput.sampleNames,
+				     Rcpp::Named("trueData")=testOutput.catTrueData,
+				     Rcpp::Named("predData")=testOutput.catPredictions,
+				     Rcpp::Named("predError")=testOutput.confidence);
+    
+  }
+  
   return(predictions);
 
 }
@@ -206,17 +216,14 @@ RcppExport SEXP rfaceFilter(SEXP filterDataFrameObj,  SEXP targetStrR, SEXP feat
 
   RFACE::FilterOutput filterOutput = rface.filter(&filterData,targetIdx,featureWeights,&forestOptions,&filterOptions,seed,nThreads);
 
-  Rcpp::List filterOutputR;
-  
-  for(size_t i = 0; i < filterOutput.nSignificantFeatures; ++i) {
-    filterOutputR.push_back( Rcpp::List::create(Rcpp::Named("featureName")=filterOutput.featureNames[i],
-						Rcpp::Named("pValue")=filterOutput.pValues[i],
-						Rcpp::Named("importance")=filterOutput.importances[i],
-						Rcpp::Named("correlation")=filterOutput.correlations[i],
-						Rcpp::Named("nSamples")=filterOutput.sampleCounts[i]));
-  }
+  Rcpp::List filterOutputR = Rcpp::List::create(Rcpp::Named("featureNames")=filterOutput.featureNames,
+                                                Rcpp::Named("pValues")=filterOutput.pValues,
+                                                Rcpp::Named("importances")=filterOutput.importances,
+                                                Rcpp::Named("correlations")=filterOutput.correlations,
+                                                Rcpp::Named("sampleCounts")=filterOutput.sampleCounts);
   
 
   return(filterOutputR);
   
 }
+

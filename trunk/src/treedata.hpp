@@ -113,6 +113,8 @@ public:
   uint32_t getHash(const size_t featureIdx, const size_t sampleIdx, const size_t integer) const;
   bool hasHash(const size_t featureIdx, const size_t sampleIdx, const uint32_t hashIdx) const;
 
+  vector<num_t> getFeatureWeights() const;
+
   num_t numericalFeatureSplit(const size_t targetIdx,
 			      const size_t featureIdx,
 			      const size_t minSamples,
