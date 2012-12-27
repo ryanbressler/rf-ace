@@ -33,14 +33,20 @@ public:
   //Sets a splitter feature for the node.
   //NOTE: splitter can be assigned only once! Subsequent setter calls will raise an assertion failure.
   void setSplitter(const string& splitterName,
-                   const num_t splitLeftLeqValue);
+                   const num_t splitLeftLeqValue,
+		   Node& leftChild,
+		   Node& rightChild);
 
   void setSplitter(const string& splitterName,
                    const set<string>& leftSplitValues,
-                   const set<string>& rightSplitValues);
+                   const set<string>& rightSplitValues,
+		   Node& leftChild,
+		   Node& rightChild);
 
   void setSplitter(const string& splitterName,
-		   const uint32_t hashIdx);
+		   const uint32_t hashIdx,
+		   Node& leftChild,
+		   Node& rightChild);
 
   //Given a value, descends to either one of the child nodes, if existing, otherwise returns a pointer to the current node
   Node* percolate(Treedata* testData, const size_t sampleIdx, const size_t scrambleFeatureIdx = datadefs::MAX_IDX);
@@ -51,12 +57,11 @@ public:
   string getRawTrainPrediction();
 
   //Logic test whether the node has children or not
-  inline bool hasChildren() { return( this->leftChild() || this->rightChild() ); }
+  inline bool hasChildren() const { return( this->leftChild() || this->rightChild() ); }
 
-  Node* leftChild();
-  Node* rightChild();
-
-  void deleteTree();
+  Node* leftChild() const;
+  Node* rightChild() const;
+  Node* missingChild() const;
 
   void print(ofstream& toFile);
   void print(string& traversal, ofstream& toFile);
@@ -77,7 +82,9 @@ protected:
 			  const size_t treeDepth,
 			  set<size_t>& featuresInTree,
 			  vector<size_t>& minDistToRoot,
-                          size_t* nLeaves);
+                          size_t* nLeaves,
+			  size_t& childIdx,
+			  vector<Node>& children);
 
   bool regularSplitterSeek(Treedata* treeData,
 			   const size_t targetIdx,
@@ -88,7 +95,9 @@ protected:
 			   size_t& splitFeatureIdx,
 			   vector<size_t>& sampleIcs_left,
 			   vector<size_t>& sampleIcs_right,
-			   num_t& splitFitness);
+			   num_t& splitFitness,
+			   size_t& childIdx,
+			   vector<Node>& children);
 
 #ifndef TEST__
 private:
@@ -97,7 +106,6 @@ private:
   struct Splitter {
 
     string name;
-    //bool isNumerical;
     Feature::Type type;
     uint32_t hashValue;
     num_t leftLeqValue;
@@ -111,6 +119,7 @@ private:
 
   Node* leftChild_;
   Node* rightChild_;
+  Node* missingChild_;
 
 };
 

@@ -18,9 +18,13 @@ public:
 
   ~RootNode();
 
+  void reset(const size_t nNodes);
+
   void growTree(Treedata* trainData, const size_t targetIdx, const distributions::PMF* pmf, const ForestOptions* forestOptions, distributions::Random* random);
+
+  Node& childRef(const size_t childIdx);
   
-  size_t nNodes();
+  size_t nNodes() const;
 
   num_t getTestPrediction(Treedata* treeData, const size_t sampleIdx);
   string getRawTestPrediction(Treedata* treeData, const size_t sampleIdx);
@@ -39,23 +43,23 @@ public:
 
   vector<pair<size_t,size_t> > getMinDistFeatures();
 
+  void verifyIntegrity() const;
+
 #ifndef TEST__
 private:
 #endif
 
+  size_t getTreeSizeEstimate(const size_t nSamples, const size_t nMaxLeaves, const size_t nodeSize) const;
+
   // Parameters that are generated only when a tree is grown
-  //Treedata* trainData_;
+  vector<Node> children_;
   size_t nNodes_;
   vector<size_t> bootstrapIcs_;
   vector<size_t> oobIcs_;
 
   set<size_t> featuresInTree_;
 
-  //minDistToRoot_t minDistToRoot_;
-
   vector<size_t> minDistToRoot_;
-
-  //vector<num_t> trainPredictionCache_;
 
 };
 

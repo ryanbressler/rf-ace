@@ -57,6 +57,9 @@ void StochasticForest::loadForest(const string& fileName) {
 
   vector<map<string,Node*> > forestMap(nTrees);
 
+  vector<size_t> nNodesPerTree(nTrees, 0);
+  vector<size_t> nNodesAllocatedPerTree(nTrees, 0);
+
   // Read the forest
   while (getline(forestStream, newLine)) {
 
@@ -70,24 +73,28 @@ void StochasticForest::loadForest(const string& fileName) {
 
     if (newLine.compare(0, 5, "TREE=") == 0) {
       ++treeIdx;
-      //cout << treeIdx << " vs " << newLine << " => " << utils::str2int(utils::split(newLine,'=')[1]) << endl;
-      //assert(treeIdx == utils::str2<int>(utils::split(newLine, '=')[1]));
+      map<string,string> treeSetup = utils::parse(newLine, ',', '=', '"');
+      assert( treeSetup.find("NNODES") != treeSetup.end() );
+      nNodesPerTree[treeIdx] = utils::str2<size_t>(treeSetup["NNODES"]);
+      
       if ( forestType_ == ForestOptions::ForestType::GBT ) {
-	map<string,string> GBTSetup = utils::parse(newLine, ',', '=', '"');
-	GBTfactors_.push_back( utils::str2<num_t>(GBTSetup["GBT_FACTOR"]) );
-	GBTconstant_.push_back( utils::str2<num_t>(GBTSetup["GBT_CONSTANT"]) );
+	assert( treeSetup.find("GBT_FACTOR") != treeSetup.end() );
+	assert( treeSetup.find("GBT_CONSTANT") != treeSetup.end() );
+	GBTfactors_.push_back( utils::str2<num_t>(treeSetup["GBT_FACTOR"]) );
+	GBTconstant_.push_back( utils::str2<num_t>(treeSetup["GBT_CONSTANT"]) );
       }
       continue;
     }
-
+    
     //cout << newLine << endl;
-
+    
     map<string,string> nodeMap = utils::parse(newLine, ',', '=', '"');
 
     // If the node is rootnode, we will create a new RootNode object and assign a reference to it in forestMap
     if (nodeMap["NODE"] == "*") {
       rootNodes_[treeIdx] = new RootNode();
       forestMap[treeIdx]["*"] = rootNodes_[treeIdx];
+      rootNodes_[treeIdx]->reset(nNodesPerTree[treeIdx]);
     }
 
     Node* nodep = forestMap[treeIdx][nodeMap["NODE"]];
@@ -105,22 +112,28 @@ void StochasticForest::loadForest(const string& fileName) {
     // If the node has a splitter...
     if (nodeMap.find("SPLITTER") != nodeMap.end()) {
 
-      //size_t featureIdx = trainData_->getFeatureIdx(nodeMap["SPLITTER"]);
+      size_t leftChildIdx = nNodesAllocatedPerTree[treeIdx]++;
+      size_t rightChildIdx = nNodesAllocatedPerTree[treeIdx]++;
+      
+      assert( nNodesAllocatedPerTree[treeIdx] + 1 < nNodesPerTree[treeIdx] );
+
+      Node& lChild = rootNodes_[treeIdx]->childRef(leftChildIdx);
+      Node& rChild = rootNodes_[treeIdx]->childRef(rightChildIdx);
 
       // If the splitter is numerical...
       if ( nodeMap["SPLITTERTYPE"] == "NUMERICAL" ) {
 
-        nodep->setSplitter(nodeMap["SPLITTER"],utils::str2<num_t>(nodeMap["LVALUES"]));
+        nodep->setSplitter(nodeMap["SPLITTER"], utils::str2<num_t>(nodeMap["LVALUES"]), lChild, rChild);
 
       } else if ( nodeMap["SPLITTERTYPE"] == "CATEGORICAL" ){
 
         set<string> splitLeftValues = utils::keys(nodeMap["LVALUES"], ':');
         set<string> splitRightValues = utils::keys(nodeMap["RVALUES"], ':');
 
-        nodep->setSplitter(nodeMap["SPLITTER"], splitLeftValues, splitRightValues);
+        nodep->setSplitter(nodeMap["SPLITTER"], splitLeftValues, splitRightValues, lChild, rChild);
 
       } else if ( nodeMap["SPLITTERTYPE"] == "TEXTUAL" ) {
-	nodep->setSplitter(nodeMap["SPLITTER"], utils::str2<uint32_t>(nodeMap["LVALUES"]));
+	nodep->setSplitter(nodeMap["SPLITTER"], utils::str2<uint32_t>(nodeMap["LVALUES"]), lChild, rChild);
       } else {
 	cerr << "ERROR: incompatible splitter type '" << nodeMap["SPLITTERTYPE"] << endl;
 	exit(1);
@@ -130,6 +143,12 @@ void StochasticForest::loadForest(const string& fileName) {
       forestMap[treeIdx][nodeMap["NODE"] + "R"] = nodep->rightChild();
 
     }
+
+  }
+
+  for ( size_t treeIdx = 0; treeIdx < nTrees; ++treeIdx ) {
+
+    rootNodes_[treeIdx]->verifyIntegrity();
 
   }
 
@@ -167,7 +186,7 @@ void StochasticForest::saveForest(ofstream& toFile) {
 
   // Save each tree in the forest
   for (size_t treeIdx = 0; treeIdx < rootNodes_.size(); ++treeIdx) {
-    toFile << "TREE=" << treeIdx;
+    toFile << "TREE=" << treeIdx << ",NNODES=" << rootNodes_[treeIdx]->nNodes();;
     if (forestType_ == ForestOptions::ForestType::GBT) {
       toFile << ",GBT_CONSTANT=";
       utils::write(toFile, GBTconstant_.begin(), GBTconstant_.end(), ':');
