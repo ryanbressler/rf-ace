@@ -14,8 +14,8 @@ Node::Node():
   trainPrediction_(datadefs::NUM_NAN),
   rawTrainPrediction_(datadefs::STR_NAN),
   leftChild_(NULL),
-  rightChild_(NULL) {
-  
+  rightChild_(NULL),
+  missingChild_(NULL) {
 }
 
 /** 
@@ -24,34 +24,38 @@ Node::Node():
 Node::~Node() {
   
   //If the node has children, some moery cleanup needs to be performed
-  if ( this->hasChildren() ) {
-
-    // Deallocates dynamically allocated memory
-    this->deleteTree();
-  }
-
+  //if ( this->hasChildren() ) {
+  
+  // Deallocates dynamically allocated memory
+  //this->deleteTree();
+  //}
+  
 }
 
 /**
  * Deletes child nodes, which will cascade all the way to the leaf nodes 
  */
-void Node::deleteTree() {
-
+/*
+  void Node::deleteTree() {
+  
   if ( false ) {
-    cout << "DEL " << leftChild_ << endl;
-    cout << "DEL " << rightChild_ << endl; 
+  cout << "DEL " << leftChild_ << endl;
+  cout << "DEL " << rightChild_ << endl; 
   }
-
+  
   delete leftChild_;
   delete rightChild_;
   
-}
+  }
+*/
 
 // !! Documentation: consider combining with the documentation in the header
 // !! file, fleshing it out a bit. Ideally, implementation notes should fall
 // !! here; notes on the abstraction should fall in the header file.
 void Node::setSplitter(const string& splitterName,  
-		       const num_t splitLeftLeqValue) {
+		       const num_t splitLeftLeqValue, 
+		       Node& leftChild, 
+		       Node& rightChild) {
   
   if ( this->hasChildren() ) {
     cerr << "Cannot set a splitter to a node twice!" << endl;
@@ -63,8 +67,8 @@ void Node::setSplitter(const string& splitterName,
   splitter_.type = Feature::Type::NUM;
   splitter_.leftLeqValue = splitLeftLeqValue;
 
-  leftChild_ = new Node();
-  rightChild_ = new Node();
+  leftChild_ = &leftChild;
+  rightChild_ = &rightChild;
 
   if ( false ) {
     cout << "NEW " << leftChild_ << endl;
@@ -78,7 +82,9 @@ void Node::setSplitter(const string& splitterName,
 // !! here; notes on the abstraction should fall in the header file.
 void Node::setSplitter(const string& splitterName,  
 		       const set<string>& leftSplitValues, 
-		       const set<string>& rightSplitValues) {
+		       const set<string>& rightSplitValues,
+		       Node& leftChild,
+		       Node& rightChild) {
 
   if ( this->hasChildren() ) {
     cerr << "Node::setSplitter() -- cannot set a splitter to a node twice!" << endl;
@@ -90,8 +96,8 @@ void Node::setSplitter(const string& splitterName,
   splitter_.leftValues = leftSplitValues;
   splitter_.rightValues = rightSplitValues;
 
-  leftChild_ = new Node();
-  rightChild_ = new Node();
+  leftChild_ = &leftChild;
+  rightChild_ = &rightChild;
 
   if ( false ) {
     cout << "NEW " << leftChild_ << endl;
@@ -101,7 +107,9 @@ void Node::setSplitter(const string& splitterName,
 }
 
 void Node::setSplitter(const string& splitterName,
-		       const uint32_t hashIdx) {
+		       const uint32_t hashIdx,
+		       Node& leftChild,
+		       Node& rightChild) {
 
   if ( this->hasChildren() ) {
     cerr << "Node::setSplitter() -- cannot set a splitter to a node twice!" << endl;
@@ -112,8 +120,8 @@ void Node::setSplitter(const string& splitterName,
   splitter_.type = Feature::Type::TXT;
   splitter_.hashValue = hashIdx;
 
-  leftChild_ = new Node();
-  rightChild_ = new Node();
+  leftChild_ = &leftChild;
+  rightChild_ = &rightChild;
 
   if ( false ) {
     cout << "NEW " << leftChild_ << endl;
@@ -140,11 +148,17 @@ Node* Node::percolate(Treedata* testData, const size_t sampleIdx, const size_t s
       exit(1);
       // data = testData->getFeatureData(featureIdx, random_->integer() % testData->nSamples() );
     }
-    if ( datadefs::isNAN(data) ) { return( this ); }
-    return( data <= splitter_.leftLeqValue ? 
-	    this->leftChild()->percolate(testData,sampleIdx,scrambleFeatureIdx) : 
-	    this->rightChild()->percolate(testData,sampleIdx,scrambleFeatureIdx) );
-    
+    if ( datadefs::isNAN(data) ) { 
+      if ( this->missingChild() ) {
+	return( this->missingChild()->percolate(testData,sampleIdx,scrambleFeatureIdx) );
+      } else {
+	return( this ); 
+      }
+    } else {
+      return( data <= splitter_.leftLeqValue ? 
+	      this->leftChild()->percolate(testData,sampleIdx,scrambleFeatureIdx) : 
+	      this->rightChild()->percolate(testData,sampleIdx,scrambleFeatureIdx) );
+    }
   } else if ( splitter_.type == Feature::Type::CAT ){
     string data;
     if ( scrambleFeatureIdx != featureIdx ) {
@@ -154,7 +168,15 @@ Node* Node::percolate(Treedata* testData, const size_t sampleIdx, const size_t s
       exit(1);
       // data = testData->getRawFeatureData(featureIdx, random_->integer() % testData->nSamples() );
     }
-    if ( datadefs::isNAN_STR(data) ) { return( this ); }
+    if ( datadefs::isNAN_STR(data) ) { 
+      if ( this->missingChild() ) {
+	return( this->missingChild()->percolate(testData,sampleIdx,scrambleFeatureIdx) );
+      } else {
+	return( this );
+      }
+    } else { 
+      return( this ); 
+    }
     // Return left child if splits left
     if ( splitter_.leftValues.find(data) != splitter_.leftValues.end() ) {
       return( this->leftChild()->percolate(testData,sampleIdx,scrambleFeatureIdx) );
@@ -166,9 +188,9 @@ Node* Node::percolate(Treedata* testData, const size_t sampleIdx, const size_t s
 
     // Else return this
     return( this );
-
+    
   } else {
-
+    
     if ( testData->hasHash(featureIdx,sampleIdx,splitter_.hashValue) ) {
       return( this->leftChild()->percolate(testData,sampleIdx,scrambleFeatureIdx) );
     } else {
@@ -178,13 +200,17 @@ Node* Node::percolate(Treedata* testData, const size_t sampleIdx, const size_t s
    
 }
   
-Node* Node::leftChild() {
+Node* Node::leftChild() const {
   return( leftChild_ );
 }
 
 
-Node* Node::rightChild() {
+Node* Node::rightChild() const {
   return( rightChild_ );
+}
+
+Node* Node::missingChild() const {
+  return( missingChild_ );
 }
 
 /**
@@ -201,24 +227,33 @@ void Node::print(string& traversal, ofstream& toFile) {
     if (splitter_.type == Feature::Type::NUM ) {
       toFile << ",SPLITTERTYPE=NUMERICAL"
 	     << ",LVALUES=" << splitter_.leftLeqValue 
-	     << ",RVALUES=" << splitter_.leftLeqValue << endl;
+	     << ",RVALUES=" << splitter_.leftLeqValue;
     } else if ( splitter_.type == Feature::Type::CAT ) {
       toFile << ",SPLITTERTYPE=CATEGORICAL" 
 	     << ",LVALUES=" << "\""; utils::write(toFile,splitter_.leftValues.begin(),splitter_.leftValues.end(),':'); toFile << "\""
-	     << ",RVALUES=" << "\""; utils::write(toFile,splitter_.rightValues.begin(),splitter_.rightValues.end(),':'); toFile << "\"" << endl;
+	     << ",RVALUES=" << "\""; utils::write(toFile,splitter_.rightValues.begin(),splitter_.rightValues.end(),':'); toFile << "\"";
     } else {
       toFile << ",SPLITTERTYPE=TEXTUAL"
 	     << ",LVALUES=" << splitter_.hashValue
-	     << ",RVALUES=" << splitter_.hashValue << endl;
+	     << ",RVALUES=" << splitter_.hashValue;
     }
-    
+
+    if ( this->missingChild() ) { toFile << ",M" << endl; } else { toFile << endl; }
+
     string traversalLeft = traversal;
     traversalLeft.append("L");
     string traversalRight = traversal;
     traversalRight.append("R");
     
-    leftChild_->print(traversalLeft,toFile);
-    rightChild_->print(traversalRight,toFile);
+    this->leftChild()->print(traversalLeft,toFile);
+    this->rightChild()->print(traversalRight,toFile);
+
+    // Optional third branch
+    if ( this->missingChild() ) {
+      string traversalMissing = traversal;
+      traversalMissing.append("M");
+      this->missingChild()->print(traversalMissing,toFile);
+    }
     
   } else {
     toFile << endl;
@@ -260,7 +295,9 @@ void Node::recursiveNodeSplit(Treedata* treeData,
 			      const size_t treeDepth,
 			      set<size_t>& featuresInTree,
 			      vector<size_t>& minDistToRoot,
-			      size_t* nLeaves) {
+			      size_t* nLeaves,
+			      size_t& childIdx,
+			      vector<Node>& children) {
 
   if ( false ) {
     cout << "REC " << this << endl;
@@ -287,7 +324,6 @@ void Node::recursiveNodeSplit(Treedata* treeData,
     cerr << "Node::recursiveNodeSplit() -- unknown prediction function!" << endl;
     exit(1);
   }
-
 
   assert( !datadefs::isNAN(trainPrediction_) );
   assert( !datadefs::isNAN_STR(rawTrainPrediction_) );
@@ -343,7 +379,9 @@ void Node::recursiveNodeSplit(Treedata* treeData,
 					      splitFeatureIdx,
 					      sampleIcs_left,
 					      sampleIcs_right,
-					      splitFitness);
+					      splitFitness,
+					      childIdx,
+					      children);
         
   if ( !foundSplit ) {
     return;
@@ -357,8 +395,33 @@ void Node::recursiveNodeSplit(Treedata* treeData,
 
   *nLeaves += 1;
   
-  leftChild_->recursiveNodeSplit(treeData,targetIdx,forestOptions,random,predictionFunctionType,pmf,sampleIcs_left,treeDepth+1,featuresInTree,minDistToRoot,nLeaves);
-  rightChild_->recursiveNodeSplit(treeData,targetIdx,forestOptions,random,predictionFunctionType,pmf,sampleIcs_right,treeDepth+1,featuresInTree,minDistToRoot,nLeaves);
+  this->leftChild()->recursiveNodeSplit(treeData,
+					targetIdx,
+					forestOptions,
+					random,
+					predictionFunctionType,
+					pmf,
+					sampleIcs_left,
+					treeDepth+1,
+					featuresInTree,
+					minDistToRoot,
+					nLeaves,
+					childIdx,
+					children);
+
+  this->rightChild()->recursiveNodeSplit(treeData,
+					 targetIdx,
+					 forestOptions,
+					 random,
+					 predictionFunctionType,
+					 pmf,
+					 sampleIcs_right,
+					 treeDepth+1,
+					 featuresInTree,
+					 minDistToRoot,
+					 nLeaves,
+					 childIdx,
+					 children);
   
 }
 
@@ -371,7 +434,9 @@ bool Node::regularSplitterSeek(Treedata* treeData,
 			       size_t& splitFeatureIdx,
 			       vector<size_t>& sampleIcs_left,
 			       vector<size_t>& sampleIcs_right,
-			       num_t& splitFitness) {
+			       num_t& splitFitness,
+			       size_t& childIdx,
+			       vector<Node>& children) {
   
   // This many features will be tested for splitting the data
   size_t nFeaturesForSplit = featureSampleIcs.size();
@@ -421,16 +486,11 @@ bool Node::regularSplitterSeek(Treedata* treeData,
 							  newSplitValues_right);
     } else if ( treeData->isFeatureTextual(newSplitFeatureIdx) && newSampleIcs_right.size() > 0 ) {
 
-      //cout << "Sampling a hash feature among samples: " << flush;
-      //utils::write()
-
       // Choose random sample
       size_t sampleIdx = random->integer() % newSampleIcs_right.size();
 
       // Choose random hash from the randomly selected sample
       newHashIdx = treeData->getHash(newSplitFeatureIdx,sampleIdx,random->integer());
-
-      //cout << "Sampling a hash idx (" << sampleIdx << "," << newHashIdx << ") from feature " << newSplitFeatureIdx << " (" << treeData->getFeatureName(newSplitFeatureIdx) << "): " << flush; 
 
       newSplitFitness = treeData->textualFeatureSplit(targetIdx,
 						      newSplitFeatureIdx,
@@ -438,8 +498,6 @@ bool Node::regularSplitterSeek(Treedata* treeData,
 						      forestOptions->nodeSize,
 						      newSampleIcs_left,
 						      newSampleIcs_right);
-
-      //cout << "fitness " << newSplitFitness << endl;
 
     }
 
@@ -464,9 +522,12 @@ bool Node::regularSplitterSeek(Treedata* treeData,
     return(false);
   } 
 
+  cout << "Setting child " << childIdx << endl;
+  cout << "Setting child " << childIdx + 1 << endl;
+
   if ( treeData->isFeatureNumerical(splitFeatureIdx) ) {
 
-    this->setSplitter(treeData->getFeatureName(splitFeatureIdx),splitValue);
+    this->setSplitter(treeData->getFeatureName(splitFeatureIdx),splitValue,children[childIdx],children[childIdx+1]);
 
   } else if ( treeData->isFeatureCategorical(splitFeatureIdx) ){
     
@@ -480,13 +541,15 @@ bool Node::regularSplitterSeek(Treedata* treeData,
       rawSplitValues_right.insert( treeData->getRawFeatureData(splitFeatureIdx,*it) );
     }
 
-    this->setSplitter(treeData->getFeatureName(splitFeatureIdx),rawSplitValues_left,rawSplitValues_right);
+    this->setSplitter(treeData->getFeatureName(splitFeatureIdx),rawSplitValues_left,rawSplitValues_right,children[childIdx],children[childIdx+1]);
 
   } else if ( treeData->isFeatureTextual(splitFeatureIdx) ) {
     
-    this->setSplitter(treeData->getFeatureName(splitFeatureIdx),hashIdx);
+    this->setSplitter(treeData->getFeatureName(splitFeatureIdx),hashIdx,children[childIdx],children[childIdx+1]);
 
   }
+
+  childIdx += 2;
 
   return(true);
 
