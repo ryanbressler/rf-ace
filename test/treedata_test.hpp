@@ -686,8 +686,8 @@ void treeDataTest::test_categoricalFeatureSplitsCategoricalTarget() {
 
   datadefs::num_t leftFraction = 1.0*sampleIcs_left.size() / ( sampleIcs_left.size() + sampleIcs_right.size() );
 
-  Node node;
-  node.setSplitter("C:noise_6",rawSplitValues_left,rawSplitValues_right);
+  Node node,leftChild,rightChild;
+  node.setSplitter("C:noise_6",rawSplitValues_left,rawSplitValues_right,leftChild,rightChild);
 
   CPPUNIT_ASSERT( node.percolate(treeData_,0) == node.leftChild() );
   CPPUNIT_ASSERT( node.percolate(treeData_,3) == node.rightChild() );

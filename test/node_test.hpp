@@ -55,9 +55,9 @@ void NodeTest::test_setSplitter() {
   
   //Splitter::Splitter splitter(0.5);
   
-  Node node;
-    
-  node.setSplitter("foo",splitLeftLeqValue);
+  Node node,leftChild,rightChild;
+
+  node.setSplitter("foo",splitLeftLeqValue,leftChild,rightChild);
   
   //CPPUNIT_ASSERT( node.splitterIdx() == splitterIdx );
   CPPUNIT_ASSERT( node.splitter_.type == Feature::Type::NUM );
@@ -68,14 +68,14 @@ void NodeTest::test_setSplitter() {
 
 void NodeTest::test_percolateData() {
   
-  Node node0;
+  Node node0,node00,node01;
   //Splitter splitter("foo",0.1);
-  node0.setSplitter("foo",0.1);
+  node0.setSplitter("foo",0.1,node00,node01);
   //CPPUNIT_ASSERT( node0.leftChild() == node0.percolate(0.09) );
   //CPPUNIT_ASSERT( node0.rightChild() == node0.percolate(0.11) );
   //CPPUNIT_ASSERT( NULL == node0.percolateData(datadefs::NUM_NAN));
 
-  Node node1;
+  Node node1,node10,node11;
   
   set<string> leftValues;
   set<string> rightValues;
@@ -86,7 +86,7 @@ void NodeTest::test_percolateData() {
   rightValues.insert("c");
   rightValues.insert("d");
 
-  node1.setSplitter("foo",leftValues,rightValues);
+  node1.setSplitter("foo",leftValues,rightValues,node10,node11);
 
   //CPPUNIT_ASSERT( node1.percolate("a") == node1.leftChild() );
   //CPPUNIT_ASSERT( node1.percolate("b") == node1.leftChild() );
