@@ -18,36 +18,7 @@ Node::Node():
   missingChild_(NULL) {
 }
 
-/** 
- * Destructor for the node: initiates a recursive destruction for all child nodes
- */
-Node::~Node() {
-  
-  //If the node has children, some moery cleanup needs to be performed
-  //if ( this->hasChildren() ) {
-  
-  // Deallocates dynamically allocated memory
-  //this->deleteTree();
-  //}
-  
-}
-
-/**
- * Deletes child nodes, which will cascade all the way to the leaf nodes 
- */
-/*
-  void Node::deleteTree() {
-  
-  if ( false ) {
-  cout << "DEL " << leftChild_ << endl;
-  cout << "DEL " << rightChild_ << endl; 
-  }
-  
-  delete leftChild_;
-  delete rightChild_;
-  
-  }
-*/
+Node::~Node() { }
 
 // !! Documentation: consider combining with the documentation in the header
 // !! file, fleshing it out a bit. Ideally, implementation notes should fall
@@ -63,17 +34,11 @@ void Node::setSplitter(const string& splitterName,
   }
 
   splitter_.name = splitterName;
-  //splitter_.isNumerical = true;
   splitter_.type = Feature::Type::NUM;
   splitter_.leftLeqValue = splitLeftLeqValue;
 
   leftChild_ = &leftChild;
   rightChild_ = &rightChild;
-
-  if ( false ) {
-    cout << "NEW " << leftChild_ << endl;
-    cout << "NEW " << rightChild_ << endl;
-  }
 
 }
 
@@ -99,11 +64,6 @@ void Node::setSplitter(const string& splitterName,
   leftChild_ = &leftChild;
   rightChild_ = &rightChild;
 
-  if ( false ) {
-    cout << "NEW " << leftChild_ << endl;
-    cout << "NEW " << rightChild_ << endl;
-  }
-
 }
 
 void Node::setSplitter(const string& splitterName,
@@ -122,12 +82,6 @@ void Node::setSplitter(const string& splitterName,
 
   leftChild_ = &leftChild;
   rightChild_ = &rightChild;
-
-  if ( false ) {
-    cout << "NEW " << leftChild_ << endl;
-    cout << "NEW " << rightChild_ << endl;
-  }
-
 
 }
 
@@ -175,20 +129,20 @@ Node* Node::percolate(Treedata* testData, const size_t sampleIdx, const size_t s
 	return( this );
       }
     } else { 
-      return( this ); 
-    }
-    // Return left child if splits left
-    if ( splitter_.leftValues.find(data) != splitter_.leftValues.end() ) {
-      return( this->leftChild()->percolate(testData,sampleIdx,scrambleFeatureIdx) );
-    }
-    // Return right child if splits right
-    if ( splitter_.rightValues.find(data) != splitter_.rightValues.end() ) {
-      return( this->rightChild()->percolate(testData,sampleIdx,scrambleFeatureIdx) );
+      
+      // Return left child if splits left
+      if ( splitter_.leftValues.find(data) != splitter_.leftValues.end() ) {
+	return( this->leftChild()->percolate(testData,sampleIdx,scrambleFeatureIdx) );
+      }
+      // Return right child if splits right
+      if ( splitter_.rightValues.find(data) != splitter_.rightValues.end() ) {
+	return( this->rightChild()->percolate(testData,sampleIdx,scrambleFeatureIdx) );
+      }
+      
+      // Else return this
+      return( this );
     }
 
-    // Else return this
-    return( this );
-    
   } else {
     
     if ( testData->hasHash(featureIdx,sampleIdx,splitter_.hashValue) ) {
@@ -521,9 +475,6 @@ bool Node::regularSplitterSeek(Treedata* treeData,
   if ( fabs(splitFitness) < datadefs::EPS ) {
     return(false);
   } 
-
-  cout << "Setting child " << childIdx << endl;
-  cout << "Setting child " << childIdx + 1 << endl;
 
   if ( treeData->isFeatureNumerical(splitFeatureIdx) ) {
 

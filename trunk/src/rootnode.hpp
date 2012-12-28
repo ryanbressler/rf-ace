@@ -29,12 +29,6 @@ public:
   num_t getTestPrediction(Treedata* treeData, const size_t sampleIdx);
   string getRawTestPrediction(Treedata* treeData, const size_t sampleIdx);
 
-  //num_t getTrainPrediction(const size_t sampleIdx);
-  //num_t getPermutedTrainPrediction(const size_t featureIdx,
-  //				   const size_t sampleIdx);
-  
-  //vector<num_t> getTrainPrediction();
-
   vector<size_t> getOobIcs();
 
   size_t nOobSamples();
@@ -53,7 +47,6 @@ private:
 
   // Parameters that are generated only when a tree is grown
   vector<Node> children_;
-  size_t nNodes_;
   vector<size_t> bootstrapIcs_;
   vector<size_t> oobIcs_;
 

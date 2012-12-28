@@ -8,7 +8,6 @@
 
 RootNode::RootNode():
   children_(0),
-  nNodes_(1),
   bootstrapIcs_(0),
   oobIcs_(0),
   minDistToRoot_(0) { /* EMPTY CONSTRUCTOR */ }
@@ -46,8 +45,6 @@ void RootNode::reset(const size_t nNodes) {
 void RootNode::growTree(Treedata* trainData, const size_t targetIdx, const distributions::PMF* pmf, const ForestOptions* forestOptions, distributions::Random* random) {
 
   size_t nChildren = this->getTreeSizeEstimate(trainData->nSamples(),forestOptions->nMaxLeaves,forestOptions->nodeSize);
-
-  cout << "RootNode::growTree() -- estimating upper bound for tree size: " << nChildren+1 << endl;
 
   this->reset(nChildren+1);
 
@@ -119,9 +116,6 @@ void RootNode::growTree(Treedata* trainData, const size_t targetIdx, const distr
 			   nChildren,
 			   children_);
   
-  // nNodes_ = 2 * nLeaves - 1;
-  nNodes_ = nChildren + 1;
-
   children_.resize(nChildren);
 
   this->verifyIntegrity();
@@ -151,20 +145,21 @@ void RootNode::verifyIntegrity() const {
 
   size_t nNodes = this->nNodes();
 
-  assert( children_.size() == nNodes - 1 );
-
   stack<const Node*> nodesToVisit;
   nodesToVisit.push(this);
 
   unordered_set<const Node*> nodesReferred;
-  nodesReferred.reserve(nNodes);
+  nodesReferred.rehash(4*nNodes);
 
   while ( ! nodesToVisit.empty() ) {
 
     const Node* node = nodesToVisit.top();
     nodesToVisit.pop();
 
-    assert( nodesReferred.find(node) == nodesReferred.end() );
+    if ( nodesReferred.find(node) != nodesReferred.end() ) {
+      cerr << "RootNode::verifyIntegrity() -- double referral to the same node in the tree, which should be impossible!" << endl;
+      exit(1);
+    }
 
     nodesReferred.insert(node);
 
@@ -196,7 +191,7 @@ Node& RootNode::childRef(const size_t childIdx) {
 }
 
 size_t RootNode::nNodes() const {
-  return( nNodes_ );
+  return( children_.size() + 1 );
 }
 
 vector<size_t> RootNode::getOobIcs() {

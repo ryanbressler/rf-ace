@@ -115,7 +115,10 @@ void StochasticForest::loadForest(const string& fileName) {
       size_t leftChildIdx = nNodesAllocatedPerTree[treeIdx]++;
       size_t rightChildIdx = nNodesAllocatedPerTree[treeIdx]++;
       
-      assert( nNodesAllocatedPerTree[treeIdx] + 1 < nNodesPerTree[treeIdx] );
+      if ( nNodesAllocatedPerTree[treeIdx] + 1 > nNodesPerTree[treeIdx] ) {
+	cerr << "StochasticForest::loadForest() -- the tree contains more nodes than declared!" << endl;
+	exit(1);
+      }
 
       Node& lChild = rootNodes_[treeIdx]->childRef(leftChildIdx);
       Node& rChild = rootNodes_[treeIdx]->childRef(rightChildIdx);
