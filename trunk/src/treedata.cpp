@@ -914,6 +914,7 @@ num_t Treedata::numericalFeatureSplit(const size_t targetIdx,
 				      const size_t minSamples,
 				      vector<size_t>& sampleIcs_left,
 				      vector<size_t>& sampleIcs_right,
+				      vector<size_t>& sampleIcs_missing,
 				      num_t& splitValue) {
 
   num_t DI_best = 0.0;
@@ -976,6 +977,7 @@ num_t Treedata::categoricalFeatureSplit(const size_t targetIdx,
 					const size_t minSamples,
 					vector<size_t>& sampleIcs_left,
 					vector<size_t>& sampleIcs_right,
+					vector<size_t>& sampleIcs_missing,
 					set<num_t>& splitValues_left,
 					set<num_t>& splitValues_right) {
 
@@ -1055,7 +1057,8 @@ num_t Treedata::textualFeatureSplit(const size_t targetIdx,
 				    const uint32_t hashIdx,
 				    const size_t minSamples,
 				    vector<size_t>& sampleIcs_left,
-				    vector<size_t>& sampleIcs_right) {
+				    vector<size_t>& sampleIcs_right,
+				    vector<size_t>& sampleIcs_missing) {
 
 
   assert(features_[featureIdx].isTextual());
@@ -1126,172 +1129,6 @@ num_t Treedata::textualFeatureSplit(const size_t targetIdx,
   return(DI_best);
   
 }
-
-/*
-  void Treedata::getFilteredAndSortedFeatureDataPair(const size_t targetIdx, 
-  const size_t featureIdx, 
-  vector<size_t>& sampleIcs, 
-  vector<num_t>& targetData, 
-  vector<num_t>& featureData) {
-  
-  if ( !features_[featureIdx].isNumerical ) {
-  cerr << "Treedata::getFilteredAndSortedDataPair() -- cannot perform for CATEGORICAL features" << endl;
-  exit(1);
-  }
-  
-  //targetData.clear();
-  //targetData.resize( sampleHeaders_.size(), datadefs::NUM_NAN );
-  //featureData.clear();
-  //featureData.resize( sampleHeaders_.size(), datadefs::NUM_NAN );
-  
-  //vector<size_t> sampleIcsCopy( sampleHeaders_.size() );
-  //size_t maxPos = 0;
-  
-  // A map: sortOrderKey -> (sampleIdx,multiplicity)
-  map<size_t,pair<size_t,size_t> > mapOrder;
-  
-  // Count the number of real samples
-  size_t nReal = 0;
-  
-  // Go through all sample indices
-  for ( vector<size_t>::const_iterator it(sampleIcs.begin()); it != sampleIcs.end(); ++it ) {
-  
-  // Extract the target and feature values for the index
-  //num_t tVal = features_[targetIdx].data[*it];
-  //num_t fVal = features_[featureIdx].data[*it];
-  
-  // If the data are non-NA...
-  if ( !datadefs::isNAN(features_[featureIdx].data[*it]) && 
-  !datadefs::isNAN(features_[targetIdx].data[*it]) ) {
-  
-  // Accumulate real data counter
-  ++nReal;
-  
-  // Extract the ordered position of the sample
-  size_t pos = features_[featureIdx].sortOrder[*it];
-  
-  // If the position is unused in the map...
-  if ( mapOrder.find(pos) == mapOrder.end() ) {
-  
-  // Add the ordered position, the original sample index, 
-  // and initialize the sample counter to 1
-  pair<size_t,size_t> foo(*it,1);
-  mapOrder.insert(pair<size_t,pair<size_t,size_t> >(pos,foo));
-  } else {
-  
-  // Otherwise accumulate multiplicity by one
-  ++mapOrder[pos].second;
-  }
-  }
-  }
-  
-  targetData.resize(nReal);
-  featureData.resize(nReal);
-  sampleIcs.resize(nReal);
-  
-  size_t i = 0;
-  
-  for ( map<size_t,pair<size_t,size_t> >::const_iterator it(mapOrder.begin()); it != mapOrder.end(); ++it ) {
-  
-  for ( size_t j = 0; j < it->second.second; ++j ) {
-  sampleIcs[i] = it->second.first;
-  targetData[i] = features_[targetIdx].data[it->second.first];
-  featureData[i] = features_[featureIdx].data[it->second.first];
-  ++i;
-  }
-  }
-  
-  assert(i == nReal);
-  
-  }
-*/
-
-
-/*
-  void Treedata::getFilteredAndSortedFeatureDataPair2(const size_t targetIdx,
-  const size_t featureIdx,
-  vector<size_t>& sampleIcs,
-  vector<num_t>& targetData,
-  vector<num_t>& featureData) {
-  
-  if ( !features_[featureIdx].isNumerical ) {
-  cerr << "Treedata::getFilteredAndSortedDataPair() -- cannot perform for CATEGORICAL features" << endl;
-  exit(1);
-  }
-  
-  size_t n = sampleHeaders_.size();
-  size_t s = sampleIcs.size();
-  
-  //vector<num_t> targetDataCopy(n);
-  //vector<num_t> featureDataCopy(n);
-  //vector<size_t> sampleIcsCopy(n);
-  
-  fill(temp_.multiplicity.begin(),temp_.multiplicity.end(),0);
-  //vector<size_t> multiplicity(n, 0);
-  
-  //vector<size_t> sampleIcsCopy(  );
-  size_t minPos = n;
-  size_t maxPos = 0;
-  
-  // Count the number of real samples
-  size_t nReal = 0;
-  
-  // Go through all sample indices
-  for ( size_t i = 0; i < s; ++i ) {
-  
-  size_t ii = sampleIcs[i];
-  
-  // Extract the target and feature values for the index
-  num_t tVal = features_[targetIdx].data[ii];
-  num_t fVal = features_[featureIdx].data[ii];
-  
-  // If the data are non-NA...
-  if ( !datadefs::isNAN(fVal) && 
-  !datadefs::isNAN(tVal) ) {
-  
-  // Accumulate real data counter
-  ++nReal;
-  
-  // Extract the ordered position of the sample
-  size_t pos = features_[featureIdx].sortOrder[ii];
-  ++temp_.multiplicity[pos];
-  
-  if ( temp_.multiplicity[pos] == 1 ) {
-  temp_.featureDataCopy[pos] = fVal;
-  temp_.targetDataCopy[pos] = tVal;
-  temp_.sampleIcsCopy[pos] = ii;
-  
-  if ( pos > maxPos ) {
-  maxPos = pos;
-  }
-  
-  if ( pos < minPos ) {
-  minPos = pos;
-  }
-  
-  }
-  
-  }
-  }
-  
-  featureData.resize(nReal);
-  targetData.resize(nReal);
-  sampleIcs.resize(nReal);
-  
-  size_t iter = 0;
-  for ( size_t i = minPos; i <= maxPos; ++i ) {
-  for ( size_t j = 0; j < temp_.multiplicity[i]; ++j ) {
-  featureData[iter] = temp_.featureDataCopy[i];
-  targetData[iter] = temp_.targetDataCopy[i];
-  sampleIcs[iter] = temp_.sampleIcsCopy[i];
-  ++iter;
-  }
-  }
-  
-  assert(nReal == iter);
-  
-  }
-*/
 
 
 void Treedata::getFilteredAndSortedFeatureDataPair3(const size_t targetIdx,

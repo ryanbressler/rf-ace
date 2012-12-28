@@ -120,6 +120,7 @@ public:
 			      const size_t minSamples,
 			      vector<size_t>& sampleIcs_left,
 			      vector<size_t>& sampleIcs_right,
+			      vector<size_t>& sampleIcs_missing,
 			      num_t& splitValue);
 
   num_t categoricalFeatureSplit(const size_t targetIdx,
@@ -127,6 +128,7 @@ public:
 				const size_t minSamples,
 				vector<size_t>& sampleIcs_left,
 				vector<size_t>& sampleIcs_right,
+				vector<size_t>& sampleIcs_missing,
 				set<num_t>& splitValues_left,
 				set<num_t>& splitValues_right);
 
@@ -135,7 +137,8 @@ public:
 			    const uint32_t hashIdx,
 			    const size_t minSamples,
 			    vector<size_t>& sampleIcs_left,
-			    vector<size_t>& sampleIcs_right);
+			    vector<size_t>& sampleIcs_right,
+			    vector<size_t>& sampleIcs_missing);
   
   void getFilteredFeatureDataPair(const size_t featureIdx1, 
 				  const size_t featureIdx2, 

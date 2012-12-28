@@ -68,8 +68,8 @@ void StochasticForestTest::test_treeDataPercolation() {
   CPPUNIT_ASSERT( confidence.size() == 4 );
   CPPUNIT_ASSERT( fabs( prediction[0] - 3.9 ) < datadefs::EPS );
   CPPUNIT_ASSERT( fabs( prediction[1] - 4.3 ) < datadefs::EPS );
-  CPPUNIT_ASSERT( fabs( prediction[2] - 5.0 ) < datadefs::EPS );
-  CPPUNIT_ASSERT( fabs( prediction[3] - 6.6 ) < datadefs::EPS );
+  CPPUNIT_ASSERT( fabs( prediction[2] - 8.0 ) < datadefs::EPS );
+  CPPUNIT_ASSERT( fabs( prediction[3] - 9.0 ) < datadefs::EPS );
   
 }
 

@@ -110,7 +110,7 @@ void StochasticForest::loadForest(const string& fileName) {
     nodep->setTrainPrediction(trainPrediction, rawTrainPrediction);
 
     // If the node has a splitter...
-    if (nodeMap.find("SPLITTER") != nodeMap.end()) {
+    if ( nodeMap.find("SPLITTER") != nodeMap.end() ) {
 
       size_t leftChildIdx = nNodesAllocatedPerTree[treeIdx]++;
       size_t rightChildIdx = nNodesAllocatedPerTree[treeIdx]++;
@@ -142,8 +142,20 @@ void StochasticForest::loadForest(const string& fileName) {
 	exit(1);
       }
 
+      assert( &lChild == nodep->leftChild() );
+      assert( &rChild == nodep->rightChild() );
+
       forestMap[treeIdx][nodeMap["NODE"] + "L"] = nodep->leftChild();
       forestMap[treeIdx][nodeMap["NODE"] + "R"] = nodep->rightChild();
+
+      // In case there is a branch for case when the splitter has missing value
+      if ( nodeMap.find("M") != nodeMap.end() ) {
+	size_t missingChildIdx = nNodesAllocatedPerTree[treeIdx]++;
+	Node& mChild = rootNodes_[treeIdx]->childRef(missingChildIdx);
+	nodep->setMissingChild(mChild);
+	assert( &mChild == nodep->missingChild() );
+	forestMap[treeIdx][nodeMap["NODE"] + "M"] = nodep->missingChild();
+      }
 
     }
 

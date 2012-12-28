@@ -47,6 +47,8 @@ public:
 		   Node& leftChild,
 		   Node& rightChild);
 
+  void setMissingChild(Node& missingChild);
+
   //Given a value, descends to either one of the child nodes, if existing, otherwise returns a pointer to the current node
   const Node* percolate(Treedata* testData, const size_t sampleIdx, const size_t scrambleFeatureIdx = datadefs::MAX_IDX) const;
 
@@ -94,6 +96,7 @@ protected:
 			   size_t& splitFeatureIdx,
 			   vector<size_t>& sampleIcs_left,
 			   vector<size_t>& sampleIcs_right,
+			   vector<size_t>& sampleIcs_missing,
 			   num_t& splitFitness,
 			   size_t& childIdx,
 			   vector<Node>& children);
