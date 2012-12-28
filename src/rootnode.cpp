@@ -44,7 +44,7 @@ void RootNode::reset(const size_t nNodes) {
 
 void RootNode::growTree(Treedata* trainData, const size_t targetIdx, const distributions::PMF* pmf, const ForestOptions* forestOptions, distributions::Random* random) {
 
-  size_t nChildren = this->getTreeSizeEstimate(trainData->nSamples(),forestOptions->nMaxLeaves,forestOptions->nodeSize);
+  size_t nChildren = this->getTreeSizeEstimate(trainData->nRealSamples(targetIdx),forestOptions->nMaxLeaves,forestOptions->nodeSize);
 
   this->reset(nChildren+1);
 

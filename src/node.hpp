@@ -27,8 +27,7 @@ public:
   ~Node();
 
   //Gets the splitter for the node
-  //inline size_t splitterIdx() { return( splitter_.idx ); }
-  inline string splitterName() { return( splitter_.name ); }
+  const string& splitterName() const { return( splitter_.name ); }
 
   //Sets a splitter feature for the node.
   //NOTE: splitter can be assigned only once! Subsequent setter calls will raise an assertion failure.
@@ -49,12 +48,12 @@ public:
 		   Node& rightChild);
 
   //Given a value, descends to either one of the child nodes, if existing, otherwise returns a pointer to the current node
-  Node* percolate(Treedata* testData, const size_t sampleIdx, const size_t scrambleFeatureIdx = datadefs::MAX_IDX);
+  const Node* percolate(Treedata* testData, const size_t sampleIdx, const size_t scrambleFeatureIdx = datadefs::MAX_IDX) const;
 
   void setTrainPrediction(const num_t trainPrediction, const string& rawTrainPrediction );
   
-  num_t getTrainPrediction();
-  string getRawTrainPrediction();
+  num_t getTrainPrediction() const;
+  string getRawTrainPrediction() const;
 
   //Logic test whether the node has children or not
   inline bool hasChildren() const { return( this->leftChild() || this->rightChild() ); }
