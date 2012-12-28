@@ -85,7 +85,7 @@ void Node::setSplitter(const string& splitterName,
 
 }
 
-Node* Node::percolate(Treedata* testData, const size_t sampleIdx, const size_t scrambleFeatureIdx) {
+const Node* Node::percolate(Treedata* testData, const size_t sampleIdx, const size_t scrambleFeatureIdx) const {
   
   if ( !this->hasChildren() ) { return( this ); }
 
@@ -229,12 +229,12 @@ void Node::setTrainPrediction(const num_t trainPrediction, const string& rawTrai
 
 // !! Documentation: just your usual accessor, returning a copy of
 // !! trainPrediction_.
-num_t Node::getTrainPrediction() {
+num_t Node::getTrainPrediction() const {
   assert( !datadefs::isNAN(trainPrediction_) );
   return( trainPrediction_ );
 }
 
-string Node::getRawTrainPrediction() {
+string Node::getRawTrainPrediction() const {
   assert( !datadefs::isNAN_STR(rawTrainPrediction_) );
   return( rawTrainPrediction_ );
 }
@@ -475,6 +475,8 @@ bool Node::regularSplitterSeek(Treedata* treeData,
   if ( fabs(splitFitness) < datadefs::EPS ) {
     return(false);
   } 
+
+  assert( childIdx < children.size() );
 
   if ( treeData->isFeatureNumerical(splitFeatureIdx) ) {
 
