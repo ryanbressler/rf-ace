@@ -85,6 +85,10 @@ void Node::setSplitter(const string& splitterName,
 
 }
 
+void Node::setMissingChild(Node& missingChild) {
+  missingChild_ = &missingChild;
+}
+
 const Node* Node::percolate(Treedata* testData, const size_t sampleIdx, const size_t scrambleFeatureIdx) const {
   
   if ( !this->hasChildren() ) { return( this ); }
@@ -319,7 +323,7 @@ void Node::recursiveNodeSplit(Treedata* treeData,
   }
   // assert( featureSampleIcs.size() == forestOptions->mTry );
   
-  vector<size_t> sampleIcs_left,sampleIcs_right;
+  vector<size_t> sampleIcs_left,sampleIcs_right,sampleIcs_missing;
 
   size_t splitFeatureIdx;
   num_t splitFitness;
@@ -333,6 +337,7 @@ void Node::recursiveNodeSplit(Treedata* treeData,
 					      splitFeatureIdx,
 					      sampleIcs_left,
 					      sampleIcs_right,
+					      sampleIcs_missing,
 					      splitFitness,
 					      childIdx,
 					      children);
@@ -376,6 +381,26 @@ void Node::recursiveNodeSplit(Treedata* treeData,
 					 nLeaves,
 					 childIdx,
 					 children);
+
+  if ( this->missingChild() ) {
+
+    assert( sampleIcs_missing.size() > 0 );
+    
+    this->missingChild()->recursiveNodeSplit(treeData,
+					     targetIdx,
+					     forestOptions,
+					     random,
+					     predictionFunctionType,
+					     pmf,
+					     sampleIcs_missing,
+					     treeDepth+1,
+					     featuresInTree,
+					     minDistToRoot,
+					     nLeaves,
+					     childIdx,
+					     children);
+    
+  }
   
 }
 
@@ -388,6 +413,7 @@ bool Node::regularSplitterSeek(Treedata* treeData,
 			       size_t& splitFeatureIdx,
 			       vector<size_t>& sampleIcs_left,
 			       vector<size_t>& sampleIcs_right,
+			       vector<size_t>& sampleIcs_missing,
 			       num_t& splitFitness,
 			       size_t& childIdx,
 			       vector<Node>& children) {
@@ -414,6 +440,7 @@ bool Node::regularSplitterSeek(Treedata* treeData,
 
     vector<size_t> newSampleIcs_left(0);
     vector<size_t> newSampleIcs_right = sampleIcs;
+    vector<size_t> newSampleIcs_missing(0);
     num_t newSplitValue;
     set<num_t> newSplitValues_left;
     set<num_t> newSplitValues_right;
@@ -427,6 +454,7 @@ bool Node::regularSplitterSeek(Treedata* treeData,
 							forestOptions->nodeSize,
 							newSampleIcs_left,
 							newSampleIcs_right,
+							newSampleIcs_missing,
 							newSplitValue);
 
     } else if ( treeData->isFeatureCategorical(newSplitFeatureIdx) ) {
@@ -436,6 +464,7 @@ bool Node::regularSplitterSeek(Treedata* treeData,
 							  forestOptions->nodeSize,
 							  newSampleIcs_left,
 							  newSampleIcs_right,
+							  newSampleIcs_missing,
 							  newSplitValues_left,
 							  newSplitValues_right);
     } else if ( treeData->isFeatureTextual(newSplitFeatureIdx) && newSampleIcs_right.size() > 0 ) {
@@ -451,7 +480,8 @@ bool Node::regularSplitterSeek(Treedata* treeData,
 						      newHashIdx,
 						      forestOptions->nodeSize,
 						      newSampleIcs_left,
-						      newSampleIcs_right);
+						      newSampleIcs_right,
+						      newSampleIcs_missing);
 
     }
 
@@ -467,6 +497,7 @@ bool Node::regularSplitterSeek(Treedata* treeData,
       hashIdx = newHashIdx;
       sampleIcs_left = newSampleIcs_left;
       sampleIcs_right = newSampleIcs_right;
+      sampleIcs_missing = newSampleIcs_missing;
     }    
 
   }
@@ -482,9 +513,9 @@ bool Node::regularSplitterSeek(Treedata* treeData,
 
     this->setSplitter(treeData->getFeatureName(splitFeatureIdx),splitValue,children[childIdx],children[childIdx+1]);
 
-  } else if ( treeData->isFeatureCategorical(splitFeatureIdx) ){
+  } else if ( treeData->isFeatureCategorical(splitFeatureIdx) ) {
     
-    set<string> rawSplitValues_left,rawSplitValues_right;
+    set<string> rawSplitValues_left, rawSplitValues_right;
 
     for ( set<num_t>::const_iterator it(splitValues_left.begin()); it != splitValues_left.end(); ++it ) {
       rawSplitValues_left.insert( treeData->getRawFeatureData(splitFeatureIdx,*it) );
@@ -503,6 +534,12 @@ bool Node::regularSplitterSeek(Treedata* treeData,
   }
 
   childIdx += 2;
+
+  if ( sampleIcs_missing.size() > 0 ) {
+    assert( childIdx < children.size() );
+
+    missingChild_ = &children[childIdx++];
+  }
 
   return(true);
 
