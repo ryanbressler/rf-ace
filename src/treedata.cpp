@@ -907,6 +907,40 @@ void Treedata::getFilteredFeatureDataPair(const size_t featureIdx1,
 
 }
 
+void Treedata::separateMissingSamples(const size_t featureIdx,
+				      vector<size_t>& sampleIcs,
+				      vector<size_t>& missingIcs) {
+  
+  size_t nReal = 0;
+  size_t nMissing = 0;
+
+  missingIcs.resize(sampleIcs.size());
+
+  vector<size_t>::const_iterator it(sampleIcs.begin());
+
+  if ( this->isFeatureTextual(featureIdx) ) {
+    for ( ; it != sampleIcs.end(); ++it ) {
+      if ( features_[featureIdx].hashSet[*it].size() > 0 ) {
+	sampleIcs[nReal++] = *it;
+      } else {
+	missingIcs[nMissing++] = *it;
+      }
+    } 
+  } else {
+    for ( ; it != sampleIcs.end(); ++it ) {
+      if ( ! datadefs::isNAN( features_[featureIdx].data[*it] ) ) {
+	sampleIcs[nReal++] = *it;
+      } else {
+	missingIcs[nMissing++] = *it;
+      }
+    }
+  }
+
+  sampleIcs.resize(nReal);
+  missingIcs.resize(nMissing);
+
+}
+
 
 // !! Correctness, Inadequate Abstraction: kill this method with fire. Refactor, REFACTOR, _*REFACTOR*_.
 num_t Treedata::numericalFeatureSplit(const size_t targetIdx,
@@ -919,11 +953,17 @@ num_t Treedata::numericalFeatureSplit(const size_t targetIdx,
 
   num_t DI_best = 0.0;
 
-  vector<num_t> tv,fv;
-
   sampleIcs_left.clear();
 
-  this->getFilteredAndSortedFeatureDataPair3(targetIdx,featureIdx,sampleIcs_right,tv,fv);
+  this->separateMissingSamples(featureIdx,sampleIcs_right,sampleIcs_missing);
+
+  vector<num_t> fv = this->getFeatureData(featureIdx,sampleIcs_right);
+  vector<num_t> tv = this->getFeatureData(targetIdx,sampleIcs_right);
+
+  vector<size_t> sortIcs = utils::range(sampleIcs_right.size());
+  utils::sortDataAndMakeRef(true,fv,sortIcs);
+  utils::sortFromRef(tv,sortIcs);
+  utils::sortFromRef(sampleIcs_right,sortIcs);
 
   size_t n_tot = fv.size();
   size_t n_right = n_tot;
@@ -983,12 +1023,12 @@ num_t Treedata::categoricalFeatureSplit(const size_t targetIdx,
 
   num_t DI_best = 0.0;
 
-  vector<num_t> tv,fv;
-
-  //cout << " -- sampleIcs_right.size() = " << sampleIcs_right.size();
-
   sampleIcs_left.clear();
-  this->getFilteredFeatureDataPair(targetIdx,featureIdx,sampleIcs_right,tv,fv);
+
+  this->separateMissingSamples(featureIdx,sampleIcs_right,sampleIcs_missing);
+
+  vector<num_t> fv = this->getFeatureData(featureIdx,sampleIcs_right);
+  vector<num_t> tv = this->getFeatureData(targetIdx,sampleIcs_right);
 
   size_t n_tot = fv.size();
 
@@ -996,7 +1036,6 @@ num_t Treedata::categoricalFeatureSplit(const size_t targetIdx,
     DI_best = 0.0;
     return( DI_best );
   }
-
   
   map<num_t,vector<size_t> > fmap_right;
   map<num_t,vector<size_t> > fmap_left;
