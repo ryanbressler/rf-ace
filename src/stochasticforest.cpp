@@ -380,9 +380,11 @@ void StochasticForest::growNumericalGBT(Treedata* trainData,
   // reference to the target column, will overwrite it
   vector<num_t> curTargetData = trueTargetData;
 
-  vector < size_t > sampleIcs = utils::range(nSamples);
+  vector<size_t> sampleIcs = utils::range(nSamples);
+  vector<size_t> missingIcs;
+  trainData->separateMissingSamples(targetIdx,sampleIcs,missingIcs);
   GBTconstant_.resize(1);
-  GBTconstant_[0] = math::mean(trainData->getFilteredFeatureData(targetIdx, sampleIcs));
+  GBTconstant_[0] = math::mean(trainData->getFeatureData(targetIdx, sampleIcs));
   GBTfactors_.resize(forestOptions->nTrees);
 
   // Set the initial prediction to be the mean

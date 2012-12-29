@@ -92,11 +92,11 @@ void Node::setMissingChild(Node& missingChild) {
 const Node* Node::percolate(Treedata* testData, const size_t sampleIdx, const size_t scrambleFeatureIdx) const {
   
   if ( !this->hasChildren() ) { return( this ); }
-
+  
   size_t featureIdx = testData->getFeatureIdx(splitter_.name);
-
+  
   if ( featureIdx == testData->end() ) { return( this ); }
-
+  
   if ( splitter_.type == Feature::Type::NUM ) {
     num_t data;
     if ( scrambleFeatureIdx != featureIdx ) {
@@ -146,7 +146,7 @@ const Node* Node::percolate(Treedata* testData, const size_t sampleIdx, const si
       // Else return this
       return( this );
     }
-
+    
   } else {
     
     if ( testData->hasHash(featureIdx,sampleIdx,splitter_.hashValue) ) {
@@ -155,9 +155,9 @@ const Node* Node::percolate(Treedata* testData, const size_t sampleIdx, const si
       return( this->rightChild()->percolate(testData,sampleIdx,scrambleFeatureIdx) );
     }
   }
-   
-}
   
+}
+
 Node* Node::leftChild() const {
   return( leftChild_ );
 }

@@ -584,11 +584,15 @@ size_t Treedata::nSamples() const {
 // WILL BECOME DEPRECATED
 num_t Treedata::pearsonCorrelation(size_t featureIdx1, size_t featureIdx2) {
   
-  vector<num_t> featureData1,featureData2;
-
   vector<size_t> sampleIcs = utils::range( this->nSamples() );
 
-  this->getFilteredFeatureDataPair(featureIdx1,featureIdx2,sampleIcs,featureData1,featureData2);
+  vector<size_t> missingIcs;
+
+  this->separateMissingSamples(featureIdx1,sampleIcs,missingIcs);
+  this->separateMissingSamples(featureIdx2,sampleIcs,missingIcs);
+
+  vector<num_t> featureData1 = this->getFeatureData(featureIdx1,sampleIcs);
+  vector<num_t> featureData2 = this->getFeatureData(featureIdx2,sampleIcs);
 
   return( math::pearsonCorrelation(featureData1,featureData2) );
 
@@ -665,19 +669,18 @@ void Treedata::permuteContrasts(distributions::Random* random) {
     if ( this->isFeatureTextual(i) ) { continue; }
 
     vector<size_t> sampleIcs = utils::range( nSamples );
+    vector<size_t> missingIcs;
+    
+    this->separateMissingSamples(i,sampleIcs,missingIcs);
 
-    vector<num_t> filteredData = this->getFilteredFeatureData(i,sampleIcs);
+    vector<num_t> filteredData = this->getFeatureData(i,sampleIcs);
     
     utils::permute(filteredData,random);
-    //this->permute<num_t>(filteredData);
-
-    //datadefs::print(features_[i].data);
 
     for ( size_t j = 0; j < sampleIcs.size(); ++j ) {
       features_[i].data[ sampleIcs[j] ] = filteredData[j];
     }
 
-    //datadefs::print(features_[i].data);
   }
 
 }
@@ -852,61 +855,7 @@ vector<num_t> Treedata::getFeatureData(size_t featureIdx, const vector<size_t>& 
   return( data );
 
 }
-
-vector<num_t> Treedata::getFilteredFeatureData(const size_t featureIdx,
-					       vector<size_t>& sampleIcs) {
-
-  size_t n = sampleIcs.size();
-
-  vector<num_t> featureData(n);
-
-  size_t nReal = 0;
-
-  for ( size_t i = 0; i < n; ++i ) {
-    size_t idx = sampleIcs[i];
-    num_t value = features_[featureIdx].data[idx];
-    if ( !datadefs::isNAN(value) ) {
-      featureData[nReal] = value;
-      sampleIcs[nReal] = idx;
-      ++nReal;
-    }
-  }
-  sampleIcs.resize(nReal);
-  featureData.resize(nReal);
-
-  return(featureData);
-
-}
-
-
-void Treedata::getFilteredFeatureDataPair(const size_t featureIdx1, 
-					  const size_t featureIdx2, 
-					  vector<size_t>& sampleIcs, 
-					  vector<num_t>& featureData1, 
-					  vector<num_t>& featureData2) {
-
-  size_t n = sampleIcs.size();
-  featureData1.resize(n);
-  featureData2.resize(n);
-  size_t nReal = 0;
-  for(size_t i = 0; i < n; ++i) {
-
-    num_t v1 = features_[featureIdx1].data[sampleIcs[i]];
-    num_t v2 = features_[featureIdx2].data[sampleIcs[i]];
-    
-    if(!datadefs::isNAN(v1) && !datadefs::isNAN(v2)) {
-      sampleIcs[nReal] = sampleIcs[i];
-      featureData1[nReal] = v1;
-      featureData2[nReal] = v2;
-      ++nReal;
-    }
-  }
-  featureData1.resize(nReal);
-  featureData2.resize(nReal);
-  sampleIcs.resize(nReal);
-
-}
-
+  
 void Treedata::separateMissingSamples(const size_t featureIdx,
 				      vector<size_t>& sampleIcs,
 				      vector<size_t>& missingIcs) {
@@ -1170,35 +1119,6 @@ num_t Treedata::textualFeatureSplit(const size_t targetIdx,
 }
 
 
-void Treedata::getFilteredAndSortedFeatureDataPair3(const size_t targetIdx,
-						    const size_t featureIdx,
-						    vector<size_t>& sampleIcs,
-						    vector<num_t>& targetData,
-						    vector<num_t>& featureData) {
-
-
-  featureData = this->getFeatureData(featureIdx,sampleIcs);
-  //targetData = this->getFeatureData(targetIdx,sampleIcs);
-
-  bool isIncreasingOrder = true;
-  vector<size_t> refIcs;
-
-  utils::filterSort(isIncreasingOrder,featureData,refIcs);
-  //datadefs::sortFromRef<num_t>(targetData,refIcs);
-  //datadefs::sortFromRef<size_t>(sampleIcs,refIcs);
-  
-  vector<size_t> sampleIcsCopy = sampleIcs;
-  
-  for ( size_t i = 0; i < refIcs.size(); ++i ) {
-    sampleIcs[i] = sampleIcsCopy[refIcs[i]];
-  }
-  sampleIcs.resize(refIcs.size());
-  
-  targetData = this->getFeatureData(targetIdx,sampleIcs);
-  
-
-}
-
 string Treedata::getRawFeatureData(const size_t featureIdx, const size_t sampleIdx) {
 
   num_t data = features_[featureIdx].data[sampleIdx];
@@ -1208,7 +1128,7 @@ string Treedata::getRawFeatureData(const size_t featureIdx, const size_t sampleI
 }
 
 string Treedata::getRawFeatureData(const size_t featureIdx, const num_t data) {
-
+  
   // If the input data is NaN, we return NaN as string 
   if ( datadefs::isNAN(data) ) {
     return( datadefs::STR_NAN );
@@ -1216,9 +1136,6 @@ string Treedata::getRawFeatureData(const size_t featureIdx, const num_t data) {
   
   // If input feature is numerical, we just represent the numeric value as string
   if ( features_[featureIdx].isNumerical() ) {
-    //stringstream ss;
-    //ss << data;
-    //return( ss.str() );
     return( utils::num2str(data) );
   } else {
     
@@ -1253,19 +1170,6 @@ void Treedata::replaceFeatureData(const size_t featureIdx, const vector<num_t>& 
 
   features_[featureIdx] = Feature(featureData,features_[featureIdx].name);
 
-  // Since the data that was passed is numerical, we set isNumerical to true
-  //features_[featureIdx].isNumerical = true;
-
-  // Data that is stored is directly the input data
-  //features_[featureIdx].data = featureData;
-
-  // Update sort indices for fast lookup
-  //this->updateSortOrder(featureIdx);
-
-  // Since the data is not categorical, there's no need to provide mappings
-  //features_[featureIdx].mapping.clear();
-  //features_[featureIdx].backMapping.clear();
-
 }
 
 void Treedata::replaceFeatureData(const size_t featureIdx, const vector<string>& rawFeatureData) {
@@ -1277,17 +1181,6 @@ void Treedata::replaceFeatureData(const size_t featureIdx, const vector<string>&
 
   features_[featureIdx] = Feature(rawFeatureData,features_[featureIdx].name);
 
-  // Since the data that was passed are string literals, we set isNumerical to false
-  //features_[featureIdx].isNumerical = false;
-
-  // Categorical data does not need sorting, thus, it doesn't benefit from the sort indices either
-  //features_[featureIdx].sortOrder.clear();
-
-  // The string literal data needs some processing 
-  //utils::strv2catv(rawFeatureData,
-  //		   features_[featureIdx].data,
-  //		   features_[featureIdx].mapping,
-  //		   features_[featureIdx].backMapping);
 }
 
 
