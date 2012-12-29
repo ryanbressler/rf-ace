@@ -18,15 +18,17 @@ size_t RootNode::getTreeSizeEstimate(const size_t nSamples, const size_t nMaxLea
 
   // Upper bound for the number of nodes as dictated by nMaxLeaves, 
   // assuming ternary splits (left,right,missing)
-  size_t S1 = static_cast<size_t>( powf(3,ceil(logf(nMaxLeaves-1)/logf(2))) + 1 );
+  size_t S1 = static_cast<size_t>(ceil(1.0 + 3.0 * ( nMaxLeaves - 1 ) / 2.0)); //static_cast<size_t>( powf(3,ceil(logf(nMaxLeaves-1)/logf(2))) + 1 );
 
   // Upper bound for the depth of tree as dictated by nSamples, 
   // assuming balanced ternary splits (left,right,missing) 
   size_t k = static_cast<size_t>( ceil( ( logf(nSamples) - logf(nodeSize) ) / logf(3) ) );
 
   // Tree depth converted to the number of nodes in the tree 
-  // S = 3^1 + 3^2 + ... + 3^(k+1)
-  size_t S2 = static_cast<size_t>( ( powf(3,k+1) - 3 ) / 2 );
+  // S = 1 + 3^1 + 3^2 + ... + 3^(k+1)
+  size_t S2 = 1 + static_cast<size_t>( ( powf(3,k+1) - 3 ) / 2 );
+
+  //cout << "f(" << nSamples << "," << nMaxLeaves << "," << nodeSize << ") = min(" << S1 << "," << S2 << ")" << endl;  
 
   // Return the smaller of the two upper bounds, S1 and S2
   return( S1 < S2 ? S1 : S2 );
@@ -44,9 +46,9 @@ void RootNode::reset(const size_t nNodes) {
 
 void RootNode::growTree(Treedata* trainData, const size_t targetIdx, const distributions::PMF* pmf, const ForestOptions* forestOptions, distributions::Random* random) {
 
-  size_t nChildren = this->getTreeSizeEstimate(trainData->nRealSamples(targetIdx),forestOptions->nMaxLeaves,forestOptions->nodeSize);
+  size_t nMaxNodes = this->getTreeSizeEstimate(trainData->nRealSamples(targetIdx),forestOptions->nMaxLeaves,forestOptions->nodeSize);
 
-  this->reset(nChildren+1);
+  this->reset(nMaxNodes);
 
   //Generate the vector for bootstrap indices
   vector<size_t> bootstrapIcs;
@@ -99,7 +101,7 @@ void RootNode::growTree(Treedata* trainData, const size_t targetIdx, const distr
   minDistToRoot_.clear();
   minDistToRoot_.resize(2*trainData->nFeatures(),datadefs::MAX_IDX);
 
-  nChildren = 0;
+  size_t nChildren = 0;
 
   //Start the recursive node splitting from the root node. This will generate the tree.
   this->recursiveNodeSplit(trainData,

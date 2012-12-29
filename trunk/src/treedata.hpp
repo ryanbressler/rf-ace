@@ -115,6 +115,10 @@ public:
 
   vector<num_t> getFeatureWeights() const;
 
+  void separateMissingSamples(const size_t featureIdx,
+			      vector<size_t>& sampleIcs,
+			      vector<size_t>& misingIcs);
+
   num_t numericalFeatureSplit(const size_t targetIdx,
 			      const size_t featureIdx,
 			      const size_t minSamples,

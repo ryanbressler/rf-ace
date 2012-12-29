@@ -196,7 +196,7 @@ void Node::print(string& traversal, ofstream& toFile) {
 	     << ",RVALUES=" << splitter_.hashValue;
     }
 
-    if ( this->missingChild() ) { toFile << ",M" << endl; } else { toFile << endl; }
+    if ( this->missingChild() ) { toFile << ",M=M" << endl; } else { toFile << endl; }
 
     string traversalLeft = traversal;
     traversalLeft.append("L");
@@ -290,7 +290,7 @@ void Node::recursiveNodeSplit(Treedata* treeData,
 
   assert( *nLeaves <= forestOptions->nMaxLeaves );
 
-  if ( nSamples < 2 * forestOptions->nodeSize || *nLeaves == forestOptions->nMaxLeaves ) {
+  if ( nSamples < 2 * forestOptions->nodeSize || *nLeaves == forestOptions->nMaxLeaves || childIdx >= children.size()-1 ) {
     return;
   }
 
@@ -507,7 +507,7 @@ bool Node::regularSplitterSeek(Treedata* treeData,
     return(false);
   } 
 
-  assert( childIdx < children.size() );
+  assert( childIdx < children.size()+1 );
 
   if ( treeData->isFeatureNumerical(splitFeatureIdx) ) {
 
@@ -535,9 +535,7 @@ bool Node::regularSplitterSeek(Treedata* treeData,
 
   childIdx += 2;
 
-  if ( sampleIcs_missing.size() > 0 ) {
-    assert( childIdx < children.size() );
-
+  if ( sampleIcs_missing.size() > 0 && childIdx < children.size() ) { 
     missingChild_ = &children[childIdx++];
   }
 

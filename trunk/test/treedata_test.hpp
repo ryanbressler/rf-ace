@@ -10,6 +10,7 @@
 
 class treeDataTest : public CppUnit::TestFixture {
   CPPUNIT_TEST_SUITE( treeDataTest );
+  CPPUNIT_TEST( test_separateMissingSamples );
   CPPUNIT_TEST( test_name2idxMap );
   CPPUNIT_TEST( test_idx2name2idx );
   CPPUNIT_TEST( test_getFeatureData );
@@ -32,6 +33,7 @@ class treeDataTest : public CppUnit::TestFixture {
 public:
   void setUp();
   void tearDown();
+  void test_separateMissingSamples();
   void test_permuteContrasts();
   void test_name2idxMap();
   void test_idx2name2idx();
@@ -85,6 +87,23 @@ void treeDataTest::tearDown() {
   
 }
  
+void treeDataTest::test_separateMissingSamples() {
+  
+  for ( size_t featureIdx = 0; featureIdx < 2*treeData_->nFeatures(); ++featureIdx ) {
+    vector<size_t> sampleIcs = utils::range(treeData_->nSamples());
+    vector<size_t> missingIcs(5);
+    size_t n = treeData_->nRealSamples(featureIdx);
+    treeData_->separateMissingSamples(featureIdx,sampleIcs,missingIcs);
+    CPPUNIT_ASSERT( sampleIcs.size() == n && sampleIcs.size() + missingIcs.size() == treeData_->nSamples() );
+    for ( size_t i = 0; i < sampleIcs.size(); ++i ) { 
+      CPPUNIT_ASSERT( ! datadefs::isNAN(treeData_->getFeatureData(featureIdx,sampleIcs[i])) );
+    }
+    for ( size_t i = 0; i < missingIcs.size(); ++i ) {
+      CPPUNIT_ASSERT( datadefs::isNAN(treeData_->getFeatureData(featureIdx,missingIcs[i])) );
+    }
+  }
+
+}
 
 void treeDataTest::test_permuteContrasts() {
   
@@ -513,8 +532,6 @@ void treeDataTest::test_numericalFeatureSplitsNumericalTarget() {
     set<size_t> leftIcs(sampleIcs_left.begin(),sampleIcs_left.end());
     set<size_t> rightIcs(sampleIcs_right.begin(),sampleIcs_right.end());
 
-    CPPUNIT_ASSERT( sampleIcs_missing.size() == 0 );
-    
     CPPUNIT_ASSERT( fabs( deltaImpurity - 1.289680394982406 ) < 1e-10 );
     CPPUNIT_ASSERT( fabs( splitValue - 4.387 ) < 1e-10 );
     
@@ -566,8 +583,6 @@ void treeDataTest::test_numericalFeatureSplitsCategoricalTarget() {
     set<size_t> leftIcs(sampleIcs_left.begin(),sampleIcs_left.end());
     set<size_t> rightIcs(sampleIcs_right.begin(),sampleIcs_right.end());
 
-    CPPUNIT_ASSERT( sampleIcs_missing.size() == 0 );
-
     CPPUNIT_ASSERT( fabs( deltaImpurity - 0.012389077212806 ) < 1e-10 );
     CPPUNIT_ASSERT( fabs( splitValue - 9.827 ) < 1e-10 );
 
@@ -603,7 +618,13 @@ void treeDataTest::test_numericalFeatureSplitsCategoricalTarget2() {
   vector<size_t> sampleIcs_right( utils::range(treeData->nSamples()) );
   vector<size_t> sampleIcs_missing(0);
 
-  vector<num_t> tv = treeData->getFilteredFeatureData(targetIdx,sampleIcs_right);
+  //vector<num_t> tv = treeData->getFilteredFeatureData(targetIdx,sampleIcs_right);
+
+  treeData->separateMissingSamples(targetIdx,sampleIcs_right,sampleIcs_missing);
+
+  sampleIcs_missing.clear();
+
+  size_t n = sampleIcs_right.size();
 
   num_t splitValue;
 
@@ -617,7 +638,7 @@ void treeDataTest::test_numericalFeatureSplitsCategoricalTarget2() {
 
   //cout << deltaImpurity << " " << splitValue << " " << sampleIcs_left.size() << " " << sampleIcs_right.size() << endl;
 
-  CPPUNIT_ASSERT( sampleIcs_missing.size() == 0 );
+  CPPUNIT_ASSERT( sampleIcs_left.size() + sampleIcs_right.size() + sampleIcs_missing.size() == n );
 
 }
 
@@ -643,7 +664,6 @@ void treeDataTest::test_categoricalFeatureSplitsNumericalTarget() {
 						     splitValues_left,
 						     splitValues_right);
 
-  CPPUNIT_ASSERT( sampleIcs_missing.size() == 0 );
 
   CPPUNIT_ASSERT( fabs( deltaImpurity - 1.102087375288799 ) < 1e-10 );
 
@@ -673,8 +693,6 @@ void treeDataTest::test_categoricalFeatureSplitsCategoricalTarget() {
 
   CPPUNIT_ASSERT( sampleIcs_left.size() == 89 );
   CPPUNIT_ASSERT( sampleIcs_right.size() == 211 );
-
-  CPPUNIT_ASSERT( sampleIcs_missing.size() == 0 );
 
   set<string> rawSplitValues_left,rawSplitValues_right;
   
