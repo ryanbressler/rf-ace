@@ -14,9 +14,6 @@ class treeDataTest : public CppUnit::TestFixture {
   CPPUNIT_TEST( test_separateMissingSamples2 );
   CPPUNIT_TEST( test_name2idxMap );
   CPPUNIT_TEST( test_idx2name2idx );
-  //CPPUNIT_TEST( test_getFeatureData );
-  //CPPUNIT_TEST( test_getFilteredFeatureData );
-  //CPPUNIT_TEST( test_getFilteredAndSortedFeatureDataPair3 );
   CPPUNIT_TEST( test_parseARFF );
   CPPUNIT_TEST( test_parseARFF_extended ); 
   CPPUNIT_TEST( test_numericalFeatureSplitsNumericalTarget );
@@ -39,9 +36,6 @@ public:
   void test_permuteContrasts();
   void test_name2idxMap();
   void test_idx2name2idx();
-  //void test_getFeatureData();
-  //void test_getFilteredFeatureData();
-  //void test_getFilteredAndSortedFeatureDataPair3();
   void test_parseARFF();
   void test_parseARFF_extended();
   void test_numericalFeatureSplitsNumericalTarget();
@@ -291,108 +285,6 @@ void treeDataTest::test_separateMissingSamples2() {
   CPPUNIT_ASSERT( sampleIcs.size() == 0 );
 
 }
-
-
-/*
-  void treeDataTest::test_getFilteredAndSortedFeatureDataPair3() {
-  
-  string fileName = "test_6by10_mixed_matrix.tsv";
-  
-  Treedata treeData(fileName,'\t',':');
-  
-  //
-  N:F1    nA      8.5     3.4     7.2     5       6       7       11      9       NA
-  N:F2    2       3       4       5       6       NA      NA      9       nan     10
-  C:F3    NA      nA      naN     NaN     1       1       1       2       2       2
-  N:F4    10      9.9     8       7       6       5       4       3       2.4     1
-  C:F5    3       3       3       4       4       5       3       2       2       2
-  N:F6    9       8       7       9       8       7       3       2       1.0     99.23
-  //
-  
-  
-  vector<size_t> sampleIcs;
-  sampleIcs.push_back(1);
-  sampleIcs.push_back(2);
-  sampleIcs.push_back(3);
-  sampleIcs.push_back(4);
-  sampleIcs.push_back(5);
-  sampleIcs.push_back(6);
-  sampleIcs.push_back(7);
-  sampleIcs.push_back(8);
-  
-  vector<num_t> tv,fv;
-  
-  //datadefs::range(sampleIcs);
-  
-  treeData.getFilteredAndSortedFeatureDataPair3(0,1,sampleIcs,tv,fv);
-  
-  CPPUNIT_ASSERT( sampleIcs.size() == 5 );
-  CPPUNIT_ASSERT( sampleIcs[0] == 1 );
-  CPPUNIT_ASSERT( sampleIcs[1] == 2 );
-  CPPUNIT_ASSERT( sampleIcs[2] == 3 );
-  CPPUNIT_ASSERT( sampleIcs[3] == 4 );
-  CPPUNIT_ASSERT( sampleIcs[4] == 7 );
-  
-  CPPUNIT_ASSERT( tv.size() == 5 );
-  CPPUNIT_ASSERT( fabs( tv[0] - 8.5) < datadefs::EPS );
-  CPPUNIT_ASSERT( fabs( tv[1] - 3.4) < datadefs::EPS );
-  CPPUNIT_ASSERT( fabs( tv[2] - 7.2) < datadefs::EPS );
-  CPPUNIT_ASSERT( fabs( tv[3] - 5) < datadefs::EPS );
-  CPPUNIT_ASSERT( fabs( tv[4] - 11) < datadefs::EPS );
-  
-  CPPUNIT_ASSERT( fv.size() == 5 );
-  CPPUNIT_ASSERT( fabs( fv[0] - 3) < datadefs::EPS );
-  CPPUNIT_ASSERT( fabs( fv[1] - 4) < datadefs::EPS );
-  CPPUNIT_ASSERT( fabs( fv[2] - 5) < datadefs::EPS );
-  CPPUNIT_ASSERT( fabs( fv[3] - 6) < datadefs::EPS );
-  CPPUNIT_ASSERT( fabs( fv[4] - 9) < datadefs::EPS );
-  
-  sampleIcs.resize(10);
-  sampleIcs[0] = 3; // 5
-  sampleIcs[1] = 4; // 3
-  sampleIcs[2] = 3; // 5
-  sampleIcs[3] = 5; // 4
-  sampleIcs[4] = 0; // NA
-  sampleIcs[5] = 8; // 6
-  sampleIcs[6] = 2; // 2
-  sampleIcs[7] = 2; // 2
-  sampleIcs[8] = 3; // 5 
-  sampleIcs[9] = 0; // NA
-  
-  treeData.getFilteredAndSortedFeatureDataPair3(5,0,sampleIcs,tv,fv);
-  
-  CPPUNIT_ASSERT( sampleIcs.size() ==  8 );
-  CPPUNIT_ASSERT( sampleIcs[0] == 2 );
-  CPPUNIT_ASSERT( sampleIcs[1] == 2 );
-  CPPUNIT_ASSERT( sampleIcs[2] == 4 );
-  CPPUNIT_ASSERT( sampleIcs[3] == 5 );
-  CPPUNIT_ASSERT( sampleIcs[4] == 3 );
-  CPPUNIT_ASSERT( sampleIcs[5] == 3 );
-  CPPUNIT_ASSERT( sampleIcs[6] == 3 );
-  CPPUNIT_ASSERT( sampleIcs[7] == 8 );
-  
-  CPPUNIT_ASSERT( tv.size() == 8 );
-  CPPUNIT_ASSERT( fabs( tv[0] - 7 ) < datadefs::EPS );
-  CPPUNIT_ASSERT( fabs( tv[1] - 7 ) < datadefs::EPS );
-  CPPUNIT_ASSERT( fabs( tv[2] - 8 ) < datadefs::EPS );
-  CPPUNIT_ASSERT( fabs( tv[3] - 7 ) < datadefs::EPS );
-  CPPUNIT_ASSERT( fabs( tv[4] - 9 ) < datadefs::EPS );
-  CPPUNIT_ASSERT( fabs( tv[5] - 9 ) < datadefs::EPS );
-  CPPUNIT_ASSERT( fabs( tv[6] - 9 ) < datadefs::EPS );
-  CPPUNIT_ASSERT( fabs( tv[7] - 1.0 ) < datadefs::EPS );
-
-  CPPUNIT_ASSERT( fv.size() == 8 );
-  CPPUNIT_ASSERT( fabs( fv[0] - 3.4 ) < datadefs::EPS );
-  CPPUNIT_ASSERT( fabs( fv[1] - 3.4 ) < datadefs::EPS );
-  CPPUNIT_ASSERT( fabs( fv[2] - 5 ) < datadefs::EPS );
-  CPPUNIT_ASSERT( fabs( fv[3] - 6 ) < datadefs::EPS );
-  CPPUNIT_ASSERT( fabs( fv[4] - 7.2 ) < datadefs::EPS );
-  CPPUNIT_ASSERT( fabs( fv[5] - 7.2 ) < datadefs::EPS );
-  CPPUNIT_ASSERT( fabs( fv[6] - 7.2 ) < datadefs::EPS );
-  CPPUNIT_ASSERT( fabs( fv[7] - 9 ) < datadefs::EPS );
-
-  }
-*/
 
 void treeDataTest::test_parseARFF() {
   
