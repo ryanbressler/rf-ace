@@ -11,11 +11,12 @@
 class treeDataTest : public CppUnit::TestFixture {
   CPPUNIT_TEST_SUITE( treeDataTest );
   CPPUNIT_TEST( test_separateMissingSamples );
+  CPPUNIT_TEST( test_separateMissingSamples2 );
   CPPUNIT_TEST( test_name2idxMap );
   CPPUNIT_TEST( test_idx2name2idx );
-  CPPUNIT_TEST( test_getFeatureData );
-  CPPUNIT_TEST( test_getFilteredFeatureData );
-  CPPUNIT_TEST( test_getFilteredAndSortedFeatureDataPair3 );
+  //CPPUNIT_TEST( test_getFeatureData );
+  //CPPUNIT_TEST( test_getFilteredFeatureData );
+  //CPPUNIT_TEST( test_getFilteredAndSortedFeatureDataPair3 );
   CPPUNIT_TEST( test_parseARFF );
   CPPUNIT_TEST( test_parseARFF_extended ); 
   CPPUNIT_TEST( test_numericalFeatureSplitsNumericalTarget );
@@ -34,12 +35,13 @@ public:
   void setUp();
   void tearDown();
   void test_separateMissingSamples();
+  void test_separateMissingSamples2();
   void test_permuteContrasts();
   void test_name2idxMap();
   void test_idx2name2idx();
-  void test_getFeatureData();
-  void test_getFilteredFeatureData();
-  void test_getFilteredAndSortedFeatureDataPair3();
+  //void test_getFeatureData();
+  //void test_getFilteredFeatureData();
+  //void test_getFilteredAndSortedFeatureDataPair3();
   void test_parseARFF();
   void test_parseARFF_extended();
   void test_numericalFeatureSplitsNumericalTarget();
@@ -89,17 +91,19 @@ void treeDataTest::tearDown() {
  
 void treeDataTest::test_separateMissingSamples() {
   
-  for ( size_t featureIdx = 0; featureIdx < 2*treeData_->nFeatures(); ++featureIdx ) {
-    vector<size_t> sampleIcs = utils::range(treeData_->nSamples());
+  Treedata* treeData = treeData_103by300NaN_;
+
+  for ( size_t featureIdx = 0; featureIdx < 2*treeData->nFeatures(); ++featureIdx ) {
+    vector<size_t> sampleIcs = utils::range(treeData->nSamples());
     vector<size_t> missingIcs(5);
-    size_t n = treeData_->nRealSamples(featureIdx);
-    treeData_->separateMissingSamples(featureIdx,sampleIcs,missingIcs);
-    CPPUNIT_ASSERT( sampleIcs.size() == n && sampleIcs.size() + missingIcs.size() == treeData_->nSamples() );
+    size_t n = treeData->nRealSamples(featureIdx);
+    treeData->separateMissingSamples(featureIdx,sampleIcs,missingIcs);
+    CPPUNIT_ASSERT( sampleIcs.size() == n && sampleIcs.size() + missingIcs.size() == treeData->nSamples() );
     for ( size_t i = 0; i < sampleIcs.size(); ++i ) { 
-      CPPUNIT_ASSERT( ! datadefs::isNAN(treeData_->getFeatureData(featureIdx,sampleIcs[i])) );
+      CPPUNIT_ASSERT( ! datadefs::isNAN(treeData->getFeatureData(featureIdx,sampleIcs[i])) );
     }
     for ( size_t i = 0; i < missingIcs.size(); ++i ) {
-      CPPUNIT_ASSERT( datadefs::isNAN(treeData_->getFeatureData(featureIdx,missingIcs[i])) );
+      CPPUNIT_ASSERT( datadefs::isNAN(treeData->getFeatureData(featureIdx,missingIcs[i])) );
     }
   }
 
@@ -197,22 +201,7 @@ void treeDataTest::test_idx2name2idx() {
 
 }
 
-void treeDataTest::test_getFeatureData() {
-
-  Treedata treedata("test_2by8_numerical_matrix.tsv",'\t',':');
-
-  vector<size_t> sampleIcs = utils::range(8);
-
-  vector<num_t> v1,v2;
-
-  treedata.getFilteredFeatureDataPair(0,1,sampleIcs,v1,v2);
-
-  
-
-}
-
-
-void treeDataTest::test_getFilteredFeatureData() {
+void treeDataTest::test_separateMissingSamples2() {
   
   string fileName = "test_6by10_mixed_matrix.tsv";
   
@@ -229,8 +218,13 @@ void treeDataTest::test_getFilteredFeatureData() {
   */
   
   vector<size_t> sampleIcs = utils::range(10);
+  vector<size_t> missingIcs;
 
-  vector<num_t> filteredData = treeData.getFilteredFeatureData(0,sampleIcs);
+  treeData.separateMissingSamples(0,sampleIcs,missingIcs);
+
+  //vector<num_t> filteredData = treeData.getFilteredFeatureData(0,sampleIcs);
+
+  vector<num_t> filteredData = treeData.getFeatureData(0,sampleIcs);
 
   CPPUNIT_ASSERT( filteredData.size() == 8 );
   CPPUNIT_ASSERT( fabs( filteredData[0] - 8.5 ) < datadefs::EPS );
@@ -252,7 +246,10 @@ void treeDataTest::test_getFilteredFeatureData() {
   CPPUNIT_ASSERT( sampleIcs[6] == 7 );
   CPPUNIT_ASSERT( sampleIcs[7] == 8 );
 
-  filteredData = treeData.getFilteredFeatureData(1,sampleIcs);
+  //sampleIcs = utils::range(10);
+  treeData.separateMissingSamples(1,sampleIcs,missingIcs);
+
+  filteredData = treeData.getFeatureData(1,sampleIcs);
 
   CPPUNIT_ASSERT( filteredData.size() == 5 );
   CPPUNIT_ASSERT( fabs( filteredData[0] - 3 ) < datadefs::EPS );
@@ -274,7 +271,9 @@ void treeDataTest::test_getFilteredFeatureData() {
   sampleIcs[3] = 5;
   sampleIcs[4] = 5;
 
-  filteredData = treeData.getFilteredFeatureData(0,sampleIcs);
+  treeData.separateMissingSamples(0,sampleIcs,missingIcs);
+
+  filteredData = treeData.getFeatureData(0,sampleIcs);
 
   CPPUNIT_ASSERT( filteredData.size() == 2 );
   CPPUNIT_ASSERT( fabs( filteredData[0] - 6 ) < datadefs::EPS );
@@ -284,34 +283,33 @@ void treeDataTest::test_getFilteredFeatureData() {
   CPPUNIT_ASSERT( sampleIcs[0] == 5 );
   CPPUNIT_ASSERT( sampleIcs[1] == 5 );
 
-  filteredData = treeData.getFilteredFeatureData(1,sampleIcs);
+  treeData.separateMissingSamples(1,sampleIcs,missingIcs);
+
+  filteredData = treeData.getFeatureData(1,sampleIcs);
 
   CPPUNIT_ASSERT( filteredData.size() == 0 );
   CPPUNIT_ASSERT( sampleIcs.size() == 0 );
-  
- 
-
 
 }
 
 
-
-void treeDataTest::test_getFilteredAndSortedFeatureDataPair3() {
-
+/*
+  void treeDataTest::test_getFilteredAndSortedFeatureDataPair3() {
+  
   string fileName = "test_6by10_mixed_matrix.tsv";
-
+  
   Treedata treeData(fileName,'\t',':');
-
-  /*
-    N:F1    nA      8.5     3.4     7.2     5       6       7       11      9       NA
-    N:F2    2       3       4       5       6       NA      NA      9       nan     10
-    C:F3    NA      nA      naN     NaN     1       1       1       2       2       2
-    N:F4    10      9.9     8       7       6       5       4       3       2.4     1
-    C:F5    3       3       3       4       4       5       3       2       2       2
-    N:F6    9       8       7       9       8       7       3       2       1.0     99.23
-  */
-
-
+  
+  //
+  N:F1    nA      8.5     3.4     7.2     5       6       7       11      9       NA
+  N:F2    2       3       4       5       6       NA      NA      9       nan     10
+  C:F3    NA      nA      naN     NaN     1       1       1       2       2       2
+  N:F4    10      9.9     8       7       6       5       4       3       2.4     1
+  C:F5    3       3       3       4       4       5       3       2       2       2
+  N:F6    9       8       7       9       8       7       3       2       1.0     99.23
+  //
+  
+  
   vector<size_t> sampleIcs;
   sampleIcs.push_back(1);
   sampleIcs.push_back(2);
@@ -321,34 +319,34 @@ void treeDataTest::test_getFilteredAndSortedFeatureDataPair3() {
   sampleIcs.push_back(6);
   sampleIcs.push_back(7);
   sampleIcs.push_back(8);
-
+  
   vector<num_t> tv,fv;
-
+  
   //datadefs::range(sampleIcs);
-
+  
   treeData.getFilteredAndSortedFeatureDataPair3(0,1,sampleIcs,tv,fv);
-
+  
   CPPUNIT_ASSERT( sampleIcs.size() == 5 );
   CPPUNIT_ASSERT( sampleIcs[0] == 1 );
   CPPUNIT_ASSERT( sampleIcs[1] == 2 );
   CPPUNIT_ASSERT( sampleIcs[2] == 3 );
   CPPUNIT_ASSERT( sampleIcs[3] == 4 );
   CPPUNIT_ASSERT( sampleIcs[4] == 7 );
-
+  
   CPPUNIT_ASSERT( tv.size() == 5 );
   CPPUNIT_ASSERT( fabs( tv[0] - 8.5) < datadefs::EPS );
   CPPUNIT_ASSERT( fabs( tv[1] - 3.4) < datadefs::EPS );
   CPPUNIT_ASSERT( fabs( tv[2] - 7.2) < datadefs::EPS );
   CPPUNIT_ASSERT( fabs( tv[3] - 5) < datadefs::EPS );
   CPPUNIT_ASSERT( fabs( tv[4] - 11) < datadefs::EPS );
-
+  
   CPPUNIT_ASSERT( fv.size() == 5 );
   CPPUNIT_ASSERT( fabs( fv[0] - 3) < datadefs::EPS );
   CPPUNIT_ASSERT( fabs( fv[1] - 4) < datadefs::EPS );
   CPPUNIT_ASSERT( fabs( fv[2] - 5) < datadefs::EPS );
   CPPUNIT_ASSERT( fabs( fv[3] - 6) < datadefs::EPS );
   CPPUNIT_ASSERT( fabs( fv[4] - 9) < datadefs::EPS );
-
+  
   sampleIcs.resize(10);
   sampleIcs[0] = 3; // 5
   sampleIcs[1] = 4; // 3
@@ -360,9 +358,9 @@ void treeDataTest::test_getFilteredAndSortedFeatureDataPair3() {
   sampleIcs[7] = 2; // 2
   sampleIcs[8] = 3; // 5 
   sampleIcs[9] = 0; // NA
-
+  
   treeData.getFilteredAndSortedFeatureDataPair3(5,0,sampleIcs,tv,fv);
-
+  
   CPPUNIT_ASSERT( sampleIcs.size() ==  8 );
   CPPUNIT_ASSERT( sampleIcs[0] == 2 );
   CPPUNIT_ASSERT( sampleIcs[1] == 2 );
@@ -372,7 +370,7 @@ void treeDataTest::test_getFilteredAndSortedFeatureDataPair3() {
   CPPUNIT_ASSERT( sampleIcs[5] == 3 );
   CPPUNIT_ASSERT( sampleIcs[6] == 3 );
   CPPUNIT_ASSERT( sampleIcs[7] == 8 );
-
+  
   CPPUNIT_ASSERT( tv.size() == 8 );
   CPPUNIT_ASSERT( fabs( tv[0] - 7 ) < datadefs::EPS );
   CPPUNIT_ASSERT( fabs( tv[1] - 7 ) < datadefs::EPS );
@@ -393,7 +391,8 @@ void treeDataTest::test_getFilteredAndSortedFeatureDataPair3() {
   CPPUNIT_ASSERT( fabs( fv[6] - 7.2 ) < datadefs::EPS );
   CPPUNIT_ASSERT( fabs( fv[7] - 9 ) < datadefs::EPS );
 
-}
+  }
+*/
 
 void treeDataTest::test_parseARFF() {
   
@@ -755,7 +754,11 @@ void treeDataTest::test_fullSplitterSweep() {
       vector<size_t> sampleIcs_right = utils::range( treeData->nSamples() );
       vector<size_t> sampleIcs_missing(0);
 
-      vector<num_t> tv = treeData->getFilteredFeatureData(targetIdx,sampleIcs_right);
+      treeData->separateMissingSamples(targetIdx,sampleIcs_right,sampleIcs_missing);
+
+      vector<num_t> tv = treeData->getFeatureData(targetIdx,sampleIcs_right);
+
+      //vector<num_t> tv = treeData->getFilteredFeatureData(targetIdx,sampleIcs_right);
       
       if ( treeData->isFeatureNumerical(featureIdx) ) {
 	

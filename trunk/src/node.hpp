@@ -46,12 +46,12 @@ public:
 		   const uint32_t hashIdx,
 		   Node& leftChild,
 		   Node& rightChild);
-
+  
   void setMissingChild(Node& missingChild);
-
+  
   //Given a value, descends to either one of the child nodes, if existing, otherwise returns a pointer to the current node
   const Node* percolate(Treedata* testData, const size_t sampleIdx, const size_t scrambleFeatureIdx = datadefs::MAX_IDX) const;
-
+  
   void setTrainPrediction(const num_t trainPrediction, const string& rawTrainPrediction );
   
   num_t getTrainPrediction() const;
