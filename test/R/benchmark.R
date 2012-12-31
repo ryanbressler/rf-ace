@@ -2,11 +2,14 @@ library(rfacer)
 
 nSamples <- 1000
 
-bag <- list(list("my","name","is","timo"),list("this","is","class2"),list("words","in","this","class3"))
+bag <- list(
+list("my","name","is","timo","and","this","is","bag","of","words"),
+list("in","this","bag","there","are","some","random","words"),
+list("but","the","bag","of","words","can","be","much","larger","like","this","one","with","some","extra","random","words"))
 
 classes <- sample(1:3,nSamples,replace=T)
 
-nWordsPerSample <- sample(2:4,nSamples,replace=T)
+nWordsPerSample <- sample(1,nSamples,replace=T)
 
 text <- vector()
 
@@ -35,7 +38,7 @@ fWeightsB <- as.vector(c(1,1,1,1,2,0))
 fWeightsC <- as.vector(c(1,1,1,1,0,1))
 
 rfmA <- rface.train(data,"N:output",featureWeights=fWeightsA,mTry=2,forestType="RF")
-rfmB <- rface.train(data,"N:output",featureWeights=fWeightsB,mTry=5,forestType="RF")
+rfmB <- rface.train(data,"N:output",featureWeights=fWeightsB,mTry=8,forestType="RF")
 rfmC <- rface.train(data,"N:output",featureWeights=fWeightsC,mTry=2,forestType="RF")
 
 outA <- rface.predict(rfmA,data);
@@ -44,14 +47,34 @@ outC <- rface.predict(rfmC,data);
 
 colors <- as.factor(data$"C:class")
 
-dev.new()
-pairs(data[1:4],col=colors)
+data$"C:class" <- as.factor(data$"C:class")
 
-dev.new()
-par(mfcol=c(1,3))
-plot(outA$predData,outA$trueData,col=colors,title="RF without textual data")
+pdf("scattermatrix.pdf")
+pairs(data[c(1,2,3,4,6)],col=colors)
+dev.off()
+
+pdf("predictions.pdf")
+par(mfcol=c(2,2))
+plot(outA$predData,outA$trueData,col=colors)
+title("RF without textual data (A)")
+lines( par()$usr[1:2], par()$usr[1:2] )
 grid()
-plot(outB$predData,outB$trueData,col=colors,title="RF with textual data")
+plot(outB$predData,outB$trueData,col=colors)
+title("RF with textual data (B)")
+lines( par()$usr[1:2], par()$usr[1:2] )
 grid()
-plot(outC$predData,outC$trueData,col=colors,title="RF with true classes")
+plot(outC$predData,outC$trueData,col=colors)
+title("RF with true classes (C)")
+lines( par()$usr[1:2], par()$usr[1:2] )
 grid()
+
+outA$method <- rep("A",nSamples)
+outB$method <- rep("B",nSamples)
+outC$method <- rep("C",nSamples)
+
+results <- data.frame(residual=c(outA$trueData-outA$predData,outB$trueData-outB$predData,outC$trueData-outC$predData),method=c(outA$method,outB$method,outC$method))
+
+boxplot(residual~method,data=results)
+title("Model residuals")
+dev.off()
+
