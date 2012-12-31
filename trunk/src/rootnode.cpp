@@ -6,6 +6,8 @@
 #include "rootnode.hpp"
 #include "datadefs.hpp"
 
+using datadefs::forest_t;
+
 RootNode::RootNode():
   children_(0),
   bootstrapIcs_(0),
@@ -88,7 +90,7 @@ void RootNode::growTree(Treedata* trainData, const size_t targetIdx, const distr
 
   if ( trainData->isFeatureNumerical(targetIdx) ) {
     predictionFunctionType = Node::MEAN;
-  } else if ( !trainData->isFeatureNumerical(targetIdx) && forestOptions->forestType == ForestOptions::ForestType::GBT ) {
+  } else if ( !trainData->isFeatureNumerical(targetIdx) && forestOptions->forestType == forest_t::GBT ) {
     predictionFunctionType = Node::GAMMA;
   } else {
     predictionFunctionType = Node::MODE;

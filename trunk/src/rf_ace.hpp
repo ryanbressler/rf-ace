@@ -27,6 +27,7 @@
 
 using namespace std;
 using datadefs::num_t;
+using datadefs::forest_t;
 using datadefs::ftable_t;
 
 using namespace std;
@@ -92,11 +93,11 @@ public:
     
     trainedModel_ = new StochasticForest();
 
-    if ( forestOptions->forestType == ForestOptions::ForestType::RF ) {
+    if ( forestOptions->forestType == forest_t::RF ) {
       trainedModel_->learnRF(trainData,targetIdx,forestOptions,featureWeights,randoms);
-    } else if ( forestOptions->forestType == ForestOptions::ForestType::GBT ) {
+    } else if ( forestOptions->forestType == forest_t::GBT ) {
       trainedModel_->learnGBT(trainData,targetIdx,forestOptions,featureWeights,randoms);
-    } else if ( forestOptions->forestType == ForestOptions::ForestType::CART ) {
+    } else if ( forestOptions->forestType == forest_t::CART ) {
       trainedModel_->learnRF(trainData,targetIdx,forestOptions,featureWeights,randoms);
     } else {
       cerr << "Unknown forest type!" << endl;

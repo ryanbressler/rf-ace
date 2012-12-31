@@ -12,6 +12,7 @@
 
 
 using namespace std;
+//using datadefs::ForestType;
 
 ////////////////////////////////////////////////////////////
 // CONSTANTS
@@ -46,6 +47,10 @@ const size_t datadefs::MAX_THREADS = thread::hardware_concurrency();
 #ifdef NOTHREADS 
 const size_t datadefs::MAX_THREADS = 1;
 #endif
+
+//enum ForestType {RF, GBT, CART, UNKNOWN};
+
+const map<string,datadefs::forest_t> datadefs::forestTypeAssign = { {"RF",datadefs::forest_t::RF}, {"GBT",datadefs::forest_t::GBT}, {"CART",datadefs::forest_t::CART} };
 
 // Random Forest default configuration
 const size_t          datadefs::RF_DEFAULT_N_TREES = 100;

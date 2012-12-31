@@ -79,7 +79,7 @@ void RFACETest::test_trainRF() {
 
   ForestOptions forestOptions;
 
-  forestOptions.forestType = ForestOptions::ForestType::RF;
+  forestOptions.forestType = datadefs::forest_t::RF;
   forestOptions.nTrees = 10;
   forestOptions.mTry = 10;
   forestOptions.nMaxLeaves = 100;
@@ -96,7 +96,7 @@ void RFACETest::test_trainGBT() {
 
   ForestOptions forestOptions;
 
-  forestOptions.forestType = ForestOptions::ForestType::GBT;
+  forestOptions.forestType = datadefs::forest_t::GBT;
   forestOptions.nTrees = 10;
   forestOptions.mTry = 10;
   forestOptions.nMaxLeaves = 100;
