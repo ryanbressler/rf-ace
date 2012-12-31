@@ -58,6 +58,9 @@ namespace datadefs {
 
   extern const string CONTRAST;
 
+  typedef enum {RF,GBT,CART,UNKNOWN} forest_t;
+  extern const map<string,forest_t> forestTypeAssign;
+
   // Random Forest default configuration
   extern const size_t     RF_DEFAULT_N_TREES;
   extern const size_t     RF_DEFAULT_M_TRY;

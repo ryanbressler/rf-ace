@@ -62,7 +62,7 @@ private:
   num_t error(const vector<num_t>& data1,
 	      const vector<num_t>& data2); 
 
-  ForestOptions::ForestType forestType_;
+  datadefs::forest_t forestType_;
 
   vector<string> categories_;
 

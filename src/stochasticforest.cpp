@@ -14,9 +14,10 @@
 #include "argparse.hpp"
 #include "utils.hpp"
 #include "math.hpp"
+#include "options.hpp"
 
 StochasticForest::StochasticForest() :
-    forestType_(ForestOptions::ForestType::UNKNOWN) {
+  forestType_(datadefs::forest_t::UNKNOWN) {
 
 }
 
@@ -30,16 +31,7 @@ void StochasticForest::loadForest(const string& fileName) {
 
   map<string,string> forestSetup = utils::parse(newLine, ',', '=', '"');
 
-  if (forestSetup["FOREST"] == "GBT") {
-    forestType_ = ForestOptions::ForestType::GBT;
-  } else if (forestSetup["FOREST"] == "RF") {
-    forestType_ = ForestOptions::ForestType::RF;
-  } else if (forestSetup["FOREST"] == "CART") {
-    forestType_ = ForestOptions::ForestType::CART;
-  } else {
-    cerr << "Unknown forest type: " << forestSetup["FOREST"] << endl;
-    exit(1);
-  }
+  forestType_ = datadefs::forestTypeAssign.at(forestSetup["FOREST"]);
 
   assert(forestSetup.find("NTREES") != forestSetup.end());
   size_t nTrees = static_cast<size_t>(utils::str2<int>(forestSetup["NTREES"]));
@@ -77,7 +69,7 @@ void StochasticForest::loadForest(const string& fileName) {
       assert( treeSetup.find("NNODES") != treeSetup.end() );
       nNodesPerTree[treeIdx] = utils::str2<size_t>(treeSetup["NNODES"]);
       
-      if ( forestType_ == ForestOptions::ForestType::GBT ) {
+      if ( forestType_ == forest_t::GBT ) {
 	assert( treeSetup.find("GBT_FACTOR") != treeSetup.end() );
 	assert( treeSetup.find("GBT_CONSTANT") != treeSetup.end() );
 	GBTfactors_.push_back( utils::str2<num_t>(treeSetup["GBT_FACTOR"]) );
@@ -181,11 +173,11 @@ StochasticForest::~StochasticForest() {
  */
 void StochasticForest::saveForest(ofstream& toFile) {
 
-  if (forestType_ == ForestOptions::ForestType::GBT) {
+  if (forestType_ == forest_t::GBT) {
     toFile << "FOREST=GBT";
-  } else if (forestType_ == ForestOptions::ForestType::RF) {
+  } else if (forestType_ == forest_t::RF) {
     toFile << "FOREST=RF";
-  } else if (forestType_ == ForestOptions::ForestType::CART) {
+  } else if (forestType_ == forest_t::CART) {
     toFile << "FOREST=CART";
   } else {
     cerr << "StochasticForest::saveForest() -- Unknown forest type!" << endl;
@@ -202,7 +194,7 @@ void StochasticForest::saveForest(ofstream& toFile) {
   // Save each tree in the forest
   for (size_t treeIdx = 0; treeIdx < rootNodes_.size(); ++treeIdx) {
     toFile << "TREE=" << treeIdx << ",NNODES=" << rootNodes_[treeIdx]->nNodes();;
-    if (forestType_ == ForestOptions::ForestType::GBT) {
+    if (forestType_ == forest_t::GBT) {
       toFile << ",GBT_CONSTANT=";
       utils::write(toFile, GBTconstant_.begin(), GBTconstant_.end(), ':');
       toFile << ",GBT_FACTOR=" << GBTfactors_[treeIdx];
@@ -230,7 +222,7 @@ void StochasticForest::learnRF(Treedata* trainData, const size_t targetIdx,
     const ForestOptions* forestOptions, const vector<num_t>& featureWeights,
     vector<distributions::Random>& randoms) {
 
-  forestType_ = ForestOptions::ForestType::RF;
+  forestType_ = forest_t::RF;
   targetName_ = trainData->getFeatureName(targetIdx);
   isTargetNumerical_ = trainData->isFeatureNumerical(targetIdx);
   categories_ = trainData->categories(targetIdx);
@@ -318,7 +310,7 @@ void StochasticForest::learnGBT(Treedata* trainData, const size_t targetIdx,
     const ForestOptions* forestOptions, const vector<num_t>& featureWeights,
     vector<distributions::Random>& randoms) {
 
-  forestType_ = ForestOptions::ForestType::GBT;
+  forestType_ = forest_t::GBT;
 
   targetName_ = trainData->getFeatureName(targetIdx);
 
@@ -651,7 +643,7 @@ num_t StochasticForest::error(const vector<num_t>& data1,
 
 void predictCatPerThread(Treedata* testData, 
 			 const vector<RootNode*>& rootNodes,
-			 const ForestOptions::ForestType& forestType,
+			 const forest_t forestType,
 			 const vector<size_t>& sampleIcs, 
 			 vector<string>* predictions,
 			 vector<num_t>* confidence, 
@@ -664,7 +656,7 @@ void predictCatPerThread(Treedata* testData,
 
     size_t sampleIdx = sampleIcs[i];
 
-    if (forestType == ForestOptions::ForestType::GBT) {
+    if (forestType == forest_t::GBT) {
 
       size_t nCategories = categories.size();
       num_t maxProb = 0;
@@ -705,7 +697,7 @@ void predictCatPerThread(Treedata* testData,
 
 void predictNumPerThread(Treedata* testData, 
 			 const vector<RootNode*>& rootNodes,
-			 const ForestOptions::ForestType& forestType, 
+			 const forest_t forestType, 
 			 vector<size_t>& sampleIcs,
 			 vector<num_t>* predictions, 
 			 vector<num_t>* confidence,
@@ -718,7 +710,7 @@ void predictNumPerThread(Treedata* testData,
     for (size_t treeIdx = 0; treeIdx < nTrees; ++treeIdx) {
       predictionVec[treeIdx] = rootNodes[treeIdx]->getTestPrediction(testData,sampleIdx);
     }
-    if (forestType == ForestOptions::ForestType::GBT) {
+    if (forestType == forest_t::GBT) {
       (*predictions)[sampleIdx] = GBTconstant[0];
       (*confidence)[sampleIdx] = 0.0;
       for (size_t treeIdx = 0; treeIdx < nTrees; ++treeIdx) {
@@ -736,7 +728,7 @@ void StochasticForest::predict(Treedata* testData, vector<string>& predictions,v
 
   assert( nThreads > 0 );
 
-  if ( forestType_ == ForestOptions::ForestType::GBT && nThreads != 1 ) {
+  if ( forestType_ == forest_t::GBT && nThreads != 1 ) {
     cout << "NOTE: GBT does not support multithreading. Turning threads OFF... " << flush;
     nThreads = 1;
   }
@@ -785,7 +777,7 @@ void StochasticForest::predict(Treedata* testData, vector<num_t>& predictions,ve
 
   assert( nThreads > 0 );
 
-  if ( forestType_ == ForestOptions::ForestType::GBT && nThreads != 1 ) {
+  if ( forestType_ == forest_t::GBT && nThreads != 1 ) {
     cout << "NOTE: GBT does not support multithreading. Turning threads OFF... " << flush;
     nThreads = 1;
   }

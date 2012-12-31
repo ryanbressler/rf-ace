@@ -12,6 +12,8 @@
 
 using namespace std;
 using datadefs::num_t;
+using datadefs::forest_t;
+//using datadefs::forestTypeAssign;
 
 class HelpStyler {
 public:
@@ -40,7 +42,7 @@ private:
 class ForestOptions : public HelpStyler {
 public:
 
-  enum ForestType {GBT,RF,CART,UNKNOWN} forestType; const string forestType_s; const string forestType_l;
+  forest_t forestType; const string forestType_s; const string forestType_l;
   size_t nTrees; const string nTrees_s; const string nTrees_l;
   size_t mTry; const string mTry_s; const string mTry_l;
   size_t nMaxLeaves; const string nMaxLeaves_s; const string nMaxLeaves_l;
@@ -54,7 +56,7 @@ public:
   bool useContrasts;
 
   ForestOptions():
-    forestType(ForestType::RF), forestType_s("f"), forestType_l("forestType"),
+    forestType(forest_t::RF), forestType_s("f"), forestType_l("forestType"),
     nTrees_s("n"),nTrees_l("nTrees"),
     mTry_s("m"),mTry_l("mTry"),
     nMaxLeaves_s("a"),nMaxLeaves_l("nMaxLeaves"),
@@ -62,9 +64,9 @@ public:
     shrinkage_s("k"),shrinkage_l("shrinkage"),
     contrastFraction_s("c"), contrastFraction_l("contrastFraction") {
 
-    if ( forestType == RF ) {
+    if ( forestType == forest_t::RF ) {
       this->setRFDefaults();
-    } else if ( forestType == GBT ) {
+    } else if ( forestType == forest_t::GBT ) {
       this->setGBTDefaults();
     } else {
       this->setCARTDefaults();
@@ -82,21 +84,19 @@ public:
     if ( isSet ) {
       string forestTypeAsStr = "";
       parser.getArgument<string>(forestType_s, forestType_l, forestTypeAsStr);
-      if ( forestTypeAsStr == "RF" ) {
-	forestType = ForestType::RF;
+      forestType = datadefs::forestTypeAssign.at(forestTypeAsStr);
+      if ( forestType == forest_t::RF) {
 	this->setRFDefaults();
-      } else if ( forestTypeAsStr == "GBT" ) {
-	forestType = ForestType::GBT;
+      } else if ( forestType == forest_t::GBT ) {
 	this->setGBTDefaults();
-      } else if ( forestTypeAsStr == "CART" ) {
-	forestType = ForestType::CART;
+      } else if ( forestType == forest_t::CART ) {
 	this->setCARTDefaults();
       } else {
 	cerr << "GeneralOptions::load() -- unknown forest type: " << forestTypeAsStr << endl;
 	exit(1);
       }
     }
-
+  
     parser.getArgument<size_t>( nTrees_s, nTrees_l, nTrees );
     parser.getArgument<size_t>( mTry_s, mTry_l, mTry );
     parser.getArgument<size_t>( nMaxLeaves_s, nMaxLeaves_l, nMaxLeaves );
@@ -147,7 +147,7 @@ public:
   
   void validate() {
     
-    if ( forestType == ForestOptions::ForestType::UNKNOWN ) {
+    if ( forestType == forest_t::UNKNOWN ) {
       cerr << "ERROR: forest type must be set!" << endl;
       exit(1);
     }
@@ -195,21 +195,21 @@ public:
   }
 
   void print() {
-    if ( forestType == ForestType::RF ) { 
-      cout << "RF configuration:" << endl;
+    if ( forestType == forest_t::RF ) { 
+      cout << "Random Forest (RF) configuration:" << endl;
       this->printOption(nTrees_s,nTrees_l,nTrees);
       this->printOption(mTry_s,mTry_l,mTry);
       this->printOption(nodeSize_s,nodeSize_l,nodeSize);
       this->printOption(nMaxLeaves_s,nMaxLeaves_l,nMaxLeaves);
-    } else if ( forestType == ForestType::GBT ) { 
-      cout << "GBT configuration:" << endl;
+    } else if ( forestType == forest_t::GBT ) { 
+      cout << "Gradient Boosting Tree (GBT) configuration:" << endl;
       this->printOption(nTrees_s,nTrees_l,nTrees);
       this->printOption(mTry_s,mTry_l,mTry);
       this->printOption(nodeSize_s,nodeSize_l,nodeSize);
       this->printOption(nMaxLeaves_s,nMaxLeaves_l,nMaxLeaves);
       this->printOption(shrinkage_s,shrinkage_l,shrinkage);
-    } else if ( forestType == ForestType::CART ) {
-      cout << "CART configuration:" << endl;
+    } else if ( forestType == forest_t::CART ) {
+      cout << "Classification and Regression Tree (CART) configuration:" << endl;
       this->printOption(nodeSize_s,nodeSize_l,nodeSize);
       this->printOption(nMaxLeaves_s,nMaxLeaves_l,nMaxLeaves);
     } else {
