@@ -1,6 +1,6 @@
 library(rfacer)
 
-nSamples <- 1000
+nSamples <- 10000
 
 bag <- list(
 list("my","name","is","timo","and","this","is","bag","of","words"),
@@ -9,7 +9,7 @@ list("but","the","bag","of","words","can","be","much","larger","like","this","on
 
 classes <- sample(1:3,nSamples,replace=T)
 
-nWordsPerSample <- sample(1,nSamples,replace=T)
+nWordsPerSample <- sample(2:8,nSamples,replace=T)
 
 text <- vector()
 
@@ -19,7 +19,7 @@ y <- sin(x) + rnorm(nSamples,0,0.1)
 for ( i in 1:nSamples ) {
   c <- classes[i]
   text[i] <- paste(sample(bag[[c]],nWordsPerSample[i],replace=T),collapse=', ') 
-  y[i] <- y[i] + 2.2*c  
+  y[i] <- y[i] + 2.2 * c  
 }
 
 n1 <- rnorm(nSamples)
@@ -37,9 +37,9 @@ fWeightsA <- as.vector(c(1,1,1,1,0,0))
 fWeightsB <- as.vector(c(1,1,1,1,2,0))
 fWeightsC <- as.vector(c(1,1,1,1,0,1))
 
-rfmA <- rface.train(data,"N:output",featureWeights=fWeightsA,mTry=2,forestType="RF")
-rfmB <- rface.train(data,"N:output",featureWeights=fWeightsB,mTry=8,forestType="RF")
-rfmC <- rface.train(data,"N:output",featureWeights=fWeightsC,mTry=2,forestType="RF")
+rfmA <- rface.train(data,"N:output",featureWeights=fWeightsA,mTry=2,nodeSize=10,forestType="RF")
+rfmB <- rface.train(data,"N:output",featureWeights=fWeightsB,mTry=4,nodeSize=10,forestType="RF")
+rfmC <- rface.train(data,"N:output",featureWeights=fWeightsC,mTry=2,nodeSize=10,forestType="RF")
 
 outA <- rface.predict(rfmA,data);
 outB <- rface.predict(rfmB,data);
@@ -55,15 +55,15 @@ dev.off()
 
 pdf("predictions.pdf")
 par(mfcol=c(2,2))
-plot(outA$predData,outA$trueData,col=colors)
+plot(outA$predData,outA$trueData,col=colors,pch='.')
 title("RF without textual data (A)")
 lines( par()$usr[1:2], par()$usr[1:2] )
 grid()
-plot(outB$predData,outB$trueData,col=colors)
+plot(outB$predData,outB$trueData,col=colors,pch='.')
 title("RF with textual data (B)")
 lines( par()$usr[1:2], par()$usr[1:2] )
 grid()
-plot(outC$predData,outC$trueData,col=colors)
+plot(outC$predData,outC$trueData,col=colors,pch='.')
 title("RF with true classes (C)")
 lines( par()$usr[1:2], par()$usr[1:2] )
 grid()

@@ -61,6 +61,8 @@ namespace datadefs {
   typedef enum {RF,GBT,CART,UNKNOWN} forest_t;
   extern const map<string,forest_t> forestTypeAssign;
 
+  extern const bool       SF_DEFAULT_NO_NA_BRANCHING;
+
   // Random Forest default configuration
   extern const size_t     RF_DEFAULT_N_TREES;
   extern const size_t     RF_DEFAULT_M_TRY;
