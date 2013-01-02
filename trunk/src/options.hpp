@@ -20,16 +20,16 @@ public:
   HelpStyler(): maxWidth_(17) {}
   ~HelpStyler() {}
   
-  void printHelpLine(const string& shortOpt, const string& longOpt, const string& description) {
+  void printHelpLine(const string& shortOpt, const string& longOpt, const string& description) const {
     cout << " -" << shortOpt << " / --" << longOpt << setw( maxWidth_ - longOpt.length() ) << " " << description << endl;
   }
 
   template<typename T>
-  void printOption(const string& shortOpt, const string& longOpt, const T& value) {
+  inline void printOption(const string& shortOpt, const string& longOpt, const T& value) const {
     cout << " -" << shortOpt << " / --" << longOpt << setw( maxWidth_ - longOpt.length() ) << " = " << value << endl;
   }
   
-  void printHelpHint(const string& shortOpt, const string& longOpt) {
+  void printHelpHint(const string& shortOpt, const string& longOpt) const {
     cout << endl;
     cout << "To get started, type -" << shortOpt << " / --" << longOpt << endl;
   }
@@ -38,6 +38,13 @@ private:
   size_t maxWidth_;
   
 };
+
+template<> inline void HelpStyler::printOption<bool>(const string& shortOpt, const string& longOpt, const bool& value) const {
+  cout << " -" << shortOpt << " / --" << longOpt << setw( maxWidth_ - longOpt.length() ) << " = " << flush;
+  if ( value ) { cout << "TRUE" << flush; } else { cout << "FALSE" << flush; }
+  cout << endl;
+}
+
 
 class ForestOptions : public HelpStyler {
 public:
@@ -49,6 +56,7 @@ public:
   size_t nodeSize; const string nodeSize_s; const string nodeSize_l;
   num_t shrinkage; const string shrinkage_s; const string shrinkage_l;
   num_t contrastFraction; const string contrastFraction_s; const string contrastFraction_l;
+  bool noNABranching; const string noNABranching_s; const string noNABranching_l;
 
   num_t inBoxFraction;
   bool sampleWithReplacement;
@@ -62,7 +70,8 @@ public:
     nMaxLeaves_s("a"),nMaxLeaves_l("nMaxLeaves"),
     nodeSize_s("s"),nodeSize_l("nodeSize"),
     shrinkage_s("k"),shrinkage_l("shrinkage"),
-    contrastFraction_s("c"), contrastFraction_l("contrastFraction") {
+    contrastFraction_s("c"), contrastFraction_l("contrastFraction"),
+    noNABranching(datadefs::SF_DEFAULT_NO_NA_BRANCHING),noNABranching_s("N"), noNABranching_l("noNABranching") {
 
     if ( forestType == forest_t::RF ) {
       this->setRFDefaults();
@@ -97,12 +106,13 @@ public:
       }
     }
   
-    parser.getArgument<size_t>( nTrees_s, nTrees_l, nTrees );
-    parser.getArgument<size_t>( mTry_s, mTry_l, mTry );
-    parser.getArgument<size_t>( nMaxLeaves_s, nMaxLeaves_l, nMaxLeaves );
-    parser.getArgument<size_t>( nodeSize_s, nodeSize_l, nodeSize );
-    parser.getArgument<num_t>(  shrinkage_s, shrinkage_l, shrinkage );
+    parser.getArgument<size_t>( nTrees_s,           nTrees_l,           nTrees );
+    parser.getArgument<size_t>( mTry_s,             mTry_l,             mTry );
+    parser.getArgument<size_t>( nMaxLeaves_s,       nMaxLeaves_l,       nMaxLeaves );
+    parser.getArgument<size_t>( nodeSize_s,         nodeSize_l,         nodeSize );
+    parser.getArgument<num_t>(  shrinkage_s,        shrinkage_l,        shrinkage );
     parser.getArgument<num_t>(  contrastFraction_s, contrastFraction_l, contrastFraction);
+    parser.getFlag(             noNABranching_s,    noNABranching_l,    noNABranching);
 
   }
 
@@ -192,6 +202,7 @@ public:
     this->printHelpLine(nodeSize_s,nodeSize_l,"Smallest number of train samples per leaf node");
     this->printHelpLine(shrinkage_s,shrinkage_l,"[GBT only] Shrinkage applied to evolving the residual");
     this->printHelpLine(contrastFraction_s,contrastFraction_l,"[Filter only] the fraction of contrast features sampled to approximate the null distribution");
+    this->printHelpLine(noNABranching_s,noNABranching_l,"If set, the splitter will NOT create a third branch for cases where the splitter is NA");
   }
 
   void print() {
@@ -216,6 +227,7 @@ public:
       cerr << "ERROR: unknown model type to print parameters for!" << endl;
       exit(1);
     }
+    this->printOption(noNABranching_s,noNABranching_l,noNABranching);
     cout << endl;
   }
    
