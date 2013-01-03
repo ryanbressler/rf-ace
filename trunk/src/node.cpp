@@ -472,7 +472,7 @@ bool Node::regularSplitterSeek(Treedata* treeData,
     } else if ( treeData->isFeatureTextual(newSplitFeatureIdx) && newSampleIcs_right.size() > 0 ) {
 
       // Choose random sample
-      size_t sampleIdx = random->integer() % newSampleIcs_right.size();
+      size_t sampleIdx = newSampleIcs_right[ random->integer() % newSampleIcs_right.size() ];
 
       // Choose random hash from the randomly selected sample
       newHashIdx = treeData->getHash(newSplitFeatureIdx,sampleIdx,random->integer());
