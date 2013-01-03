@@ -25,6 +25,8 @@ public:
   Node& childRef(const size_t childIdx);
   
   size_t nNodes() const;
+  
+  size_t nLeaves() const;
 
   num_t getTestPrediction(Treedata* treeData, const size_t sampleIdx);
   string getRawTestPrediction(Treedata* treeData, const size_t sampleIdx);
@@ -47,6 +49,9 @@ private:
 
   // Parameters that are generated only when a tree is grown
   vector<Node> children_;
+
+  size_t nLeaves_;
+
   vector<size_t> bootstrapIcs_;
   vector<size_t> oobIcs_;
 

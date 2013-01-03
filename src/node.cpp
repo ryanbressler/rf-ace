@@ -385,6 +385,8 @@ void Node::recursiveNodeSplit(Treedata* treeData,
   if ( this->missingChild() ) {
 
     assert( sampleIcs_missing.size() > 0 );
+
+    *nLeaves += 1;
     
     this->missingChild()->recursiveNodeSplit(treeData,
 					     targetIdx,
