@@ -35,7 +35,7 @@ size_t RootNode::getTreeSizeEstimate(const size_t nSamples, const size_t nMaxLea
   // S = 1 + 3^1 + 3^2 + ... + 3^(k+1)
   // size_t S2 = 1 + static_cast<size_t>( ( powf(3,k+1) - 3 ) / 2 );
 
-  //cout << "f(" << nSamples << "," << nMaxLeaves << "," << nodeSize << ") = min(" << S1 << "," << S2 << ")" << endl;  
+  // cout << "f(" << nSamples << "," << nMaxLeaves << "," << nodeSize << ") = min(" << S1 << "," << S2 << ")" << endl;  
 
   // Return the smaller of the two upper bounds, S1 and S2
   return( S1 < S2 ? S1 : S2 );
