@@ -9,7 +9,7 @@ list("but","the","bag","of","words","can","be","much","larger","like","this","on
 
 classes <- sample(1:3,nSamples,replace=T)
 
-nWordsPerSample <- sample(2:8,nSamples,replace=T)
+nWordsPerSample <- sample(2:4,nSamples,replace=T)
 
 text <- vector()
 

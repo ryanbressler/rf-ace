@@ -10,6 +10,7 @@ using datadefs::forest_t;
 
 RootNode::RootNode():
   children_(0),
+  nLeaves_(0),
   bootstrapIcs_(0),
   oobIcs_(0),
   minDistToRoot_(0) { /* EMPTY CONSTRUCTOR */ }
@@ -100,7 +101,7 @@ void RootNode::growTree(Treedata* trainData, const size_t targetIdx, const distr
     predictionFunctionType = Node::MODE;
   }
 
-  size_t nLeaves = 1;
+  nLeaves_ = 1;
 
   size_t treeDist = 0;
 
@@ -120,7 +121,7 @@ void RootNode::growTree(Treedata* trainData, const size_t targetIdx, const distr
 			   treeDist,
 			   featuresInTree_,
 			   minDistToRoot_,
-			   &nLeaves,
+			   &nLeaves_,
 			   nChildren,
 			   children_);
   
@@ -200,6 +201,16 @@ Node& RootNode::childRef(const size_t childIdx) {
 
 size_t RootNode::nNodes() const {
   return( children_.size() + 1 );
+}
+
+size_t RootNode::nLeaves() const {
+
+  if ( nLeaves_ == 0 ) {
+    cerr << "ERROR: RootNode::nLeaves() -- trying to save a forest that has been read from file? Don't!" << endl;
+    exit(1);
+  }
+
+  return( nLeaves_ );
 }
 
 vector<size_t> RootNode::getOobIcs() {

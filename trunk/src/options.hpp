@@ -41,7 +41,7 @@ private:
 
 template<> inline void HelpStyler::printOption<bool>(const string& shortOpt, const string& longOpt, const bool& value) const {
   cout << " -" << shortOpt << " / --" << longOpt << setw( maxWidth_ - longOpt.length() ) << " = " << flush;
-  if ( value ) { cout << "TRUE" << flush; } else { cout << "FALSE" << flush; }
+  if ( value ) { cout << "SET" << flush; } else { cout << "NOT SET" << flush; }
   cout << endl;
 }
 

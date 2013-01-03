@@ -193,7 +193,7 @@ void StochasticForest::saveForest(ofstream& toFile) {
 
   // Save each tree in the forest
   for (size_t treeIdx = 0; treeIdx < rootNodes_.size(); ++treeIdx) {
-    toFile << "TREE=" << treeIdx << ",NNODES=" << rootNodes_[treeIdx]->nNodes();;
+    toFile << "TREE=" << treeIdx << ",NNODES=" << rootNodes_[treeIdx]->nNodes() << ",NLEAVES=" << rootNodes_[treeIdx]->nLeaves();
     if (forestType_ == forest_t::GBT) {
       toFile << ",GBT_CONSTANT=";
       utils::write(toFile, GBTconstant_.begin(), GBTconstant_.end(), ':');
