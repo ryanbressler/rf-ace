@@ -81,7 +81,7 @@ const datadefs::num_t datadefs::GBT_DEFAULT_SHRINKAGE = 0.1;
 // CART default configuration
 const size_t          datadefs::CART_DEFAULT_N_TREES = 1;
 const size_t          datadefs::CART_DEFAULT_M_TRY = 0;
-const size_t          datadefs::CART_DEFAULT_N_MAX_LEAVES = 0;
+const size_t          datadefs::CART_DEFAULT_N_MAX_LEAVES = datadefs::MAX_IDX;
 const size_t          datadefs::CART_DEFAULT_NODE_SIZE = 3;
 const datadefs::num_t datadefs::CART_DEFAULT_IN_BOX_FRACTION = 1.0;
 const datadefs::num_t datadefs::CART_DEFAULT_SAMPLE_WITH_REPLACEMENT = false;

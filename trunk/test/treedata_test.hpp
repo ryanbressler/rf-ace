@@ -743,6 +743,38 @@ void treeDataTest::test_hashFeature() {
 
   Feature hashFeature(textData,"T:foo",doHash);
 
+  uint32_t h;
+
+  MurmurHash3_x86_32("i",1,0,&h);
+  CPPUNIT_ASSERT( hashFeature.hasHash(0,h) );
+  CPPUNIT_ASSERT( hashFeature.hasHash(1,h) );
+  CPPUNIT_ASSERT( ! hashFeature.hasHash(2,h) );
+
+  MurmurHash3_x86_32("am",2,0,&h);
+  CPPUNIT_ASSERT( hashFeature.hasHash(0,h) );
+  CPPUNIT_ASSERT( hashFeature.hasHash(1,h) );
+  CPPUNIT_ASSERT( ! hashFeature.hasHash(2,h) );
+
+  MurmurHash3_x86_32("random",6,0,&h);
+  CPPUNIT_ASSERT(   hashFeature.hasHash(0,h) );
+  CPPUNIT_ASSERT(   hashFeature.hasHash(1,h) );
+  CPPUNIT_ASSERT( ! hashFeature.hasHash(2,h) );
+
+  MurmurHash3_x86_32("text",4,0,&h);
+  CPPUNIT_ASSERT(   hashFeature.hasHash(0,h) );
+  CPPUNIT_ASSERT(   hashFeature.hasHash(1,h) );
+  CPPUNIT_ASSERT( ! hashFeature.hasHash(2,h) );
+
+  MurmurHash3_x86_32("something",9,0,&h);
+  CPPUNIT_ASSERT( ! hashFeature.hasHash(0,h) );
+  CPPUNIT_ASSERT( ! hashFeature.hasHash(1,h) );
+  CPPUNIT_ASSERT(   hashFeature.hasHash(2,h) );
+
+  MurmurHash3_x86_32("is",2,0,&h);
+  CPPUNIT_ASSERT(   hashFeature.hasHash(0,h) );
+  CPPUNIT_ASSERT( ! hashFeature.hasHash(1,h) );
+  CPPUNIT_ASSERT(   hashFeature.hasHash(2,h) );
+
 }
 
 // Registers the fixture into the test 'registry'

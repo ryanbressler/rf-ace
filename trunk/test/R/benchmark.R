@@ -65,11 +65,13 @@ colors <- as.factor(data$"C:class")
 
 data$"C:class" <- as.factor(data$"C:class")
 
-pdf("scattermatrix.pdf")
+dev.new()
+#pdf("scattermatrix.pdf")
 pairs(data[c(1,2,3,7)],col=colors)
-dev.off()
+# dev.off()
 
-pdf("predictions.pdf")
+dev.new()
+#pdf("predictions.pdf")
 par(mfcol=c(2,2))
 plot(outA$predData,outA$trueData,col=colors,pch='.')
 title("RF without textual data (A)")
@@ -92,5 +94,5 @@ results <- data.frame(residual=c(outA$trueData-outA$predData,outB$trueData-outB$
 
 boxplot(residual~method,data=results)
 title("Model residuals")
-dev.off()
+# dev.off()
 

@@ -29,6 +29,7 @@ public:
   void test_recursiveNodeSplit();
   void test_cleanPairVectorFromNANs();
   void test_recursiveNDescendantNodes();
+  void test_regularSplitterSeek();
 
 private:
 
@@ -68,32 +69,46 @@ void NodeTest::test_setSplitter() {
 
 void NodeTest::test_percolateData() {
   
-  Node node0,node00,node01;
-  //Splitter splitter("foo",0.1);
-  node0.setSplitter("foo",0.1,node00,node01);
-  //CPPUNIT_ASSERT( node0.leftChild() == node0.percolate(0.09) );
-  //CPPUNIT_ASSERT( node0.rightChild() == node0.percolate(0.11) );
-  //CPPUNIT_ASSERT( NULL == node0.percolateData(datadefs::NUM_NAN));
+  Treedata treeData("test_2by10_text_matrix.afm",'\t',':');
 
-  Node node1,node10,node11;
+  uint32_t h;
+
+  MurmurHash3_x86_32("c",1,0,&h);
+
+  Node node,leftChild,rightChild;
+
+  node.setSplitter("T:in",h,leftChild,rightChild);
   
-  set<string> leftValues;
-  set<string> rightValues;
+  CPPUNIT_ASSERT( &leftChild == node.leftChild() );
+  CPPUNIT_ASSERT( &rightChild == node.rightChild() );
 
-  leftValues.insert("a");
-  leftValues.insert("b");
+  CPPUNIT_ASSERT( NULL == node.missingChild() );
 
-  rightValues.insert("c");
-  rightValues.insert("d");
+  CPPUNIT_ASSERT( node.percolate(&treeData,0,1) == &rightChild );
+  CPPUNIT_ASSERT( node.percolate(&treeData,1,1) == &rightChild );
+  CPPUNIT_ASSERT( node.percolate(&treeData,2,1) == &rightChild );
+  CPPUNIT_ASSERT( node.percolate(&treeData,3,1) == &rightChild );
+  CPPUNIT_ASSERT( node.percolate(&treeData,4,1) == &rightChild );
+  CPPUNIT_ASSERT( node.percolate(&treeData,5,1) == &leftChild );
+  CPPUNIT_ASSERT( node.percolate(&treeData,6,1) == &leftChild );
+  CPPUNIT_ASSERT( node.percolate(&treeData,7,1) == &leftChild );
+  CPPUNIT_ASSERT( node.percolate(&treeData,8,1) == &leftChild );
+  CPPUNIT_ASSERT( node.percolate(&treeData,9,1) == &leftChild );
+  CPPUNIT_ASSERT( node.percolate(&treeData,10,1) == &leftChild );
+  CPPUNIT_ASSERT( node.percolate(&treeData,11,1) == &leftChild );
+  CPPUNIT_ASSERT( node.percolate(&treeData,12,1) == &leftChild );
+  CPPUNIT_ASSERT( node.percolate(&treeData,13,1) == &leftChild );
+  CPPUNIT_ASSERT( node.percolate(&treeData,14,1) == &leftChild );
+  CPPUNIT_ASSERT( node.percolate(&treeData,15,1) == &rightChild );
+  CPPUNIT_ASSERT( node.percolate(&treeData,16,1) == &rightChild );
+  CPPUNIT_ASSERT( node.percolate(&treeData,17,1) == &rightChild );
+  CPPUNIT_ASSERT( node.percolate(&treeData,18,1) == &rightChild );
+  CPPUNIT_ASSERT( node.percolate(&treeData,19,1) == &rightChild );
 
-  node1.setSplitter("foo",leftValues,rightValues,node10,node11);
 
-  //CPPUNIT_ASSERT( node1.percolate("a") == node1.leftChild() );
-  //CPPUNIT_ASSERT( node1.percolate("b") == node1.leftChild() );
-  //CPPUNIT_ASSERT( node1.percolate("c") == node1.rightChild() );
-  //CPPUNIT_ASSERT( node1.percolate("d") == node1.rightChild() );
+}
 
-  //CPPUNIT_ASSERT( node1.percolateData("foo") == NULL );
+void NodeTest::test_regularSplitterSeek() {
 
 }
 

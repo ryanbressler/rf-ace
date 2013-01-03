@@ -395,6 +395,36 @@ void UtilsTest::test_text2tokens() {
 
   CPPUNIT_ASSERT( hashes.size() == 9 );
 
+  uint32_t h;
+
+  MurmurHash3_x86_32("i",1,0,&h);
+  CPPUNIT_ASSERT( hashes.find(h) != hashes.end() );
+
+  MurmurHash3_x86_32("want",4,0,&h);
+  CPPUNIT_ASSERT( hashes.find(h) != hashes.end() );
+
+  MurmurHash3_x86_32("to",2,0,&h);
+  CPPUNIT_ASSERT( hashes.find(h) != hashes.end() );
+
+  MurmurHash3_x86_32("tokenize",8,0,&h);
+  CPPUNIT_ASSERT( hashes.find(h) != hashes.end() );
+
+  MurmurHash3_x86_32("this",4,0,&h);
+  CPPUNIT_ASSERT( hashes.find(h) != hashes.end() );
+
+  MurmurHash3_x86_32("it",2,0,&h);
+  CPPUNIT_ASSERT( hashes.find(h) != hashes.end() );
+
+  MurmurHash3_x86_32("s",1,0,&h);
+  CPPUNIT_ASSERT( hashes.find(h) != hashes.end() );
+
+  MurmurHash3_x86_32("so",2,0,&h);
+  CPPUNIT_ASSERT( hashes.find(h) != hashes.end() );
+
+  MurmurHash3_x86_32("rad",3,0,&h);
+  CPPUNIT_ASSERT( hashes.find(h) != hashes.end() );
+
+
 }
 
 // Registers the fixture into the test 'registry'

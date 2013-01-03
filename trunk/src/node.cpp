@@ -290,7 +290,7 @@ void Node::recursiveNodeSplit(Treedata* treeData,
 
   assert( *nLeaves <= forestOptions->nMaxLeaves );
 
-  if ( nSamples < 2 * forestOptions->nodeSize || *nLeaves == forestOptions->nMaxLeaves || childIdx + 3 >= children.size() ) {
+  if ( nSamples < 2 * forestOptions->nodeSize || *nLeaves == forestOptions->nMaxLeaves || childIdx + 1 >= children.size() ) {
     return;
   }
 
@@ -535,7 +535,7 @@ bool Node::regularSplitterSeek(Treedata* treeData,
 
   childIdx += 2;
 
-  if ( ! forestOptions->noNABranching && sampleIcs_missing.size() > 0 ) { 
+  if ( ! forestOptions->noNABranching && sampleIcs_missing.size() > 0 && childIdx < children.size() ) { 
     missingChild_ = &children[childIdx++];
   }
 
