@@ -38,10 +38,14 @@ void parseDataFrame(SEXP dataFrameObj, vector<Feature>& dataMatrix, vector<strin
         //cout << Rcpp::as<string>(vec[j]) << endl;
         sVec[j] = Rcpp::as<string>(vec[j]);
       }
-      //cout << "sVec = ";
-      //utils::write(cout,sVec.begin(),sVec.end());
-      //cout << endl;
-      dataMatrix.push_back( Feature(sVec,featureHeaders[i]) );
+      // cout << "sVec = ";
+      // utils::write(cout,sVec.begin(),sVec.end());
+      // cout << endl;
+      bool doHash = false;
+      if ( featureHeaders[i].substr(0,2) == "T:" ) {
+	doHash = true;
+      }
+      dataMatrix.push_back( Feature(sVec,featureHeaders[i],doHash) );
     } else {
       vector<num_t> sVec(sampleHeaders.size());
       for ( size_t j = 0; j < sampleHeaders.size(); ++j ) {
