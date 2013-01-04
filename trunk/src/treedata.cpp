@@ -275,6 +275,16 @@ Treedata::Treedata(string fileName, const char dataDelimiter, const char headerD
       bool doHash = true;
       features_[i] = Feature(rawMatrix[i],featureHeaders[i],doHash);
 
+      /*
+	for ( size_t j = 0; j < features_[i].hashSet.size(); ++j ) {
+	
+	utils::write(cout,rawMatrix[i].begin(),rawMatrix[i].end());
+	cout << " ==> " << flush;
+	utils::write(cout,features_[i].hashSet[j].begin(),features_[i].hashSet[j].end());
+	cout << endl;
+	}
+      */
+
     } else {
       cerr << "ERROR: unknown feature type for feature with header '" << featureHeaders[i] << "'" << endl;
       exit(1);
