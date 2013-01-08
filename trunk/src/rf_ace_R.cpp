@@ -81,19 +81,29 @@ RcppExport SEXP rfaceLoad(SEXP rfaceFile) {
 
 }
 
-RcppExport SEXP rfaceTrain(SEXP trainDataFrameObj, SEXP targetStrR, SEXP featureWeightsR, SEXP forestTypeR, SEXP nTreesR, SEXP mTryR, SEXP nodeSizeR, SEXP nMaxLeavesR, SEXP shrinkageR, SEXP nThreadsR) {
+RcppExport SEXP rfaceTrain(SEXP trainDataFrameObj, 
+			   SEXP targetStrR, 
+			   SEXP featureWeightsR, 
+			   SEXP forestTypeR, 
+			   SEXP nTreesR, 
+			   SEXP mTryR, 
+			   SEXP nodeSizeR, 
+			   SEXP nMaxLeavesR, 
+			   SEXP shrinkageR, 
+			   SEXP noNABranchingR, 
+			   SEXP nThreadsR) {
 
   ForestOptions forestOptions;
 
-  
-  string targetStr = Rcpp::as<string>(targetStrR);
-  forestOptions.forestType = datadefs::forestTypeAssign.at(Rcpp::as<string>(forestTypeR));
-  forestOptions.nTrees     = Rcpp::as<size_t>(nTreesR);
-  forestOptions.mTry       = Rcpp::as<size_t>(mTryR);
-  forestOptions.nodeSize   = Rcpp::as<size_t>(nodeSizeR);
-  forestOptions.nMaxLeaves = Rcpp::as<size_t>(nMaxLeavesR);
-  forestOptions.shrinkage  = Rcpp::as<num_t>(shrinkageR);
-  size_t nThreads = Rcpp::as<size_t>(nThreadsR);
+  string targetStr            = Rcpp::as<string>(targetStrR);
+  forestOptions.forestType    = datadefs::forestTypeAssign.at(Rcpp::as<string>(forestTypeR));
+  forestOptions.nTrees        = Rcpp::as<size_t>(nTreesR);
+  forestOptions.mTry          = Rcpp::as<size_t>(mTryR);
+  forestOptions.nodeSize      = Rcpp::as<size_t>(nodeSizeR);
+  forestOptions.nMaxLeaves    = Rcpp::as<size_t>(nMaxLeavesR);
+  forestOptions.shrinkage     = Rcpp::as<num_t>(shrinkageR);
+  forestOptions.noNABranching = Rcpp::as<bool>(noNABranchingR);
+  size_t nThreads             = Rcpp::as<size_t>(nThreadsR);
 
   vector<Feature> dataMatrix;
   vector<string> sampleHeaders;
