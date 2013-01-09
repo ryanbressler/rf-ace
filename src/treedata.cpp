@@ -10,9 +10,6 @@
 
 #include "math.hpp"
 #include "utils.hpp"
-//#include "timer.hpp"
-
-//extern Timer* TIMER_G;
 
 using namespace std;
 
@@ -25,7 +22,6 @@ Feature::Feature(const vector<num_t>& newData, const string& newName):
 
   data = newData;
   name = newName;
-  //isNumerical = true;
   mapping.clear();
   backMapping.clear();
 

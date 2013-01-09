@@ -1,32 +1,27 @@
 library(rfacer)
 library(randomForest)
 
-nSamples <- 1000
-
-bag <- list(
-list("buckler","shield","sword","helmet","gloves","horse","medieval","castle","joust","clown","extra","words","that","mix"),
-list("swan","duck","duckling","bird","fly","pond","wings","feather","beak","legs","words","that","dont","distinguish"),
-list("baby","diaper","toy","poo","pee","smile","cry","toddler","infant","play","text","that","dont","distinguish"))
+generateBenchmark <- function(nSamples,std,bags,nWordsMin,nWordsMax,pMissing) {
 
 classes <- sample(1:3,nSamples,replace=T)
 
-nWordsPerSample <- sample(4:10,nSamples,replace=TRUE)
+nWordsPerSample <- sample(nWordsMin:nWordsMax,nSamples,replace=TRUE)
 
 text <- vector()
 
 v  <- seq(0,4*pi,length.out=nSamples)
-x1 <- sin(v) + rnorm(nSamples,0,0.1)
-x2 <- v + rnorm(nSamples,0,0.1)
-y  <- x1 + x2 + rnorm(nSamples,0,0.1)
+x1 <- sin(v) + rnorm(nSamples,0,std)
+x2 <- v + rnorm(nSamples,0,std)
+y  <- x1 + x2 + rnorm(nSamples,0,std)
 
-nVars <- 4
-pMissing <- 0.05
+nNoisyVars <- 4
+# pMissing <- 0.05
 
 for ( i in 1:nSamples ) {
   c <- classes[i]
   nWords <- nWordsPerSample[i]
   # nWords <- 10
-  text[i] <- paste(sample(bag[[c]],nWords,replace=F),collapse=', ') 
+  text[i] <- paste(sample(bags[[c]],nWords,replace=F),collapse=', ') 
   y[i] <- y[i] + 4 * pi * c  
 }
 
@@ -80,8 +75,8 @@ pairs(data[c(1,2,3,7)],col=colors)
 dev.off()
 
 # dev.new()
-pdf("predictions.pdf")
-par(mfcol=c(2,3))
+pdf("predictions.pdf",width=8,height=8)
+par(mfcol=c(3,2))
 plot(outA$predData,outA$trueData,col=colors,pch='.')
 title("RF-ACE (binary) (A)")
 lines( par()$usr[1:2], par()$usr[1:2] )
@@ -106,6 +101,14 @@ plot(outF$predData,outF$trueData,col=colors,pch='.')
 title("RF-ACE (ternary) (classes) (F)")
 lines( par()$usr[1:2], par()$usr[1:2] )
 grid()
+dev.off()
+
+pdf("predictions_ref.pdf")
+plot(outG$predData,outG$trueData,col=colors,pch='.')
+title("RF (ref.)")
+lines( par()$usr[1:2], par()$usr[1:2] )
+grid()
+dev.off()
 
 outA$method <- rep("A",nSamples)
 outB$method <- rep("B",nSamples)
@@ -124,17 +127,51 @@ rmse <- function(out) {
   return(sqrt(mean((out$predData-out$trueData)^2,na.rm=TRUE)))
 }
 
-pdf("errors.pdf",width=9,height=6)
+titleStr <- paste(c("Simulated data, ",as.character(nSamples)," samples, ",as.character(pMissing*100),"% missing values"),collapse='')
+
+pdfStr <- paste(c("errors_",nSamples,"_",pMissing*100,".pdf"),collapse='')
+
+pdf(pdfStr,width=9,height=4)
 errors <- c(rmse(outG),rmse(outA),rmse(outD),rmse(outB),rmse(outE),rmse(outC),rmse(outF))
 names(errors) <- c("RF (ref.)\n","RF-ACE\nBinary","RF-ACE\nTernary","RF-ACE\nBinary","RF-ACE\nTernary","RF-ACE\nBinary","RF-ACE\nTernary")
 colors <- c("black","blue","blue","green","green","magenta","magenta")
-barplot(errors,legend.text=FALSE,axes=TRUE,xlab="Models",ylab="Root Mean Squared Error",col=colors,cex.names=0.8,ylim=c(0,max(errors)+1))
-title("Simulated data, 1000 samples, 5% missing values")
+barplot(errors,legend.text=FALSE,axes=TRUE,xlab="Models",ylab="Root Mean Squared Error",col=colors,cex.names=0.9,ylim=c(0,13))
+title(titleStr)
 legend("topright",c("Num.","Num.","Num. + Text","Num. + Cat."),col=c("black","blue","green","magenta"),pch=c(15,15,15,15))
 dev.off()
 
+return(list(outG=outG,data=data,idata=idata))
 
+}
 
+nSamples <- 1000
+std <- 0.1
+pMissing <- 0.05
+nWordsMin <- 4
+nWordsMax <- 8
+
+bags <- list(
+list("buckler","shield","sword","helmet","gloves","horse","medieval","castle","joust","clown","extra","words","that","mix"),
+list("swan","duck","duckling","bird","fly","pond","wings","feather","beak","legs","words","that","dont","distinguish"),
+list("baby","diaper","toy","poo","pee","smile","cry","toddler","infant","play","text","that","dont","distinguish"))
+
+generateBenchmark(nSamples,0.3,bags,nWordsMin,nWordsMax,0.00)
+generateBenchmark(nSamples,0.3,bags,nWordsMin,nWordsMax,0.10)
+generateBenchmark(nSamples,0.3,bags,nWordsMin,nWordsMax,0.20)
+
+treesizes <- as.data.frame(t(read.table("tmp/treesizes.tsv")))
+# treesizes <- data.frame("0%"=tmp[1,],"10%"=tmp[2,],"20%"=tmp[3,],"30%"=tmp[4,])
+names(treesizes) <- c("0%","10%","20%","30%","0%","10%","20%","30%")
+
+pdf("treesizes.pdf",width=8,height=4)
+par(mfcol=c(1,2))
+boxplot(treesizes[1:4],ylim=c(15,150),xlab="% of missing values",ylab="Tree size (nodes)")
+title("RF-ACE, binary splits")
+grid()
+boxplot(treesizes[5:8],ylim=c(15,150),xlab="% of missing values",ylab="Tree size (nodes)")
+title("RF-ACE, ternary splits")
+grid()
+dev.off()
 
 
 
