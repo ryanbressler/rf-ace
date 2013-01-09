@@ -29,7 +29,7 @@ This will load the following functions to the namespace:
  * rface.load
 Check the corresponding R documentation of the functions with `?rface.train` etc. 
 
-Below is a small R script that demonstrates the use of `rfacer` (you can also check the file *[https://code.google.com/p/rf-ace/source/browse/trunk/R/run_tests.R here]*):
+Below is a small R script that demonstrates the use of `rfacer` (you can also check the file *[https://code.google.com/p/rf-ace/source/browse/trunk/test/R/run_tests.R here]*):
 {{{
 library(rfacer)
 
