@@ -1,6 +1,5 @@
 #include "reader.hpp"
 #include <iostream>
-#include <string>
 
 using namespace std;
 
@@ -9,9 +8,7 @@ Reader::Reader(const string& fileName, const char delimiter, const char newLine,
   newLine_(newLine),
   naStr_(naStr) {
 
-  inStream_.open(fileName);
-
-  
+  this->init(fileName);
 
 }
 
@@ -23,12 +20,48 @@ Reader::~Reader() {
 
 }
 
-ostream& operator<<(ostream& outStream, Reader& reader) {
+void Reader::init(const string& fileName) {
+
+  inStream_.open(fileName);
+
+  nCols_ = 0;
+  nRows_ = 0;
+
+  string line;
+  getline(inStream_,line,newLine_);
+
+  ++nRows_;
+
+  stringstream ss(line);
+
+  string field;
+  while ( getline(ss,field,delimiter_) ) {
+    ++nCols_;
+  }
+
+  while ( getline(inStream_,line,newLine_) ) {
+    ++nRows_;
+  }
+
+  inStream_.clear();
+  inStream_.seekg(ios_base::beg);
+
+}
+
+void Reader::skipLine() {
+
+  string line;
+  getline(inStream_,line,newLine_);
+  //return( utils::chomp(line) );
+
+}
+
+void Reader::skipField() {
 
   string field;
 
-  getline(reader.inStream_,field,reader.delimiter_);
-
-  return( outStream << field );
+  std::getline(inStream_,field,delimiter_);
 
 }
+
+

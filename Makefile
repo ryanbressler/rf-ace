@@ -1,9 +1,10 @@
 COMPILER = g++
 CFLAGS = -O2 -std=c++0x -Wall -Wextra -pedantic -Isrc/
 TFLAGS = -pthread
-SOURCEFILES = src/murmurhash3.cpp src/datadefs.cpp src/progress.cpp src/statistics.cpp src/math.cpp src/stochasticforest.cpp src/rootnode.cpp src/node.cpp src/treedata.cpp src/utils.cpp src/distributions.cpp
+SOURCEFILES = src/murmurhash3.cpp src/datadefs.cpp src/progress.cpp src/statistics.cpp src/math.cpp src/stochasticforest.cpp src/rootnode.cpp src/node.cpp src/treedata.cpp src/utils.cpp src/distributions.cpp src/reader.cpp
 STATICFLAGS = -static-libgcc -static
 TESTFILES = test/rface_test.hpp test/distributions_test.hpp test/argparse_test.hpp test/datadefs_test.hpp test/stochasticforest_test.hpp test/utils_test.hpp test/math_test.hpp test/rootnode_test.hpp test/node_test.hpp test/treedata_test.hpp
+NEWTESTFILES = test/test_reader.hpp
 TESTFLAGS = -std=c++0x -L${HOME}/lib/ -L/usr/local/lib -lcppunit -ldl -pedantic -I${HOME}/include/ -I/usr/local/include -Itest/ -Isrc/
 .PHONY: all test clean  # Squash directory checks for the usual suspects
 
@@ -32,6 +33,9 @@ GBT_benchmark: test/GBT_benchmark.cpp $(SOURCEFILES)
 
 test: $(SOURCEFILES) $(TESTFILES)
 	rm -f bin/test; $(COMPILER) $(TESTFLAGS) test/run_tests.cpp $(SOURCEFILES) $(TFLAGS) -o bin/test -ggdb; ./bin/test
+
+newtest: $(SOURCEFILES) $(NEWTESTFILES)
+	rm -f bin/newtest; $(COMPILER) $(CFLAGS) test/newtest.cpp $(SOURCEFILES) $(TFLAGS) -o bin/newtest; ./bin/newtest
 
 test-no-threads: $(SOURCEFILES)
 	rm -f bin/test; $(COMPILER) $(TESTFLAGS) -DNOTHREADS test/run_tests.cpp $(SOURCEFILES) -o bin/test -ggdb; ./bin/test  

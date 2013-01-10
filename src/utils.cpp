@@ -59,7 +59,7 @@ void utils::strv2catv(const vector<string>& strvec,
   mapping.clear();
   backMapping.clear();
 
-  num_t val = 0.0;
+  num_t val = static_cast<datadefs::num_t>(0);
 
   //Map unique strings to values and store values in catvec as doubles
   for(size_t strIdx = 0; strIdx < n; ++strIdx) {
@@ -74,7 +74,7 @@ void utils::strv2catv(const vector<string>& strvec,
         mapping.insert(pair<string,num_t>(strvec[strIdx],val));
         backMapping.insert(pair<num_t,string>(val,strvec[strIdx]));
         catvec[strIdx] = val;
-        val += 1.0;
+        val = static_cast<num_t>(mapping.size());
       } else {
         catvec[strIdx] = it->second;
       }
