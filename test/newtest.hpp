@@ -25,4 +25,8 @@ void newtest(const std::string& info, void (*testFunc)(void) ) {
 
 }
 
+void newassert(bool expr) {
+  if ( expr ) { N_SUCCESS++; } else { N_FAIL++; }
+}
+
 #endif
