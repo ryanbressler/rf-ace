@@ -14,7 +14,7 @@ int main() {
 
   size_t nTests = N_SUCCESS + N_FAIL;
 
-  cout << "TEST: " << nTests << " tests run: " << N_SUCCESS << " successes and " << N_FAIL << " failures" << endl; 
+  cout << "ALL DONE! " << nTests << " tests run: " << N_SUCCESS << " successes and " << N_FAIL << " failures" << endl; 
 
   return( EXIT_SUCCESS );
 

@@ -24,7 +24,7 @@ void test_reader() {
 
 void test_readAFM() {
 
-  Reader reader("test/data/3by8_mixed_NA_matrix.afm",'\t','\n',"NA");
+  Reader reader("test/data/3by8_mixed_NA_matrix.afm",'\t',"NA");
 
   assert( reader.nRows() == 4 ); N_SUCCESS++;
   assert( reader.nCols() == 9 ); N_SUCCESS++;
@@ -42,7 +42,7 @@ void test_readAFM() {
   vector<Feature> features(nVars);
 
   // Removing top-left corner from table having column and row headers
-  reader.skipField();
+  reader.nextLine().skipField();
 
   // Regular expressions for valid variable names
   // NOTE: these will be moved to datadefs
@@ -65,11 +65,30 @@ void test_readAFM() {
     
   }
   
-  N_SUCCESS++;
+  assert( reader.endOfLine() ); N_SUCCESS++;
+  
+  reader.nextLine();
+
+  string field;
+  
+  reader >> field; assert( field == "s0" );  N_SUCCESS++;
+  reader >> field; assert( field == "NA" );  N_SUCCESS++;
+  reader >> field; assert( field == "foo" ); N_SUCCESS++;
+  reader >> field; assert( field == "2.2" ); N_SUCCESS++;
+  reader >> field; assert( field == "3.3" ); N_SUCCESS++;
+  reader >> field; assert( field == "4.4" ); N_SUCCESS++;
+  reader >> field; assert( field == "5.5" ); N_SUCCESS++;
+  reader >> field; assert( field == "6.6" ); N_SUCCESS++;
+  reader >> field; assert( field == "Ah, be so good. Yes, no?" ); N_SUCCESS++;
+
+  assert( reader.endOfLine() ); N_SUCCESS++;
+
+  reader.rewind().nextLine();
 
   vector<string> sampleNames(nSamples);
 
   for ( size_t i = 0; i < nSamples; ++i ) {
+    reader.nextLine();
     reader >> sampleNames[i];
     for ( size_t j = 0; j < nVars; ++j ) {
       if ( features[j].isNumerical() ) {
@@ -83,16 +102,30 @@ void test_readAFM() {
 	features[j].setTxtSampleValue(i,str);
       }
     }
+    assert( reader.endOfLine() ); N_SUCCESS++;    
   }
 
-  cout << sampleNames[0] << endl; 
   assert( sampleNames[0] == "s0" ); N_SUCCESS++;
-  cout << sampleNames[1] << endl;
   assert( sampleNames[1] == "s1" ); N_SUCCESS++;
-  cout << sampleNames[2] << endl;
   assert( sampleNames[2] == "s2" ); N_SUCCESS++;
 
+  reader.rewind().nextLine().nextLine();
+
+  string s0;
+  num_t  v1,v3,v4,v5,v6,v7;
+  string v2,v8;
   
+  reader >> s0 >> v1 >> v2 >> v3 >> v4 >> v5 >> v6 >> v7 >> v8; 
+
+  assert( s0 == "s0" ); N_SUCCESS++;
+  assert( datadefs::isNAN(v1) ); N_SUCCESS++;
+  assert( v2 == "foo" ); N_SUCCESS++;
+  assert( fabs( v3 - 2.2 ) < datadefs::EPS ); N_SUCCESS++;
+  assert( fabs( v4 - 3.3 ) < datadefs::EPS ); N_SUCCESS++;
+  assert( fabs( v5 - 4.4 ) < datadefs::EPS ); N_SUCCESS++;
+  assert( fabs( v6 - 5.5 ) < datadefs::EPS ); N_SUCCESS++;
+  assert( fabs( v7 - 6.6 ) < datadefs::EPS ); N_SUCCESS++;
+  assert( v8 == "Ah, be so good. Yes, no?" ); N_SUCCESS++;
 
 }
 

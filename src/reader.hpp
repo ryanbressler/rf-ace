@@ -11,25 +11,25 @@
 class Reader {
 public:
 
-  Reader(const std::string& fileName, const char delimiter = '\t', const char newLine = '\n', const std::string& naStr = "NA");
+  Reader(const std::string& fileName, const char delimiter = '\t', const std::string& naStr = "NA");
   ~Reader();
   
-  friend std::ostream& operator<<(std::ostream& outStream, Reader& reader) {
+  template<typename T> inline friend Reader& operator>>(Reader& reader, T& val) {
+    reader.checkLineFeed();
     std::string field;
-    std::getline(reader.inStream_,field,reader.delimiter_);
-    field = utils::chomp(field);
-    return( outStream << field );
-  }
-  
-  template<typename T> inline friend void operator>>(Reader& reader, T& val) {
-    std::string field;
-    std::getline(reader.inStream_,field,reader.delimiter_);
+    std::getline(reader.lineFeed_,field,reader.delimiter_);
     std::stringstream ss( utils::chomp(field) );
     ss >> val;
+    return(reader);
   }
   
-  void skipLine();
-  void skipField();
+  Reader& nextLine();
+
+  Reader& skipField();
+
+  Reader& rewind();
+
+  bool endOfLine();
 
   size_t nRows() { return( nRows_ ); }
   size_t nCols() { return( nCols_ ); }
@@ -40,20 +40,26 @@ private:
 
   void init(const std::string& fileName);
 
+  void checkLineFeed();
+
+  void setLineFeed(const string& str);
+
   std::ifstream inStream_;
 
   char delimiter_;
-  char newLine_;
   std::string naStr_;
 
   size_t nCols_;
   size_t nRows_;
 
+  stringstream lineFeed_;
+
 };
 
-template<> inline void operator>>(Reader& reader, datadefs::num_t& val) {
+template<> inline Reader& operator>>(Reader& reader, datadefs::num_t& val) {
+  reader.checkLineFeed();
   std::string field;
-  std::getline(reader.inStream_,field,reader.delimiter_);
+  std::getline(reader.lineFeed_,field,reader.delimiter_);
   field = utils::chomp(field);
   if ( field == reader.naStr_ ) {
     val = datadefs::NUM_NAN;
@@ -61,6 +67,14 @@ template<> inline void operator>>(Reader& reader, datadefs::num_t& val) {
     std::stringstream ss( utils::chomp(field) );
     ss >> val;
   }
+  return(reader);
+}
+
+template<> inline Reader& operator>>(Reader& reader, string& str) {
+  reader.checkLineFeed();
+  std::getline(reader.lineFeed_,str,reader.delimiter_);
+  str = utils::chomp(str);
+  return(reader);
 }
 
 #endif
