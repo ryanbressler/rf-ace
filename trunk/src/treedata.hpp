@@ -31,10 +31,15 @@ public:
   string name;
   
   Feature();
+  Feature(Type newType, const string& newName, const size_t nSamples);
   Feature(const vector<num_t>& newData, const string& newName);
   Feature(const vector<string>& newStringData, const string& newName, bool doHash = false);
   ~Feature();
   
+  void setNumSampleValue(const size_t sampleIdx, const num_t val);
+  void setCatSampleValue(const size_t sampleIdx, const string& str);
+  void setTxtSampleValue(const size_t sampleIdx, const string& str);
+
   bool isNumerical() const; 
   bool isCategorical() const;
   bool isTextual() const;

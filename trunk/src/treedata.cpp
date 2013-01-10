@@ -17,6 +17,58 @@ Feature::Feature():
   type_(Feature::Type::UNKNOWN) {  
 }
 
+Feature::Feature(Feature::Type newType, const string& newName, const size_t nSamples):
+  type_(newType) {
+
+  name = newName;
+
+  if ( type_ == Feature::Type::NUM || type_ == Feature::Type::CAT ) {
+    data.resize(nSamples);
+    hashSet.clear();
+  } else if ( type_ == Feature::Type::TXT ) {
+    data.clear();
+    hashSet.resize(nSamples);
+  }
+  
+  mapping.clear();
+  backMapping.clear();
+  
+}
+
+void Feature::setNumSampleValue(const size_t sampleIdx, const num_t val) {
+  assert( type_ == Feature::Type::NUM );
+  data[sampleIdx] = val;
+}
+
+void Feature::setCatSampleValue(const size_t sampleIdx, const string& str) {
+  assert( type_ == Feature::Type::CAT );
+
+  if ( datadefs::isNAN_STR(str) ) {
+    data[sampleIdx] = datadefs::NUM_NAN;
+    return;
+  }
+  
+  map<string,num_t>::iterator it(mapping.find(str));
+
+  if ( it != mapping.end() ) {
+    data[sampleIdx] = it->second;
+  } else {
+    num_t val = static_cast<num_t>(mapping.size());
+    mapping[str] = val;
+    backMapping[val] = str;
+    data[sampleIdx] = val;
+  }
+}
+
+void Feature::setTxtSampleValue(const size_t sampleIdx, const string& str) {
+  assert( type_ == Feature::Type::TXT );
+  if ( datadefs::isNAN_STR(str) ) {
+    hashSet[sampleIdx] = utils::hashText("");
+  } else {
+    hashSet[sampleIdx] = utils::hashText(str);
+  }
+}
+
 Feature::Feature(const vector<num_t>& newData, const string& newName):
   type_(Feature::Type::NUM) {
 
@@ -1060,6 +1112,8 @@ num_t Treedata::textualFeatureSplit(const size_t targetIdx,
   size_t n_left = 0;
   size_t n_right = 0;
   size_t n_tot = sampleIcs_right.size();
+
+  sampleIcs_missing.clear();
 
   sampleIcs_left.resize(n_tot);
 
