@@ -34,7 +34,7 @@ public:
   size_t nRows() { return( nRows_ ); }
   size_t nCols() { return( nCols_ ); }
 
-#ifndef TEST
+#ifndef TEST__
 private:
 #endif
 

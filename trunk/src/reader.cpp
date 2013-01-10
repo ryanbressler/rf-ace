@@ -22,7 +22,7 @@ Reader::~Reader() {
 
 void Reader::init(const string& fileName) {
 
-  inStream_.open(fileName);
+  inStream_.open(fileName.c_str());
 
   nCols_ = 0;
   nRows_ = 0;
