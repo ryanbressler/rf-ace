@@ -25,33 +25,27 @@ void Reader::init(const string& fileName) {
 
   this->setLineFeed("");
 
-  nCols_ = 0;
-  nRows_ = 0;
+  nLines_ = 0;
 
   string line;
-  getline(inStream_,line);
 
-  ++nRows_;
-
-  stringstream ss(line);
-
-  string field;
-  while ( getline(ss,field,delimiter_) ) {
-    ++nCols_;
-  }
-
-  while ( getline(inStream_,line) ) {
-    ++nRows_;
-  }
+  for ( nLines_ = 0; getline(inStream_,line); ++nLines_ ) { }
 
   this->rewind();
 
 }
 
-bool Reader::endOfLine() {
-  
-  return( lineFeed_.rdbuf()->in_avail() == 0 );
+bool Reader::endOfStream(const ios& stream) const {
+  return( stream.rdbuf()->in_avail() == 0 );
+}
 
+bool Reader::endOfLine() const {
+  return( this->endOfStream(lineFeed_) );
+  //return( lineFeed_.rdbuf()->in_avail() == 0 );
+}
+
+bool Reader::endOfFile() const {
+  return( this->endOfStream(lineFeed_) && this->endOfStream(inStream_) );
 }
 
 Reader& Reader::nextLine() {
@@ -87,7 +81,7 @@ Reader& Reader::rewind() {
 
 }
 
-void Reader::checkLineFeed() {
+void Reader::checkLineFeed() const {
 
   if ( this->endOfLine() ) {
     cerr << "READ ERROR: tried to read from an empty linefeed. Did you forget Reader::nextLine()?" << endl;

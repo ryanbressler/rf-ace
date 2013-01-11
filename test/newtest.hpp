@@ -3,6 +3,11 @@
 
 #include <cstdlib>
 #include <iostream>
+#include <sstream>
+
+std::stringstream ERRLOG;
+
+#define newassert(condition) { if(!(condition)){ ERRLOG << " => FAIL: " << #condition << " @ " << __FILE__ << " (" << __LINE__ << ")" << std::endl; N_FAIL++; } else { N_SUCCESS++; } }
 
 extern size_t N_SUCCESS;
 extern size_t N_FAIL;
@@ -23,10 +28,12 @@ void newtest(const std::string& info, void (*testFunc)(void) ) {
 
   std::cout << std::endl;
 
-}
+  std::string errLine;
 
-void newassert(bool expr) {
-  if ( expr ) { N_SUCCESS++; } else { N_FAIL++; }
+  while( std::getline(ERRLOG,errLine) ) {
+    std::cerr << errLine << std::endl;
+  }
+
 }
 
 #endif

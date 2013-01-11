@@ -5,6 +5,7 @@
 #include <fstream>
 #include <string>
 #include <sstream>
+#include <ios>
 
 #include "utils.hpp"
 
@@ -29,10 +30,10 @@ public:
 
   Reader& rewind();
 
-  bool endOfLine();
+  bool endOfLine() const;
+  bool endOfFile() const;
 
-  size_t nRows() { return( nRows_ ); }
-  size_t nCols() { return( nCols_ ); }
+  size_t nLines() const { return( nLines_ ); }
 
 #ifndef TEST__
 private:
@@ -40,17 +41,18 @@ private:
 
   void init(const std::string& fileName);
 
-  void checkLineFeed();
+  void checkLineFeed() const;
 
   void setLineFeed(const string& str);
+
+  bool endOfStream(const ios& stream) const;
 
   std::ifstream inStream_;
 
   char delimiter_;
   std::string naStr_;
 
-  size_t nCols_;
-  size_t nRows_;
+  size_t nLines_;
 
   stringstream lineFeed_;
 
