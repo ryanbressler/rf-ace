@@ -1,5 +1,5 @@
-#ifndef TEST_READER_HPP
-#define TEST_READER_HPP
+#ifndef READER_NEWTEST_HPP
+#define READER_NEWTEST_HPP
 
 #include "newtest.hpp"
 #include "reader.hpp"
@@ -9,15 +9,15 @@
 using namespace std;
 using datadefs::num_t;
 
-void test_readAFM();
+void reader_newtest_readAFM();
 
-void test_reader() {
+void reader_newtest() {
 
-  newtest( "Reading delimited data from AFM file", &test_readAFM );
+  newtest( "Reading delimited data from AFM file", &reader_newtest_readAFM );
 
 }
 
-void test_readAFM() {
+void reader_newtest_readAFM() {
 
   Reader reader("test/data/3by8_mixed_NA_matrix.afm",'\t',"NA");
 
@@ -46,7 +46,7 @@ void test_readAFM() {
     }
     
   }
-  
+
   newassert( nVars == 8 );
   newassert( features.size() == 8 );
 
