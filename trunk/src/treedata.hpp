@@ -31,6 +31,10 @@ public:
 
   ~Treedata();
 
+  const Feature* operator[](const size_t featureIdx) const {
+    return( &features_[featureIdx] );
+  }
+
   // Returns the number of features
   size_t nFeatures() const;
 
@@ -47,7 +51,7 @@ public:
   // Returns feature name, given the index
   string getFeatureName(const size_t featureIdx) const;
 
-  num_t getFeatureEntropy(const size_t fatureIdx) const;
+  num_t getFeatureEntropy(const size_t featureIdx) const;
 
   // Returns sample name, given sample index
   string getSampleName(const size_t sampleIdx);
