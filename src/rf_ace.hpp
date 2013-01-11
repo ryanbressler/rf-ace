@@ -157,7 +157,7 @@ public:
 
     size_t nFeatures = filterData->nFeatures();
 
-    filterOutput.targetName = filterData->getFeatureName(targetIdx);
+    filterOutput.targetName = filterData->feature(targetIdx)->name();
     filterOutput.pValues.resize(nFeatures,1.0);
     filterOutput.importances.resize(nFeatures);
     filterOutput.sampleCounts.resize(nFeatures);
@@ -247,7 +247,7 @@ public:
       filterOutput.importances[featureIdx] = math::mean(featureImportanceSample);
       filterOutput.correlations[featureIdx] = filterData->isFeatureNumerical(featureIdx) ? filterData->pearsonCorrelation(targetIdx,featureIdx) : datadefs::NUM_NAN;
       filterOutput.sampleCounts[featureIdx] = filterData->isFeatureNumerical(featureIdx) ? filterData->nRealSamples(targetIdx,featureIdx) : filterData->nRealSamples(targetIdx);
-      filterOutput.featureNames[featureIdx] = filterData->getFeatureName(featureIdx);
+      filterOutput.featureNames[featureIdx] = filterData->feature(featureIdx)->name();
     }
     
     sortFilterOutput(&filterOutput);
