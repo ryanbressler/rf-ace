@@ -17,14 +17,6 @@ uint32_t Treedata::getHash(const size_t featureIdx, const size_t sampleIdx, cons
   return( features_[featureIdx].getHash(sampleIdx,integer) );
 }
 
-bool Treedata::hasHash(const size_t featureIdx, const size_t sampleIdx, const uint32_t hashIdx) const {
-  return( features_[featureIdx].hasHash(sampleIdx,hashIdx) );
-}
-
-num_t Treedata::getFeatureEntropy(const size_t featureIdx) const {
-  return( features_[featureIdx].entropy() );
-}
-
 Treedata::Treedata(const vector<Feature>& features, const bool useContrasts, const vector<string>& sampleHeaders):
   useContrasts_(useContrasts),
   features_(features),
@@ -43,7 +35,7 @@ Treedata::Treedata(const vector<Feature>& features, const bool useContrasts, con
   for ( size_t featureIdx = 0; featureIdx < nFeatures; ++featureIdx ) {
 
     assert( features_[featureIdx].data.size() == nSamples );
-    name2idx_[ features_[featureIdx].name ] = featureIdx;
+    name2idx_[ features_[featureIdx].name() ] = featureIdx;
   }
 
   assert( nSamples > 0 );
@@ -203,8 +195,10 @@ void Treedata::createContrasts() {
   // Generate contrast features
   for(size_t i = nFeatures; i < 2*nFeatures; ++i) {
     features_[i] = features_[ i - nFeatures ];
-    features_[i].name.append("_CONTRAST");
-    name2idx_[ features_[i].name ] = i;
+    //string newName = features_[i].name();
+    //newName.append("_CONTRAST");
+    features_[i].setName( features_[i].name().append("_CONTRAST") );
+    name2idx_[ features_[i].name() ] = i;
   }
 
 }
@@ -511,10 +505,6 @@ size_t Treedata::getFeatureIdx(const string& featureName) const {
   return( it->second );
 }
 
-string Treedata::getFeatureName(const size_t featureIdx) const {
-  return( features_.at(featureIdx).name );
-}
-
 string Treedata::getSampleName(const size_t sampleIdx) {
   return( sampleHeaders_.at(sampleIdx) );
 }
@@ -524,9 +514,10 @@ vector<num_t> Treedata::getFeatureWeights() const {
   vector<num_t> weights(this->nFeatures(),1.0);
 
   for ( size_t i = 0; i < this->nFeatures(); ++i ) {
-    if ( this->isFeatureTextual(i) ) {
-      num_t entropy = this->getFeatureEntropy(i);
-      cout << "Feature '" << this->getFeatureName(i) << "' is textual and has sqrt(entropy) " << sqrtf(entropy) << endl;
+    const Feature* feature = this->feature(i);
+    if ( feature->isTextual() ) {
+      num_t entropy = feature->entropy();
+      cout << "Feature '" << feature->name() << "' is textual and has sqrt(entropy) " << sqrtf(entropy) << endl;
       weights[i] = sqrtf(entropy);
     }
   }
@@ -534,31 +525,6 @@ vector<num_t> Treedata::getFeatureWeights() const {
   return(weights);
 
 }
-
-void Treedata::print() {
-  cout << "Printing feature matrix (missing values encoded to " << datadefs::NUM_NAN << "):" << endl;
-  for(size_t j = 0; j < Treedata::nSamples(); ++j) {
-    cout << '\t' << "foo";
-  }
-  cout << endl;
-  for(size_t i = 0; i < Treedata::nFeatures(); ++i) {
-    cout << i << ':' << features_[i].name << ':';
-    for(size_t j = 0; j < Treedata::nSamples(); ++j) {
-      cout << '\t' << features_[i].data[j];
-    }
-    cout << endl;
-  }
-}
-
-
-void Treedata::print(const size_t featureIdx) {
-  cout << "Print " << features_[featureIdx].name << ":";
-  for(size_t i = 0; i < Treedata::nSamples(); ++i) {
-    cout << " " << features_[featureIdx].data[i];
-  }
-  cout << endl;
-}
-
 
 void Treedata::permuteContrasts(distributions::Random* random) {
 
@@ -617,36 +583,17 @@ size_t Treedata::nRealSamples(const size_t featureIdx1, const size_t featureIdx2
   return( nRealSamples );
 }
 
-size_t Treedata::nCategories(const size_t featureIdx) {
-  return( features_[featureIdx].mapping.size() );
-}
-
 size_t Treedata::nMaxCategories() {
 
-  size_t ret = 0;
-  for( size_t i = 0; i < Treedata::nFeatures(); ++i ) {
-    if( ret < features_[i].mapping.size() ) {
-      ret = features_[i].mapping.size();
+  size_t maxCat = 0;
+  for ( size_t i = 0; i < Treedata::nFeatures(); ++i ) {
+    size_t newMaxCat = this->feature(i)->nCategories();
+    if ( maxCat < newMaxCat ) {
+      maxCat = newMaxCat;
     }
   }
   
-  return( ret ); 
-
-}
-
-vector<string> Treedata::categories(const size_t featureIdx) {
-  
-  vector<string> categories;
-
-  if( this->isFeatureNumerical(featureIdx) ) {
-    return( categories );
-  }
- 
-  for ( map<num_t,string>::const_iterator it( features_[featureIdx].backMapping.begin() ) ; it != features_[featureIdx].backMapping.end(); ++it ) {
-    categories.push_back(it->second);
-  }
-
-  return( categories );
+  return( maxCat ); 
 
 }
 
@@ -1071,7 +1018,7 @@ void Treedata::replaceFeatureData(const size_t featureIdx, const vector<num_t>& 
     exit(1);
   }
 
-  features_[featureIdx] = Feature(featureData,features_[featureIdx].name);
+  features_[featureIdx] = Feature( featureData, features_[featureIdx].name() );
 
 }
 
@@ -1082,7 +1029,7 @@ void Treedata::replaceFeatureData(const size_t featureIdx, const vector<string>&
     exit(1);
   }
 
-  features_[featureIdx] = Feature(rawFeatureData,features_[featureIdx].name);
+  features_[featureIdx] = Feature( rawFeatureData, features_[featureIdx].name() );
 
 }
 

@@ -31,7 +31,7 @@ public:
 
   ~Treedata();
 
-  const Feature* operator[](const size_t featureIdx) const {
+  const Feature* feature(const size_t featureIdx) const {
     return( &features_[featureIdx] );
   }
 
@@ -48,11 +48,6 @@ public:
   // A value denoting the "one-over-last" feature in matrix
   size_t end() const { return( datadefs::MAX_IDX ); }
 
-  // Returns feature name, given the index
-  string getFeatureName(const size_t featureIdx) const;
-
-  num_t getFeatureEntropy(const size_t featureIdx) const;
-
   // Returns sample name, given sample index
   string getSampleName(const size_t sampleIdx);
 
@@ -63,24 +58,14 @@ public:
   size_t nRealSamples(const size_t featureIdx);
   size_t nRealSamples(const size_t featureIdx1, const size_t featureIdx2);
   
-  // Returns the number of categories a feature has
-  size_t nCategories(const size_t featureIdx);
-
-  vector<string> categories(const size_t featureIdx);
-
   // Returns the number of categories of the feature with the highest cardinality
   size_t nMaxCategories();
-
-  // Prints the treedata matrix in its internal form
-  void print();
-  void print(const size_t featureIdx);
 
   vector<num_t> getFeatureData(const size_t featureIdx);
   num_t getFeatureData(const size_t featureIdx, const size_t sampleIdx);
   vector<num_t> getFeatureData(const size_t featureIdx, const vector<size_t>& sampleIcs);
 
   uint32_t getHash(const size_t featureIdx, const size_t sampleIdx, const size_t integer) const;
-  bool hasHash(const size_t featureIdx, const size_t sampleIdx, const uint32_t hashIdx) const;
 
   vector<num_t> getFeatureWeights() const;
 

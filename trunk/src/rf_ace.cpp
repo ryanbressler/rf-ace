@@ -272,7 +272,7 @@ void printDataStatistics(Treedata& treeData, const size_t targetIdx) {
   size_t nRealSamples = treeData.nRealSamples(targetIdx);
   num_t realFraction = 1.0*nRealSamples / treeData.nSamples();
 
-  cout << endl << "Feature '" << treeData.getFeatureName(targetIdx) << "' chosen as target with " << nRealSamples << " / " << nSamples << " samples ( " << 100.0 * ( 1 - realFraction ) << " % missing ) among " << nFeatures << " features" << endl;
+  cout << endl << "Feature '" << treeData.feature(targetIdx)->name() << "' chosen as target with " << nRealSamples << " / " << nSamples << " samples ( " << 100.0 * ( 1 - realFraction ) << " % missing ) among " << nFeatures << " features" << endl;
 
 }
 

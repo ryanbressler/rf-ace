@@ -7,9 +7,8 @@ Feature::Feature():
 }
 
 Feature::Feature(Feature::Type newType, const string& newName, const size_t nSamples):
-  type_(newType) {
-
-  name = newName;
+  type_(newType),
+  name_(newName) {
 
   if ( type_ == Feature::Type::NUM || type_ == Feature::Type::CAT ) {
     data.resize(nSamples);
@@ -59,19 +58,18 @@ void Feature::setTxtSampleValue(const size_t sampleIdx, const string& str) {
 }
 
 Feature::Feature(const vector<num_t>& newData, const string& newName):
-  type_(Feature::Type::NUM) {
+  type_(Feature::Type::NUM),
+  name_(newName) {
 
   data = newData;
-  name = newName;
   mapping.clear();
   backMapping.clear();
 
 }
 
 Feature::Feature(const vector<string>& newStringData, const string& newName, bool doHash):
-  type_( doHash ? Feature::Type::TXT : Feature::Type::CAT ) {
-
-  name = newName;
+  type_( doHash ? Feature::Type::TXT : Feature::Type::CAT ),
+  name_(newName) {
 
   if ( type_ == Feature::Type::CAT ) {
 
@@ -105,6 +103,35 @@ bool Feature::isCategorical() const {
 
 bool Feature::isTextual() const {
   return( type_ == Feature::Type::TXT ? true : false );
+}
+
+string Feature::name() const {
+  return( name_ );
+}
+
+void Feature::setName(const string& newName) {
+  assert( newName.length() > 0 );
+  name_ = newName;
+}
+
+vector<string> Feature::categories() const {
+
+  vector<string> categories;
+  
+  if( this->isNumerical() || this->isCategorical() ) {
+    return( categories );
+  }
+  
+  for ( map<num_t,string>::const_iterator it( backMapping.begin() ) ; it != backMapping.end(); ++it ) {
+    categories.push_back(it->second);
+  }
+  
+  return( categories );
+  
+}
+
+size_t Feature::nCategories() const {
+  return( mapping.size() );
 }
 
 uint32_t Feature::getHash(const size_t sampleIdx, const size_t integer) const {

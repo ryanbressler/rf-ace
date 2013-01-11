@@ -21,7 +21,6 @@ public:
   map<string,num_t> mapping;
   map<num_t,string> backMapping;
   vector<unordered_set<uint32_t> > hashSet;
-  string name;
 
   Feature();
   Feature(Type newType, const string& newName, const size_t nSamples);
@@ -37,6 +36,12 @@ public:
   bool isCategorical() const;
   bool isTextual() const;
 
+  string name() const;
+  void setName(const string& newName);
+  
+  vector<string> categories() const;
+  size_t nCategories() const;
+
   uint32_t getHash(const size_t sampleIdx, const size_t integer) const;
   bool hasHash(const size_t sampleIdx, const uint32_t hashIdx) const;
 
@@ -45,6 +50,7 @@ public:
 private:
 
   Type type_;
+  string name_;
 
 };
 

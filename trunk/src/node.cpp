@@ -149,7 +149,7 @@ const Node* Node::percolate(Treedata* testData, const size_t sampleIdx, const si
     
   } else {
     
-    if ( testData->hasHash(featureIdx,sampleIdx,splitter_.hashValue) ) {
+    if ( testData->feature(featureIdx)->hasHash(sampleIdx,splitter_.hashValue) ) {
       return( this->leftChild()->percolate(testData,sampleIdx,scrambleFeatureIdx) );
     } else {
       return( this->rightChild()->percolate(testData,sampleIdx,scrambleFeatureIdx) );
@@ -275,7 +275,7 @@ void Node::recursiveNodeSplit(Treedata* treeData,
     string rawTrainPrediction = treeData->getRawFeatureData(targetIdx,trainPrediction);
     this->setTrainPrediction( trainPrediction, rawTrainPrediction );
   } else if ( predictionFunctionType == GAMMA ) {
-    num_t trainPrediction = math::gamma(trainData, treeData->nCategories(targetIdx) );
+    num_t trainPrediction = math::gamma(trainData, treeData->feature(targetIdx)->nCategories() );
     string rawTrainPrediction = utils::num2str(trainPrediction);
     this->setTrainPrediction( trainPrediction, rawTrainPrediction );
   } else {
@@ -509,11 +509,13 @@ bool Node::regularSplitterSeek(Treedata* treeData,
     return(false);
   } 
 
-  if ( treeData->isFeatureNumerical(splitFeatureIdx) ) {
+  const Feature* splitFeature = treeData->feature(splitFeatureIdx);
 
-    this->setSplitter(treeData->getFeatureName(splitFeatureIdx),splitValue,children[childIdx],children[childIdx+1]);
+  if ( splitFeature->isNumerical() ) {
 
-  } else if ( treeData->isFeatureCategorical(splitFeatureIdx) ) {
+    this->setSplitter(splitFeature->name(),splitValue,children[childIdx],children[childIdx+1]);
+
+  } else if ( splitFeature->isCategorical() ) {
     
     set<string> rawSplitValues_left, rawSplitValues_right;
 
@@ -525,11 +527,11 @@ bool Node::regularSplitterSeek(Treedata* treeData,
       rawSplitValues_right.insert( treeData->getRawFeatureData(splitFeatureIdx,*it) );
     }
 
-    this->setSplitter(treeData->getFeatureName(splitFeatureIdx),rawSplitValues_left,rawSplitValues_right,children[childIdx],children[childIdx+1]);
+    this->setSplitter(splitFeature->name(),rawSplitValues_left,rawSplitValues_right,children[childIdx],children[childIdx+1]);
 
-  } else if ( treeData->isFeatureTextual(splitFeatureIdx) ) {
+  } else if ( splitFeature->isTextual() ) {
     
-    this->setSplitter(treeData->getFeatureName(splitFeatureIdx),hashIdx,children[childIdx],children[childIdx+1]);
+    this->setSplitter(splitFeature->name(),hashIdx,children[childIdx],children[childIdx+1]);
 
   }
 

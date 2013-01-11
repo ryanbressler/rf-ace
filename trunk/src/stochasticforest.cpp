@@ -223,9 +223,9 @@ void StochasticForest::learnRF(Treedata* trainData, const size_t targetIdx,
     vector<distributions::Random>& randoms) {
 
   forestType_ = forest_t::RF;
-  targetName_ = trainData->getFeatureName(targetIdx);
-  isTargetNumerical_ = trainData->isFeatureNumerical(targetIdx);
-  categories_ = trainData->categories(targetIdx);
+  targetName_ = trainData->feature(targetIdx)->name();
+  isTargetNumerical_ = trainData->feature(targetIdx)->isNumerical();
+  categories_ = trainData->feature(targetIdx)->categories();
 
   assert(trainData->nFeatures() == featureWeights.size());
   assert(fabs(featureWeights[targetIdx]) < datadefs::EPS);
@@ -312,11 +312,11 @@ void StochasticForest::learnGBT(Treedata* trainData, const size_t targetIdx,
 
   forestType_ = forest_t::GBT;
 
-  targetName_ = trainData->getFeatureName(targetIdx);
+  targetName_ = trainData->feature(targetIdx)->name();
 
-  isTargetNumerical_ = trainData->isFeatureNumerical(targetIdx);
+  isTargetNumerical_ = trainData->feature(targetIdx)->isNumerical();
 
-  categories_ = trainData->categories(targetIdx);
+  categories_ = trainData->feature(targetIdx)->categories();
 
   assert(trainData->nFeatures() == featureWeights.size());
 
@@ -327,7 +327,7 @@ void StochasticForest::learnGBT(Treedata* trainData, const size_t targetIdx,
   distributions::PMF pmf(featureWeights);
 
   if (!isTargetNumerical_) {
-    size_t nTrees = forestOptions->nTrees * trainData->nCategories(targetIdx);
+    size_t nTrees = forestOptions->nTrees * trainData->feature(targetIdx)->nCategories();
     rootNodes_.resize(nTrees); //nCategories;
     GBTfactors_.resize(nTrees);
   } else {
