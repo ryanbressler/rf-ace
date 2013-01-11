@@ -236,20 +236,18 @@ unordered_set<uint32_t> utils::hashText(const string& text) {
   char const* p = text.c_str();
   char const* q = strpbrk(p+1,datadefs::tokenDelimiters);
   for ( ; ; q = strpbrk(p,datadefs::tokenDelimiters) ) {
-    if ( distance(p,q) > 0 ) {
+    if ( q == NULL ) {
+      string token(p);
+      uint32_t h;
+      MurmurHash3_x86_32(utils::tolower(token).c_str(),token.length(),0,&h);
+      hashes.insert( h );
+      break;
+    } else {
       string token(p,q);
       uint32_t h;
       MurmurHash3_x86_32(utils::tolower(token).c_str(),token.length(),0,&h);
       hashes.insert( h );
-    }
-    if ( q != NULL ) {
       p = q + 1;
-    } else {
-      string token2(p);
-      uint32_t h;
-      MurmurHash3_x86_32(utils::tolower(token2).c_str(),token2.length(),0,&h);
-      hashes.insert( h );
-      break;
     }
   }
    

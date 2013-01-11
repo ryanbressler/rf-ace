@@ -7,10 +7,10 @@
 
 std::stringstream ERRLOG;
 
-#define newassert(condition) { if(!(condition)){ ERRLOG << " => FAIL: " << #condition << " @ " << __FILE__ << " (" << __LINE__ << ")" << std::endl; N_FAIL++; } else { N_SUCCESS++; } }
+size_t N_SUCCESS = 0;
+size_t N_FAIL = 0;
 
-extern size_t N_SUCCESS;
-extern size_t N_FAIL;
+#define newassert(condition) { if(!(condition)){ ERRLOG << " => FAIL: " << #condition << " @ " << __FILE__ << " (" << __LINE__ << ")" << std::endl; N_FAIL++; } else { N_SUCCESS++; } }
 
 void newtest(const std::string& info, void (*testFunc)(void) ) {
 
@@ -33,6 +33,12 @@ void newtest(const std::string& info, void (*testFunc)(void) ) {
   while( std::getline(ERRLOG,errLine) ) {
     std::cerr << errLine << std::endl;
   }
+
+}
+
+void newtestdone() {
+  
+  std::cout << "ALL DONE! " << N_SUCCESS + N_FAIL << " tests run: " << N_SUCCESS << " successes and " << N_FAIL << " failures" << std::endl;
 
 }
 
