@@ -93,9 +93,9 @@ void RootNode::growTree(Treedata* trainData, const size_t targetIdx, const distr
 
   PredictionFunctionType predictionFunctionType;
 
-  if ( trainData->isFeatureNumerical(targetIdx) ) {
+  if ( trainData->feature(targetIdx)->isNumerical() ) {
     predictionFunctionType = Node::MEAN;
-  } else if ( !trainData->isFeatureNumerical(targetIdx) && forestOptions->forestType == forest_t::GBT ) {
+  } else if ( !trainData->feature(targetIdx)->isNumerical() && forestOptions->forestType == forest_t::GBT ) {
     predictionFunctionType = Node::GAMMA;
   } else {
     predictionFunctionType = Node::MODE;

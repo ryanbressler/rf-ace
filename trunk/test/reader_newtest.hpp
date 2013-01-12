@@ -13,13 +13,13 @@ void reader_newtest_readAFM();
 
 void reader_newtest() {
 
-  newtest( "Reading delimited data from AFM file", &reader_newtest_readAFM );
+  newtest( "Testing Reader class with AFM data", &reader_newtest_readAFM );
 
 }
 
 void reader_newtest_readAFM() {
 
-  Reader reader("test/data/3by8_mixed_NA_matrix.afm",'\t',"NA");
+  Reader reader("test/data/3by8_mixed_NA_matrix.afm",'\t');
 
   newassert( reader.nLines() == 4 );
 
@@ -44,9 +44,8 @@ void reader_newtest_readAFM() {
     } else {
       newassert( false );
     }
-    
   }
-
+  
   newassert( nVars == 8 );
   newassert( features.size() == 8 );
 

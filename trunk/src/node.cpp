@@ -308,7 +308,7 @@ void Node::recursiveNodeSplit(Treedata* treeData,
       for ( size_t i = 0; i < forestOptions->mTry; ++i ) {
 	
 	// If the sampled feature is a contrast... 
-	if ( ! treeData->isFeatureTextual(featureSampleIcs[i]) && random->uniform() < forestOptions->contrastFraction ) { // p% sampling rate
+	if ( ! treeData->feature(featureSampleIcs[i])->isTextual() && random->uniform() < forestOptions->contrastFraction ) { // p% sampling rate
 	  
 	  // Contrast features in Treedata are indexed with an offset of the number of features: nFeatures
 	  featureSampleIcs[i] += treeData->nFeatures();
@@ -449,7 +449,9 @@ bool Node::regularSplitterSeek(Treedata* treeData,
     uint32_t newHashIdx = 0;
     num_t newSplitFitness = 0.0;
 
-    if ( treeData->isFeatureNumerical(newSplitFeatureIdx) ) {
+    const Feature* newSplitFeature = treeData->feature(newSplitFeatureIdx);
+
+    if ( newSplitFeature->isNumerical() ) {
 
       newSplitFitness = treeData->numericalFeatureSplit(targetIdx,
 							newSplitFeatureIdx,
@@ -459,7 +461,7 @@ bool Node::regularSplitterSeek(Treedata* treeData,
 							newSampleIcs_missing,
 							newSplitValue);
 
-    } else if ( treeData->isFeatureCategorical(newSplitFeatureIdx) ) {
+    } else if ( newSplitFeature->isCategorical() ) {
 
       newSplitFitness = treeData->categoricalFeatureSplit(targetIdx,
 							  newSplitFeatureIdx,
@@ -469,13 +471,13 @@ bool Node::regularSplitterSeek(Treedata* treeData,
 							  newSampleIcs_missing,
 							  newSplitValues_left,
 							  newSplitValues_right);
-    } else if ( treeData->isFeatureTextual(newSplitFeatureIdx) && newSampleIcs_right.size() > 0 ) {
+    } else if ( newSplitFeature->isTextual() && newSampleIcs_right.size() > 0 ) {
 
       // Choose random sample
       size_t sampleIdx = newSampleIcs_right[ random->integer() % newSampleIcs_right.size() ];
 
       // Choose random hash from the randomly selected sample
-      newHashIdx = treeData->getHash(newSplitFeatureIdx,sampleIdx,random->integer());
+      newHashIdx = newSplitFeature->getHash(sampleIdx,random->integer());
 
       newSplitFitness = treeData->textualFeatureSplit(targetIdx,
 						      newSplitFeatureIdx,

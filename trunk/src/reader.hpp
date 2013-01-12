@@ -12,7 +12,7 @@
 class Reader {
 public:
 
-  Reader(const std::string& fileName, const char delimiter = '\t', const std::string& naStr = "NA");
+  Reader(const std::string& fileName, const char delimiter = '\t');
   ~Reader();
   
   template<typename T> inline friend Reader& operator>>(Reader& reader, T& val) {
@@ -50,7 +50,6 @@ private:
   std::ifstream inStream_;
 
   char delimiter_;
-  std::string naStr_;
 
   size_t nLines_;
 
@@ -63,7 +62,7 @@ template<> inline Reader& operator>>(Reader& reader, datadefs::num_t& val) {
   std::string field;
   std::getline(reader.lineFeed_,field,reader.delimiter_);
   field = utils::chomp(field);
-  if ( field == reader.naStr_ ) {
+  if ( datadefs::isNAN_STR(field) ) {
     val = datadefs::NUM_NAN;
   } else {
     std::stringstream ss( utils::chomp(field) );
