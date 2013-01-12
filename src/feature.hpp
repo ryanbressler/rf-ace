@@ -47,7 +47,9 @@ public:
 
   num_t entropy() const;
 
+#ifndef TEST__
 private:
+#endif
 
   Type type_;
   string name_;

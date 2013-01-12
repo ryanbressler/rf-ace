@@ -136,7 +136,7 @@ int main(const int argc, char* const argv[]) {
     num_t ibOobError = 0;// trainedModel->getError();
     
     cout << "RF training error measures (NULL == no model):" << endl;
-    if ( trainData.isFeatureNumerical(targetIdx) ) {
+    if ( trainData.feature(targetIdx)->isNumerical() ) {
       num_t nullError = math::var(data);
       cout << "              NULL std = " << sqrt( nullError ) << endl;
       cout << "               OOB std = " << sqrt( oobError ) << endl;

@@ -26,11 +26,11 @@ public:
   Treedata(const vector<Feature>& features, bool useContrasts = false, const vector<string>& sampleHeaders = vector<string>(0));
 
   // Initializes the object and reads in a data matrix
-  // NOTE: will permute the contrasts, which is why it needs the RNG
   Treedata(string fileName, const char dataDelimiter, const char headerDelimiter, const bool useContrasts = false);
 
   ~Treedata();
 
+  // Reveals the Feature class interface to the user
   const Feature* feature(const size_t featureIdx) const {
     return( &features_[featureIdx] );
   }
@@ -58,20 +58,15 @@ public:
   size_t nRealSamples(const size_t featureIdx);
   size_t nRealSamples(const size_t featureIdx1, const size_t featureIdx2);
   
-  // Returns the number of categories of the feature with the highest cardinality
-  size_t nMaxCategories();
-
   vector<num_t> getFeatureData(const size_t featureIdx);
   num_t getFeatureData(const size_t featureIdx, const size_t sampleIdx);
   vector<num_t> getFeatureData(const size_t featureIdx, const vector<size_t>& sampleIcs);
-
-  uint32_t getHash(const size_t featureIdx, const size_t sampleIdx, const size_t integer) const;
 
   vector<num_t> getFeatureWeights() const;
 
   void separateMissingSamples(const size_t featureIdx,
 			      vector<size_t>& sampleIcs,
-			      vector<size_t>& misingIcs);
+			      vector<size_t>& missingIcs);
 
   num_t numericalFeatureSplit(const size_t targetIdx,
 			      const size_t featureIdx,
@@ -114,10 +109,6 @@ public:
   void createContrasts();
   void permuteContrasts(distributions::Random* random);
 
-  bool isFeatureNumerical(const size_t featureIdx) const;
-  bool isFeatureCategorical(const size_t featureIdx) const;
-  bool isFeatureTextual(const size_t featureIdx) const;
-
   void replaceFeatureData(const size_t featureIdx, const vector<num_t>& featureData);
   void replaceFeatureData(const size_t featureIdx, const vector<string>& rawFeatureData);
 
@@ -126,30 +117,20 @@ public:
 private:
 #endif
   
-  enum FileType {UNKNOWN, AFM, ARFF};
+  enum FileType {UNKNOWN, AFM, TAFM, ARFF};
 
-  void readFileType(string& fileName, FileType& fileType);
+  FileType getFileType(const string& fileName);
 
-  void readAFM(ifstream& featurestream, 
-	       vector<vector<string> >& rawMatrix, 
-	       vector<string>& featureHeaders, 
-	       vector<string>& sampleHeaders, 
-	       vector<Feature::Type>& featureTypes,
-	       const char dataDelimiter,
-	       const char headerDelimiter);
-  
-  void readARFF(ifstream& featurestream, 
-		vector<vector<string> >& rawMatrix, 
-		vector<string>& featureHeaders, 
-		vector<Feature::Type>& featureTypes);
+  void readAFM(const string& fileName, const char dataDelimiter, const char headerDelimiter);
+  void readTAFM(const string& fileName, const char dataDelimiter, const char headerDelimiter);
+  void readARFF(const string& fileName);
 
   void parseARFFattribute(const string& str, string& attributeName, bool& isFeatureNumerical);
 
-  bool isValidNumericalHeader(const string& str, const char headerDelimiter);
-  bool isValidCategoricalHeader(const string& str, const char headerDelimiter);
-  bool isValidTextHeader(const string& str, const char headerDelimiter);
-  bool isValidFeatureHeader(const string& str, const char headerDelimiter);
-
+  //bool isValidNumericalHeader(const string& str, const char headerDelimiter);
+  //bool isValidCategoricalHeader(const string& str, const char headerDelimiter);
+  //bool isValidTextHeader(const string& str, const char headerDelimiter);
+  //bool isValidFeatureHeader(const string& str, const char headerDelimiter);
 
   template <typename T> void transpose(vector<vector<T> >& mat);
 

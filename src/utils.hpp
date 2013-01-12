@@ -22,6 +22,8 @@ namespace utils {
 
   string tolower(const string& str);
 
+  string suffix(const string& str);
+
   // Removes missing values from the provided data vector
   vector<num_t> removeNANs(vector<num_t> x);
     

@@ -18,6 +18,10 @@ string utils::tolower(const string& str) {
   return(strcopy);
 }
 
+string utils::suffix(const string& fileName) {
+  return( fileName.substr(fileName.find_last_of(".") + 1) );
+}
+
 // Returns a copy of input vector x with NAN-entries removed
 // NOTE: is just a wrapper of the algorithm "remove_if"
 vector<num_t> utils::removeNANs(vector<num_t> x) {

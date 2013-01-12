@@ -1,6 +1,8 @@
 #ifndef NEWTEST_HPP
 #define NEWTEST_HPP
 
+#define TEST__
+
 #include <cstdlib>
 #include <iostream>
 #include <sstream>
@@ -33,6 +35,8 @@ void newtest(const std::string& info, void (*testFunc)(void) ) {
   while( std::getline(ERRLOG,errLine) ) {
     std::cerr << errLine << std::endl;
   }
+
+  ERRLOG.clear();
 
 }
 

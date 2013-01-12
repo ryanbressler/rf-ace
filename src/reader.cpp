@@ -3,9 +3,8 @@
 
 using namespace std;
 
-Reader::Reader(const string& fileName, const char delimiter, const string& naStr): 
-  delimiter_(delimiter),
-  naStr_(naStr) {
+Reader::Reader(const string& fileName, const char delimiter): 
+  delimiter_(delimiter) {
 
   this->init(fileName);
 
@@ -23,6 +22,11 @@ void Reader::init(const string& fileName) {
 
   inStream_.open(fileName.c_str());
 
+  if ( !inStream_.good() ) {
+    cerr << "ERROR: failed to open file '" << fileName << "' for reading. Make sure the file exists. Quitting..." << endl;
+    exit(1);
+  }
+  
   this->setLineFeed("");
 
   nLines_ = 0;

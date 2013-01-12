@@ -245,8 +245,8 @@ public:
       
       // Calculate mean importace score from the sample
       filterOutput.importances[featureIdx] = math::mean(featureImportanceSample);
-      filterOutput.correlations[featureIdx] = filterData->isFeatureNumerical(featureIdx) ? filterData->pearsonCorrelation(targetIdx,featureIdx) : datadefs::NUM_NAN;
-      filterOutput.sampleCounts[featureIdx] = filterData->isFeatureNumerical(featureIdx) ? filterData->nRealSamples(targetIdx,featureIdx) : filterData->nRealSamples(targetIdx);
+      filterOutput.correlations[featureIdx] = filterData->pearsonCorrelation(targetIdx,featureIdx);
+      filterOutput.sampleCounts[featureIdx] = filterData->nRealSamples(targetIdx,featureIdx);
       filterOutput.featureNames[featureIdx] = filterData->feature(featureIdx)->name();
     }
     

@@ -10,12 +10,9 @@
 
 #include "math.hpp"
 #include "utils.hpp"
+#include "reader.hpp"
 
 using namespace std;
-
-uint32_t Treedata::getHash(const size_t featureIdx, const size_t sampleIdx, const size_t integer) const {
-  return( features_[featureIdx].getHash(sampleIdx,integer) );
-}
 
 Treedata::Treedata(const vector<Feature>& features, const bool useContrasts, const vector<string>& sampleHeaders):
   useContrasts_(useContrasts),
@@ -62,121 +59,21 @@ Treedata::Treedata(const vector<Feature>& features, const bool useContrasts, con
 Treedata::Treedata(string fileName, const char dataDelimiter, const char headerDelimiter, const bool useContrasts):
   useContrasts_(useContrasts) {
 
-  //Initialize stream to read from file
-  ifstream featurestream;
-  featurestream.open(fileName.c_str());
-  if ( !featurestream.good() ) {
-    cerr << "Failed to open file '" << fileName << "' for reading. Make sure the file exists. Quitting..." << endl;
+  FileType fileType = this->getFileType(fileName);
+
+  if ( fileType == AFM ) {
+    this->readAFM(fileName,dataDelimiter,headerDelimiter);
+  } else if ( fileType == TAFM ) {
+    this->readTAFM(fileName,dataDelimiter,headerDelimiter);
+  } else if ( fileType == ARFF ) {
+    this->readARFF(fileName);
+  } else {
+    cerr << "ERROR: unknown file type in '" << fileName << "'" << endl;
     exit(1);
   }
 
-  // Interprets file type from the content of the file
-  FileType fileType = UNKNOWN;
-  Treedata::readFileType(fileName,fileType);
-
-  // Reads raw data matrix from the input file
-  // NOTE: should be optimized to scale for large data sets
-  vector<vector<string> > rawMatrix;
-  vector<string> featureHeaders;
-  vector<Feature::Type> featureTypes;
-  if(fileType == AFM) {
-    
-    // Reads from the AFM stream and inserts 
-    // data to the following arguments
-    Treedata::readAFM(featurestream,
-		      rawMatrix,
-		      featureHeaders,
-		      sampleHeaders_,
-		      featureTypes,
-		      dataDelimiter,
-		      headerDelimiter);
-    
-  } else if(fileType == ARFF) {
-    
-    // Reads from the ARFF stream and inserts 
-    // data to the following arguments
-    Treedata::readARFF(featurestream,
-		       rawMatrix,
-		       featureHeaders,
-		       featureTypes);
-
-    // ARFF doesn't contain sample headers 
-    sampleHeaders_.clear();
-    sampleHeaders_.resize(rawMatrix[0].size(),"NO_SAMPLE_ID");
-    
-  } else {
-    
-    // By default, reads from the AFM stream and inserts
-    // data to the following arguments
-    Treedata::readAFM(featurestream,
-		      rawMatrix,
-		      featureHeaders,
-		      sampleHeaders_,
-		      featureTypes,
-		      dataDelimiter,
-		      headerDelimiter);
-    
-  }      
-
-  // Extract the number of features 
-  size_t nFeatures = featureHeaders.size();
-
-  features_.resize(nFeatures);
-
-  // If we have contrasts, there would be 2*nFeatures, in which case
-  // 4*nFeatures results in a reasonable max load factor of 0.5
-  name2idx_.rehash(4*nFeatures);
-
-  // Start reading data to the final container "features_"
-  for(size_t i = 0; i < nFeatures; ++i) {
-    
-    // We require that no two features have identical header
-    if( name2idx_.find(featureHeaders[i]) != name2idx_.end() ) {
-      cerr << "Duplicate feature header '" << featureHeaders[i] << "' found!" << endl;
-      exit(1);
-    }
-
-    // Map the i'th feature header to integer i
-    // NOTE: could be replaced with a hash table
-    name2idx_[featureHeaders[i]] = i;
-
-    if ( featureTypes[i] == Feature::Type::NUM ) {
-
-      vector<num_t> data;
-
-      // If type is numerical, read the raw data as numbers
-      utils::strv2numv(rawMatrix[i],data);
-
-      features_[i] = Feature(data,featureHeaders[i]);
-
-    } else if ( featureTypes[i] == Feature::Type::CAT ) {
-
-      features_[i] = Feature(rawMatrix[i],featureHeaders[i]);
-
-    } else if ( featureTypes[i] == Feature::Type::TXT ) {
-
-      bool doHash = true;
-      features_[i] = Feature(rawMatrix[i],featureHeaders[i],doHash);
-
-      /*
-	for ( size_t j = 0; j < features_[i].hashSet.size(); ++j ) {
-	
-	utils::write(cout,rawMatrix[i].begin(),rawMatrix[i].end());
-	cout << " ==> " << flush;
-	utils::write(cout,features_[i].hashSet[j].begin(),features_[i].hashSet[j].end());
-	cout << endl;
-	}
-      */
-
-    } else {
-      cerr << "ERROR: unknown feature type for feature with header '" << featureHeaders[i] << "'" << endl;
-      exit(1);
-    }
-
-  } 
- 
   if ( useContrasts_ ) {
-    this->createContrasts(); // Doubles matrix size
+    this->createContrasts();
   }
   
 }
@@ -195,227 +92,160 @@ void Treedata::createContrasts() {
   // Generate contrast features
   for(size_t i = nFeatures; i < 2*nFeatures; ++i) {
     features_[i] = features_[ i - nFeatures ];
-    //string newName = features_[i].name();
-    //newName.append("_CONTRAST");
     features_[i].setName( features_[i].name().append("_CONTRAST") );
     name2idx_[ features_[i].name() ] = i;
   }
 
 }
 
-void Treedata::readFileType(string& fileName, FileType& fileType) {
-
-  stringstream ss(fileName);
-  string suffix = "";
-  while(getline(ss,suffix,'.')) {}
-  //datadefs::toupper(suffix);
-
-  if(suffix == "AFM" || suffix == "afm") {
+Treedata::FileType Treedata::getFileType(const string& fileName) {
+  
+  FileType fileType;
+  
+  string suffix = utils::tolower( utils::suffix(fileName) );
+  
+  if ( suffix == "afm" ) {
     fileType = AFM;
-  } else if(suffix == "ARFF" || suffix == "arff") {
+  } else if ( suffix == "tafm" ) {
+    fileType = TAFM;
+  } else if ( suffix == "arff" ) {
     fileType = ARFF;
   } else {
-    fileType = UNKNOWN;
+    fileType = AFM;
   }
 
+  return(fileType);
 }
 
-void Treedata::readAFM(ifstream& featurestream, 
-		       vector<vector<string> >& rawMatrix, 
-		       vector<string>& featureHeaders, 
-		       vector<string>& sampleHeaders,
-		       vector<Feature::Type>& featureTypes,
-		       const char dataDelimiter,
-		       const char headerDelimiter) {
+void Treedata::readAFM(const string& fileName, const char dataDelimiter, const char headerDelimiter) {
 
-  string field;
-  string row;
+  Reader reader(fileName,dataDelimiter);
 
-  assert( headerDelimiter != ' ' );
+  size_t nSamples = reader.nLines() - 1;
 
-  rawMatrix.clear();
-  featureHeaders.clear();
-  sampleHeaders.clear();
-  featureTypes.clear();
+  // Load first line into linefeed and skip the first field (top-left corner) being empty
+  reader.nextLine().skipField();
 
-  //Remove upper left element from the matrix as useless
-  getline(featurestream,field,dataDelimiter);
+  string numPrefix = string("N") + headerDelimiter;
+  string catPrefix = string("C") + headerDelimiter;
+  string txtPrefix = string("T") + headerDelimiter;
 
-  //Next read the first row, which should contain the column headers
-  getline(featurestream,row);
-  stringstream ss( utils::chomp(row) );
-  bool isFeaturesAsRows = true;
-  vector<string> columnHeaders;
-  while ( getline(ss,field,dataDelimiter) ) {
-
-    // If at least one of the column headers is a valid feature header, we assume features are stored as columns
-    if ( isFeaturesAsRows && isValidFeatureHeader(field,headerDelimiter) ) {
-      isFeaturesAsRows = false;
-    }
-    columnHeaders.push_back(field);
-  }
-
-  // We should have reached the end of file. NOTE: failbit is set since the last element read did not end at '\t'
-  assert( ss.eof() );
-  //assert( !ss.fail() );
-
-  size_t nColumns = columnHeaders.size();
-
-  vector<string> rowHeaders;
-  //vector<string> sampleHeaders; // THIS WILL BE DEFINED AS ONE OF THE INPUT ARGUMENTS
-
-  //Go through the rest of the rows
-  size_t iter = 0;
-  while ( getline(featurestream,row) ) {
-
-    row = utils::chomp(row);
-
-    //Read row from the stream
-    ss.clear();
-    ss.str("");
-
-    //Read the string back to a stream
-    ss << row;
-
-    //Read the next row header from the stream
-    getline(ss,field,dataDelimiter);
-    rowHeaders.push_back(field);
-
-    vector<string> rawVector(nColumns);
-    for(size_t i = 0; i < nColumns; ++i) {
-      getline(ss,rawVector[i],dataDelimiter);
-      rawVector[i] = utils::trim(rawVector[i]);
-    }
-    if ( ss.fail() || !ss.eof()) {
-      cerr << "ERROR: incorrectly formatted line " << iter << ". Make sure the line contains expected number of fields (" << nColumns << ")" << endl;
-      exit(1);
-    }
-    rawMatrix.push_back(rawVector);
-    ++iter;
-  }
-
-  //If the data is row-formatted...
-  if(isFeaturesAsRows) {
-    //cout << "AFM orientation: features as rows" << endl;
-
-    //... and feature headers are row headers
-    featureHeaders = rowHeaders;
-    sampleHeaders = columnHeaders;
-
-  } else {
-
-    //cout << "AFM orientation: features as columns" << endl;
-      
-    Treedata::transpose<string>(rawMatrix);
-      
-    //... and feature headers are row headers
-    featureHeaders = columnHeaders;
-    sampleHeaders = rowHeaders;
-      
-  }
-
-  size_t nFeatures = featureHeaders.size();
-  featureTypes.resize(nFeatures);
-  for(size_t i = 0; i < nFeatures; ++i) {
-    if(Treedata::isValidNumericalHeader(featureHeaders[i],headerDelimiter)) {
-      featureTypes[i] = Feature::Type::NUM;
-    } else if ( this->isValidCategoricalHeader(featureHeaders[i],headerDelimiter) ) {
-      featureTypes[i] = Feature::Type::CAT;
-    } else if ( this->isValidTextHeader(featureHeaders[i],headerDelimiter) ) {
-      featureTypes[i] = Feature::Type::TXT;
+  // Prepare feature containers and name2idx mapping
+  features_.resize(0);
+  name2idx_.clear();
+  for ( size_t i = 0; ! reader.endOfLine(); ++i ) {
+    string featureName; reader >> featureName;
+    if ( featureName.substr(0,2) == numPrefix ) {
+      features_.push_back( Feature(Feature::Type::NUM,featureName,nSamples) );
+    } else if ( featureName.substr(0,2) == catPrefix ) {
+      features_.push_back( Feature(Feature::Type::CAT,featureName,nSamples) );
+    } else if ( featureName.substr(0,2) == txtPrefix ) {
+      features_.push_back( Feature(Feature::Type::TXT,featureName,nSamples) );
     } else {
-      cerr << "ERROR: unknown feature type with feature header '" << featureHeaders[i] << "'" << endl;
+      cerr << "ERROR reading AFM: unknown feature type for '" << featureName << "'. Are you sure you didn't mean TAFM (Transposed AFM)?" << endl;
+      exit(1);
+    }
+    if ( name2idx_.find(featureName) == name2idx_.end() ) {
+      name2idx_[featureName] = i;
+    } else {
+      cerr << "ERROR reading AFM: duplicate feature name found" << endl;
       exit(1);
     }
   }
+
+  assert( reader.endOfLine() );
+
+  size_t nFeatures = features_.size();
+
+  // Read sample names and data
+  sampleHeaders_.resize(nSamples);
+  for ( size_t i = 0; i < nSamples; ++i ) {
+    reader.nextLine();
+    reader >> sampleHeaders_[i];
+    for ( size_t j = 0; j < nFeatures; ++j ) {
+      if ( features_[j].isNumerical() ) {
+        num_t val; reader >> val;
+        features_[j].setNumSampleValue(i,val);
+      } else if ( features_[j].isCategorical() ) {
+        string str; reader >> str;
+        features_[j].setCatSampleValue(i,str);
+      } else if ( features_[j].isTextual() ) {
+        string str; reader >> str;
+        features_[j].setTxtSampleValue(i,str);
+      }
+    }
+    assert( reader.endOfLine() );
+  }
+
 }
 
-void Treedata::readARFF(ifstream& featurestream, vector<vector<string> >& rawMatrix, vector<string>& featureHeaders, vector<Feature::Type>& featureTypes) {
+void Treedata::readTAFM(const string& fileName, const char dataDelimiter, const char headerDelimiter) {
 
-  string row;
+  Reader reader(fileName,dataDelimiter);
 
-  bool hasRelation = false;
-  bool hasData = false;
+  size_t nFeatures = reader.nLines() - 1;
 
-  size_t nFeatures = 0;
-  //TODO: add Treedata::clearData(...)
-  rawMatrix.clear();
-  featureHeaders.clear();
-  featureTypes.clear();
-  
-  //Read one line from the ARFF file
-  while ( getline(featurestream,row) ) {
+  // Load first line into linefeed and skip the first field (top-left corner) being empty 
+  reader.nextLine().skipField();
 
-    row = utils::chomp(row);
+  sampleHeaders_.clear();
+  while ( ! reader.endOfLine() ) {
+    string sampleName; reader >> sampleName;
+    sampleHeaders_.push_back( sampleName );
+  }
 
-    //Comment lines and empty lines are omitted
-    if(row[0] == '%' || row == "") {
-      continue;
-    }
-    
-    string rowU = datadefs::toUpperCase(row);
-    
-    //Read relation
-    if(!hasRelation && rowU.compare(0,9,"@RELATION") == 0) {
-      hasRelation = true;
-      //cout << "found relation header: " << row << endl;
-    } else if ( rowU.compare(0,10,"@ATTRIBUTE") == 0) {    //Read attribute
-      string attributeName = "";
-      bool isNumerical;
-      ++nFeatures;
-      //cout << "found attribute header: " << row << endl;
-      Treedata::parseARFFattribute(row,attributeName,isNumerical);
-      featureHeaders.push_back(attributeName);
-      if ( isNumerical ) {
-	featureTypes.push_back(Feature::Type::NUM);
-      } else {
-	featureTypes.push_back(Feature::Type::CAT);
+  assert( reader.endOfLine() );
+
+  size_t nSamples = sampleHeaders_.size();
+
+  string numPrefix = string("N") + headerDelimiter;
+  string catPrefix = string("C") + headerDelimiter;
+  string txtPrefix = string("T") + headerDelimiter;
+
+  name2idx_.clear();
+  for ( size_t i = 0; ! reader.endOfFile(); ++i ) {
+    reader.nextLine();
+    string featureName; reader >> featureName;
+    if ( featureName.substr(0,2) == numPrefix ) {
+      features_.push_back( Feature(Feature::Type::NUM,featureName,nSamples) );
+      for ( size_t j = 0; j < nSamples; ++j ) {
+	num_t val; reader >> val;
+	features_[i].setNumSampleValue(j,val);
       }
-      
-    } else if(!hasData && rowU.compare(0,5,"@DATA") == 0) {    //Read data header
-      
-      hasData = true;
-      break;
-      //cout << "found data header:" << row << endl;
-    } else {      //If none of the earlier branches matched, we have a problem
-      cerr << "incorrectly formatted ARFF row '" << row << "'" << endl;
-      assert(false);
-    }
-    
-  }
-
-  if ( !hasData ) {
-    cerr << "Treedata::readARFF() -- could not find @data/@DATA identifier" << endl;
-    exit(1);
-  }
-
-  if ( !hasRelation ) {
-    cerr << "Treedata::readARFF() -- could not find @relation/@RELATION identifier" << endl;
-    exit(1);
-  }
-    
-  //Read data row-by-row
-  while ( getline(featurestream,row) ) {
-    
-    row = utils::chomp(row);
-
-    //Comment lines and empty lines are omitted
-    if ( row == "" ) {
-      continue;
-    }
-    
-    // One sample is stored as row in the matrix
-    rawMatrix.push_back( utils::split(row,',') );
-    
-    if ( rawMatrix.back().size() != nFeatures ) {
-      cerr << "Treedata::readARFF() -- sample contains incorrect number of features" << endl;
+    } else if ( featureName.substr(0,2) == catPrefix ) {
+      features_.push_back( Feature(Feature::Type::CAT,featureName,nSamples) );
+      for ( size_t j = 0; j < nSamples; ++j ) {
+        string str; reader >> str;
+        features_[i].setCatSampleValue(j,str);
+      }
+    } else if ( featureName.substr(0,2) == txtPrefix ) {
+      features_.push_back( Feature(Feature::Type::TXT,featureName,nSamples) );
+      for ( size_t j = 0; j < nSamples; ++j ) {
+        string str; reader >> str;
+        features_[i].setTxtSampleValue(j,str);
+      }
+    } else {
+      cerr << "ERROR reading TAFM: unknown feature type for '" << featureName << "'. Are you sure you didn't mean AFM?" << endl;
       exit(1);
     }
-    
+    if ( name2idx_.find(featureName) == name2idx_.end() ) {
+      name2idx_[featureName] = i;
+    } else {
+      cerr << "ERROR reading TAFM: duplicate feature name found" << endl;
+      exit(1);
+    }
   }
   
-  this->transpose<string>(rawMatrix);
-  
+  assert( nFeatures == features_.size() );
+
+}
+
+void Treedata::readARFF(const string& fileName) {
+
+  Reader reader(fileName,',');
+
+  cerr << "ERROR: ARFF implementation is missing!" << endl;
+  exit(1);
 }
 
 void Treedata::parseARFFattribute(const string& str, string& attributeName, bool& isFeatureNumerical) {
@@ -440,34 +270,6 @@ void Treedata::parseARFFattribute(const string& str, string& attributeName, bool
   //attributeName = prefix;
 }
 
-bool Treedata::isValidNumericalHeader(const string& str, const char headerDelimiter) {
-  if ( str.size() > 1 ) {
-    return( str[0] == 'N' && str[1] == headerDelimiter );
-  } else {
-    return( false );
-  }
-}
-
-bool Treedata::isValidCategoricalHeader(const string& str, const char headerDelimiter) {
-  if ( str.size() > 1 ) {
-    return( ( str[0] == 'C' || str[0] == 'B' ) && str[1] == headerDelimiter );
-  } else {
-    return(false);
-  }
-}
-
-bool Treedata::isValidTextHeader(const string& str, const char headerDelimiter) {
-  if ( str.size() > 1 ) {
-    return( str[0] == 'T' && str[1] == headerDelimiter );
-  } else {
-    return(false);
-  }
-}
-
-bool Treedata::isValidFeatureHeader(const string& str, const char headerDelimiter) {
-  return( isValidNumericalHeader(str,headerDelimiter) || isValidCategoricalHeader(str,headerDelimiter) || isValidTextHeader(str,headerDelimiter) );
-}
-
 size_t Treedata::nFeatures() const {
   return( useContrasts_ ? features_.size() / 2 : features_.size() );
 }
@@ -479,6 +281,10 @@ size_t Treedata::nSamples() const {
 // WILL BECOME DEPRECATED
 num_t Treedata::pearsonCorrelation(size_t featureIdx1, size_t featureIdx2) {
   
+  if ( ! this->feature(featureIdx1)->isNumerical() || ! this->feature(featureIdx2)->isNumerical() ) {
+    return( datadefs::NUM_NAN );
+  }
+
   vector<size_t> sampleIcs = utils::range( this->nSamples() );
 
   vector<size_t> missingIcs;
@@ -533,7 +339,7 @@ void Treedata::permuteContrasts(distributions::Random* random) {
 
   for ( size_t i = nFeatures; i < 2*nFeatures; ++i ) {
     
-    if ( this->isFeatureTextual(i) ) { continue; }
+    if ( this->feature(i)->isTextual() ) { continue; }
 
     vector<size_t> sampleIcs = utils::range( nSamples );
     vector<size_t> missingIcs;
@@ -550,18 +356,6 @@ void Treedata::permuteContrasts(distributions::Random* random) {
 
   }
 
-}
-
-bool Treedata::isFeatureNumerical(const size_t featureIdx) const {
-  return( features_[featureIdx].isNumerical() );
-}
-
-bool Treedata::isFeatureCategorical(const size_t featureIdx) const {
-  return( features_[featureIdx].isCategorical() );
-}
-
-bool Treedata::isFeatureTextual(const size_t featureIdx) const {
-  return( features_[featureIdx].isTextual() );
 }
 
 size_t Treedata::nRealSamples(const size_t featureIdx) { 
@@ -581,20 +375,6 @@ size_t Treedata::nRealSamples(const size_t featureIdx1, const size_t featureIdx2
     }
   }
   return( nRealSamples );
-}
-
-size_t Treedata::nMaxCategories() {
-
-  size_t maxCat = 0;
-  for ( size_t i = 0; i < Treedata::nFeatures(); ++i ) {
-    size_t newMaxCat = this->feature(i)->nCategories();
-    if ( maxCat < newMaxCat ) {
-      maxCat = newMaxCat;
-    }
-  }
-  
-  return( maxCat ); 
-
 }
 
 template <typename T> void Treedata::transpose(vector<vector<T> >& mat) {
@@ -715,9 +495,9 @@ void Treedata::separateMissingSamples(const size_t featureIdx,
 
   vector<size_t>::const_iterator it(sampleIcs.begin());
 
-  if ( this->isFeatureTextual(featureIdx) ) {
+  if ( this->feature(featureIdx)->isTextual() ) {
     for ( ; it != sampleIcs.end(); ++it ) {
-      if ( features_[featureIdx].hashSet[*it].size() > 0 ) {
+      if ( this->feature(featureIdx)->hashSet[*it].size() > 0 ) {
 	sampleIcs[nReal++] = *it;
       } else {
 	missingIcs[nMissing++] = *it;
@@ -725,7 +505,7 @@ void Treedata::separateMissingSamples(const size_t featureIdx,
     } 
   } else {
     for ( ; it != sampleIcs.end(); ++it ) {
-      if ( ! datadefs::isNAN( features_[featureIdx].data[*it] ) ) {
+      if ( ! datadefs::isNAN( this->feature(featureIdx)->data[*it] ) ) {
 	sampleIcs[nReal++] = *it;
       } else {
 	missingIcs[nMissing++] = *it;
@@ -774,7 +554,7 @@ num_t Treedata::numericalFeatureSplit(const size_t targetIdx,
   size_t bestSplitIdx = datadefs::MAX_IDX;
 
   //If the target is numerical, we use the incremental squared error formula
-  if ( this->isFeatureNumerical(targetIdx) ) {
+  if ( this->feature(targetIdx)->isNumerical() ) {
 
     DI_best = utils::numericalFeatureSplitsNumericalTarget(tv,fv,minSamples,bestSplitIdx);
 
@@ -837,7 +617,7 @@ num_t Treedata::categoricalFeatureSplit(const size_t targetIdx,
   map<num_t,vector<size_t> > fmap_right;
   map<num_t,vector<size_t> > fmap_left;
 
-  if ( this->isFeatureNumerical(targetIdx) ) {
+  if ( this->feature(targetIdx)->isNumerical() ) {
 
     DI_best = utils::categoricalFeatureSplitsNumericalTarget(tv,fv,minSamples,fmap_left,fmap_right);
 
@@ -909,7 +689,7 @@ num_t Treedata::textualFeatureSplit(const size_t targetIdx,
 
   num_t DI_best = 0.0;
 
-  if ( this->isFeatureNumerical(targetIdx) ) {
+  if ( this->feature(targetIdx)->isNumerical() ) {
   
     num_t mu_left = 0.0;
     num_t mu_right = 0.0;
