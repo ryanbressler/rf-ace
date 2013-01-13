@@ -8,6 +8,7 @@
 #include <ios>
 
 #include "utils.hpp"
+#include "datadefs.hpp"
 
 class Reader {
 public:
