@@ -10,7 +10,6 @@
 
 #include "math.hpp"
 #include "utils.hpp"
-#include "reader.hpp"
 
 using namespace std;
 
@@ -63,8 +62,6 @@ Treedata::Treedata(string fileName, const char dataDelimiter, const char headerD
 
   if ( fileType == AFM ) {
     this->readAFM(fileName,dataDelimiter,headerDelimiter);
-  } else if ( fileType == TAFM ) {
-    this->readTAFM(fileName,dataDelimiter,headerDelimiter);
   } else if ( fileType == ARFF ) {
     this->readARFF(fileName);
   } else {
@@ -106,8 +103,6 @@ Treedata::FileType Treedata::getFileType(const string& fileName) {
   
   if ( suffix == "afm" ) {
     fileType = AFM;
-  } else if ( suffix == "tafm" ) {
-    fileType = TAFM;
   } else if ( suffix == "arff" ) {
     fileType = ARFF;
   } else {
@@ -117,126 +112,182 @@ Treedata::FileType Treedata::getFileType(const string& fileName) {
   return(fileType);
 }
 
+bool Treedata::isValidNumericalHeader(const string& str, const char headerDelimiter) {
+  if ( str.size() > 1 ) {
+    return( str[0] == 'N' && str[1] == headerDelimiter );
+  } else {
+    return( false );
+  }
+}
+
+bool Treedata::isValidCategoricalHeader(const string& str, const char headerDelimiter) {
+  if ( str.size() > 1 ) {
+    return( ( str[0] == 'C' || str[0] == 'B' ) && str[1] == headerDelimiter );
+  } else {
+    return(false);
+  }
+}
+
+bool Treedata::isValidTextHeader(const string& str, const char headerDelimiter) {
+  if ( str.size() > 1 ) {
+    return( str[0] == 'T' && str[1] == headerDelimiter );
+  } else {
+    return(false);
+  }
+}
+
+bool Treedata::isValidFeatureHeader(const string& str, const char headerDelimiter) {
+  return( isValidNumericalHeader(str,headerDelimiter) || isValidCategoricalHeader(str,headerDelimiter) || isValidTextHeader(str,headerDelimiter) );
+}
+
+bool Treedata::isRowsAsSamplesInAFM(Reader& reader, const char headerDelimiter) {
+
+  reader.rewind();
+  reader.nextLine();
+  reader.skipField();
+
+  bool foundSomeFeatures = false;
+  bool foundSomeSamples = false;
+
+  while ( !reader.endOfLine() ) {
+    string str;
+    reader >> str;
+    if ( this->isValidFeatureHeader(str,headerDelimiter) ) {
+      foundSomeFeatures = true;
+    } else {
+      foundSomeSamples = true;
+    }
+  }
+
+  reader.rewind();
+
+  if ( foundSomeFeatures && foundSomeSamples ) {
+    cerr << "ERROR: First for of AFM contains both features and sample names!" << endl;
+    exit(1);
+  }
+
+  return( foundSomeFeatures ? true : false );
+  
+}
+
 void Treedata::readAFM(const string& fileName, const char dataDelimiter, const char headerDelimiter) {
 
   Reader reader(fileName,dataDelimiter);
 
-  size_t nSamples = reader.nLines() - 1;
-
-  // Load first line into linefeed and skip the first field (top-left corner) being empty
-  reader.nextLine().skipField();
-
   string numPrefix = string("N") + headerDelimiter;
   string catPrefix = string("C") + headerDelimiter;
   string txtPrefix = string("T") + headerDelimiter;
 
-  // Prepare feature containers and name2idx mapping
-  features_.resize(0);
-  name2idx_.clear();
-  for ( size_t i = 0; ! reader.endOfLine(); ++i ) {
-    string featureName; reader >> featureName;
-    if ( featureName.substr(0,2) == numPrefix ) {
-      features_.push_back( Feature(Feature::Type::NUM,featureName,nSamples) );
-    } else if ( featureName.substr(0,2) == catPrefix ) {
-      features_.push_back( Feature(Feature::Type::CAT,featureName,nSamples) );
-    } else if ( featureName.substr(0,2) == txtPrefix ) {
-      features_.push_back( Feature(Feature::Type::TXT,featureName,nSamples) );
-    } else {
-      cerr << "ERROR reading AFM: unknown feature type for '" << featureName << "'. Are you sure you didn't mean TAFM (Transposed AFM)?" << endl;
-      exit(1);
-    }
-    if ( name2idx_.find(featureName) == name2idx_.end() ) {
-      name2idx_[featureName] = i;
-    } else {
-      cerr << "ERROR reading AFM: duplicate feature name found" << endl;
-      exit(1);
-    }
-  }
-
-  assert( reader.endOfLine() );
-
-  size_t nFeatures = features_.size();
-
-  // Read sample names and data
-  sampleHeaders_.resize(nSamples);
-  for ( size_t i = 0; i < nSamples; ++i ) {
+  if ( this->isRowsAsSamplesInAFM(reader,headerDelimiter) ) { 
+    
+    size_t nSamples = reader.nLines() - 1;
+    
+    // Load first line into linefeed and skip the first field (top-left corner) being empty
     reader.nextLine();
-    reader >> sampleHeaders_[i];
-    for ( size_t j = 0; j < nFeatures; ++j ) {
-      if ( features_[j].isNumerical() ) {
-        num_t val; reader >> val;
-        features_[j].setNumSampleValue(i,val);
-      } else if ( features_[j].isCategorical() ) {
-        string str; reader >> str;
-        features_[j].setCatSampleValue(i,str);
-      } else if ( features_[j].isTextual() ) {
-        string str; reader >> str;
-        features_[j].setTxtSampleValue(i,str);
+    reader.skipField();
+    
+    // Prepare feature containers and name2idx mapping
+    features_.resize(0);
+    name2idx_.clear();
+    for ( size_t i = 0; ! reader.endOfLine(); ++i ) {
+      string featureName; reader >> featureName;
+      if ( featureName.substr(0,2) == numPrefix ) {
+	features_.push_back( Feature(Feature::Type::NUM,featureName,nSamples) );
+      } else if ( featureName.substr(0,2) == catPrefix ) {
+	features_.push_back( Feature(Feature::Type::CAT,featureName,nSamples) );
+      } else if ( featureName.substr(0,2) == txtPrefix ) {
+	features_.push_back( Feature(Feature::Type::TXT,featureName,nSamples) );
+      } else {
+	cerr << "ERROR reading AFM: unknown feature type for '" << featureName << "'. Are you sure you didn't mean TAFM (Transposed AFM)?" << endl;
+	exit(1);
+      }
+      if ( name2idx_.find(featureName) == name2idx_.end() ) {
+	name2idx_[featureName] = i;
+      } else {
+	cerr << "ERROR reading AFM: duplicate feature name found" << endl;
+	exit(1);
       }
     }
+    
     assert( reader.endOfLine() );
-  }
+    
+    size_t nFeatures = features_.size();
+    
+    // Read sample names and data
+    sampleHeaders_.resize(nSamples);
+    for ( size_t i = 0; i < nSamples; ++i ) {
+      reader.nextLine();
+      reader >> sampleHeaders_[i];
+      for ( size_t j = 0; j < nFeatures; ++j ) {
+	if ( features_[j].isNumerical() ) {
+	  num_t val; reader >> val;
+	  features_[j].setNumSampleValue(i,val);
+	} else if ( features_[j].isCategorical() ) {
+	  string str; reader >> str;
+	  features_[j].setCatSampleValue(i,str);
+	} else if ( features_[j].isTextual() ) {
+	  string str; reader >> str;
+	  features_[j].setTxtSampleValue(i,str);
+	}
+      }
+      assert( reader.endOfLine() );
+    }
 
-}
+  } else { 
 
-void Treedata::readTAFM(const string& fileName, const char dataDelimiter, const char headerDelimiter) {
+    size_t nFeatures = reader.nLines() - 1;
 
-  Reader reader(fileName,dataDelimiter);
-
-  size_t nFeatures = reader.nLines() - 1;
-
-  // Load first line into linefeed and skip the first field (top-left corner) being empty 
-  reader.nextLine().skipField();
-
-  sampleHeaders_.clear();
-  while ( ! reader.endOfLine() ) {
-    string sampleName; reader >> sampleName;
-    sampleHeaders_.push_back( sampleName );
-  }
-
-  assert( reader.endOfLine() );
-
-  size_t nSamples = sampleHeaders_.size();
-
-  string numPrefix = string("N") + headerDelimiter;
-  string catPrefix = string("C") + headerDelimiter;
-  string txtPrefix = string("T") + headerDelimiter;
-
-  name2idx_.clear();
-  for ( size_t i = 0; ! reader.endOfFile(); ++i ) {
+    // Load first line into linefeed and skip the first field (top-left corner) being empty
     reader.nextLine();
-    string featureName; reader >> featureName;
-    if ( featureName.substr(0,2) == numPrefix ) {
-      features_.push_back( Feature(Feature::Type::NUM,featureName,nSamples) );
-      for ( size_t j = 0; j < nSamples; ++j ) {
-	num_t val; reader >> val;
-	features_[i].setNumSampleValue(j,val);
-      }
-    } else if ( featureName.substr(0,2) == catPrefix ) {
-      features_.push_back( Feature(Feature::Type::CAT,featureName,nSamples) );
-      for ( size_t j = 0; j < nSamples; ++j ) {
-        string str; reader >> str;
-        features_[i].setCatSampleValue(j,str);
-      }
-    } else if ( featureName.substr(0,2) == txtPrefix ) {
-      features_.push_back( Feature(Feature::Type::TXT,featureName,nSamples) );
-      for ( size_t j = 0; j < nSamples; ++j ) {
-        string str; reader >> str;
-        features_[i].setTxtSampleValue(j,str);
-      }
-    } else {
-      cerr << "ERROR reading TAFM: unknown feature type for '" << featureName << "'. Are you sure you didn't mean AFM?" << endl;
-      exit(1);
+    reader.skipField();
+
+    sampleHeaders_.clear();
+    while ( ! reader.endOfLine() ) {
+      string sampleName; reader >> sampleName;
+      sampleHeaders_.push_back( sampleName );
     }
-    if ( name2idx_.find(featureName) == name2idx_.end() ) {
-      name2idx_[featureName] = i;
-    } else {
-      cerr << "ERROR reading TAFM: duplicate feature name found" << endl;
-      exit(1);
+
+    assert( reader.endOfLine() );
+
+    size_t nSamples = sampleHeaders_.size();
+
+    name2idx_.clear();
+    for ( size_t i = 0; i < nFeatures; ++i ) {
+      reader.nextLine();
+      string featureName; reader >> featureName;
+      if ( featureName.substr(0,2) == numPrefix ) {
+	features_.push_back( Feature(Feature::Type::NUM,featureName,nSamples) );
+	for ( size_t j = 0; j < nSamples; ++j ) {
+	  num_t val; reader >> val;
+	  features_[i].setNumSampleValue(j,val);
+	}
+      } else if ( featureName.substr(0,2) == catPrefix ) {
+	features_.push_back( Feature(Feature::Type::CAT,featureName,nSamples) );
+	for ( size_t j = 0; j < nSamples; ++j ) {
+	  string str; reader >> str;
+	  features_[i].setCatSampleValue(j,str);
+	}
+      } else if ( featureName.substr(0,2) == txtPrefix ) {
+	features_.push_back( Feature(Feature::Type::TXT,featureName,nSamples) );
+	for ( size_t j = 0; j < nSamples; ++j ) {
+	  string str; reader >> str;
+	  features_[i].setTxtSampleValue(j,str);
+	}
+      } else {
+	cerr << "ERROR reading TAFM: unknown feature type for '" << featureName << "'. Are you sure you didn't mean AFM?" << endl;
+	exit(1);
+      }
+      if ( name2idx_.find(featureName) == name2idx_.end() ) {
+	name2idx_[featureName] = i;
+      } else {
+	cerr << "ERROR reading TAFM: duplicate feature name found" << endl;
+	exit(1);
+      }
     }
+
+    assert( nFeatures == features_.size() );
+
   }
-  
-  assert( nFeatures == features_.size() );
 
 }
 
@@ -375,25 +426,6 @@ size_t Treedata::nRealSamples(const size_t featureIdx1, const size_t featureIdx2
     }
   }
   return( nRealSamples );
-}
-
-template <typename T> void Treedata::transpose(vector<vector<T> >& mat) {
-
-  vector<vector<T> > foo = mat;
-
-  size_t ncols = mat.size();
-  size_t nrows = mat[0].size();
-
-  mat.resize(nrows);
-  for(size_t i = 0; i < nrows; ++i) {
-    mat[i].resize(ncols);
-  }
-
-  for(size_t i = 0; i < nrows; ++i) {
-    for(size_t j = 0; j < ncols; ++j) {
-      mat[i][j] = foo[j][i];
-    }
-  }
 }
 
 void Treedata::bootstrapFromRealSamples(distributions::Random* random,

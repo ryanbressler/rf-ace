@@ -39,49 +39,42 @@ void Reader::init(const string& fileName) {
 
 }
 
-bool Reader::endOfStream(const ios& stream) const {
-  return( stream.rdbuf()->in_avail() == 0 );
-}
-
 bool Reader::endOfLine() const {
-  return( this->endOfStream(lineFeed_) );
-  //return( lineFeed_.rdbuf()->in_avail() == 0 );
+  return( lineFeed_.rdbuf()->in_avail() == 0 );
 }
 
-bool Reader::endOfFile() const {
-  return( this->endOfStream(lineFeed_) && this->endOfStream(inStream_) );
-}
-
-Reader& Reader::nextLine() {
+bool Reader::nextLine() {
   
   string line;
-
-  getline(inStream_,line);
-
-  this->setLineFeed(line);
-
-  return(*this);
-
+  
+  if ( getline(inStream_,line) ) {
+    this->setLineFeed(line);
+    return(true);
+  } else {
+    this->setLineFeed(line);
+    return(false);
+  }
+  
 }
 
-Reader& Reader::skipField() {
-
+bool Reader::skipField() {
+  
   string field;
-
-  std::getline(lineFeed_,field,delimiter_);
-
-  return(*this);
-
+  
+  if ( getline(lineFeed_,field,delimiter_) ) {
+    return(true);
+  } else {
+    return(false);
+  }
+  
 }
 
-Reader& Reader::rewind() {
+void Reader::rewind() {
 
   inStream_.clear();
   inStream_.seekg(ios_base::beg);
 
   this->setLineFeed("");
-
-  return(*this);
 
 }
 

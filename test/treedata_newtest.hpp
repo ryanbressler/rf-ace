@@ -29,7 +29,8 @@ void treedata_newtest_readAFM() {
   newassert( treeDataC.features_.size() == 16 );
   newassert( treeDataC.name2idx_.size() == 16 );
 
-  reader.nextLine().skipField();
+  reader.nextLine();
+  reader.skipField();
 
   string featureName;
   reader >> featureName; newassert( treeDataC.feature(0)->name() == featureName ); newassert( featureName == "N:var0" ); newassert( treeDataC.getFeatureIdx("N:var0") == 0 );
@@ -59,7 +60,9 @@ void treedata_newtest_readAFM() {
   newassert( treeData.features_.size() == 8 );
   newassert( treeData.name2idx_.size() == 8 );
 
-  reader.rewind().nextLine().skipField();
+  reader.rewind();
+  reader.nextLine();
+  reader.skipField();
 
   reader >> featureName; newassert( treeData.feature(0)->name() == featureName ); newassert( featureName == "N:var0" ); newassert( treeData.getFeatureIdx("N:var0") == 0 );
   reader >> featureName; newassert( treeData.feature(1)->name() == featureName ); newassert( featureName == "C:var1" ); newassert( treeData.getFeatureIdx("C:var1") == 1 );

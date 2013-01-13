@@ -15,6 +15,7 @@
 #include "distributions.hpp"
 #include "options.hpp"
 #include "feature.hpp"
+#include "reader.hpp"
 
 using namespace std;
 using datadefs::num_t;
@@ -117,22 +118,23 @@ public:
 private:
 #endif
   
-  enum FileType {UNKNOWN, AFM, TAFM, ARFF};
+  enum FileType {UNKNOWN, AFM, ARFF};
 
   FileType getFileType(const string& fileName);
 
+  bool isRowsAsSamplesInAFM(Reader& reader, const char headerDelimiter);
+
   void readAFM(const string& fileName, const char dataDelimiter, const char headerDelimiter);
-  void readTAFM(const string& fileName, const char dataDelimiter, const char headerDelimiter);
   void readARFF(const string& fileName);
 
   void parseARFFattribute(const string& str, string& attributeName, bool& isFeatureNumerical);
 
-  //bool isValidNumericalHeader(const string& str, const char headerDelimiter);
-  //bool isValidCategoricalHeader(const string& str, const char headerDelimiter);
-  //bool isValidTextHeader(const string& str, const char headerDelimiter);
-  //bool isValidFeatureHeader(const string& str, const char headerDelimiter);
+  bool isValidNumericalHeader(const string& str, const char headerDelimiter);
+  bool isValidCategoricalHeader(const string& str, const char headerDelimiter);
+  bool isValidTextHeader(const string& str, const char headerDelimiter);
+  bool isValidFeatureHeader(const string& str, const char headerDelimiter);
 
-  template <typename T> void transpose(vector<vector<T> >& mat);
+  //template <typename T> void transpose(vector<vector<T> >& mat);
 
   bool useContrasts_;
   

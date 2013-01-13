@@ -28,8 +28,9 @@ void reader_newtest_readAFM() {
   vector<Feature> features;
 
   // Removing top-left corner from table having column and row headers
-  reader.nextLine().skipField();
-
+  reader.nextLine();
+  reader.skipField();
+  
   size_t nVars = 0;
 
   // Check that all variable names are valid
@@ -69,13 +70,15 @@ void reader_newtest_readAFM() {
   newassert( reader.endOfLine() ); 
 
   // Go to the start of file and get first line
-  reader.rewind().nextLine();
+  reader.rewind();
+  reader.nextLine();
 
   vector<string> sampleNames(nSamples);
 
   // Go through lines 2,3,...
-  for ( size_t i = 0; i < nSamples; ++i ) {
-    reader.nextLine();
+  size_t i;
+  for ( i = 0; reader.nextLine(); ++i ) {
+    //reader.nextLine();
     // Sample name is the first field of the line
     reader >> sampleNames[i];
     for ( size_t j = 0; j < nVars; ++j ) {
@@ -94,13 +97,17 @@ void reader_newtest_readAFM() {
     newassert( reader.endOfLine() );     
   }
 
+  newassert( i == nSamples );
+
   // Did we recover the correct sample names from the file
   newassert( sampleNames[0] == "s0" ); 
   newassert( sampleNames[1] == "s1" ); 
   newassert( sampleNames[2] == "s2" ); 
 
   // Rewind again to the start, and start reading from line 2
-  reader.rewind().nextLine().nextLine();
+  reader.rewind();
+  reader.nextLine();
+  reader.nextLine();
 
   // Variables for storing all data on line 2
   string s0;
@@ -133,7 +140,7 @@ void reader_newtest_readAFM() {
   for ( size_t i = 0; i < reader.nLines(); ++i ) {
     reader.nextLine();
     newassert( ! reader.endOfLine() );
-    newassert( ! reader.endOfFile() );
+    //newassert( ! reader.endOfFile() );
   }
 
   // ... that means that we can then read the last line, field by field, 
@@ -144,9 +151,10 @@ void reader_newtest_readAFM() {
   }
 
   // After we are done reading the last line, we should have reached end of line 
-  // and end of file
+  // and end of file, meaning that we can't extract the next line since there is no
+  // next line
   newassert( reader.endOfLine() );
-  newassert( reader.endOfFile() );
+  newassert( ! reader.nextLine() );
 
 }
 
