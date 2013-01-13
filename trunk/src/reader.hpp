@@ -24,14 +24,14 @@ public:
     return(reader);
   }
   
-  Reader& nextLine();
+  bool nextLine();
 
-  Reader& skipField();
+  bool skipField();
 
-  Reader& rewind();
+  void rewind();
 
   bool endOfLine() const;
-  bool endOfFile() const;
+  //bool endOfFile() const;
 
   size_t nLines() const { return( nLines_ ); }
 
@@ -45,7 +45,7 @@ private:
 
   void setLineFeed(const string& str);
 
-  bool endOfStream(const ios& stream) const;
+  //bool endOfStream(const ios& stream) const;
 
   std::ifstream inStream_;
 
