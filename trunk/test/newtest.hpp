@@ -22,7 +22,7 @@ void newtest(const std::string& info, void (*testFunc)(void) ) {
 
   std::cout << "TEST: " << info << "..." << std::flush; 
   testFunc();
-  std::cout << " DONE [ " << N_SUCCESS - nOldSuccess << " / " << N_SUCCESS + N_FAIL - nOldTests << " OK ] " << std::flush;
+  std::cout << " " << N_SUCCESS - nOldSuccess << "/" << N_SUCCESS + N_FAIL - nOldTests << " OK " << std::flush;
 
   if ( N_FAIL > nOldFail ) {
     std::cout << " !! " << N_FAIL - nOldFail << " FAILURES !! " << std::flush;
