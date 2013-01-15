@@ -469,7 +469,6 @@ num_t utils::numericalFeatureSplitsCategoricalTarget(const vector<num_t>& tv,
     // If the split point "i-1" yields a better split than the previous one,
     // update se_best and bestSplitIdx
     num_t DI = math::deltaImpurity_class(sf_tot,n_tot,sf_left,n_left,sf_right,n_right);
-    //cout << " tv=" << features_[targetIdx].backMapping[tv[i]] << " fv=" << fv[i] << " nl=" << n_left << " sfl=" << sf_left << " nr=" << n_right << " sfr=" << sf_right << " nt=" << n_tot << " sft=" << sf_tot << " DI=" << DI << endl;
     
     if ( DI > DI_best ) {
       splitIdx = i;

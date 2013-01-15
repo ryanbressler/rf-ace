@@ -32,7 +32,6 @@ public:
   void rewind();
 
   bool endOfLine() const;
-  //bool endOfFile() const;
 
   size_t nLines() const { return( nLines_ ); }
 
@@ -45,8 +44,6 @@ private:
   void checkLineFeed() const;
 
   void setLineFeed(const string& str);
-
-  //bool endOfStream(const ios& stream) const;
 
   std::ifstream inStream_;
 

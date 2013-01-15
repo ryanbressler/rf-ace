@@ -125,22 +125,11 @@ namespace datadefs {
 
   bool isInteger(const string& str, int& integer);
   
-  //void strv2catv(const vector<string>& strvec, vector<num_t>& catvec, map<string,num_t>& mapping, map<num_t,string>& backMapping);
-  //void strv2numv(const vector<string>& strvec, vector<num_t>& numvec);
-
-  bool is_unique(const vector<string>& strvec);
-
-  void cardinality(const vector<num_t>& data, size_t& cardinality);
-
   void countRealValues(vector<num_t> const& data, size_t& nRealValues);
 
   void map_data(vector<num_t> const& data, 
                 map<num_t,vector<size_t> >& datamap,
                 size_t& nRealValues);
-
-  //void sortDataAndMakeRef(const bool isIncreasingOrder, vector<num_t>& data, vector<size_t>& refIcs);
-
-  //bool isAFM(const string& str);
 
   ////////////////////////////////////////////////////////////
   // INLINE METHOD DEFINITIONS
@@ -247,47 +236,6 @@ namespace datadefs {
       v2[i] = p[i].second;
     }
   }
-
-  /**
-   * Sorts a given input data vector of type T based on a given reference
-   * ordering of type vector<int>.
-   !! Correctness: this will fail if any of the contents of refIcs fall outside
-       of the normal scope of vector<T>& data.
-   */
-  /*
-    template <typename T> void sortFromRef(vector<T>& data,
-    vector<size_t> const& refIcs
-    ) {
-    assert(data.size() == refIcs.size());  
-    vector<T> foo = data;
-    int n = data.size();
-    for (int i = 0; i < n; ++i) {
-    data[i] = foo[refIcs[i]];
-    }
-    }
-  */
-
-  /**
-   * Prints a vector
-   */
-  /*
-    template <typename T> void print(const vector<T>& x) {
-    for(size_t i = 0; i < x.size(); ++i) {
-    cout << " " << x[i];
-    }
-    cout << endl;
-    }
-  */
-
-  /*
-    template <typename T> void print(const set<T>& x) {
-    
-    for( typename set<T>::const_iterator it = x.begin(); it != x.end(); ++it) {
-    cout << " " << *it;
-    }
-    cout << endl;
-    }
-  */
 
 }
 

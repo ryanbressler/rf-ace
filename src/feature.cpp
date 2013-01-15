@@ -118,7 +118,7 @@ vector<string> Feature::categories() const {
 
   vector<string> categories;
   
-  if( this->isNumerical() || this->isCategorical() ) {
+  if( this->isNumerical() || this->isTextual() ) {
     return( categories );
   }
   

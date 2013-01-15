@@ -235,9 +235,7 @@ void StochasticForest::learnRF(Treedata* trainData, const size_t targetIdx,
   distributions::PMF pmf(featureWeights);
 
   if (forestOptions->isRandomSplit && forestOptions->mTry == 0) {
-    cerr
-        << "StochasticForest::learnRF() -- for randomized splits mTry must be greater than 0"
-        << endl;
+    cerr << "StochasticForest::learnRF() -- for randomized splits mTry must be greater than 0" << endl;
     exit(1);
   }
 
@@ -253,53 +251,53 @@ void StochasticForest::learnRF(Treedata* trainData, const size_t targetIdx,
 
   if (nThreads == 1) {
 
-    vector < size_t > treeIcs = utils::range(forestOptions->nTrees);
+    vector<size_t> treeIcs = utils::range(forestOptions->nTrees);
 
     for (size_t treeIdx = 0; treeIdx < rootNodes_.size(); ++treeIdx) {
       rootNodes_[treeIdx] = new RootNode();
-      rootNodes_[treeIdx]->growTree(trainData, targetIdx, &pmf, forestOptions,
-          &randoms[0]);
+      rootNodes_[treeIdx]->growTree(trainData, targetIdx, &pmf, forestOptions, &randoms[0]);
     }
 
   }
 #ifndef NOTHREADS  
   else {
 
-    vector < vector<size_t> > treeIcs = utils::splitRange(forestOptions->nTrees,
-        nThreads);
+    vector<vector<size_t> > treeIcs = utils::splitRange(forestOptions->nTrees, nThreads);
 
-    vector < thread > threads;
+    vector <thread> threads;
 
-    for (size_t threadIdx = 0; threadIdx < nThreads; ++threadIdx) {
+    for ( size_t threadIdx = 0; threadIdx < nThreads; ++threadIdx ) {
 
-      vector < size_t > &treeIcsPerThread = treeIcs[threadIdx];
+      vector<size_t> &treeIcsPerThread = treeIcs[threadIdx];
       vector<RootNode*> rootNodesPerThread(treeIcsPerThread.size());
 
-      for (size_t i = 0; i < treeIcsPerThread.size(); ++i) {
+      for ( size_t i = 0; i < treeIcsPerThread.size(); ++i ) {
 
         rootNodes_[treeIcsPerThread[i]] = new RootNode();
 
         rootNodesPerThread[i] = rootNodes_[treeIcsPerThread[i]];
 
-        //rootNodes_[treeIcsPerThread[i]]->growTree();
       }
 
-      threads.push_back(
-          thread(growTreesPerThread, rootNodesPerThread, trainData, targetIdx,
-              forestOptions, &pmf, &randoms[threadIdx])); //thread(this->growTrees,treeIcsPerThread[threadIdx],threadIdx);
+      threads.push_back(thread(growTreesPerThread, 
+			       rootNodesPerThread, 
+			       trainData, 
+			       targetIdx, 
+			       forestOptions, 
+			       &pmf, 
+			       &randoms[threadIdx])); 
     }
 
-    for (size_t threadIdx = 0; threadIdx < threads.size(); ++threadIdx) {
+    for ( size_t threadIdx = 0; threadIdx < threads.size(); ++threadIdx ) {
       threads[threadIdx].join();
     }
   }
 #endif
 
   // Get features in the forest for fast look-up
-  for (size_t treeIdx = 0; treeIdx < rootNodes_.size(); ++treeIdx) {
-    set < size_t > featuresInTree = rootNodes_[treeIdx]->getFeaturesInTree();
-    for (set<size_t>::const_iterator it(featuresInTree.begin());
-        it != featuresInTree.end(); ++it) {
+  for ( size_t treeIdx = 0; treeIdx < rootNodes_.size(); ++treeIdx ) {
+    set <size_t> featuresInTree = rootNodes_[treeIdx]->getFeaturesInTree();
+    for ( set<size_t>::const_iterator it(featuresInTree.begin()); it != featuresInTree.end(); ++it ) {
       featuresInForest_.insert(*it);
     }
   }

@@ -133,7 +133,7 @@ int main(const int argc, char* const argv[]) {
     vector<num_t> data = utils::removeNANs(trainData.getFeatureData(targetIdx));
     
     num_t oobError = 0; //trainedModel->getOobError();
-    num_t ibOobError = 0;// trainedModel->getError();
+    num_t ibOobError = 0; // trainedModel->getError();
     
     cout << "RF training error measures (NULL == no model):" << endl;
     if ( trainData.feature(targetIdx)->isNumerical() ) {

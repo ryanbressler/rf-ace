@@ -31,12 +31,10 @@ const datadefs::num_t datadefs::LOG_OF_MAX_NUM = 70.0; /** !! Potentially
                                                         * expressible as a
                                                         * num_t? */
 
-// List of NaN's adapted from http://en.wikipedia.org/wiki/NaN#Display
-const string initNANs[] = {"NA","NAN","NAN%","NANQ","NANS","QNAN","SNAN","1.#SNAN","1.#QNAN","-1.#IND","NULL","?"}; 
-
 const char datadefs::tokenDelimiters[] = " \t,.;:?!@'\"-\n\0";
 
-const set<datadefs::NAN_t> datadefs::NANs(initNANs,initNANs+12);
+// List of NaN's adapted from http://en.wikipedia.org/wiki/NaN#Display
+const set<datadefs::NAN_t> datadefs::NANs = {"NA","NAN","NAN%","NANQ","NANS","QNAN","SNAN","1.#SNAN","1.#QNAN","-1.#IND","NULL","?"};
 
 const string datadefs::CONTRAST = "CONTRAST";
 
@@ -135,37 +133,7 @@ bool datadefs::isInteger(const string& str, int& integer) {
   }
 }
 
-
-bool datadefs::is_unique(const vector<string>& strvec) {
-
-  set<string> strset;
-  for ( size_t i = 0; i < strvec.size(); ++i ) {
-    if ( strset.find(strvec[i]) != strset.end() ) {
-      return false;
-    } else {
-      strset.insert(strvec[i]);
-    }
-  }
-  return true;
-}
-
   
-/**
- * Determines the cardinality of a given input data set
- !! Input sanitization: contains no checks for NaN.
-*/
-void datadefs::cardinality(const vector<datadefs::num_t>& data, size_t& cardinality) {
-  set<datadefs::num_t> categories;
-  for(size_t i = 0; i < data.size(); ++i) {
-    if (!datadefs::isNAN(data[i])) { // Filter out NaN, as it causes unintended results
-                              //  in std::set::insert.
-      categories.insert(data[i]);
-    }
-  }
-  cardinality = categories.size();
-
-}
-
 /**
  * Count all values that aren't transfinite
  !! Correctness: what about representations of infinity? And to be entirely
