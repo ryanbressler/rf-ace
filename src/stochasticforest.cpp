@@ -731,7 +731,7 @@ void StochasticForest::predict(Treedata* testData, vector<string>& predictions,v
     nThreads = 1;
   }
   
-  assert( this->isTargetNumerical() );
+  assert( ! this->isTargetNumerical() );
 
 #ifdef NOTHREADS
   assert( nThreads == 1 );
