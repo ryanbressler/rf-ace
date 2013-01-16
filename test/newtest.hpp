@@ -14,13 +14,27 @@ size_t N_FAIL = 0;
 
 #define newassert(condition) { if(!(condition)){ ERRLOG << " => FAIL: " << #condition << " @ " << __FILE__ << " (" << __LINE__ << ")" << std::endl; N_FAIL++; } else { N_SUCCESS++; } }
 
+void newtestinit() {
+
+  // Reset counters
+  N_SUCCESS = 0;
+  N_FAIL = 0;
+
+  // Clear error stream
+  ERRLOG.clear();
+  ERRLOG.str("");
+
+  std::cout << std::endl << "UNIT TESTING STARTED" << std::endl;
+  
+}
+
 void newtest(const std::string& info, void (*testFunc)(void) ) {
 
   size_t nOldSuccess = N_SUCCESS;
   size_t nOldFail = N_FAIL;
   size_t nOldTests = N_SUCCESS + N_FAIL;
 
-  std::cout << "TEST: " << info << "..." << std::flush; 
+  std::cout << " TEST: " << info << "..." << std::flush; 
   testFunc();
   std::cout << " " << N_SUCCESS - nOldSuccess << "/" << N_SUCCESS + N_FAIL - nOldTests << " OK " << std::flush;
 
@@ -42,7 +56,7 @@ void newtest(const std::string& info, void (*testFunc)(void) ) {
 
 void newtestdone() {
   
-  std::cout << "ALL DONE! " << N_SUCCESS + N_FAIL << " tests run: " << N_SUCCESS << " successes and " << N_FAIL << " failures" << std::endl;
+  std::cout << std::endl << "ALL DONE! " << N_SUCCESS + N_FAIL << " tests run: " << N_SUCCESS << " successes and " << N_FAIL << " failures" << std::endl << std::endl;
 
 }
 

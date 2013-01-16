@@ -41,7 +41,8 @@ void StochasticForest::loadForest(const string& fileName) {
   targetName_ = forestSetup["TARGET"];
 
   assert(forestSetup.find("CATEGORIES") != forestSetup.end());
-  isTargetNumerical_ = utils::split(forestSetup["CATEGORIES"], ',').size() == 0;
+  categories_ = utils::split(forestSetup["CATEGORIES"], ',');
+  isTargetNumerical_ = categories_.size() == 0;
 
   assert(forestStream.good());
 
@@ -53,7 +54,7 @@ void StochasticForest::loadForest(const string& fileName) {
   vector<size_t> nNodesAllocatedPerTree(nTrees, 0);
 
   // Read the forest
-  while (getline(forestStream, newLine)) {
+  while ( getline(forestStream, newLine) ) {
 
     // remove trailing end-of-line characters
     newLine = utils::chomp(newLine);
@@ -94,7 +95,7 @@ void StochasticForest::loadForest(const string& fileName) {
     string rawTrainPrediction = nodeMap["PRED"];
     num_t trainPrediction = datadefs::NUM_NAN;
 
-    if (this->isTargetNumerical()) {
+    if ( this->isTargetNumerical() || (!this->isTargetNumerical() && forestType_ == forest_t::GBT) ) {
       trainPrediction = utils::str2<num_t>(rawTrainPrediction);
     }
 
@@ -195,8 +196,9 @@ void StochasticForest::saveForest(ofstream& toFile) {
   for (size_t treeIdx = 0; treeIdx < rootNodes_.size(); ++treeIdx) {
     toFile << "TREE=" << treeIdx << ",NNODES=" << rootNodes_[treeIdx]->nNodes() << ",NLEAVES=" << rootNodes_[treeIdx]->nLeaves();
     if (forestType_ == forest_t::GBT) {
-      toFile << ",GBT_CONSTANT=";
-      utils::write(toFile, GBTconstant_.begin(), GBTconstant_.end(), ':');
+      toFile << ",GBT_CONSTANT=" << GBTconstant_[treeIdx];
+      
+      //utils::write(toFile, GBTconstant_.begin(), GBTconstant_.end(), ':');
       toFile << ",GBT_FACTOR=" << GBTfactors_[treeIdx];
     }
     toFile << endl;
