@@ -292,7 +292,7 @@ public:
 
   }
 
-  TestOutput test(Treedata* testData,const size_t nThreads = 1) {
+  TestOutput test(Treedata* testData, const size_t nThreads = 1) {
 
     assert(trainedModel_);
 

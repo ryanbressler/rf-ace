@@ -10,6 +10,8 @@ using namespace std;
 
 int main() {
 
+  newtestinit();
+
   reader_newtest();
   treedata_newtest();
   rface_newtest();
