@@ -228,7 +228,11 @@ void StochasticForest::learnRF(Treedata* trainData, const size_t targetIdx,
   categories_ = trainData->feature(targetIdx)->categories();
 
   assert(trainData->nFeatures() == featureWeights.size());
-  assert(fabs(featureWeights[targetIdx]) < datadefs::EPS);
+
+  if ( fabs(featureWeights[targetIdx]) > datadefs::EPS) {
+    cerr << "ERROR: Weight for the target variable must be 0!" << endl;
+    exit(1);
+  }
 
   rootNodes_.resize(forestOptions->nTrees);
 
