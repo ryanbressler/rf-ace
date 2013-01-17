@@ -117,6 +117,7 @@ public:
   }
 
   void setRFDefaults() {
+    forestType            = forest_t::RF;
     inBoxFraction         = datadefs::RF_DEFAULT_IN_BOX_FRACTION;
     sampleWithReplacement = datadefs::RF_DEFAULT_SAMPLE_WITH_REPLACEMENT;
     isRandomSplit         = datadefs::RF_DEFAULT_IS_RANDOM_SPLIT;
@@ -130,6 +131,7 @@ public:
   }
 
   void setGBTDefaults() {
+    forestType            = forest_t::GBT;
     inBoxFraction         = datadefs::GBT_DEFAULT_IN_BOX_FRACTION;
     sampleWithReplacement = datadefs::GBT_DEFAULT_SAMPLE_WITH_REPLACEMENT;
     isRandomSplit         = datadefs::GBT_DEFAULT_IS_RANDOM_SPLIT;
@@ -143,6 +145,7 @@ public:
   }
 
   void setCARTDefaults() {
+    forestType            = forest_t::CART;
     inBoxFraction         = datadefs::CART_DEFAULT_IN_BOX_FRACTION;
     sampleWithReplacement = datadefs::CART_DEFAULT_SAMPLE_WITH_REPLACEMENT;
     isRandomSplit         = datadefs::CART_DEFAULT_IS_RANDOM_SPLIT;

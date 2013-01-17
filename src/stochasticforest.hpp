@@ -66,9 +66,10 @@ private:
 
   vector<string> categories_;
 
-  // Experimental parameters for making GBT working
-  vector<num_t> GBTfactors_;
-  vector<num_t> GBTconstant_;
+  vector<num_t> GBTConstants_;
+  num_t GBTShrinkage_;
+
+  //num_t shrinkage_;
 
   // Chosen target to regress on
   string targetName_;
