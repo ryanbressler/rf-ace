@@ -46,18 +46,21 @@ namespace distributions {
  
   class PMF {
   public:
+    
     PMF(const vector<datadefs::num_t>& weights);
     ~PMF();
-    size_t icdf(const datadefs::num_t prob) const;
+    
+    size_t sample(Random* random) const;
+    
+#ifndef TEST__
   private:
-    map<datadefs::num_t,size_t> icdf_;
+#endif
+    
+    vector<datadefs::num_t> prob_;
+    vector<size_t> alias_;
+    
   };
-
-  //icdf_t 
-
-  // This is for reference -- will be consumed by the PMF class for efficient implementation of PMF.icdf()
-  void walkersalias(int n,double *p, int nans, int *ans);
-
+  
 }
 
 #endif

@@ -1,5 +1,7 @@
 #include "distributions.hpp"
 
+#include "utils.hpp"
+
 using datadefs::num_t;
 
 distributions::Random::Random():
@@ -33,85 +35,54 @@ num_t distributions::Random::uniform() {
 }
 
 distributions::PMF::PMF(const vector<num_t>& weights) {
+  
+  size_t n = weights.size();
 
   num_t sum = 0.0;
-
-  for ( size_t i = 0; i < weights.size(); ++i ) {
+  
+  for ( size_t i = 0; i < n; ++i ) {
     assert( weights[i] >= 0.0 );
     sum += weights[i];
-  }
+  } 
+  
+  prob_.resize(n);
+  alias_.resize(n);
+  
+  vector<size_t> HL(n);
+  vector<size_t>::iterator H(HL.begin()-1);
+  vector<size_t>::iterator L(HL.end());
 
-  num_t cumProb = 0.0;
-
-  assert( sum > 0.0 );
-
-  for ( size_t i = 0; i < weights.size(); ++i ) {
-    if ( weights[i] > 0.0 ) {
-      cumProb += weights[i] / sum;
-      icdf_[cumProb] = i;
+  for ( size_t i = 0; i < n; ++i ) {
+    prob_[i] = weights[i] / sum * n;
+    if ( prob_[i] < 1.0 ) {
+      *(++H) = i;
+    } else {
+      *(--L) = i;
     }
   }
 
-}
-
-distributions::PMF::~PMF() {
+  for ( size_t k = 0; k < n-1; k++ ) {
+    size_t i = HL[k];
+    size_t j = *L;
+    alias_[i] = j;
+    prob_[j] += prob_[i] - 1.0;
+    if ( prob_[j] < 1.0 ) {
+      L++;
+    }
+    if ( L >= HL.end() ) {
+      break;
+    }
+  }
   
 }
 
-size_t distributions::PMF::icdf(const num_t prob) const {
-  assert(prob >= 0.0 && prob < 1.0);
+distributions::PMF::~PMF() { }
 
-  return( icdf_.upper_bound(prob)->second );
+size_t distributions::PMF::sample(distributions::Random* random) const {
+
+  size_t i = random->integer() % prob_.size(); 
+
+  return( random->uniform() < prob_[i] ? i : alias_[i] );
+
 }
 
-void distributions::walkersalias(
-		  int n,   // number of classes
-		  double *p, // relative weights of each class
-		  int nans,  // sample size to return
-		  int *ans  // sample as an array of class indices 
-                  ){
-
-  int *a = (int*) calloc(n,sizeof(int));
-  double *q, rU;
-  int i,j,k;
-  int *HL,*H,*L;
-  HL = (int*) calloc(n,sizeof(int));
-  q = (double*) calloc(n,sizeof(double));
-  H = HL - 1; L = HL + n;
-  double sum = 0;
-  for(i = 0; i < n; i++)
-    {
-      sum += p[i];
-    }
-  for(i = 0; i < n; i++)
-    {
-      p[i] /= sum;
-    }
-  for(i = 0; i < n; i++)
-    {
-      q[i] = p[i] * n;
-      if(q[i] < 1.) *++H = i; else *--L = i;
-    }
-  if(H >= HL && L < HL +n)
-    {
-      for(k = 0; k < n-1; k++)
-	{
-	  i = HL[k];
-	  j = *L;
-	  a[i] = j;
-	  q[j] += q[i] - 1;
-	  if(q[j] < 1.) L++;
-	  if(L >= HL + n) break;
-	}
-    }
-  for(i = 0; i < n; i++) q[i] += i;
-  for(i = 0; i < nans; i++)
-    {
-      rU = (double) rand() / RAND_MAX * n;
-      k = (int) rU;
-      ans[i] = (rU < q[k]) ? k : a[k];
-    }
-  free(HL);
-  free(q);
-  free(a);
-}

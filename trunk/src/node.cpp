@@ -301,7 +301,7 @@ void Node::recursiveNodeSplit(Treedata* treeData,
     featureSampleIcs.resize(forestOptions->mTry);
 
     for ( size_t i = 0; i < forestOptions->mTry; ++i ) {
-      featureSampleIcs[i] = pmf->icdf( random->uniform() );
+      featureSampleIcs[i] = pmf->sample(random); //icdf( random->uniform() );
     }
 
     if ( forestOptions->useContrasts ) {
