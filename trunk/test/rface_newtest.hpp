@@ -18,10 +18,13 @@ void rface_newtest_GBT_train_test_regression();
 
 void rface_newtest() {
   
-  newtest( "Making an RF classification experiment", &rface_newtest_RF_train_test_classification );
-  newtest( "Making an RF regression experiment", &rface_newtest_RF_train_test_regression );
-  newtest( "Making a GBT classification experiment", &rface_newtest_GBT_train_test_classification );
-  newtest( "Making a GBT regression experiment", &rface_newtest_GBT_train_test_regression );
+  newtest( "Testing RF for classification", &rface_newtest_RF_train_test_classification );
+  newtest( "Testing RF for regression", &rface_newtest_RF_train_test_regression );
+  newtest( "Testing GBT for classification", &rface_newtest_GBT_train_test_classification );
+  newtest( "Testing GBT for regression", &rface_newtest_GBT_train_test_regression );
+  newtest( "Testing save/load RF for classification", &rface_newtest_RF_save_load_classification);
+  newtest( "Testing save/load RF for regression", &rface_newtest_RF_save_load_regression);
+  newtest( "")
   
 }
 
