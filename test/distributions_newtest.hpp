@@ -99,8 +99,6 @@ void distributions_newtest_random_uniform() {
 
 }
 
-
-
 void distributions_newtest_PMF() {
 
   distributions::Random random(0);
