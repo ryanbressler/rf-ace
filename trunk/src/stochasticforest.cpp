@@ -163,7 +163,9 @@ void StochasticForest::loadForest(const string& fileName) {
   }
 
   if ( forestType_ == forest_t::GBT ) {
-    assert( GBTConstants_.size() == categories_.size() );
+    if ( ! isTargetNumerical_ ) {
+      assert( GBTConstants_.size() == categories_.size() );
+    }
     assert( GBTShrinkage_ > 0 );
   }
 
