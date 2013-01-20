@@ -15,6 +15,10 @@ void rface_newtest_RF_train_test_classification();
 void rface_newtest_RF_train_test_regression();
 void rface_newtest_GBT_train_test_classification();
 void rface_newtest_GBT_train_test_regression();
+void rface_newtest_RF_save_load_classification();
+void rface_newtest_RF_save_load_regression();
+void rface_newtest_GBT_save_load_classification();
+void rface_newtest_GBT_save_load_regression();
 
 void rface_newtest() {
   
@@ -24,7 +28,8 @@ void rface_newtest() {
   newtest( "Testing GBT for regression", &rface_newtest_GBT_train_test_regression );
   newtest( "Testing save/load RF for classification", &rface_newtest_RF_save_load_classification);
   newtest( "Testing save/load RF for regression", &rface_newtest_RF_save_load_regression);
-  newtest( "")
+  newtest( "Testing save/load GBT for classification", &rface_newtest_GBT_save_load_classification);
+  newtest( "Testing save/load GBT for regression", &rface_newtest_GBT_save_load_regression);
   
 }
 
@@ -39,8 +44,31 @@ RFACE::TestOutput make_predictions(ForestOptions& forestOptions, const string& t
   RFACE rface;
 
   rface.train(&trainData,targetIdx,weights,&forestOptions);
-  
+
   return( rface.test(&trainData) );
+
+}
+
+
+RFACE::TestOutput make_save_load_predictions(ForestOptions& forestOptions, const string& targetStr) {
+
+  string fileName = "test_103by300_mixed_nan_matrix.afm";
+  Treedata trainData(fileName,'\t',':',false);
+  size_t targetIdx = trainData.getFeatureIdx(targetStr);
+  vector<num_t> weights = trainData.getFeatureWeights();
+  weights[targetIdx] = 0;
+
+  RFACE rface;
+
+  rface.train(&trainData,targetIdx,weights,&forestOptions);
+  
+  rface.save("foo.sf");
+
+  RFACE rface2;
+  
+  rface2.load("foo.sf");
+
+  return( rface2.test(&trainData) );
   
 }
 
@@ -71,10 +99,9 @@ num_t regression_error(const RFACE::TestOutput& predictions) {
 
 void rface_newtest_RF_train_test_classification() {
   
-  RFACE rface;
   ForestOptions forestOptions;
   forestOptions.setRFDefaults();
-  forestOptions.mTry = 50;
+  forestOptions.mTry = 30;
 
   num_t pError = classification_error( make_predictions(forestOptions,"C:class") );
 
@@ -84,10 +111,9 @@ void rface_newtest_RF_train_test_classification() {
 
 void rface_newtest_RF_train_test_regression() {
   
-  RFACE rface;
   ForestOptions forestOptions;
   forestOptions.setRFDefaults();
-  forestOptions.mTry = 50;
+  forestOptions.mTry = 30;
 
   num_t RMSE = regression_error( make_predictions(forestOptions,"N:output") );
   
@@ -97,7 +123,6 @@ void rface_newtest_RF_train_test_regression() {
 
 void rface_newtest_GBT_train_test_classification() {
 
-  RFACE rface;
   ForestOptions forestOptions;
   forestOptions.setGBTDefaults();
 
@@ -109,13 +134,64 @@ void rface_newtest_GBT_train_test_classification() {
 
 void rface_newtest_GBT_train_test_regression() { 
 
-  RFACE rface;
   ForestOptions forestOptions;
   forestOptions.setGBTDefaults();
 
   num_t RMSE = regression_error( make_predictions(forestOptions,"N:output") );
 
   newassert(RMSE < 1.0);
+
+}
+
+void rface_newtest_RF_save_load_classification() {
+
+  ForestOptions forestOptions;
+  forestOptions.setRFDefaults();
+  forestOptions.mTry = 30;
+
+  num_t pError1 = classification_error( make_predictions(forestOptions,"C:class") );
+  num_t pError2 = classification_error( make_save_load_predictions(forestOptions,"C:class") );
+  
+  newassert( fabs(pError1 - pError2) < 1e-3 );
+
+}
+
+void rface_newtest_RF_save_load_regression() {
+
+  ForestOptions forestOptions;
+  forestOptions.setRFDefaults();
+  forestOptions.mTry = 30;
+
+  num_t RMSE1 = classification_error( make_predictions(forestOptions,"N:output") );
+  num_t RMSE2 = classification_error( make_save_load_predictions(forestOptions,"N:output") );
+
+  newassert( fabs(RMSE1 - RMSE2) < 1e-3 );
+
+}
+
+void rface_newtest_GBT_save_load_classification() {
+
+  ForestOptions forestOptions;
+  forestOptions.setGBTDefaults();
+
+  num_t pError1 = classification_error( make_predictions(forestOptions,"C:class") );
+  num_t pError2 = classification_error( make_save_load_predictions(forestOptions,"C:class") );
+
+  newassert( fabs(pError1 - pError2) < 1e-3 );
+
+  
+}
+
+void rface_newtest_GBT_save_load_regression() {
+
+  ForestOptions forestOptions;
+  forestOptions.setGBTDefaults();
+
+  num_t RMSE1 = classification_error( make_predictions(forestOptions,"N:output") );
+  num_t RMSE2 = classification_error( make_save_load_predictions(forestOptions,"N:output") );
+
+  newassert( fabs(RMSE1 - RMSE2) < 1e-3 );
+
 
 }
 
