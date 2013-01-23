@@ -481,6 +481,73 @@ num_t utils::numericalFeatureSplitsCategoricalTarget(const vector<num_t>& tv,
   
 }
 
+num_t utils::categoricalFeatureSplitsNumericalTarget2(const vector<num_t>& tv,
+						      const vector<num_t>& fv,
+						      const size_t minSamples,
+						      const vector<num_t>& catOrder,
+						      map<num_t,vector<size_t> >& fmap_left,
+						      map<num_t,vector<size_t> >& fmap_right) {
+  
+  fmap_left.clear();
+  fmap_right.clear();
+  
+  size_t n_tot = 0;
+  
+  datadefs::map_data(fv,fmap_right,n_tot);
+
+  size_t n_right = n_tot;
+  size_t n_left = 0;
+  
+  num_t mu_tot = math::mean(tv);
+  num_t mu_right = mu_tot;
+  num_t mu_left = 0.0;
+  
+  num_t DI_best = 0.0;
+  
+  for ( size_t i = 0; i < catOrder.size(); ++i ) {
+    assert( fmap_right.find( catOrder[i] ) != fmap_right.end() );
+  }
+  
+  
+  for ( size_t i = 0; i < catOrder.size(); ++i ) {
+    
+    map<num_t,vector<size_t> >::const_iterator it( fmap_right.begin() );
+    
+    for ( size_t j = 0; j < it->second.size(); ++j ) {
+      
+      ++n_left;
+      --n_right;
+      mu_left  += ( tv[ it->second[j] ] - mu_left  ) / n_left;
+      mu_right -= ( tv[ it->second[j] ] - mu_right ) / n_right;
+      
+    }
+    
+    num_t DI = math::deltaImpurity_regr(mu_tot,n_tot,mu_left,n_left,mu_right,n_right);
+    
+    if ( DI > DI_best ) { 
+      
+      DI_best = DI;
+      
+      fmap_left.insert( *it );
+      fmap_right.erase( it->first );
+      
+    } else {
+      
+      for ( size_t j = 0; j < it->second.size(); ++j ) {
+	
+	--n_left;
+	++n_right;
+	mu_left  -= ( tv[ it->second[j] ] - mu_left  ) / n_left;
+	mu_right += ( tv[ it->second[j] ] - mu_right ) / n_right;
+	
+      }    
+    }
+  }    
+  
+  return(DI_best);
+  
+}
+
 num_t utils::categoricalFeatureSplitsNumericalTarget(const vector<num_t>& tv,
 						     const vector<num_t>& fv,
 						     const size_t minSamples,

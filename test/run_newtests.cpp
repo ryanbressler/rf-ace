@@ -6,6 +6,7 @@
 #include "treedata_newtest.hpp"
 #include "rface_newtest.hpp"
 #include "distributions_newtest.hpp"
+#include "utils_newtest.hpp"
 
 using namespace std;
 
@@ -17,6 +18,7 @@ int main() {
   treedata_newtest();
   rface_newtest();
   distributions_newtest();
+  utils_newtest();
 
   newtestdone();
 
