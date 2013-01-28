@@ -1,5 +1,5 @@
 COMPILER = g++
-CFLAGS = -O1 -std=c++0x -Wall -Wextra -pedantic -Isrc/
+CFLAGS = -O3 -std=c++0x -Wall -Wextra -pedantic -Isrc/
 TFLAGS = -pthread
 SOURCEFILES = src/murmurhash3.cpp src/datadefs.cpp src/progress.cpp src/statistics.cpp src/math.cpp src/stochasticforest.cpp src/rootnode.cpp src/node.cpp src/treedata.cpp src/utils.cpp src/distributions.cpp src/reader.cpp src/feature.cpp
 STATICFLAGS = -static-libgcc -static
