@@ -512,6 +512,12 @@ num_t utils::categoricalFeatureSplitsNumericalTarget2(const vector<num_t>& tv,
   for ( size_t i = 0; i < catOrder.size(); ++i ) {
     
     map<num_t,vector<size_t> >::const_iterator it( fmap_right.begin() );
+
+    assert( it != fmap_right.end() );
+
+    if ( n_right - it->second.size() < minSamples ) {
+      continue;
+    }
     
     for ( size_t j = 0; j < it->second.size(); ++j ) {
       
@@ -583,6 +589,10 @@ num_t utils::categoricalFeatureSplitsCategoricalTarget2(const vector<num_t>& tv,
     map<num_t,vector<size_t> >::const_iterator it( fmap_right.find(catOrder[i]) );
 
     assert( it != fmap_right.end() );
+
+    if ( n_right - it->second.size() < minSamples ) {
+      continue;
+    }
 
     //cout << "Sending category " << catOrder[i] << " from right to left: [" << flush;
     for ( size_t j = 0; j < it->second.size(); ++j ) {
