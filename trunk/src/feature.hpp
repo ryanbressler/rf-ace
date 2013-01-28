@@ -28,7 +28,7 @@ public:
   Feature(const vector<string>& newStringData, const string& newName, bool doHash = false);
   ~Feature();
 
-  void setNumSampleValue(const size_t sampleIdx, const num_t val);
+  void setNumSampleValue(const size_t sampleIdx, const num_t   val);
   void setCatSampleValue(const size_t sampleIdx, const string& str);
   void setTxtSampleValue(const size_t sampleIdx, const string& str);
 

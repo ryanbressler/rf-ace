@@ -565,39 +565,45 @@ num_t utils::categoricalFeatureSplitsCategoricalTarget2(const vector<num_t>& tv,
   size_t n_right = n_tot;
   size_t n_left = 0;
 
-  size_t sf_right;
-  size_t sf_left;
-  size_t sf_tot;
+  size_t sf_right = 0;
+  size_t sf_left = 0;
 
   map<num_t,size_t> freq_left,freq_right;
 
-  assert(false);
-  
+  for( size_t i = 0; i < n_tot; ++i ) {
+    math::incrementSquaredFrequency(tv[i], freq_right, sf_right);
+  }
 
+  size_t sf_tot = sf_right;
+ 
   num_t DI_best = 0.0;
 
   for ( size_t i = 0; i < catOrder.size(); ++i ) {
-    assert( fmap_right.find( catOrder[i] ) != fmap_right.end() );
-  }
 
+    map<num_t,vector<size_t> >::const_iterator it( fmap_right.find(catOrder[i]) );
 
-  for ( size_t i = 0; i < catOrder.size(); ++i ) {
+    assert( it != fmap_right.end() );
 
-    map<num_t,vector<size_t> >::const_iterator it( fmap_right.begin() );
-
+    //cout << "Sending category " << catOrder[i] << " from right to left: [" << flush;
     for ( size_t j = 0; j < it->second.size(); ++j ) {
 
+      //cout << " " << tv[it->second[j]] << flush;
+
       ++n_left;
-      math::incrementSquaredFrequency(it->second[j],freq_left,sf_left);
-
+      math::incrementSquaredFrequency(tv[ it->second[j] ],freq_left,sf_left);
+      
       --n_right;
-      math::decrementSquaredFrequency(it->second[j],freq_right,sf_right);
-
+      math::decrementSquaredFrequency(tv[ it->second[j] ],freq_right,sf_right);
+      
     }
+    
+    //cout << "]" << flush;
 
     num_t DI = math::deltaImpurity_class(sf_tot,n_tot,sf_left,n_left,sf_right,n_right);
 
     if ( DI > DI_best ) {
+
+      //cout << " IMPROVED " << DI << " > " << DI_best << flush;
 
       DI_best = DI;
 
@@ -606,16 +612,22 @@ num_t utils::categoricalFeatureSplitsCategoricalTarget2(const vector<num_t>& tv,
 
     } else {
 
+      //cout << " moving back: [" << flush;
+
       for ( size_t j = 0; j < it->second.size(); ++j ) {
 
+	//cout << " " << tv[ it->second[j] ] << flush;
+
         --n_left;
-	math::decrementSquaredFrequency(it->second[j],freq_left,sf_left);
+	math::decrementSquaredFrequency(tv[ it->second[j] ],freq_left,sf_left);
 
         ++n_right;
-	math::incrementSquaredFrequency(it->second[j],freq_right,sf_right);
+	math::incrementSquaredFrequency(tv[ it->second[j] ],freq_right,sf_right);
 
       }
+      //cout << "] " << flush;
     }
+    //cout << endl;
   }
 
   return(DI_best);
