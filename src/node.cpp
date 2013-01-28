@@ -463,14 +463,32 @@ bool Node::regularSplitterSeek(Treedata* treeData,
 
     } else if ( newSplitFeature->isCategorical() ) {
 
+      
+      set<num_t> uniqueCats;
+
+      for ( size_t i = 0; i < newSampleIcs_right.size(); ++i ) {
+	uniqueCats.insert(treeData->feature(newSplitFeatureIdx)->data[newSampleIcs_right[i]]);
+      }
+      
+      vector<num_t> catOrder(uniqueCats.size());
+      size_t iter = 0;
+      for ( set<num_t>::const_iterator it(uniqueCats.begin()); it != uniqueCats.end(); ++it ) {
+	catOrder[iter] = *it;
+	++iter;
+      }
+
+      utils::permute(catOrder,random);
+
       newSplitFitness = treeData->categoricalFeatureSplit(targetIdx,
 							  newSplitFeatureIdx,
+							  catOrder,
 							  forestOptions->nodeSize,
 							  newSampleIcs_left,
 							  newSampleIcs_right,
 							  newSampleIcs_missing,
 							  newSplitValues_left,
 							  newSplitValues_right);
+
     } else if ( newSplitFeature->isTextual() && newSampleIcs_right.size() > 0 ) {
 
       // Choose random sample

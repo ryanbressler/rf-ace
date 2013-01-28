@@ -623,6 +623,7 @@ num_t Treedata::numericalFeatureSplit(const size_t targetIdx,
 // !! Inadequate Abstraction: Refactor me.
 num_t Treedata::categoricalFeatureSplit(const size_t targetIdx,
 					const size_t featureIdx,
+					const vector<num_t>& catOrder,
 					const size_t minSamples,
 					vector<size_t>& sampleIcs_left,
 					vector<size_t>& sampleIcs_right,
@@ -651,11 +652,11 @@ num_t Treedata::categoricalFeatureSplit(const size_t targetIdx,
 
   if ( this->feature(targetIdx)->isNumerical() ) {
 
-    DI_best = utils::categoricalFeatureSplitsNumericalTarget(tv,fv,minSamples,fmap_left,fmap_right);
+    DI_best = utils::categoricalFeatureSplitsNumericalTarget2(tv,fv,minSamples,catOrder,fmap_left,fmap_right);
 
   } else {
 
-    DI_best = utils::categoricalFeatureSplitsCategoricalTarget(tv,fv,minSamples,fmap_left,fmap_right);
+    DI_best = utils::categoricalFeatureSplitsCategoricalTarget2(tv,fv,minSamples,catOrder,fmap_left,fmap_right);
 
   }
 

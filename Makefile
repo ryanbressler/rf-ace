@@ -1,5 +1,5 @@
 COMPILER = g++
-CFLAGS = -O2 -std=c++0x -Wall -Wextra -pedantic -Isrc/
+CFLAGS = -O1 -std=c++0x -Wall -Wextra -pedantic -Isrc/
 TFLAGS = -pthread
 SOURCEFILES = src/murmurhash3.cpp src/datadefs.cpp src/progress.cpp src/statistics.cpp src/math.cpp src/stochasticforest.cpp src/rootnode.cpp src/node.cpp src/treedata.cpp src/utils.cpp src/distributions.cpp src/reader.cpp src/feature.cpp
 STATICFLAGS = -static-libgcc -static
@@ -23,7 +23,7 @@ no-threads: $(SOURCEFILES)
 	$(COMPILER) $(CFLAGS) -DNOTHREADS $(SOURCEFILES) src/rf_ace.cpp -o bin/rf-ace
 
 debug: $(SOURCEFILES)
-	$(COMPILER) $(CFLAGS) src/rf_ace.cpp $(SOURCEFILES) $(TFLAGS) -o bin/rf-ace -g -ggdb
+	$(COMPILER) $(CFLAGS) src/rf_ace.cpp $(SOURCEFILES) $(TFLAGS) -o bin/rf-ace -g -ggdb -pg
 
 static: $(SOURCEFILES)
 	$(COMPILER) $(CFLAGS) src/rf_ace.cpp $(STATICFLAGS) $(SOURCEFILES) $(TFLAGS) -o bin/rf-ace

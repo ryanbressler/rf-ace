@@ -79,6 +79,7 @@ public:
 
   num_t categoricalFeatureSplit(const size_t targetIdx,
 				const size_t featureIdx,
+				const vector<num_t>& catOrder,
 				const size_t minSamples,
 				vector<size_t>& sampleIcs_left,
 				vector<size_t>& sampleIcs_right,
