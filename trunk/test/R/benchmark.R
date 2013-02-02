@@ -178,14 +178,53 @@ return(list(outG=outG,data=testData,idata=imputedTestData))
 
 }
 
+benchmarkCatSplitterSpeed <- function(offset) {
+
+nSamples <- 1000
+std <- 0.3
+nWordsMin <- 4
+nWordsMax <- 8
+
+bags <- list(
+list("buckler","shield","sword","helmet","gloves","horse","medieval","castle","joust","clown","extra","words","that","mix"),
+list("swan","duck","duckling","bird","fly","pond","wings","feather","beak","legs","words","that","dont","distinguish"),
+list("baby","diaper","toy","poo","pee","smile","cry","toddler","infant","play","text","that","dont","distinguish"))
+
+trainData <- makeData(nSamples,std,bags,nWordsMin,nWordsMax,offset)
+trainData <- trainData[c(1,7)]
+
+speed <- list()
+
+speed$rface <- proc.time()
+rface <- rface.train(trainData,"N:output",nTrees=50,mTry=1,nodeSize=3,forestType="RF",noNABranching=FALSE)
+speed$rface <- proc.time() - speed$rface
+
+trainData$"C:class" <- as.factor(trainData$"C:class")
+
+trainData <- as.matrix(trainData)
+
+speed$rf <- proc.time()
+# rf <- randomForest(imputedTrainData[,2],y=imputedTrainData[,1],ntree=50,mtry=1)
+speed$rf <- proc.time() - speed$rf
+
+return(list(rf=speed$rf,rface=speed$rface,data=trainData,idata=imputedTrainData))
+}
+
+# Benchmark missing values
 for ( pMissing in c(0.0,0.1,0.2) ) {
   foo <- benchmarkMissingValues(pMissing)
 } 
 
-treesizes <- as.data.frame(t(read.table("tmp/treesizes.tsv")))
-# treesizes <- data.frame("0%"=tmp[1,],"10%"=tmp[2,],"20%"=tmp[3,],"30%"=tmp[4,])
-names(treesizes) <- c("0%","10%","20%","30%","0%","10%","20%","30%")
+# Benchmark categorical splitter speed
+offsets <- c(0,1,2,3,4,5)
+speeds <- list(length(offsets))
+for ( i in 1:length(offsets) ) {
+  speeds[[i]] <- benchmarkCatSplitterSpeed(offsets[i])
+}
 
+# Benchmark tree size
+treesizes <- as.data.frame(t(read.table("tmp/treesizes.tsv")))
+names(treesizes) <- c("0%","10%","20%","30%","0%","10%","20%","30%")
 pdf("treesizes.pdf",width=8,height=4)
 par(mfcol=c(1,2))
 boxplot(treesizes[1:4],ylim=c(15,150),xlab="% of missing values",ylab="Tree size (nodes)")

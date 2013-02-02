@@ -76,8 +76,6 @@ void utils_newtest_categoricalFeatureSplitsCategoricalTarget() {
   
   num_t DI_ref = math::deltaImpurity_class(sf_tot,12,sf_left,3,sf_right,9);
  
-  cout << DI << " " << DI_ref << endl;
-
   newassert( fabs( DI - DI_ref ) < datadefs::EPS );
 
   fv = {1,1,1,1,1,1,1,1,1,1,1,1};
