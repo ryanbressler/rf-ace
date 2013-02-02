@@ -137,14 +137,14 @@ const Node* Node::percolate(Treedata* testData, const size_t sampleIdx, const si
       // Return left child if splits left
       if ( splitter_.leftValues.find(data) != splitter_.leftValues.end() ) {
 	return( this->leftChild()->percolate(testData,sampleIdx,scrambleFeatureIdx) );
-      }
-      // Return right child if splits right
-      if ( splitter_.rightValues.find(data) != splitter_.rightValues.end() ) {
+      } else {
+	// Return right child if splits right
+	//if ( splitter_.rightValues.find(data) != splitter_.rightValues.end() ) {	
 	return( this->rightChild()->percolate(testData,sampleIdx,scrambleFeatureIdx) );
       }
       
       // Else return this
-      return( this );
+      //return( this );
     }
     
   } else {
