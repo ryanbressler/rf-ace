@@ -195,40 +195,54 @@ trainData <- trainData[c(1,7)]
 
 speed <- list()
 
-speed$rface <- proc.time() - proc.time()
+speed$rface <- 0
 for ( i in 1:10 ) {
 diff <- proc.time()
 rface <- rface.train(trainData,"N:output",nTrees=50,mTry=1,nodeSize=3,forestType="RF",noNABranching=FALSE)
 diff <- proc.time() - diff
-speed$rface <- speed$rface + diff
+speed$rface <- as.matrix(speed$rface + diff)[1]
 }
 
 trainData$"C:class" <- as.factor(trainData$"C:class")
 
 #trainData <- as.matrix(na.roughfix(trainData))
 
-speed$rf <- proc.time() - proc.time()
+speed$rf <- NA
+if (offset < 10) {
+speed$rf <- 0
 for ( i in 1:10 ) {
 diff <- proc.time()
 rf <- randomForest(trainData[2],y=trainData[[1]],ntree=50,mtry=1)
 diff <- proc.time() - diff
-speed$rf <- speed$rf + diff
+speed$rf <- as.matrix(speed$rf + diff)[1]
+}
 }
 
 return(list(rf=speed$rf,rface=speed$rface,data=trainData))
 }
+
 
 # Benchmark missing values
 for ( pMissing in c(0.0,0.1,0.2) ) {
   foo <- benchmarkMissingValues(pMissing)
 } 
 
+
 # Benchmark categorical splitter speed
-offsets <- c(0,2,3,4,5,8)
-speeds <- list(length(offsets))
+offsets <- as.vector(c(0,2,3,4,5,7,9,15,20))
+nCategories <- 3 + 3*offsets 
+speeds <- data.frame(rf=vector(length=length(offsets)),rface=vector(length=length(offsets)))
 for ( i in 1:length(offsets) ) {
-  speeds[[i]] <- benchmarkCatSplitterSpeed(offsets[i])
+  out <- benchmarkCatSplitterSpeed(offsets[i])
+  speeds$rf[i] <- out$rf
+  speeds$rface[i] <- out$rface
 }
+pdf("catsplitter_speeds.pdf",width=4,height=4)
+plot(nCategories,speeds$rface,type="l",col="red")
+lines(nCategories,speeds$rf,col="blue")
+grid()
+title("Categorical splitter execution time")
+dev.off()
 
 # Benchmark tree size
 treesizes <- as.data.frame(t(read.table("tmp/treesizes.tsv")))
