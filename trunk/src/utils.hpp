@@ -33,7 +33,7 @@ namespace utils {
   // Removes leading and trailing whitespace characters
   string trim(const string& str, const string& wh = " ");
 
-  set<string> keys(const string& str, const char delimiter);
+  unordered_set<string> keys(const string& str, const char delimiter);
   
   // A sophisticated parser that extracts a key-value pairs from a string
   map<string,string> parse(const string& str, 

@@ -141,9 +141,9 @@ string utils::trim(const string& str, const string& wh) {
   return( str.substr(beginStr, range) );
 }
 
-set<string> utils::keys(const string& str, const char delimiter) {
+unordered_set<string> utils::keys(const string& str, const char delimiter) {
 
-  set<string> ret;
+  unordered_set<string> ret;
 
   vector<string> items = utils::split(str,delimiter);
 

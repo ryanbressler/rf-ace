@@ -10,6 +10,7 @@
 //#include <queue>
 #include <map>
 #include <set>
+#include <unordered_set>
 #include <string>
 #include "datadefs.hpp"
 #include "treedata.hpp"
@@ -37,8 +38,7 @@ public:
 		   Node& rightChild);
 
   void setSplitter(const string& splitterName,
-                   const set<string>& leftSplitValues,
-                   const set<string>& rightSplitValues,
+                   const unordered_set<string>& leftSplitValues,
 		   Node& leftChild,
 		   Node& rightChild);
 
@@ -111,8 +111,7 @@ private:
     Feature::Type type;
     uint32_t hashValue;
     num_t leftLeqValue;
-    set<string> leftValues;
-    set<string> rightValues;
+    unordered_set<string> leftValues;
     
   } splitter_;
 
