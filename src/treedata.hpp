@@ -74,7 +74,6 @@ public:
 			      const size_t minSamples,
 			      vector<size_t>& sampleIcs_left,
 			      vector<size_t>& sampleIcs_right,
-			      vector<size_t>& sampleIcs_missing,
 			      num_t& splitValue);
 
   num_t categoricalFeatureSplit(const size_t targetIdx,
@@ -83,17 +82,14 @@ public:
 				const size_t minSamples,
 				vector<size_t>& sampleIcs_left,
 				vector<size_t>& sampleIcs_right,
-				vector<size_t>& sampleIcs_missing,
-				set<num_t>& splitValues_left,
-				set<num_t>& splitValues_right);
+				unordered_set<num_t>& splitValues_left);
 
   num_t textualFeatureSplit(const size_t targetIdx,
 			    const size_t featureIdx,
 			    const uint32_t hashIdx,
 			    const size_t minSamples,
 			    vector<size_t>& sampleIcs_left,
-			    vector<size_t>& sampleIcs_right,
-			    vector<size_t>& sampleIcs_missing);
+			    vector<size_t>& sampleIcs_right);
     
   string getRawFeatureData(const size_t featureIdx, const size_t sampleIdx);
   string getRawFeatureData(const size_t featureIdx, const num_t data);

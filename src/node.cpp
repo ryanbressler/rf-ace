@@ -46,8 +46,7 @@ void Node::setSplitter(const string& splitterName,
 // !! file, fleshing it out a bit. Ideally, implementation notes should fall
 // !! here; notes on the abstraction should fall in the header file.
 void Node::setSplitter(const string& splitterName,  
-		       const set<string>& leftSplitValues, 
-		       const set<string>& rightSplitValues,
+		       const unordered_set<string>& leftSplitValues, 
 		       Node& leftChild,
 		       Node& rightChild) {
 
@@ -59,7 +58,6 @@ void Node::setSplitter(const string& splitterName,
   splitter_.name = splitterName;
   splitter_.type = Feature::Type::CAT;
   splitter_.leftValues = leftSplitValues;
-  splitter_.rightValues = rightSplitValues;
 
   leftChild_ = &leftChild;
   rightChild_ = &rightChild;
@@ -138,13 +136,8 @@ const Node* Node::percolate(Treedata* testData, const size_t sampleIdx, const si
       if ( splitter_.leftValues.find(data) != splitter_.leftValues.end() ) {
 	return( this->leftChild()->percolate(testData,sampleIdx,scrambleFeatureIdx) );
       } else {
-	// Return right child if splits right
-	//if ( splitter_.rightValues.find(data) != splitter_.rightValues.end() ) {	
 	return( this->rightChild()->percolate(testData,sampleIdx,scrambleFeatureIdx) );
       }
-      
-      // Else return this
-      //return( this );
     }
     
   } else {
@@ -184,16 +177,16 @@ void Node::print(string& traversal, ofstream& toFile) {
 
     if (splitter_.type == Feature::Type::NUM ) {
       toFile << ",SPLITTERTYPE=NUMERICAL"
-	     << ",LVALUES=" << splitter_.leftLeqValue 
-	     << ",RVALUES=" << splitter_.leftLeqValue;
+	     << ",LVALUES=" << splitter_.leftLeqValue; 
+      //<< ",RVALUES=" << splitter_.leftLeqValue;
     } else if ( splitter_.type == Feature::Type::CAT ) {
       toFile << ",SPLITTERTYPE=CATEGORICAL" 
-	     << ",LVALUES=" << "\""; utils::write(toFile,splitter_.leftValues.begin(),splitter_.leftValues.end(),':'); toFile << "\""
-	     << ",RVALUES=" << "\""; utils::write(toFile,splitter_.rightValues.begin(),splitter_.rightValues.end(),':'); toFile << "\"";
+	     << ",LVALUES=" << "\""; utils::write(toFile,splitter_.leftValues.begin(),splitter_.leftValues.end(),':'); toFile << "\"";
+      //<< ",RVALUES=" << "\""; utils::write(toFile,splitter_.rightValues.begin(),splitter_.rightValues.end(),':'); toFile << "\"";
     } else {
       toFile << ",SPLITTERTYPE=TEXTUAL"
-	     << ",LVALUES=" << splitter_.hashValue
-	     << ",RVALUES=" << splitter_.hashValue;
+	     << ",LVALUES=" << splitter_.hashValue;
+      //<< ",RVALUES=" << splitter_.hashValue;
     }
 
     if ( this->missingChild() ) { toFile << ",M=M" << endl; } else { toFile << endl; }
@@ -424,8 +417,8 @@ bool Node::regularSplitterSeek(Treedata* treeData,
   size_t nFeaturesForSplit = featureSampleIcs.size();
   
   num_t splitValue = datadefs::NUM_NAN;
-  set<num_t> splitValues_left; 
-  set<num_t> splitValues_right;
+  unordered_set<num_t> splitValues_left; 
+  //set<num_t> splitValues_right;
   uint32_t hashIdx = 0;
 
   // Initialize split fitness to lowest possible value
@@ -443,9 +436,9 @@ bool Node::regularSplitterSeek(Treedata* treeData,
     vector<size_t> newSampleIcs_left(0);
     vector<size_t> newSampleIcs_right = sampleIcs;
     vector<size_t> newSampleIcs_missing(0);
+    treeData->separateMissingSamples(newSplitFeatureIdx,newSampleIcs_right,newSampleIcs_missing);
     num_t newSplitValue;
-    set<num_t> newSplitValues_left;
-    set<num_t> newSplitValues_right;
+    unordered_set<num_t> newSplitValues_left;
     uint32_t newHashIdx = 0;
     num_t newSplitFitness = 0.0;
 
@@ -458,13 +451,11 @@ bool Node::regularSplitterSeek(Treedata* treeData,
 							forestOptions->nodeSize,
 							newSampleIcs_left,
 							newSampleIcs_right,
-							newSampleIcs_missing,
 							newSplitValue);
 
     } else if ( newSplitFeature->isCategorical() ) {
 
-      
-      set<num_t> uniqueCats;
+      unordered_set<num_t> uniqueCats;
 
       for ( size_t i = 0; i < newSampleIcs_right.size(); ++i ) {
 	uniqueCats.insert(treeData->feature(newSplitFeatureIdx)->data[newSampleIcs_right[i]]);
@@ -472,7 +463,7 @@ bool Node::regularSplitterSeek(Treedata* treeData,
       
       vector<num_t> catOrder(uniqueCats.size());
       size_t iter = 0;
-      for ( set<num_t>::const_iterator it(uniqueCats.begin()); it != uniqueCats.end(); ++it ) {
+      for ( unordered_set<num_t>::const_iterator it(uniqueCats.begin()); it != uniqueCats.end(); ++it ) {
 	catOrder[iter] = *it;
 	++iter;
       }
@@ -485,9 +476,7 @@ bool Node::regularSplitterSeek(Treedata* treeData,
 							  forestOptions->nodeSize,
 							  newSampleIcs_left,
 							  newSampleIcs_right,
-							  newSampleIcs_missing,
-							  newSplitValues_left,
-							  newSplitValues_right);
+							  newSplitValues_left);
 
     } else if ( newSplitFeature->isTextual() && newSampleIcs_right.size() > 0 ) {
 
@@ -502,8 +491,7 @@ bool Node::regularSplitterSeek(Treedata* treeData,
 						      newHashIdx,
 						      forestOptions->nodeSize,
 						      newSampleIcs_left,
-						      newSampleIcs_right,
-						      newSampleIcs_missing);
+						      newSampleIcs_right);
 
     }
 
@@ -515,7 +503,6 @@ bool Node::regularSplitterSeek(Treedata* treeData,
       splitFeatureIdx = newSplitFeatureIdx;
       splitValue = newSplitValue;
       splitValues_left = newSplitValues_left;
-      splitValues_right = newSplitValues_right;
       hashIdx = newHashIdx;
       sampleIcs_left = newSampleIcs_left;
       sampleIcs_right = newSampleIcs_right;
@@ -537,17 +524,14 @@ bool Node::regularSplitterSeek(Treedata* treeData,
 
   } else if ( splitFeature->isCategorical() ) {
     
-    set<string> rawSplitValues_left, rawSplitValues_right;
+    unordered_set<string> rawSplitValues_left;
 
-    for ( set<num_t>::const_iterator it(splitValues_left.begin()); it != splitValues_left.end(); ++it ) {
+    for ( unordered_set<num_t>::const_iterator it(splitValues_left.begin()); it != splitValues_left.end(); ++it ) {
       rawSplitValues_left.insert( treeData->getRawFeatureData(splitFeatureIdx,*it) );
     }
 
-    for ( set<num_t>::const_iterator it(splitValues_right.begin()); it != splitValues_right.end(); ++it ) {
-      rawSplitValues_right.insert( treeData->getRawFeatureData(splitFeatureIdx,*it) );
-    }
 
-    this->setSplitter(splitFeature->name(),rawSplitValues_left,rawSplitValues_right,children[childIdx],children[childIdx+1]);
+    this->setSplitter(splitFeature->name(),rawSplitValues_left,children[childIdx],children[childIdx+1]);
 
   } else if ( splitFeature->isTextual() ) {
     

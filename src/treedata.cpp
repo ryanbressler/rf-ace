@@ -557,14 +557,11 @@ num_t Treedata::numericalFeatureSplit(const size_t targetIdx,
 				      const size_t minSamples,
 				      vector<size_t>& sampleIcs_left,
 				      vector<size_t>& sampleIcs_right,
-				      vector<size_t>& sampleIcs_missing,
 				      num_t& splitValue) {
 
   num_t DI_best = 0.0;
 
   sampleIcs_left.clear();
-
-  this->separateMissingSamples(featureIdx,sampleIcs_right,sampleIcs_missing);
 
   vector<num_t> fv = this->getFeatureData(featureIdx,sampleIcs_right);
   vector<num_t> tv = this->getFeatureData(targetIdx,sampleIcs_right);
@@ -627,15 +624,11 @@ num_t Treedata::categoricalFeatureSplit(const size_t targetIdx,
 					const size_t minSamples,
 					vector<size_t>& sampleIcs_left,
 					vector<size_t>& sampleIcs_right,
-					vector<size_t>& sampleIcs_missing,
-					set<num_t>& splitValues_left,
-					set<num_t>& splitValues_right) {
+					unordered_set<num_t>& splitValues_left) {
 
   num_t DI_best = 0.0;
 
   sampleIcs_left.clear();
-
-  this->separateMissingSamples(featureIdx,sampleIcs_right,sampleIcs_missing);
 
   vector<num_t> fv = this->getFeatureData(featureIdx,sampleIcs_right);
   vector<num_t> tv = this->getFeatureData(targetIdx,sampleIcs_right);
@@ -670,6 +663,7 @@ num_t Treedata::categoricalFeatureSplit(const size_t targetIdx,
   // Then populate the left side (sample indices and split values)
   sampleIcs_left.resize(n_tot);
   splitValues_left.clear();
+  splitValues_left.reserve(fmap_right.size());
   size_t iter = 0;
   for ( map<num_t,vector<size_t> >::const_iterator it(fmap_left.begin()); it != fmap_left.end(); ++it ) {
     for ( size_t i = 0; i < it->second.size(); ++i ) {
@@ -684,18 +678,18 @@ num_t Treedata::categoricalFeatureSplit(const size_t targetIdx,
 
   // Last populate the right side (sample indices and split values)
   sampleIcs_right.resize(n_tot);
-  splitValues_right.clear();
+  //unordered_set<num_t> splitValues_right;
   iter = 0;
   for ( map<num_t,vector<size_t> >::const_iterator it(fmap_right.begin()); it != fmap_right.end(); ++it ) {
     for ( size_t i = 0; i < it->second.size(); ++i ) {
       sampleIcs_right[iter] = sampleIcs[it->second[i]];
       ++iter;
     }
-    splitValues_right.insert( it->first );
+    //splitValues_right.insert( it->first );
   }
   sampleIcs_right.resize(iter);
   //assert( iter == n_right );
-  assert( splitValues_right.size() == fmap_right.size() );
+  //assert( splitValues_right.size() == fmap_right.size() );
 
   return( DI_best );
 
@@ -706,8 +700,7 @@ num_t Treedata::textualFeatureSplit(const size_t targetIdx,
 				    const uint32_t hashIdx,
 				    const size_t minSamples,
 				    vector<size_t>& sampleIcs_left,
-				    vector<size_t>& sampleIcs_right,
-				    vector<size_t>& sampleIcs_missing) {
+				    vector<size_t>& sampleIcs_right) {
 
 
   assert(features_[featureIdx].isTextual());
@@ -715,8 +708,6 @@ num_t Treedata::textualFeatureSplit(const size_t targetIdx,
   size_t n_left = 0;
   size_t n_right = 0;
   size_t n_tot = sampleIcs_right.size();
-
-  sampleIcs_missing.clear();
 
   sampleIcs_left.resize(n_tot);
 

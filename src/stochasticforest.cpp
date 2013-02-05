@@ -125,10 +125,10 @@ void StochasticForest::loadForest(const string& fileName) {
 
       } else if ( nodeMap["SPLITTERTYPE"] == "CATEGORICAL" ){
 
-        set<string> splitLeftValues = utils::keys(nodeMap["LVALUES"], ':');
-        set<string> splitRightValues = utils::keys(nodeMap["RVALUES"], ':');
+        unordered_set<string> splitLeftValues = utils::keys(nodeMap["LVALUES"], ':');
+        //set<string> splitRightValues = utils::keys(nodeMap["RVALUES"], ':');
 
-        nodep->setSplitter(nodeMap["SPLITTER"], splitLeftValues, splitRightValues, lChild, rChild);
+        nodep->setSplitter(nodeMap["SPLITTER"], splitLeftValues, lChild, rChild);
 
       } else if ( nodeMap["SPLITTERTYPE"] == "TEXTUAL" ) {
 	nodep->setSplitter(nodeMap["SPLITTER"], utils::str2<uint32_t>(nodeMap["LVALUES"]), lChild, rChild);
