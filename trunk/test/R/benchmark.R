@@ -180,7 +180,7 @@ return(list(outG=outG,data=testData,idata=imputedTestData))
 
 benchmarkCatSplitterSpeed <- function(offset) {
 
-nSamples <- 1000
+nSamples <- 5000
 std <- 0.3
 nWordsMin <- 4
 nWordsMax <- 8

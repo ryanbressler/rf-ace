@@ -13,7 +13,6 @@
 using namespace std;
 using datadefs::num_t;
 using datadefs::forest_t;
-//using datadefs::forestTypeAssign;
 
 class HelpStyler {
 public:
@@ -516,13 +515,13 @@ public:
     
     cout << endl;
     cout << "Feature selection examples:" << endl
-	 << "bin/rf-ace --" << io.filterDataFile_l << " data.arff --" << generalOptions.targetStr_l << " target --" << io.associationsFile_l << " associations.tsv" << endl
-	 << "bin/rf-ace --" << io.filterDataFile_l << " data.arff --" << generalOptions.targetStr_l << " 5 --" << filterOptions.nPerms_l << " 50 --" << filterOptions.pValueThreshold_l << " 0.001 --" << io.associationsFile_l << " associations.tsv" << endl << endl;
+	 << "bin/rf-ace -" << io.filterDataFile_s << " data.afm -" << generalOptions.targetStr_s << " target -" << forestOptions.nTrees_s << " 100 -" << forestOptions.mTry_s << " 30 -" << io.associationsFile_s << " associations.tsv" << endl
+	 << "bin/rf-ace -" << io.filterDataFile_s << " data.afm -" << generalOptions.targetStr_s << " 5      -" << forestOptions.nTrees_s << " 100 -" << forestOptions.mTry_s << " 30 -" << filterOptions.nPerms_s << " 50 -" << filterOptions.pValueThreshold_s << " 0.001 -" << io.associationsFile_s << " associations.tsv" << endl << endl;
     
     cout << "Model training & prediction examples:" << endl
-	 << "bin/rf-ace --" << io.trainDataFile_l << " data.arff --" << generalOptions.targetStr_l << " target --" << io.testDataFile_l << " testdata.arff --" << forestOptions.nTrees_l << " 1000 --" << forestOptions.mTry_l << " 10 --" << io.predictionsFile_l << " predictions.tsv" << endl
-	 << "bin/rf-ace --" << io.trainDataFile_l << " data.arff --" << generalOptions.targetStr_l << " target --" << io.saveForestFile_l << " model.sf" << endl
-	 << "bin/rf-ace --" << io.loadForestFile_l << " model.sf --" << io.testDataFile_l << " testdata.arff --" << io.predictionsFile_l << " predictions.tsv" << endl << endl;
+	 << "bin/rf-ace -" << io.trainDataFile_s << " data.afm -" << generalOptions.targetStr_s << " target -" << io.testDataFile_s << " testdata.afm -" << forestOptions.nTrees_s << " 100 -" << forestOptions.mTry_s << " 30 -" << io.predictionsFile_s << " predictions.tsv" << endl
+	 << "bin/rf-ace -" << io.trainDataFile_s << " data.afm -" << generalOptions.targetStr_s << " target -" << io.saveForestFile_s << " model.sf" << endl
+	 << "bin/rf-ace -" << io.loadForestFile_s << " model.sf -" << io.testDataFile_s << " testdata.afm -" << io.predictionsFile_s << " predictions.tsv" << endl << endl;
     
   }
   

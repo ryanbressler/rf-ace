@@ -248,7 +248,8 @@ void Node::recursiveNodeSplit(Treedata* treeData,
 			      vector<size_t>& minDistToRoot,
 			      size_t* nLeaves,
 			      size_t& childIdx,
-			      vector<Node>& children) {
+			      vector<Node>& children,
+			      SplitCache& splitCache) {
 
   if ( false ) {
     cout << "REC " << this << endl;
@@ -257,18 +258,19 @@ void Node::recursiveNodeSplit(Treedata* treeData,
     cout << " " << nLeaves << endl;
   }
 
-  vector<num_t> trainData = treeData->getFeatureData(targetIdx,sampleIcs);
+  splitCache.trainData = treeData->getFeatureData(targetIdx,sampleIcs);
+  splitCache.nSamples = sampleIcs.size();
 
   if ( predictionFunctionType == MEAN ) {
-    num_t trainPrediction = math::mean(trainData);
+    num_t trainPrediction = math::mean(splitCache.trainData);
     string rawTrainPrediction = utils::num2str(trainPrediction);
     this->setTrainPrediction( trainPrediction, rawTrainPrediction );
   } else if ( predictionFunctionType == MODE ) {
-    num_t trainPrediction = math::mode<num_t>(trainData);
+    num_t trainPrediction = math::mode<num_t>(splitCache.trainData);
     string rawTrainPrediction = treeData->getRawFeatureData(targetIdx,trainPrediction);
     this->setTrainPrediction( trainPrediction, rawTrainPrediction );
   } else if ( predictionFunctionType == GAMMA ) {
-    num_t trainPrediction = math::gamma(trainData, treeData->feature(targetIdx)->nCategories() );
+    num_t trainPrediction = math::gamma(splitCache.trainData, treeData->feature(targetIdx)->nCategories() );
     string rawTrainPrediction = utils::num2str(trainPrediction);
     this->setTrainPrediction( trainPrediction, rawTrainPrediction );
   } else {
@@ -279,74 +281,70 @@ void Node::recursiveNodeSplit(Treedata* treeData,
   assert( !datadefs::isNAN(trainPrediction_) );
   assert( !datadefs::isNAN_STR(rawTrainPrediction_) );
 
-  size_t nSamples = sampleIcs.size();
-
   assert( *nLeaves <= forestOptions->nMaxLeaves );
 
-  if ( nSamples < 2 * forestOptions->nodeSize || *nLeaves == forestOptions->nMaxLeaves || childIdx + 1 >= children.size() ) {
+  if ( splitCache.nSamples < 2 * forestOptions->nodeSize || *nLeaves == forestOptions->nMaxLeaves || childIdx + 1 >= children.size() ) {
     return;
   }
 
-  vector<size_t> featureSampleIcs;
+  splitCache.featureSampleIcs.clear();
 
   if ( forestOptions->isRandomSplit ) {
 
-    featureSampleIcs.resize(forestOptions->mTry);
+    splitCache.featureSampleIcs.resize(forestOptions->mTry);
 
     for ( size_t i = 0; i < forestOptions->mTry; ++i ) {
-      featureSampleIcs[i] = pmf->sample(random); //icdf( random->uniform() );
+      splitCache.featureSampleIcs[i] = pmf->sample(random); //icdf( random->uniform() );
     }
 
     if ( forestOptions->useContrasts ) {
       for ( size_t i = 0; i < forestOptions->mTry; ++i ) {
 	
 	// If the sampled feature is a contrast... 
-	if ( ! treeData->feature(featureSampleIcs[i])->isTextual() && random->uniform() < forestOptions->contrastFraction ) { // p% sampling rate
+	if ( ! treeData->feature(splitCache.featureSampleIcs[i])->isTextual() && random->uniform() < forestOptions->contrastFraction ) { // p% sampling rate
 	  
 	  // Contrast features in Treedata are indexed with an offset of the number of features: nFeatures
-	  featureSampleIcs[i] += treeData->nFeatures();
+	  splitCache.featureSampleIcs[i] += treeData->nFeatures();
 	}
       }
     } 
   } else {
 
-    featureSampleIcs = utils::range(treeData->nFeatures());
+    splitCache.featureSampleIcs = utils::range(treeData->nFeatures());
 
-    featureSampleIcs.erase(featureSampleIcs.begin()+targetIdx);
+    splitCache.featureSampleIcs.erase(splitCache.featureSampleIcs.begin()+targetIdx);
   }
-  // assert( featureSampleIcs.size() == forestOptions->mTry );
   
-  vector<size_t> sampleIcs_left,sampleIcs_right,sampleIcs_missing;
-
-  size_t splitFeatureIdx;
-  num_t splitFitness;
+  splitCache.sampleIcs_left.clear();
+  splitCache.sampleIcs_right.clear();
+  splitCache.sampleIcs_missing.clear();
 
   bool foundSplit = this->regularSplitterSeek(treeData,
 					      targetIdx,
 					      forestOptions,
 					      random,
 					      sampleIcs,
-					      featureSampleIcs,
-					      splitFeatureIdx,
-					      sampleIcs_left,
-					      sampleIcs_right,
-					      sampleIcs_missing,
-					      splitFitness,
 					      childIdx,
-					      children);
+					      children,
+					      splitCache);
         
   if ( !foundSplit ) {
     return;
   }
-
-  if ( minDistToRoot[splitFeatureIdx] > treeDepth ) {
-    minDistToRoot[splitFeatureIdx] = treeDepth;
-  }
-
-  featuresInTree.insert(splitFeatureIdx);
-
-  *nLeaves += 1;
   
+  if ( minDistToRoot[splitCache.splitFeatureIdx] > treeDepth ) {
+    minDistToRoot[splitCache.splitFeatureIdx] = treeDepth;
+  }
+  
+  featuresInTree.insert(splitCache.splitFeatureIdx);
+  
+  *nLeaves += 1;
+
+  vector<size_t> sampleIcs_left = splitCache.sampleIcs_left;
+  vector<size_t> sampleIcs_right = splitCache.sampleIcs_right;
+  vector<size_t> sampleIcs_missing = splitCache.sampleIcs_missing;
+  
+  // Left child recursive split
   this->leftChild()->recursiveNodeSplit(treeData,
 					targetIdx,
 					forestOptions,
@@ -359,8 +357,11 @@ void Node::recursiveNodeSplit(Treedata* treeData,
 					minDistToRoot,
 					nLeaves,
 					childIdx,
-					children);
+					children,
+					splitCache);
 
+
+  // Right child recursive split
   this->rightChild()->recursiveNodeSplit(treeData,
 					 targetIdx,
 					 forestOptions,
@@ -373,10 +374,14 @@ void Node::recursiveNodeSplit(Treedata* treeData,
 					 minDistToRoot,
 					 nLeaves,
 					 childIdx,
-					 children);
+					 children,
+					 splitCache);
+  
 
+  
+  // OPTIONAL: Missing child recursive split
   if ( this->missingChild() ) {
-
+    
     assert( sampleIcs_missing.size() > 0 );
 
     *nLeaves += 1;
@@ -393,8 +398,8 @@ void Node::recursiveNodeSplit(Treedata* treeData,
 					     minDistToRoot,
 					     nLeaves,
 					     childIdx,
-					     children);
-    
+					     children,
+					     splitCache); 
   }
   
 }
@@ -404,61 +409,52 @@ bool Node::regularSplitterSeek(Treedata* treeData,
 			       const ForestOptions* forestOptions,
 			       distributions::Random* random,
 			       const vector<size_t>& sampleIcs,
-			       const vector<size_t>& featureSampleIcs,
-			       size_t& splitFeatureIdx,
-			       vector<size_t>& sampleIcs_left,
-			       vector<size_t>& sampleIcs_right,
-			       vector<size_t>& sampleIcs_missing,
-			       num_t& splitFitness,
 			       size_t& childIdx,
-			       vector<Node>& children) {
+			       vector<Node>& children,
+			       SplitCache& splitCache) {
   
   // This many features will be tested for splitting the data
-  size_t nFeaturesForSplit = featureSampleIcs.size();
+  size_t nFeaturesForSplit = splitCache.featureSampleIcs.size();
   
-  num_t splitValue = datadefs::NUM_NAN;
-  unordered_set<num_t> splitValues_left; 
-  //set<num_t> splitValues_right;
-  uint32_t hashIdx = 0;
-
   // Initialize split fitness to lowest possible value
-  splitFitness = 0.0;
+  splitCache.splitFitness = 0.0;
 
   // Loop through candidate splitters
   for ( size_t i = 0; i < nFeaturesForSplit; ++i ) {
     
     // Get split feature index
-    size_t newSplitFeatureIdx = featureSampleIcs[i];
+    splitCache.newSplitFeatureIdx = splitCache.featureSampleIcs[i];
 
     // We don't want that the program tests to split data with itself
-    assert( newSplitFeatureIdx != targetIdx );
+    assert( splitCache.newSplitFeatureIdx != targetIdx );
 
-    vector<size_t> newSampleIcs_left(0);
-    vector<size_t> newSampleIcs_right = sampleIcs;
-    vector<size_t> newSampleIcs_missing(0);
-    treeData->separateMissingSamples(newSplitFeatureIdx,newSampleIcs_right,newSampleIcs_missing);
-    num_t newSplitValue;
-    unordered_set<num_t> newSplitValues_left;
-    uint32_t newHashIdx = 0;
-    num_t newSplitFitness = 0.0;
+    // Reset the splitCache
+    splitCache.newSampleIcs_left.clear();
+    splitCache.newSampleIcs_right = sampleIcs;
+    splitCache.newSampleIcs_missing.clear();
+    treeData->separateMissingSamples(splitCache.newSplitFeatureIdx,splitCache.newSampleIcs_right,splitCache.newSampleIcs_missing);
+    splitCache.newSplitValue = datadefs::NUM_NAN;
+    splitCache.newSplitValues_left.clear();
+    splitCache.newHashIdx = 0;
+    splitCache.newSplitFitness = 0.0;
 
-    const Feature* newSplitFeature = treeData->feature(newSplitFeatureIdx);
+    const Feature* newSplitFeature = treeData->feature(splitCache.newSplitFeatureIdx);
 
     if ( newSplitFeature->isNumerical() ) {
 
-      newSplitFitness = treeData->numericalFeatureSplit(targetIdx,
-							newSplitFeatureIdx,
-							forestOptions->nodeSize,
-							newSampleIcs_left,
-							newSampleIcs_right,
-							newSplitValue);
+      splitCache.newSplitFitness = treeData->numericalFeatureSplit(targetIdx,
+								   splitCache.newSplitFeatureIdx,
+								   forestOptions->nodeSize,
+								   splitCache.newSampleIcs_left,
+								   splitCache.newSampleIcs_right,
+								   splitCache.newSplitValue);
 
     } else if ( newSplitFeature->isCategorical() ) {
-
-      unordered_set<num_t> uniqueCats;
-
-      for ( size_t i = 0; i < newSampleIcs_right.size(); ++i ) {
-	uniqueCats.insert(treeData->feature(newSplitFeatureIdx)->data[newSampleIcs_right[i]]);
+      
+      unordered_set<num_t> uniqueCats(sampleIcs.size());
+      
+      for ( size_t i = 0; i < splitCache.newSampleIcs_right.size(); ++i ) {
+	uniqueCats.insert(treeData->feature(splitCache.newSplitFeatureIdx)->data[splitCache.newSampleIcs_right[i]]);
       }
       
       vector<num_t> catOrder(uniqueCats.size());
@@ -467,67 +463,67 @@ bool Node::regularSplitterSeek(Treedata* treeData,
 	catOrder[iter] = *it;
 	++iter;
       }
-
+      
       utils::permute(catOrder,random);
+      
+      splitCache.newSplitFitness = treeData->categoricalFeatureSplit(targetIdx,
+								     splitCache.newSplitFeatureIdx,
+								     catOrder,
+								     forestOptions->nodeSize,
+								     splitCache.newSampleIcs_left,
+								     splitCache.newSampleIcs_right,
+								     splitCache.newSplitValues_left);
 
-      newSplitFitness = treeData->categoricalFeatureSplit(targetIdx,
-							  newSplitFeatureIdx,
-							  catOrder,
-							  forestOptions->nodeSize,
-							  newSampleIcs_left,
-							  newSampleIcs_right,
-							  newSplitValues_left);
-
-    } else if ( newSplitFeature->isTextual() && newSampleIcs_right.size() > 0 ) {
+    } else if ( newSplitFeature->isTextual() && splitCache.newSampleIcs_right.size() > 0 ) {
 
       // Choose random sample
-      size_t sampleIdx = newSampleIcs_right[ random->integer() % newSampleIcs_right.size() ];
+      size_t sampleIdx = splitCache.newSampleIcs_right[ random->integer() % splitCache.newSampleIcs_right.size() ];
 
       // Choose random hash from the randomly selected sample
-      newHashIdx = newSplitFeature->getHash(sampleIdx,random->integer());
+      splitCache.newHashIdx = newSplitFeature->getHash(sampleIdx,random->integer());
 
-      newSplitFitness = treeData->textualFeatureSplit(targetIdx,
-						      newSplitFeatureIdx,
-						      newHashIdx,
-						      forestOptions->nodeSize,
-						      newSampleIcs_left,
-						      newSampleIcs_right);
+      splitCache.newSplitFitness = treeData->textualFeatureSplit(targetIdx,
+								 splitCache.newSplitFeatureIdx,
+								 splitCache.newHashIdx,
+								 forestOptions->nodeSize,
+								 splitCache.newSampleIcs_left,
+								 splitCache.newSampleIcs_right);
 
     }
 
-    if( newSplitFitness > splitFitness &&
-	newSampleIcs_left.size() >= forestOptions->nodeSize &&
-	newSampleIcs_right.size() >= forestOptions->nodeSize ) {
+    if( splitCache.newSplitFitness > splitCache.splitFitness &&
+	splitCache.newSampleIcs_left.size() >= forestOptions->nodeSize &&
+	splitCache.newSampleIcs_right.size() >= forestOptions->nodeSize ) {
       
-      splitFitness = newSplitFitness;
-      splitFeatureIdx = newSplitFeatureIdx;
-      splitValue = newSplitValue;
-      splitValues_left = newSplitValues_left;
-      hashIdx = newHashIdx;
-      sampleIcs_left = newSampleIcs_left;
-      sampleIcs_right = newSampleIcs_right;
-      sampleIcs_missing = newSampleIcs_missing;
+      splitCache.splitFitness      = splitCache.newSplitFitness;
+      splitCache.splitFeatureIdx   = splitCache.newSplitFeatureIdx;
+      splitCache.splitValue        = splitCache.newSplitValue;
+      splitCache.splitValues_left  = splitCache.newSplitValues_left;
+      splitCache.hashIdx           = splitCache.newHashIdx;
+      splitCache.sampleIcs_left    = splitCache.newSampleIcs_left;
+      splitCache.sampleIcs_right   = splitCache.newSampleIcs_right;
+      splitCache.sampleIcs_missing = splitCache.newSampleIcs_missing;
     }    
 
   }
   
   // If none of the splitter candidates worked as a splitter
-  if ( fabs(splitFitness) < datadefs::EPS ) {
+  if ( fabs(splitCache.splitFitness) < datadefs::EPS ) {
     return(false);
   } 
 
-  const Feature* splitFeature = treeData->feature(splitFeatureIdx);
+  const Feature* splitFeature = treeData->feature(splitCache.splitFeatureIdx);
 
   if ( splitFeature->isNumerical() ) {
 
-    this->setSplitter(splitFeature->name(),splitValue,children[childIdx],children[childIdx+1]);
+    this->setSplitter(splitFeature->name(),splitCache.splitValue,children[childIdx],children[childIdx+1]);
 
   } else if ( splitFeature->isCategorical() ) {
     
     unordered_set<string> rawSplitValues_left;
 
-    for ( unordered_set<num_t>::const_iterator it(splitValues_left.begin()); it != splitValues_left.end(); ++it ) {
-      rawSplitValues_left.insert( treeData->getRawFeatureData(splitFeatureIdx,*it) );
+    for ( unordered_set<num_t>::const_iterator it(splitCache.splitValues_left.begin()); it != splitCache.splitValues_left.end(); ++it ) {
+      rawSplitValues_left.insert( treeData->getRawFeatureData(splitCache.splitFeatureIdx,*it) );
     }
 
 
@@ -535,13 +531,13 @@ bool Node::regularSplitterSeek(Treedata* treeData,
 
   } else if ( splitFeature->isTextual() ) {
     
-    this->setSplitter(splitFeature->name(),hashIdx,children[childIdx],children[childIdx+1]);
+    this->setSplitter(splitFeature->name(),splitCache.hashIdx,children[childIdx],children[childIdx+1]);
 
   }
 
   childIdx += 2;
 
-  if ( ! forestOptions->noNABranching && sampleIcs_missing.size() > 0 && childIdx < children.size() ) { 
+  if ( ! forestOptions->noNABranching && splitCache.sampleIcs_missing.size() > 0 && childIdx < children.size() ) { 
     missingChild_ = &children[childIdx++];
   }
 

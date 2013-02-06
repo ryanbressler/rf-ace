@@ -9,6 +9,8 @@
 #include <sstream>
 #include <cstdlib>
 #include <unordered_set>
+#include <unordered_map>
+
 #include "datadefs.hpp"
 //#include "math.hpp"
 #include "distributions.hpp"
@@ -155,31 +157,35 @@ namespace utils {
 						const size_t minSamples,
 						size_t& splitIdx);
   
-  num_t categoricalFeatureSplitsNumericalTarget(const vector<num_t>& tv,
-						const vector<num_t>& fv,
-						const size_t minSamples,
-						map<num_t,vector<size_t> >& fmap_left,
-						map<num_t,vector<size_t> >& fmap_right);
- 
+  /*
+    num_t categoricalFeatureSplitsNumericalTarget(const vector<num_t>& tv,
+    const vector<num_t>& fv,
+    const size_t minSamples,
+    unordered_map<num_t,vector<size_t> >& fmap_left,
+    unordered_map<num_t,vector<size_t> >& fmap_right);
+  */ 
+
   num_t categoricalFeatureSplitsNumericalTarget2(const vector<num_t>& tv,
 						 const vector<num_t>& fv,
 						 const size_t minSamples,
 						 const vector<num_t>& catOrder,
-						 map<num_t,vector<size_t> >& fmap_left,
-						 map<num_t,vector<size_t> >& fmap_right);
+						 unordered_map<num_t,vector<size_t> >& fmap_left,
+						 unordered_map<num_t,vector<size_t> >& fmap_right);
  
-  num_t categoricalFeatureSplitsCategoricalTarget(const vector<num_t>& tv,
-						  const vector<num_t>& fv,
-						  const size_t minSamples,
-						  map<num_t,vector<size_t> >& fmap_left,
-						  map<num_t,vector<size_t> >& fmap_right);
+  /*
+    num_t categoricalFeatureSplitsCategoricalTarget(const vector<num_t>& tv,
+    const vector<num_t>& fv,
+    const size_t minSamples,
+    unordered_map<num_t,vector<size_t> >& fmap_left,
+    unordered_map<num_t,vector<size_t> >& fmap_right);
+  */
 
   num_t categoricalFeatureSplitsCategoricalTarget2(const vector<num_t>& tv,
 						   const vector<num_t>& fv,
 						   const size_t minSamples,
 						   const vector<num_t>& catOrder,
-						   map<num_t,vector<size_t> >& fmap_left,
-						   map<num_t,vector<size_t> >& fmap_right);
+						   unordered_map<num_t,vector<size_t> >& fmap_left,
+						   unordered_map<num_t,vector<size_t> >& fmap_right);
   
   
 }

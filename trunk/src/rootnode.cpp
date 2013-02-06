@@ -21,21 +21,11 @@ size_t RootNode::getTreeSizeEstimate(const size_t nSamples, const size_t nMaxLea
 
   // Upper bound for the number of nodes as dictated by nMaxLeaves, 
   // assuming ternary splits (left,right,missing)
-  size_t S1 = static_cast<size_t>(ceil(1.0 + 3.0 * ( nMaxLeaves - 1 ) / 2.0)); //static_cast<size_t>( powf(3,ceil(logf(nMaxLeaves-1)/logf(2))) + 1 );
+  size_t S1 = static_cast<size_t>(ceil(1.0 + 3.0 * ( nMaxLeaves - 1 ) / 2.0)); 
 
   // Upper bound for the number of nodes as dictated by sample size,
   // assuming ternary splits (left,right,missing)
   size_t S2 = static_cast<size_t>(ceil(1.0 + 3.0 * ( ceil(nSamples/nodeSize) - 1 ) / 2.0 ));
-
-  // Upper bound for the depth of tree as dictated by nSamples, 
-  // assuming balanced ternary splits (left,right,missing) 
-  // size_t k = static_cast<size_t>( ceil( ( logf(nSamples) - logf(nodeSize) ) / logf(3) ) );
-
-  // Tree depth converted to the number of nodes in the tree 
-  // S = 1 + 3^1 + 3^2 + ... + 3^(k+1)
-  // size_t S2 = 1 + static_cast<size_t>( ( powf(3,k+1) - 3 ) / 2 );
-
-  // cout << "f(" << nSamples << "," << nMaxLeaves << "," << nodeSize << ") = min(" << S1 << "," << S2 << ")" << endl;  
 
   // Return the smaller of the two upper bounds, S1 and S2
   return( S1 < S2 ? S1 : S2 );
@@ -123,11 +113,12 @@ void RootNode::growTree(Treedata* trainData, const size_t targetIdx, const distr
 			   minDistToRoot_,
 			   &nLeaves_,
 			   nChildren,
-			   children_);
+			   children_,
+			   splitCache_);
   
   children_.resize(nChildren);
 
-  this->verifyIntegrity();
+  //this->verifyIntegrity();
 
 }
 

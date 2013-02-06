@@ -4,6 +4,7 @@
 #include <vector>
 #include <algorithm>
 #include <map>
+#include <unordered_map>
 #include <utility>
 #include "datadefs.hpp"
 #include "errno.hpp"
@@ -111,8 +112,8 @@ namespace math {
   }
 
   template<typename T>
-  map<T,size_t> frequency(const vector<T>& x) {
-    map<T,size_t> freq;
+  unordered_map<T,size_t> frequency(const vector<T>& x) {
+    unordered_map<T,size_t> freq;
     for(size_t i = 0; i < x.size(); ++i) {
       if( freq.find(x[i]) == freq.end() ) {
 	freq[ x[i] ] = 1;
@@ -125,9 +126,9 @@ namespace math {
 
   template<typename T>
   T mode(const vector<T>& x) {
-    map<T,size_t> freq = frequency(x);
-    typename map<T,size_t>::const_iterator maxElement( freq.begin() );
-    for ( typename map<T,size_t>::const_iterator it(freq.begin()); it != freq.end(); ++it ) {
+    unordered_map<T,size_t> freq = frequency(x);
+    typename unordered_map<T,size_t>::const_iterator maxElement( freq.begin() );
+    for ( typename unordered_map<T,size_t>::const_iterator it(freq.begin()); it != freq.end(); ++it ) {
       if ( it->second > maxElement->second ) {
 	maxElement = it;
       }
@@ -209,12 +210,12 @@ namespace math {
      NOTE: NANs will corrupt the data
   */
   inline void incrementSquaredFrequency(const num_t x_n,
-					map<num_t,size_t>& freq,
+					unordered_map<num_t,size_t>& freq,
 					size_t& sqFreq) {
 
 
     // Check if the value already exists in the frequency map
-    map<num_t,size_t>::iterator it(freq.find(x_n));
+    unordered_map<num_t,size_t>::iterator it(freq.find(x_n));
     if(it == freq.end()) {
 
       // If not, squared frequency becomes updated by 1
@@ -237,7 +238,7 @@ namespace math {
      NOTE: NANs will corrupt the data
   */ 
   inline void decrementSquaredFrequency(const num_t x_n,
-                                        map<num_t,size_t>& freq,
+                                        unordered_map<num_t,size_t>& freq,
                                         size_t& sqFreq) {
     
     assert( freq.find(x_n) != freq.end() );

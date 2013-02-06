@@ -59,6 +59,8 @@ private:
 
   vector<size_t> minDistToRoot_;
 
+  SplitCache splitCache_;
+
 };
 
 #endif
