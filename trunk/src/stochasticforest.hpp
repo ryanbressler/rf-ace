@@ -28,8 +28,10 @@ public:
   //void getImportanceValues(Treedata* trainData, vector<num_t>& importanceValues, vector<num_t>& contrastImportanceValues);
   void getMeanMinimalDepthValues(Treedata* trainData, vector<num_t>& depthValues, vector<num_t>& contrastDepthValues);
 
-  void predict(Treedata* treeDataTest, vector<string>& predictions, vector<num_t>& confidence, size_t nThreads = 1);
-  void predict(Treedata* treeDataTest, vector<num_t>& predictions, vector<num_t>& confidence, size_t nThreads = 1);
+  void predict(Treedata* testData, vector<string>& predictions, vector<num_t>& confidence, size_t nThreads = 1);
+  void predict(Treedata* testData, vector<num_t>& predictions, vector<num_t>& confidence, size_t nThreads = 1);
+
+  void predictQuantiles(Treedata* testData, vector<vector<num_t> >& predictions, const vector<num_t>& quantilePoints, distributions::Random* random, size_t nSamplesPerTree);
 
   //vector<num_t> getOobPredictions();
   //vector<num_t> getPermutedOobPredictions(const size_t featureIdx);

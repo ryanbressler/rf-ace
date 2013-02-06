@@ -31,6 +31,8 @@ public:
   num_t getTestPrediction(Treedata* treeData, const size_t sampleIdx);
   string getRawTestPrediction(Treedata* treeData, const size_t sampleIdx);
 
+  vector<num_t> getChildLeafTrainData(Treedata* treeData, const size_t sampleIdx);
+
   vector<size_t> getOobIcs();
 
   size_t nOobSamples();

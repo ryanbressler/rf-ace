@@ -36,8 +36,9 @@ class RFACE {
 
 public:
 
-  RFACE():
+  RFACE(size_t nThreads = 1, int seed = 0):
     trainedModel_(NULL) {
+    this->resetRandomNumberGenerators(nThreads,seed);
   }
 
   ~RFACE() {
@@ -70,13 +71,19 @@ public:
     vector<num_t> confidence;
     vector<string> sampleNames;
   };
+
+  struct QuantilePredictionOutput {
+    string targetName;
+    vector<num_t> quantiles;
+    vector<vector<num_t> > predictions;
+    vector<num_t> trueData;
+    vector<string> sampleNames;
+  };
   
   void train(Treedata* trainData, 
 	     const size_t targetIdx, 
 	     const vector<num_t>& featureWeights, 
-	     ForestOptions* forestOptions, 
-	     const int seed = 0,
-	     const size_t nThreads = 1) {
+	     ForestOptions* forestOptions) {
     
     forestOptions->useContrasts = false;
 
@@ -89,16 +96,14 @@ public:
       trainedModel_ = NULL;
     }
     
-    vector<distributions::Random> randoms = this->makeRandomNumberGenerators(nThreads,seed);
-    
     trainedModel_ = new StochasticForest();
 
     if ( forestOptions->forestType == forest_t::RF ) {
-      trainedModel_->learnRF(trainData,targetIdx,forestOptions,featureWeights,randoms);
+      trainedModel_->learnRF(trainData,targetIdx,forestOptions,featureWeights,randoms_);
     } else if ( forestOptions->forestType == forest_t::GBT ) {
-      trainedModel_->learnGBT(trainData,targetIdx,forestOptions,featureWeights,randoms);
+      trainedModel_->learnGBT(trainData,targetIdx,forestOptions,featureWeights,randoms_);
     } else if ( forestOptions->forestType == forest_t::CART ) {
-      trainedModel_->learnRF(trainData,targetIdx,forestOptions,featureWeights,randoms);
+      trainedModel_->learnRF(trainData,targetIdx,forestOptions,featureWeights,randoms_);
     } else {
       cerr << "Unknown forest type!" << endl;
       exit(1);
@@ -110,8 +115,6 @@ public:
 		      const vector<num_t>& featureWeights, 
 		      ForestOptions* forestOptions,
 		      FilterOptions* filterOptions,
-		      const int seed = 0,
-		      const size_t nThreads = 1,
 		      const string& forestFile = "" ) {
 
     forestOptions->useContrasts = true;
@@ -131,10 +134,8 @@ public:
     vector<num_t> contrastImportanceSample;
     set<size_t> featuresInAllForests;
 
-    vector<distributions::Random> randoms = makeRandomNumberGenerators(nThreads,seed);
-
     cout << endl << "Uncovering associations... " << flush;
-    executeRandomForest(filterData,targetIdx,featureWeights,forestOptions,filterOptions,filterOutput,randoms,forestFile);
+    executeRandomForest(filterData,targetIdx,featureWeights,forestOptions,filterOptions,filterOutput,forestFile);
     cout << "DONE" << endl;
 
     return( filterOutput );
@@ -147,11 +148,8 @@ public:
 			   ForestOptions* forestOptions,
 			   FilterOptions* filterOptions,
 			   FilterOutput& filterOutput,
-			   vector<distributions::Random>& randoms,
 			   const string& forestFile) {
     
-    //vector<vector<size_t> > nodeMat(filterOptions->nPerms,vector<size_t>(forestOptions->nTrees));
-
     vector<vector<num_t> >         importanceMat( filterOptions->nPerms, vector<num_t>(filterData->nFeatures()) );
     vector<vector<num_t> > contrastImportanceMat( filterOptions->nPerms, vector<num_t>(filterData->nFeatures()) );
 
@@ -177,13 +175,13 @@ public:
 
     for(size_t permIdx = 0; permIdx < filterOptions->nPerms; ++permIdx) {
 
-      filterData->permuteContrasts(&randoms[0]);
+      filterData->permuteContrasts(&randoms_[0]);
 
       progress.update(1.0*permIdx/filterOptions->nPerms);
 
       StochasticForest SF;
 
-      SF.learnRF(filterData,targetIdx,forestOptions,featureWeights,randoms);
+      SF.learnRF(filterData,targetIdx,forestOptions,featureWeights,randoms_);
 
       if ( forestFile != "" ) {
 	//ofstream toFile;
@@ -292,13 +290,15 @@ public:
 
   }
 
-  TestOutput test(Treedata* testData, const size_t nThreads = 1) {
+  TestOutput test(Treedata* testData) {
 
     assert(trainedModel_);
 
     TestOutput testOutput;
 
     size_t targetIdx = testData->getFeatureIdx(trainedModel_->getTargetName());
+
+    size_t nThreads = randoms_.size();
 
     testOutput.targetName = trainedModel_->getTargetName();
     vector<num_t> confidence;
@@ -330,6 +330,33 @@ public:
     }
     testOutput.confidence = confidence;
     return( testOutput );
+  }
+
+  QuantilePredictionOutput predictQuantiles(Treedata* testData, ForestOptions* forestOptions) {
+    
+    assert( trainedModel_ );
+
+    QuantilePredictionOutput qPredOut;
+
+    qPredOut.targetName = trainedModel_->getTargetName();
+
+    size_t targetIdx = testData->getFeatureIdx(qPredOut.targetName);
+
+    if ( targetIdx != testData->end() ) {
+      qPredOut.trueData = testData->getFeatureData(targetIdx);
+    } else {
+      qPredOut.trueData = vector<num_t>(testData->nSamples(),datadefs::NUM_NAN);
+    }
+
+    trainedModel_->predictQuantiles(testData,qPredOut.predictions,forestOptions->quantiles,&randoms_[0],forestOptions->nodeSize);
+
+    qPredOut.sampleNames.resize( testData->nSamples() );
+    for ( size_t i = 0; i < testData->nSamples(); ++i ) {
+      qPredOut.sampleNames[i] = testData->getSampleName(i);
+    }
+
+    return( qPredOut );
+
   }
   
   void load(const string& fileName) {
@@ -427,28 +454,31 @@ public:
     }
   */
 
-  vector<distributions::Random> makeRandomNumberGenerators(const size_t nThreads, int seed) {
+  void resetRandomNumberGenerators(const size_t nThreads, int seed) {
 
     assert( nThreads >= 1 );
-
-    vector<distributions::Random> randoms(nThreads);
 
     if ( seed < 0 ) {
       cerr << "Invalid random seed (" << seed << ")" << endl;
     }
 
-    for ( size_t threadIdx = 0; threadIdx < nThreads; ++threadIdx ) {
-      randoms[threadIdx].seed(seed + threadIdx);
-    }
+    // We have as many random number generators as there are threads
+    randoms_.resize(nThreads);
 
-    return(randoms);
+    // Set the seeds for each RNG to be seed + threadIdx
+    for ( size_t threadIdx = 0; threadIdx < nThreads; ++threadIdx ) {
+      randoms_[threadIdx].seed(seed + threadIdx);
+    }
 
   }
 
 
 private:
 
+  vector<distributions::Random> randoms_;
+
   StochasticForest* trainedModel_;
+  
 
 };
 

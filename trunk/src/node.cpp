@@ -165,6 +165,31 @@ Node* Node::missingChild() const {
   return( missingChild_ );
 }
 
+vector<const Node*> Node::getChildLeaves() const {
+
+  vector<const Node*> leaves;
+  this->recursiveGetChildLeaves(leaves);
+
+  return(leaves);
+
+}
+
+void Node::recursiveGetChildLeaves(vector<const Node*>& leaves) const {
+
+  if ( ! this->hasChildren() ) {
+    leaves.push_back(this);
+    return;
+  }
+
+  this->leftChild()->recursiveGetChildLeaves(leaves);
+  this->rightChild()->recursiveGetChildLeaves(leaves);
+  
+  if ( this->missingChild() ) {
+    this->missingChild()->recursiveGetChildLeaves(leaves);
+  }
+  
+}
+
 /**
  * Recursively prints a tree to a stream (file)
  */
@@ -232,6 +257,10 @@ num_t Node::getTrainPrediction() const {
   return( trainPrediction_ );
 }
 
+vector<num_t> Node::getTrainData() const {
+  return( trainData_ );
+}
+
 string Node::getRawTrainPrediction() const {
   assert( !datadefs::isNAN_STR(rawTrainPrediction_) );
   return( rawTrainPrediction_ );
@@ -285,6 +314,9 @@ void Node::recursiveNodeSplit(Treedata* treeData,
   assert( *nLeaves <= forestOptions->nMaxLeaves );
 
   if ( splitCache.nSamples < 2 * forestOptions->nodeSize || *nLeaves == forestOptions->nMaxLeaves || childIdx + 1 >= children.size() ) {
+    if ( forestOptions->useQuantiles ) {
+      trainData_ = splitCache.trainData;
+    }
     return;
   }
 
@@ -330,6 +362,9 @@ void Node::recursiveNodeSplit(Treedata* treeData,
 					      splitCache);
         
   if ( !foundSplit ) {
+    if ( forestOptions->useQuantiles ) {
+      trainData_ = splitCache.trainData;
+    }
     return;
   }
   

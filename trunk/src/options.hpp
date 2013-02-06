@@ -76,6 +76,7 @@ public:
   bool sampleWithReplacement;
   bool isRandomSplit;
   bool useContrasts;
+  bool useQuantiles;
 
   ForestOptions():
     forestType(forest_t::RF), forestType_s("f"), forestType_l("forestType"),
@@ -128,6 +129,7 @@ public:
     parser.getArgument<num_t>(  shrinkage_s,        shrinkage_l,        shrinkage );
     parser.getArgument<num_t>(  contrastFraction_s, contrastFraction_l, contrastFraction );
     parser.getFlag(             noNABranching_s,    noNABranching_l,    noNABranching );
+    parser.getFlag(             quantiles_s,        quantiles_l,        useQuantiles);
 
     string quantilesAsStr;
     parser.getArgument<string>( quantiles_s,        quantiles_l,        quantilesAsStr );
