@@ -50,7 +50,8 @@ const size_t datadefs::MAX_THREADS = 1;
 
 const map<string,datadefs::forest_t> datadefs::forestTypeAssign = { {"RF",datadefs::forest_t::RF}, {"GBT",datadefs::forest_t::GBT}, {"CART",datadefs::forest_t::CART} };
 
-const bool            datadefs::SF_DEFAULT_NO_NA_BRANCHING = false;
+const bool                      datadefs::SF_DEFAULT_NO_NA_BRANCHING = false;
+const vector<datadefs::num_t>   datadefs::SF_DEFAULT_QUANTILES = {};
 
 // Random Forest default configuration
 const size_t          datadefs::RF_DEFAULT_N_TREES = 100;

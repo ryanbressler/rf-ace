@@ -13,6 +13,7 @@ using datadefs::num_t;
 Node::Node():
   trainPrediction_(datadefs::NUM_NAN),
   rawTrainPrediction_(datadefs::STR_NAN),
+  trainData_(0),
   leftChild_(NULL),
   rightChild_(NULL),
   missingChild_(NULL) {
