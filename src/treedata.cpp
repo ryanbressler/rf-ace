@@ -640,8 +640,8 @@ num_t Treedata::categoricalFeatureSplit(const size_t targetIdx,
     return( DI_best );
   }
   
-  map<num_t,vector<size_t> > fmap_right;
-  map<num_t,vector<size_t> > fmap_left;
+  unordered_map<num_t,vector<size_t> > fmap_right(catOrder.size());
+  unordered_map<num_t,vector<size_t> > fmap_left(catOrder.size());
 
   if ( this->feature(targetIdx)->isNumerical() ) {
 
@@ -665,7 +665,7 @@ num_t Treedata::categoricalFeatureSplit(const size_t targetIdx,
   splitValues_left.clear();
   splitValues_left.reserve(fmap_right.size());
   size_t iter = 0;
-  for ( map<num_t,vector<size_t> >::const_iterator it(fmap_left.begin()); it != fmap_left.end(); ++it ) {
+  for ( unordered_map<num_t,vector<size_t> >::const_iterator it(fmap_left.begin()); it != fmap_left.end(); ++it ) {
     for ( size_t i = 0; i < it->second.size(); ++i ) {
       sampleIcs_left[iter] = sampleIcs[it->second[i]];
       ++iter;
@@ -680,7 +680,7 @@ num_t Treedata::categoricalFeatureSplit(const size_t targetIdx,
   sampleIcs_right.resize(n_tot);
   //unordered_set<num_t> splitValues_right;
   iter = 0;
-  for ( map<num_t,vector<size_t> >::const_iterator it(fmap_right.begin()); it != fmap_right.end(); ++it ) {
+  for ( unordered_map<num_t,vector<size_t> >::const_iterator it(fmap_right.begin()); it != fmap_right.end(); ++it ) {
     for ( size_t i = 0; i < it->second.size(); ++i ) {
       sampleIcs_right[iter] = sampleIcs[it->second[i]];
       ++iter;
@@ -736,7 +736,7 @@ num_t Treedata::textualFeatureSplit(const size_t targetIdx,
 
   } else {
 
-    map<num_t,size_t> freq_left,freq_right,freq_tot;
+    unordered_map<num_t,size_t> freq_left,freq_right,freq_tot(n_tot);
 
     size_t sf_left = 0;
     size_t sf_right = 0;

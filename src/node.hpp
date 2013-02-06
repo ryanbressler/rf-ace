@@ -73,6 +73,32 @@ public:
 protected:
 #endif
 
+  struct SplitCache {
+
+    size_t nSamples;
+    vector<size_t> featureSampleIcs;
+    vector<num_t> trainData;
+
+    vector<size_t> sampleIcs_left;
+    vector<size_t> sampleIcs_right;
+    vector<size_t> sampleIcs_missing;
+    uint32_t hashIdx;
+    size_t splitFeatureIdx;
+    num_t splitValue;
+    unordered_set<num_t> splitValues_left;
+    num_t splitFitness;
+
+    vector<size_t> newSampleIcs_left;
+    vector<size_t> newSampleIcs_right;
+    vector<size_t> newSampleIcs_missing;
+    uint32_t newHashIdx;
+    size_t newSplitFeatureIdx;
+    num_t newSplitValue;
+    unordered_set<num_t> newSplitValues_left;
+    num_t newSplitFitness;
+
+  };
+
   void recursiveNodeSplit(Treedata* treeData,
                           const size_t targetIdx,
 			  const ForestOptions* forestOptions,
@@ -85,21 +111,18 @@ protected:
 			  vector<size_t>& minDistToRoot,
                           size_t* nLeaves,
 			  size_t& childIdx,
-			  vector<Node>& children);
+			  vector<Node>& children,
+			  SplitCache& splitCache);
 
   bool regularSplitterSeek(Treedata* treeData,
 			   const size_t targetIdx,
 			   const ForestOptions* forestOptions,
 			   distributions::Random* random,
 			   const vector<size_t>& sampleIcs,
-			   const vector<size_t>& featureSampleIcs,
-			   size_t& splitFeatureIdx,
-			   vector<size_t>& sampleIcs_left,
-			   vector<size_t>& sampleIcs_right,
-			   vector<size_t>& sampleIcs_missing,
-			   num_t& splitFitness,
 			   size_t& childIdx,
-			   vector<Node>& children);
+			   vector<Node>& children,
+			   SplitCache& splitCache);
+
 
 #ifndef TEST__
 private:

@@ -435,7 +435,7 @@ num_t utils::numericalFeatureSplitsCategoricalTarget(const vector<num_t>& tv,
   size_t n_left = 0;
   size_t n_right = n_tot;
  
-  map<num_t,size_t> freq_right;
+  unordered_map<num_t,size_t> freq_right(n_tot);
   size_t sf_right = 0;
   
   for ( size_t i = 0; i < n_tot; ++i ) {
@@ -444,7 +444,7 @@ num_t utils::numericalFeatureSplitsCategoricalTarget(const vector<num_t>& tv,
   
   size_t sf_tot = sf_right;
   
-  map<num_t,size_t> freq_left;
+  unordered_map<num_t,size_t> freq_left(n_tot);
   size_t sf_left = 0;
 
   num_t DI_best = 0.0;
@@ -485,12 +485,14 @@ num_t utils::categoricalFeatureSplitsNumericalTarget2(const vector<num_t>& tv,
 						      const vector<num_t>& fv,
 						      const size_t minSamples,
 						      const vector<num_t>& catOrder,
-						      map<num_t,vector<size_t> >& fmap_left,
-						      map<num_t,vector<size_t> >& fmap_right) {
+						      unordered_map<num_t,vector<size_t> >& fmap_left,
+						      unordered_map<num_t,vector<size_t> >& fmap_right) {
   
   fmap_left.clear();
+  fmap_left.reserve(catOrder.size());
   fmap_right.clear();
-  
+  fmap_right.reserve(catOrder.size());
+
   size_t n_tot = 0;
   
   datadefs::map_data(fv,fmap_right,n_tot);
@@ -511,7 +513,7 @@ num_t utils::categoricalFeatureSplitsNumericalTarget2(const vector<num_t>& tv,
   
   for ( size_t i = 0; i < catOrder.size(); ++i ) {
     
-    map<num_t,vector<size_t> >::const_iterator it( fmap_right.begin() );
+    unordered_map<num_t,vector<size_t> >::const_iterator it( fmap_right.begin() );
 
     assert( it != fmap_right.end() );
 
@@ -558,11 +560,13 @@ num_t utils::categoricalFeatureSplitsCategoricalTarget2(const vector<num_t>& tv,
 							const vector<num_t>& fv,
 							const size_t minSamples,
 							const vector<num_t>& catOrder,
-							map<num_t,vector<size_t> >& fmap_left,
-							map<num_t,vector<size_t> >& fmap_right) {
+							unordered_map<num_t,vector<size_t> >& fmap_left,
+							unordered_map<num_t,vector<size_t> >& fmap_right) {
 
   fmap_left.clear();
+  fmap_left.reserve(catOrder.size());
   fmap_right.clear();
+  fmap_right.reserve(catOrder.size());
 
   size_t n_tot = 0;
 
@@ -574,7 +578,8 @@ num_t utils::categoricalFeatureSplitsCategoricalTarget2(const vector<num_t>& tv,
   size_t sf_right = 0;
   size_t sf_left = 0;
 
-  map<num_t,size_t> freq_left,freq_right;
+  unordered_map<num_t,size_t> freq_left(catOrder.size());
+  unordered_map<num_t,size_t> freq_right(catOrder.size());
 
   for( size_t i = 0; i < n_tot; ++i ) {
     math::incrementSquaredFrequency(tv[i], freq_right, sf_right);
@@ -586,7 +591,7 @@ num_t utils::categoricalFeatureSplitsCategoricalTarget2(const vector<num_t>& tv,
 
   for ( size_t i = 0; i < catOrder.size(); ++i ) {
 
-    map<num_t,vector<size_t> >::const_iterator it( fmap_right.find(catOrder[i]) );
+    unordered_map<num_t,vector<size_t> >::const_iterator it( fmap_right.find(catOrder[i]) );
 
     assert( it != fmap_right.end() );
 
@@ -645,207 +650,210 @@ num_t utils::categoricalFeatureSplitsCategoricalTarget2(const vector<num_t>& tv,
 }
 
 
-
-num_t utils::categoricalFeatureSplitsNumericalTarget(const vector<num_t>& tv,
-						     const vector<num_t>& fv,
-						     const size_t minSamples,
-						     map<num_t,vector<size_t> >& fmap_left,
-						     map<num_t,vector<size_t> >& fmap_right) {
+/*
+  num_t utils::categoricalFeatureSplitsNumericalTarget(const vector<num_t>& tv,
+  const vector<num_t>& fv,
+  const size_t minSamples,
+  map<num_t,vector<size_t> >& fmap_left,
+  map<num_t,vector<size_t> >& fmap_right) {
   
-
+  
   fmap_left.clear();
-
+  
   size_t n_tot = 0;
   datadefs::map_data(fv,fmap_right,n_tot);
   size_t n_right = n_tot;
   size_t n_left = 0;
-
+  
   num_t mu_tot = math::mean(tv);
   num_t mu_right = mu_tot;
   num_t mu_left = 0.0;
-
+  
   num_t DI_best = 0.0;
-
+  
   while ( fmap_right.size() > 1 ) {
-
-    map<num_t,vector<size_t> >::iterator it_best( fmap_right.end() );
-
-    // We test each category one by one and see if the fitness becomes improved
-    for ( map<num_t,vector<size_t> >::iterator it( fmap_right.begin() ); it != fmap_right.end() ; ++it ) {
-
-      //cout << "Testing to split with feature '" << treedata->getRawFeatureData(featureIdx,it->first) << "'" << endl;
-
-      // Take samples from right and put them left
-      //cout << "from right to left: [";
-      size_t n_left_c = n_left;
-      size_t n_right_c = n_right;
-      num_t mu_left_c = mu_left;
-      num_t mu_right_c = mu_right;
-
-      for(size_t i = 0; i < it->second.size(); ++i) {
-	//cout << " " << it->second[i];
-
-	++n_left_c;
-	--n_right_c;
-	mu_left_c  += ( tv[ it->second[i] ] - mu_left_c  ) / n_left_c;
-	mu_right_c -= ( tv[ it->second[i] ] - mu_right_c ) / n_right_c;
-
-      }
-      //cout << " ]" << endl;
-
-      //If the split reduces impurity even further, save the point
-      num_t DI = math::deltaImpurity_regr(mu_tot,n_tot,mu_left_c,n_left_c,mu_right_c,n_right_c);
-      if ( DI > DI_best ) { //&& n_left >= minSamples && n_right >= minSamples )
-
-	it_best = it;
-	DI_best = DI;
-      }
-
-    }
-
-    // After testing all categories,
-    // if we couldn't find any split that would reduce impurity,
-    // we'll exit the loop
-    if ( it_best == fmap_right.end() ) {
-      //cout << " -- STOP --" << endl;
-      break;
-    }
-
-    // Otherwise move samples from right to left
-    for(size_t i = 0; i < it_best->second.size(); ++i) {
-      //cout << " " << it->second[i];
-
-      ++n_left;
-      --n_right;
-      mu_left  += ( tv[ it_best->second[i] ] - mu_left  ) / n_left;
-      mu_right -= ( tv[ it_best->second[i] ] - mu_right ) / n_right;
-
-    }
-
-    // Update the maps
-    fmap_left.insert( *it_best );
-    fmap_right.erase( it_best->first );
-
+  
+  map<num_t,vector<size_t> >::iterator it_best( fmap_right.end() );
+  
+  // We test each category one by one and see if the fitness becomes improved
+  for ( map<num_t,vector<size_t> >::iterator it( fmap_right.begin() ); it != fmap_right.end() ; ++it ) {
+  
+  //cout << "Testing to split with feature '" << treedata->getRawFeatureData(featureIdx,it->first) << "'" << endl;
+  
+  // Take samples from right and put them left
+  //cout << "from right to left: [";
+  size_t n_left_c = n_left;
+  size_t n_right_c = n_right;
+  num_t mu_left_c = mu_left;
+  num_t mu_right_c = mu_right;
+  
+  for(size_t i = 0; i < it->second.size(); ++i) {
+  //cout << " " << it->second[i];
+  
+  ++n_left_c;
+  --n_right_c;
+  mu_left_c  += ( tv[ it->second[i] ] - mu_left_c  ) / n_left_c;
+  mu_right_c -= ( tv[ it->second[i] ] - mu_right_c ) / n_right_c;
+  
   }
-
+  //cout << " ]" << endl;
+  
+  //If the split reduces impurity even further, save the point
+  num_t DI = math::deltaImpurity_regr(mu_tot,n_tot,mu_left_c,n_left_c,mu_right_c,n_right_c);
+  if ( DI > DI_best ) { //&& n_left >= minSamples && n_right >= minSamples )
+  
+  it_best = it;
+  DI_best = DI;
+  }
+  
+  }
+  
+  // After testing all categories,
+  // if we couldn't find any split that would reduce impurity,
+  // we'll exit the loop
+  if ( it_best == fmap_right.end() ) {
+  //cout << " -- STOP --" << endl;
+  break;
+  }
+  
+  // Otherwise move samples from right to left
+  for(size_t i = 0; i < it_best->second.size(); ++i) {
+  //cout << " " << it->second[i];
+  
+  ++n_left;
+  --n_right;
+  mu_left  += ( tv[ it_best->second[i] ] - mu_left  ) / n_left;
+  mu_right -= ( tv[ it_best->second[i] ] - mu_right ) / n_right;
+  
+  }
+  
+  // Update the maps
+  fmap_left.insert( *it_best );
+  fmap_right.erase( it_best->first );
+  
+  }
+  
   assert( n_left + n_right == n_tot );
-
+  
   if( n_left < minSamples || n_right < minSamples ) {
-    DI_best = 0.0;
+  DI_best = 0.0;
   }
-
+  
   return(DI_best);
+  
+  }
+*/
 
-}
-
-num_t utils::categoricalFeatureSplitsCategoricalTarget(const vector<num_t>& tv,
-						       const vector<num_t>& fv,
-						       const size_t minSamples,
-						       map<num_t,vector<size_t> >& fmap_left,
-						       map<num_t,vector<size_t> >& fmap_right) {
+/*
+  num_t utils::categoricalFeatureSplitsCategoricalTarget(const vector<num_t>& tv,
+  const vector<num_t>& fv,
+  const size_t minSamples,
+  map<num_t,vector<size_t> >& fmap_left,
+  map<num_t,vector<size_t> >& fmap_right) {
   
   fmap_left.clear();
-
+  
   size_t n_tot = 0;
   datadefs::map_data(fv,fmap_right,n_tot);
   size_t n_right = n_tot;
   size_t n_left = 0;
-
+  
   map<num_t,size_t> freq_left,freq_right;
   size_t sf_left = 0;
   size_t sf_right = 0;
-
+  
   for( size_t i = 0; i < n_tot; ++i ) {
-    math::incrementSquaredFrequency(tv[i], freq_right, sf_right);
+  math::incrementSquaredFrequency(tv[i], freq_right, sf_right);
   }
-
+  
   size_t sf_tot = sf_right;
-
+  
   num_t DI_best = 0.0;
-
+  
   while ( fmap_right.size() > 1 ) {
-
-    map<num_t,vector<size_t> >::iterator it_best( fmap_right.end() );
-    //cout << "There are " << fmap_right.size() << " categories on right" << endl;
-
-    // We test each category one by one and see if the fitness becomes improved
-    for ( map<num_t,vector<size_t> >::iterator it( fmap_right.begin() ); it != fmap_right.end() ; ++it ) {
-
-      //cout << "Testing to split with feature '" << treedata->getRawFeatureData(featureIdx,it->first) << "'" << endl;
-
-      // Take samples from right and put them left
-      //cout << "from right to left: [";
-      for(size_t i = 0; i < it->second.size(); ++i) {
-
-	// Add sample to left
-	++n_left;
-	math::incrementSquaredFrequency(tv[ it->second[i] ], freq_left, sf_left);
-
-	// Remove sample from right
-	--n_right;
-	math::decrementSquaredFrequency(tv[ it->second[i] ], freq_right, sf_right);
-
-      }
-      //cout << " ]" << endl;
-
-      //If the impurity becomes reduced even further, save the point
-      num_t DI = math::deltaImpurity_class(sf_tot,n_tot,sf_left,n_left,sf_right,n_right);
-      if ( DI > DI_best ) { //&& n_left >= minSamples && n_right >= minSamples )
-
-	it_best = it;
-	DI_best = DI;
-      }
-
-      // Take samples from left and put them right
-      //cout << "From left to right: [";
-      for(size_t i = 0; i < it->second.size(); ++i) {
-
-	// Add sample to right
-	++n_right;
-	math::incrementSquaredFrequency(tv[ it->second[i] ], freq_right, sf_right);
-
-	// Remove sample from left
-	--n_left;
-	math::decrementSquaredFrequency(tv[ it->second[i] ], freq_left, sf_left);
-
-      }
-      //cout << " ]" << endl;
-
-    }
-
-    // After testing all categories,
-    // if we couldn't find any split that would reduce impurity,
-    // we'll exit the loop
-    if ( it_best == fmap_right.end() ) {
-      //cout << " -- STOP --" << endl;
-      break;
-    }
-
-    // Take samples from right and put them left
-    for(size_t i = 0; i < it_best->second.size(); ++i) {
-
-      // Add sample to left
-      ++n_left;
-      math::incrementSquaredFrequency(tv[ it_best->second[i] ], freq_left, sf_left);
-
-      // Remove sample from right
-      --n_right;
-      math::decrementSquaredFrequency(tv[ it_best->second[i] ], freq_right, sf_right);
-
-    }
-
-    // Update the maps
-    fmap_left.insert( *it_best );
-    fmap_right.erase( it_best->first );
-
+  
+  map<num_t,vector<size_t> >::iterator it_best( fmap_right.end() );
+  //cout << "There are " << fmap_right.size() << " categories on right" << endl;
+  
+  // We test each category one by one and see if the fitness becomes improved
+  for ( map<num_t,vector<size_t> >::iterator it( fmap_right.begin() ); it != fmap_right.end() ; ++it ) {
+  
+  //cout << "Testing to split with feature '" << treedata->getRawFeatureData(featureIdx,it->first) << "'" << endl;
+  
+  // Take samples from right and put them left
+  //cout << "from right to left: [";
+  for(size_t i = 0; i < it->second.size(); ++i) {
+  
+  // Add sample to left
+  ++n_left;
+  math::incrementSquaredFrequency(tv[ it->second[i] ], freq_left, sf_left);
+  
+  // Remove sample from right
+  --n_right;
+  math::decrementSquaredFrequency(tv[ it->second[i] ], freq_right, sf_right);
+  
   }
-
+  //cout << " ]" << endl;
+  
+  //If the impurity becomes reduced even further, save the point
+  num_t DI = math::deltaImpurity_class(sf_tot,n_tot,sf_left,n_left,sf_right,n_right);
+  if ( DI > DI_best ) { //&& n_left >= minSamples && n_right >= minSamples )
+  
+  it_best = it;
+  DI_best = DI;
+  }
+  
+  // Take samples from left and put them right
+  //cout << "From left to right: [";
+  for(size_t i = 0; i < it->second.size(); ++i) {
+  
+  // Add sample to right
+  ++n_right;
+  math::incrementSquaredFrequency(tv[ it->second[i] ], freq_right, sf_right);
+  
+  // Remove sample from left
+  --n_left;
+  math::decrementSquaredFrequency(tv[ it->second[i] ], freq_left, sf_left);
+  
+  }
+  //cout << " ]" << endl;
+  
+  }
+  
+  // After testing all categories,
+  // if we couldn't find any split that would reduce impurity,
+  // we'll exit the loop
+  if ( it_best == fmap_right.end() ) {
+  //cout << " -- STOP --" << endl;
+  break;
+  }
+  
+  // Take samples from right and put them left
+  for(size_t i = 0; i < it_best->second.size(); ++i) {
+  
+  // Add sample to left
+  ++n_left;
+  math::incrementSquaredFrequency(tv[ it_best->second[i] ], freq_left, sf_left);
+  
+  // Remove sample from right
+  --n_right;
+  math::decrementSquaredFrequency(tv[ it_best->second[i] ], freq_right, sf_right);
+  
+  }
+  
+  // Update the maps
+  fmap_left.insert( *it_best );
+  fmap_right.erase( it_best->first );
+  
+  }
+  
   assert( n_left + n_right == n_tot );
-
+  
   if( n_left < minSamples || n_right < minSamples ) {
-    DI_best = 0.0;
+  DI_best = 0.0;
   }
-
+  
   return(DI_best);
-
-}
+  
+  }
+*/

@@ -128,7 +128,7 @@ namespace datadefs {
   void countRealValues(vector<num_t> const& data, size_t& nRealValues);
 
   void map_data(vector<num_t> const& data, 
-                map<num_t,vector<size_t> >& datamap,
+                unordered_map<num_t,vector<size_t> >& datamap,
                 size_t& nRealValues);
 
   ////////////////////////////////////////////////////////////

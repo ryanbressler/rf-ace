@@ -153,10 +153,13 @@ void datadefs::countRealValues(vector<num_t> const& data, size_t& nRealValues) {
    !! Documentation
 */
 void datadefs::map_data(vector<datadefs::num_t> const& data, 
-                        map<datadefs::num_t,vector<size_t> >& datamap, 
+                        unordered_map<datadefs::num_t,vector<size_t> >& datamap, 
                         size_t& nRealValues) {
+
   datamap.clear();
-  map<datadefs::num_t,vector<size_t> >::iterator it;
+  datamap.reserve(data.size());
+
+  unordered_map<datadefs::num_t,vector<size_t> >::iterator it;
   nRealValues = 0;
   for(size_t i = 0; i < data.size(); ++i) {
     if(!datadefs::isNAN(data[i])) {
