@@ -224,3 +224,20 @@ string RootNode::getRawTestPrediction(Treedata* testData, const size_t sampleIdx
 
 }
 
+vector<num_t> RootNode::getChildLeafTrainData(Treedata* treeData, const size_t sampleIdx) {
+
+  vector<const Node*> leaves = this->percolate(treeData,sampleIdx)->getChildLeaves();
+
+  vector<num_t> allTrainData;
+
+  for ( size_t i = 0; i < leaves.size(); ++i ) {
+    vector<num_t> trainData = leaves[i]->getTrainData();
+    for ( size_t j = 0; j < trainData.size(); ++j ) {
+      allTrainData.push_back(trainData[j]);
+    }
+  }
+
+  return(allTrainData);
+
+}
+

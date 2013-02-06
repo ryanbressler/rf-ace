@@ -18,7 +18,6 @@
 
 StochasticForest::StochasticForest() :
   forestType_(datadefs::forest_t::UNKNOWN) {
-
 }
 
 void StochasticForest::loadForest(const string& fileName) {
@@ -823,6 +822,38 @@ void StochasticForest::predict(Treedata* testData, vector<num_t>& predictions,ve
     }
   }
 #endif
+}
+
+void StochasticForest::predictQuantiles(Treedata* testData, 
+					vector<vector<num_t> >& predictions, 
+					const vector<num_t>& quantilePoints, 
+					distributions::Random* random, 
+					size_t nSamplesPerTree) {
+
+
+  size_t nTrees = this->nTrees();
+  size_t nSamples = testData->nSamples();
+  size_t nQuantiles = quantilePoints.size();
+
+  predictions.resize(nSamples,vector<num_t>(nQuantiles));
+  
+  for ( size_t sampleIdx = 0; sampleIdx < nSamples; ++sampleIdx ) {
+    //cout << "sample " << sampleIdx << endl;
+    vector<num_t> finalData(nTrees*nSamplesPerTree);
+    for ( size_t treeIdx = 0; treeIdx < nTrees; ++treeIdx ) {
+      vector<num_t> treeData = rootNodes_[treeIdx]->getChildLeafTrainData(testData,sampleIdx);
+      //cout << "got leaf data for tree " << treeIdx << endl;
+      for ( size_t i = 0; i < nSamplesPerTree; ++i ) {
+	//cout << "sample " << i << " in tree" << endl;
+	finalData[ treeIdx * nSamplesPerTree + i ] = treeData[ random->integer() % treeData.size() ];
+      }
+    }
+    for ( size_t q = 0; q < nQuantiles; ++q ) {
+      predictions[sampleIdx][q] = math::percentile(finalData,quantilePoints[q]);
+    }
+    //cout << "done with sample " << sampleIdx << endl;
+  }
+  
 }
 
 /*

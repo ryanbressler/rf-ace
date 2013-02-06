@@ -33,6 +33,7 @@ void printDataStatistics(Treedata& treeData, const size_t targetIdx);
 void writeFilterOutputToFile(RFACE::FilterOutput& filterOutput, const string& fileName);
 
 void printPredictionsToFile(RFACE::TestOutput& testOutput, const string& fileName);
+void printQuantilePredictionsToFile(RFACE::QuantilePredictionOutput& qPredOutput, const string& fileName);
 
 int main(const int argc, char* const argv[]) {
 
@@ -51,10 +52,11 @@ int main(const int argc, char* const argv[]) {
     return(EXIT_SUCCESS);
   }
 
-  RFACE rface;
+  RFACE rface(options.generalOptions.nThreads,options.generalOptions.seed);
 
   RFACE::FilterOutput filterOutput;
   RFACE::TestOutput testOutput;
+  RFACE::QuantilePredictionOutput qPredOutput;
 
   timer.tic("Total time elapsed");
 
@@ -81,7 +83,7 @@ int main(const int argc, char* const argv[]) {
       options.generalOptions.seed = distributions::generateSeed();
     }
 
-    filterOutput = rface.filter(&filterData,targetIdx,featureWeights,&options.forestOptions,&options.filterOptions,options.generalOptions.seed,options.generalOptions.nThreads,options.io.saveForestFile);
+    filterOutput = rface.filter(&filterData,targetIdx,featureWeights,&options.forestOptions,&options.filterOptions,options.io.saveForestFile);
 
     options.io.saveForestFile = "";
 
@@ -128,7 +130,7 @@ int main(const int argc, char* const argv[]) {
       options.generalOptions.seed = distributions::generateSeed();
     }
 
-    rface.train(&trainData,targetIdx,featureWeights,&options.forestOptions,options.generalOptions.seed,options.generalOptions.nThreads);
+    rface.train(&trainData,targetIdx,featureWeights,&options.forestOptions);
     
     vector<num_t> data = utils::removeNANs(trainData.getFeatureData(targetIdx));
     
@@ -158,27 +160,45 @@ int main(const int argc, char* const argv[]) {
     cout << "Reading test file '" << options.io.testDataFile << "', please wait..." << flush;
     Treedata testData(options.io.testDataFile,options.generalOptions.dataDelimiter,options.generalOptions.headerDelimiter);
     cout << "DONE" << endl;
+
+    if ( options.forestOptions.useQuantiles ) {
+      cout << "Making quantile predictions with test data... " << flush;
+      qPredOutput = rface.predictQuantiles(&testData,&options.forestOptions);
+    } else {
+      cout << "Making predictions with test data... " << flush;
+      testOutput = rface.test(&testData);
+    }
     
-    cout << "Making predictions with test data... " << flush;
-    testOutput = rface.test(&testData,options.generalOptions.nThreads);
     cout << "DONE" << endl;
     
   }
 
-  if ( options.io.predictionsFile != "" ) {
-    printPredictionsToFile(testOutput,options.io.predictionsFile);
-    
-    cout << "Prediction file '" << options.io.predictionsFile << "' created. Format:" << endl
-	 << "TARGET   SAMPLE_ID  TRUE_DATA(*)  PREDICTION    CONFIDENCE(**)" << endl
-	 << endl
-	 << "  (*): should target variable have true data for test samples, write them," << endl
-	 << "       otherwise write NA" << endl
-	 << " (**): confidence is the st.dev for regression and % of mispred. for classification" << endl
-	 << endl
-	 << "RF-ACE completed successfully." << endl
-	 << endl; 
-  }
   
+
+  if ( options.io.predictionsFile != "" ) {
+    if ( options.forestOptions.useQuantiles ) {
+   
+      printQuantilePredictionsToFile(qPredOutput,options.io.predictionsFile);
+
+      cout << "Quantile prediction file '" << options.io.predictionsFile << "' created. Format:" << endl
+           << "TARGET   SAMPLE_ID  TRUE_DATA(*)  Q1   Q2   ...  Qk" << endl
+           << endl
+           << "  (*): should target variable have true data for test samples, write them," << endl
+           << "       otherwise write NA" << endl << endl;
+   
+    } else {
+      printPredictionsToFile(testOutput,options.io.predictionsFile);
+      
+      cout << "Prediction file '" << options.io.predictionsFile << "' created. Format:" << endl
+	   << "TARGET   SAMPLE_ID  TRUE_DATA(*)  PREDICTION    CONFIDENCE(**)" << endl
+	   << endl
+	   << "  (*): should target variable have true data for test samples, write them," << endl
+	   << "       otherwise write NA" << endl
+	   << " (**): confidence is the st.dev for regression and % of mispred. for classification" << endl << endl;
+    }
+  }
+    
+
   if ( options.io.saveForestFile != "" ) {
     
     cout << "Writing predictor to file... " << flush;
@@ -189,6 +209,8 @@ int main(const int argc, char* const argv[]) {
 	 << endl;
     
   }
+
+  cout << "RF-ACE completed successfully." << endl;
 
   timer.toc("Total time elapsed");
 
@@ -350,5 +372,19 @@ void printPredictionsToFile(RFACE::TestOutput& testOutput, const string& fileNam
   }
 
   toPredictionFile.close();
+
+}
+
+void printQuantilePredictionsToFile(RFACE::QuantilePredictionOutput& qPredOutput, const string& fileName) {
+
+  ofstream toPredictionFile(fileName.c_str());
+
+  size_t nSamples = qPredOutput.sampleNames.size();
+
+  for ( size_t i = 0; i < nSamples; ++i ) {
+    toPredictionFile << qPredOutput.targetName << "\t" << qPredOutput.sampleNames[i] << "\t" << qPredOutput.trueData[i] << "\t" << flush;
+    utils::write(toPredictionFile,qPredOutput.predictions[i].begin(),qPredOutput.predictions[i].end(),'\t');
+    toPredictionFile << endl;
+  }
 
 }

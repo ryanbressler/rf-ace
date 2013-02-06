@@ -7,7 +7,6 @@
 
 #include <cstdlib>
 #include <vector>
-//#include <queue>
 #include <map>
 #include <set>
 #include <unordered_set>
@@ -63,6 +62,10 @@ public:
   Node* leftChild() const;
   Node* rightChild() const;
   Node* missingChild() const;
+
+  vector<const Node*> getChildLeaves() const;
+
+  vector<num_t> getTrainData() const;
 
   void print(ofstream& toFile);
   void print(string& traversal, ofstream& toFile);
@@ -123,6 +126,8 @@ protected:
 			   vector<Node>& children,
 			   SplitCache& splitCache);
 
+
+  void recursiveGetChildLeaves(vector<const Node*>& leaves) const;
 
 #ifndef TEST__
 private:

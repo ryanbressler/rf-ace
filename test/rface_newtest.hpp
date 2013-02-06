@@ -13,10 +13,12 @@ using datadefs::num_t;
 
 void rface_newtest_RF_train_test_classification();
 void rface_newtest_RF_train_test_regression();
+void rface_newtest_QRF_train_test_regression();
 void rface_newtest_GBT_train_test_classification();
 void rface_newtest_GBT_train_test_regression();
 void rface_newtest_RF_save_load_classification();
 void rface_newtest_RF_save_load_regression();
+void rface_newtest_QRF_save_load_regression();
 void rface_newtest_GBT_save_load_classification();
 void rface_newtest_GBT_save_load_regression();
 
@@ -24,13 +26,14 @@ void rface_newtest() {
   
   newtest( "Testing RF for classification", &rface_newtest_RF_train_test_classification );
   newtest( "Testing RF for regression", &rface_newtest_RF_train_test_regression );
+  newtest( "Testing Quantile Regression Random Forest", &rface_newtest_QRF_train_test_regression );
   newtest( "Testing GBT for classification", &rface_newtest_GBT_train_test_classification );
   newtest( "Testing GBT for regression", &rface_newtest_GBT_train_test_regression );
-  newtest( "Testing save/load RF for classification", &rface_newtest_RF_save_load_classification);
-  newtest( "Testing save/load RF for regression", &rface_newtest_RF_save_load_regression);
-  newtest( "Testing save/load GBT for classification", &rface_newtest_GBT_save_load_classification);
-  newtest( "Testing save/load GBT for regression", &rface_newtest_GBT_save_load_regression);
-  
+  newtest( "Testing save/load RF for classification", &rface_newtest_RF_save_load_classification );
+  newtest( "Testing save/load RF for regression", &rface_newtest_RF_save_load_regression );
+  newtest( "Testing save/load Quantile Regression Random Forest", &rface_newtest_QRF_save_load_regression );
+  newtest( "Testing save/load GBT for classification", &rface_newtest_GBT_save_load_classification );
+  newtest( "Testing save/load GBT for regression", &rface_newtest_GBT_save_load_regression );
 }
 
 RFACE::TestOutput make_predictions(ForestOptions& forestOptions, const string& targetStr) {
@@ -121,6 +124,10 @@ void rface_newtest_RF_train_test_regression() {
 
 }
 
+void rface_newtest_QRF_train_test_regression() {
+
+}
+
 void rface_newtest_GBT_train_test_classification() {
 
   ForestOptions forestOptions;
@@ -169,6 +176,10 @@ void rface_newtest_RF_save_load_regression() {
 
 }
 
+void rface_newtest_QRF_save_load_regression() {
+
+}
+
 void rface_newtest_GBT_save_load_classification() {
 
   ForestOptions forestOptions;
@@ -178,7 +189,6 @@ void rface_newtest_GBT_save_load_classification() {
   num_t pError2 = classification_error( make_save_load_predictions(forestOptions,"C:class") );
 
   newassert( fabs(pError1 - pError2) < 1e-3 );
-
   
 }
 
@@ -191,7 +201,6 @@ void rface_newtest_GBT_save_load_regression() {
   num_t RMSE2 = classification_error( make_save_load_predictions(forestOptions,"N:output") );
 
   newassert( fabs(RMSE1 - RMSE2) < 1e-3 );
-
 
 }
 
