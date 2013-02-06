@@ -140,6 +140,7 @@ private:
 
   num_t  trainPrediction_;
   string rawTrainPrediction_;
+  vector<num_t> trainData_;
 
   Node* leftChild_;
   Node* rightChild_;

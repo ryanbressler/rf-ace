@@ -6,6 +6,9 @@
 #include <sstream>
 #include <iostream>
 #include <iomanip>
+#include <algorithm>
+
+#include "utils.hpp"
 #include "argparse.hpp"
 #include "datadefs.hpp"
 #include "distributions.hpp"
@@ -27,7 +30,19 @@ public:
   inline void printOption(const string& shortOpt, const string& longOpt, const T& value) const {
     cout << " -" << shortOpt << " / --" << longOpt << setw( maxWidth_ - longOpt.length() ) << " = " << value << endl;
   }
-  
+ 
+  template<typename StartIter, typename StopIter> 
+  inline void printOption(const string& shortOpt, const string& longOpt, StartIter startIt, StopIter stopIt) const {
+    cout << " -" << shortOpt << " / --" << longOpt << setw( maxWidth_ - longOpt.length() ) << " = " << flush;
+    if ( startIt != stopIt ) {
+      cout << "[ " << flush;
+      utils::write<StartIter,StopIter>(cout,startIt,stopIt,' ');
+      cout << " ]" << endl;
+    } else {
+      cout << "NOT SET" << endl;
+    }
+  }
+ 
   void printHelpHint(const string& shortOpt, const string& longOpt) const {
     cout << endl;
     cout << "To get started, type -" << shortOpt << " / --" << longOpt << endl;
@@ -44,7 +59,6 @@ template<> inline void HelpStyler::printOption<bool>(const string& shortOpt, con
   cout << endl;
 }
 
-
 class ForestOptions : public HelpStyler {
 public:
 
@@ -56,6 +70,7 @@ public:
   num_t shrinkage; const string shrinkage_s; const string shrinkage_l;
   num_t contrastFraction; const string contrastFraction_s; const string contrastFraction_l;
   bool noNABranching; const string noNABranching_s; const string noNABranching_l;
+  vector<num_t> quantiles; const string quantiles_s; const string quantiles_l;
 
   num_t inBoxFraction;
   bool sampleWithReplacement;
@@ -70,7 +85,8 @@ public:
     nodeSize_s("s"),nodeSize_l("nodeSize"),
     shrinkage_s("k"),shrinkage_l("shrinkage"),
     contrastFraction_s("c"), contrastFraction_l("contrastFraction"),
-    noNABranching(datadefs::SF_DEFAULT_NO_NA_BRANCHING),noNABranching_s("N"), noNABranching_l("noNABranching") {
+    noNABranching(datadefs::SF_DEFAULT_NO_NA_BRANCHING),noNABranching_s("N"), noNABranching_l("noNABranching"),
+    quantiles(datadefs::SF_DEFAULT_QUANTILES), quantiles_s("q"), quantiles_l("quantiles") {
 
     if ( forestType == forest_t::RF ) {
       this->setRFDefaults();
@@ -110,8 +126,14 @@ public:
     parser.getArgument<size_t>( nMaxLeaves_s,       nMaxLeaves_l,       nMaxLeaves );
     parser.getArgument<size_t>( nodeSize_s,         nodeSize_l,         nodeSize );
     parser.getArgument<num_t>(  shrinkage_s,        shrinkage_l,        shrinkage );
-    parser.getArgument<num_t>(  contrastFraction_s, contrastFraction_l, contrastFraction);
-    parser.getFlag(             noNABranching_s,    noNABranching_l,    noNABranching);
+    parser.getArgument<num_t>(  contrastFraction_s, contrastFraction_l, contrastFraction );
+    parser.getFlag(             noNABranching_s,    noNABranching_l,    noNABranching );
+
+    string quantilesAsStr;
+    parser.getArgument<string>( quantiles_s,        quantiles_l,        quantilesAsStr );
+    vector<string> quantileList = utils::split(quantilesAsStr,',');
+    quantiles.resize(quantileList.size());
+    transform(quantileList.begin(),quantileList.end(),quantiles.begin(),utils::str2<num_t>);
 
   }
 
@@ -193,6 +215,16 @@ public:
       cerr << "ERROR: inBoxFraction must be between (0,1]" << endl;
       exit(1);
     }
+
+    if ( forestType == forest_t::RF && quantiles.size() > 0 ) {
+      for ( size_t i = 0; i < quantiles.size(); ++i ) {
+	if ( 0.0 >= quantiles[i] || quantiles[i] > 1.0 ) {
+	  cerr << "ERROR: quantiles must be real numbers between (0,1]" << endl;
+	  exit(1);
+	}
+      }
+    }
+
   }
 
   void help() {
@@ -205,6 +237,7 @@ public:
     this->printHelpLine(shrinkage_s,shrinkage_l,"[GBT only] Shrinkage applied to evolving the residual");
     this->printHelpLine(contrastFraction_s,contrastFraction_l,"[Filter only] the fraction of contrast features sampled to approximate the null distribution");
     this->printHelpLine(noNABranching_s,noNABranching_l,"If set, the splitter will NOT create a third branch for cases where the splitter is NA");
+    this->printHelpLine(quantiles_s,quantiles_l,"[RF only] comma-separated list of quantiles to build a Quantile Random Forest from");
   }
 
   void print() {
@@ -214,6 +247,7 @@ public:
       this->printOption(mTry_s,mTry_l,mTry);
       this->printOption(nodeSize_s,nodeSize_l,nodeSize);
       this->printOption(nMaxLeaves_s,nMaxLeaves_l,nMaxLeaves);
+      this->printOption(quantiles_s,quantiles_l,quantiles.begin(),quantiles.end());
     } else if ( forestType == forest_t::GBT ) { 
       cout << "Gradient Boosting Tree (GBT) configuration:" << endl;
       this->printOption(nTrees_s,nTrees_l,nTrees);
