@@ -421,7 +421,7 @@ size_t Treedata::nRealSamples(const size_t featureIdx1, const size_t featureIdx2
 
   size_t nRealSamples = 0;
   for( size_t i = 0; i < Treedata::nSamples(); ++i ) {
-    if( !datadefs::isNAN( features_[featureIdx1].data[i] ) && !datadefs::isNAN( features_[featureIdx2].data[i] ) ) {
+    if( !this->feature(featureIdx1)->isMissing(i) && !this->feature(featureIdx2)->isMissing(i) ) {
       ++nRealSamples;
     }
   }

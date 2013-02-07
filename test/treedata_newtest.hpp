@@ -9,11 +9,13 @@ using namespace std;
 
 void treedata_newtest_readAFM();
 void treedata_newtest_readTransposedAFM();
+void treedata_newtest_nRealSamples();
 
 void treedata_newtest() {
 
   newtest( "Testing Treedata class with AFM data", &treedata_newtest_readAFM );
   newtest( "Testing Treedata class with transposed AFM data", &treedata_newtest_readTransposedAFM );
+  newtest( "Testing proper counting of missing samples in Treedata", &treedata_newtest_nRealSamples );
 
 }
 
@@ -225,6 +227,18 @@ void treedata_newtest_readTransposedAFM() {
   newassert( datadefs::isNAN(treeData.getFeatureData(6,1)) );
   newassert( fabs(treeData.getFeatureData(6,2) - 6.666) < datadefs::EPS );
 
+}
+
+void treedata_newtest_nRealSamples() {
+
+  string fileName = "test/data/3by8_mixed_NA_matrix.afm";
+  bool useContrasts = false;
+  
+  Treedata treeData(fileName,'\t',':',useContrasts);
+
+  newassert(treeData.nFeatures() == 8);
+  newassert(treeData.nRealSamples(0,1) == 1);
+  newassert(treeData.nRealSamples(6,7) == 2);
 
 }
 

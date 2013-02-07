@@ -36,6 +36,8 @@ public:
   bool isCategorical() const;
   bool isTextual() const;
 
+  bool isMissing(const size_t sampleIdx) const;
+
   string name() const;
   void setName(const string& newName);
   
