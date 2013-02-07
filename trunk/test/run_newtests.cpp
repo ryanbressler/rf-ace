@@ -7,6 +7,7 @@
 #include "rface_newtest.hpp"
 #include "distributions_newtest.hpp"
 #include "utils_newtest.hpp"
+#include "datadefs_newtest.hpp"
 
 using namespace std;
 
@@ -19,6 +20,7 @@ int main() {
   rface_newtest();
   distributions_newtest();
   utils_newtest();
+  datadefs_newtest();
 
   newtestdone();
 

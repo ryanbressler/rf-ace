@@ -105,6 +105,14 @@ bool Feature::isTextual() const {
   return( type_ == Feature::Type::TXT ? true : false );
 }
 
+bool Feature::isMissing(const size_t sampleIdx) const {
+  if ( type_ != TXT ) {
+    return( datadefs::isNAN(data[sampleIdx]) );
+  } else {
+    return( hashSet[sampleIdx].size() == 0 );
+  }
+}
+
 string Feature::name() const {
   return( name_ );
 }

@@ -314,7 +314,7 @@ void Node::recursiveNodeSplit(Treedata* treeData,
   assert( *nLeaves <= forestOptions->nMaxLeaves );
 
   if ( splitCache.nSamples < 2 * forestOptions->nodeSize || *nLeaves == forestOptions->nMaxLeaves || childIdx + 1 >= children.size() ) {
-    if ( forestOptions->useQuantiles ) {
+    if ( forestOptions->useQuantiles() ) {
       trainData_ = splitCache.trainData;
     }
     return;
@@ -362,7 +362,7 @@ void Node::recursiveNodeSplit(Treedata* treeData,
 					      splitCache);
         
   if ( !foundSplit ) {
-    if ( forestOptions->useQuantiles ) {
+    if ( forestOptions->useQuantiles() ) {
       trainData_ = splitCache.trainData;
     }
     return;

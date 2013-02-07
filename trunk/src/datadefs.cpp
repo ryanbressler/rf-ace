@@ -34,7 +34,7 @@ const datadefs::num_t datadefs::LOG_OF_MAX_NUM = 70.0; /** !! Potentially
 const char datadefs::tokenDelimiters[] = " \t,.;:?!@'\"-\n\0";
 
 // List of NaN's adapted from http://en.wikipedia.org/wiki/NaN#Display
-const set<datadefs::NAN_t> datadefs::NANs = {"NA","NAN","NAN%","NANQ","NANS","QNAN","SNAN","1.#SNAN","1.#QNAN","-1.#IND","NULL","?"};
+const set<datadefs::NAN_t> datadefs::NANs = {"NA","NAN","NULL","?"};
 
 const string datadefs::CONTRAST = "CONTRAST";
 
@@ -146,7 +146,7 @@ void datadefs::countRealValues(vector<num_t> const& data, size_t& nRealValues) {
     if(!datadefs::isNAN(data[i])) {
       ++nRealValues;
     }
-  }  
+  }
 }
 
 

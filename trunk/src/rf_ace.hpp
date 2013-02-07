@@ -91,6 +91,11 @@ public:
 
     assert( ! forestOptions->useContrasts );
 
+    if ( ! trainData->feature(targetIdx)->isNumerical() && forestOptions->useQuantiles() ) {
+      cerr << "ERROR: Quantiles do not work with classification!" << endl;
+      exit(1);
+    }
+
     if ( trainedModel_ ) {
       delete trainedModel_;
       trainedModel_ = NULL;
@@ -334,11 +339,13 @@ public:
 
   QuantilePredictionOutput predictQuantiles(Treedata* testData, ForestOptions* forestOptions) {
     
-    assert( trainedModel_ );
+    assert(forestOptions->useQuantiles());
+    assert(trainedModel_);
 
     QuantilePredictionOutput qPredOut;
 
     qPredOut.targetName = trainedModel_->getTargetName();
+    qPredOut.quantiles = forestOptions->quantiles;
 
     size_t targetIdx = testData->getFeatureIdx(qPredOut.targetName);
 
@@ -459,7 +466,9 @@ public:
     assert( nThreads >= 1 );
 
     if ( seed < 0 ) {
-      cerr << "Invalid random seed (" << seed << ")" << endl;
+      //cerr << "Invalid random seed (" << seed << ")" << endl;
+      //exit(1);
+      seed = distributions::generateSeed();
     }
 
     // We have as many random number generators as there are threads
