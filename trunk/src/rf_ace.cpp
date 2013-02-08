@@ -94,9 +94,8 @@ int main(const int argc, char* const argv[]) {
   } 
 
   if ( options.io.loadForestFile != "" ) {
-    
+    cout << "-Loading forest from file '" << options.io.loadForestFile << "'" << endl;
     rface.load(options.io.loadForestFile);
-    
   }
 
 
@@ -117,10 +116,7 @@ int main(const int argc, char* const argv[]) {
     
     vector<num_t> featureWeights = readFeatureWeights(trainData,targetIdx,options);
     
-    if ( options.generalOptions.seed < 0 ) {
-      options.generalOptions.seed = distributions::generateSeed();
-    }
-
+    cout << "-Training the model" << endl;
     rface.train(&trainData,targetIdx,featureWeights,&options.forestOptions);
     
     vector<num_t> data = utils::removeNANs(trainData.getFeatureData(targetIdx));

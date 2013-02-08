@@ -125,7 +125,7 @@ RcppExport SEXP rfaceTrain(SEXP trainDataFrameObj,
     }
   }
 
-  Rcpp::XPtr<RFACE> rface( new RFACE, true);
+  Rcpp::XPtr<RFACE> rface( new RFACE(nThreads), true);
 
   Rcpp::NumericVector foo(featureWeightsR);
   vector<num_t> featureWeights(foo.size());
@@ -136,17 +136,13 @@ RcppExport SEXP rfaceTrain(SEXP trainDataFrameObj,
   //vector<num_t> featureWeights(trainData.nFeatures(),1.0);
   featureWeights[targetIdx] = 0.0;
 
-  int seed = 0;
-
-  rface->train(&trainData,targetIdx,featureWeights,&forestOptions,seed,nThreads);
+  rface->train(&trainData,targetIdx,featureWeights,&forestOptions);
 
   return(rface);
 
 }
 
-RcppExport SEXP rfacePredict(SEXP rfaceObj, SEXP testDataFrameObj, SEXP nThreadsR) {
-
-  size_t nThreads = Rcpp::as<size_t>(nThreadsR);
+RcppExport SEXP rfacePredict(SEXP rfaceObj, SEXP testDataFrameObj) {
 
   Rcpp::XPtr<RFACE> rface(rfaceObj);
 
@@ -159,7 +155,7 @@ RcppExport SEXP rfacePredict(SEXP rfaceObj, SEXP testDataFrameObj, SEXP nThreads
 
   Treedata testData(testDataMatrix,useContrasts,sampleHeaders);
 
-  RFACE::TestOutput testOutput = rface->test(&testData,nThreads);
+  RFACE::TestOutput testOutput = rface->test(&testData);
 
   Rcpp::List predictions;
 
@@ -208,8 +204,6 @@ RcppExport SEXP rfaceFilter(SEXP filterDataFrameObj,  SEXP targetStrR, SEXP feat
 
   Treedata filterData(dataMatrix,useContrasts,sampleHeaders);
  
-  size_t seed = 0;
-
   size_t targetIdx = filterData.getFeatureIdx(targetStr);
 
   if ( targetIdx == filterData.end() ) {
@@ -229,9 +223,9 @@ RcppExport SEXP rfaceFilter(SEXP filterDataFrameObj,  SEXP targetStrR, SEXP feat
   }
   featureWeights[targetIdx] = 0.0;
 
-  RFACE rface;
+  RFACE rface(nThreads);
 
-  RFACE::FilterOutput filterOutput = rface.filter(&filterData,targetIdx,featureWeights,&forestOptions,&filterOptions,seed,nThreads);
+  RFACE::FilterOutput filterOutput = rface.filter(&filterData,targetIdx,featureWeights,&forestOptions,&filterOptions);
 
   Rcpp::List filterOutputR = Rcpp::List::create(Rcpp::Named("featureNames")=filterOutput.featureNames,
                                                 Rcpp::Named("pValues")=filterOutput.pValues,

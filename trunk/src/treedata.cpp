@@ -572,7 +572,7 @@ num_t Treedata::numericalFeatureSplit(const size_t targetIdx,
   utils::sortFromRef(sampleIcs_right,sortIcs);
 
   size_t n_tot = fv.size();
-  size_t n_right = n_tot;
+  //size_t n_right = n_tot;
   size_t n_left = 0;
 
   if(n_tot < 2 * minSamples) {
@@ -607,7 +607,7 @@ num_t Treedata::numericalFeatureSplit(const size_t targetIdx,
     sampleIcs_left[i] = sampleIcs_right[i];
   }
   sampleIcs_right.erase(sampleIcs_right.begin(),sampleIcs_right.begin() + n_left);
-  n_right = sampleIcs_right.size();
+  size_t n_right = sampleIcs_right.size();
 
   assert(n_left + n_right == n_tot);
 

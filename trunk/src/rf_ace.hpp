@@ -36,7 +36,7 @@ class RFACE {
 
 public:
 
-  RFACE(size_t nThreads = 1, int seed = 0):
+  RFACE(size_t nThreads = 1, int seed = -1):
     trainedModel_(NULL) {
     this->resetRandomNumberGenerators(nThreads,seed);
   }
