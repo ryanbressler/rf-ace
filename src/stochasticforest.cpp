@@ -52,6 +52,10 @@ void StochasticForest::loadForest(const string& fileName) {
   categories_ = utils::split(forestSetup["CATEGORIES"], ',');
   isTargetNumerical_ = categories_.size() == 0;
 
+  vector<string> foo = utils::split(forestSetup["QUANTILES"],',');
+  quantiles_.resize(foo.size());
+  transform(foo.begin(),foo.end(),quantiles_.begin(),utils::str2<num_t>);
+
   assert(forestStream.good());
 
   int treeIdx = -1;
@@ -92,7 +96,7 @@ void StochasticForest::loadForest(const string& fileName) {
     }
 
     Node* nodep = forestMap[treeIdx][nodeMap["NODE"]];
-
+    
     string rawTrainPrediction = nodeMap["PRED"];
     num_t trainPrediction = datadefs::NUM_NAN;
 
@@ -100,9 +104,14 @@ void StochasticForest::loadForest(const string& fileName) {
       trainPrediction = utils::str2<num_t>(rawTrainPrediction);
     }
 
-    // Set train prediction of the node
-    nodep->setTrainPrediction(trainPrediction, rawTrainPrediction);
+    vector<string> foo2 = utils::split(nodeMap["DATA"],',');
+    vector<num_t> trainData(foo2.size());
+    transform(foo2.begin(),foo2.end(),trainData.begin(),utils::str2<num_t>);
 
+    // Set train data prediction of the node
+    nodep->setTrainPrediction(trainPrediction, rawTrainPrediction);
+    nodep->setTrainData(trainData);
+    
     // If the node has a splitter...
     if ( nodeMap.find("SPLITTER") != nodeMap.end() ) {
 
@@ -202,8 +211,10 @@ void StochasticForest::saveForest(ofstream& toFile) {
     toFile << ",GBT_CONSTANTS=\"" << flush;
     utils::write(toFile,GBTConstants_.begin(),GBTConstants_.end(),',');
     toFile << "\",GBT_SHRINKAGE=" << GBTShrinkage_<< flush;
-  }
-  toFile << endl;
+  } 
+  toFile << ",QUANTILES=\"" << flush;
+  utils::write(toFile,quantiles_.begin(),quantiles_.end(),',');
+  toFile << "\"" << endl;
 
   // Save each tree in the forest
   for (size_t treeIdx = 0; treeIdx < rootNodes_.size(); ++treeIdx) {
@@ -234,6 +245,7 @@ void StochasticForest::learnRF(Treedata* trainData, const size_t targetIdx,
   targetName_ = trainData->feature(targetIdx)->name();
   isTargetNumerical_ = trainData->feature(targetIdx)->isNumerical();
   categories_ = trainData->feature(targetIdx)->categories();
+  quantiles_ = forestOptions->quantiles;
 
   assert(trainData->nFeatures() == featureWeights.size());
 
@@ -331,9 +343,7 @@ void StochasticForest::learnGBT(Treedata* trainData, const size_t targetIdx,
   categories_ = trainData->feature(targetIdx)->categories();
 
   assert(trainData->nFeatures() == featureWeights.size());
-
   assert(fabs(featureWeights[targetIdx]) < datadefs::EPS);
-
   assert(randoms.size() == 1);
 
   distributions::PMF pmf(featureWeights);
@@ -824,16 +834,17 @@ void StochasticForest::predict(Treedata* testData, vector<num_t>& predictions,ve
 #endif
 }
 
-void StochasticForest::predictQuantiles(Treedata* testData, 
+void StochasticForest::predictQuantiles(Treedata* testData,
 					vector<vector<num_t> >& predictions, 
-					const vector<num_t>& quantilePoints, 
-					distributions::Random* random, 
-					size_t nSamplesPerTree) {
+					distributions::Random* random,
+					const size_t nSamplesPerTree) {
 
 
   size_t nTrees = this->nTrees();
   size_t nSamples = testData->nSamples();
-  size_t nQuantiles = quantilePoints.size();
+  size_t nQuantiles = quantiles_.size();
+
+  assert(nQuantiles > 0);
 
   predictions.resize(nSamples,vector<num_t>(nQuantiles));
   
@@ -849,7 +860,7 @@ void StochasticForest::predictQuantiles(Treedata* testData,
       }
     }
     for ( size_t q = 0; q < nQuantiles; ++q ) {
-      predictions[sampleIdx][q] = math::percentile(finalData,quantilePoints[q]);
+      predictions[sampleIdx][q] = math::percentile(finalData,quantiles_[q]);
     }
     //cout << "done with sample " << sampleIdx << endl;
   }

@@ -215,7 +215,11 @@ void Node::print(string& traversal, ofstream& toFile) {
       //<< ",RVALUES=" << splitter_.hashValue;
     }
 
-    if ( this->missingChild() ) { toFile << ",M=M" << endl; } else { toFile << endl; }
+    if ( this->missingChild() ) { toFile << ",M=M"; }
+
+    toFile << ",DATA=\"";
+    utils::write(toFile,trainData_.begin(),trainData_.end(),',');
+    toFile << "\"" << endl;
 
     string traversalLeft = traversal;
     traversalLeft.append("L");
@@ -233,7 +237,9 @@ void Node::print(string& traversal, ofstream& toFile) {
     }
     
   } else {
-    toFile << endl;
+    toFile << ",DATA=\"";
+    utils::write(toFile,trainData_.begin(),trainData_.end(),',');
+    toFile << "\"" << endl;
   }
 }
 
@@ -255,6 +261,10 @@ void Node::setTrainPrediction(const num_t trainPrediction, const string& rawTrai
 num_t Node::getTrainPrediction() const {
   assert( !datadefs::isNAN(trainPrediction_) );
   return( trainPrediction_ );
+}
+
+void Node::setTrainData(const vector<num_t>& trainData) {
+  trainData_ = trainData;
 }
 
 vector<num_t> Node::getTrainData() const {

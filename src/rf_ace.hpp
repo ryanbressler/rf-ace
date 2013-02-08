@@ -337,15 +337,17 @@ public:
     return( testOutput );
   }
 
-  QuantilePredictionOutput predictQuantiles(Treedata* testData, ForestOptions* forestOptions) {
+  QuantilePredictionOutput predictQuantiles(Treedata* testData, const size_t nSamplesPerTree) {
     
-    assert(forestOptions->useQuantiles());
+    //assert(forestOptions->useQuantiles());
     assert(trainedModel_);
 
     QuantilePredictionOutput qPredOut;
 
     qPredOut.targetName = trainedModel_->getTargetName();
-    qPredOut.quantiles = forestOptions->quantiles;
+    qPredOut.quantiles = trainedModel_->getQuantiles();
+
+    assert(qPredOut.quantiles.size() > 0);
 
     size_t targetIdx = testData->getFeatureIdx(qPredOut.targetName);
 
@@ -355,7 +357,7 @@ public:
       qPredOut.trueData = vector<num_t>(testData->nSamples(),datadefs::NUM_NAN);
     }
 
-    trainedModel_->predictQuantiles(testData,qPredOut.predictions,forestOptions->quantiles,&randoms_[0],forestOptions->nodeSize);
+    trainedModel_->predictQuantiles(testData,qPredOut.predictions,&randoms_[0],nSamplesPerTree);
 
     qPredOut.sampleNames.resize( testData->nSamples() );
     for ( size_t i = 0; i < testData->nSamples(); ++i ) {
