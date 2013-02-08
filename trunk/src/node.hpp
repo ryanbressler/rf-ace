@@ -65,6 +65,8 @@ public:
 
   vector<const Node*> getChildLeaves() const;
 
+  void setTrainData(const vector<num_t>& trainData);
+
   vector<num_t> getTrainData() const;
 
   void print(ofstream& toFile);

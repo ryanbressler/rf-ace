@@ -147,7 +147,7 @@ int main(const int argc, char* const argv[]) {
     Treedata testData(options.io.testDataFile,options.generalOptions.dataDelimiter,options.generalOptions.headerDelimiter);
     if ( options.forestOptions.useQuantiles() ) {
       cout << "-Making quantile predictions" << endl;
-      qPredOutput = rface.predictQuantiles(&testData,&options.forestOptions);
+      qPredOutput = rface.predictQuantiles(&testData,options.forestOptions.nodeSize);
     } else {
       cout << "-Making predictions" << endl;
       testOutput = rface.test(&testData);
