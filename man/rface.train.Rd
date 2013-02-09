@@ -8,7 +8,7 @@
  Builds an RF-ACE predictor object.
 }
 \usage{
- predictorObj <- rface.train(trainData, target, featureWeights = as.vector(rep(1,length(colnames(trainData)))), nTrees = 100, mTry = 10, nodeSize = 3, nMaxLeaves = 1000, nThreads = 1)
+ predictorObj <- rface.train(trainData, target, featureWeights = as.vector(rep(1,length(colnames(trainData)))), nTrees = 100, mTry = 10, nodeSize = 3, nMaxLeaves = 1000, quantiles = vector(length=0), nThreads = 1)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -32,6 +32,9 @@
 }
   \item{nMaxLeaves}{
   Maximum number of leaves per tree. Default 1000.
+}
+  \item{quantiles}{
+  A vector of quantile points to provide predictions for. If empty, mean prediction will be calculated. Quantiles are only applicable in regression.
 }
   \item{nThreads}{
   Number of CPU threads to train the model with. Default 1.
