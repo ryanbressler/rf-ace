@@ -223,6 +223,10 @@ diff <- proc.time() - diff
 speed$rface <- as.matrix(speed$rface + diff)[1]
 }
 
+RMSE <- list()
+rfaceOut <- rface.predict(rface,testData)
+RMSE$rface <- rmse(rfaceOut)
+
 trainData$"C:class" <- as.factor(trainData$"C:class")
 
 #trainData <- as.matrix(na.roughfix(trainData))
@@ -238,7 +242,17 @@ speed$rf <- as.matrix(speed$rf + diff)[1]
 }
 }
 
-return(list(rf=speed$rf,rface=speed$rface,data=trainData))
+RMSE$rf <- NA 
+if (offset < 10) {
+rf <- randomForest(trainData[2],y=trainData[[1]],xtest=testData[2],ytest=testData[[1]],ntree=50,mtry=1)
+
+rfOut <- list()
+rfOut$trueData <- rfaceOut$trueData
+rfOut$predData <- rf$test$predicted
+RMSE$rf <- rmse(rfOut)
+}
+
+return(list(rfSpeed=speed$rf,rfaceSpeed=speed$rface,data=trainData,rfRMSE=RMSE$rf,rfaceRMSE=RMSE$rface))
 }
 
 
