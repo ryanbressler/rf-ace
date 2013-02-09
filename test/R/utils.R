@@ -51,12 +51,16 @@ makeData <- function(nSamples,std,bags,nWordsMin,nWordsMax,offset,pMissing) {
   n1[runif(nSamples) < pMissing] <- NA
   n2 <- rnorm(nSamples)
   n2[runif(nSamples) < pMissing] <- NA
+  n3 <- rnorm(nSamples)
+  n3[runif(nSamples) < pMissing] <- NA
+  n4 <- rnorm(nSamples)
+  n4[runif(nSamples) < pMissing] <- NA
   x1[runif(nSamples) < pMissing] <- NA
   x2[runif(nSamples) < pMissing] <- NA
 
   # Populating the data frame with the training data
-  data <- data.frame(y,x1,x2,n1,n2,text,as.character(fakeClasses),stringsAsFactors=FALSE)
-  colnames(data) <- c("N:output","N:input1","N:input2","N:noise1","N:noise2","T:random","C:class")
+  data <- data.frame(y,x1,x2,text,as.character(fakeClasses),n1,n2,n3,n4,stringsAsFactors=FALSE)
+  colnames(data) <- c("N:output","N:input1","N:input2","T:random","C:class","N:noise1","N:noise2","N:noise3","N:noise4")
 
   # Populating sample names
   rownames(data) <- paste(c(rep("s",nSamples)),(1:nSamples),sep='')
@@ -71,7 +75,7 @@ makeData <- function(nSamples,std,bags,nWordsMin,nWordsMax,offset,pMissing) {
 benchmarkMissingValues <- function(pMissing) {
 
 nSamples <- 1000
-std <- 0.3
+std <- 0.4
 nWordsMin <- 4
 nWordsMax <- 8
 offset <- 0
@@ -84,16 +88,16 @@ list("baby","diaper","toy","poo","pee","smile","cry","toddler","infant","play","
 trainData <- makeData(nSamples,std,bags,nWordsMin,nWordsMax,offset,pMissing)
 testData <- makeData(nSamples,std,bags,nWordsMin,nWordsMax,offset,pMissing)
 
-fWeightsA <- as.vector(c(1,1,1,1,1,0,0))
-fWeightsB <- as.vector(c(1,1,1,1,1,4,0))
-fWeightsC <- as.vector(c(1,1,1,1,1,0,1))
+fWeightsA <- as.vector(c(1,1,1,0,0,1,1,1,1))
+fWeightsB <- as.vector(c(1,1,1,4,0,1,1,1,1))
+fWeightsC <- as.vector(c(1,1,1,0,1,1,1,1,1))
 
-rfmA <- rface.train(trainData,"N:output",featureWeights=fWeightsA,nTrees=50,mTry=2,nodeSize=3,forestType="RF",noNABranching=TRUE)
+rfmA <- rface.train(trainData,"N:output",featureWeights=fWeightsA,nTrees=50,mTry=3,nodeSize=3,forestType="RF",noNABranching=TRUE)
 rfmB <- rface.train(trainData,"N:output",featureWeights=fWeightsB,nTrees=50,mTry=6,nodeSize=3,forestType="RF",noNABranching=TRUE)
-rfmC <- rface.train(trainData,"N:output",featureWeights=fWeightsC,nTrees=50,mTry=2,nodeSize=3,forestType="RF",noNABranching=TRUE)
-rfmD <- rface.train(trainData,"N:output",featureWeights=fWeightsA,nTrees=50,mTry=2,nodeSize=3,forestType="RF",noNABranching=FALSE)
+rfmC <- rface.train(trainData,"N:output",featureWeights=fWeightsC,nTrees=50,mTry=3,nodeSize=3,forestType="RF",noNABranching=TRUE)
+rfmD <- rface.train(trainData,"N:output",featureWeights=fWeightsA,nTrees=50,mTry=3,nodeSize=3,forestType="RF",noNABranching=FALSE)
 rfmE <- rface.train(trainData,"N:output",featureWeights=fWeightsB,nTrees=50,mTry=6,nodeSize=3,forestType="RF",noNABranching=FALSE)
-rfmF <- rface.train(trainData,"N:output",featureWeights=fWeightsC,nTrees=50,mTry=2,nodeSize=3,forestType="RF",noNABranching=FALSE)
+rfmF <- rface.train(trainData,"N:output",featureWeights=fWeightsC,nTrees=50,mTry=3,nodeSize=3,forestType="RF",noNABranching=FALSE)
 
 outA <- rface.predict(rfmA,testData)
 outB <- rface.predict(rfmB,testData)
@@ -105,19 +109,19 @@ outF <- rface.predict(rfmF,testData)
 trainData$"C:class" <- as.factor(trainData$"C:class")
 testData$"C:class"  <- as.factor(testData$"C:class")
 
-imputedTrainData <- na.roughfix(trainData[c(1,2,3,4,5,7)])
-imputedTestData  <- na.roughfix(testData[c(1,2,3,4,5,7)])
+imputedTrainData <- na.roughfix(trainData[c(1,2,3,5,6,7,8,9)])
+imputedTestData  <- na.roughfix(testData[ c(1,2,3,5,6,7,8,9)])
 
-rfOut1 <- randomForest(imputedTrainData[c(2,3,4,5)],y=imputedTrainData[[1]],xtest=imputedTestData[c(2,3,4,5)],ytest=imputedTestData[[1]],ntree=50,mtry=2)
-rfOut2 <- randomForest(imputedTrainData[c(2,3,4,5,6)],y=imputedTrainData[[1]],xtest=imputedTestData[c(2,3,4,5,6)],ytest=imputedTestData[[1]],ntree=50,mtry=2)
+rfOut1 <- randomForest(imputedTrainData[c(2,3,5,6,7,8)],y=imputedTrainData[[1]],xtest=imputedTestData[c(2,3,5,6,7,8)],ytest=imputedTestData[[1]],ntree=50,mtry=3)
+rfOut2 <- randomForest(imputedTrainData[2:8],y=imputedTrainData[[1]],xtest=imputedTestData[2:8],ytest=imputedTestData[[1]],ntree=50,mtry=3)
 
 outG <- list()
 outG$trueData <- outF$trueData
-outG$predData <- rfOut1$predicted
+outG$predData <- rfOut1$test$predicted
 
 outH <- list()
 outH$trueData <- outF$trueData
-outH$predData <- rfOut2$predicted
+outH$predData <- rfOut2$test$predicted
 
 colors <- testData$"C:class"
 
@@ -181,13 +185,13 @@ dev.off()
 errors <- list()
 errors$num <- c(rmse(outG),rmse(outA),rmse(outD))
 names(errors$num) <- c("A","B","C")
-errors$txt <- c(rmse(outH),rmse(outB),rmse(outE))
+errors$txt <- c(rmse(outG),rmse(outB),rmse(outE))
 names(errors$txt) <- c("A","B","C")
-errors$cat <- c(rmse(outH),rmse(outC),rmse(outF))
+errors$cat <- c(rmse(outG),rmse(outC),rmse(outF))
 names(errors$cat) <- c("A","B","C")
 errors$title <- paste(c("n=",as.character(nSamples), ", pMissing=",as.character(pMissing*100)),collapse='')
 
-return(list(errors=errors,data=testData,idata=imputedTestData))
+return(list(errors=errors,data=testData,idata=imputedTestData,rf=rfOut2,outG=outG,outH=outH))
 
 }
 
@@ -205,7 +209,9 @@ list("swan","duck","duckling","bird","fly","pond","wings","feather","beak","legs
 list("baby","diaper","toy","poo","pee","smile","cry","toddler","infant","play","text","that","dont","distinguish"))
 
 trainData <- makeData(nSamples,std,bags,nWordsMin,nWordsMax,offset,pMissing)
-trainData <- trainData[c(1,7)]
+testData <- makeData(nSamples,std,bags,nWordsMin,nWordsMax,offset,pMissing)
+trainData <- trainData[c(1,5)]
+testData <- testData[c(1,5)]
 
 speed <- list()
 
