@@ -34,6 +34,7 @@ void rface_newtest() {
   newtest( "Testing save/load Quantile Regression Random Forest", &rface_newtest_QRF_save_load_regression );
   newtest( "Testing save/load GBT for classification", &rface_newtest_GBT_save_load_classification );
   newtest( "Testing save/load GBT for regression", &rface_newtest_GBT_save_load_regression );
+
 }
 
 RFACE::TestOutput make_predictions(ForestOptions& forestOptions, const string& targetStr) {

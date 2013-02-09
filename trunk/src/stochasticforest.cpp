@@ -227,6 +227,10 @@ void StochasticForest::saveForest(ofstream& toFile) {
 
 }
 
+bool StochasticForest::useQuantiles() const {
+  return( quantiles_.size() > 0 );
+}
+
 void growTreesPerThread(vector<RootNode*>& rootNodes, Treedata* trainData,
     const size_t targetIdx, const ForestOptions* forestOptions,
     const distributions::PMF* pmf, distributions::Random* random) {

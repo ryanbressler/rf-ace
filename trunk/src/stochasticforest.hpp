@@ -31,6 +31,8 @@ public:
   void predict(Treedata* testData, vector<string>& predictions, vector<num_t>& confidence, size_t nThreads = 1);
   void predict(Treedata* testData, vector<num_t>& predictions, vector<num_t>& confidence, size_t nThreads = 1);
 
+  bool useQuantiles() const;
+
   void predictQuantiles(Treedata* testData, vector<vector<num_t> >& predictions, distributions::Random* random, const size_t nSamplesPerTree);
 
   //vector<num_t> getOobPredictions();

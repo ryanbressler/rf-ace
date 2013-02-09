@@ -388,6 +388,8 @@ public:
     trainedModel_->saveForest( toFile );
 
   }
+
+  StochasticForest* forestRef() { return( trainedModel_ ); }
   
   void updateFeatureFrequency(ftable_t& frequency, StochasticForest* SF) {
 

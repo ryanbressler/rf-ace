@@ -9,7 +9,8 @@ errorlist <- list()
 
 # Benchmark missing values
 for ( i in 1:length(pMissing) ) {
-  errorlist[i] <- benchmarkMissingValues(pMissing[[i]])
+  tmp <- benchmarkMissingValues(pMissing[[i]])
+  errorlist[[i]] <- tmp$errors
 } 
 
 colors <- c("black","darkgrey","lightgrey")
@@ -30,6 +31,7 @@ title(tit)
 tit <- paste(c("NUM+CAT, %NA=",as.character(pMissing[i]*100)),collapse='')
 barplot(errorlist[[i]]$cat,legend.text=FALSE,axes=TRUE,ylab="RMSE",col=colors,cex.names=0.9)
 title(tit)
+
 }
 
 dev.off()
@@ -64,5 +66,8 @@ title("RF-ACE, ternary splits")
 grid()
 dev.off()
 
+
+trainData <- read.afm("test_103by300_mixed_nan_matrix.afm")
+rface <- rface.train(trainData,"N:output",nTrees=50,mTry=3,nodeSize=3,forestType="RF",quantiles=vector(0.1,0.3,0.5,0.7,0.9))
 
 
