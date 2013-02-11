@@ -863,6 +863,8 @@ void StochasticForest::predictQuantiles(Treedata* testData,
 	finalData[ treeIdx * nSamplesPerTree + i ] = treeData[ random->integer() % treeData.size() ];
       }
     }
+    //utils::write(cout,finalData.begin(),finalData.end());
+    //cout << endl;
     for ( size_t q = 0; q < nQuantiles; ++q ) {
       predictions[sampleIdx][q] = math::percentile(finalData,quantiles_[q]);
     }

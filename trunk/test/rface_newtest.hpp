@@ -111,7 +111,7 @@ RFACE::QuantilePredictionOutput make_save_load_quantile_predictions(ForestOption
   
   rface2.load("foo.sf");
   
-  return( rface2.predictQuantiles(&trainData,forestOptions.nodeSize) );
+  return( rface2.predictQuantiles(&trainData,10*forestOptions.nodeSize) );
 
 }
 
@@ -143,18 +143,18 @@ num_t regression_error(const RFACE::TestOutput& predictions) {
 
 vector<num_t> quantile_regression_error(const RFACE::QuantilePredictionOutput& qPredOut) {
 
-  vector<num_t> QRMSE(qPredOut.quantiles.size(),0.0);
+  vector<num_t> QDEV(qPredOut.quantiles.size(),0.0);
   num_t n = static_cast<num_t>(qPredOut.predictions.size());
 
   for ( size_t q = 0; q < qPredOut.quantiles.size(); ++q ) {
     for ( size_t i = 0; i < qPredOut.predictions.size(); ++i ) {
-      num_t e = qPredOut.predictions[i][q] - qPredOut.trueData[i];
-      QRMSE[q] += powf(e,2)/n;
+      bool b = qPredOut.trueData[i] < qPredOut.predictions[i][q];
+      QDEV[q] += b/n;
     }
-    QRMSE[q] = sqrt(QRMSE[q]);
+    QDEV[q] = fabs(QDEV[q] - qPredOut.quantiles[q]);
   }
 
-  return(QRMSE);
+  return(QDEV);
 
 }
 
@@ -189,9 +189,11 @@ void rface_newtest_QRF_train_test_regression() {
   forestOptions.mTry = 30;
   forestOptions.quantiles = {0.1,0.3,0.5,0.7,0.9};
 
-  vector<num_t> QRMSE = quantile_regression_error( make_quantile_predictions(forestOptions,"N:output") );
+  vector<num_t> QDEV = quantile_regression_error( make_quantile_predictions(forestOptions,"N:output") );
 
-  newassert( QRMSE[2] < 1.0 );
+  utils::write(cout,QDEV.begin(),QDEV.end());
+
+  newassert( math::mean(QDEV) < 0.05 );
   
 }
 

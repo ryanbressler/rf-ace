@@ -8,7 +8,7 @@
  Apply feature selection with RF-ACE.
 }
 \usage{
- associations <- rface.filter(filterData, target, featureWeights = as.vector(rep(1,length(colnames(filterData)))), nTrees = 100, mTry = 10, nodeSize = 3, nMaxLeaves = 1000, nThreads = 1)
+ associations <- rface.filter(filterData, target, featureWeights = vector(length=0), nTrees = 100, mTry = 10, nodeSize = 3, nMaxLeaves = 1000, nThreads = 1)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
