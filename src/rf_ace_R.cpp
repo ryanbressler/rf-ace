@@ -129,13 +129,12 @@ RcppExport SEXP rfaceTrain(SEXP trainDataFrameObj,
 
   Rcpp::XPtr<RFACE> rface( new RFACE(nThreads), true);
 
-  Rcpp::NumericVector foo(featureWeightsR);
-  vector<num_t> featureWeights(foo.size());
-  for ( size_t i = 0; i < featureWeights.size(); ++i ) {
-    featureWeights[i] = foo[i];
-  }
+  vector<num_t> featureWeights = Rcpp::as<vector<num_t> >(featureWeightsR);
 
-  //vector<num_t> featureWeights(trainData.nFeatures(),1.0);
+  if ( featureWeights.size() == 0 ) {
+    featureWeights = trainData.getFeatureWeights();
+  } 
+ 
   featureWeights[targetIdx] = 0.0;
 
   rface->train(&trainData,targetIdx,featureWeights,&forestOptions);
@@ -161,7 +160,7 @@ RcppExport SEXP rfacePredict(SEXP rfaceObj, SEXP testDataFrameObj) {
     
     if ( rface->forestRef()->useQuantiles() ) {
 
-      RFACE::QuantilePredictionOutput qPredOut = rface->predictQuantiles(&testData,3);
+      RFACE::QuantilePredictionOutput qPredOut = rface->predictQuantiles(&testData,100);
       
       return( Rcpp::List::create(Rcpp::Named("targetName")=qPredOut.targetName,
 				 Rcpp::Named("sampleNames")=qPredOut.sampleNames,
@@ -230,10 +229,9 @@ RcppExport SEXP rfaceFilter(SEXP filterDataFrameObj,  SEXP targetStrR, SEXP feat
     }
   }
 
-  Rcpp::NumericVector foo(featureWeightsR);
-  vector<num_t> featureWeights(foo.size());
-  for ( size_t i = 0; i < featureWeights.size(); ++i ) {
-    featureWeights[i] = foo[i];
+  vector<num_t> featureWeights = Rcpp::as<vector<num_t> >(featureWeightsR);
+  if ( featureWeights.size() == 0 ) {
+    featureWeights = filterData.getFeatureWeights();
   }
   featureWeights[targetIdx] = 0.0;
 

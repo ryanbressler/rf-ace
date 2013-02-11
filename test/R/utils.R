@@ -23,7 +23,15 @@ sampleFakeClasses <- function(classes,offset) {
 
 
 
-makeData <- function(nSamples,std,bags,nWordsMin,nWordsMax,offset,pMissing) {
+makeData <- function(nSamples,std,offset,pMissing) {
+
+  nWordsMin <- 4
+  nWordsMax <- 8
+
+  bags <- list(
+  list("buckler","shield","sword","helmet","gloves","horse","medieval","castle","joust","clown","extra","words","that","mix"),
+  list("swan","duck","duckling","bird","fly","pond","wings","feather","beak","legs","words","that","dont","distinguish"),
+  list("baby","diaper","toy","poo","pee","smile","cry","toddler","infant","play","text","that","dont","distinguish"))
 
   classes <- sample(1:3,nSamples,replace=T)
   fakeClasses <- sampleFakeClasses(classes,offset)
@@ -69,42 +77,50 @@ makeData <- function(nSamples,std,bags,nWordsMin,nWordsMax,offset,pMissing) {
 
 }
 
+getRFACEOutput <- function(trainData,testData,forestType,noNABranching,quantiles=vector(length(0))) {
 
+rface <- rface.train(trainData,"N:output",nTrees=50,mTry=3,nodeSize=3,forestType=forestType,noNABranching=noNABranching)
+return(rface.predict(rface,testData))
+
+}
+
+getQuantileVector <- function(predictions,idx) {
+
+out <- vector(length=length(predictions))
+
+for ( i in 1:length(predictions) ) {
+out[i] <- predictions[[i]][idx]
+}
+return(out)
+}
 
 
 benchmarkMissingValues <- function(pMissing) {
 
+offset <- 0
 nSamples <- 1000
 std <- 0.4
-nWordsMin <- 4
-nWordsMax <- 8
-offset <- 0
 
-bags <- list(
-list("buckler","shield","sword","helmet","gloves","horse","medieval","castle","joust","clown","extra","words","that","mix"),
-list("swan","duck","duckling","bird","fly","pond","wings","feather","beak","legs","words","that","dont","distinguish"),
-list("baby","diaper","toy","poo","pee","smile","cry","toddler","infant","play","text","that","dont","distinguish"))
+trainData <- makeData(nSamples,std,offset,pMissing)
+testData <- makeData(nSamples,std,offset,pMissing)
 
-trainData <- makeData(nSamples,std,bags,nWordsMin,nWordsMax,offset,pMissing)
-testData <- makeData(nSamples,std,bags,nWordsMin,nWordsMax,offset,pMissing)
+icsNum <- as.vector(c(1,2,3,6,7,8,9))
+icsNumTxt <- as.vector(c(1,2,3,4,6,7,8,9))
+icsNumCat <- as.vector(c(1,2,3,5,6,7,8,9))
 
-fWeightsA <- as.vector(c(1,1,1,0,0,1,1,1,1))
-fWeightsB <- as.vector(c(1,1,1,4,0,1,1,1,1))
-fWeightsC <- as.vector(c(1,1,1,0,1,1,1,1,1))
+outA <- getRFACEOutput(trainData[icsNum],testData[icsNum],"RF",TRUE)
+outB <- getRFACEOutput(trainData[icsNumTxt],testData[icsNumTxt],"RF",TRUE)
+outC <- getRFACEOutput(trainData[icsNumCat],testData[icsNumCat],"RF",TRUE)
+outD <- getRFACEOutput(trainData[icsNum],testData[icsNum],"RF",FALSE)
+outE <- getRFACEOutput(trainData[icsNumTxt],testData[icsNumTxt],"RF",FALSE)
+outF <- getRFACEOutput(trainData[icsNumCat],testData[icsNumCat],"RF",FALSE)
 
-rfmA <- rface.train(trainData,"N:output",featureWeights=fWeightsA,nTrees=50,mTry=3,nodeSize=3,forestType="RF",noNABranching=TRUE)
-rfmB <- rface.train(trainData,"N:output",featureWeights=fWeightsB,nTrees=50,mTry=6,nodeSize=3,forestType="RF",noNABranching=TRUE)
-rfmC <- rface.train(trainData,"N:output",featureWeights=fWeightsC,nTrees=50,mTry=3,nodeSize=3,forestType="RF",noNABranching=TRUE)
-rfmD <- rface.train(trainData,"N:output",featureWeights=fWeightsA,nTrees=50,mTry=3,nodeSize=3,forestType="RF",noNABranching=FALSE)
-rfmE <- rface.train(trainData,"N:output",featureWeights=fWeightsB,nTrees=50,mTry=6,nodeSize=3,forestType="RF",noNABranching=FALSE)
-rfmF <- rface.train(trainData,"N:output",featureWeights=fWeightsC,nTrees=50,mTry=3,nodeSize=3,forestType="RF",noNABranching=FALSE)
-
-outA <- rface.predict(rfmA,testData)
-outB <- rface.predict(rfmB,testData)
-outC <- rface.predict(rfmC,testData)
-outD <- rface.predict(rfmD,testData)
-outE <- rface.predict(rfmE,testData)
-outF <- rface.predict(rfmF,testData)
+outG <- getRFACEOutput(trainData[icsNum],testData[icsNum],"RF",TRUE,quantiles=vector(c(0.5)))
+outH <- getRFACEOutput(trainData[icsNumTxt],testData[icsNumTxt],"RF",TRUE,quantiles=vector(c(0.5)))
+outI <- getRFACEOutput(trainData[icsNumCat],testData[icsNumCat],"RF",TRUE,quantiles=vector(c(0.5)))
+outJ <- getRFACEOutput(trainData[icsNum],testData[icsNum],"RF",FALSE,quantiles=vector(c(0.5)))
+outK <- getRFACEOutput(trainData[icsNumTxt],testData[icsNumTxt],"RF",FALSE,quantiles=vector(c(0.5)))
+outL <- getRFACEOutput(trainData[icsNumCat],testData[icsNumCat],"RF",FALSE,quantiles=vector(c(0.5)))
 
 trainData$"C:class" <- as.factor(trainData$"C:class")
 testData$"C:class"  <- as.factor(testData$"C:class")
@@ -113,15 +129,11 @@ imputedTrainData <- na.roughfix(trainData[c(1,2,3,5,6,7,8,9)])
 imputedTestData  <- na.roughfix(testData[ c(1,2,3,5,6,7,8,9)])
 
 rfOut1 <- randomForest(imputedTrainData[c(2,3,5,6,7,8)],y=imputedTrainData[[1]],xtest=imputedTestData[c(2,3,5,6,7,8)],ytest=imputedTestData[[1]],ntree=50,mtry=3)
-rfOut2 <- randomForest(imputedTrainData[2:8],y=imputedTrainData[[1]],xtest=imputedTestData[2:8],ytest=imputedTestData[[1]],ntree=50,mtry=3)
+#rfOut2 <- randomForest(imputedTrainData[2:8],y=imputedTrainData[[1]],xtest=imputedTestData[2:8],ytest=imputedTestData[[1]],ntree=50,mtry=3)
 
-outG <- list()
-outG$trueData <- outF$trueData
-outG$predData <- rfOut1$test$predicted
-
-outH <- list()
-outH$trueData <- outF$trueData
-outH$predData <- rfOut2$test$predicted
+outRef <- list()
+outRef$trueData <- outA$trueData
+outRef$predData <- rfOut1$test$predicted
 
 colors <- testData$"C:class"
 
@@ -160,38 +172,29 @@ grid()
 dev.off()
 
 pdf("predictions_ref.pdf")
-plot(outG$predData,outG$trueData,col=colors,pch='.')
+plot(outRef$predData,outRef$trueData,col=colors,pch='.')
 title("RF (ref.)")
 lines( par()$usr[1:2], par()$usr[1:2] )
 grid()
 dev.off()
 
-pdf("predictions_ref2.pdf")
-plot(outH$predData,outH$trueData,col=colors,pch='.')
-title("RF (ref.)")
-lines( par()$usr[1:2], par()$usr[1:2] )
-grid()
-dev.off()
-
-#outA$method <- rep("A",nSamples)
-#outB$method <- rep("B",nSamples)
-#outC$method <- rep("C",nSamples)
-#outD$method <- rep("D",nSamples)
-#outE$method <- rep("E",nSamples)
-#outF$method <- rep("F",nSamples)
-
-#results <- data.frame(residual=c(outA$trueData-outA$predData,outB$trueData-outB$predData,outC$trueData-outC$predData,outD$trueData-outD$predData,outE$trueData-outE$predData,outF$trueData-outF$predData),method=c(outA$method,outB$method,outC$method,outD$method,outE$method,outF$method))
+#pdf("predictions_ref2.pdf")
+#plot(outH$predData,outH$trueData,col=colors,pch='.')
+#title("RF (ref.)")
+#lines( par()$usr[1:2], par()$usr[1:2] )
+#grid()
+#dev.off()
 
 errors <- list()
-errors$num <- c(rmse(outG),rmse(outA),rmse(outD))
-names(errors$num) <- c("A","B","C")
-errors$txt <- c(rmse(outG),rmse(outB),rmse(outE))
-names(errors$txt) <- c("A","B","C")
-errors$cat <- c(rmse(outG),rmse(outC),rmse(outF))
-names(errors$cat) <- c("A","B","C")
+errors$num <- c(rmse(outRef),rmse(outA),rmse(outD),rmse(outG),rmse(outJ))
+names(errors$num) <- c("A","B","C","D","E")
+errors$txt <- c(rmse(outRef),rmse(outB),rmse(outE),rmse(outH),rmse(outK))
+names(errors$txt) <- c("A","B","C","D","E")
+errors$cat <- c(rmse(outRef),rmse(outC),rmse(outF),rmse(outI),rmse(outL))
+names(errors$cat) <- c("A","B","C","D","E")
 errors$title <- paste(c("n=",as.character(nSamples), ", pMissing=",as.character(pMissing*100)),collapse='')
 
-return(list(errors=errors,data=testData,idata=imputedTestData,rf=rfOut2,outG=outG,outH=outH))
+return(list(errors=errors,data=testData,idata=imputedTestData,rf=rfOut1,outG=outG,outH=outH))
 
 }
 
@@ -199,17 +202,10 @@ benchmarkCatSplitterSpeed <- function(offset) {
 
 nSamples <- 1000
 std <- 0.3
-nWordsMin <- 4
-nWordsMax <- 8
 pMissing <- 0.0
 
-bags <- list(
-list("buckler","shield","sword","helmet","gloves","horse","medieval","castle","joust","clown","extra","words","that","mix"),
-list("swan","duck","duckling","bird","fly","pond","wings","feather","beak","legs","words","that","dont","distinguish"),
-list("baby","diaper","toy","poo","pee","smile","cry","toddler","infant","play","text","that","dont","distinguish"))
-
-trainData <- makeData(nSamples,std,bags,nWordsMin,nWordsMax,offset,pMissing)
-testData <- makeData(nSamples,std,bags,nWordsMin,nWordsMax,offset,pMissing)
+trainData <- makeData(nSamples,std,offset,pMissing)
+testData <- makeData(nSamples,std,offset,pMissing)
 trainData <- trainData[c(1,5)]
 testData <- testData[c(1,5)]
 

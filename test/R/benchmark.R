@@ -70,8 +70,28 @@ title("RF-ACE, ternary splits")
 grid()
 dev.off()
 
+nSamples <- 1000
+std <- 0.3
+offset <- 0
+pMissing <- 0.0
 
-trainData <- read.afm("test_103by300_mixed_nan_matrix.afm")
-rface <- rface.train(trainData,"N:output",nTrees=50,mTry=3,nodeSize=3,forestType="RF",quantiles=as.vector(c(0.1,0.3,0.5,0.7,0.9)))
+trainData <- makeData(nSamples,std,offset,pMissing)
+testData <- makeData(nSamples,std,offset,pMissing)
+qrface <- rface.train(trainData[c(1,2,3,5,6,7,8,9)],"N:output",nTrees=100,mTry=3,nodeSize=3,forestType="RF",quantiles=as.vector(c(0.1,0.3,0.5,0.7,0.9)))
+qrfaceOut <- rface.predict(qrface,testData)
 
+q1 <- getQuantileVector(qrfaceOut$predictions,1)
+q2 <- getQuantileVector(qrfaceOut$predictions,2)
+q3 <- getQuantileVector(qrfaceOut$predictions,3)
+q4 <- getQuantileVector(qrfaceOut$predictions,4)
+q5 <- getQuantileVector(qrfaceOut$predictions,5)
+
+pdf("quantilepredictions.pdf")
+plot(qrfaceOut$trueData,q1,col="lightgray",pch=".",cex=2)
+grid()
+points(qrfaceOut$trueData,q2,col="darkgray",pch=".",cex=2)
+points(qrfaceOut$trueData,q3,col="black",pch=".",cex=2)
+points(qrfaceOut$trueData,q4,col="darkgray",pch=".",cex=2)
+points(qrfaceOut$trueData,q5,col="lightgray",pch=".",cex=2)
+dev.off()
 

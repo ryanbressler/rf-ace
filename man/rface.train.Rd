@@ -8,7 +8,7 @@
  Builds an RF-ACE predictor object.
 }
 \usage{
- predictorObj <- rface.train(trainData, target, featureWeights = as.vector(rep(1,length(colnames(trainData)))), nTrees = 100, mTry = 10, nodeSize = 3, nMaxLeaves = 1000, quantiles = vector(length=0), nThreads = 1)
+ predictorObj <- rface.train(trainData, target, featureWeights = vector(length=0), nTrees = 100, mTry = 10, nodeSize = 3, nMaxLeaves = 1000, quantiles = vector(length=0), nThreads = 1)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
