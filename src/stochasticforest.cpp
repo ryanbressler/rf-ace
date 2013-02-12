@@ -854,7 +854,7 @@ void StochasticForest::predictQuantiles(Treedata* testData,
   
   for ( size_t sampleIdx = 0; sampleIdx < nSamples; ++sampleIdx ) {
     //cout << "sample " << sampleIdx << endl;
-    vector<num_t> finalData(nTrees*nSamplesPerTree);
+    vector<num_t> finalData(nTrees*nSamplesPerTree,datadefs::NUM_NAN);
     for ( size_t treeIdx = 0; treeIdx < nTrees; ++treeIdx ) {
       vector<num_t> treeData = rootNodes_[treeIdx]->getChildLeafTrainData(testData,sampleIdx);
       //cout << "got leaf data for tree " << treeIdx << endl;
