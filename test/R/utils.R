@@ -94,6 +94,18 @@ out[i] <- predictions[[i]][idx]
 return(out)
 }
 
+testCalibration <- function(rfaceOut) {
+
+  nQuantiles <- length(rfaceOut$quantiles)
+  nSamples <- length(rfaceOut$trueData)
+  cal <- 1*vector(length=nQuantiles)
+
+  for ( i in 1:nSamples ) {
+    cal <- cal + 1*(rfaceOut$trueData[i] < rfaceOut$predictions[[i]])/nSamples
+  }
+
+  return(cal)
+}
 
 benchmarkMissingValues <- function(pMissing) {
 
