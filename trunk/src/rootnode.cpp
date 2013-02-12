@@ -236,8 +236,8 @@ vector<num_t> RootNode::getChildLeafTrainData(Treedata* treeData, const size_t s
       allTrainData.push_back(trainData[j]);
     }
   }
-
+  
   return(allTrainData);
-
+  
 }
 
