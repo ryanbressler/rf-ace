@@ -158,7 +158,7 @@ void datadefs::map_data(vector<datadefs::num_t> const& data,
                         size_t& nRealValues) {
 
   datamap.clear();
-  datamap.reserve(data.size());
+  datamap.rehash(2*data.size());
 
   unordered_map<datadefs::num_t,vector<size_t> >::iterator it;
   nRealValues = 0;

@@ -489,9 +489,9 @@ num_t utils::categoricalFeatureSplitsNumericalTarget2(const vector<num_t>& tv,
 						      unordered_map<num_t,vector<size_t> >& fmap_right) {
   
   fmap_left.clear();
-  fmap_left.reserve(catOrder.size());
+  fmap_left.rehash(2*catOrder.size());
   fmap_right.clear();
-  fmap_right.reserve(catOrder.size());
+  fmap_right.rehash(2*catOrder.size());
 
   size_t n_tot = 0;
   
@@ -564,9 +564,9 @@ num_t utils::categoricalFeatureSplitsCategoricalTarget2(const vector<num_t>& tv,
 							unordered_map<num_t,vector<size_t> >& fmap_right) {
 
   fmap_left.clear();
-  fmap_left.reserve(catOrder.size());
+  fmap_left.rehash(2*catOrder.size());
   fmap_right.clear();
-  fmap_right.reserve(catOrder.size());
+  fmap_right.rehash(2*catOrder.size());
 
   size_t n_tot = 0;
 

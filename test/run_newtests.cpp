@@ -17,12 +17,25 @@ int main() {
 
   newtestinit();
 
+  cout << endl << "Testing Reader class:" << endl; 
   reader_newtest();
+
+  cout << endl << "Testing Treedata class:" << endl; 
   treedata_newtest();
+
+  cout << endl << "Testing RFACE class:" << endl;
   rface_newtest();
+
+  cout << endl << "Testing Distributions namespace:" << endl;
   distributions_newtest();
+  
+  cout << endl << "Testing Utils namespace:" << endl;
   utils_newtest();
+  
+  cout << endl << "Testing Datadefs namespace:" << endl;
   datadefs_newtest();
+
+  cout << endl << "Testing Node class:" << endl;
   node_newtest();
   //rootnode_newtest();
 
