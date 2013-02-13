@@ -293,11 +293,118 @@ void Treedata::readAFM(const string& fileName, const char dataDelimiter, const c
 
 void Treedata::readARFF(const string& fileName) {
 
-  Reader reader(fileName,',');
+  Reader reader(fileName,' ');
 
-  cerr << "ERROR: ARFF implementation is missing!" << endl;
-  exit(1);
+  string row;
+
+  bool hasRelation = false;
+  bool hasData = false;
+  bool hasFeatures = false;
+
+  size_t nFeatures = 0;
+  size_t nLines = reader.nLines();
+
+  vector<string> featureHeaders;
+  vector<Feature::Type> featureTypes;
+
+  // Prepare feature containers and name2idx mapping
+  features_.resize(0);
+  name2idx_.clear();
+
+  //Read one line from the ARFF file
+  while ( reader.nextLine() ) {
+
+    --nLines;
+
+    string prefix; reader >> prefix;
+
+    //Comment lines and empty lines are omitted
+    if(prefix[0] == '%' || prefix == "") {
+      continue;
+    }
+
+    prefix = utils::tolower(prefix);
+
+    //Read relation
+    if ( prefix == "@relation" ) {
+      hasRelation = true;
+      continue;
+    }
+
+    if ( prefix == "@attribute" ) { //Read attribute
+
+      hasFeatures = true;
+
+      assert( featureHeaders.size() == nFeatures );
+      assert( featureTypes.size() == nFeatures );
+
+      ++nFeatures;
+
+      string featureHeader,featureType; reader >> featureHeader >> featureType;
+      
+      featureType = utils::tolower(featureType);
+
+      featureHeaders.push_back(featureHeader);
+
+      if ( featureType == "real" || featureType == "numeric" ) {
+	featureTypes.push_back(Feature::Type::NUM);
+      } else {
+	featureTypes.push_back(Feature::Type::CAT);
+      }
+      continue;
+    }
+      
+    if ( prefix == "@data" ) { //Read data header
+      hasData = true;
+      break;
+    }
+  }
+  
+  if ( !hasData ) {
+    cerr << "Treedata::readARFF() -- could not find @data/@DATA identifier" << endl;
+    exit(1);
+  }
+
+  if ( !hasRelation ) {
+    cerr << "Treedata::readARFF() -- could not find @relation/@RELATION identifier" << endl;
+    exit(1);
+  }
+
+  if ( !hasFeatures ) {
+    cerr << "Treedata::readARFF() -- could not find @attribute/@ATTRIBUTE" << endl;
+    exit(1);
+  }
+
+  for ( size_t i = 0; i < nFeatures; ++i ) {
+    features_.push_back(Feature(featureTypes[i],featureHeaders[i],nLines));
+    name2idx_[featureHeaders[i]] = i;
+  }
+
+  reader.setDelimiter(',');
+
+  size_t sampleIdx = 0;
+
+  //Read data row-by-row
+  while ( reader.nextLine() ) {
+
+    for ( size_t i = 0; i < nFeatures; ++i ) {
+      //cout << "  " << i << features_[i].isNumerical() << flush;
+      if ( features_[i].isNumerical() ) {
+	num_t val; reader >> val;
+	features_[i].setNumSampleValue(sampleIdx,val);
+      } else {
+	string str; reader >> str;
+	features_[i].setCatSampleValue(sampleIdx,str);
+      }
+    }
+    //cout << endl;
+    ++sampleIdx;
+  }
+
+  assert(sampleIdx = nLines);
+
 }
+
 
 void Treedata::parseARFFattribute(const string& str, string& attributeName, bool& isFeatureNumerical) {
 
@@ -663,7 +770,7 @@ num_t Treedata::categoricalFeatureSplit(const size_t targetIdx,
   // Then populate the left side (sample indices and split values)
   sampleIcs_left.resize(n_tot);
   splitValues_left.clear();
-  splitValues_left.reserve(fmap_right.size());
+  splitValues_left.rehash(2*fmap_right.size());
   size_t iter = 0;
   for ( unordered_map<num_t,vector<size_t> >::const_iterator it(fmap_left.begin()); it != fmap_left.end(); ++it ) {
     for ( size_t i = 0; i < it->second.size(); ++i ) {

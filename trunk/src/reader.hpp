@@ -35,6 +35,8 @@ public:
 
   size_t nLines() const { return( nLines_ ); }
 
+  void setDelimiter(const char delimiter) { delimiter_ = delimiter; }
+
 #ifndef TEST__
 private:
 #endif
