@@ -70,14 +70,14 @@ title("RF-ACE, ternary splits")
 grid()
 dev.off()
 
-nSamples <- 10000
+nSamples <- 1000
 std <- 0.3
 offset <- 0
-pMissing <- 0.0
+pMissing <- 0.2
 
 trainData <- makeData(nSamples,std,offset,pMissing)
 testData <- makeData(nSamples,std,offset,pMissing)
-qrface <- rface.train(trainData[c(1,2,3,5,6,7,8,9)],"N:output",nTrees=100,mTry=3,nodeSize=3,forestType="RF",quantiles=as.vector(seq(0.01,0.90,0.05)))
+qrface <- rface.train(trainData[c(1,2,3,5,6,7,8,9)],"N:output",nTrees=100,mTry=3,nodeSize=10,forestType="RF",quantiles=as.vector(seq(0.01,0.90,0.05)))
 qrfaceOut <- rface.predict(qrface,testData)
 
 cal <- testCalibration(qrfaceOut)

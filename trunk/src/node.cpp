@@ -88,7 +88,7 @@ void Node::setMissingChild(Node& missingChild) {
   missingChild_ = &missingChild;
 }
 
-const Node* Node::percolate(Treedata* testData, const size_t sampleIdx, const size_t scrambleFeatureIdx) const {
+Node* Node::percolate(Treedata* testData, const size_t sampleIdx, const size_t scrambleFeatureIdx) {
   
   if ( !this->hasChildren() ) { return( this ); }
   
@@ -165,16 +165,16 @@ Node* Node::missingChild() const {
   return( missingChild_ );
 }
 
-vector<const Node*> Node::getChildLeaves() const {
+vector<Node*> Node::getChildLeaves() {
 
-  vector<const Node*> leaves;
+  vector<Node*> leaves;
   this->recursiveGetChildLeaves(leaves);
 
   return(leaves);
 
 }
 
-void Node::recursiveGetChildLeaves(vector<const Node*>& leaves) const {
+void Node::recursiveGetChildLeaves(vector<Node*>& leaves) {
 
   if ( ! this->hasChildren() ) {
     leaves.push_back(this);
@@ -265,6 +265,10 @@ num_t Node::getTrainPrediction() const {
 
 void Node::setTrainData(const vector<num_t>& trainData) {
   trainData_ = trainData;
+}
+
+void Node::addTrainData(const num_t trainData) {
+  trainData_.push_back(trainData);
 }
 
 vector<num_t> Node::getTrainData() const {

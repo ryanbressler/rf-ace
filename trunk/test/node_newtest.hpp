@@ -31,9 +31,9 @@ void node_newtest_getChildLeaves() {
   nodeR.setTrainData({6});
   nodeM.setTrainData({7});
 
-  vector<const Node*> childLeaves = node.getChildLeaves();
+  vector<Node*> childLeaves = node.getChildLeaves();
 
-  set<const Node*> childLeavesSet(childLeaves.begin(),childLeaves.end());
+  set<Node*> childLeavesSet(childLeaves.begin(),childLeaves.end());
 
   newassert( childLeaves.size() == 4 );
   newassert( childLeavesSet.size() == 4 );
@@ -52,7 +52,7 @@ void node_newtest_getChildLeaves() {
 
   childLeaves = nodeL.getChildLeaves();
   newassert( childLeaves.size() == 2 );
-  childLeavesSet = set<const Node*>(childLeaves.begin(),childLeaves.end());
+  childLeavesSet = set<Node*>(childLeaves.begin(),childLeaves.end());
   newassert( childLeavesSet.find(&nodeLL) != childLeavesSet.end() );
   newassert( childLeavesSet.find(&nodeLR) != childLeavesSet.end() );
   

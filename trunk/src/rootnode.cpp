@@ -118,8 +118,14 @@ void RootNode::growTree(Treedata* trainData, const size_t targetIdx, const distr
   
   children_.resize(nChildren);
 
-  //this->verifyIntegrity();
-
+  if ( forestOptions->useQuantiles() ) {
+    assert( trainData->feature(targetIdx)->isNumerical() );
+    for ( size_t i = 0; i < oobIcs_.size(); ++i ) {
+      num_t x = trainData->feature(targetIdx)->data[oobIcs_[i]];
+      this->percolate(trainData,oobIcs_[i])->addTrainData(x);
+    }
+  }
+  
 }
 
 vector<pair<size_t,size_t> > RootNode::getMinDistFeatures() {
@@ -226,7 +232,7 @@ string RootNode::getRawTestPrediction(Treedata* testData, const size_t sampleIdx
 
 vector<num_t> RootNode::getChildLeafTrainData(Treedata* treeData, const size_t sampleIdx) {
 
-  vector<const Node*> leaves = this->percolate(treeData,sampleIdx)->getChildLeaves();
+  vector<Node*> leaves = this->percolate(treeData,sampleIdx)->getChildLeaves();
 
   vector<num_t> allTrainData;
 

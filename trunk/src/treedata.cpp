@@ -175,6 +175,7 @@ void Treedata::readAFM(const string& fileName, const char dataDelimiter, const c
   Reader reader(fileName,dataDelimiter);
 
   string numPrefix = string("N") + headerDelimiter;
+  string binPrefix = string("B") + headerDelimiter;
   string catPrefix = string("C") + headerDelimiter;
   string txtPrefix = string("T") + headerDelimiter;
 
@@ -193,7 +194,7 @@ void Treedata::readAFM(const string& fileName, const char dataDelimiter, const c
       string featureName; reader >> featureName;
       if ( featureName.substr(0,2) == numPrefix ) {
 	features_.push_back( Feature(Feature::Type::NUM,featureName,nSamples) );
-      } else if ( featureName.substr(0,2) == catPrefix ) {
+      } else if ( featureName.substr(0,2) == catPrefix || featureName.substr(0,2) == binPrefix ) {
 	features_.push_back( Feature(Feature::Type::CAT,featureName,nSamples) );
       } else if ( featureName.substr(0,2) == txtPrefix ) {
 	features_.push_back( Feature(Feature::Type::TXT,featureName,nSamples) );
@@ -261,7 +262,7 @@ void Treedata::readAFM(const string& fileName, const char dataDelimiter, const c
 	  num_t val; reader >> val;
 	  features_[i].setNumSampleValue(j,val);
 	}
-      } else if ( featureName.substr(0,2) == catPrefix ) {
+      } else if ( featureName.substr(0,2) == catPrefix || featureName.substr(0,2) == binPrefix ) {
 	features_.push_back( Feature(Feature::Type::CAT,featureName,nSamples) );
 	for ( size_t j = 0; j < nSamples; ++j ) {
 	  string str; reader >> str;

@@ -111,7 +111,7 @@ benchmarkMissingValues <- function(pMissing) {
 
 offset <- 0
 nSamples <- 1000
-std <- 0.4
+std <- 0.3
 
 trainData <- makeData(nSamples,std,offset,pMissing)
 testData <- makeData(nSamples,std,offset,pMissing)

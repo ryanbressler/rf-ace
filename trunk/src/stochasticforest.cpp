@@ -857,11 +857,11 @@ void StochasticForest::predictQuantiles(Treedata* testData,
     vector<num_t> finalData(nTrees*nSamplesPerTree,datadefs::NUM_NAN);
     for ( size_t treeIdx = 0; treeIdx < nTrees; ++treeIdx ) {
       vector<num_t> treeData = rootNodes_[treeIdx]->getChildLeafTrainData(testData,sampleIdx);
-      //cout << "got leaf data for tree " << treeIdx << endl;
-      for ( size_t i = 0; i < nSamplesPerTree; ++i ) {
-	//cout << "sample " << i << " in tree" << endl;
-	finalData[ treeIdx * nSamplesPerTree + i ] = treeData[ random->integer() % treeData.size() ];
-      }
+	//cout << "got leaf data for tree " << treeIdx << endl;
+	for ( size_t i = 0; i < nSamplesPerTree; ++i ) {
+	  //cout << "sample " << i << " in tree" << endl;
+	  finalData[ treeIdx * nSamplesPerTree + i ] = treeData[ random->integer() % treeData.size() ];
+	}
     }
     //utils::write(cout,finalData.begin(),finalData.end());
     //cout << endl;
