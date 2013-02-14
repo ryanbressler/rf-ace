@@ -49,7 +49,7 @@ public:
   void setMissingChild(Node& missingChild);
   
   //Given a value, descends to either one of the child nodes, if existing, otherwise returns a pointer to the current node
-  const Node* percolate(Treedata* testData, const size_t sampleIdx, const size_t scrambleFeatureIdx = datadefs::MAX_IDX) const;
+  Node* percolate(Treedata* testData, const size_t sampleIdx, const size_t scrambleFeatureIdx = datadefs::MAX_IDX);
   
   void setTrainPrediction(const num_t trainPrediction, const string& rawTrainPrediction );
   
@@ -63,9 +63,10 @@ public:
   Node* rightChild() const;
   Node* missingChild() const;
 
-  vector<const Node*> getChildLeaves() const;
+  vector<Node*> getChildLeaves();
 
   void setTrainData(const vector<num_t>& trainData);
+  void addTrainData(const num_t trainData);
 
   vector<num_t> getTrainData() const;
 
@@ -129,7 +130,7 @@ protected:
 			   SplitCache& splitCache);
 
 
-  void recursiveGetChildLeaves(vector<const Node*>& leaves) const;
+  void recursiveGetChildLeaves(vector<Node*>& leaves);
 
 #ifndef TEST__
 private:
