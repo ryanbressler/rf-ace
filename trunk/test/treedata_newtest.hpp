@@ -4,6 +4,8 @@
 #include <cstdlib>
 
 #include "newtest.hpp"
+#include "murmurhash3.hpp"
+#include "distributions.hpp"
 
 using namespace std;
 
@@ -13,6 +15,12 @@ void treedata_newtest_readTransposedAFM();
 void treedata_newtest_nRealSamples();
 void treedata_newtest_name2idxMap();
 void treedata_newtest_numericalFeatureSplitsNumericalTarget();
+void treedata_newtest_numericalFeatureSplitsCategoricalTarget();
+void treedata_newtest_categoricalFeatureSplitsNumericalTarget();
+void treedata_newtest_replaceFeatureData();
+void treedata_newtest_end();
+void treedata_newtest_hashFeature();
+void treedata_newtest_bootstrapRealSamples();
 void treedata_newtest_separateMissingSamples();
 
 void treedata_newtest() {
@@ -22,7 +30,13 @@ void treedata_newtest() {
   newtest( "Testing Treedata class with transposed AFM data", &treedata_newtest_readTransposedAFM );
   newtest( "Testing proper counting of missing samples in Treedata", &treedata_newtest_nRealSamples );
   newtest( "Testing mapping of feature names to indices and vice versa", &treedata_newtest_name2idxMap ); 
-  newtest( "Testing splitting with numerical-vs-numerical variables", &treedata_newtest_numericalFeatureSplitsNumericalTarget );
+  newtest( "Testing splitting num->num", &treedata_newtest_numericalFeatureSplitsNumericalTarget );
+  newtest( "Testing splitting num->cat", &treedata_newtest_numericalFeatureSplitsCategoricalTarget );
+  newtest( "Testing splitting cat->num", &treedata_newtest_categoricalFeatureSplitsNumericalTarget );
+  newtest( "Testing replacement of feature in Treedata", &treedata_newtest_replaceFeatureData );
+  newtest( "Testing proper response for querying nonexistent feature" , &treedata_newtest_end );
+  newtest( "Testing feature hashing", &treedata_newtest_hashFeature );
+  newtest( "Testing bootstrapping", &treedata_newtest_bootstrapRealSamples );
   newtest( "Testing separation of missing samples", &treedata_newtest_separateMissingSamples );
 
 }
@@ -377,6 +391,166 @@ void treedata_newtest_numericalFeatureSplitsNumericalTarget() {
   }
 
   minSamples = 50;
+
+}
+
+void treedata_newtest_numericalFeatureSplitsCategoricalTarget() {
+
+  Treedata treeData("test_103by300_mixed_matrix.afm",'\t',':',true);
+
+  size_t targetIdx = 1; // categorical
+  size_t featureIdx = 2; // numerical
+
+  vector<size_t> sampleIcs_left(0);
+  vector<size_t> sampleIcs_right = utils::range(300);
+  vector<size_t> sampleIcs_missing(0);
+
+  datadefs::num_t splitValue;
+  datadefs::num_t deltaImpurity;
+
+  size_t minSamples = 1;
+
+  deltaImpurity = treeData.numericalFeatureSplit(targetIdx,
+						  featureIdx,
+						  minSamples,
+						  sampleIcs_left,
+						  sampleIcs_right,
+						  splitValue);
+  
+  {
+    set<size_t> leftIcs(sampleIcs_left.begin(),sampleIcs_left.end());
+    set<size_t> rightIcs(sampleIcs_right.begin(),sampleIcs_right.end());
+
+    newassert( fabs( deltaImpurity - 0.012389077212806 ) < 1e-10 );
+    newassert( fabs( splitValue - 9.827 ) < 1e-10 );
+
+    newassert( sampleIcs_left.size() == 295 );
+    newassert( sampleIcs_right.size() == 5 );
+
+    newassert( leftIcs.find(261) != leftIcs.end() );
+    newassert( leftIcs.find(185) != leftIcs.end() );
+    newassert( leftIcs.find(3)   != leftIcs.end() );
+    newassert( leftIcs.find(7)   != leftIcs.end() );
+    newassert( leftIcs.find(256) != leftIcs.end() );
+
+    newassert( rightIcs.find(69)  != rightIcs.end() );
+    newassert( rightIcs.find(55)  != rightIcs.end() );
+    newassert( rightIcs.find(100) != rightIcs.end() );
+    newassert( rightIcs.find(127) != rightIcs.end() );
+    newassert( rightIcs.find(91)  != rightIcs.end() );
+  }
+}
+
+void treedata_newtest_categoricalFeatureSplitsNumericalTarget() {
+
+  Treedata treeData("test_103by300_mixed_matrix.afm",'\t',':',true);
+
+  vector<size_t> sampleIcs_left(0);
+  vector<size_t> sampleIcs_right = utils::range(300);
+  vector<size_t> sampleIcs_missing(0);
+
+  unordered_set<num_t> splitValues_left,splitValues_right;
+  datadefs::num_t deltaImpurity;
+
+  size_t featureIdx = 1;
+  size_t targetIdx = 0;
+  size_t minSamples = 1;
+
+  deltaImpurity = treeData.categoricalFeatureSplit(targetIdx,
+						   featureIdx,
+						   {1,2},
+						   minSamples,
+						   sampleIcs_left,
+						   sampleIcs_right,
+						   splitValues_left);
+  
+
+  //newassert( fabs( deltaImpurity - 1.102087375288799 ) < 1e-10 );
+
+}
+
+void treedata_newtest_end() {
+
+  Treedata treeData("test_103by300_mixed_matrix.afm",'\t',':',true);
+
+  newassert( treeData.getFeatureIdx("IDontExist") == treeData.end() );
+
+}
+
+void treedata_newtest_replaceFeatureData() {
+
+  Treedata treeData("test_103by300_mixed_matrix.afm",'\t',':',true);
+
+  treeData.replaceFeatureData(0,vector<num_t>(treeData.nSamples(),0.0));
+
+  for ( size_t i = 0; i < treeData.nSamples(); ++i ) {
+    newassert( treeData.getFeatureData(0,i) == 0.0 );
+  }
+
+}
+
+void treedata_newtest_hashFeature() {
+
+  vector<string> textData(3,"");
+
+  textData[0] = "I am a random, text that is going to be hashed!";
+  textData[1] = "I am a another random text";
+  textData[2] = "This is something, completely different";
+
+  bool doHash = true;
+
+  Feature hashFeature(textData,"T:foo",doHash);
+
+  uint32_t h;
+
+  MurmurHash3_x86_32("i",1,0,&h);
+  newassert( hashFeature.hasHash(0,h) );
+  newassert( hashFeature.hasHash(1,h) );
+  newassert( ! hashFeature.hasHash(2,h) );
+
+  MurmurHash3_x86_32("am",2,0,&h);
+  newassert( hashFeature.hasHash(0,h) );
+  newassert( hashFeature.hasHash(1,h) );
+  newassert( ! hashFeature.hasHash(2,h) );
+
+  MurmurHash3_x86_32("random",6,0,&h);
+  newassert(   hashFeature.hasHash(0,h) );
+  newassert(   hashFeature.hasHash(1,h) );
+  newassert( ! hashFeature.hasHash(2,h) );
+
+  MurmurHash3_x86_32("text",4,0,&h);
+  newassert(   hashFeature.hasHash(0,h) );
+
+}
+
+void treedata_newtest_bootstrapRealSamples() {
+
+  Treedata treeData("test_103by300_mixed_matrix.afm",'\t',':',true);
+
+  distributions::Random random;
+
+  bool withReplacement = true;
+  num_t sampleSize = 1.0;
+  size_t featureIdx = 0;
+  vector<size_t> ics,oobIcs;
+
+  num_t oobFraction = 0.0;
+
+  for ( size_t i = 0; i < 1000; ++i ) {
+
+    treeData.bootstrapFromRealSamples(&random,withReplacement,sampleSize,featureIdx,ics,oobIcs);
+
+    oobFraction += 1.0 * oobIcs.size();
+
+    newassert( ics.size() == treeData.nRealSamples(featureIdx) );
+    newassert( !datadefs::containsNAN(treeData.getFeatureData(featureIdx,ics)) );
+    newassert( !datadefs::containsNAN(treeData.getFeatureData(featureIdx,oobIcs)) );
+
+  }
+
+  oobFraction /= 1000 * treeData.nRealSamples(featureIdx);
+
+  newassert( fabs( oobFraction - 0.36 ) < 0.05 );
 
 }
 
