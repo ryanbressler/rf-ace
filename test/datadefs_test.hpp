@@ -18,7 +18,7 @@ class DataDefsTest : public CppUnit::TestFixture {
   CPPUNIT_TEST( test_size_tIsSigned);
   //CPPUNIT_TEST( test_strv2catv );
   //CPPUNIT_TEST( test_strv2numv );
-  CPPUNIT_TEST( test_cardinality );
+  //CPPUNIT_TEST( test_cardinality );
   CPPUNIT_TEST( test_countRealValues );
   CPPUNIT_TEST( test_map_data );
   //CPPUNIT_TEST( test_max_idx );
@@ -40,7 +40,7 @@ public:
   void test_size_tIsSigned();
   //void test_strv2catv();
   //void test_strv2numv();
-  void test_cardinality();
+  //void test_cardinality();
   void test_countRealValues();
   void test_map_data();
   //void test_max_idx();
@@ -65,38 +65,6 @@ void DataDefsTest::test_size_tIsSigned() {
   CPPUNIT_ASSERT(!numeric_limits<size_t>::is_signed);
 }
 
-
-void DataDefsTest::test_cardinality() {
-  vector<datadefs::num_t> data;
-  size_t cardinality = static_cast<size_t>(-1);
-  for (int i = 0; i < 50; ++i) {
-    data.push_back(static_cast<datadefs::num_t>(i));
-  }
-  
-  datadefs::cardinality(data, cardinality);
-  CPPUNIT_ASSERT(cardinality == 50);
-
-  // Interleave the original input with NaNs; verify we get the same results
-  for (int i = 0; i < 50; ++i) {
-    data.insert(data.begin() + (i*2), datadefs::NUM_NAN);
-  }
-
-  cardinality = static_cast<size_t>(-1);
-
-  datadefs::cardinality(data, cardinality);
-  CPPUNIT_ASSERT(cardinality == 50); 
-  
-  // Ensure a vector containing only NaNs is handled as expected
-  data.clear();
-  for (int i = 0; i < 50; ++i) {
-    data.push_back(datadefs::NUM_NAN);
-  }
-
-  cardinality = static_cast<size_t>(-1); 
-
-  datadefs::cardinality(data, cardinality);
-  CPPUNIT_ASSERT(cardinality == 0);
-}
 
 void DataDefsTest::test_countRealValues() {
   vector<datadefs::num_t> data;
@@ -137,7 +105,7 @@ void DataDefsTest::test_countRealValues() {
 // !! TODO: make this test more robust
 void DataDefsTest::test_map_data() {
   vector<datadefs::num_t> data;
-  map<datadefs::num_t,vector<size_t> > datamap; 
+  unordered_map<datadefs::num_t,vector<size_t> > datamap; 
   size_t nRealValues;
   for (int i = 0; i < 50; ++i) {
     data.push_back(static_cast<datadefs::num_t>(i));

@@ -315,7 +315,7 @@ void MathTest::test_pearsonCorrelation() {
 
 void MathTest::test_incrementDecrementSquaredFrequency() {
 
-  map<num_t,size_t> freq;
+  unordered_map<num_t,size_t> freq;
   size_t sqFreq = 0;
 
 
