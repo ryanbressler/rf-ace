@@ -162,7 +162,7 @@ bool Treedata::isRowsAsSamplesInAFM(Reader& reader, const char headerDelimiter) 
   reader.rewind();
 
   if ( foundSomeFeatures && foundSomeSamples ) {
-    cerr << "ERROR: First for of AFM contains both features and sample names!" << endl;
+    cerr << "ERROR: First row of AFM contains both features and sample names!" << endl;
     exit(1);
   }
 

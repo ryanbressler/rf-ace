@@ -70,8 +70,8 @@ public:
 
   vector<num_t> getTrainData() const;
 
-  void print(ofstream& toFile);
-  void print(string& traversal, ofstream& toFile);
+  void writeTree(ofstream& toFile);
+  void writeTree(string& traversal, ofstream& toFile);
 
   enum PredictionFunctionType { MEAN, MODE, GAMMA };
 

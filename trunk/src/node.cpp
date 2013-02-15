@@ -193,7 +193,7 @@ void Node::recursiveGetChildLeaves(vector<Node*>& leaves) {
 /**
  * Recursively prints a tree to a stream (file)
  */
-void Node::print(string& traversal, ofstream& toFile) {
+void Node::writeTree(string& traversal, ofstream& toFile) {
 
   toFile << "NODE=" << traversal << ",PRED=" << rawTrainPrediction_;
   
@@ -226,14 +226,14 @@ void Node::print(string& traversal, ofstream& toFile) {
     string traversalRight = traversal;
     traversalRight.append("R");
     
-    this->leftChild()->print(traversalLeft,toFile);
-    this->rightChild()->print(traversalRight,toFile);
+    this->leftChild()->writeTree(traversalLeft,toFile);
+    this->rightChild()->writeTree(traversalRight,toFile);
 
     // Optional third branch
     if ( this->missingChild() ) {
       string traversalMissing = traversal;
       traversalMissing.append("M");
-      this->missingChild()->print(traversalMissing,toFile);
+      this->missingChild()->writeTree(traversalMissing,toFile);
     }
     
   } else {
@@ -243,10 +243,10 @@ void Node::print(string& traversal, ofstream& toFile) {
   }
 }
 
-void Node::print(ofstream& toFile) {
+void Node::writeTree(ofstream& toFile) {
   
   string traversal("*");
-  this->print(traversal,toFile);
+  this->writeTree(traversal,toFile);
 
 }
 
