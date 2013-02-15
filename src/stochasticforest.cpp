@@ -187,9 +187,7 @@ StochasticForest::~StochasticForest() {
 
 }
 
-/* Prints the forest into a file, so that the forest can be loaded for later use (e.g. prediction).
- */
-void StochasticForest::saveForest(ofstream& toFile) {
+void StochasticForest::writeForestHeader(ofstream& toFile) {
 
   if (forestType_ == forest_t::GBT) {
     toFile << "FOREST=GBT";
@@ -201,7 +199,7 @@ void StochasticForest::saveForest(ofstream& toFile) {
     cerr << "StochasticForest::saveForest() -- Unknown forest type!" << endl;
     exit(1);
   }
-
+  
   toFile << ",TARGET=" << "\"" << targetName_ << "\"";
   toFile << ",NTREES=" << rootNodes_.size();
   toFile << ",CATEGORIES=" << "\"";
@@ -211,15 +209,23 @@ void StochasticForest::saveForest(ofstream& toFile) {
     toFile << ",GBT_CONSTANTS=\"" << flush;
     utils::write(toFile,GBTConstants_.begin(),GBTConstants_.end(),',');
     toFile << "\",GBT_SHRINKAGE=" << GBTShrinkage_<< flush;
-  } 
+  }
   toFile << ",QUANTILES=\"" << flush;
   utils::write(toFile,quantiles_.begin(),quantiles_.end(),',');
   toFile << "\"" << endl;
 
+}
+
+/* Prints the forest into a file, so that the forest can be loaded for later use (e.g. prediction).
+ */
+void StochasticForest::writeForest(ofstream& toFile) {
+
+  this->writeForestHeader(toFile);
+  
   // Save each tree in the forest
   for (size_t treeIdx = 0; treeIdx < rootNodes_.size(); ++treeIdx) {
     toFile << "TREE=" << treeIdx << ",NNODES=" << rootNodes_[treeIdx]->nNodes() << ",NLEAVES=" << rootNodes_[treeIdx]->nLeaves() << endl;
-    rootNodes_[treeIdx]->print(toFile);
+    rootNodes_[treeIdx]->writeTree(toFile);
   }
 
   // Close stream

@@ -51,7 +51,8 @@ public:
   inline vector<num_t> getQuantiles() const { return(quantiles_); }
   inline bool isTargetNumerical() const { return( isTargetNumerical_ ); }
 
-  void saveForest(ofstream& toFile);
+  void writeForestHeader(ofstream& toFile);
+  void writeForest(ofstream& toFile);
 
 #ifndef TEST__
 private:
@@ -74,8 +75,6 @@ private:
 
   vector<num_t> GBTConstants_;
   num_t GBTShrinkage_;
-
-  //num_t shrinkage_;
 
   // Chosen target to regress on
   string targetName_;

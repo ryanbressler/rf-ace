@@ -191,7 +191,7 @@ public:
       if ( forestFile != "" ) {
 	//ofstream toFile;
 	toFile.open(forestFile.c_str(),ios::app);
-	SF.saveForest(toFile);
+	SF.writeForest(toFile);
 	toFile.close();
       }
 
@@ -385,7 +385,7 @@ public:
     
     ofstream toFile(fileName);
 
-    trainedModel_->saveForest( toFile );
+    trainedModel_->writeForest( toFile );
 
   }
 
