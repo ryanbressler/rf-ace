@@ -379,6 +379,35 @@ public:
     trainedModel_->loadForest(fileName);
   }
 
+  QuantilePredictionOutput loadAndPredictQuantiles(const string& fileName, Treedata* testData, const size_t nSamplesPerTree) {
+    
+    QuantilePredictionOutput qPredOut;
+
+    trainedModel_ = new StochasticForest();
+    trainedModel_->loadForestAndPredictQuantiles(fileName,testData,qPredOut.predictions,&randoms_[0],nSamplesPerTree);
+
+    qPredOut.targetName = trainedModel_->getTargetName();
+    qPredOut.quantiles = trainedModel_->getQuantiles();
+
+    assert(qPredOut.quantiles.size() > 0);
+
+    size_t targetIdx = testData->getFeatureIdx(qPredOut.targetName);
+
+    if ( targetIdx != testData->end() ) {
+      qPredOut.trueData = testData->getFeatureData(targetIdx);
+    } else {
+      qPredOut.trueData = vector<num_t>(testData->nSamples(),datadefs::NUM_NAN);
+    }
+
+    qPredOut.sampleNames.resize( testData->nSamples() );
+    for ( size_t i = 0; i < testData->nSamples(); ++i ) {
+      qPredOut.sampleNames[i] = testData->getSampleName(i);
+    }
+    
+    return(qPredOut);
+
+  }
+
   void save(const string& fileName) {
 
     assert(trainedModel_);

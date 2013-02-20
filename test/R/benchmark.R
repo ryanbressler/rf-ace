@@ -3,7 +3,7 @@ library(randomForest)
 
 source("test/R/utils.R")
 
-pMissing <- c(0.0,0.1,0.2)
+pMissing <- c(0.0,0.2,0.4)
 
 errorlist <- list()
 
@@ -19,15 +19,15 @@ pdf("errors.pdf",width=6,height=6)
 par(mfcol=c(3,3))
 for ( i in 1:3 ) {
 tit <- paste(c("NUM, %NA=",as.character(pMissing[i]*100)),collapse='')
-barplot(errorlist[[i]]$num,legend.text=FALSE,axes=TRUE,ylab="RMSE",col=colors,cex.names=0.9)
+barplot(errorlist[[i]]$num,legend.text=FALSE,axes=TRUE,ylab="RMSE",col=colors,cex.names=0.65,ylim=c(0,9))
 title(tit)
 
 tit <- paste(c("NUM+TXT, %NA=",as.character(pMissing[i]*100)),collapse='')
-barplot(errorlist[[i]]$txt,legend.text=FALSE,axes=TRUE,ylab="RMSE",col=colors,cex.names=0.9)
+barplot(errorlist[[i]]$txt,legend.text=FALSE,axes=TRUE,ylab="RMSE",col=colors,cex.names=0.65,ylim=c(0,9))
 title(tit)
 
 tit <- paste(c("NUM+CAT, %NA=",as.character(pMissing[i]*100)),collapse='')
-barplot(errorlist[[i]]$cat,legend.text=FALSE,axes=TRUE,ylab="RMSE",col=colors,cex.names=0.9)
+barplot(errorlist[[i]]$cat,legend.text=FALSE,axes=TRUE,ylab="RMSE",col=colors,cex.names=0.65,ylim=c(0,9))
 title(tit)
 }
 dev.off()
@@ -46,14 +46,18 @@ for ( i in 1:length(offsets) ) {
   RMSE$rface[i] <- out$rfaceRMSE
 }
 rownames(speeds) <- c(nCategories)
-speeds <- t(speeds)
+#speeds <- t(speeds)
 rownames(RMSE) <- c(nCategories)
-RMSE <- t(RMSE)
+#RMSE <- t(RMSE)
 pdf("catsplitter_speeds.pdf",width=4,height=6)
 par(mfcol=c(2,1))
-barplot(speeds,beside=TRUE,legend=TRUE,cex.names=0.8)
+plot(nCategories,speeds$rf)
+points(nCategories,speeds$rface)
+#barplot(speeds,beside=TRUE,legend=TRUE,cex.names=0.8)
 title("Categorical splitter execution time")
-barplot(RMSE,beside=TRUE,legend=TRUE,cex.names=0.8)
+#barplot(RMSE,beside=TRUE,legend=TRUE,cex.names=0.8)
+plot(nCategories,RMSE$rf)
+points(nCategories,RMSE$rface)
 title("RMSE as function of cardinality")
 dev.off()
 

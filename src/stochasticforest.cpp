@@ -20,10 +20,7 @@ StochasticForest::StochasticForest() :
   forestType_(datadefs::forest_t::UNKNOWN) {
 }
 
-void StochasticForest::loadForest(const string& fileName) {
-
-  ifstream forestStream(fileName.c_str());
-  assert(forestStream.good());
+void StochasticForest::readForestHeader(ifstream& forestStream) {
 
   string newLine("");
   getline(forestStream, newLine);
@@ -58,118 +55,6 @@ void StochasticForest::loadForest(const string& fileName) {
 
   assert(forestStream.good());
 
-  int treeIdx = -1;
-
-  vector<map<string,Node*> > forestMap(nTrees);
-
-  vector<size_t> nNodesPerTree(nTrees, 0);
-  vector<size_t> nNodesAllocatedPerTree(nTrees, 0);
-
-  // Read the forest
-  while ( getline(forestStream, newLine) ) {
-
-    // remove trailing end-of-line characters
-    newLine = utils::chomp(newLine);
-
-    // Empty lines will be discarded
-    if (newLine == "") {
-      continue;
-    }
-
-    if (newLine.compare(0, 5, "TREE=") == 0) {
-      ++treeIdx;
-      map<string,string> treeSetup = utils::parse(newLine, ',', '=', '"');
-      assert( treeSetup.find("NNODES") != treeSetup.end() );
-      nNodesPerTree[treeIdx] = utils::str2<size_t>(treeSetup["NNODES"]);
-      continue;
-    }
-    
-    //cout << newLine << endl;
-    
-    map<string,string> nodeMap = utils::parse(newLine, ',', '=', '"');
-
-    // If the node is rootnode, we will create a new RootNode object and assign a reference to it in forestMap
-    if (nodeMap["NODE"] == "*") {
-      rootNodes_[treeIdx] = new RootNode();
-      forestMap[treeIdx]["*"] = rootNodes_[treeIdx];
-      rootNodes_[treeIdx]->reset(nNodesPerTree[treeIdx]);
-    }
-
-    Node* nodep = forestMap[treeIdx][nodeMap["NODE"]];
-    
-    string rawTrainPrediction = nodeMap["PRED"];
-    num_t trainPrediction = datadefs::NUM_NAN;
-
-    if ( this->isTargetNumerical() || (!this->isTargetNumerical() && forestType_ == forest_t::GBT) ) {
-      trainPrediction = utils::str2<num_t>(rawTrainPrediction);
-    }
-
-    vector<string> foo2 = utils::split(nodeMap["DATA"],',');
-    vector<num_t> trainData(foo2.size());
-    transform(foo2.begin(),foo2.end(),trainData.begin(),utils::str2<num_t>);
-
-    // Set train data prediction of the node
-    nodep->setTrainPrediction(trainPrediction, rawTrainPrediction);
-    nodep->setTrainData(trainData);
-    
-    // If the node has a splitter...
-    if ( nodeMap.find("SPLITTER") != nodeMap.end() ) {
-
-      size_t leftChildIdx = nNodesAllocatedPerTree[treeIdx]++;
-      size_t rightChildIdx = nNodesAllocatedPerTree[treeIdx]++;
-      
-      if ( nNodesAllocatedPerTree[treeIdx] + 1 > nNodesPerTree[treeIdx] ) {
-	cerr << "StochasticForest::loadForest() -- the tree contains more nodes than declared!" << endl;
-	exit(1);
-      }
-
-      Node& lChild = rootNodes_[treeIdx]->childRef(leftChildIdx);
-      Node& rChild = rootNodes_[treeIdx]->childRef(rightChildIdx);
-
-      // If the splitter is numerical...
-      if ( nodeMap["SPLITTERTYPE"] == "NUMERICAL" ) {
-
-        nodep->setSplitter(nodeMap["SPLITTER"], utils::str2<num_t>(nodeMap["LVALUES"]), lChild, rChild);
-
-      } else if ( nodeMap["SPLITTERTYPE"] == "CATEGORICAL" ){
-
-        unordered_set<string> splitLeftValues = utils::keys(nodeMap["LVALUES"], ':');
-        //set<string> splitRightValues = utils::keys(nodeMap["RVALUES"], ':');
-
-        nodep->setSplitter(nodeMap["SPLITTER"], splitLeftValues, lChild, rChild);
-
-      } else if ( nodeMap["SPLITTERTYPE"] == "TEXTUAL" ) {
-	nodep->setSplitter(nodeMap["SPLITTER"], utils::str2<uint32_t>(nodeMap["LVALUES"]), lChild, rChild);
-      } else {
-	cerr << "ERROR: incompatible splitter type '" << nodeMap["SPLITTERTYPE"] << endl;
-	exit(1);
-      }
-
-      assert( &lChild == nodep->leftChild() );
-      assert( &rChild == nodep->rightChild() );
-
-      forestMap[treeIdx][nodeMap["NODE"] + "L"] = nodep->leftChild();
-      forestMap[treeIdx][nodeMap["NODE"] + "R"] = nodep->rightChild();
-
-      // In case there is a branch for case when the splitter has missing value
-      if ( nodeMap.find("M") != nodeMap.end() ) {
-	size_t missingChildIdx = nNodesAllocatedPerTree[treeIdx]++;
-	Node& mChild = rootNodes_[treeIdx]->childRef(missingChildIdx);
-	nodep->setMissingChild(mChild);
-	assert( &mChild == nodep->missingChild() );
-	forestMap[treeIdx][nodeMap["NODE"] + "M"] = nodep->missingChild();
-      }
-
-    }
-
-  }
-
-  for ( size_t treeIdx = 0; treeIdx < nTrees; ++treeIdx ) {
-
-    rootNodes_[treeIdx]->verifyIntegrity();
-
-  }
-
   if ( forestType_ == forest_t::GBT ) {
     if ( ! isTargetNumerical_ ) {
       assert( GBTConstants_.size() == categories_.size() );
@@ -179,12 +64,70 @@ void StochasticForest::loadForest(const string& fileName) {
 
 }
 
-StochasticForest::~StochasticForest() {
 
+void StochasticForest::loadForest(const string& fileName) {
+
+  ifstream forestStream(fileName.c_str());
+  assert(forestStream.good());
+
+  // Sets targetName, gets the number of trees in forest, and sets some tree constants
+  this->readForestHeader(forestStream);
+
+  // How many trees were defined in the forest header
+  size_t nTrees = this->nTrees();
+
+  // Go through all trees in the forest
+  for ( size_t treeIdx = 0; treeIdx < nTrees; ++treeIdx ) {
+    rootNodes_[treeIdx] = new RootNode();
+    rootNodes_[treeIdx]->loadTree(forestStream,this->isTargetNumerical(),forestType_);
+  }
+
+}
+
+void StochasticForest::loadForestAndPredictQuantiles(const string& fileName, 
+						     Treedata* testData, 
+						     vector<vector<num_t> >& predictions, 
+						     distributions::Random* random, 
+						     const size_t nSamplesPerTree) {
+
+  ifstream forestStream(fileName.c_str());
+  assert(forestStream.good());
+
+  this->readForestHeader(forestStream);
+
+  size_t nQuantiles = quantiles_.size();
+  size_t nTrees = this->nTrees();
+  size_t nSamples = testData->nSamples();
+  
+  predictions.resize(nSamples,vector<num_t>(nQuantiles,datadefs::NUM_NAN));
+
+  for ( size_t sampleIdx = 0; sampleIdx < nSamples; ++sampleIdx ) {
+    vector<num_t> finalData(nTrees*nSamplesPerTree,datadefs::NUM_NAN);
+    string line;
+    forestStream.seekg(ios_base::beg);
+    getline(forestStream,line);
+    RootNode rootNode;
+    rootNode.loadTree(forestStream,this->isTargetNumerical(),forestType_);
+    for ( size_t treeIdx = 0; treeIdx < nTrees; ++treeIdx ) {
+      vector<num_t> treeData = rootNode.getChildLeafTrainData(testData,sampleIdx);
+      for ( size_t i = 0; i < nSamplesPerTree; ++i ) {
+	finalData[ treeIdx * nSamplesPerTree + i ] = treeData[ random->integer() % nSamplesPerTree ];
+      }
+    }
+    sort(finalData.begin(),finalData.end());
+    for ( size_t q = 0; q < nQuantiles; ++q ) {
+      predictions[sampleIdx][q] = math::percentile(finalData,quantiles_[q]);
+    }
+  }
+  
+}
+
+StochasticForest::~StochasticForest() {
+  
   for (size_t treeIdx = 0; treeIdx < rootNodes_.size(); ++treeIdx) {
     delete rootNodes_[treeIdx];
   }
-
+  
 }
 
 void StochasticForest::writeForestHeader(ofstream& toFile) {
@@ -676,21 +619,21 @@ void predictCatPerThread(Treedata* testData,
 			 num_t& GBTShrinkage) {
 
   size_t nTrees = rootNodes.size();
-  for (size_t i = 0; i < sampleIcs.size(); ++i) {
+  for ( size_t i = 0; i < sampleIcs.size(); ++i ) {
 
     size_t sampleIdx = sampleIcs[i];
 
-    if (forestType == forest_t::GBT) {
+    if ( forestType == forest_t::GBT ) {
 
       size_t nCategories = categories.size();
       num_t maxProb = 0;
       size_t maxProbCat = 0;
 
-      for (size_t categoryIdx = 0; categoryIdx < nCategories; ++categoryIdx) {
+      for ( size_t categoryIdx = 0; categoryIdx < nCategories; ++categoryIdx ) {
 
         num_t cumProb = GBTConstants[categoryIdx];
 
-        for (size_t iterIdx = 0; iterIdx < nTrees / nCategories; ++iterIdx) {
+        for ( size_t iterIdx = 0; iterIdx < nTrees / nCategories; ++iterIdx ) {
           size_t treeIdx = iterIdx * nCategories + categoryIdx;
           cumProb += GBTShrinkage * rootNodes[treeIdx]->getTestPrediction(testData, sampleIdx);
         }
@@ -866,11 +809,10 @@ void StochasticForest::predictQuantiles(Treedata* testData,
 	//cout << "got leaf data for tree " << treeIdx << endl;
 	for ( size_t i = 0; i < nSamplesPerTree; ++i ) {
 	  //cout << "sample " << i << " in tree" << endl;
-	  finalData[ treeIdx * nSamplesPerTree + i ] = treeData[ random->integer() % treeData.size() ];
+	  finalData[ treeIdx * nSamplesPerTree + i ] = treeData[ random->integer() % nSamplesPerTree ];
 	}
     }
-    //utils::write(cout,finalData.begin(),finalData.end());
-    //cout << endl;
+    sort(finalData.begin(),finalData.end());
     for ( size_t q = 0; q < nQuantiles; ++q ) {
       predictions[sampleIdx][q] = math::percentile(finalData,quantiles_[q]);
     }

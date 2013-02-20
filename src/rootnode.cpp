@@ -41,6 +41,108 @@ void RootNode::reset(const size_t nNodes) {
 
 }
 
+void RootNode::loadTree(ifstream& treeStream, const bool isTargetNumerical, const datadefs::forest_t forestType) {
+
+  unordered_map<string,Node*> treeMap;
+
+  size_t nNodes = 0;
+  size_t nNodesAllocated = 0;
+
+  string newLine;
+
+  getline(treeStream,newLine);
+
+  // remove trailing end-of-line characters
+  newLine = utils::chomp(newLine);
+
+  assert(newLine.compare(0, 5, "TREE=") == 0);
+  map<string,string> treeSetup = utils::parse(newLine, ',', '=', '"');
+  assert( treeSetup.find("NNODES") != treeSetup.end() );
+  nNodes = utils::str2<size_t>(treeSetup["NNODES"]);
+
+  this->reset(nNodes);
+  treeMap["*"] = this;
+
+  for ( size_t nodeIdx = 0; nodeIdx < nNodes; ++nodeIdx ) {
+
+    assert( getline(treeStream,newLine) );
+    
+    // remove trailing end-of-line characters
+    newLine = utils::chomp(newLine);
+
+    map<string,string> nodeMap = utils::parse(newLine, ',', '=', '"');
+    
+    Node* nodep = treeMap[nodeMap["NODE"]];
+    
+    string rawTrainPrediction = nodeMap["PRED"];
+    num_t trainPrediction = datadefs::NUM_NAN;
+    
+    if ( isTargetNumerical || (!isTargetNumerical && forestType == forest_t::GBT) ) {
+      trainPrediction = utils::str2<num_t>(rawTrainPrediction);
+    }
+    
+    vector<string> foo2 = utils::split(nodeMap["DATA"],',');
+    vector<num_t> trainData(foo2.size());
+    transform(foo2.begin(),foo2.end(),trainData.begin(),utils::str2<num_t>);
+    
+    // Set train data prediction of the node
+    nodep->setTrainPrediction(trainPrediction, rawTrainPrediction);
+    nodep->setTrainData(trainData);
+    
+    // If the node has a splitter... 
+    if ( nodeMap.find("SPLITTER") != nodeMap.end() ) {
+      
+      size_t leftChildIdx = nNodesAllocated++;
+      size_t rightChildIdx = nNodesAllocated++;
+      
+      if ( nNodesAllocated + 1 > nNodes ) {
+	cerr << "RootNode::loadForest() -- the tree contains more nodes than declared!" << endl;
+	exit(1);
+      }
+      
+      Node& lChild = this->childRef(leftChildIdx);
+      Node& rChild = this->childRef(rightChildIdx);
+      
+      if ( nodeMap["SPLITTERTYPE"] == "NUMERICAL" ) {
+
+        nodep->setSplitter(nodeMap["SPLITTER"], utils::str2<num_t>(nodeMap["LVALUES"]), lChild, rChild);
+
+      } else if ( nodeMap["SPLITTERTYPE"] == "CATEGORICAL" ){
+
+        unordered_set<string> splitLeftValues = utils::keys(nodeMap["LVALUES"], ':');
+
+        nodep->setSplitter(nodeMap["SPLITTER"], splitLeftValues, lChild, rChild);
+
+      } else if ( nodeMap["SPLITTERTYPE"] == "TEXTUAL" ) {
+        nodep->setSplitter(nodeMap["SPLITTER"], utils::str2<uint32_t>(nodeMap["LVALUES"]), lChild, rChild);
+      } else {
+        cerr << "ERROR: incompatible splitter type '" << nodeMap["SPLITTERTYPE"] << endl;
+        exit(1);
+      }
+
+      assert( &lChild == nodep->leftChild() );
+      assert( &rChild == nodep->rightChild() );
+
+      treeMap[nodeMap["NODE"] + "L"] = nodep->leftChild();
+      treeMap[nodeMap["NODE"] + "R"] = nodep->rightChild();
+
+      // In case there is a branch for case when the splitter has missing value
+      if ( nodeMap.find("M") != nodeMap.end() ) {
+        size_t missingChildIdx = nNodesAllocated++;
+        Node& mChild = this->childRef(missingChildIdx);
+        nodep->setMissingChild(mChild);
+        assert( &mChild == nodep->missingChild() );
+        treeMap[nodeMap["NODE"] + "M"] = nodep->missingChild();
+      }
+
+    }
+
+  }
+
+  assert( nNodesAllocated + 1 == nNodes );
+
+}
+
 void RootNode::growTree(Treedata* trainData, const size_t targetIdx, const distributions::PMF* pmf, const ForestOptions* forestOptions, distributions::Random* random) {
 
   size_t nMaxNodes = this->getTreeSizeEstimate(trainData->nRealSamples(targetIdx),forestOptions->nMaxLeaves,forestOptions->nodeSize);
@@ -242,7 +344,7 @@ vector<num_t> RootNode::getChildLeafTrainData(Treedata* treeData, const size_t s
       allTrainData.push_back(trainData[j]);
     }
   }
-  
+
   return(allTrainData);
   
 }

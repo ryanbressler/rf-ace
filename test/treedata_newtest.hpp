@@ -450,22 +450,21 @@ void treedata_newtest_categoricalFeatureSplitsNumericalTarget() {
   vector<size_t> sampleIcs_missing(0);
 
   unordered_set<num_t> splitValues_left,splitValues_right;
-  datadefs::num_t deltaImpurity;
-
+  
   size_t featureIdx = 1;
   size_t targetIdx = 0;
   size_t minSamples = 1;
-
-  deltaImpurity = treeData.categoricalFeatureSplit(targetIdx,
-						   featureIdx,
-						   {1,2},
-						   minSamples,
-						   sampleIcs_left,
-						   sampleIcs_right,
-						   splitValues_left);
+  
+  datadefs::num_t deltaImpurity = treeData.categoricalFeatureSplit(targetIdx,
+								   featureIdx,
+								   {1,2},
+								   minSamples,
+								   sampleIcs_left,
+								   sampleIcs_right,
+								   splitValues_left);
   
 
-  //newassert( fabs( deltaImpurity - 1.102087375288799 ) < 1e-10 );
+  newassert( fabs( deltaImpurity - 1.102087375288799 ) < 1e-10 );
 
 }
 
