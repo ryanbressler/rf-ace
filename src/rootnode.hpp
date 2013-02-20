@@ -23,6 +23,8 @@ public:
 
   void loadTree(ifstream& treeStream, const bool isTargetNumerical, const datadefs::forest_t forestType);
 
+  void writeTree(ofstream& toFile);
+
   void growTree(Treedata* trainData, const size_t targetIdx, const distributions::PMF* pmf, const ForestOptions* forestOptions, distributions::Random* random);
 
   Node& childRef(const size_t childIdx);

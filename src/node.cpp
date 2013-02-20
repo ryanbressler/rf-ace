@@ -4,7 +4,6 @@
 
 #include "node.hpp"
 #include "datadefs.hpp"
-//#include "utils.hpp"
 #include "math.hpp"
 
 using namespace std;
@@ -193,7 +192,7 @@ void Node::recursiveGetChildLeaves(vector<Node*>& leaves) {
 /**
  * Recursively prints a tree to a stream (file)
  */
-void Node::writeTree(string& traversal, ofstream& toFile) {
+void Node::recursiveWriteTree(string& traversal, ofstream& toFile) {
 
   toFile << "NODE=" << traversal << ",PRED=" << rawTrainPrediction_;
   
@@ -226,14 +225,14 @@ void Node::writeTree(string& traversal, ofstream& toFile) {
     string traversalRight = traversal;
     traversalRight.append("R");
     
-    this->leftChild()->writeTree(traversalLeft,toFile);
-    this->rightChild()->writeTree(traversalRight,toFile);
+    this->leftChild()->recursiveWriteTree(traversalLeft,toFile);
+    this->rightChild()->recursiveWriteTree(traversalRight,toFile);
 
     // Optional third branch
     if ( this->missingChild() ) {
       string traversalMissing = traversal;
       traversalMissing.append("M");
-      this->missingChild()->writeTree(traversalMissing,toFile);
+      this->missingChild()->recursiveWriteTree(traversalMissing,toFile);
     }
     
   } else {
@@ -242,14 +241,6 @@ void Node::writeTree(string& traversal, ofstream& toFile) {
     toFile << "\"" << endl;
   }
 }
-
-void Node::writeTree(ofstream& toFile) {
-  
-  string traversal("*");
-  this->writeTree(traversal,toFile);
-
-}
-
 
 void Node::setTrainPrediction(const num_t trainPrediction, const string& rawTrainPrediction) {
   trainPrediction_ = trainPrediction;
