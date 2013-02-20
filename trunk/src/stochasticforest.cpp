@@ -106,9 +106,9 @@ void StochasticForest::loadForestAndPredictQuantiles(const string& fileName,
     string line;
     forestStream.seekg(ios_base::beg);
     getline(forestStream,line);
-    RootNode rootNode;
-    rootNode.loadTree(forestStream,this->isTargetNumerical(),forestType_);
     for ( size_t treeIdx = 0; treeIdx < nTrees; ++treeIdx ) {
+      RootNode rootNode;
+      rootNode.loadTree(forestStream,this->isTargetNumerical(),forestType_);
       vector<num_t> treeData = rootNode.getChildLeafTrainData(testData,sampleIdx);
       for ( size_t i = 0; i < nSamplesPerTree; ++i ) {
 	finalData[ treeIdx * nSamplesPerTree + i ] = treeData[ random->integer() % nSamplesPerTree ];

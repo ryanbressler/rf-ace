@@ -143,6 +143,14 @@ void RootNode::loadTree(ifstream& treeStream, const bool isTargetNumerical, cons
 
 }
 
+void RootNode::writeTree(ofstream& toFile) {
+  
+  string traversal("*");
+  this->recursiveWriteTree(traversal,toFile);
+
+}
+
+
 void RootNode::growTree(Treedata* trainData, const size_t targetIdx, const distributions::PMF* pmf, const ForestOptions* forestOptions, distributions::Random* random) {
 
   size_t nMaxNodes = this->getTreeSizeEstimate(trainData->nRealSamples(targetIdx),forestOptions->nMaxLeaves,forestOptions->nodeSize);
