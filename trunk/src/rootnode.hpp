@@ -6,6 +6,7 @@
 #include <vector>
 #include <set>
 #include <utility>
+#include <fstream>
 #include "node.hpp"
 #include "treedata.hpp"
 #include "options.hpp"
@@ -19,6 +20,8 @@ public:
   ~RootNode();
 
   void reset(const size_t nNodes);
+
+  void loadTree(ifstream& treeStream, const bool isTargetNumerical, const datadefs::forest_t forestType);
 
   void growTree(Treedata* trainData, const size_t targetIdx, const distributions::PMF* pmf, const ForestOptions* forestOptions, distributions::Random* random);
 

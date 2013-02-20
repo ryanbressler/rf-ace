@@ -56,15 +56,16 @@ makeData <- function(nSamples,std,offset,pMissing) {
   }
 
   n1 <- rnorm(nSamples)
-  n1[runif(nSamples) < pMissing] <- NA
+  n1[runif(nSamples) < pMissing & classes == 1] <- NA
   n2 <- rnorm(nSamples)
-  n2[runif(nSamples) < pMissing] <- NA
+  n2[runif(nSamples) < pMissing & classes == 1] <- NA
   n3 <- rnorm(nSamples)
-  n3[runif(nSamples) < pMissing] <- NA
+  n3[runif(nSamples) < pMissing & classes == 1] <- NA
   n4 <- rnorm(nSamples)
-  n4[runif(nSamples) < pMissing] <- NA
-  x1[runif(nSamples) < pMissing] <- NA
-  x2[runif(nSamples) < pMissing] <- NA
+  n4[runif(nSamples) < pMissing & classes == 1] <- NA
+  x1[runif(nSamples) < pMissing & classes == 1] <- NA
+  x2[runif(nSamples) < pMissing & classes == 1] <- NA
+  fakeClasses[runif(nSamples) < pMissing & classes == 1] <- NA
 
   # Populating the data frame with the training data
   data <- data.frame(y,x1,x2,text,as.character(fakeClasses),n1,n2,n3,n4,stringsAsFactors=FALSE)
@@ -141,11 +142,15 @@ imputedTrainData <- na.roughfix(trainData[c(1,2,3,5,6,7,8,9)])
 imputedTestData  <- na.roughfix(testData[ c(1,2,3,5,6,7,8,9)])
 
 rfOut1 <- randomForest(imputedTrainData[c(2,3,5,6,7,8)],y=imputedTrainData[[1]],xtest=imputedTestData[c(2,3,5,6,7,8)],ytest=imputedTestData[[1]],ntree=50,mtry=3)
-#rfOut2 <- randomForest(imputedTrainData[2:8],y=imputedTrainData[[1]],xtest=imputedTestData[2:8],ytest=imputedTestData[[1]],ntree=50,mtry=3)
+rfOut2 <- randomForest(imputedTrainData[c(2,3,4,5,6,7,8)],y=imputedTrainData[[1]],xtest=imputedTestData[c(2,3,4,5,6,7,8)],ytest=imputedTestData[[1]],ntree=50,mtry=3)
 
-outRef <- list()
-outRef$trueData <- outA$trueData
-outRef$predData <- rfOut1$test$predicted
+outRef1 <- list()
+outRef1$trueData <- outA$trueData
+outRef1$predData <- rfOut1$test$predicted
+
+outRef2 <- list()
+outRef2$trueData <- outA$trueData
+outRef2$predData <- rfOut2$test$predicted
 
 colors <- testData$"C:class"
 
@@ -183,8 +188,8 @@ lines( par()$usr[1:2], par()$usr[1:2] )
 grid()
 dev.off()
 
-pdf("predictions_ref.pdf")
-plot(outRef$predData,outRef$trueData,col=colors,pch='.')
+pdf("predictions_ref1.pdf")
+plot(outRef1$predData,outRef1$trueData,col=colors,pch='.')
 title("RF (ref.)")
 lines( par()$usr[1:2], par()$usr[1:2] )
 grid()
@@ -198,12 +203,12 @@ dev.off()
 #dev.off()
 
 errors <- list()
-errors$num <- c(rmse(outRef),rmse(outA),rmse(outD),rmse(outG),rmse(outJ))
-names(errors$num) <- c("A","B","C","D","E")
-errors$txt <- c(rmse(outRef),rmse(outB),rmse(outE),rmse(outH),rmse(outK))
-names(errors$txt) <- c("A","B","C","D","E")
-errors$cat <- c(rmse(outRef),rmse(outC),rmse(outF),rmse(outI),rmse(outL))
-names(errors$cat) <- c("A","B","C","D","E")
+errors$num <- c(rmse(outRef1),rmse(outA),rmse(outD))
+names(errors$num) <- c("RF\nImputed","RF-ACE\nBinary","RF-ACE\nTernary")
+errors$txt <- c(rmse(outRef1),rmse(outB),rmse(outE))
+names(errors$txt) <- c("RF\nImputed","RF-ACE\nBinary","RF-ACE\nTernary")
+errors$cat <- c(rmse(outRef2),rmse(outC),rmse(outF))
+names(errors$cat) <- c("RF\nImputed","RF-ACE\nBinary","RF-ACE\nTernary")
 errors$title <- paste(c("n=",as.character(nSamples), ", pMissing=",as.character(pMissing*100)),collapse='')
 
 return(list(errors=errors,data=testData,idata=imputedTestData,rf=rfOut1,outG=outG,outH=outH))
@@ -236,8 +241,6 @@ rfaceOut <- rface.predict(rface,testData)
 RMSE$rface <- rmse(rfaceOut)
 
 trainData$"C:class" <- as.factor(trainData$"C:class")
-
-#trainData <- as.matrix(na.roughfix(trainData))
 
 speed$rf <- NA
 if (offset < 10) {

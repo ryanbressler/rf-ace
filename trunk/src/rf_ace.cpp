@@ -93,13 +93,19 @@ int main(const int argc, char* const argv[]) {
     writeFilterOutputToFile(filterOutput,options.io.associationsFile);
   } 
 
+  if ( options.io.loadForestFile != "" && options.io.testDataFile != "" && options.forestOptions.useQuantiles() && options.io.predictionsFile != "" ) {
+    cout << "-Loading model '" << options.io.loadForestFile << "', making on-the-fly quantile predictions and saving to file '" << options.io.predictionsFile << "'" << endl;
+    Treedata testData(options.io.testDataFile,options.generalOptions.dataDelimiter,options.generalOptions.headerDelimiter);
+    qPredOutput = rface.loadAndPredictQuantiles(options.io.loadForestFile,&testData,options.forestOptions.nodeSize);
+    printQuantilePredictionsToFile(qPredOutput,options.io.predictionsFile);
+    return(EXIT_SUCCESS);
+  } 
+
   if ( options.io.loadForestFile != "" ) {
-    cout << "-Loading forest from file '" << options.io.loadForestFile << "'" << endl;
+    cout << "-Loading model '" << options.io.loadForestFile << "'" << endl;
     rface.load(options.io.loadForestFile);
   }
 
-
-  
   if ( options.io.trainDataFile != "" ) {
 
     options.forestOptions.print();

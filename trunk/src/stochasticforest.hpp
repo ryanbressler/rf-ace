@@ -21,6 +21,8 @@ public:
   void learnGBT(Treedata* trainData, const size_t targetIdx, const ForestOptions* forestOptions, const vector<num_t>& featureWeights, vector<distributions::Random>& randoms);
 
   void loadForest(const string& fileName);
+
+  void loadForestAndPredictQuantiles(const string& fileName, Treedata* testData, vector<vector<num_t> >& predictions, distributions::Random* random, size_t nSamplesPerTree);
   
   //num_t getError() { return(0.0); }
   //num_t getOobError();
@@ -57,6 +59,8 @@ public:
 #ifndef TEST__
 private:
 #endif
+
+  void readForestHeader(ifstream& forestStream);
   
   void growNumericalGBT(Treedata* trainData, const size_t targetIdx, const ForestOptions* forestOptions, const distributions::PMF* pmf, vector<distributions::Random>& randoms);
   void growCategoricalGBT(Treedata* trainData, const size_t targetIdx, const ForestOptions* forestOptions, const distributions::PMF* pmf, vector<distributions::Random>& randoms);

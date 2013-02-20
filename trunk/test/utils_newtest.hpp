@@ -45,7 +45,7 @@ void utils_newtest_categoricalFeatureSplitsNumericalTarget() {
 
   DI_ref = 0;
 
-  newassert( fabs( DI - DI_ref ) < 1e-5 );  
+  newassert( fabs( DI - DI_ref ) < 1e-3 );  
   
 }
 
