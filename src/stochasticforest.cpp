@@ -99,26 +99,34 @@ void StochasticForest::loadForestAndPredictQuantiles(const string& fileName,
   size_t nTrees = this->nTrees();
   size_t nSamples = testData->nSamples();
   
+  vector<vector<num_t> > finalData(nSamples,vector<num_t>(nTrees*nSamplesPerTree,datadefs::NUM_NAN));
+
   predictions.resize(nSamples,vector<num_t>(nQuantiles,datadefs::NUM_NAN));
 
-  for ( size_t sampleIdx = 0; sampleIdx < nSamples; ++sampleIdx ) {
-    vector<num_t> finalData(nTrees*nSamplesPerTree,datadefs::NUM_NAN);
-    string line;
-    forestStream.seekg(ios_base::beg);
-    getline(forestStream,line);
-    for ( size_t treeIdx = 0; treeIdx < nTrees; ++treeIdx ) {
-      RootNode rootNode;
-      rootNode.loadTree(forestStream,this->isTargetNumerical(),forestType_);
+  for ( size_t treeIdx = 0; treeIdx < nTrees; ++treeIdx ) {
+
+    RootNode rootNode;
+    rootNode.loadTree(forestStream,this->isTargetNumerical(),forestType_);
+
+    for ( size_t sampleIdx = 0; sampleIdx < nSamples; ++sampleIdx ) {
+
       vector<num_t> treeData = rootNode.getChildLeafTrainData(testData,sampleIdx);
+
       for ( size_t i = 0; i < nSamplesPerTree; ++i ) {
-	finalData[ treeIdx * nSamplesPerTree + i ] = treeData[ random->integer() % nSamplesPerTree ];
+	finalData[sampleIdx][ treeIdx * nSamplesPerTree + i ] = treeData[ random->integer() % nSamplesPerTree ];
       }
+
     }
-    sort(finalData.begin(),finalData.end());
+
+  }
+  
+  for ( size_t sampleIdx = 0; sampleIdx < nSamples; ++sampleIdx ) {
+    sort(finalData[sampleIdx].begin(),finalData[sampleIdx].end());
     for ( size_t q = 0; q < nQuantiles; ++q ) {
-      predictions[sampleIdx][q] = math::percentile(finalData,quantiles_[q]);
+      predictions[sampleIdx][q] = math::percentile(finalData[sampleIdx],quantiles_[q]);
     }
   }
+  
   
 }
 
