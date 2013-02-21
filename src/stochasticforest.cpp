@@ -111,9 +111,10 @@ void StochasticForest::loadForestAndPredictQuantiles(const string& fileName,
     for ( size_t sampleIdx = 0; sampleIdx < nSamples; ++sampleIdx ) {
 
       vector<num_t> treeData = rootNode.getChildLeafTrainData(testData,sampleIdx);
+      size_t nSamplesInTreeData = treeData.size();
 
       for ( size_t i = 0; i < nSamplesPerTree; ++i ) {
-	finalData[sampleIdx][ treeIdx * nSamplesPerTree + i ] = treeData[ random->integer() % nSamplesPerTree ];
+	finalData[sampleIdx][ treeIdx * nSamplesPerTree + i ] = treeData[ random->integer() % nSamplesInTreeData ];
       }
 
     }
@@ -814,11 +815,12 @@ void StochasticForest::predictQuantiles(Treedata* testData,
     vector<num_t> finalData(nTrees*nSamplesPerTree,datadefs::NUM_NAN);
     for ( size_t treeIdx = 0; treeIdx < nTrees; ++treeIdx ) {
       vector<num_t> treeData = rootNodes_[treeIdx]->getChildLeafTrainData(testData,sampleIdx);
-	//cout << "got leaf data for tree " << treeIdx << endl;
-	for ( size_t i = 0; i < nSamplesPerTree; ++i ) {
-	  //cout << "sample " << i << " in tree" << endl;
-	  finalData[ treeIdx * nSamplesPerTree + i ] = treeData[ random->integer() % nSamplesPerTree ];
-	}
+      size_t nSamplesInTreeData = treeData.size();
+      //cout << "got leaf data for tree " << treeIdx << endl;
+      for ( size_t i = 0; i < nSamplesPerTree; ++i ) {
+	//cout << "sample " << i << " in tree" << endl;
+	finalData[ treeIdx * nSamplesPerTree + i ] = treeData[ random->integer() % nSamplesInTreeData ];
+      }
     }
     sort(finalData.begin(),finalData.end());
     for ( size_t q = 0; q < nQuantiles; ++q ) {

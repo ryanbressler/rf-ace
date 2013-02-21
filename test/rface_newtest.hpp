@@ -65,7 +65,7 @@ RFACE::QuantilePredictionOutput make_quantile_predictions(ForestOptions& forestO
 
   rface.train(&trainData,targetIdx,weights,&forestOptions);
 
-  return( rface.predictQuantiles(&trainData,forestOptions.nodeSize) );
+  return( rface.predictQuantiles(&trainData,30*forestOptions.nodeSize) );
 
 }
 
@@ -111,7 +111,7 @@ RFACE::QuantilePredictionOutput make_save_load_quantile_predictions(ForestOption
   
   rface2.load("foo.sf");
   
-  return( rface2.predictQuantiles(&trainData,10*forestOptions.nodeSize) );
+  return( rface2.predictQuantiles(&trainData,30*forestOptions.nodeSize) );
 
 }
 

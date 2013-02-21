@@ -96,7 +96,7 @@ int main(const int argc, char* const argv[]) {
   if ( options.io.loadForestFile != "" && options.io.testDataFile != "" && options.forestOptions.useQuantiles() && options.io.predictionsFile != "" ) {
     cout << "-Loading model '" << options.io.loadForestFile << "', making on-the-fly quantile predictions and saving to file '" << options.io.predictionsFile << "'" << endl;
     Treedata testData(options.io.testDataFile,options.generalOptions.dataDelimiter,options.generalOptions.headerDelimiter);
-    qPredOutput = rface.loadAndPredictQuantiles(options.io.loadForestFile,&testData,options.forestOptions.nodeSize);
+    qPredOutput = rface.loadAndPredictQuantiles(options.io.loadForestFile,&testData,options.forestOptions.nSamplesForQuantiles);
     printQuantilePredictionsToFile(qPredOutput,options.io.predictionsFile);
     return(EXIT_SUCCESS);
   } 
@@ -153,7 +153,7 @@ int main(const int argc, char* const argv[]) {
     Treedata testData(options.io.testDataFile,options.generalOptions.dataDelimiter,options.generalOptions.headerDelimiter);
     if ( options.forestOptions.useQuantiles() ) {
       cout << "-Making quantile predictions" << endl;
-      qPredOutput = rface.predictQuantiles(&testData,options.forestOptions.nodeSize);
+      qPredOutput = rface.predictQuantiles(&testData,options.forestOptions.nSamplesForQuantiles);
     } else {
       cout << "-Making predictions" << endl;
       testOutput = rface.test(&testData);

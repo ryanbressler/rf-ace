@@ -71,6 +71,7 @@ public:
   num_t contrastFraction; const string contrastFraction_s; const string contrastFraction_l;
   bool noNABranching; const string noNABranching_s; const string noNABranching_l;
   vector<num_t> quantiles; const string quantiles_s; const string quantiles_l;
+  size_t nSamplesForQuantiles; const string nSamplesForQuantiles_s; const string nSamplesForQuantiles_l;
 
   num_t inBoxFraction;
   bool sampleWithReplacement;
@@ -86,7 +87,8 @@ public:
     shrinkage_s("k"),shrinkage_l("shrinkage"),
     contrastFraction_s("c"), contrastFraction_l("contrastFraction"),
     noNABranching(datadefs::SF_DEFAULT_NO_NA_BRANCHING),noNABranching_s("N"), noNABranching_l("noNABranching"),
-    quantiles(datadefs::SF_DEFAULT_QUANTILES), quantiles_s("q"), quantiles_l("quantiles") {
+    quantiles(datadefs::SF_DEFAULT_QUANTILES), quantiles_s("q"), quantiles_l("quantiles"),
+    nSamplesForQuantiles(10*datadefs::RF_DEFAULT_NODE_SIZE), nSamplesForQuantiles_s("r"), nSamplesForQuantiles_l("qSamples") {
 
     if ( forestType == forest_t::RF ) {
       this->setRFDefaults();
@@ -136,6 +138,8 @@ public:
     vector<string> quantileList = utils::split(quantilesAsStr,',');
     quantiles.resize(quantileList.size());
     transform(quantileList.begin(),quantileList.end(),quantiles.begin(),utils::str2<num_t>);
+
+    parser.getArgument<size_t>( nSamplesForQuantiles_s, nSamplesForQuantiles_l, nSamplesForQuantiles );
 
   }
 
@@ -225,6 +229,10 @@ public:
 	  exit(1);
 	}
       }
+      if (nSamplesForQuantiles == 0) {
+	cerr << "ERROR: using 0 samples for quantile predictions" << endl;
+	exit(1);
+      }
     }
 
   }
@@ -240,6 +248,7 @@ public:
     this->printHelpLine(contrastFraction_s,contrastFraction_l,"[Filter only] the fraction of contrast features sampled to approximate the null distribution");
     this->printHelpLine(noNABranching_s,noNABranching_l,"If set, the splitter will NOT create a third branch for cases where the splitter is NA");
     this->printHelpLine(quantiles_s,quantiles_l,"[RF only] comma-separated list of quantiles to build a Quantile Random Forest from");
+    this->printHelpLine(nSamplesForQuantiles_s,nSamplesForQuantiles_l,"[RF only] specify the number of samples per tree for calculating the quantiles");
   }
 
   void print() {
@@ -249,7 +258,10 @@ public:
       this->printOption(mTry_s,mTry_l,mTry);
       this->printOption(nodeSize_s,nodeSize_l,nodeSize);
       this->printOption(nMaxLeaves_s,nMaxLeaves_l,nMaxLeaves);
-      this->printOption(quantiles_s,quantiles_l,quantiles.begin(),quantiles.end());
+      if ( this->useQuantiles() ) {
+	this->printOption(quantiles_s,quantiles_l,quantiles.begin(),quantiles.end());
+	this->printOption(nSamplesForQuantiles_s,nSamplesForQuantiles_l,nSamplesForQuantiles);
+      }
     } else if ( forestType == forest_t::GBT ) { 
       cout << "Gradient Boosting Tree (GBT) configuration:" << endl;
       this->printOption(nTrees_s,nTrees_l,nTrees);
