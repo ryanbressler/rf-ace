@@ -58,47 +58,54 @@ namespace datadefs {
 
   extern const string CONTRAST;
 
-  typedef enum {RF,GBT,CART,UNKNOWN} forest_t;
+  typedef enum {RF,QRF,GBT,UNKNOWN} forest_t;
   extern const map<string,forest_t> forestTypeAssign;
 
   extern const bool          SF_DEFAULT_NO_NA_BRANCHING;
   extern const vector<num_t> SF_DEFAULT_QUANTILES;
 
   // Random Forest default configuration
-  extern const size_t     RF_DEFAULT_N_TREES;
-  extern const size_t     RF_DEFAULT_M_TRY;
-  extern const size_t     RF_DEFAULT_N_MAX_LEAVES;
-  extern const size_t     RF_DEFAULT_NODE_SIZE;
-  extern const num_t      RF_DEFAULT_IN_BOX_FRACTION;
-  extern const num_t      RF_DEFAULT_SAMPLE_WITH_REPLACEMENT;
-  extern const bool       RF_DEFAULT_USE_CONTRASTS;
-  extern const num_t      RF_DEFAULT_CONTRAST_FRACTION;
-  extern const bool       RF_DEFAULT_IS_RANDOM_SPLIT;
-  extern const num_t      RF_DEFAULT_SHRINKAGE;
+  extern const size_t        RF_DEFAULT_N_TREES;
+  extern const size_t        RF_DEFAULT_M_TRY;
+  extern const size_t        RF_DEFAULT_N_MAX_LEAVES;
+  extern const size_t        RF_DEFAULT_NODE_SIZE;
+  extern const num_t         RF_DEFAULT_IN_BOX_FRACTION;
+  extern const num_t         RF_DEFAULT_SAMPLE_WITH_REPLACEMENT;
+  extern const bool          RF_DEFAULT_USE_CONTRASTS;
+  extern const num_t         RF_DEFAULT_CONTRAST_FRACTION;
+  extern const bool          RF_DEFAULT_IS_RANDOM_SPLIT;
+  extern const num_t         RF_DEFAULT_SHRINKAGE;
+  extern const vector<num_t> RF_DEFAULT_QUANTILES;
+  extern const size_t        RF_DEFAULT_N_SAMPLES_FOR_QUANTILES;
+
+  // Quantile Regression Random Forest default configuration
+  extern const size_t        QRF_DEFAULT_N_TREES;
+  extern const size_t        QRF_DEFAULT_M_TRY;
+  extern const size_t        QRF_DEFAULT_N_MAX_LEAVES;
+  extern const size_t        QRF_DEFAULT_NODE_SIZE;
+  extern const num_t         QRF_DEFAULT_IN_BOX_FRACTION;
+  extern const num_t         QRF_DEFAULT_SAMPLE_WITH_REPLACEMENT;
+  extern const bool          QRF_DEFAULT_USE_CONTRASTS;
+  extern const num_t         QRF_DEFAULT_CONTRAST_FRACTION;
+  extern const bool          QRF_DEFAULT_IS_RANDOM_SPLIT;
+  extern const num_t         QRF_DEFAULT_SHRINKAGE;
+  extern const vector<num_t> QRF_DEFAULT_QUANTILES;
+  extern const size_t        QRF_DEFAULT_N_SAMPLES_FOR_QUANTILES;
 
   // Gradient Boosting Trees default configuration
-  extern const size_t     GBT_DEFAULT_N_TREES;
-  extern const size_t     GBT_DEFAULT_M_TRY;
-  extern const size_t     GBT_DEFAULT_N_MAX_LEAVES;
-  extern const size_t     GBT_DEFAULT_NODE_SIZE;
-  extern const num_t      GBT_DEFAULT_IN_BOX_FRACTION;
-  extern const num_t      GBT_DEFAULT_SAMPLE_WITH_REPLACEMENT;
-  extern const bool       GBT_DEFAULT_USE_CONTRASTS;
-  extern const num_t      GBT_DEFAULT_CONTRAST_FRACTION;
-  extern const bool       GBT_DEFAULT_IS_RANDOM_SPLIT;
-  extern const num_t      GBT_DEFAULT_SHRINKAGE;
+  extern const size_t        GBT_DEFAULT_N_TREES;
+  extern const size_t        GBT_DEFAULT_M_TRY;
+  extern const size_t        GBT_DEFAULT_N_MAX_LEAVES;
+  extern const size_t        GBT_DEFAULT_NODE_SIZE;
+  extern const num_t         GBT_DEFAULT_IN_BOX_FRACTION;
+  extern const num_t         GBT_DEFAULT_SAMPLE_WITH_REPLACEMENT;
+  extern const bool          GBT_DEFAULT_USE_CONTRASTS;
+  extern const num_t         GBT_DEFAULT_CONTRAST_FRACTION;
+  extern const bool          GBT_DEFAULT_IS_RANDOM_SPLIT;
+  extern const num_t         GBT_DEFAULT_SHRINKAGE;
+  extern const vector<num_t> GBT_DEFAULT_QUANTILES;
+  extern const size_t        GBT_DEFAULT_N_SAMPLES_FOR_QUANTILES;
 
-  // CART default configuration
-  extern const size_t     CART_DEFAULT_N_TREES;
-  extern const size_t     CART_DEFAULT_M_TRY;
-  extern const size_t     CART_DEFAULT_N_MAX_LEAVES;
-  extern const size_t     CART_DEFAULT_NODE_SIZE;
-  extern const num_t      CART_DEFAULT_IN_BOX_FRACTION;
-  extern const num_t      CART_DEFAULT_SAMPLE_WITH_REPLACEMENT;
-  extern const bool       CART_DEFAULT_USE_CONTRASTS;
-  extern const num_t      CART_DEFAULT_CONTRAST_FRACTION;
-  extern const bool       CART_DEFAULT_IS_RANDOM_SPLIT;
-  extern const num_t      CART_DEFAULT_SHRINKAGE;
 
   // Statistical test default configuration
   extern const size_t     FILTER_DEFAULT_N_PERMS;

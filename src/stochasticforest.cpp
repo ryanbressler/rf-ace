@@ -49,10 +49,6 @@ void StochasticForest::readForestHeader(ifstream& forestStream) {
   categories_ = utils::split(forestSetup["CATEGORIES"], ',');
   isTargetNumerical_ = categories_.size() == 0;
 
-  vector<string> foo = utils::split(forestSetup["QUANTILES"],',');
-  quantiles_.resize(foo.size());
-  transform(foo.begin(),foo.end(),quantiles_.begin(),utils::str2<num_t>);
-
   assert(forestStream.good());
 
   if ( forestType_ == forest_t::GBT ) {
@@ -78,15 +74,16 @@ void StochasticForest::loadForest(const string& fileName) {
 
   // Go through all trees in the forest
   for ( size_t treeIdx = 0; treeIdx < nTrees; ++treeIdx ) {
-    rootNodes_[treeIdx] = new RootNode();
-    rootNodes_[treeIdx]->loadTree(forestStream,this->isTargetNumerical(),forestType_);
+    rootNodes_[treeIdx] = new RootNode(forestType_,targetName_,this->isTargetNumerical());
+    rootNodes_[treeIdx]->loadTree(forestStream);
   }
 
 }
 
 void StochasticForest::loadForestAndPredictQuantiles(const string& fileName, 
 						     Treedata* testData, 
-						     vector<vector<num_t> >& predictions, 
+						     vector<vector<num_t> >& predictions,
+						     const vector<num_t>& quantiles,
 						     distributions::Random* random, 
 						     const size_t nSamplesPerTree) {
 
@@ -95,7 +92,7 @@ void StochasticForest::loadForestAndPredictQuantiles(const string& fileName,
 
   this->readForestHeader(forestStream);
 
-  size_t nQuantiles = quantiles_.size();
+  size_t nQuantiles = quantiles.size();
   size_t nTrees = this->nTrees();
   size_t nSamples = testData->nSamples();
   
@@ -105,8 +102,8 @@ void StochasticForest::loadForestAndPredictQuantiles(const string& fileName,
 
   for ( size_t treeIdx = 0; treeIdx < nTrees; ++treeIdx ) {
 
-    RootNode rootNode;
-    rootNode.loadTree(forestStream,this->isTargetNumerical(),forestType_);
+    RootNode rootNode(forestType_,targetName_,this->isTargetNumerical());
+    rootNode.loadTree(forestStream);
 
     for ( size_t sampleIdx = 0; sampleIdx < nSamples; ++sampleIdx ) {
 
@@ -124,11 +121,10 @@ void StochasticForest::loadForestAndPredictQuantiles(const string& fileName,
   for ( size_t sampleIdx = 0; sampleIdx < nSamples; ++sampleIdx ) {
     sort(finalData[sampleIdx].begin(),finalData[sampleIdx].end());
     for ( size_t q = 0; q < nQuantiles; ++q ) {
-      predictions[sampleIdx][q] = math::percentile(finalData[sampleIdx],quantiles_[q]);
+      predictions[sampleIdx][q] = math::percentile(finalData[sampleIdx],quantiles[q]);
     }
   }
-  
-  
+    
 }
 
 StochasticForest::~StochasticForest() {
@@ -145,8 +141,8 @@ void StochasticForest::writeForestHeader(ofstream& toFile) {
     toFile << "FOREST=GBT";
   } else if (forestType_ == forest_t::RF) {
     toFile << "FOREST=RF";
-  } else if (forestType_ == forest_t::CART) {
-    toFile << "FOREST=CART";
+  } else if (forestType_ == forest_t::QRF) {
+    toFile << "FOREST=QRF";
   } else {
     cerr << "StochasticForest::saveForest() -- Unknown forest type!" << endl;
     exit(1);
@@ -162,9 +158,9 @@ void StochasticForest::writeForestHeader(ofstream& toFile) {
     utils::write(toFile,GBTConstants_.begin(),GBTConstants_.end(),',');
     toFile << "\",GBT_SHRINKAGE=" << GBTShrinkage_<< flush;
   }
-  toFile << ",QUANTILES=\"" << flush;
-  utils::write(toFile,quantiles_.begin(),quantiles_.end(),',');
-  toFile << "\"" << endl;
+  //toFile << ",QUANTILES=\"" << flush;
+  //utils::write(toFile,quantiles_.begin(),quantiles_.end(),',');
+  toFile << endl;
 
 }
 
@@ -176,17 +172,13 @@ void StochasticForest::writeForest(ofstream& toFile) {
   
   // Save each tree in the forest
   for (size_t treeIdx = 0; treeIdx < rootNodes_.size(); ++treeIdx) {
-    toFile << "TREE=" << treeIdx << ",NNODES=" << rootNodes_[treeIdx]->nNodes() << ",NLEAVES=" << rootNodes_[treeIdx]->nLeaves() << endl;
+    //toFile << "TREE=" << treeIdx << ",NNODES=" << rootNodes_[treeIdx]->nNodes() << ",NLEAVES=" << rootNodes_[treeIdx]->nLeaves() << endl;
     rootNodes_[treeIdx]->writeTree(toFile);
   }
 
   // Close stream
   toFile.close();
 
-}
-
-bool StochasticForest::useQuantiles() const {
-  return( quantiles_.size() > 0 );
 }
 
 void growTreesPerThread(vector<RootNode*>& rootNodes, Treedata* trainData,
@@ -199,15 +191,18 @@ void growTreesPerThread(vector<RootNode*>& rootNodes, Treedata* trainData,
 
 }
 
-void StochasticForest::learnRF(Treedata* trainData, const size_t targetIdx,
-    const ForestOptions* forestOptions, const vector<num_t>& featureWeights,
-    vector<distributions::Random>& randoms) {
+void StochasticForest::learnRF(Treedata* trainData, 
+			       const size_t targetIdx,
+			       const ForestOptions* forestOptions, 
+			       const vector<num_t>& featureWeights,
+			       vector<distributions::Random>& randoms) {
 
-  forestType_ = forest_t::RF;
+  assert(forestOptions->forestType != forest_t::GBT );
+
+  forestType_ = forestOptions->forestType;
   targetName_ = trainData->feature(targetIdx)->name();
   isTargetNumerical_ = trainData->feature(targetIdx)->isNumerical();
   categories_ = trainData->feature(targetIdx)->categories();
-  quantiles_ = forestOptions->quantiles;
 
   assert(trainData->nFeatures() == featureWeights.size());
 
@@ -240,7 +235,7 @@ void StochasticForest::learnRF(Treedata* trainData, const size_t targetIdx,
     vector<size_t> treeIcs = utils::range(forestOptions->nTrees);
 
     for (size_t treeIdx = 0; treeIdx < rootNodes_.size(); ++treeIdx) {
-      rootNodes_[treeIdx] = new RootNode();
+      rootNodes_[treeIdx] = new RootNode(forestType_,targetName_,this->isTargetNumerical());
       rootNodes_[treeIdx]->growTree(trainData, targetIdx, &pmf, forestOptions, &randoms[0]);
     }
 
@@ -294,7 +289,9 @@ void StochasticForest::learnGBT(Treedata* trainData, const size_t targetIdx,
     const ForestOptions* forestOptions, const vector<num_t>& featureWeights,
     vector<distributions::Random>& randoms) {
 
-  forestType_ = forest_t::GBT;
+  assert( forestOptions->forestType == forest_t::GBT );
+
+  forestType_ = forestOptions->forestType;
 
   GBTShrinkage_ = forestOptions->shrinkage;
   
@@ -322,7 +319,7 @@ void StochasticForest::learnGBT(Treedata* trainData, const size_t targetIdx,
 
   //Allocates memory for the root nodes. With all these parameters, the RootNode is now able to take full control of the splitting process
   for (size_t treeIdx = 0; treeIdx < rootNodes_.size(); ++treeIdx) {
-    rootNodes_[treeIdx] = new RootNode();
+    rootNodes_[treeIdx] = new RootNode(forestType_,targetName_,this->isTargetNumerical());
   }
 
   if (isTargetNumerical_) {
@@ -797,14 +794,15 @@ void StochasticForest::predict(Treedata* testData, vector<num_t>& predictions,ve
 }
 
 void StochasticForest::predictQuantiles(Treedata* testData,
-					vector<vector<num_t> >& predictions, 
+					vector<vector<num_t> >& predictions,
+					const vector<num_t>& quantiles,
 					distributions::Random* random,
 					const size_t nSamplesPerTree) {
 
 
   size_t nTrees = this->nTrees();
   size_t nSamples = testData->nSamples();
-  size_t nQuantiles = quantiles_.size();
+  size_t nQuantiles = quantiles.size();
 
   assert(nQuantiles > 0);
 
@@ -824,7 +822,7 @@ void StochasticForest::predictQuantiles(Treedata* testData,
     }
     sort(finalData.begin(),finalData.end());
     for ( size_t q = 0; q < nQuantiles; ++q ) {
-      predictions[sampleIdx][q] = math::percentile(finalData,quantiles_[q]);
+      predictions[sampleIdx][q] = math::percentile(finalData,quantiles[q]);
     }
     //cout << "done with sample " << sampleIdx << endl;
   }
