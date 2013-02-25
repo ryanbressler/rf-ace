@@ -22,7 +22,12 @@ public:
 
   void loadForest(const string& fileName);
 
-  void loadForestAndPredictQuantiles(const string& fileName, Treedata* testData, vector<vector<num_t> >& predictions, distributions::Random* random, size_t nSamplesPerTree);
+  void loadForestAndPredictQuantiles(const string& fileName, 
+				     Treedata* testData, 
+				     vector<vector<num_t> >& predictions, 
+				     const vector<num_t>& quantiles, 
+				     distributions::Random* random, 
+				     size_t nSamplesPerTree);
   
   //num_t getError() { return(0.0); }
   //num_t getOobError();
@@ -33,9 +38,9 @@ public:
   void predict(Treedata* testData, vector<string>& predictions, vector<num_t>& confidence, size_t nThreads = 1);
   void predict(Treedata* testData, vector<num_t>& predictions, vector<num_t>& confidence, size_t nThreads = 1);
 
-  bool useQuantiles() const;
+  //bool useQuantiles() const;
 
-  void predictQuantiles(Treedata* testData, vector<vector<num_t> >& predictions, distributions::Random* random, const size_t nSamplesPerTree);
+  void predictQuantiles(Treedata* testData, vector<vector<num_t> >& predictions, const vector<num_t>& quantiles, distributions::Random* random, const size_t nSamplesPerTree);
 
   //vector<num_t> getOobPredictions();
   //vector<num_t> getPermutedOobPredictions(const size_t featureIdx);
@@ -50,7 +55,7 @@ public:
 
   inline set<size_t> getFeaturesInForest() const { return( featuresInForest_ ); }
   inline string getTargetName() const { return( targetName_ ); }
-  inline vector<num_t> getQuantiles() const { return(quantiles_); }
+  //inline vector<num_t> getQuantiles() const { return(quantiles_); }
   inline bool isTargetNumerical() const { return( isTargetNumerical_ ); }
 
   void writeForestHeader(ofstream& toFile);
@@ -73,7 +78,7 @@ private:
 
   datadefs::forest_t forestType_;
 
-  vector<num_t> quantiles_;
+  //vector<num_t> quantiles_;
 
   vector<string> categories_;
 

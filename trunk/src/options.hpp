@@ -78,8 +78,8 @@ public:
   bool isRandomSplit;
   bool useContrasts;
   
-  ForestOptions():
-    forestType(forest_t::RF), forestType_s("f"), forestType_l("forestType"),
+  ForestOptions(const forest_t ft):
+    forestType(ft), forestType_s("f"), forestType_l("forestType"),
     nTrees_s("n"),nTrees_l("nTrees"),
     mTry_s("m"),mTry_l("mTry"),
     nMaxLeaves_s("a"),nMaxLeaves_l("nMaxLeaves"),
@@ -87,20 +87,21 @@ public:
     shrinkage_s("k"),shrinkage_l("shrinkage"),
     contrastFraction_s("c"), contrastFraction_l("contrastFraction"),
     noNABranching(datadefs::SF_DEFAULT_NO_NA_BRANCHING),noNABranching_s("N"), noNABranching_l("noNABranching"),
-    quantiles(datadefs::SF_DEFAULT_QUANTILES), quantiles_s("q"), quantiles_l("quantiles"),
-    nSamplesForQuantiles(10*datadefs::RF_DEFAULT_NODE_SIZE), nSamplesForQuantiles_s("r"), nSamplesForQuantiles_l("qSamples") {
+    quantiles_s("q"), quantiles_l("quantiles"),
+    nSamplesForQuantiles_s("r"), nSamplesForQuantiles_l("qSamples") {
 
     if ( forestType == forest_t::RF ) {
       this->setRFDefaults();
+    } else if ( forestType == forest_t::QRF ) {
+      this->setQRFDefaults();
     } else if ( forestType == forest_t::GBT ) {
       this->setGBTDefaults();
     } else {
-      this->setCARTDefaults();
+      cerr << "ERROR: wrong forest type!" << endl;
+      exit(1);
     }
 
   }
-
-  bool useQuantiles() const { return( quantiles.size() > 0 ); }
 
   ~ForestOptions() {}
 
@@ -113,12 +114,12 @@ public:
       string forestTypeAsStr = "";
       parser.getArgument<string>(forestType_s, forestType_l, forestTypeAsStr);
       forestType = datadefs::forestTypeAssign.at(forestTypeAsStr);
-      if ( forestType == forest_t::RF) {
+      if ( forestType == forest_t::RF ) {
 	this->setRFDefaults();
+      } else if ( forestType == forest_t::QRF ) {
+	this->setQRFDefaults();
       } else if ( forestType == forest_t::GBT ) {
 	this->setGBTDefaults();
-      } else if ( forestType == forest_t::CART ) {
-	this->setCARTDefaults();
       } else {
 	cerr << "GeneralOptions::load() -- unknown forest type: " << forestTypeAsStr << endl;
 	exit(1);
@@ -155,6 +156,25 @@ public:
     nMaxLeaves            = datadefs::RF_DEFAULT_N_MAX_LEAVES;
     nodeSize              = datadefs::RF_DEFAULT_NODE_SIZE;
     shrinkage             = datadefs::RF_DEFAULT_SHRINKAGE;
+    quantiles             = datadefs::RF_DEFAULT_QUANTILES;
+    nSamplesForQuantiles  = datadefs::RF_DEFAULT_N_SAMPLES_FOR_QUANTILES;
+
+  }
+
+  void setQRFDefaults() {
+    forestType            = forest_t::QRF;
+    inBoxFraction         = datadefs::QRF_DEFAULT_IN_BOX_FRACTION;
+    sampleWithReplacement = datadefs::QRF_DEFAULT_SAMPLE_WITH_REPLACEMENT;
+    isRandomSplit         = datadefs::QRF_DEFAULT_IS_RANDOM_SPLIT;
+    useContrasts          = datadefs::QRF_DEFAULT_USE_CONTRASTS;
+    contrastFraction      = datadefs::QRF_DEFAULT_CONTRAST_FRACTION;
+    nTrees                = datadefs::QRF_DEFAULT_N_TREES;
+    mTry                  = datadefs::QRF_DEFAULT_M_TRY;
+    nMaxLeaves            = datadefs::QRF_DEFAULT_N_MAX_LEAVES;
+    nodeSize              = datadefs::QRF_DEFAULT_NODE_SIZE;
+    shrinkage             = datadefs::QRF_DEFAULT_SHRINKAGE;
+    quantiles             = datadefs::QRF_DEFAULT_QUANTILES;
+    nSamplesForQuantiles  = datadefs::QRF_DEFAULT_N_SAMPLES_FOR_QUANTILES;
   }
 
   void setGBTDefaults() {
@@ -169,22 +189,10 @@ public:
     nMaxLeaves            = datadefs::GBT_DEFAULT_N_MAX_LEAVES;
     nodeSize              = datadefs::GBT_DEFAULT_NODE_SIZE;
     shrinkage             = datadefs::GBT_DEFAULT_SHRINKAGE;
+    quantiles             = datadefs::GBT_DEFAULT_QUANTILES;
+    nSamplesForQuantiles  = datadefs::GBT_DEFAULT_N_SAMPLES_FOR_QUANTILES;
   }
 
-  void setCARTDefaults() {
-    forestType            = forest_t::CART;
-    inBoxFraction         = datadefs::CART_DEFAULT_IN_BOX_FRACTION;
-    sampleWithReplacement = datadefs::CART_DEFAULT_SAMPLE_WITH_REPLACEMENT;
-    isRandomSplit         = datadefs::CART_DEFAULT_IS_RANDOM_SPLIT;
-    useContrasts          = datadefs::CART_DEFAULT_USE_CONTRASTS;
-    contrastFraction      = datadefs::CART_DEFAULT_CONTRAST_FRACTION;
-    nTrees                = datadefs::CART_DEFAULT_N_TREES;
-    mTry                  = datadefs::CART_DEFAULT_M_TRY;
-    nMaxLeaves            = datadefs::CART_DEFAULT_N_MAX_LEAVES;
-    nodeSize              = datadefs::CART_DEFAULT_NODE_SIZE;
-    shrinkage             = datadefs::CART_DEFAULT_SHRINKAGE;
-  }
-  
   void validate() {
     
     if ( forestType == forest_t::UNKNOWN ) {
@@ -222,7 +230,7 @@ public:
       exit(1);
     }
 
-    if ( forestType == forest_t::RF && quantiles.size() > 0 ) {
+    if ( forestType == forest_t::QRF ) {
       for ( size_t i = 0; i < quantiles.size(); ++i ) {
 	if ( 0.0 >= quantiles[i] || quantiles[i] > 1.0 ) {
 	  cerr << "ERROR: quantiles must be real numbers between (0,1]" << endl;
@@ -239,16 +247,16 @@ public:
 
   void help() {
     cout << "Forest Options:" << endl;
-    this->printHelpLine(forestType_s,forestType_l,"Forest type: RF (default), GBT, or CART");
-    this->printHelpLine(nTrees_s,nTrees_l,"[RF and GBT only] Number of trees in the forest");
-    this->printHelpLine(mTry_s,mTry_l,"[RF only] Fraction of randomly drawn features per node split");
+    this->printHelpLine(forestType_s,forestType_l,"Forest type: RF (default), QRF, or GBT");
+    this->printHelpLine(nTrees_s,nTrees_l,"Number of trees in the forest");
+    this->printHelpLine(mTry_s,mTry_l,"[RF+QRF] Fraction of randomly drawn features per node split");
     this->printHelpLine(nMaxLeaves_s,nMaxLeaves_l,"Maximum number of leaves per tree");
     this->printHelpLine(nodeSize_s,nodeSize_l,"Smallest number of train samples per leaf node");
-    this->printHelpLine(shrinkage_s,shrinkage_l,"[GBT only] Shrinkage applied to evolving the residual");
+    this->printHelpLine(shrinkage_s,shrinkage_l,"[GBT] Shrinkage applied to evolving the residual");
     this->printHelpLine(contrastFraction_s,contrastFraction_l,"[Filter only] the fraction of contrast features sampled to approximate the null distribution");
     this->printHelpLine(noNABranching_s,noNABranching_l,"If set, the splitter will NOT create a third branch for cases where the splitter is NA");
-    this->printHelpLine(quantiles_s,quantiles_l,"[RF only] comma-separated list of quantiles to build a Quantile Random Forest from");
-    this->printHelpLine(nSamplesForQuantiles_s,nSamplesForQuantiles_l,"[RF only] specify the number of samples per tree for calculating the quantiles");
+    this->printHelpLine(quantiles_s,quantiles_l,"[QRF] comma-separated list of quantiles to build a Quantile Random Forest from");
+    this->printHelpLine(nSamplesForQuantiles_s,nSamplesForQuantiles_l,"[QRF] specify the number of samples per tree for calculating the quantiles");
   }
 
   void print() {
@@ -258,10 +266,14 @@ public:
       this->printOption(mTry_s,mTry_l,mTry);
       this->printOption(nodeSize_s,nodeSize_l,nodeSize);
       this->printOption(nMaxLeaves_s,nMaxLeaves_l,nMaxLeaves);
-      if ( this->useQuantiles() ) {
-	this->printOption(quantiles_s,quantiles_l,quantiles.begin(),quantiles.end());
-	this->printOption(nSamplesForQuantiles_s,nSamplesForQuantiles_l,nSamplesForQuantiles);
-      }
+    } else if ( forestType == forest_t::QRF ) {
+      cout << "Quantile Random Forest (QRF) configuration:" << endl;
+      this->printOption(nTrees_s,nTrees_l,nTrees);
+      this->printOption(mTry_s,mTry_l,mTry);
+      this->printOption(nodeSize_s,nodeSize_l,nodeSize);
+      this->printOption(nMaxLeaves_s,nMaxLeaves_l,nMaxLeaves);
+      this->printOption(quantiles_s,quantiles_l,quantiles.begin(),quantiles.end());
+      this->printOption(nSamplesForQuantiles_s,nSamplesForQuantiles_l,nSamplesForQuantiles);
     } else if ( forestType == forest_t::GBT ) { 
       cout << "Gradient Boosting Tree (GBT) configuration:" << endl;
       this->printOption(nTrees_s,nTrees_l,nTrees);
@@ -269,10 +281,6 @@ public:
       this->printOption(nodeSize_s,nodeSize_l,nodeSize);
       this->printOption(nMaxLeaves_s,nMaxLeaves_l,nMaxLeaves);
       this->printOption(shrinkage_s,shrinkage_l,shrinkage);
-    } else if ( forestType == forest_t::CART ) {
-      cout << "Classification and Regression Tree (CART) configuration:" << endl;
-      this->printOption(nodeSize_s,nodeSize_l,nodeSize);
-      this->printOption(nMaxLeaves_s,nMaxLeaves_l,nMaxLeaves);
     } else {
       cerr << "ERROR: unknown model type to print parameters for!" << endl;
       exit(1);
@@ -531,7 +539,9 @@ public:
   GeneralOptions generalOptions;
   FilterOptions filterOptions;
   
-  Options() {}
+  Options(forest_t ft): 
+    forestOptions(ft) {}
+
   ~Options() {}
   
   void load(const int argc, char* const argv[]) {

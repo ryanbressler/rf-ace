@@ -11,17 +11,18 @@
 #include "treedata.hpp"
 #include "options.hpp"
 #include "distributions.hpp"
+#include "datadefs.hpp"
 
 class RootNode : public Node {
 public:
 
-  RootNode();
+  RootNode(const datadefs::forest_t forestType, const string& targetName, const bool isTargetNumerical);
 
   ~RootNode();
 
   void reset(const size_t nNodes);
 
-  void loadTree(ifstream& treeStream, const bool isTargetNumerical, const datadefs::forest_t forestType);
+  void loadTree(ifstream& treeStream);
 
   void writeTree(ofstream& toFile);
 
@@ -53,6 +54,10 @@ private:
 #endif
 
   size_t getTreeSizeEstimate(const size_t nSamples, const size_t nMaxLeaves, const size_t nodeSize) const;
+
+  forest_t forestType_;
+  string targetName_;
+  bool isTargetNumerical_;
 
   // Parameters that are generated only when a tree is grown
   vector<Node> children_;

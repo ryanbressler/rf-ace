@@ -89,9 +89,9 @@ public:
 
     forestOptions->validate();
 
-    assert( ! forestOptions->useContrasts );
+    assert( !forestOptions->useContrasts );
 
-    if ( ! trainData->feature(targetIdx)->isNumerical() && forestOptions->useQuantiles() ) {
+    if ( !trainData->feature(targetIdx)->isNumerical() && forestOptions->forestType == forest_t::QRF ) {
       cerr << "ERROR: Quantiles do not work with classification!" << endl;
       exit(1);
     }
@@ -103,12 +103,10 @@ public:
     
     trainedModel_ = new StochasticForest();
 
-    if ( forestOptions->forestType == forest_t::RF ) {
+    if ( forestOptions->forestType == forest_t::RF || forestOptions->forestType == forest_t::QRF ) {
       trainedModel_->learnRF(trainData,targetIdx,forestOptions,featureWeights,randoms_);
     } else if ( forestOptions->forestType == forest_t::GBT ) {
       trainedModel_->learnGBT(trainData,targetIdx,forestOptions,featureWeights,randoms_);
-    } else if ( forestOptions->forestType == forest_t::CART ) {
-      trainedModel_->learnRF(trainData,targetIdx,forestOptions,featureWeights,randoms_);
     } else {
       cerr << "Unknown forest type!" << endl;
       exit(1);
@@ -337,7 +335,7 @@ public:
     return( testOutput );
   }
 
-  QuantilePredictionOutput predictQuantiles(Treedata* testData, const size_t nSamplesPerTree) {
+  QuantilePredictionOutput predictQuantiles(Treedata* testData, const vector<num_t>& quantiles, const size_t nSamplesPerTree) {
     
     //assert(forestOptions->useQuantiles());
     assert(trainedModel_);
@@ -345,7 +343,7 @@ public:
     QuantilePredictionOutput qPredOut;
 
     qPredOut.targetName = trainedModel_->getTargetName();
-    qPredOut.quantiles = trainedModel_->getQuantiles();
+    qPredOut.quantiles = quantiles;
 
     assert(qPredOut.quantiles.size() > 0);
 
@@ -357,7 +355,7 @@ public:
       qPredOut.trueData = vector<num_t>(testData->nSamples(),datadefs::NUM_NAN);
     }
 
-    trainedModel_->predictQuantiles(testData,qPredOut.predictions,&randoms_[0],nSamplesPerTree);
+    trainedModel_->predictQuantiles(testData,qPredOut.predictions,quantiles,&randoms_[0],nSamplesPerTree);
 
     qPredOut.sampleNames.resize( testData->nSamples() );
     for ( size_t i = 0; i < testData->nSamples(); ++i ) {
@@ -379,15 +377,15 @@ public:
     trainedModel_->loadForest(fileName);
   }
 
-  QuantilePredictionOutput loadAndPredictQuantiles(const string& fileName, Treedata* testData, const size_t nSamplesPerTree) {
+  QuantilePredictionOutput loadAndPredictQuantiles(const string& fileName, Treedata* testData, const vector<num_t>& quantiles, const size_t nSamplesPerTree) {
     
     QuantilePredictionOutput qPredOut;
 
     trainedModel_ = new StochasticForest();
-    trainedModel_->loadForestAndPredictQuantiles(fileName,testData,qPredOut.predictions,&randoms_[0],nSamplesPerTree);
+    trainedModel_->loadForestAndPredictQuantiles(fileName,testData,qPredOut.predictions,quantiles,&randoms_[0],nSamplesPerTree);
 
     qPredOut.targetName = trainedModel_->getTargetName();
-    qPredOut.quantiles = trainedModel_->getQuantiles();
+    qPredOut.quantiles = quantiles;
 
     assert(qPredOut.quantiles.size() > 0);
 

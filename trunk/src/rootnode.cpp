@@ -8,7 +8,10 @@
 
 using datadefs::forest_t;
 
-RootNode::RootNode():
+RootNode::RootNode(forest_t forestType, const string& targetName, const bool isTargetNumerical):
+  forestType_(forestType),
+  targetName_(targetName),
+  isTargetNumerical_(isTargetNumerical),
   children_(0),
   nLeaves_(0),
   bootstrapIcs_(0),
@@ -41,7 +44,7 @@ void RootNode::reset(const size_t nNodes) {
 
 }
 
-void RootNode::loadTree(ifstream& treeStream, const bool isTargetNumerical, const datadefs::forest_t forestType) {
+void RootNode::loadTree(ifstream& treeStream) {
 
   unordered_map<string,Node*> treeMap;
 
@@ -60,6 +63,10 @@ void RootNode::loadTree(ifstream& treeStream, const bool isTargetNumerical, cons
   assert( treeSetup.find("NNODES") != treeSetup.end() );
   nNodes = utils::str2<size_t>(treeSetup["NNODES"]);
 
+  forestType_ = datadefs::forestTypeAssign.at(treeSetup["FOREST"]);
+  targetName_ = treeSetup["TARGET"];
+  isTargetNumerical_ = utils::str2<bool>(treeSetup["ISTARGETNUMERICAL"]);
+
   this->reset(nNodes);
   treeMap["*"] = this;
 
@@ -77,7 +84,7 @@ void RootNode::loadTree(ifstream& treeStream, const bool isTargetNumerical, cons
     string rawTrainPrediction = nodeMap["PRED"];
     num_t trainPrediction = datadefs::NUM_NAN;
     
-    if ( isTargetNumerical || (!isTargetNumerical && forestType == forest_t::GBT) ) {
+    if ( isTargetNumerical_ || (!isTargetNumerical_ && forestType_ == forest_t::GBT) ) {
       trainPrediction = utils::str2<num_t>(rawTrainPrediction);
     }
     
@@ -144,7 +151,22 @@ void RootNode::loadTree(ifstream& treeStream, const bool isTargetNumerical, cons
 }
 
 void RootNode::writeTree(ofstream& toFile) {
+
+  toFile << "TREE=," << flush;
   
+  if (forestType_ == forest_t::GBT) {
+    toFile << "FOREST=GBT";
+  } else if (forestType_ == forest_t::RF) {
+    toFile << "FOREST=RF";
+  } else if (forestType_ == forest_t::QRF) {
+    toFile << "FOREST=QRF";
+  } else {
+    cerr << "StochasticForest::saveForest() -- Unknown forest type!" << endl;
+    exit(1);
+  }
+
+  toFile << ",NNODES=" << this->nNodes() << ",NLEAVES=" << this->nLeaves() << ",TARGET=" << targetName_ << ",ISTARGETNUMERICAL=" << isTargetNumerical_ << endl;
+
   string traversal("*");
   this->recursiveWriteTree(traversal,toFile);
 
@@ -228,7 +250,7 @@ void RootNode::growTree(Treedata* trainData, const size_t targetIdx, const distr
   
   children_.resize(nChildren);
 
-  if ( forestOptions->useQuantiles() ) {
+  if ( forestOptions->forestType == forest_t::QRF ) {
     assert( trainData->feature(targetIdx)->isNumerical() );
     for ( size_t i = 0; i < oobIcs_.size(); ++i ) {
       num_t x = trainData->feature(targetIdx)->data[oobIcs_[i]];

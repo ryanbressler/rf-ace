@@ -65,7 +65,7 @@ RFACE::QuantilePredictionOutput make_quantile_predictions(ForestOptions& forestO
 
   rface.train(&trainData,targetIdx,weights,&forestOptions);
 
-  return( rface.predictQuantiles(&trainData,30*forestOptions.nodeSize) );
+  return( rface.predictQuantiles(&trainData,forestOptions.quantiles,forestOptions.nSamplesForQuantiles) );
 
 }
 
@@ -111,7 +111,7 @@ RFACE::QuantilePredictionOutput make_save_load_quantile_predictions(ForestOption
   
   rface2.load("foo.sf");
   
-  return( rface2.predictQuantiles(&trainData,30*forestOptions.nodeSize) );
+  return( rface2.predictQuantiles(&trainData,forestOptions.quantiles,forestOptions.nSamplesForQuantiles) );
 
 }
 
@@ -160,8 +160,7 @@ vector<num_t> quantile_regression_error(const RFACE::QuantilePredictionOutput& q
 
 void rface_newtest_RF_train_test_classification() {
   
-  ForestOptions forestOptions;
-  forestOptions.setRFDefaults();
+  ForestOptions forestOptions(forest_t::RF);
   forestOptions.mTry = 30;
 
   num_t pError = classification_error( make_predictions(forestOptions,"C:class") );
@@ -172,8 +171,7 @@ void rface_newtest_RF_train_test_classification() {
 
 void rface_newtest_RF_train_test_regression() {
   
-  ForestOptions forestOptions;
-  forestOptions.setRFDefaults();
+  ForestOptions forestOptions(forest_t::RF);
   forestOptions.mTry = 30;
 
   num_t RMSE = regression_error( make_predictions(forestOptions,"N:output") );
@@ -184,10 +182,8 @@ void rface_newtest_RF_train_test_regression() {
 
 void rface_newtest_QRF_train_test_regression() {
 
-  ForestOptions forestOptions;
-  forestOptions.setRFDefaults();
+  ForestOptions forestOptions(forest_t::QRF);
   forestOptions.mTry = 30;
-  forestOptions.quantiles = {0.1,0.3,0.5,0.7,0.9};
 
   vector<num_t> QDEV = quantile_regression_error( make_quantile_predictions(forestOptions,"N:output") );
 
@@ -199,8 +195,7 @@ void rface_newtest_QRF_train_test_regression() {
 
 void rface_newtest_GBT_train_test_classification() {
 
-  ForestOptions forestOptions;
-  forestOptions.setGBTDefaults();
+  ForestOptions forestOptions(forest_t::GBT);
 
   num_t pError = classification_error( make_predictions(forestOptions,"C:class") );
 
@@ -210,8 +205,7 @@ void rface_newtest_GBT_train_test_classification() {
 
 void rface_newtest_GBT_train_test_regression() { 
 
-  ForestOptions forestOptions;
-  forestOptions.setGBTDefaults();
+  ForestOptions forestOptions(forest_t::GBT);
 
   num_t RMSE = regression_error( make_predictions(forestOptions,"N:output") );
 
@@ -221,8 +215,7 @@ void rface_newtest_GBT_train_test_regression() {
 
 void rface_newtest_RF_save_load_classification() {
 
-  ForestOptions forestOptions;
-  forestOptions.setRFDefaults();
+  ForestOptions forestOptions(forest_t::RF);
   forestOptions.mTry = 30;
 
   num_t pError1 = classification_error( make_predictions(forestOptions,"C:class") );
@@ -234,8 +227,7 @@ void rface_newtest_RF_save_load_classification() {
 
 void rface_newtest_RF_save_load_regression() {
 
-  ForestOptions forestOptions;
-  forestOptions.setRFDefaults();
+  ForestOptions forestOptions(forest_t::RF);
   forestOptions.mTry = 30;
 
   num_t RMSE1 = classification_error( make_predictions(forestOptions,"N:output") );
@@ -247,9 +239,7 @@ void rface_newtest_RF_save_load_regression() {
 
 void rface_newtest_QRF_save_load_regression() {
 
-  ForestOptions forestOptions;
-  forestOptions.setRFDefaults();
-  forestOptions.quantiles = {0.1,0.3,0.5,0.7,0.9};
+  ForestOptions forestOptions(forest_t::QRF);
   forestOptions.mTry = 30;
   
   vector<num_t> QRMSE1 = quantile_regression_error( make_quantile_predictions(forestOptions,"N:output") );
@@ -262,8 +252,7 @@ void rface_newtest_QRF_save_load_regression() {
 
 void rface_newtest_GBT_save_load_classification() {
 
-  ForestOptions forestOptions;
-  forestOptions.setGBTDefaults();
+  ForestOptions forestOptions(forest_t::GBT);
 
   num_t pError1 = classification_error( make_predictions(forestOptions,"C:class") );
   num_t pError2 = classification_error( make_save_load_predictions(forestOptions,"C:class") );
@@ -274,8 +263,7 @@ void rface_newtest_GBT_save_load_classification() {
 
 void rface_newtest_GBT_save_load_regression() {
 
-  ForestOptions forestOptions;
-  forestOptions.setGBTDefaults();
+  ForestOptions forestOptions(forest_t::GBT);
 
   num_t RMSE1 = classification_error( make_predictions(forestOptions,"N:output") );
   num_t RMSE2 = classification_error( make_save_load_predictions(forestOptions,"N:output") );
