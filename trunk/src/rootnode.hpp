@@ -18,6 +18,8 @@ public:
 
   RootNode(const datadefs::forest_t forestType, const string& targetName, const bool isTargetNumerical);
 
+  RootNode(ifstream& treeStream);
+
   ~RootNode();
 
   void reset(const size_t nNodes);
@@ -44,6 +46,9 @@ public:
   size_t nOobSamples();
 
   set<size_t> getFeaturesInTree() { return( featuresInTree_ ); }
+
+  string getTargetName() const { return( targetName_ ); }
+  bool isTargetNumerical() const { return( isTargetNumerical_ ); }
 
   vector<pair<size_t,size_t> > getMinDistFeatures();
 

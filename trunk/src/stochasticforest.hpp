@@ -53,12 +53,10 @@ public:
 
   RootNode* tree(const size_t treeIdx) { return( rootNodes_[treeIdx] ); }
 
-  inline set<size_t> getFeaturesInForest() const { return( featuresInForest_ ); }
-  inline string getTargetName() const { return( targetName_ ); }
-  //inline vector<num_t> getQuantiles() const { return(quantiles_); }
-  inline bool isTargetNumerical() const { return( isTargetNumerical_ ); }
+  //inline set<size_t> getFeaturesInForest() const { return( featuresInForest_ ); }
+  inline string getTargetName() const { return( rootNodes_[0]->getTargetName() ); }
+  inline bool isTargetNumerical() const { return( rootNodes_[0]->isTargetNumerical() ); }
 
-  void writeForestHeader(ofstream& toFile);
   void writeForest(ofstream& toFile);
 
 #ifndef TEST__
@@ -70,30 +68,19 @@ private:
   void growNumericalGBT(Treedata* trainData, const size_t targetIdx, const ForestOptions* forestOptions, const distributions::PMF* pmf, vector<distributions::Random>& randoms);
   void growCategoricalGBT(Treedata* trainData, const size_t targetIdx, const ForestOptions* forestOptions, const distributions::PMF* pmf, vector<distributions::Random>& randoms);
 
-  // TODO: StochasticForest::transformLogistic() should be moved elsewhere
-  void transformLogistic(size_t nCategories, vector<num_t>& prediction, vector<num_t>& probability);
-  
   num_t error(const vector<num_t>& data1,
 	      const vector<num_t>& data2); 
 
   datadefs::forest_t forestType_;
 
-  //vector<num_t> quantiles_;
-
-  vector<string> categories_;
-
   vector<num_t> GBTConstants_;
   num_t GBTShrinkage_;
-
-  // Chosen target to regress on
-  string targetName_;
-  bool isTargetNumerical_;
 
   // Root nodes for every tree
   vector<RootNode*> rootNodes_;
 
   // Container for all features in the forest for fast look-up
-  set<size_t> featuresInForest_;
+  //set<size_t> featuresInForest_;
   
 };
 
