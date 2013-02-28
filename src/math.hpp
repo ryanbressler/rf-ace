@@ -66,6 +66,8 @@ namespace math {
     
   }
 
+  void transformLogistic(size_t nCategories, vector<num_t>& prediction, vector<num_t>& probability);
+
   /**
      Error function
      NOTE: see http://en.wikipedia.org/wiki/Error_function

@@ -18,6 +18,12 @@ RootNode::RootNode(forest_t forestType, const string& targetName, const bool isT
   oobIcs_(0),
   minDistToRoot_(0) { /* EMPTY CONSTRUCTOR */ }
 
+RootNode::RootNode(ifstream& treeStream) {
+
+  this->loadTree(treeStream);
+
+}
+
 RootNode::~RootNode() { /* EMPTY DESTRUCTOR */ }
 
 size_t RootNode::getTreeSizeEstimate(const size_t nSamples, const size_t nMaxLeaves, const size_t nodeSize) const {
@@ -148,6 +154,8 @@ void RootNode::loadTree(ifstream& treeStream) {
 
   assert( nNodesAllocated + 1 == nNodes );
 
+  treeStream.peek();
+
 }
 
 void RootNode::writeTree(ofstream& toFile) {
@@ -165,7 +173,7 @@ void RootNode::writeTree(ofstream& toFile) {
     exit(1);
   }
 
-  toFile << ",NNODES=" << this->nNodes() << ",NLEAVES=" << this->nLeaves() << ",TARGET=" << targetName_ << ",ISTARGETNUMERICAL=" << isTargetNumerical_ << endl;
+  toFile << ",NNODES=" << this->nNodes() << ",NLEAVES=" << this->nLeaves() << ",TARGET=\"" << targetName_ << "\",ISTARGETNUMERICAL=" << isTargetNumerical_ << ",CLASS=\"\"" << endl;
 
   string traversal("*");
   this->recursiveWriteTree(traversal,toFile);
