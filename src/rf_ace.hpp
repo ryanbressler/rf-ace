@@ -377,14 +377,53 @@ public:
     trainedModel_->loadForest(fileName);
   }
 
-  QuantilePredictionOutput loadAndPredictQuantiles(const string& fileName, Treedata* testData, const vector<num_t>& quantiles, const size_t nSamplesPerTree) {
+  QuantilePredictionOutput loadForestAndPredictQuantiles(const string& fileName, Treedata* testData, const vector<num_t>& quantiles, const size_t nSamplesPerTree) {
     
     QuantilePredictionOutput qPredOut;
 
-    trainedModel_ = new StochasticForest();
-    trainedModel_->loadForestAndPredictQuantiles(fileName,testData,qPredOut.predictions,quantiles,&randoms_[0],nSamplesPerTree);
+    ifstream forestStream(fileName.c_str());
+    assert(forestStream.good());
 
-    qPredOut.targetName = trainedModel_->getTargetName();
+    size_t nQuantiles = quantiles.size();
+    size_t nSamples = testData->nSamples();
+
+    vector<vector<num_t> > finalData(nSamples);
+
+    qPredOut.predictions.resize(nSamples,vector<num_t>(nQuantiles,datadefs::NUM_NAN));
+
+    size_t iter = 0;
+    while ( forestStream.good() ) {
+
+      RootNode rootNode(forestStream);
+
+      qPredOut.targetName = rootNode.getTargetName();
+
+      cout << "Tree " << iter << " loaded" << endl;
+      iter++;
+
+      for ( size_t sampleIdx = 0; sampleIdx < nSamples; ++sampleIdx ) {
+
+        vector<num_t> treeData = rootNode.getChildLeafTrainData(testData,sampleIdx);
+        size_t nSamplesInTreeData = treeData.size();
+
+        for ( size_t i = 0; i < nSamplesPerTree; ++i ) {
+          finalData[sampleIdx].push_back( treeData[ randoms_[0].integer() % nSamplesInTreeData ] );
+        }
+
+      }
+    }
+
+    for ( size_t sampleIdx = 0; sampleIdx < nSamples; ++sampleIdx ) {
+      cout << "Test sample " << sampleIdx << " yielded " << finalData[sampleIdx].size() << " samples from the conditional distribution" << endl;
+      sort(finalData[sampleIdx].begin(),finalData[sampleIdx].end());
+      for ( size_t q = 0; q < nQuantiles; ++q ) {
+        qPredOut.predictions[sampleIdx][q] = math::percentile(finalData[sampleIdx],quantiles[q]);
+      }
+    }
+
+    cout << nQuantiles << " quantiles collected" << endl;
+
+    //qPredOut.targetName = trainedModel_->getTargetName();
     qPredOut.quantiles = quantiles;
 
     assert(qPredOut.quantiles.size() > 0);
@@ -418,41 +457,44 @@ public:
 
   StochasticForest* forestRef() { return( trainedModel_ ); }
   
-  void updateFeatureFrequency(ftable_t& frequency, StochasticForest* SF) {
-
+  /*
+    void updateFeatureFrequency(ftable_t& frequency, StochasticForest* SF) {
+    
     // We loop through all the trees
     for ( size_t treeIdx = 0; treeIdx < SF->nTrees(); ++treeIdx ) {
-
-      set<size_t> featuresInTree = SF->tree(treeIdx)->getFeaturesInTree();
-
-      for ( set<size_t>::const_iterator it1(featuresInTree.begin() ); it1 != featuresInTree.end(); ++it1 ) {
-	set<size_t>::const_iterator it2( it1 );
-	++it2;
-	while ( it2 != featuresInTree.end() ) {
-
-	  size_t lokey,hikey;
-	  if ( *it1 <= *it2 ) {
-	    lokey = *it1;
-	    hikey = *it2;
-	  } else {
-	    lokey = *it2;
-	    hikey = *it1;
-	  }
-
-	  if ( frequency.find(lokey) == frequency.end() || frequency[lokey].find(hikey) == frequency[lokey].end() ) {
-	    frequency[lokey][hikey] = 1;
-	  } else {
-	    ++frequency[lokey][hikey];
-	  }
-
-	  ++it2;
-
-	}
-      }
-
+    
+    set<size_t> featuresInTree = SF->tree(treeIdx)->getFeaturesInTree();
+    
+    for ( set<size_t>::const_iterator it1(featuresInTree.begin() ); it1 != featuresInTree.end(); ++it1 ) {
+    set<size_t>::const_iterator it2( it1 );
+    ++it2;
+    while ( it2 != featuresInTree.end() ) {
+    
+    size_t lokey,hikey;
+    if ( *it1 <= *it2 ) {
+    lokey = *it1;
+    hikey = *it2;
+    } else {
+    lokey = *it2;
+    hikey = *it1;
     }
+    
+    if ( frequency.find(lokey) == frequency.end() || frequency[lokey].find(hikey) == frequency[lokey].end() ) {
+    frequency[lokey][hikey] = 1;
+    } else {
+    ++frequency[lokey][hikey];
+    }
+    
+    ++it2;
+    
+    }
+    }
+    
+    }
+    
+    }
+  */
 
-  }
 
   /*
     template<typename T, size_t pos, bool isAscending>

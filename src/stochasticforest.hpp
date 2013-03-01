@@ -22,12 +22,21 @@ public:
 
   void loadForest(const string& fileName);
 
-  void loadForestAndPredictQuantiles(const string& fileName, 
-				     Treedata* testData, 
-				     vector<vector<num_t> >& predictions, 
-				     const vector<num_t>& quantiles, 
-				     distributions::Random* random, 
-				     size_t nSamplesPerTree);
+
+  void trainForestAndPredictQuantiles(Treedata* trainData,
+				      const size_t targetIdx,
+				      Treedata* testData,
+				      distributions::PMF* pmf,
+				      ForestOptions* forestOptions,
+				      distributions::Random* random,
+				      vector<vector<num_t> >& predictions); 
+
+  //void loadForestAndPredictQuantiles(const string& fileName, 
+  //				     Treedata* testData, 
+  //				     vector<vector<num_t> >& predictions, 
+  //				     const vector<num_t>& quantiles, 
+  //				     distributions::Random* random, 
+  //				     size_t nSamplesPerTree);
   
   //num_t getError() { return(0.0); }
   //num_t getOobError();
@@ -46,16 +55,16 @@ public:
   //vector<num_t> getPermutedOobPredictions(const size_t featureIdx);
 
   //Counts the number of nodes in the forest
-  size_t nNodes();
-  size_t nNodes(const size_t treeIdx);
+  //size_t nNodes();
+  //size_t nNodes(const size_t treeIdx);
 
   size_t nTrees();
 
-  RootNode* tree(const size_t treeIdx) { return( rootNodes_[treeIdx] ); }
+  //RootNode* tree(const size_t treeIdx) { return( rootNodes_[treeIdx] ); }
 
   //inline set<size_t> getFeaturesInForest() const { return( featuresInForest_ ); }
-  inline string getTargetName() const { return( rootNodes_[0]->getTargetName() ); }
-  inline bool isTargetNumerical() const { return( rootNodes_[0]->isTargetNumerical() ); }
+  inline string getTargetName() const { assert(rootNodes_.size() > 0); return( rootNodes_[0]->getTargetName() ); }
+  inline bool isTargetNumerical() const { assert(rootNodes_.size() > 0); return( rootNodes_[0]->isTargetNumerical() ); }
 
   void writeForest(ofstream& toFile);
 
@@ -68,8 +77,8 @@ private:
   void growNumericalGBT(Treedata* trainData, const size_t targetIdx, const ForestOptions* forestOptions, const distributions::PMF* pmf, vector<distributions::Random>& randoms);
   void growCategoricalGBT(Treedata* trainData, const size_t targetIdx, const ForestOptions* forestOptions, const distributions::PMF* pmf, vector<distributions::Random>& randoms);
 
-  num_t error(const vector<num_t>& data1,
-	      const vector<num_t>& data2); 
+  //num_t error(const vector<num_t>& data1,
+  //	      const vector<num_t>& data2); 
 
   datadefs::forest_t forestType_;
 

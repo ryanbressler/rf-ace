@@ -31,48 +31,73 @@ void StochasticForest::loadForest(const string& fileName) {
 
 }
 
-void StochasticForest::loadForestAndPredictQuantiles(const string& fileName, 
-						     Treedata* testData, 
-						     vector<vector<num_t> >& predictions,
-						     const vector<num_t>& quantiles,
-						     distributions::Random* random, 
-						     const size_t nSamplesPerTree) {
 
+void StochasticForest::trainForestAndPredictQuantiles(Treedata* trainData,
+						      const size_t targetIdx,
+						      Treedata* testData,
+						      distributions::PMF* pmf,
+						      ForestOptions* forestOptions,
+						      distributions::Random* random,
+						      vector<vector<num_t> >& predictions) {
+  
+  for ( size_t treeIdx = 0; treeIdx < forestOptions->nTrees; ++treeIdx ) {
+
+    RootNode rootNode(trainData,targetIdx,pmf,forestOptions,random);
+
+  }
+
+}
+
+/*
+  void StochasticForest::loadForestAndPredictQuantiles(const string& fileName, 
+  Treedata* testData, 
+  vector<vector<num_t> >& predictions,
+  const vector<num_t>& quantiles,
+  distributions::Random* random, 
+  const size_t nSamplesPerTree) {
+  
   ifstream forestStream(fileName.c_str());
   assert(forestStream.good());
-
+  
   size_t nQuantiles = quantiles.size();
   size_t nSamples = testData->nSamples();
   
   vector<vector<num_t> > finalData(nSamples);
-
+  
   predictions.resize(nSamples,vector<num_t>(nQuantiles,datadefs::NUM_NAN));
-
+  
+  size_t iter = 0;
   while ( forestStream.good() ) {
-
-    RootNode rootNode(forestStream);
-
-    for ( size_t sampleIdx = 0; sampleIdx < nSamples; ++sampleIdx ) {
-
-      vector<num_t> treeData = rootNode.getChildLeafTrainData(testData,sampleIdx);
-      size_t nSamplesInTreeData = treeData.size();
-
-      for ( size_t i = 0; i < nSamplesPerTree; ++i ) {
-	finalData[sampleIdx].push_back( treeData[ random->integer() % nSamplesInTreeData ] );
-      }
-
-    }
-
+  
+  RootNode rootNode(forestStream);
+  
+  cout << "Tree " << iter << " loaded" << endl;
+  iter++;
+  
+  for ( size_t sampleIdx = 0; sampleIdx < nSamples; ++sampleIdx ) {
+  
+  vector<num_t> treeData = rootNode.getChildLeafTrainData(testData,sampleIdx);
+  size_t nSamplesInTreeData = treeData.size();
+  
+  for ( size_t i = 0; i < nSamplesPerTree; ++i ) {
+  finalData[sampleIdx].push_back( treeData[ random->integer() % nSamplesInTreeData ] );
+  }
+  
+  }
   }
   
   for ( size_t sampleIdx = 0; sampleIdx < nSamples; ++sampleIdx ) {
-    sort(finalData[sampleIdx].begin(),finalData[sampleIdx].end());
-    for ( size_t q = 0; q < nQuantiles; ++q ) {
-      predictions[sampleIdx][q] = math::percentile(finalData[sampleIdx],quantiles[q]);
-    }
+  cout << "Test sample " << sampleIdx << " yielded " << finalData[sampleIdx].size() << " samples from the conditional distribution" << endl;
+  sort(finalData[sampleIdx].begin(),finalData[sampleIdx].end());
+  for ( size_t q = 0; q < nQuantiles; ++q ) {
+  predictions[sampleIdx][q] = math::percentile(finalData[sampleIdx],quantiles[q]);
   }
-    
-}
+  }
+  
+  cout << nQuantiles << " quantiles collected" << endl;
+  
+  }
+*/
 
 StochasticForest::~StochasticForest() {
   
@@ -151,8 +176,7 @@ void StochasticForest::learnRF(Treedata* trainData,
     vector<size_t> treeIcs = utils::range(forestOptions->nTrees);
 
     for (size_t treeIdx = 0; treeIdx < rootNodes_.size(); ++treeIdx) {
-      rootNodes_[treeIdx] = new RootNode(forestType_,targetName,isTargetNumerical);
-      rootNodes_[treeIdx]->growTree(trainData, targetIdx, &pmf, forestOptions, &randoms[0]);
+      rootNodes_[treeIdx] = new RootNode(trainData, targetIdx, &pmf, forestOptions, &randoms[0]);
     }
 
   }
@@ -161,11 +185,11 @@ void StochasticForest::learnRF(Treedata* trainData,
 
     vector<vector<size_t> > treeIcs = utils::splitRange(forestOptions->nTrees, nThreads);
 
-    vector <thread> threads;
+    vector<thread> threads;
 
     for ( size_t threadIdx = 0; threadIdx < nThreads; ++threadIdx ) {
 
-      vector<size_t> &treeIcsPerThread = treeIcs[threadIdx];
+      vector<size_t>& treeIcsPerThread = treeIcs[threadIdx];
       vector<RootNode*> rootNodesPerThread(treeIcsPerThread.size());
 
       for ( size_t i = 0; i < treeIcsPerThread.size(); ++i ) {
@@ -238,7 +262,7 @@ void StochasticForest::learnGBT(Treedata* trainData, const size_t targetIdx,
 
   //Allocates memory for the root nodes. With all these parameters, the RootNode is now able to take full control of the splitting process
   for (size_t treeIdx = 0; treeIdx < rootNodes_.size(); ++treeIdx) {
-    rootNodes_[treeIdx] = new RootNode(forestType_,targetName,isTargetNumerical);
+    rootNodes_[treeIdx] = new RootNode();
   }
 
   if (isTargetNumerical) {
@@ -406,40 +430,42 @@ void StochasticForest::growCategoricalGBT(Treedata* trainData,
 }
 
 
-num_t StochasticForest::error(const vector<num_t>& data1,
-    const vector<num_t>& data2) {
-
+/*
+  num_t StochasticForest::error(const vector<num_t>& data1,
+  const vector<num_t>& data2) {
+  
   size_t nSamples = data1.size();
   assert(nSamples == data2.size());
-
+  
   num_t predictionError = 0.0;
   size_t nRealSamples = 0;
-
+  
   if (this->isTargetNumerical()) {
-    for (size_t sampleIdx = 0; sampleIdx < nSamples; ++sampleIdx) {
-      if (!datadefs::isNAN(data1[sampleIdx]) && !datadefs::isNAN(data2[sampleIdx])) {
-        ++nRealSamples;
-        predictionError += pow(data1[sampleIdx] - data2[sampleIdx], 2);
-      }
-    }
-  } else {
-    for (size_t sampleIdx = 0; sampleIdx < nSamples; ++sampleIdx) {
-      if (!datadefs::isNAN(data1[sampleIdx]) && !datadefs::isNAN(data2[sampleIdx])) {
-        ++nRealSamples;
-        predictionError += 1.0 * (data1[sampleIdx] != data2[sampleIdx]);
-      }
-    }
+  for (size_t sampleIdx = 0; sampleIdx < nSamples; ++sampleIdx) {
+  if (!datadefs::isNAN(data1[sampleIdx]) && !datadefs::isNAN(data2[sampleIdx])) {
+  ++nRealSamples;
+  predictionError += pow(data1[sampleIdx] - data2[sampleIdx], 2);
   }
-
+  }
+  } else {
+  for (size_t sampleIdx = 0; sampleIdx < nSamples; ++sampleIdx) {
+  if (!datadefs::isNAN(data1[sampleIdx]) && !datadefs::isNAN(data2[sampleIdx])) {
+  ++nRealSamples;
+  predictionError += 1.0 * (data1[sampleIdx] != data2[sampleIdx]);
+  }
+  }
+  }
+  
   if (nRealSamples > 0) {
-    predictionError /= nRealSamples;
+  predictionError /= nRealSamples;
   } else {
-    predictionError = datadefs::NUM_NAN;
+  predictionError = datadefs::NUM_NAN;
   }
-
+  
   return (predictionError);
-
-}
+  
+  }
+*/
 
 /*
  num_t StochasticForest::getOobError() {
@@ -607,7 +633,7 @@ void StochasticForest::predict(Treedata* testData, vector<string>& predictions,v
     nThreads = 1;
   }
   
-  assert( ! this->isTargetNumerical() );
+  assert( ! rootNodes_[0]->isTargetNumerical() );
 
 #ifdef NOTHREADS
   assert( nThreads == 1 );
@@ -658,7 +684,7 @@ void StochasticForest::predict(Treedata* testData, vector<num_t>& predictions,ve
     nThreads = 1;
   }
 
-  assert( this->isTargetNumerical() );
+  assert( rootNodes_[0]->isTargetNumerical() );
 
 #ifdef NOTHREADS
   assert( nThreads == 1 );
@@ -783,27 +809,31 @@ void StochasticForest::predictQuantiles(Treedata* testData,
 /**
  Returns a vector of node counts in the trees of the forest
  */
-size_t StochasticForest::nNodes() {
-
+/*
+  size_t StochasticForest::nNodes() {
+  
   size_t nNodes = 0;
-
+  
   // Loop through all trees
   for (size_t treeIdx = 0; treeIdx < this->nTrees(); ++treeIdx) {
-
-    // Get the node count for the tree
-    nNodes += this->nNodes(treeIdx);
-
+  
+  // Get the node count for the tree
+  nNodes += this->nNodes(treeIdx);
+  
   }
-
+  
   return (nNodes);
-}
-
+  }
+*/
+  
 /**
  Returns the number of nodes in tree treeIdx
  */
-size_t StochasticForest::nNodes(const size_t treeIdx) {
+/*
+  size_t StochasticForest::nNodes(const size_t treeIdx) {
   return (rootNodes_[treeIdx]->nNodes());
-}
+  }
+*/
 
 /**
  Returns the number of trees in the forest
@@ -811,6 +841,7 @@ size_t StochasticForest::nNodes(const size_t treeIdx) {
 size_t StochasticForest::nTrees() {
   return (rootNodes_.size());
 }
+
 
 void StochasticForest::getMeanMinimalDepthValues(Treedata* trainData,
 						 vector<num_t>& depthValues, 
