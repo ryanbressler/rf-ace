@@ -8,15 +8,21 @@
 
 using datadefs::forest_t;
 
-RootNode::RootNode(forest_t forestType, const string& targetName, const bool isTargetNumerical):
-  forestType_(forestType),
-  targetName_(targetName),
-  isTargetNumerical_(isTargetNumerical),
+RootNode::RootNode() {}
+
+RootNode::RootNode(Treedata* trainData, const size_t targetIdx, const distributions::PMF* pmf, const ForestOptions* forestOptions, distributions::Random* random):
+  forestType_(forestOptions->forestType),
+  targetName_(trainData->feature(targetIdx)->name()),
+  isTargetNumerical_(trainData->feature(targetIdx)->isNumerical()),
   children_(0),
   nLeaves_(0),
   bootstrapIcs_(0),
   oobIcs_(0),
-  minDistToRoot_(0) { /* EMPTY CONSTRUCTOR */ }
+  minDistToRoot_(0) {
+
+  this->growTree(trainData,targetIdx,pmf,forestOptions,random);
+
+}
 
 RootNode::RootNode(ifstream& treeStream) {
 
@@ -182,6 +188,10 @@ void RootNode::writeTree(ofstream& toFile) {
 
 
 void RootNode::growTree(Treedata* trainData, const size_t targetIdx, const distributions::PMF* pmf, const ForestOptions* forestOptions, distributions::Random* random) {
+
+  forestType_ = forestOptions->forestType;
+  targetName_ = trainData->feature(targetIdx)->name();
+  isTargetNumerical_ = trainData->feature(targetIdx)->isNumerical();
 
   size_t nMaxNodes = this->getTreeSizeEstimate(trainData->nRealSamples(targetIdx),forestOptions->nMaxLeaves,forestOptions->nodeSize);
 

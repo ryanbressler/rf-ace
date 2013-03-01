@@ -16,8 +16,13 @@
 class RootNode : public Node {
 public:
 
-  RootNode(const datadefs::forest_t forestType, const string& targetName, const bool isTargetNumerical);
+  // Empty tree
+  RootNode();
+  
+  // Learn Tree from data
+  RootNode(Treedata* trainData, const size_t targetIdx, const distributions::PMF* pmf, const ForestOptions* forestOptions, distributions::Random* random);
 
+  // Load tree from file
   RootNode(ifstream& treeStream);
 
   ~RootNode();
