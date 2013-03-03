@@ -91,14 +91,12 @@ RcppExport SEXP rfaceTrain(SEXP trainDataFrameObj,
 			   SEXP nMaxLeavesR, 
 			   SEXP shrinkageR, 
 			   SEXP noNABranchingR,
-			   SEXP quantilesR,
 			   SEXP nThreadsR) {
 
-  ForestOptions forestOptions;
+
+  ForestOptions forestOptions( datadefs::forestTypeAssign.at(Rcpp::as<string>(forestTypeR)) );
 
   string targetStr            = Rcpp::as<string>(targetStrR);
-  forestOptions.forestType    = datadefs::forestTypeAssign.at(Rcpp::as<string>(forestTypeR));
-  forestOptions.quantiles     = Rcpp::as<vector<num_t> >(quantilesR);
   forestOptions.nTrees        = Rcpp::as<size_t>(nTreesR);
   forestOptions.mTry          = Rcpp::as<size_t>(mTryR);
   forestOptions.nodeSize      = Rcpp::as<size_t>(nodeSizeR);
@@ -143,9 +141,12 @@ RcppExport SEXP rfaceTrain(SEXP trainDataFrameObj,
 
 }
 
-RcppExport SEXP rfacePredict(SEXP rfaceObj, SEXP testDataFrameObj) {
+RcppExport SEXP rfacePredict(SEXP rfaceObj, SEXP testDataFrameObj, SEXP quantilesR, SEXP nSamplesForQuantilesR) {
 
   Rcpp::XPtr<RFACE> rface(rfaceObj);
+
+  vector<num_t> quantiles = Rcpp::as<vector<num_t> >(quantilesR);
+  size_t nSamplesForQuantiles = Rcpp::as<size_t>(nSamplesForQuantilesR);
 
   vector<Feature> testDataMatrix;
   vector<string> sampleHeaders;
@@ -156,34 +157,30 @@ RcppExport SEXP rfacePredict(SEXP rfaceObj, SEXP testDataFrameObj) {
 
   Treedata testData(testDataMatrix,useContrasts,sampleHeaders);
 
-  if ( rface->forestRef()->isTargetNumerical() ) {
+  if ( quantiles.size() > 0 ) {
     
-    if ( rface->forestRef()->useQuantiles() ) {
-
-      RFACE::QuantilePredictionOutput qPredOut = rface->predictQuantiles(&testData,100);
-      
-      return( Rcpp::List::create(Rcpp::Named("targetName")=qPredOut.targetName,
-				 Rcpp::Named("sampleNames")=qPredOut.sampleNames,
-				 Rcpp::Named("trueData")=qPredOut.trueData,
-				 Rcpp::Named("predictions")=qPredOut.predictions,
-				 Rcpp::Named("quantiles")=qPredOut.quantiles) );
-      
-    } else {
-      
-      RFACE::TestOutput testOut = rface->test(&testData);
-      
-      return( Rcpp::List::create(Rcpp::Named("targetName")=testOut.targetName,
-				 Rcpp::Named("sampleNames")=testOut.sampleNames,
-				 Rcpp::Named("trueData")=testOut.numTrueData,
-				 Rcpp::Named("predData")=testOut.numPredictions,
-				 Rcpp::Named("predError")=testOut.confidence) );
-      
-    }
+    RFACE::QuantilePredictionOutput qPredOut = rface->predictQuantiles(&testData,quantiles,nSamplesForQuantiles);
+    
+    return( Rcpp::List::create(Rcpp::Named("targetName")=qPredOut.targetName,
+			       Rcpp::Named("sampleNames")=qPredOut.sampleNames,
+			       Rcpp::Named("trueData")=qPredOut.trueData,
+			       Rcpp::Named("predictions")=qPredOut.predictions,
+			       Rcpp::Named("quantiles")=qPredOut.quantiles) );
+    
+  } else if ( rface->forestRef()->isTargetNumerical() ){
+    
+    RFACE::TestOutput testOut = rface->test(&testData);
+    
+    return( Rcpp::List::create(Rcpp::Named("targetName")=testOut.targetName,
+			       Rcpp::Named("sampleNames")=testOut.sampleNames,
+			       Rcpp::Named("trueData")=testOut.numTrueData,
+			       Rcpp::Named("predData")=testOut.numPredictions,
+			       Rcpp::Named("predError")=testOut.confidence) );
     
   } else {
-  
+    
     RFACE::TestOutput testOut = rface->test(&testData);
-  
+    
     return( Rcpp::List::create(Rcpp::Named("targetName")=testOut.targetName,
 			       Rcpp::Named("sampleNames")=testOut.sampleNames,
 			       Rcpp::Named("trueData")=testOut.catTrueData,
@@ -198,7 +195,7 @@ RcppExport SEXP rfaceFilter(SEXP filterDataFrameObj,  SEXP targetStrR, SEXP feat
 
   string targetStr = Rcpp::as<string>(targetStrR);
 
-  ForestOptions forestOptions;
+  ForestOptions forestOptions(forest_t::RF);
   forestOptions.nTrees = Rcpp::as<size_t>(nTreesR);
   forestOptions.mTry = Rcpp::as<size_t>(mTryR);
   forestOptions.nodeSize = Rcpp::as<size_t>(nodeSizeR);

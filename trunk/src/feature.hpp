@@ -49,6 +49,10 @@ public:
 
   num_t entropy() const;
 
+  unordered_map<uint32_t,size_t> getHashKeyFrequency() const;
+
+  void removeFrequentHashKeys(const num_t fThreshold);
+
 #ifndef TEST__
 private:
 #endif

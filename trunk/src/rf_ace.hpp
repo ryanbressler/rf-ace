@@ -91,11 +91,6 @@ public:
 
     assert( !forestOptions->useContrasts );
 
-    if ( !trainData->feature(targetIdx)->isNumerical() && forestOptions->forestType == forest_t::QRF ) {
-      cerr << "ERROR: Quantiles do not work with classification!" << endl;
-      exit(1);
-    }
-
     if ( trainedModel_ ) {
       delete trainedModel_;
       trainedModel_ = NULL;

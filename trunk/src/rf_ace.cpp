@@ -39,7 +39,7 @@ int main(const int argc, char* const argv[]) {
 
   printHeader(cout);
 
-  Options options(forest_t::RF);
+  Options options(forest_t::QRF);
   options.load(argc,argv);
 
   Timer timer;

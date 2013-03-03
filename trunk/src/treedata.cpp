@@ -42,6 +42,12 @@ Treedata::Treedata(const vector<Feature>& features, const bool useContrasts, con
 
   assert( sampleHeaders_.size() == nSamples );
 
+  for ( size_t featureIdx = 0; featureIdx < this->nFeatures(); ++featureIdx ) {
+    if ( this->feature(featureIdx)->isTextual() ) {
+      features_[featureIdx].removeFrequentHashKeys(0.7);
+    }
+  }
+
   if ( useContrasts_ ) {
     this->createContrasts(); // Doubles matrix size
     // this->permuteContrasts(random);
@@ -67,6 +73,12 @@ Treedata::Treedata(string fileName, const char dataDelimiter, const char headerD
   } else {
     cerr << "ERROR: unknown file type in '" << fileName << "'" << endl;
     exit(1);
+  }
+  
+  for ( size_t featureIdx = 0; featureIdx < this->nFeatures(); ++featureIdx ) {
+    if ( this->feature(featureIdx)->isTextual() ) {
+      features_[featureIdx].removeFrequentHashKeys(0.7);
+    }
   }
 
   if ( useContrasts_ ) {
@@ -482,8 +494,8 @@ vector<num_t> Treedata::getFeatureWeights() const {
     const Feature* feature = this->feature(i);
     if ( feature->isTextual() ) {
       num_t entropy = feature->entropy();
-      cout << "Feature '" << feature->name() << "' is textual and has sqrt(entropy) " << sqrtf(entropy) << endl;
-      weights[i] = sqrtf(entropy);
+      cout << "Feature '" << feature->name() << "' is textual and has entropy " << entropy << endl;
+      weights[i] = entropy;
     }
   }
 
