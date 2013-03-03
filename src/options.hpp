@@ -90,6 +90,8 @@ public:
     quantiles_s("q"), quantiles_l("quantiles"),
     nSamplesForQuantiles_s("r"), nSamplesForQuantiles_l("qSamples") {
 
+    forestType = forest_t::QRF;
+
     if ( forestType == forest_t::RF ) {
       this->setRFDefaults();
     } else if ( forestType == forest_t::QRF ) {
@@ -113,7 +115,7 @@ public:
     if ( isSet ) {
       string forestTypeAsStr = "";
       parser.getArgument<string>(forestType_s, forestType_l, forestTypeAsStr);
-      forestType = datadefs::forestTypeAssign.at(forestTypeAsStr);
+      //forestType = datadefs::forestTypeAssign.at(forestTypeAsStr);
       if ( forestType == forest_t::RF ) {
 	this->setRFDefaults();
       } else if ( forestType == forest_t::QRF ) {

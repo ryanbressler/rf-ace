@@ -34,31 +34,36 @@ dev.off()
 
 
 # Benchmark categorical splitter speed
-offsets <- as.vector(c(0,2,3,4,5,7,9,15,20))
+offsets <- as.vector(c(0,2,3,4,5,7,9,15,20,25,30))
 nCategories <- 3 + 3*offsets 
 speeds <- data.frame(rf=vector(length=length(offsets)),rface=vector(length=length(offsets)))
-RMSE <- data.frame(rf=vector(length=length(offsets)),rface=vector(length=length(offsets)))
+RMSE <- data.frame(RF=vector(length=length(offsets)),"RF-ACE"=vector(length=length(offsets)))
+names(RMSE) <- c("RF","RF-ACE")
 for ( i in 1:length(offsets) ) {
   out <- benchmarkCatSplitterSpeed(offsets[i])
   speeds$rf[i] <- out$rfSpeed
   speeds$rface[i] <- out$rfaceSpeed
-  RMSE$rf[i] <- out$rfRMSE
-  RMSE$rface[i] <- out$rfaceRMSE
+  RMSE$"RF"[i] <- out$rfRMSE
+  RMSE$"RF-ACE"[i] <- out$rfaceRMSE
 }
 rownames(speeds) <- c(nCategories)
 #speeds <- t(speeds)
 rownames(RMSE) <- c(nCategories)
-#RMSE <- t(RMSE)
-pdf("catsplitter_speeds.pdf",width=4,height=6)
-par(mfcol=c(2,1))
-plot(nCategories,speeds$rf)
-points(nCategories,speeds$rface)
+RMSE <- t(RMSE)
+pdf("catsplitter_speeds.pdf",width=8,height=4)
+par(mfcol=c(1,2))
+plot(nCategories,speeds$rface,type='l',col='red',xlab='Cardinality',ylab='Runtime (s)',lwd=2.5)
+lines(nCategories,speeds$rf,col='blue',lwd=2.5)
+legend(10,3.5,c('RF','RF-ACE'),lty=c(1,1),lwd=c(2.5,2.5),col=c("blue","red"))
+grid()
 #barplot(speeds,beside=TRUE,legend=TRUE,cex.names=0.8)
-title("Categorical splitter execution time")
-#barplot(RMSE,beside=TRUE,legend=TRUE,cex.names=0.8)
-plot(nCategories,RMSE$rf)
-points(nCategories,RMSE$rface)
-title("RMSE as function of cardinality")
+#title("Categorical splitter execution time")
+barplot(RMSE,beside=TRUE,legend=TRUE,cex.names=0.8,col=c("blue","red"),xlab="Cardinality",ylab="RMSE")
+#plot(nCategories,RMSE$rf)
+#points(nCategories,RMSE$rface)
+#title("RMSE as function of cardinality")
+box()
+grid()
 dev.off()
 
 # Benchmark tree size
@@ -81,8 +86,8 @@ pMissing <- 0.2
 
 trainData <- makeData(nSamples,std,offset,pMissing)
 testData <- makeData(nSamples,std,offset,pMissing)
-qrface <- rface.train(trainData[c(1,2,3,5,6,7,8,9)],"N:output",nTrees=100,mTry=3,nodeSize=10,forestType="RF",quantiles=as.vector(seq(0.01,0.90,0.05)))
-qrfaceOut <- rface.predict(qrface,testData)
+qrface <- rface.train(trainData[c(1,2,3,5,6,7,8,9)],"N:output",nTrees=100,mTry=3,nodeSize=10)
+qrfaceOut <- rface.predict(qrface,testData,quantiles=as.vector(seq(0.01,0.90,0.05)),nSamplesForQuantiles=50)
 
 cal <- testCalibration(qrfaceOut)
 

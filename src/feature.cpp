@@ -163,29 +163,61 @@ bool Feature::hasHash(const size_t sampleIdx, const uint32_t hashIdx) const {
 
 }
 
+unordered_map<uint32_t,size_t> Feature::getHashKeyFrequency() const {
+
+  size_t nSamples = hashSet.size();
+
+  unordered_map<uint32_t,size_t> visitedKeys;
+  
+  for ( size_t i = 0; i < nSamples; ++i ) {
+    for ( unordered_set<uint32_t>::const_iterator it(hashSet[i].begin()); it != hashSet[i].end(); ++it ) {
+      visitedKeys[*it]++;
+    }
+  }
+  
+  return(visitedKeys);
+
+}
+
 num_t Feature::entropy() const {
 
   size_t nSamples = hashSet.size();
 
-  unordered_map<uint32_t,size_t> visited_keys;
+  unordered_map<uint32_t,size_t> visitedKeys = getHashKeyFrequency();
 
-  for ( size_t i = 0; i < nSamples; ++i ) {
-    for ( unordered_set<uint32_t>::const_iterator it(hashSet[i].begin()); it != hashSet[i].end(); ++it ) {
-      visited_keys[*it]++;
-    }
-  }
-
-  unordered_map<uint32_t,size_t>::const_iterator it(visited_keys.begin());
+  unordered_map<uint32_t,size_t>::const_iterator it(visitedKeys.begin());
 
   num_t entropy = 0.0;
 
-  for ( ; it != visited_keys.end(); ++it ) {
+  for ( ; it != visitedKeys.end(); ++it ) {
     num_t f = static_cast<num_t>(it->second) / static_cast<num_t>(nSamples);
     if ( fabs(f) > 1e-5 && fabs(1-f) > 1e-5 ) {
-      entropy -= f * log(f) + (1-f)*log(1-f);
+      entropy -= (f * log(f) + (1-f)*log(1-f))/log(2);
     }
   }
 
   return(entropy);
 
+}
+
+void Feature::removeFrequentHashKeys(num_t fThreshold) {
+
+  size_t nSamples = hashSet.size();
+
+  const unordered_map<uint32_t,size_t> visitedKeys = this->getHashKeyFrequency();
+
+  unordered_map<uint32_t,size_t>::const_iterator it(visitedKeys.begin());
+  
+  for ( ; it != visitedKeys.end(); ++it ) {
+    num_t f = static_cast<num_t>(it->second) / static_cast<num_t>(nSamples);
+    if ( f > fThreshold ) {
+      for ( size_t sampleIdx = 0; sampleIdx < nSamples; ++sampleIdx ) {
+	uint32_t hashKey = it->first;
+	if ( hashSet[sampleIdx].find(hashKey) != hashSet[sampleIdx].end() ) {
+	  hashSet[sampleIdx].erase(it->first);
+	}
+      }
+    }
+  }
+  
 }

@@ -269,7 +269,7 @@ void RootNode::growTree(Treedata* trainData, const size_t targetIdx, const distr
   children_.resize(nChildren);
 
   if ( forestOptions->forestType == forest_t::QRF ) {
-    assert( trainData->feature(targetIdx)->isNumerical() );
+    //assert( trainData->feature(targetIdx)->isNumerical() );
     for ( size_t i = 0; i < oobIcs_.size(); ++i ) {
       num_t x = trainData->feature(targetIdx)->data[oobIcs_[i]];
       this->percolate(trainData,oobIcs_[i])->addTrainData(x);
