@@ -266,5 +266,33 @@ RMSE$rf <- rmse(rfOut)
 return(list(rfSpeed=speed$rf,rfaceSpeed=speed$rface,data=trainData,rfRMSE=RMSE$rf,rfaceRMSE=RMSE$rface))
 }
 
+benchmarkRFSpeeds <- function() {
 
+  speeds <- data.frame(rf=0,qrf=0,rface=0)
+  names(speeds) <- c("RF","QRF","RF-ACE")  
+
+  nSamples <- 10000
+  std <- 0.3
+  offset <- 0
+  pMissing <- 0
+
+  data <- makeData(nSamples,std,offset,pMissing)
+
+  for ( i in 1:10 ) {
+
+    diff <- proc.time()
+    rf <- randomForest(data[c(2,3,5,6,7,8,9)],y=data[[1]],ntree=50,mtry=3)
+    diff <- proc.time() - diff
+    speeds["RF"] <- as.matrix(speeds["RF"]+diff)[1]
+
+    diff <- proc.time()
+    rface <- rface.train(data[c(1,2,3,5,6,7,8,9)],"N:output",nTrees=50,mTry=3)
+    diff <- proc.time() - diff
+    speeds["RF-ACE"] <- as.matrix(speeds["RF-ACE"]+diff)[1]
+
+  }
+
+  return(speeds)
+
+}
 
