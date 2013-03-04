@@ -1,5 +1,6 @@
 library(rfacer)
 library(randomForest)
+library(quantregForest)
 
 source("test/R/utils.R")
 
@@ -96,4 +97,6 @@ plot(qrfaceOut$quantiles,cal,pch=".",cex=4)
 lines( par()$usr[1:2], par()$usr[1:2] )
 grid()
 dev.off()
+
+speeds <- benchmarkRFSpeeds()
 

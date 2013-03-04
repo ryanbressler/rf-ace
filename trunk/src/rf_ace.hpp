@@ -409,7 +409,7 @@ public:
     }
 
     for ( size_t sampleIdx = 0; sampleIdx < nSamples; ++sampleIdx ) {
-      cout << "Test sample " << sampleIdx << " yielded " << finalData[sampleIdx].size() << " samples from the conditional distribution" << endl;
+      //cout << "Test sample " << sampleIdx << " yielded " << finalData[sampleIdx].size() << " samples from the conditional distribution" << endl;
       sort(finalData[sampleIdx].begin(),finalData[sampleIdx].end());
       for ( size_t q = 0; q < nQuantiles; ++q ) {
         qPredOut.predictions[sampleIdx][q] = math::percentile(finalData[sampleIdx],quantiles[q]);
