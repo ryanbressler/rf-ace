@@ -98,5 +98,17 @@ lines( par()$usr[1:2], par()$usr[1:2] )
 grid()
 dev.off()
 
-speeds <- benchmarkRFSpeeds()
+nSamples <- as.vector(seq(1000,10000,1000))
+nIters <- 5
+
+speeds <- benchmarkRFSpeeds(nSamples,nIters)
+
+pdf("RF_QRF_RFACE_runtime.pdf",width=4,height=4)
+plot(nSamples,speeds$"RF"/nIters,type='l',col='blue',lwd=2.5,xlab='nSamples',ylab='Runtime (s)')
+lines(nSamples,speeds$"QRF"/nIters,col='orange',lwd=2.5)
+lines(nSamples,speeds$"RF-ACE"/nIters,col='red',lwd=2.5)
+legend(1000,8.2,c('RF','QRF','RF-ACE'),lty=c(1,1,1),lwd=c(2.5,2.5,2.5),col=c("blue","orange","red"))
+grid()
+dev.off()
+
 

@@ -113,6 +113,10 @@ RcppExport SEXP rfaceTrain(SEXP trainDataFrameObj,
   bool useContrasts = false;
   Treedata trainData(dataMatrix,useContrasts,sampleHeaders);
 
+  if ( forestOptions.nMaxLeaves == 0 ) {
+    forestOptions.nMaxLeaves = datadefs::MAX_IDX;
+  }
+
   size_t targetIdx = trainData.getFeatureIdx(targetStr);
 
   if ( targetIdx == trainData.end() ) {
