@@ -280,12 +280,12 @@ benchmarkRFSpeeds <- function(nSamples,nIters) {
     data <- makeData(nSamples[i],std,offset,pMissing)
 
     diff <- proc.time()
-    rf <- randomForest(data[c(2,3,5,6,7,8,9)],y=data[[1]],ntree=50,mtry=3,nodesize=3)
+    #rf <- randomForest(data[c(2,3,5,6,7,8,9)],y=data[[1]],ntree=50,mtry=3,nodesize=3)
     diff <- proc.time() - diff
     speeds$"RF"[i] <- as.matrix(speeds$"RF"[i]+diff)[1]
 
     diff <- proc.time()
-    rf <- quantregForest(data[c(2,3,5,6,7,8,9)],y=data[[1]],ntree=50,mtry=3,nodesize=3)
+    #rf <- quantregForest(data[c(2,3,5,6,7,8,9)],y=data[[1]],ntree=50,mtry=3,nodesize=3)
     diff <- proc.time() - diff
     speeds$"QRF"[i] <- as.matrix(speeds$"QRF"[i]+diff)[1]
 
