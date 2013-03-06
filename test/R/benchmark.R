@@ -101,13 +101,13 @@ dev.off()
 nSamples <- as.vector(seq(1000,10000,1000))
 nIters <- 1
 
-speeds <- benchmarkRFSpeeds(nSamples,nIters)
+modelSpeeds <- benchmarkRFSpeeds(nSamples,nIters)
 
 pdf("RF_QRF_RFACE_runtime.pdf",width=4,height=4)
-plot(nSamples,speeds$"RF"/nIters,type='l',col='black',lwd=2.5,xlab='nSamples',ylab='Runtime (s)')
-lines(nSamples,speeds$"QRF"/nIters,col='darkgray',lwd=2.5)
-plot(nSamples,speeds$"RF-ACE"/nIters,col='gray',lwd=2.5)
-legend(1000,8.2,c('RF','QRF','RF-ACE'),lty=c(1,1,1),lwd=c(2.5,2.5,2.5),col=c("black","gray","lightgray"))
+plot(nSamples,modelSpeeds$"RF"/nIters,type='l',col='black',lwd=2.5,xlab='nSamples',ylab='Runtime (s)')
+lines(nSamples,modelSpeeds$"QRF"/nIters,col='darkgray',lwd=2.5)
+lines(nSamples,modelSpeeds$"RF-ACE"/nIters,col='gray',lwd=2.5)
+legend(1000,8.2,c('RF','QRF','RF-ACE'),lty=c(1,1,1),lwd=c(2.5,2.5,2.5),col=c("black","darkgray","gray"))
 grid()
 dev.off()
 
