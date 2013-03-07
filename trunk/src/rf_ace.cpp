@@ -155,8 +155,7 @@ int main(const int argc, char* const argv[]) {
   if ( options.io.testDataFile != "" ) {  
     cout << "-Reading test file '" << options.io.testDataFile << "'" << endl;
     Treedata testData(options.io.testDataFile,options.generalOptions.dataDelimiter,options.generalOptions.headerDelimiter);
-    if ( options.forestOptions.forestType == forest_t::QRF ) {
-      assert(options.forestOptions.quantiles.size() > 0 );
+    if ( options.forestOptions.forestType == forest_t::QRF && options.forestOptions.quantiles.size() > 0 ) {
       cout << "-Making quantile predictions" << endl;
       qPredOutput = rface.predictQuantiles(&testData,options.forestOptions.quantiles,options.forestOptions.nSamplesForQuantiles);
     } else {
@@ -165,12 +164,9 @@ int main(const int argc, char* const argv[]) {
     }
   }
 
-  
-
   if ( options.io.predictionsFile != "" ) {
     cout << "-Writing predictions to file '" << options.io.predictionsFile << "'" << endl; 
-    if ( options.forestOptions.forestType == forest_t::QRF ) {
-      assert(options.forestOptions.quantiles.size() > 0 ); 
+    if ( options.forestOptions.forestType == forest_t::QRF && options.forestOptions.quantiles.size() > 0 ) {
       printQuantilePredictionsToFile(qPredOutput,options.io.predictionsFile);
     } else {
       printPredictionsToFile(testOutput,options.io.predictionsFile);
