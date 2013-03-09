@@ -333,7 +333,6 @@ public:
 
   QuantilePredictionOutput predictQuantiles(Treedata* testData, const vector<num_t>& quantiles, const size_t nSamplesPerTree) {
     
-    //assert(forestOptions->useQuantiles());
     assert(trainedModel_);
 
     QuantilePredictionOutput qPredOut;
@@ -354,6 +353,7 @@ public:
     trainedModel_->predictDistributions(testData,qPredOut.distributions,&randoms_[0],nSamplesPerTree);
 
     qPredOut.sampleNames.resize( testData->nSamples() );
+    qPredOut.predictions = vector<vector<num_t> >(testData->nSamples(),vector<num_t>(quantiles.size()));
     for ( size_t i = 0; i < testData->nSamples(); ++i ) {
       qPredOut.sampleNames[i] = testData->getSampleName(i);
       sort(qPredOut.distributions[i].begin(),qPredOut.distributions[i].end());
