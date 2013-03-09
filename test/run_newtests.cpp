@@ -9,7 +9,7 @@
 #include "utils_newtest.hpp"
 #include "datadefs_newtest.hpp"
 #include "node_newtest.hpp"
-//#include "rootnode_newtest.hpp"
+#include "math_newtest.hpp"
 
 using namespace std;
 
@@ -37,7 +37,9 @@ int main() {
 
   cout << endl << "Testing Node class:" << endl;
   node_newtest();
-  //rootnode_newtest();
+
+  cout << endl << "Testing math namespace:" << endl;
+  math_newtest();
 
   newtestdone();
 
