@@ -78,6 +78,7 @@ public:
     vector<vector<num_t> > predictions;
     vector<num_t> trueData;
     vector<string> sampleNames;
+    vector<vector<num_t> > distributions;
   };
   
   void train(Treedata* trainData, 
@@ -350,11 +351,15 @@ public:
       qPredOut.trueData = vector<num_t>(testData->nSamples(),datadefs::NUM_NAN);
     }
 
-    trainedModel_->predictQuantiles(testData,qPredOut.predictions,quantiles,&randoms_[0],nSamplesPerTree);
+    trainedModel_->predictDistributions(testData,qPredOut.distributions,&randoms_[0],nSamplesPerTree);
 
     qPredOut.sampleNames.resize( testData->nSamples() );
     for ( size_t i = 0; i < testData->nSamples(); ++i ) {
       qPredOut.sampleNames[i] = testData->getSampleName(i);
+      sort(qPredOut.distributions[i].begin(),qPredOut.distributions[i].end());
+      for ( size_t q = 0; q < quantiles.size(); ++q ) {
+	qPredOut.predictions[i][q] = math::percentile(qPredOut.distributions[i],qPredOut.quantiles[q]);
+      }
     }
 
     return( qPredOut );
@@ -382,7 +387,7 @@ public:
     size_t nQuantiles = quantiles.size();
     size_t nSamples = testData->nSamples();
 
-    vector<vector<num_t> > finalData(nSamples);
+    qPredOut.distributions = vector<vector<num_t> >(nSamples); //vector<vector<num_t> > finalData(nSamples);
 
     qPredOut.predictions.resize(nSamples,vector<num_t>(nQuantiles,datadefs::NUM_NAN));
 
@@ -402,23 +407,24 @@ public:
         size_t nSamplesInTreeData = treeData.size();
 
         for ( size_t i = 0; i < nSamplesPerTree; ++i ) {
-          finalData[sampleIdx].push_back( treeData[ randoms_[0].integer() % nSamplesInTreeData ] );
+          qPredOut.distributions[sampleIdx].push_back( treeData[ randoms_[0].integer() % nSamplesInTreeData ] );
         }
 
       }
     }
 
+    qPredOut.sampleNames.resize( testData->nSamples() );
     for ( size_t sampleIdx = 0; sampleIdx < nSamples; ++sampleIdx ) {
+      qPredOut.sampleNames[sampleIdx] = testData->getSampleName(sampleIdx);
       //cout << "Test sample " << sampleIdx << " yielded " << finalData[sampleIdx].size() << " samples from the conditional distribution" << endl;
-      sort(finalData[sampleIdx].begin(),finalData[sampleIdx].end());
+      sort(qPredOut.distributions[sampleIdx].begin(),qPredOut.distributions[sampleIdx].end());
       for ( size_t q = 0; q < nQuantiles; ++q ) {
-        qPredOut.predictions[sampleIdx][q] = math::percentile(finalData[sampleIdx],quantiles[q]);
+        qPredOut.predictions[sampleIdx][q] = math::percentile(qPredOut.distributions[sampleIdx],quantiles[q]);
       }
     }
 
     cout << nQuantiles << " quantiles collected" << endl;
 
-    //qPredOut.targetName = trainedModel_->getTargetName();
     qPredOut.quantiles = quantiles;
 
     assert(qPredOut.quantiles.size() > 0);
@@ -429,11 +435,6 @@ public:
       qPredOut.trueData = testData->getFeatureData(targetIdx);
     } else {
       qPredOut.trueData = vector<num_t>(testData->nSamples(),datadefs::NUM_NAN);
-    }
-
-    qPredOut.sampleNames.resize( testData->nSamples() );
-    for ( size_t i = 0; i < testData->nSamples(); ++i ) {
-      qPredOut.sampleNames[i] = testData->getSampleName(i);
     }
     
     return(qPredOut);

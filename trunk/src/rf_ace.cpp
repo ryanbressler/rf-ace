@@ -98,6 +98,7 @@ int main(const int argc, char* const argv[]) {
        options.forestOptions.forestType == forest_t::QRF && 
        options.io.predictionsFile != "" && 
        options.forestOptions.quantiles.size() > 0 ) {
+
     cout << "-Loading model '" << options.io.loadForestFile << "', making on-the-fly quantile predictions and saving to file '" << options.io.predictionsFile << "'" << endl;
     Treedata testData(options.io.testDataFile,options.generalOptions.dataDelimiter,options.generalOptions.headerDelimiter);
     qPredOutput = rface.loadForestAndPredictQuantiles(options.io.loadForestFile,&testData,options.forestOptions.quantiles,options.forestOptions.nSamplesForQuantiles);

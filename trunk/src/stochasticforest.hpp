@@ -49,7 +49,7 @@ public:
 
   //bool useQuantiles() const;
 
-  void predictQuantiles(Treedata* testData, vector<vector<num_t> >& predictions, const vector<num_t>& quantiles, distributions::Random* random, const size_t nSamplesPerTree);
+  void predictDistributions(Treedata* testData, vector<vector<num_t> >& distribution, distributions::Random* random, const size_t nSamplesPerTree);
 
   //vector<num_t> getOobPredictions();
   //vector<num_t> getPermutedOobPredictions(const size_t featureIdx);

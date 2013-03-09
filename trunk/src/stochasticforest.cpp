@@ -31,74 +31,6 @@ void StochasticForest::loadForest(const string& fileName) {
 
 }
 
-
-void StochasticForest::trainForestAndPredictQuantiles(Treedata* trainData,
-						      const size_t targetIdx,
-						      Treedata* testData,
-						      distributions::PMF* pmf,
-						      ForestOptions* forestOptions,
-						      distributions::Random* random,
-						      vector<vector<num_t> >& predictions) {
-  
-  for ( size_t treeIdx = 0; treeIdx < forestOptions->nTrees; ++treeIdx ) {
-
-    RootNode rootNode(trainData,targetIdx,pmf,forestOptions,random);
-
-  }
-
-}
-
-/*
-  void StochasticForest::loadForestAndPredictQuantiles(const string& fileName, 
-  Treedata* testData, 
-  vector<vector<num_t> >& predictions,
-  const vector<num_t>& quantiles,
-  distributions::Random* random, 
-  const size_t nSamplesPerTree) {
-  
-  ifstream forestStream(fileName.c_str());
-  assert(forestStream.good());
-  
-  size_t nQuantiles = quantiles.size();
-  size_t nSamples = testData->nSamples();
-  
-  vector<vector<num_t> > finalData(nSamples);
-  
-  predictions.resize(nSamples,vector<num_t>(nQuantiles,datadefs::NUM_NAN));
-  
-  size_t iter = 0;
-  while ( forestStream.good() ) {
-  
-  RootNode rootNode(forestStream);
-  
-  cout << "Tree " << iter << " loaded" << endl;
-  iter++;
-  
-  for ( size_t sampleIdx = 0; sampleIdx < nSamples; ++sampleIdx ) {
-  
-  vector<num_t> treeData = rootNode.getChildLeafTrainData(testData,sampleIdx);
-  size_t nSamplesInTreeData = treeData.size();
-  
-  for ( size_t i = 0; i < nSamplesPerTree; ++i ) {
-  finalData[sampleIdx].push_back( treeData[ random->integer() % nSamplesInTreeData ] );
-  }
-  
-  }
-  }
-  
-  for ( size_t sampleIdx = 0; sampleIdx < nSamples; ++sampleIdx ) {
-  cout << "Test sample " << sampleIdx << " yielded " << finalData[sampleIdx].size() << " samples from the conditional distribution" << endl;
-  sort(finalData[sampleIdx].begin(),finalData[sampleIdx].end());
-  for ( size_t q = 0; q < nQuantiles; ++q ) {
-  predictions[sampleIdx][q] = math::percentile(finalData[sampleIdx],quantiles[q]);
-  }
-  }
-  
-  cout << nQuantiles << " quantiles collected" << endl;
-  
-  }
-*/
-
 StochasticForest::~StochasticForest() {
   
   for (size_t treeIdx = 0; treeIdx < rootNodes_.size(); ++treeIdx) {
@@ -722,38 +654,24 @@ void StochasticForest::predict(Treedata* testData, vector<num_t>& predictions,ve
 #endif
 }
 
-void StochasticForest::predictQuantiles(Treedata* testData,
-					vector<vector<num_t> >& predictions,
-					const vector<num_t>& quantiles,
-					distributions::Random* random,
-					const size_t nSamplesPerTree) {
-
-
+void StochasticForest::predictDistributions(Treedata* testData,
+					    vector<vector<num_t> >& distribution,
+					    distributions::Random* random,
+					    const size_t nSamplesPerTree) {
+  
   size_t nTrees = this->nTrees();
   size_t nSamples = testData->nSamples();
-  size_t nQuantiles = quantiles.size();
 
-  assert(nQuantiles > 0);
-
-  predictions.resize(nSamples,vector<num_t>(nQuantiles));
+  distribution.resize(nSamples,vector<num_t>(nTrees*nSamplesPerTree));
   
   for ( size_t sampleIdx = 0; sampleIdx < nSamples; ++sampleIdx ) {
-    //cout << "sample " << sampleIdx << endl;
-    vector<num_t> finalData(nTrees*nSamplesPerTree,datadefs::NUM_NAN);
     for ( size_t treeIdx = 0; treeIdx < nTrees; ++treeIdx ) {
       vector<num_t> treeData = rootNodes_[treeIdx]->getChildLeafTrainData(testData,sampleIdx);
       size_t nSamplesInTreeData = treeData.size();
-      //cout << "got leaf data for tree " << treeIdx << endl;
       for ( size_t i = 0; i < nSamplesPerTree; ++i ) {
-	//cout << "sample " << i << " in tree" << endl;
-	finalData[ treeIdx * nSamplesPerTree + i ] = treeData[ random->integer() % nSamplesInTreeData ];
+	distribution[sampleIdx][ treeIdx * nSamplesPerTree + i ] = treeData[ random->integer() % nSamplesInTreeData ];
       }
     }
-    sort(finalData.begin(),finalData.end());
-    for ( size_t q = 0; q < nQuantiles; ++q ) {
-      predictions[sampleIdx][q] = math::percentile(finalData,quantiles[q]);
-    }
-    //cout << "done with sample " << sampleIdx << endl;
   }
   
 }
