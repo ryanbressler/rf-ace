@@ -355,11 +355,13 @@ void printQuantilePredictionsToFile(RFACE::QuantilePredictionOutput& qPredOutput
   for ( size_t q = 0; q < qPredOutput.quantiles.size(); ++q ) {
     toPredictionFile << "\t" << qPredOutput.targetName << "_Q" << qPredOutput.quantiles[q] << flush;
   }
-  toPredictionFile << endl;
+  toPredictionFile << "\t" << qPredOutput.targetName << "_DISTRIBUTION" << endl;
 
   for ( size_t i = 0; i < nSamples; ++i ) {
     toPredictionFile << qPredOutput.sampleNames[i] << "\t" << qPredOutput.trueData[i] << "\t" << flush;
     utils::write(toPredictionFile,qPredOutput.predictions[i].begin(),qPredOutput.predictions[i].end(),'\t');
+    toPredictionFile << "\t";
+    utils::write(toPredictionFile,qPredOutput.distributions[i].begin(),qPredOutput.distributions[i].end(),',');
     toPredictionFile << endl;
   }
 
