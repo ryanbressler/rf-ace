@@ -329,10 +329,14 @@ void Treedata::readARFF(const string& fileName) {
 
     --nLines;
 
+    if ( reader.endOfLine() ) {
+      continue;
+    }
+
     string prefix; reader >> prefix;
 
     //Comment lines and empty lines are omitted
-    if(prefix[0] == '%' || prefix == "") {
+    if ( prefix[0] == '%' ) {
       continue;
     }
 
@@ -417,7 +421,7 @@ void Treedata::readARFF(const string& fileName) {
   size_t nSamples = sampleIdx;
 
   assert(nSamples == nLines);
-  sampleHeaders_ = vector<string>(nSamples,"NO_SAMPLE_ID");
+  sampleHeaders_.resize(nSamples,"NO_SAMPLE_ID");
 
 }
 
