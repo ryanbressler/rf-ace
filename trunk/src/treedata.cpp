@@ -414,7 +414,10 @@ void Treedata::readARFF(const string& fileName) {
     ++sampleIdx;
   }
 
-  assert(sampleIdx = nLines);
+  size_t nSamples = sampleIdx;
+
+  assert(nSamples == nLines);
+  sampleHeaders_ = vector<string>(nSamples,"NO_SAMPLE_ID");
 
 }
 

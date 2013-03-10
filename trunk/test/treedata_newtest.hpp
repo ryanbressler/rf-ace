@@ -253,11 +253,16 @@ void treedata_newtest_readTransposedAFM() {
 
 void treedata_newtest_readARFF() {
 
-  Treedata treeData("test_5by10_numeric_matrix.arff",'\t',':');
+  Treedata treeData("test/data/5by10_numeric_matrix.arff",'\t',':');
 
   newassert( treeData.nFeatures() == 5 );
-  newassert( treeData.nSamples() == 10 );
+  newassert( treeData.feature(0)->name() == "x1" ); newassert( treeData.feature(0)->isNumerical() );
+  newassert( treeData.feature(1)->name() == "x2" ); newassert( treeData.feature(1)->isNumerical() );
+  newassert( treeData.feature(2)->name() == "x3" ); newassert( treeData.feature(2)->isNumerical() );
+  newassert( treeData.feature(3)->name() == "x4" ); newassert( treeData.feature(3)->isNumerical() );
+  newassert( treeData.feature(4)->name() == "y"  ); newassert( treeData.feature(4)->isNumerical() );
 
+  newassert( treeData.nSamples() == 10 );
   newassert( treeData.nRealSamples(0) == 10 );
   newassert( treeData.nRealSamples(1) == 9 );
   newassert( treeData.nRealSamples(2) == 9 );
@@ -266,12 +271,6 @@ void treedata_newtest_readARFF() {
 
   newassert( treeData.nRealSamples(0,1) == 9 );
   newassert( treeData.nRealSamples(1,2) == 8 );
-
-  newassert( treeData.feature(0)->name() == "x1" );
-  newassert( treeData.feature(1)->name() == "x2" );
-  newassert( treeData.feature(2)->name() == "x3" );
-  newassert( treeData.feature(3)->name() == "x4" );
-  newassert( treeData.feature(4)->name() == "y"  );
 
   newassert( fabs( treeData.feature(0)->data[0] - 0.8147 ) < datadefs::EPS );
   newassert( fabs( treeData.feature(0)->data[1] - 0.9058 ) < datadefs::EPS );
@@ -327,6 +326,8 @@ void treedata_newtest_readARFF() {
   newassert( fabs( treeData.feature(4)->data[7] - 104.0000 ) < datadefs::EPS );
   newassert( fabs( treeData.feature(4)->data[8] - 126.0000 ) < datadefs::EPS );
   newassert( fabs( treeData.feature(4)->data[9] - 150.0000 ) < datadefs::EPS );
+
+  //  treeData = Treedata("test/data/12by21_categorical_matrix.arff",'\t',':');
 
 }
 

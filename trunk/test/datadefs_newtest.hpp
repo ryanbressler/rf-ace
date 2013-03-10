@@ -18,14 +18,14 @@ void datadefs_newtest_separatePairedV();
 
 void datadefs_newtest() {
 
-  newtest( "Testing interpretation of missing values", &datadefs_newtest_isnan );
-  newtest( "Testing counting of real values", &datadefs_newtest_countRealValues );
-  newtest( "Testing data mapping", &datadefs_newtest_mapData );
-  newtest( "Testing incr. ordering operator", &datadefs_newtest_increasingOrder );
-  newtest( "Testing decr. ordering operator", &datadefs_newtest_decreasingOrder );
-  newtest( "Testing counting frequency", &datadefs_newtest_freqIncreasingOrder );
-  newtest( "Testing pairing of a vector", &datadefs_newtest_makePairedV );
-  newtest( "Testing separation of a pried vector", &datadefs_newtest_separatePairedV );
+  newtest( "isnan(x)", &datadefs_newtest_isnan );
+  newtest( "countRealValues(x)", &datadefs_newtest_countRealValues );
+  newtest( "mapData(x)", &datadefs_newtest_mapData );
+  newtest( "increasingOrder(x)", &datadefs_newtest_increasingOrder );
+  newtest( "decreasingOrder(x)", &datadefs_newtest_decreasingOrder );
+  newtest( "freqIncreasingOrder(x)", &datadefs_newtest_freqIncreasingOrder );
+  newtest( "makePairedV(x)", &datadefs_newtest_makePairedV );
+  newtest( "separatePairedV(x)", &datadefs_newtest_separatePairedV );
 
 }
 

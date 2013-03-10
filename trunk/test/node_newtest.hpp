@@ -85,9 +85,9 @@ void node_newtest_getChildLeaves() {
 
 void node_newtest_setSplitter() {
   
-  size_t splitterIdx = 3;
+  //size_t splitterIdx = 3;
   datadefs::num_t splitLeftLeqValue = 0.5; 
-  datadefs::num_t leftFraction = 0.5;
+  //datadefs::num_t leftFraction = 0.5;
   
   //Splitter::Splitter splitter(0.5);
   
