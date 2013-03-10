@@ -25,19 +25,19 @@ void treedata_newtest_separateMissingSamples();
 
 void treedata_newtest() {
 
-  newtest( "Testing Treedata class with AFM data", &treedata_newtest_readAFM );
-  newtest( "Testing Treedata clas with ARFF data", &treedata_newtest_readARFF );
-  newtest( "Testing Treedata class with transposed AFM data", &treedata_newtest_readTransposedAFM );
-  newtest( "Testing proper counting of missing samples in Treedata", &treedata_newtest_nRealSamples );
-  newtest( "Testing mapping of feature names to indices and vice versa", &treedata_newtest_name2idxMap ); 
-  newtest( "Testing splitting num->num", &treedata_newtest_numericalFeatureSplitsNumericalTarget );
-  newtest( "Testing splitting num->cat", &treedata_newtest_numericalFeatureSplitsCategoricalTarget );
-  newtest( "Testing splitting cat->num", &treedata_newtest_categoricalFeatureSplitsNumericalTarget );
-  newtest( "Testing replacement of feature in Treedata", &treedata_newtest_replaceFeatureData );
-  newtest( "Testing proper response for querying nonexistent feature" , &treedata_newtest_end );
-  newtest( "Testing feature hashing", &treedata_newtest_hashFeature );
-  newtest( "Testing bootstrapping", &treedata_newtest_bootstrapRealSamples );
-  newtest( "Testing separation of missing samples", &treedata_newtest_separateMissingSamples );
+  newtest( "readAFM(x)", &treedata_newtest_readAFM );
+  newtest( "readARFF(x)", &treedata_newtest_readARFF );
+  newtest( "readTransposedAFM(x)", &treedata_newtest_readTransposedAFM );
+  newtest( "nRealSamples(x)", &treedata_newtest_nRealSamples );
+  newtest( "name2idxMap(x)", &treedata_newtest_name2idxMap ); 
+  newtest( "numericalFeatureSplitsNumericalTarget(x)", &treedata_newtest_numericalFeatureSplitsNumericalTarget );
+  newtest( "numericalFeatureSplitsCategoricalTarget(x)", &treedata_newtest_numericalFeatureSplitsCategoricalTarget );
+  newtest( "categoricalFeatureSplitsNumericalTarget(x)", &treedata_newtest_categoricalFeatureSplitsNumericalTarget );
+  newtest( "replaceFeatureData(x)", &treedata_newtest_replaceFeatureData );
+  newtest( "end(x)" , &treedata_newtest_end );
+  newtest( "hashFeature(x)", &treedata_newtest_hashFeature );
+  newtest( "bootstrapRealSamples(x)", &treedata_newtest_bootstrapRealSamples );
+  newtest( "separateMissingSamples(x)", &treedata_newtest_separateMissingSamples );
 
 }
 
@@ -327,7 +327,13 @@ void treedata_newtest_readARFF() {
   newassert( fabs( treeData.feature(4)->data[8] - 126.0000 ) < datadefs::EPS );
   newassert( fabs( treeData.feature(4)->data[9] - 150.0000 ) < datadefs::EPS );
 
-  //  treeData = Treedata("test/data/12by21_categorical_matrix.arff",'\t',':');
+  Treedata treeData2("test/data/12by21_categorical_matrix.arff",'\t',':');
+
+  newassert( treeData2.nSamples() == 12 );
+  newassert( treeData2.nFeatures() == 21 );
+  for ( size_t i = 0; i < treeData2.nFeatures(); ++i ) {
+    newassert( treeData2.feature(i)->isCategorical() );
+  }
 
 }
 
