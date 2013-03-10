@@ -189,7 +189,7 @@ void rface_newtest_QRF_train_test_regression() {
 
   vector<num_t> QDEV = quantile_regression_error( make_quantile_predictions(forestOptions,"N:output") );
 
-  utils::write(cout,QDEV.begin(),QDEV.end());
+  //utils::write(cout,QDEV.begin(),QDEV.end());
 
   newassert( math::mean(QDEV) < 0.05 );
   

@@ -37,22 +37,22 @@ void utils_newtest_text2tokens();
 
 void utils_newtest() {
 
-  newtest( "Testing categorical feature splitter with numerical targets", &utils_newtest_categoricalFeatureSplitsNumericalTarget);
-  newtest( "Testing categorical feature splitter with categorical targets", &utils_newtest_categoricalFeatureSplitsCategoricalTarget);
-  newtest( "Testing text parsing", &utils_newtest_parse );
-  newtest( "Testing str-to-num conversions", &utils_newtest_str2 );
-  newtest( "Testing write", &utils_newtest_write );
-  newtest( "Testing range", &utils_newtest_range );
-  newtest( "Testing trim", &utils_newtest_trim );
-  newtest( "Testing chomp", &utils_newtest_chomp );
-  newtest( "Testing split", &utils_newtest_split );
-  newtest( "Testing permute", &utils_newtest_permute );
-  newtest( "Testing splitRange", &utils_newtest_splitRange );
-  newtest( "Testing str-to-cat vector conversions", &utils_newtest_strv2catv );
-  newtest( "Testing str-to-num vector conversions", &utils_newtest_strv2numv );
-  newtest( "Testing sorting and making reference", &utils_newtest_sortDataAndMakeRef );
-  newtest( "Testing sorting from reference", &utils_newtest_sortFromRef );
-  newtest( "Testing text tokenization", &utils_newtest_text2tokens );
+  newtest( "categoricalFeatureSplitsNumericalTarget(x)", &utils_newtest_categoricalFeatureSplitsNumericalTarget);
+  newtest( "categoricalFeatureSplitsCategoricalTarget(x)", &utils_newtest_categoricalFeatureSplitsCategoricalTarget);
+  newtest( "parse(x)", &utils_newtest_parse );
+  newtest( "str2(x)", &utils_newtest_str2 );
+  newtest( "write(x)", &utils_newtest_write );
+  newtest( "range(x)", &utils_newtest_range );
+  newtest( "trim(x)", &utils_newtest_trim );
+  newtest( "chomp(x)", &utils_newtest_chomp );
+  newtest( "split(x)", &utils_newtest_split );
+  newtest( "permute(x)", &utils_newtest_permute );
+  newtest( "splitRange(x)", &utils_newtest_splitRange );
+  newtest( "strv2catv(x)", &utils_newtest_strv2catv );
+  newtest( "strv2numv(x)", &utils_newtest_strv2numv );
+  newtest( "sortAndMakeRef(x)", &utils_newtest_sortDataAndMakeRef );
+  newtest( "sortFromRef(x)", &utils_newtest_sortFromRef );
+  newtest( "text2tokens(x)", &utils_newtest_text2tokens );
 
 }
 
@@ -406,8 +406,8 @@ void utils_newtest_sortDataAndMakeRef() {
     newassert(data[i] == static_cast<datadefs::num_t>(49-i));
     newassert(refIcs[i] == static_cast<size_t>(49-i));
   }
-  newassert(data[50] == 0.0);
-  newassert(refIcs[50] == 0);
+  newassert(data[49] == 0.0);
+  newassert(refIcs[49] == 0);
 
   // Check for correct behavior with an empty data list and arbitrary refIcs
   data.clear();

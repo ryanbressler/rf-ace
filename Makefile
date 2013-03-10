@@ -31,17 +31,11 @@ static: $(SOURCEFILES)
 GBT_benchmark: test/GBT_benchmark.cpp $(SOURCEFILES)
 	$(COMPILER) $(CFLAGS) test/GBT_benchmark.cpp $(SOURCEFILES) $(TFLAGS) -o bin/GBT_benchmark
 
-test: $(SOURCEFILES) $(TESTFILES)
-	rm -f bin/test; $(COMPILER) $(TESTFLAGS) test/run_tests.cpp $(SOURCEFILES) $(TFLAGS) -o bin/test -ggdb; ./bin/test
+test: $(SOURCEFILES) $(NEWTESTFILES)
+	rm -f bin/newtest; $(COMPILER) $(CFLAGS) test/run_newtests.cpp $(SOURCEFILES) $(TFLAGS) -o bin/newtest -ggdb; ./bin/newtest
 
-newtest: $(SOURCEFILES) $(NEWTESTFILES)
-	rm -f bin/newtest; $(COMPILER) $(CFLAGS) test/run_newtests.cpp $(SOURCEFILES) $(TFLAGS) -o bin/newtest; ./bin/newtest
-
-newtest-no-threads: $(SOURCEFILES) $(NEWTESTFILES)
-	rm -f bin/newtest; $(COMPILER) $(CFLAGS) -DNOTHREADS test/run_newtests.cpp $(SOURCEFILES) -o bin/newtest; ./bin/newtest
-
-test-no-threads: $(SOURCEFILES)
-	rm -f bin/test; $(COMPILER) $(TESTFLAGS) -DNOTHREADS test/run_tests.cpp $(SOURCEFILES) -o bin/test -ggdb; ./bin/test  
+test-no-threads: $(SOURCEFILES) $(NEWTESTFILES)
+	rm -f bin/newtest; $(COMPILER) $(CFLAGS) -DNOTHREADS test/run_newtests.cpp $(SOURCEFILES) -o bin/newtest -ggdb; ./bin/newtest
 
 clean:
 	rm -rf bin/rf-ace bin/benchmark bin/GBT_benchmark bin/test bin/*.dSYM/ src/*.o
