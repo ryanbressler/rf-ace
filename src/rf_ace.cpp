@@ -45,7 +45,7 @@ int main(const int argc, char* const argv[]) {
   try {
     options.load(argc,argv);
   } catch(exception& e) {
-    cerr << e.what() << endl;
+    cerr << "Could not parse command-line arguments" << endl;
     return(EXIT_FAILURE);
   }
 

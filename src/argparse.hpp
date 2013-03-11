@@ -161,13 +161,13 @@ public:
     if (it != mappedArgs.end()) {
       string found = (*it).second;
       if (found.empty()) {
-        throw RFACE_EXCEPTION( ERRNO::INVALID_VALUE, "Value for command-line argument is empty or malformed." );
+        throw ERRNO::INVALID_VALUE;
       }
       stringstream ss(found);
       ss >> returnVal;
 
       if (ss.fail() || !ss.eof()) {
-        throw RFACE_EXCEPTION( ERRNO::INVALID_VALUE, "Extraction of value of command-line argument failed." );
+        throw ERRNO::INVALID_VALUE;
       }
       return true;
     }
