@@ -74,7 +74,7 @@ void StochasticForest::learnRF(Treedata* trainData,
 
   forestType_ = forestOptions->forestType;
   string targetName = trainData->feature(targetIdx)->name();
-  bool isTargetNumerical = trainData->feature(targetIdx)->isNumerical();
+  //bool isTargetNumerical = trainData->feature(targetIdx)->isNumerical();
   //categories_ = trainData->feature(targetIdx)->categories();
 
   assert(trainData->nFeatures() == featureWeights.size());

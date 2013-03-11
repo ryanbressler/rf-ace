@@ -17,9 +17,9 @@ void distributions_newtest_PMF();
 
 void distributions_newtest() {
 
-  newtest("Testing Random number generator for integers", &distributions_newtest_random_integer);
-  newtest("Testing Random number generator for uniforms", &distributions_newtest_random_uniform);
-  newtest("Testing that Walker's Alias produces true PMFs", &distributions_newtest_PMF);
+  newtest("integer()", &distributions_newtest_random_integer);
+  newtest("uniform()", &distributions_newtest_random_uniform);
+  newtest("pmf()", &distributions_newtest_PMF);
 
 }
 
