@@ -24,7 +24,7 @@ public:
 
   ArgParse(const int argc, char* const argv[]) {
     if (argc < 1) {
-      throw RFACE_EXCEPTION( ERRNO_INVALID_ARGUMENT );
+      throw RFACE_EXCEPTION( ERRNO::INVALID_ARGUMENT );
       //throw EXCEPTION_INVALID_ARGUMENT;
     }
 
@@ -37,7 +37,7 @@ public:
         // !!  outright crash, may imply security vulnerabilities in dependent
         // !!  code. Beware!
         if (argv[i] == NULL || argv[i][0] == 0x0) {
-          throw RFACE_EXCEPTION( ERRNO_INVALID_ARGUMENT );
+          throw RFACE_EXCEPTION( ERRNO::INVALID_ARGUMENT );
         } else {
           if (!currArg.empty()) {
             mappedArgs[currArg] = string(argv[i]);
@@ -94,7 +94,7 @@ public:
                          //  major FIXME if this is hit. (Disabled in lieu of
                          //  runtime checks during testing)
         
-        throw RFACE_EXCEPTION( ERRNO_ILLEGAL_MEMORY_ACCESS );  // Perform a safer runtime check
+        throw RFACE_EXCEPTION( ERRNO::ILLEGAL_MEMORY_ACCESS );  // Perform a safer runtime check
 	                                                       // that should never be hit by
                                                                // correct code.
       }
@@ -161,13 +161,13 @@ public:
     if (it != mappedArgs.end()) {
       string found = (*it).second;
       if (found.empty()) {
-        throw RFACE_EXCEPTION( ERRNO_INVALID_VALUE, "Value for command-line argument is empty or malformed." );
+        throw RFACE_EXCEPTION( ERRNO::INVALID_VALUE, "Value for command-line argument is empty or malformed." );
       }
       stringstream ss(found);
       ss >> returnVal;
 
       if (ss.fail() || !ss.eof()) {
-        throw RFACE_EXCEPTION( ERRNO_INVALID_VALUE, "Extraction of value of command-line argument failed." );
+        throw RFACE_EXCEPTION( ERRNO::INVALID_VALUE, "Extraction of value of command-line argument failed." );
       }
       return true;
     }
