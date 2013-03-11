@@ -11,7 +11,7 @@ class RFACE_EXCEPTION : public exception {
 
 public:
 
-  RFACE_EXCEPTION(ERRNO errno, const std::string& note = ""):errno_(errno) {
+  RFACE_EXCEPTION(const ERRNO& errno, const std::string& note = "") throw():errno_(errno) {
     stringstream ss;
     ss << "ERRNO (" << errno_ << "): ";
     switch ( errno_ ) {
