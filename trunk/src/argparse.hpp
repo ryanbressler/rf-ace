@@ -8,6 +8,7 @@
 #include <string.h>
 #include <vector>
 #include "errno.hpp"
+#include "exceptions.hpp"
 
 using namespace std;
 
@@ -23,7 +24,8 @@ public:
 
   ArgParse(const int argc, char* const argv[]) {
     if (argc < 1) {
-      throw ERRNO_INVALID_ARGUMENT;
+      throw RFACE_EXCEPTION( ERRNO_INVALID_ARGUMENT );
+      //throw EXCEPTION_INVALID_ARGUMENT;
     }
 
     string currArg = "";
@@ -35,7 +37,7 @@ public:
         // !!  outright crash, may imply security vulnerabilities in dependent
         // !!  code. Beware!
         if (argv[i] == NULL || argv[i][0] == 0x0) {
-          throw ERRNO_INVALID_ARGUMENT;
+          throw RFACE_EXCEPTION( ERRNO_INVALID_ARGUMENT );
         } else {
           if (!currArg.empty()) {
             mappedArgs[currArg] = string(argv[i]);
@@ -92,9 +94,9 @@ public:
                          //  major FIXME if this is hit. (Disabled in lieu of
                          //  runtime checks during testing)
         
-        throw ERRNO_ILLEGAL_MEMORY_ACCESS;  // Perform a safer runtime check
-                                            //  that should never be hit by
-                                            //  correct code.
+        throw RFACE_EXCEPTION( ERRNO_ILLEGAL_MEMORY_ACCESS );  // Perform a safer runtime check
+	                                                       // that should never be hit by
+                                                               // correct code.
       }
     }
     if (!currArg.empty()) {
@@ -159,13 +161,13 @@ public:
     if (it != mappedArgs.end()) {
       string found = (*it).second;
       if (found.empty()) {
-        throw ERRNO_INVALID_VALUE;
+        throw RFACE_EXCEPTION( ERRNO_INVALID_VALUE, "Value for command-line argument is empty or malformed." );
       }
       stringstream ss(found);
       ss >> returnVal;
 
       if (ss.fail() || !ss.eof()) {
-        throw ERRNO_INVALID_VALUE;
+        throw RFACE_EXCEPTION( ERRNO_INVALID_VALUE, "Extraction of value of command-line argument failed." );
       }
       return true;
     }

@@ -10,6 +10,7 @@
 #include "datadefs.hpp"
 #include "options.hpp"
 #include "timer.hpp"
+#include "exceptions.hpp"
 
 using namespace std;
 using datadefs::num_t;
@@ -40,7 +41,13 @@ int main(const int argc, char* const argv[]) {
   printHeader(cout);
 
   Options options(forest_t::QRF);
-  options.load(argc,argv);
+
+  try {
+    options.load(argc,argv);
+  } catch(exception& e) {
+    cerr << e.what() << endl;
+    return(EXIT_FAILURE);
+  }
 
   Timer timer;
 

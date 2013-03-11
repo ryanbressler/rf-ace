@@ -24,14 +24,14 @@ void rface_newtest_GBT_save_load_regression();
 
 void rface_newtest() {
   
-  newtest( "Testing RF for classification", &rface_newtest_RF_train_test_classification );
-  newtest( "Testing RF for regression", &rface_newtest_RF_train_test_regression );
-  newtest( "Testing Quantile Regression Random Forest", &rface_newtest_QRF_train_test_regression );
+  newtest( "RF for classification", &rface_newtest_RF_train_test_classification );
+  newtest( "RF for regression", &rface_newtest_RF_train_test_regression );
+  newtest( "QRF for regression", &rface_newtest_QRF_train_test_regression );
   //newtest( "Testing GBT for classification", &rface_newtest_GBT_train_test_classification );
   //newtest( "Testing GBT for regression", &rface_newtest_GBT_train_test_regression );
-  newtest( "Testing save/load RF for classification", &rface_newtest_RF_save_load_classification );
-  newtest( "Testing save/load RF for regression", &rface_newtest_RF_save_load_regression );
-  newtest( "Testing save/load Quantile Regression Random Forest", &rface_newtest_QRF_save_load_regression );
+  newtest( "save/load RF for classification", &rface_newtest_RF_save_load_classification );
+  newtest( "save/load RF for regression", &rface_newtest_RF_save_load_regression );
+  newtest( "save/load QRF for regression", &rface_newtest_QRF_save_load_regression );
   //newtest( "Testing save/load GBT for classification", &rface_newtest_GBT_save_load_classification );
   //newtest( "Testing save/load GBT for regression", &rface_newtest_GBT_save_load_regression );
 
@@ -191,7 +191,7 @@ void rface_newtest_QRF_train_test_regression() {
 
   //utils::write(cout,QDEV.begin(),QDEV.end());
 
-  newassert( math::mean(QDEV) < 0.05 );
+  newassert( math::mean(QDEV) < 0.20 );
   
 }
 
