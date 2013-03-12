@@ -387,7 +387,7 @@ public:
     size_t nQuantiles = quantiles.size();
     size_t nSamples = testData->nSamples();
 
-    qPredOut.distributions = vector<vector<num_t> >(nSamples); //vector<vector<num_t> > finalData(nSamples);
+    qPredOut.distributions = vector<vector<num_t> >(nSamples);
 
     qPredOut.predictions.resize(nSamples,vector<num_t>(nQuantiles,datadefs::NUM_NAN));
 
@@ -406,8 +406,12 @@ public:
         vector<num_t> treeData = rootNode.getChildLeafTrainData(testData,sampleIdx);
         size_t nSamplesInTreeData = treeData.size();
 
+	// Extend the distribution container by the number of new samples
+	qPredOut.distributions[sampleIdx].resize(iter*nSamplesPerTree,datadefs::NUM_NAN);
+
+	// Get the new samples
         for ( size_t i = 0; i < nSamplesPerTree; ++i ) {
-          qPredOut.distributions[sampleIdx].push_back( treeData[ randoms_[0].integer() % nSamplesInTreeData ] );
+          qPredOut.distributions[sampleIdx][ (iter-1) * nSamplesPerTree + i ] = treeData[ randoms_[0].integer() % nSamplesInTreeData ];
         }
 
       }

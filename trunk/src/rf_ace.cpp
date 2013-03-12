@@ -10,7 +10,7 @@
 #include "datadefs.hpp"
 #include "options.hpp"
 #include "timer.hpp"
-#include "exceptions.hpp"
+//#include "exceptions.hpp"
 
 using namespace std;
 using datadefs::num_t;
