@@ -60,9 +60,9 @@ void utils_newtest_categoricalFeatureSplitsNumericalTarget() {
   unordered_map<cat_t,vector<size_t> > fmap_left,fmap_right;
 
   num_t DI = utils::categoricalFeatureSplitsNumericalTarget(tv,fv,1,{"1","2","3","4"},fmap_left,fmap_right);
-  
+
   num_t DI_ref = math::deltaImpurity_regr(math::mean(tv),12,math::mean({1,1,1,2,3,4}),6,math::mean({5,6,7,8,9,10}),6);
-  
+
   newassert( fabs( DI - DI_ref ) < 1e-5 );
 
   fv = {"1","1","1","1","1","1","1","1","1","1","1","1"};
@@ -406,7 +406,7 @@ void utils_newtest_text2tokens() {
   string text = "I want to, tokenizE  This!!.; it's so rad";
 
   unordered_set<uint32_t> hashes = utils::hashText(text);
-  unordered_set<uint32_t>::const_iterator it = hashes.begin();
+  //unordered_set<uint32_t>::const_iterator it = hashes.begin();
 
   //newassert( hashes.size() == 9 );
 

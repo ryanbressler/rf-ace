@@ -511,13 +511,8 @@ num_t utils::categoricalFeatureSplitsNumericalTarget(const vector<num_t>& tv,
   num_t DI_best = 0.0;
   
   for ( size_t i = 0; i < catOrder.size(); ++i ) {
-    assert( fmap_right.find( catOrder[i] ) != fmap_right.end() );
-  }
-  
-  
-  for ( size_t i = 0; i < catOrder.size(); ++i ) {
     
-    unordered_map<cat_t,vector<size_t> >::const_iterator it( fmap_right.begin() );
+    unordered_map<cat_t,vector<size_t> >::const_iterator it( fmap_right.find(catOrder[i]) );
 
     assert( it != fmap_right.end() );
 
