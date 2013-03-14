@@ -22,25 +22,35 @@ using datadefs::num_t;
 
 class Node {
 public:
+
+  struct Prediction {
+
+    Feature::Type type;
+    num_t numTrainPrediction;
+    cat_t catTrainPrediction;
+    vector<num_t> numTrainData;
+    vector<cat_t> catTrainData;
+  };
+
   //Initializes node.
   Node();
   ~Node();
-
+  
   //Gets the splitter for the node
   const string& splitterName() const { return( splitter_.name ); }
-
+  
   //Sets a splitter feature for the node.
   //NOTE: splitter can be assigned only once! Subsequent setter calls will raise an assertion failure.
   void setSplitter(const string& splitterName,
                    const num_t splitLeftLeqValue,
 		   Node& leftChild,
 		   Node& rightChild);
-
+  
   void setSplitter(const string& splitterName,
-                   const unordered_set<string>& leftSplitValues,
+                   const unordered_set<cat_t>& leftSplitValues,
 		   Node& leftChild,
 		   Node& rightChild);
-
+  
   void setSplitter(const string& splitterName,
 		   const uint32_t hashIdx,
 		   Node& leftChild,
@@ -51,11 +61,9 @@ public:
   //Given a value, descends to either one of the child nodes, if existing, otherwise returns a pointer to the current node
   Node* percolate(Treedata* testData, const size_t sampleIdx, const size_t scrambleFeatureIdx = datadefs::MAX_IDX);
   
-  void setTrainPrediction(const num_t trainPrediction, const string& rawTrainPrediction );
+  void setNumTrainPrediction(const num_t& numTrainPrediction);
+  void setCatTrainPrediction(const cat_t& catTrainPrediction);
   
-  num_t getTrainPrediction() const;
-  string getRawTrainPrediction() const;
-
   //Logic test whether the node has children or not
   inline bool hasChildren() const { return( this->leftChild() || this->rightChild() ); }
 
@@ -63,12 +71,12 @@ public:
   Node* rightChild() const;
   Node* missingChild() const;
 
-  vector<Node*> getChildLeaves();
+  vector<Node*> getSubTreeLeaves();
 
-  void setTrainData(const vector<num_t>& trainData);
-  void addTrainData(const num_t trainData);
+  void setNumTrainData(const vector<num_t>& numTrainData);
+  void setCatTrainData(const vector<cat_t>& catTrainData);
 
-  vector<num_t> getTrainData() const;
+  const Prediction& getPrediction();
 
   void recursiveWriteTree(string& traversal, ofstream& toFile);
 
@@ -82,7 +90,7 @@ protected:
 
     size_t nSamples;
     vector<size_t> featureSampleIcs;
-    vector<num_t> trainData;
+    //vector<num_t> trainData;
 
     vector<size_t> sampleIcs_left;
     vector<size_t> sampleIcs_right;
@@ -90,7 +98,7 @@ protected:
     uint32_t hashIdx;
     size_t splitFeatureIdx;
     num_t splitValue;
-    unordered_set<num_t> splitValues_left;
+    unordered_set<cat_t> splitValues_left;
     num_t splitFitness;
 
     vector<size_t> newSampleIcs_left;
@@ -99,7 +107,7 @@ protected:
     uint32_t newHashIdx;
     size_t newSplitFeatureIdx;
     num_t newSplitValue;
-    unordered_set<num_t> newSplitValues_left;
+    unordered_set<cat_t> newSplitValues_left;
     num_t newSplitFitness;
 
   };
@@ -129,7 +137,7 @@ protected:
 			   SplitCache& splitCache);
 
 
-  void recursiveGetChildLeaves(vector<Node*>& leaves);
+  void recursiveGetSubTreeLeaves(vector<Node*>& leaves);
 
 #ifndef TEST__
 private:
@@ -141,13 +149,11 @@ private:
     Feature::Type type;
     uint32_t hashValue;
     num_t leftLeqValue;
-    unordered_set<string> leftValues;
+    unordered_set<cat_t> leftValues;
     
   } splitter_;
 
-  num_t  trainPrediction_;
-  string rawTrainPrediction_;
-  vector<num_t> trainData_;
+  Prediction prediction_;
 
   Node* leftChild_;
   Node* rightChild_;

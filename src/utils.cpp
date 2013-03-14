@@ -24,12 +24,12 @@ string utils::suffix(const string& fileName) {
 
 // Returns a copy of input vector x with NAN-entries removed
 // NOTE: is just a wrapper of the algorithm "remove_if"
-vector<num_t> utils::removeNANs(vector<num_t> x) {
-
-  x.erase( remove_if(x.begin(),x.end(),&datadefs::isNAN), x.end() );
-
-  return( x );
-}
+//vector<num_t> utils::removeNANs(vector<num_t> x) {
+//
+//  x.erase( remove_if(x.begin(),x.end(),&datadefs::isNAN<num_t>), x.end() );
+//
+//  return( x );
+//}
 
 string utils::num2str(const num_t x) {
 
@@ -42,8 +42,9 @@ string utils::num2str(const num_t x) {
   
 }
 
+
 void utils::strv2numv(const vector<string>& strvec,
-                         vector<datadefs::num_t>& numvec) {
+		      vector<datadefs::num_t>& numvec) {
   size_t n = strvec.size();
   numvec.resize(n);
   
@@ -52,43 +53,46 @@ void utils::strv2numv(const vector<string>& strvec,
   }
 }
 
-void utils::strv2catv(const vector<string>& strvec,
-		      vector<datadefs::num_t>& catvec,
-		      map<string,datadefs::num_t>& mapping,
-		      map<datadefs::num_t,string>& backMapping) {
+
+/*
+  void utils::strv2catv(const vector<string>& strvec,
+  vector<datadefs::num_t>& catvec,
+  map<string,datadefs::num_t>& mapping,
+  map<datadefs::num_t,string>& backMapping) {
   
   size_t n = strvec.size();
   catvec.resize(n);
-
+  
   mapping.clear();
   backMapping.clear();
-
+  
   num_t val = static_cast<datadefs::num_t>(0);
-
+  
   //Map unique strings to values and store values in catvec as doubles
   for(size_t strIdx = 0; strIdx < n; ++strIdx) {
-
-    //If the string is not NaN ...
-    if(!datadefs::isNAN_STR(strvec[strIdx])) {
-      map<string,num_t>::iterator it;
-
-      //Try to find the string in the map. If it's not found, extend the map...
-      it = mapping.find(strvec[strIdx]);
-      if(it == mapping.end()) {
-        mapping.insert(pair<string,num_t>(strvec[strIdx],val));
-        backMapping.insert(pair<num_t,string>(val,strvec[strIdx]));
-        catvec[strIdx] = val;
-        val = static_cast<num_t>(mapping.size());
-      } else {
-        catvec[strIdx] = it->second;
-      }
-
-    } else {    //If the string is defined to NaN, however...
-      catvec[strIdx] = datadefs::NUM_NAN;
-    }
+  
+  //If the string is not NaN ...
+  if(!datadefs::isNAN_STR(strvec[strIdx])) {
+  map<string,num_t>::iterator it;
+  
+  //Try to find the string in the map. If it's not found, extend the map...
+  it = mapping.find(strvec[strIdx]);
+  if(it == mapping.end()) {
+  mapping.insert(pair<string,num_t>(strvec[strIdx],val));
+  backMapping.insert(pair<num_t,string>(val,strvec[strIdx]));
+  catvec[strIdx] = val;
+  val = static_cast<num_t>(mapping.size());
+  } else {
+  catvec[strIdx] = it->second;
   }
-
-}
+  
+  } else {    //If the string is defined to NaN, however...
+  catvec[strIdx] = datadefs::NUM_NAN;
+  }
+  }
+  
+  }
+*/
 
 void utils::sortDataAndMakeRef(const bool isIncreasingOrder,
 			       vector<num_t>& data,
@@ -426,7 +430,7 @@ num_t utils::numericalFeatureSplitsNumericalTarget(const vector<num_t>& tv,
   return(DI_best);
 }
 
-num_t utils::numericalFeatureSplitsCategoricalTarget(const vector<num_t>& tv,
+num_t utils::numericalFeatureSplitsCategoricalTarget(const vector<cat_t>& tv,
 						     const vector<num_t>& fv,
 						     const size_t minSamples,
 						     size_t& splitIdx) {
@@ -435,7 +439,7 @@ num_t utils::numericalFeatureSplitsCategoricalTarget(const vector<num_t>& tv,
   size_t n_left = 0;
   size_t n_right = n_tot;
  
-  unordered_map<num_t,size_t> freq_right(n_tot);
+  unordered_map<cat_t,size_t> freq_right(n_tot);
   size_t sf_right = 0;
   
   for ( size_t i = 0; i < n_tot; ++i ) {
@@ -444,7 +448,7 @@ num_t utils::numericalFeatureSplitsCategoricalTarget(const vector<num_t>& tv,
   
   size_t sf_tot = sf_right;
   
-  unordered_map<num_t,size_t> freq_left(n_tot);
+  unordered_map<cat_t,size_t> freq_left(n_tot);
   size_t sf_left = 0;
 
   num_t DI_best = 0.0;
@@ -481,12 +485,12 @@ num_t utils::numericalFeatureSplitsCategoricalTarget(const vector<num_t>& tv,
   
 }
 
-num_t utils::categoricalFeatureSplitsNumericalTarget2(const vector<num_t>& tv,
-						      const vector<num_t>& fv,
-						      const size_t minSamples,
-						      const vector<num_t>& catOrder,
-						      unordered_map<num_t,vector<size_t> >& fmap_left,
-						      unordered_map<num_t,vector<size_t> >& fmap_right) {
+num_t utils::categoricalFeatureSplitsNumericalTarget(const vector<num_t>& tv,
+						     const vector<cat_t>& fv,
+						     const size_t minSamples,
+						     const vector<cat_t>& catOrder,
+						     unordered_map<cat_t,vector<size_t> >& fmap_left,
+						     unordered_map<cat_t,vector<size_t> >& fmap_right) {
   
   fmap_left.clear();
   fmap_left.rehash(2*catOrder.size());
@@ -513,7 +517,7 @@ num_t utils::categoricalFeatureSplitsNumericalTarget2(const vector<num_t>& tv,
   
   for ( size_t i = 0; i < catOrder.size(); ++i ) {
     
-    unordered_map<num_t,vector<size_t> >::const_iterator it( fmap_right.begin() );
+    unordered_map<cat_t,vector<size_t> >::const_iterator it( fmap_right.begin() );
 
     assert( it != fmap_right.end() );
 
@@ -556,12 +560,12 @@ num_t utils::categoricalFeatureSplitsNumericalTarget2(const vector<num_t>& tv,
   
 }
 
-num_t utils::categoricalFeatureSplitsCategoricalTarget2(const vector<num_t>& tv,
-							const vector<num_t>& fv,
-							const size_t minSamples,
-							const vector<num_t>& catOrder,
-							unordered_map<num_t,vector<size_t> >& fmap_left,
-							unordered_map<num_t,vector<size_t> >& fmap_right) {
+num_t utils::categoricalFeatureSplitsCategoricalTarget(const vector<cat_t>& tv,
+						       const vector<cat_t>& fv,
+						       const size_t minSamples,
+						       const vector<cat_t>& catOrder,
+						       unordered_map<cat_t,vector<size_t> >& fmap_left,
+						       unordered_map<cat_t,vector<size_t> >& fmap_right) {
 
   fmap_left.clear();
   fmap_left.rehash(2*catOrder.size());
@@ -578,8 +582,8 @@ num_t utils::categoricalFeatureSplitsCategoricalTarget2(const vector<num_t>& tv,
   size_t sf_right = 0;
   size_t sf_left = 0;
 
-  unordered_map<num_t,size_t> freq_left(catOrder.size());
-  unordered_map<num_t,size_t> freq_right(catOrder.size());
+  unordered_map<cat_t,size_t> freq_left(catOrder.size());
+  unordered_map<cat_t,size_t> freq_right(catOrder.size());
 
   for( size_t i = 0; i < n_tot; ++i ) {
     math::incrementSquaredFrequency(tv[i], freq_right, sf_right);
@@ -591,7 +595,7 @@ num_t utils::categoricalFeatureSplitsCategoricalTarget2(const vector<num_t>& tv,
 
   for ( size_t i = 0; i < catOrder.size(); ++i ) {
 
-    unordered_map<num_t,vector<size_t> >::const_iterator it( fmap_right.find(catOrder[i]) );
+    unordered_map<cat_t,vector<size_t> >::const_iterator it( fmap_right.find(catOrder[i]) );
 
     assert( it != fmap_right.end() );
 
@@ -649,211 +653,3 @@ num_t utils::categoricalFeatureSplitsCategoricalTarget2(const vector<num_t>& tv,
 
 }
 
-
-/*
-  num_t utils::categoricalFeatureSplitsNumericalTarget(const vector<num_t>& tv,
-  const vector<num_t>& fv,
-  const size_t minSamples,
-  map<num_t,vector<size_t> >& fmap_left,
-  map<num_t,vector<size_t> >& fmap_right) {
-  
-  
-  fmap_left.clear();
-  
-  size_t n_tot = 0;
-  datadefs::map_data(fv,fmap_right,n_tot);
-  size_t n_right = n_tot;
-  size_t n_left = 0;
-  
-  num_t mu_tot = math::mean(tv);
-  num_t mu_right = mu_tot;
-  num_t mu_left = 0.0;
-  
-  num_t DI_best = 0.0;
-  
-  while ( fmap_right.size() > 1 ) {
-  
-  map<num_t,vector<size_t> >::iterator it_best( fmap_right.end() );
-  
-  // We test each category one by one and see if the fitness becomes improved
-  for ( map<num_t,vector<size_t> >::iterator it( fmap_right.begin() ); it != fmap_right.end() ; ++it ) {
-  
-  //cout << "Testing to split with feature '" << treedata->getRawFeatureData(featureIdx,it->first) << "'" << endl;
-  
-  // Take samples from right and put them left
-  //cout << "from right to left: [";
-  size_t n_left_c = n_left;
-  size_t n_right_c = n_right;
-  num_t mu_left_c = mu_left;
-  num_t mu_right_c = mu_right;
-  
-  for(size_t i = 0; i < it->second.size(); ++i) {
-  //cout << " " << it->second[i];
-  
-  ++n_left_c;
-  --n_right_c;
-  mu_left_c  += ( tv[ it->second[i] ] - mu_left_c  ) / n_left_c;
-  mu_right_c -= ( tv[ it->second[i] ] - mu_right_c ) / n_right_c;
-  
-  }
-  //cout << " ]" << endl;
-  
-  //If the split reduces impurity even further, save the point
-  num_t DI = math::deltaImpurity_regr(mu_tot,n_tot,mu_left_c,n_left_c,mu_right_c,n_right_c);
-  if ( DI > DI_best ) { //&& n_left >= minSamples && n_right >= minSamples )
-  
-  it_best = it;
-  DI_best = DI;
-  }
-  
-  }
-  
-  // After testing all categories,
-  // if we couldn't find any split that would reduce impurity,
-  // we'll exit the loop
-  if ( it_best == fmap_right.end() ) {
-  //cout << " -- STOP --" << endl;
-  break;
-  }
-  
-  // Otherwise move samples from right to left
-  for(size_t i = 0; i < it_best->second.size(); ++i) {
-  //cout << " " << it->second[i];
-  
-  ++n_left;
-  --n_right;
-  mu_left  += ( tv[ it_best->second[i] ] - mu_left  ) / n_left;
-  mu_right -= ( tv[ it_best->second[i] ] - mu_right ) / n_right;
-  
-  }
-  
-  // Update the maps
-  fmap_left.insert( *it_best );
-  fmap_right.erase( it_best->first );
-  
-  }
-  
-  assert( n_left + n_right == n_tot );
-  
-  if( n_left < minSamples || n_right < minSamples ) {
-  DI_best = 0.0;
-  }
-  
-  return(DI_best);
-  
-  }
-*/
-
-/*
-  num_t utils::categoricalFeatureSplitsCategoricalTarget(const vector<num_t>& tv,
-  const vector<num_t>& fv,
-  const size_t minSamples,
-  map<num_t,vector<size_t> >& fmap_left,
-  map<num_t,vector<size_t> >& fmap_right) {
-  
-  fmap_left.clear();
-  
-  size_t n_tot = 0;
-  datadefs::map_data(fv,fmap_right,n_tot);
-  size_t n_right = n_tot;
-  size_t n_left = 0;
-  
-  map<num_t,size_t> freq_left,freq_right;
-  size_t sf_left = 0;
-  size_t sf_right = 0;
-  
-  for( size_t i = 0; i < n_tot; ++i ) {
-  math::incrementSquaredFrequency(tv[i], freq_right, sf_right);
-  }
-  
-  size_t sf_tot = sf_right;
-  
-  num_t DI_best = 0.0;
-  
-  while ( fmap_right.size() > 1 ) {
-  
-  map<num_t,vector<size_t> >::iterator it_best( fmap_right.end() );
-  //cout << "There are " << fmap_right.size() << " categories on right" << endl;
-  
-  // We test each category one by one and see if the fitness becomes improved
-  for ( map<num_t,vector<size_t> >::iterator it( fmap_right.begin() ); it != fmap_right.end() ; ++it ) {
-  
-  //cout << "Testing to split with feature '" << treedata->getRawFeatureData(featureIdx,it->first) << "'" << endl;
-  
-  // Take samples from right and put them left
-  //cout << "from right to left: [";
-  for(size_t i = 0; i < it->second.size(); ++i) {
-  
-  // Add sample to left
-  ++n_left;
-  math::incrementSquaredFrequency(tv[ it->second[i] ], freq_left, sf_left);
-  
-  // Remove sample from right
-  --n_right;
-  math::decrementSquaredFrequency(tv[ it->second[i] ], freq_right, sf_right);
-  
-  }
-  //cout << " ]" << endl;
-  
-  //If the impurity becomes reduced even further, save the point
-  num_t DI = math::deltaImpurity_class(sf_tot,n_tot,sf_left,n_left,sf_right,n_right);
-  if ( DI > DI_best ) { //&& n_left >= minSamples && n_right >= minSamples )
-  
-  it_best = it;
-  DI_best = DI;
-  }
-  
-  // Take samples from left and put them right
-  //cout << "From left to right: [";
-  for(size_t i = 0; i < it->second.size(); ++i) {
-  
-  // Add sample to right
-  ++n_right;
-  math::incrementSquaredFrequency(tv[ it->second[i] ], freq_right, sf_right);
-  
-  // Remove sample from left
-  --n_left;
-  math::decrementSquaredFrequency(tv[ it->second[i] ], freq_left, sf_left);
-  
-  }
-  //cout << " ]" << endl;
-  
-  }
-  
-  // After testing all categories,
-  // if we couldn't find any split that would reduce impurity,
-  // we'll exit the loop
-  if ( it_best == fmap_right.end() ) {
-  //cout << " -- STOP --" << endl;
-  break;
-  }
-  
-  // Take samples from right and put them left
-  for(size_t i = 0; i < it_best->second.size(); ++i) {
-  
-  // Add sample to left
-  ++n_left;
-  math::incrementSquaredFrequency(tv[ it_best->second[i] ], freq_left, sf_left);
-  
-  // Remove sample from right
-  --n_right;
-  math::decrementSquaredFrequency(tv[ it_best->second[i] ], freq_right, sf_right);
-  
-  }
-  
-  // Update the maps
-  fmap_left.insert( *it_best );
-  fmap_right.erase( it_best->first );
-  
-  }
-  
-  assert( n_left + n_right == n_tot );
-  
-  if( n_left < minSamples || n_right < minSamples ) {
-  DI_best = 0.0;
-  }
-  
-  return(DI_best);
-  
-  }
-*/

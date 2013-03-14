@@ -10,12 +10,14 @@ using namespace std;
 using datadefs::num_t;
 
 Node::Node():
-  trainPrediction_(datadefs::NUM_NAN),
-  rawTrainPrediction_(datadefs::STR_NAN),
-  trainData_(0),
   leftChild_(NULL),
   rightChild_(NULL),
   missingChild_(NULL) {
+
+  prediction_.type = Feature::Type::UNKNOWN;
+  prediction_.numTrainPrediction = datadefs::NUM_NAN;
+  prediction_.catTrainPrediction = datadefs::STR_NAN;
+
 }
 
 Node::~Node() { }
@@ -98,7 +100,7 @@ Node* Node::percolate(Treedata* testData, const size_t sampleIdx, const size_t s
   if ( splitter_.type == Feature::Type::NUM ) {
     num_t data;
     if ( scrambleFeatureIdx != featureIdx ) {
-      data = testData->getFeatureData(featureIdx,sampleIdx);
+      data = testData->feature(featureIdx)->getNumData(sampleIdx);
     } else {
       cerr << "Randomized prediction is not available!" << endl;
       exit(1);
@@ -116,15 +118,15 @@ Node* Node::percolate(Treedata* testData, const size_t sampleIdx, const size_t s
 	      this->rightChild()->percolate(testData,sampleIdx,scrambleFeatureIdx) );
     }
   } else if ( splitter_.type == Feature::Type::CAT ){
-    string data;
+    cat_t data;
     if ( scrambleFeatureIdx != featureIdx ) {
-      data = testData->getRawFeatureData(featureIdx,sampleIdx);
+      data = testData->feature(featureIdx)->getCatData(sampleIdx);
     } else {
       cerr << "randomized prediction is not available!" << endl;
       exit(1);
       // data = testData->getRawFeatureData(featureIdx, random_->integer() % testData->nSamples() );
     }
-    if ( datadefs::isNAN_STR(data) ) { 
+    if ( datadefs::isNAN(data) ) { 
       if ( this->missingChild() ) {
 	return( this->missingChild()->percolate(testData,sampleIdx,scrambleFeatureIdx) );
       } else {
@@ -164,27 +166,27 @@ Node* Node::missingChild() const {
   return( missingChild_ );
 }
 
-vector<Node*> Node::getChildLeaves() {
+vector<Node*> Node::getSubTreeLeaves() {
 
   vector<Node*> leaves;
-  this->recursiveGetChildLeaves(leaves);
+  this->recursiveGetSubTreeLeaves(leaves);
 
   return(leaves);
 
 }
 
-void Node::recursiveGetChildLeaves(vector<Node*>& leaves) {
+void Node::recursiveGetSubTreeLeaves(vector<Node*>& leaves) {
 
   if ( ! this->hasChildren() ) {
     leaves.push_back(this);
     return;
   }
 
-  this->leftChild()->recursiveGetChildLeaves(leaves);
-  this->rightChild()->recursiveGetChildLeaves(leaves);
+  this->leftChild()->recursiveGetSubTreeLeaves(leaves);
+  this->rightChild()->recursiveGetSubTreeLeaves(leaves);
   
   if ( this->missingChild() ) {
-    this->missingChild()->recursiveGetChildLeaves(leaves);
+    this->missingChild()->recursiveGetSubTreeLeaves(leaves);
   }
   
 }
@@ -194,7 +196,14 @@ void Node::recursiveGetChildLeaves(vector<Node*>& leaves) {
  */
 void Node::recursiveWriteTree(string& traversal, ofstream& toFile) {
 
-  toFile << "NODE=" << traversal << ",PRED=" << rawTrainPrediction_;
+  assert(prediction_.type != Feature::Type::UNKNOWN);
+
+  toFile << "NODE=" << traversal << ",PRED=";
+  if ( prediction_.type == Feature::Type::NUM ) {
+    toFile << prediction_.numTrainPrediction;
+  } else {
+    toFile << prediction_.catTrainPrediction;
+  }
   
   if ( this->hasChildren() ) {
     
@@ -217,7 +226,11 @@ void Node::recursiveWriteTree(string& traversal, ofstream& toFile) {
     if ( this->missingChild() ) { toFile << ",M=M"; }
 
     toFile << ",DATA=\"";
-    utils::write(toFile,trainData_.begin(),trainData_.end(),',');
+    if ( prediction_.type == Feature::Type::NUM ) {
+      utils::write(toFile,prediction_.numTrainData.begin(),prediction_.numTrainData.end(),',');
+    } else {
+      utils::write(toFile,prediction_.catTrainData.begin(),prediction_.catTrainData.end(),',');
+    }
     toFile << "\"" << endl;
 
     string traversalLeft = traversal;
@@ -237,38 +250,41 @@ void Node::recursiveWriteTree(string& traversal, ofstream& toFile) {
     
   } else {
     toFile << ",DATA=\"";
-    utils::write(toFile,trainData_.begin(),trainData_.end(),',');
+    if ( prediction_.type == Feature::Type::NUM ) {
+      utils::write(toFile,prediction_.numTrainData.begin(),prediction_.numTrainData.end(),',');
+    } else {
+      utils::write(toFile,prediction_.catTrainData.begin(),prediction_.catTrainData.end(),',');
+    }
     toFile << "\"" << endl;
   }
 }
 
-void Node::setTrainPrediction(const num_t trainPrediction, const string& rawTrainPrediction) {
-  trainPrediction_ = trainPrediction;
-  rawTrainPrediction_ = rawTrainPrediction;
+void Node::setNumTrainPrediction(const num_t& numTrainPrediction) {
+  assert(prediction_.type == Feature::Type::UNKNOWN);
+  prediction_.type = Feature::Type::NUM;
+  prediction_.numTrainPrediction = numTrainPrediction;
 }
 
-// !! Documentation: just your usual accessor, returning a copy of
-// !! trainPrediction_.
-num_t Node::getTrainPrediction() const {
-  assert( !datadefs::isNAN(trainPrediction_) );
-  return( trainPrediction_ );
+void Node::setCatTrainPrediction(const cat_t& catTrainPrediction) {
+  assert(prediction_.type == Feature::Type::UNKNOWN);
+  prediction_.type = Feature::Type::CAT;
+  prediction_.catTrainPrediction = catTrainPrediction;
 }
 
-void Node::setTrainData(const vector<num_t>& trainData) {
-  trainData_ = trainData;
+
+void Node::setNumTrainData(const vector<num_t>& numTrainData) {
+  assert(prediction_.type == Feature::Type::NUM);
+  prediction_.numTrainData = numTrainData;
 }
 
-void Node::addTrainData(const num_t trainData) {
-  trainData_.push_back(trainData);
+void Node::setCatTrainData(const vector<cat_t>& catTrainData) {
+  assert(prediction_.type == Feature::Type::CAT);
+  prediction_.catTrainData = catTrainData;
 }
 
-vector<num_t> Node::getTrainData() const {
-  return( trainData_ );
-}
-
-string Node::getRawTrainPrediction() const {
-  assert( !datadefs::isNAN_STR(rawTrainPrediction_) );
-  return( rawTrainPrediction_ );
+const Node::Prediction& Node::getPrediction() {
+  assert(prediction_.type != Feature::Type::UNKNOWN);
+  return( prediction_ );
 }
 
 void Node::recursiveNodeSplit(Treedata* treeData,
@@ -293,34 +309,35 @@ void Node::recursiveNodeSplit(Treedata* treeData,
     cout << " " << nLeaves << endl;
   }
 
-  splitCache.trainData = treeData->getFeatureData(targetIdx,sampleIcs);
+  //splitCache.trainData = treeData->getFeatureData(targetIdx,sampleIcs);
   splitCache.nSamples = sampleIcs.size();
 
   if ( predictionFunctionType == MEAN ) {
-    num_t trainPrediction = math::mean(splitCache.trainData);
-    string rawTrainPrediction = utils::num2str(trainPrediction);
-    this->setTrainPrediction( trainPrediction, rawTrainPrediction );
+    num_t numTrainPrediction = math::mean(treeData->feature(targetIdx)->getNumData(sampleIcs));
+    this->setNumTrainPrediction( numTrainPrediction);
+    assert(!datadefs::isNAN(prediction_.numTrainPrediction));
   } else if ( predictionFunctionType == MODE ) {
-    num_t trainPrediction = math::mode<num_t>(splitCache.trainData);
-    string rawTrainPrediction = treeData->getRawFeatureData(targetIdx,trainPrediction);
-    this->setTrainPrediction( trainPrediction, rawTrainPrediction );
+    cat_t catTrainPrediction = math::mode(treeData->feature(targetIdx)->getCatData(sampleIcs));
+    this->setCatTrainPrediction( catTrainPrediction );
+    assert(!datadefs::isNAN(prediction_.catTrainPrediction));
   } else if ( predictionFunctionType == GAMMA ) {
-    num_t trainPrediction = math::gamma(splitCache.trainData, treeData->feature(targetIdx)->nCategories() );
-    string rawTrainPrediction = utils::num2str(trainPrediction);
-    this->setTrainPrediction( trainPrediction, rawTrainPrediction );
+    num_t numTrainPrediction = math::gamma(treeData->feature(targetIdx)->getNumData(sampleIcs), treeData->feature(targetIdx)->categories().size() );
+    this->setNumTrainPrediction( numTrainPrediction );
+    assert(!datadefs::isNAN(prediction_.numTrainPrediction));
   } else {
     cerr << "Node::recursiveNodeSplit() -- unknown prediction function!" << endl;
     exit(1);
   }
 
-  assert( !datadefs::isNAN(trainPrediction_) );
-  assert( !datadefs::isNAN_STR(rawTrainPrediction_) );
-
   assert( *nLeaves <= forestOptions->nMaxLeaves );
 
   if ( splitCache.nSamples < 2 * forestOptions->nodeSize || *nLeaves == forestOptions->nMaxLeaves || childIdx + 1 >= children.size() ) {
-    if ( forestOptions->forestType ==forest_t::QRF ) {
-      trainData_ = splitCache.trainData;
+    if ( forestOptions->forestType == forest_t::QRF ) {
+      if ( treeData->feature(targetIdx)->isNumerical() ) {
+	this->setNumTrainData( treeData->feature(targetIdx)->getNumData(sampleIcs) );
+      } else {
+	this->setCatTrainData( treeData->feature(targetIdx)->getCatData(sampleIcs) );
+      }
     }
     return;
   }
@@ -368,7 +385,11 @@ void Node::recursiveNodeSplit(Treedata* treeData,
         
   if ( !foundSplit ) {
     if ( forestOptions->forestType == forest_t::QRF ) {
-      trainData_ = splitCache.trainData;
+      if ( treeData->feature(targetIdx)->isNumerical() ) {
+        this->setNumTrainData( treeData->feature(targetIdx)->getNumData(sampleIcs) );
+      } else {
+        this->setCatTrainData( treeData->feature(targetIdx)->getCatData(sampleIcs) );
+      }
     }
     return;
   }
@@ -492,15 +513,15 @@ bool Node::regularSplitterSeek(Treedata* treeData,
 
     } else if ( newSplitFeature->isCategorical() ) {
       
-      unordered_set<num_t> uniqueCats(sampleIcs.size());
+      unordered_set<cat_t> uniqueCats(sampleIcs.size());
       
       for ( size_t i = 0; i < splitCache.newSampleIcs_right.size(); ++i ) {
-	uniqueCats.insert(treeData->feature(splitCache.newSplitFeatureIdx)->data[splitCache.newSampleIcs_right[i]]);
+	uniqueCats.insert(treeData->feature(splitCache.newSplitFeatureIdx)->getCatData(splitCache.newSampleIcs_right[i]));
       }
       
-      vector<num_t> catOrder(uniqueCats.size());
+      vector<cat_t> catOrder(uniqueCats.size());
       size_t iter = 0;
-      for ( unordered_set<num_t>::const_iterator it(uniqueCats.begin()); it != uniqueCats.end(); ++it ) {
+      for ( unordered_set<cat_t>::const_iterator it(uniqueCats.begin()); it != uniqueCats.end(); ++it ) {
 	catOrder[iter] = *it;
 	++iter;
       }
@@ -561,14 +582,7 @@ bool Node::regularSplitterSeek(Treedata* treeData,
 
   } else if ( splitFeature->isCategorical() ) {
     
-    unordered_set<string> rawSplitValues_left;
-
-    for ( unordered_set<num_t>::const_iterator it(splitCache.splitValues_left.begin()); it != splitCache.splitValues_left.end(); ++it ) {
-      rawSplitValues_left.insert( treeData->getRawFeatureData(splitCache.splitFeatureIdx,*it) );
-    }
-
-
-    this->setSplitter(splitFeature->name(),rawSplitValues_left,children[childIdx],children[childIdx+1]);
+    this->setSplitter(splitFeature->name(),splitCache.splitValues_left,children[childIdx],children[childIdx+1]);
 
   } else if ( splitFeature->isTextual() ) {
     

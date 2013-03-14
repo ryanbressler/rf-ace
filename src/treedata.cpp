@@ -26,11 +26,11 @@ Treedata::Treedata(const vector<Feature>& features, const bool useContrasts, con
   // 4*nFeatures results in a reasonable max load factor of 0.5
   name2idx_.rehash(4*nFeatures);
 
-  size_t nSamples = features_[0].data.size();
+  size_t nSamples = this->nSamples();
 
   for ( size_t featureIdx = 0; featureIdx < nFeatures; ++featureIdx ) {
 
-    assert( features_[featureIdx].data.size() == nSamples );
+    //assert( features_[featureIdx].data.size() == nSamples );
     name2idx_[ features_[featureIdx].name() ] = featureIdx;
   }
 
@@ -236,7 +236,7 @@ void Treedata::readAFM(const string& fileName, const char dataDelimiter, const c
 	  num_t val; reader >> val;
 	  features_[j].setNumSampleValue(i,val);
 	} else if ( features_[j].isCategorical() ) {
-	  string str; reader >> str;
+	  cat_t str; reader >> str;
 	  features_[j].setCatSampleValue(i,str);
 	} else if ( features_[j].isTextual() ) {
 	  string str; reader >> str;
@@ -410,7 +410,7 @@ void Treedata::readARFF(const string& fileName) {
 	num_t val; reader >> val;
 	features_[i].setNumSampleValue(sampleIdx,val);
       } else {
-	string str; reader >> str;
+	cat_t str; reader >> str;
 	features_[i].setCatSampleValue(sampleIdx,str);
       }
     }
@@ -470,8 +470,8 @@ num_t Treedata::pearsonCorrelation(size_t featureIdx1, size_t featureIdx2) {
   this->separateMissingSamples(featureIdx1,sampleIcs,missingIcs);
   this->separateMissingSamples(featureIdx2,sampleIcs,missingIcs);
 
-  vector<num_t> featureData1 = this->getFeatureData(featureIdx1,sampleIcs);
-  vector<num_t> featureData2 = this->getFeatureData(featureIdx2,sampleIcs);
+  vector<num_t> featureData1 = this->feature(featureIdx1)->getNumData(sampleIcs);
+  vector<num_t> featureData2 = this->feature(featureIdx2)->getNumData(sampleIcs);
 
   return( math::pearsonCorrelation(featureData1,featureData2) );
 
@@ -524,22 +524,36 @@ void Treedata::permuteContrasts(distributions::Random* random) {
     
     this->separateMissingSamples(i,sampleIcs,missingIcs);
 
-    vector<num_t> filteredData = this->getFeatureData(i,sampleIcs);
-    
-    utils::permute(filteredData,random);
+    if ( this->feature(i)->isNumerical() ) {
 
-    for ( size_t j = 0; j < sampleIcs.size(); ++j ) {
-      features_[i].data[ sampleIcs[j] ] = filteredData[j];
+      vector<num_t> filteredData = this->feature(i)->getNumData(sampleIcs);
+      utils::permute(filteredData,random);
+      for ( size_t j = 0; j < sampleIcs.size(); ++j ) {
+	features_[i].setNumSampleValue(sampleIcs[j],filteredData[j]);
+      }
+
+    } else {
+
+      vector<cat_t> filteredData = this->feature(i)->getCatData(sampleIcs);
+      utils::permute(filteredData,random);
+      for ( size_t j = 0; j < sampleIcs.size(); ++j ) {
+	features_[i].setCatSampleValue(sampleIcs[j],filteredData[j]);
+      }
+
     }
-
+    
   }
-
+  
 }
 
 size_t Treedata::nRealSamples(const size_t featureIdx) { 
   
-  size_t nRealSamples;
-  datadefs::countRealValues( features_[featureIdx].data, nRealSamples );
+  size_t nRealSamples = 0;
+  for ( size_t i = 0; i < Treedata::nSamples(); ++i ) {
+    if ( !this->feature(featureIdx)->isMissing(i) ) {
+      ++nRealSamples;
+    }
+  }
   return( nRealSamples );
 
 }
@@ -571,8 +585,8 @@ void Treedata::bootstrapFromRealSamples(distributions::Random* random,
 
   //First we collect all indices that correspond to real samples
   vector<size_t> allIcs;
-  for(size_t i = 0; i < this->nSamples(); ++i) {
-    if(!datadefs::isNAN(features_[featureIdx].data[i])) {
+  for ( size_t i = 0; i < this->nSamples(); ++i) {
+    if ( !this->feature(featureIdx)->isMissing(i) ) {
       allIcs.push_back(i);
     }
   }
@@ -612,36 +626,41 @@ void Treedata::bootstrapFromRealSamples(distributions::Random* random,
 }
 
 
-vector<num_t> Treedata::getFeatureData(size_t featureIdx) {
+/*
+  vector<num_t> Treedata::getFeatureData(size_t featureIdx) {
   
   vector<num_t> data( features_[featureIdx].data.size() );
-
+  
   for(size_t i = 0; i < Treedata::nSamples(); ++i) {
-    data[i] = features_[featureIdx].data[i];
+  data[i] = features_[featureIdx].data[i];
   }
-
+  
   return( data );
-}
+  }
+*/
 
-
-num_t Treedata::getFeatureData(size_t featureIdx, const size_t sampleIdx) {
-
+/*
+  num_t Treedata::getFeatureData(size_t featureIdx, const size_t sampleIdx) {
+  
   num_t data = features_[featureIdx].data[sampleIdx];
-
+  
   return( data ); 
-}
+  }
+*/
 
-vector<num_t> Treedata::getFeatureData(size_t featureIdx, const vector<size_t>& sampleIcs) {
+/*
+  vector<num_t> Treedata::getFeatureData(size_t featureIdx, const vector<size_t>& sampleIcs) {
   
   vector<num_t> data(sampleIcs.size());
   
   for(size_t i = 0; i < sampleIcs.size(); ++i) {
-    data[i] = features_[featureIdx].data[sampleIcs[i]];
+  data[i] = features_[featureIdx].data[sampleIcs[i]];
   }
-
+  
   return( data );
-
-}
+  
+  }
+*/
   
 void Treedata::separateMissingSamples(const size_t featureIdx,
 				      vector<size_t>& sampleIcs,
@@ -654,21 +673,11 @@ void Treedata::separateMissingSamples(const size_t featureIdx,
 
   vector<size_t>::const_iterator it(sampleIcs.begin());
 
-  if ( this->feature(featureIdx)->isTextual() ) {
-    for ( ; it != sampleIcs.end(); ++it ) {
-      if ( this->feature(featureIdx)->hashSet[*it].size() > 0 ) {
-	sampleIcs[nReal++] = *it;
-      } else {
-	missingIcs[nMissing++] = *it;
-      }
-    } 
-  } else {
-    for ( ; it != sampleIcs.end(); ++it ) {
-      if ( ! datadefs::isNAN( this->feature(featureIdx)->data[*it] ) ) {
-	sampleIcs[nReal++] = *it;
-      } else {
-	missingIcs[nMissing++] = *it;
-      }
+  for ( ; it != sampleIcs.end(); ++it ) {
+    if ( !this->feature(featureIdx)->isMissing(*it) ) {
+      sampleIcs[nReal++] = *it;
+    } else {
+      missingIcs[nMissing++] = *it;
     }
   }
 
@@ -677,8 +686,6 @@ void Treedata::separateMissingSamples(const size_t featureIdx,
 
 }
 
-
-// !! Correctness, Inadequate Abstraction: kill this method with fire. Refactor, REFACTOR, _*REFACTOR*_.
 num_t Treedata::numericalFeatureSplit(const size_t targetIdx,
 				      const size_t featureIdx,
 				      const size_t minSamples,
@@ -690,16 +697,13 @@ num_t Treedata::numericalFeatureSplit(const size_t targetIdx,
 
   sampleIcs_left.clear();
 
-  vector<num_t> fv = this->getFeatureData(featureIdx,sampleIcs_right);
-  vector<num_t> tv = this->getFeatureData(targetIdx,sampleIcs_right);
+  vector<num_t> fv = this->feature(featureIdx)->getNumData(sampleIcs_right);
 
   vector<size_t> sortIcs = utils::range(sampleIcs_right.size());
   utils::sortDataAndMakeRef(true,fv,sortIcs);
-  utils::sortFromRef(tv,sortIcs);
   utils::sortFromRef(sampleIcs_right,sortIcs);
 
   size_t n_tot = fv.size();
-  //size_t n_right = n_tot;
   size_t n_left = 0;
 
   if(n_tot < 2 * minSamples) {
@@ -712,9 +716,15 @@ num_t Treedata::numericalFeatureSplit(const size_t targetIdx,
   //If the target is numerical, we use the incremental squared error formula
   if ( this->feature(targetIdx)->isNumerical() ) {
 
+    vector<num_t> tv = this->feature(targetIdx)->getNumData(sampleIcs_right);
+    //utils::sortFromRef(tv,sortIcs);
+
     DI_best = utils::numericalFeatureSplitsNumericalTarget(tv,fv,minSamples,bestSplitIdx);
 
   } else { // Otherwise we use the iterative gini index formula to update impurity scores while we traverse "right"
+
+    vector<cat_t> tv = this->feature(targetIdx)->getCatData(sampleIcs_right);
+    //utils::sortFromRef(tv,sortIcs);
 
     DI_best = utils::numericalFeatureSplitsCategoricalTarget(tv,fv,minSamples,bestSplitIdx);
 
@@ -747,18 +757,17 @@ num_t Treedata::numericalFeatureSplit(const size_t targetIdx,
 // !! Inadequate Abstraction: Refactor me.
 num_t Treedata::categoricalFeatureSplit(const size_t targetIdx,
 					const size_t featureIdx,
-					const vector<num_t>& catOrder,
+					const vector<cat_t>& catOrder,
 					const size_t minSamples,
 					vector<size_t>& sampleIcs_left,
 					vector<size_t>& sampleIcs_right,
-					unordered_set<num_t>& splitValues_left) {
+					unordered_set<cat_t>& splitValues_left) {
 
   num_t DI_best = 0.0;
 
   sampleIcs_left.clear();
 
-  vector<num_t> fv = this->getFeatureData(featureIdx,sampleIcs_right);
-  vector<num_t> tv = this->getFeatureData(targetIdx,sampleIcs_right);
+  vector<cat_t> fv = this->feature(featureIdx)->getCatData(sampleIcs_right);
 
   size_t n_tot = fv.size();
 
@@ -767,16 +776,20 @@ num_t Treedata::categoricalFeatureSplit(const size_t targetIdx,
     return( DI_best );
   }
   
-  unordered_map<num_t,vector<size_t> > fmap_right(catOrder.size());
-  unordered_map<num_t,vector<size_t> > fmap_left(catOrder.size());
+  unordered_map<cat_t,vector<size_t> > fmap_right(catOrder.size());
+  unordered_map<cat_t,vector<size_t> > fmap_left(catOrder.size());
 
   if ( this->feature(targetIdx)->isNumerical() ) {
 
-    DI_best = utils::categoricalFeatureSplitsNumericalTarget2(tv,fv,minSamples,catOrder,fmap_left,fmap_right);
+    vector<num_t> tv = this->feature(targetIdx)->getNumData(sampleIcs_right);
+
+    DI_best = utils::categoricalFeatureSplitsNumericalTarget(tv,fv,minSamples,catOrder,fmap_left,fmap_right);
 
   } else {
 
-    DI_best = utils::categoricalFeatureSplitsCategoricalTarget2(tv,fv,minSamples,catOrder,fmap_left,fmap_right);
+    vector<cat_t> tv = this->feature(targetIdx)->getCatData(sampleIcs_right);
+
+    DI_best = utils::categoricalFeatureSplitsCategoricalTarget(tv,fv,minSamples,catOrder,fmap_left,fmap_right);
 
   }
 
@@ -792,7 +805,7 @@ num_t Treedata::categoricalFeatureSplit(const size_t targetIdx,
   splitValues_left.clear();
   splitValues_left.rehash(2*fmap_right.size());
   size_t iter = 0;
-  for ( unordered_map<num_t,vector<size_t> >::const_iterator it(fmap_left.begin()); it != fmap_left.end(); ++it ) {
+  for ( unordered_map<cat_t,vector<size_t> >::const_iterator it(fmap_left.begin()); it != fmap_left.end(); ++it ) {
     for ( size_t i = 0; i < it->second.size(); ++i ) {
       sampleIcs_left[iter] = sampleIcs[it->second[i]];
       ++iter;
@@ -807,7 +820,7 @@ num_t Treedata::categoricalFeatureSplit(const size_t targetIdx,
   sampleIcs_right.resize(n_tot);
   //unordered_set<num_t> splitValues_right;
   iter = 0;
-  for ( unordered_map<num_t,vector<size_t> >::const_iterator it(fmap_right.begin()); it != fmap_right.end(); ++it ) {
+  for ( unordered_map<cat_t,vector<size_t> >::const_iterator it(fmap_right.begin()); it != fmap_right.end(); ++it ) {
     for ( size_t i = 0; i < it->second.size(); ++i ) {
       sampleIcs_right[iter] = sampleIcs[it->second[i]];
       ++iter;
@@ -847,8 +860,8 @@ num_t Treedata::textualFeatureSplit(const size_t targetIdx,
     num_t mu_tot = 0.0;
 
     for ( size_t i = 0; i < n_tot; ++i ) {
-      unordered_set<uint32_t>& hs = features_[featureIdx].hashSet[sampleIcs_right[i]];
-      num_t x = features_[targetIdx].data[sampleIcs_right[i]];
+      unordered_set<uint32_t> hs = this->feature(featureIdx)->getTxtData(sampleIcs_right[i]);
+      num_t x = this->feature(targetIdx)->getNumData(sampleIcs_right[i]);
       if ( hs.find(hashIdx) != hs.end() ) {
 	sampleIcs_left[n_left++] = sampleIcs_right[i];
 	mu_left += ( x - mu_left ) / n_left;
@@ -863,15 +876,15 @@ num_t Treedata::textualFeatureSplit(const size_t targetIdx,
 
   } else {
 
-    unordered_map<num_t,size_t> freq_left,freq_right,freq_tot(n_tot);
+    unordered_map<cat_t,size_t> freq_left,freq_right,freq_tot(n_tot);
 
     size_t sf_left = 0;
     size_t sf_right = 0;
     size_t sf_tot = 0;
 
     for ( size_t i = 0; i < sampleIcs_right.size(); ++i ) {
-      unordered_set<uint32_t>& hs = features_[featureIdx].hashSet[sampleIcs_right[i]];
-      num_t x = features_[targetIdx].data[sampleIcs_right[i]];
+      unordered_set<uint32_t> hs = this->feature(featureIdx)->getTxtData(sampleIcs_right[i]);
+      cat_t x = this->feature(targetIdx)->getCatData(sampleIcs_right[i]);
       if ( hs.find(hashIdx) != hs.end() ) {
         sampleIcs_left[n_left++] = sampleIcs_right[i];
 	math::incrementSquaredFrequency(x,freq_left,sf_left);
@@ -899,68 +912,25 @@ num_t Treedata::textualFeatureSplit(const size_t targetIdx,
   
 }
 
-
-string Treedata::getRawFeatureData(const size_t featureIdx, const size_t sampleIdx) {
-
-  num_t data = features_[featureIdx].data[sampleIdx];
-
-  return( this->getRawFeatureData(featureIdx,data) );
-    
-}
-
-string Treedata::getRawFeatureData(const size_t featureIdx, const num_t data) {
-  
-  // If the input data is NaN, we return NaN as string 
-  if ( datadefs::isNAN(data) ) {
-    return( datadefs::STR_NAN );
-  }
-  
-  // If input feature is numerical, we just represent the numeric value as string
-  if ( features_[featureIdx].isNumerical() ) {
-    return( utils::num2str(data) );
-  } else {
-    
-    if ( features_[featureIdx].backMapping.find(data) == features_[featureIdx].backMapping.end() ) {
-      cerr << "Treedata::getRawFeatureData() -- unknown value to get" << endl;
-      exit(1);
-    }
-    
-    return( features_[featureIdx].backMapping[data] );
-  }
-  
-}
-
-vector<string> Treedata::getRawFeatureData(const size_t featureIdx) {
-  
-  vector<string> rawData( sampleHeaders_.size() );
-
-  for ( size_t i = 0; i < rawData.size(); ++i ) {
-    rawData[i] = this->getRawFeatureData(featureIdx,i);
-  }
-
-  return( rawData );
-
-}
-
 void Treedata::replaceFeatureData(const size_t featureIdx, const vector<num_t>& featureData) {
 
-  if(featureData.size() != features_[featureIdx].data.size() ) {
+  if(featureData.size() != this->feature(featureIdx)->nSamples() ) {
     cerr << "Treedata::replaceFeatureData(num_t) -- data dimension mismatch" << endl;
     exit(1);
   }
 
-  features_[featureIdx] = Feature( featureData, features_[featureIdx].name() );
+  features_[featureIdx] = Feature( featureData, this->feature(featureIdx)->name() );
 
 }
 
 void Treedata::replaceFeatureData(const size_t featureIdx, const vector<string>& rawFeatureData) {
 
-  if(rawFeatureData.size() != features_[featureIdx].data.size() ) {
+  if(rawFeatureData.size() != this->feature(featureIdx)->nSamples() ) {
     cerr << "Treedata::replaceFeatureData(string) -- data dimension mismatch" << endl;
     exit(1);
   }
-
-  features_[featureIdx] = Feature( rawFeatureData, features_[featureIdx].name() );
+  
+  features_[featureIdx] = Feature( rawFeatureData, this->feature(featureIdx)->name() );
 
 }
 

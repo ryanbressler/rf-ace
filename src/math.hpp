@@ -211,13 +211,14 @@ namespace math {
      Updates the squared frequency by ADDING x_n to the set
      NOTE: NANs will corrupt the data
   */
-  inline void incrementSquaredFrequency(const num_t x_n,
-					unordered_map<num_t,size_t>& freq,
+  template<typename T>
+  inline void incrementSquaredFrequency(const T& x_n,
+					unordered_map<T,size_t>& freq,
 					size_t& sqFreq) {
 
 
     // Check if the value already exists in the frequency map
-    unordered_map<num_t,size_t>::iterator it(freq.find(x_n));
+    typename unordered_map<T,size_t>::iterator it(freq.find(x_n));
     if(it == freq.end()) {
 
       // If not, squared frequency becomes updated by 1
@@ -239,8 +240,9 @@ namespace math {
      from the set
      NOTE: NANs will corrupt the data
   */ 
-  inline void decrementSquaredFrequency(const num_t x_n,
-                                        unordered_map<num_t,size_t>& freq,
+  template<typename T>
+  inline void decrementSquaredFrequency(const T& x_n,
+                                        unordered_map<T,size_t>& freq,
                                         size_t& sqFreq) {
     
     assert( freq.find(x_n) != freq.end() );

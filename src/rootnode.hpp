@@ -13,6 +13,9 @@
 #include "distributions.hpp"
 #include "datadefs.hpp"
 
+using datadefs::num_t;
+using datadefs::cat_t;
+
 class RootNode : public Node {
 public:
 
@@ -41,8 +44,7 @@ public:
   
   size_t nLeaves() const;
 
-  num_t getTestPrediction(Treedata* treeData, const size_t sampleIdx);
-  string getRawTestPrediction(Treedata* treeData, const size_t sampleIdx);
+  const Prediction& getPrediction(Treedata* treeData, const size_t sampleIdx);
 
   vector<num_t> getChildLeafTrainData(Treedata* treeData, const size_t sampleIdx);
 

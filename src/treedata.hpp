@@ -59,10 +59,6 @@ public:
   size_t nRealSamples(const size_t featureIdx);
   size_t nRealSamples(const size_t featureIdx1, const size_t featureIdx2);
   
-  vector<num_t> getFeatureData(const size_t featureIdx);
-  num_t getFeatureData(const size_t featureIdx, const size_t sampleIdx);
-  vector<num_t> getFeatureData(const size_t featureIdx, const vector<size_t>& sampleIcs);
-
   vector<num_t> getFeatureWeights() const;
 
   void separateMissingSamples(const size_t featureIdx,
@@ -78,11 +74,11 @@ public:
 
   num_t categoricalFeatureSplit(const size_t targetIdx,
 				const size_t featureIdx,
-				const vector<num_t>& catOrder,
+				const vector<cat_t>& catOrder,
 				const size_t minSamples,
 				vector<size_t>& sampleIcs_left,
 				vector<size_t>& sampleIcs_right,
-				unordered_set<num_t>& splitValues_left);
+				unordered_set<cat_t>& splitValues_left);
 
   num_t textualFeatureSplit(const size_t targetIdx,
 			    const size_t featureIdx,
@@ -91,9 +87,9 @@ public:
 			    vector<size_t>& sampleIcs_left,
 			    vector<size_t>& sampleIcs_right);
     
-  string getRawFeatureData(const size_t featureIdx, const size_t sampleIdx);
-  string getRawFeatureData(const size_t featureIdx, const num_t data);
-  vector<string> getRawFeatureData(const size_t featureIdx);
+  //string getRawFeatureData(const size_t featureIdx, const size_t sampleIdx);
+  //string getRawFeatureData(const size_t featureIdx, const num_t data);
+  //vector<string> getRawFeatureData(const size_t featureIdx);
   
   // Generates a bootstrap sample from the real samples of featureIdx. Samples not in the bootstrap sample will be stored in oob_ics,
   // and the number of oob samples is stored in noob.

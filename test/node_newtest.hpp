@@ -39,16 +39,22 @@ void node_newtest_getChildLeaves() {
 
   Node node,nodeL,nodeR,nodeM,nodeLL,nodeLR;
 
-  node.setSplitter("foo",5.0,nodeL,nodeR);
-  nodeL.setSplitter("bar",6.0,nodeLL,nodeLR);
+  node.setSplitter("foo",static_cast<num_t>(5.0),nodeL,nodeR);
+  nodeL.setSplitter("bar",static_cast<num_t>(6.0),nodeLL,nodeLR);
   node.missingChild_ = &nodeM;
 
-  nodeLL.setTrainData({1,2,3});
-  nodeLR.setTrainData({4,5});
-  nodeR.setTrainData({6});
-  nodeM.setTrainData({7});
+  nodeR.setNumTrainPrediction(1.3);
+  nodeM.setNumTrainPrediction(2.2);
 
-  vector<Node*> childLeaves = node.getChildLeaves();
+  nodeLL.setNumTrainPrediction(1.1);
+  nodeLR.setNumTrainPrediction(1.2);
+
+  nodeLL.setNumTrainData({1,2,3});
+  nodeLR.setNumTrainData({4,5});
+  nodeR.setNumTrainData({6});
+  nodeM.setNumTrainData({7});
+
+  vector<Node*> childLeaves = node.getSubTreeLeaves();
 
   set<Node*> childLeavesSet(childLeaves.begin(),childLeaves.end());
 
@@ -59,21 +65,21 @@ void node_newtest_getChildLeaves() {
   newassert( childLeavesSet.find(&nodeR) != childLeavesSet.end() );
   newassert( childLeavesSet.find(&nodeM) != childLeavesSet.end() );
 
-  childLeaves = nodeR.getChildLeaves();
+  childLeaves = nodeR.getSubTreeLeaves();
   newassert( childLeaves.size() == 1 );
   newassert( childLeaves[0] == &nodeR );
 
-  childLeaves = nodeM.getChildLeaves();
+  childLeaves = nodeM.getSubTreeLeaves();
   newassert( childLeaves.size() == 1 );
   newassert( childLeaves[0] == &nodeM );
 
-  childLeaves = nodeL.getChildLeaves();
+  childLeaves = nodeL.getSubTreeLeaves();
   newassert( childLeaves.size() == 2 );
   childLeavesSet = set<Node*>(childLeaves.begin(),childLeaves.end());
   newassert( childLeavesSet.find(&nodeLL) != childLeavesSet.end() );
   newassert( childLeavesSet.find(&nodeLR) != childLeavesSet.end() );
   
-  vector<num_t> trainData = nodeLL.getTrainData();
+  vector<num_t> trainData = nodeLL.getPrediction().numTrainData;
   set<num_t> trainDataSet(trainData.begin(),trainData.end());
 
   newassert( trainDataSet.find(1) != trainDataSet.end() );

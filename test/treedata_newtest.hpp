@@ -77,27 +77,27 @@ void treedata_newtest_readAFM() {
   newassert( treeDataC.feature(14)->name()  == "N:var6_CONTRAST" ); newassert( treeDataC.getFeatureIdx("N:var6_CONTRAST") == 14 );
   newassert( treeDataC.feature(15)->name()  == "T:var7_CONTRAST" ); newassert( treeDataC.getFeatureIdx("T:var7_CONTRAST") == 15 );
 
-  newassert( datadefs::isNAN(treeDataC.getFeatureData(0,0)) );
-  newassert( fabs(treeDataC.getFeatureData(0,1) - 0.00) < datadefs::EPS );
-  newassert( fabs(treeDataC.getFeatureData(0,2) - 0.000) < datadefs::EPS );
-  newassert( treeDataC.getRawFeatureData(1,(size_t)0) == "foo" );
-  newassert( datadefs::isNAN_STR(treeDataC.getRawFeatureData(1,(size_t)1)) );
-  newassert( treeDataC.getRawFeatureData(1,(size_t)2) == "bar" );
-  newassert( fabs(treeDataC.getFeatureData(2,0) - 2.2) < datadefs::EPS );
-  newassert( fabs(treeDataC.getFeatureData(2,1) - 2.22) < datadefs::EPS );
-  newassert( fabs(treeDataC.getFeatureData(2,2) - 2.222) < datadefs::EPS );
-  newassert( fabs(treeDataC.getFeatureData(3,0) - 3.3) < datadefs::EPS );
-  newassert( fabs(treeDataC.getFeatureData(3,1) - 3.33) < datadefs::EPS );
-  newassert( fabs(treeDataC.getFeatureData(3,2) - 3.333) < datadefs::EPS );
-  newassert( fabs(treeDataC.getFeatureData(4,0) - 4.4) < datadefs::EPS );
-  newassert( fabs(treeDataC.getFeatureData(4,1) - 4.44) < datadefs::EPS );
-  newassert( fabs(treeDataC.getFeatureData(4,2) - 4.444) < datadefs::EPS );
-  newassert( fabs(treeDataC.getFeatureData(5,0) - 5.5) < datadefs::EPS );
-  newassert( fabs(treeDataC.getFeatureData(5,1) - 5.55) < datadefs::EPS );
-  newassert( fabs(treeDataC.getFeatureData(5,2) - 5.555) < datadefs::EPS );
-  newassert( fabs(treeDataC.getFeatureData(6,0) - 6.6) < datadefs::EPS );
-  newassert( datadefs::isNAN(treeDataC.getFeatureData(6,(size_t)1)) );
-  newassert( fabs(treeDataC.getFeatureData(6,(size_t)2) - 6.666) < datadefs::EPS );
+  newassert( treeDataC.feature(0)->isMissing(0) );
+  newassert( fabs(treeDataC.feature(0)->getNumData(1) - 0.00) < 1e-5 );
+  newassert( fabs(treeDataC.feature(0)->getNumData(2) - 0.000) < 1e-5 );
+  newassert( treeDataC.feature(1)->getCatData(0) == "foo" );
+  newassert( treeDataC.feature(1)->isMissing(1) );
+  newassert( treeDataC.feature(1)->getCatData(2) == "bar" );
+  newassert( fabs(treeDataC.feature(2)->getNumData(0) - 2.2) < 1e-5 );
+  newassert( fabs(treeDataC.feature(2)->getNumData(1) - 2.22) < 1e-5 );
+  newassert( fabs(treeDataC.feature(2)->getNumData(2) - 2.222) < 1e-5 );
+  newassert( fabs(treeDataC.feature(3)->getNumData(0) - 3.3) < 1e-5 );
+  newassert( fabs(treeDataC.feature(3)->getNumData(1) - 3.33) < 1e-5 );
+  newassert( fabs(treeDataC.feature(3)->getNumData(2) - 3.333) < 1e-5 );
+  newassert( fabs(treeDataC.feature(4)->getNumData(0) - 4.4) < 1e-5 );
+  newassert( fabs(treeDataC.feature(4)->getNumData(1) - 4.44) < 1e-5 );
+  newassert( fabs(treeDataC.feature(4)->getNumData(2) - 4.444) < 1e-5 );
+  newassert( fabs(treeDataC.feature(5)->getNumData(0) - 5.5) < 1e-5 );
+  newassert( fabs(treeDataC.feature(5)->getNumData(1) - 5.55) < 1e-5 );
+  newassert( fabs(treeDataC.feature(5)->getNumData(2) - 5.555) < 1e-5 );
+  newassert( fabs(treeDataC.feature(6)->getNumData(0) - 6.6) < 1e-5 );
+  newassert( treeDataC.feature(6)->isMissing(1) );
+  newassert( fabs(treeDataC.feature(6)->getNumData(2) - 6.666) < 1e-5 );
 
   useContrasts = false;
   
@@ -107,7 +107,6 @@ void treedata_newtest_readAFM() {
   newassert( treeData.nSamples() == 3 );
   newassert( treeData.features_.size() == 8 );
   newassert( treeData.name2idx_.size() == 8 );
-
   reader.rewind();
   reader.nextLine();
   reader.skipField();
@@ -121,28 +120,27 @@ void treedata_newtest_readAFM() {
   reader >> featureName; newassert( treeData.feature(6)->name() == featureName ); newassert( featureName == "N:var6" ); newassert( treeData.getFeatureIdx("N:var6") == 6 );
   reader >> featureName; newassert( treeData.feature(7)->name() == featureName ); newassert( featureName == "T:var7" ); newassert( treeData.getFeatureIdx("T:var7") == 7 );
 
-  newassert( datadefs::isNAN(treeData.getFeatureData(0,0)) );
-  newassert( fabs(treeData.getFeatureData(0,1) - 0.00) < datadefs::EPS );
-  newassert( fabs(treeData.getFeatureData(0,2) - 0.000) < datadefs::EPS );
-  newassert( treeData.getRawFeatureData(1,(size_t)0) == "foo" );
-  newassert( datadefs::isNAN_STR(treeData.getRawFeatureData(1,(size_t)1)) );
-  newassert( treeData.getRawFeatureData(1,(size_t)2) == "bar" );
-  newassert( fabs(treeData.getFeatureData(2,0) - 2.2) < datadefs::EPS );
-  newassert( fabs(treeData.getFeatureData(2,1) - 2.22) < datadefs::EPS );
-  newassert( fabs(treeData.getFeatureData(2,2) - 2.222) < datadefs::EPS );
-  newassert( fabs(treeData.getFeatureData(3,0) - 3.3) < datadefs::EPS );
-  newassert( fabs(treeData.getFeatureData(3,1) - 3.33) < datadefs::EPS );
-  newassert( fabs(treeData.getFeatureData(3,2) - 3.333) < datadefs::EPS );
-  newassert( fabs(treeData.getFeatureData(4,0) - 4.4) < datadefs::EPS );
-  newassert( fabs(treeData.getFeatureData(4,1) - 4.44) < datadefs::EPS );
-  newassert( fabs(treeData.getFeatureData(4,2) - 4.444) < datadefs::EPS );
-  newassert( fabs(treeData.getFeatureData(5,0) - 5.5) < datadefs::EPS );
-  newassert( fabs(treeData.getFeatureData(5,1) - 5.55) < datadefs::EPS );
-  newassert( fabs(treeData.getFeatureData(5,2) - 5.555) < datadefs::EPS );
-  newassert( fabs(treeData.getFeatureData(6,0) - 6.6) < datadefs::EPS );
-  newassert( datadefs::isNAN(treeData.getFeatureData(6,1)) );
-  newassert( fabs(treeData.getFeatureData(6,2) - 6.666) < datadefs::EPS );
-
+  newassert( treeData.feature(0)->isMissing(0) );
+  newassert( fabs(treeData.feature(0)->getNumData(1) - 0.00) < 1e-5 );
+  newassert( fabs(treeData.feature(0)->getNumData(2) - 0.000) < 1e-5 );
+  newassert( treeData.feature(1)->getCatData(0) == "foo" );
+  newassert( treeData.feature(1)->isMissing(1) );
+  newassert( treeData.feature(1)->getCatData(2) == "bar" );
+  newassert( fabs(treeData.feature(2)->getNumData(0) - 2.2) < 1e-5 );
+  newassert( fabs(treeData.feature(2)->getNumData(1) - 2.22) < 1e-5 );
+  newassert( fabs(treeData.feature(2)->getNumData(2) - 2.222) < 1e-5 );
+  newassert( fabs(treeData.feature(3)->getNumData(0) - 3.3) < 1e-5 );
+  newassert( fabs(treeData.feature(3)->getNumData(1) - 3.33) < 1e-5 );
+  newassert( fabs(treeData.feature(3)->getNumData(2) - 3.333) < 1e-5 );
+  newassert( fabs(treeData.feature(4)->getNumData(0) - 4.4) < 1e-5 );
+  newassert( fabs(treeData.feature(4)->getNumData(1) - 4.44) < 1e-5 );
+  newassert( fabs(treeData.feature(4)->getNumData(2) - 4.444) < 1e-5 );
+  newassert( fabs(treeData.feature(5)->getNumData(0) - 5.5) < 1e-5 );
+  newassert( fabs(treeData.feature(5)->getNumData(1) - 5.55) < 1e-5 );
+  newassert( fabs(treeData.feature(5)->getNumData(2) - 5.555) < 1e-5 );
+  newassert( fabs(treeData.feature(6)->getNumData(0) - 6.6) < 1e-5 );
+  newassert( treeData.feature(6)->isMissing(1) );
+  newassert( fabs(treeData.feature(6)->getNumData(2) - 6.666) < 1e-5 );
 
 }
 
@@ -177,28 +175,27 @@ void treedata_newtest_readTransposedAFM() {
   newassert( treeDataC.feature(15)->name()  == "T:var7_CONTRAST" ); newassert( treeDataC.getFeatureIdx("T:var7_CONTRAST") == 15 );
 
 
-  newassert( datadefs::isNAN(treeDataC.getFeatureData(0,0)) );
-  newassert( fabs(treeDataC.getFeatureData(0,1) - 0.00) < datadefs::EPS );
-  newassert( fabs(treeDataC.getFeatureData(0,2) - 0.000) < datadefs::EPS );
-  newassert( treeDataC.getRawFeatureData(1,(size_t)0) == "foo" );
-  newassert( datadefs::isNAN_STR(treeDataC.getRawFeatureData(1,(size_t)1)) );
-  newassert( treeDataC.getRawFeatureData(1,(size_t)2) == "bar" );
-  newassert( fabs(treeDataC.getFeatureData(2,0) - 2.2) < datadefs::EPS );
-  newassert( fabs(treeDataC.getFeatureData(2,1) - 2.22) < datadefs::EPS );
-  newassert( fabs(treeDataC.getFeatureData(2,2) - 2.222) < datadefs::EPS );
-  newassert( fabs(treeDataC.getFeatureData(3,0) - 3.3) < datadefs::EPS );
-  newassert( fabs(treeDataC.getFeatureData(3,1) - 3.33) < datadefs::EPS );
-  newassert( fabs(treeDataC.getFeatureData(3,2) - 3.333) < datadefs::EPS );
-  newassert( fabs(treeDataC.getFeatureData(4,0) - 4.4) < datadefs::EPS );
-  newassert( fabs(treeDataC.getFeatureData(4,1) - 4.44) < datadefs::EPS );
-  newassert( fabs(treeDataC.getFeatureData(4,2) - 4.444) < datadefs::EPS );
-  newassert( fabs(treeDataC.getFeatureData(5,0) - 5.5) < datadefs::EPS );
-  newassert( fabs(treeDataC.getFeatureData(5,1) - 5.55) < datadefs::EPS );
-  newassert( fabs(treeDataC.getFeatureData(5,2) - 5.555) < datadefs::EPS );
-  newassert( fabs(treeDataC.getFeatureData(6,0) - 6.6) < datadefs::EPS );
-  newassert( datadefs::isNAN(treeDataC.getFeatureData(6,1)) );
-  newassert( fabs(treeDataC.getFeatureData(6,2) - 6.666) < datadefs::EPS );
-
+  newassert( treeDataC.feature(0)->isMissing(0) );
+  newassert( fabs(treeDataC.feature(0)->getNumData(1) - 0.00) < 1e-5 );
+  newassert( fabs(treeDataC.feature(0)->getNumData(2) - 0.000) < 1e-5 );
+  newassert( treeDataC.feature(1)->getCatData(0) == "foo" );
+  newassert( treeDataC.feature(1)->isMissing(1) );
+  newassert( treeDataC.feature(1)->getCatData(2) == "bar" );
+  newassert( fabs(treeDataC.feature(2)->getNumData(0) - 2.2) < 1e-5 );
+  newassert( fabs(treeDataC.feature(2)->getNumData(1) - 2.22) < 1e-5 );
+  newassert( fabs(treeDataC.feature(2)->getNumData(2) - 2.222) < 1e-5 );
+  newassert( fabs(treeDataC.feature(3)->getNumData(0) - 3.3) < 1e-5 );
+  newassert( fabs(treeDataC.feature(3)->getNumData(1) - 3.33) < 1e-5 );
+  newassert( fabs(treeDataC.feature(3)->getNumData(2) - 3.333) < 1e-5 );
+  newassert( fabs(treeDataC.feature(4)->getNumData(0) - 4.4) < 1e-5 );
+  newassert( fabs(treeDataC.feature(4)->getNumData(1) - 4.44) < 1e-5 );
+  newassert( fabs(treeDataC.feature(4)->getNumData(2) - 4.444) < 1e-5 );
+  newassert( fabs(treeDataC.feature(5)->getNumData(0) - 5.5) < 1e-5 );
+  newassert( fabs(treeDataC.feature(5)->getNumData(1) - 5.55) < 1e-5 );
+  newassert( fabs(treeDataC.feature(5)->getNumData(2) - 5.555) < 1e-5 );
+  newassert( fabs(treeDataC.feature(6)->getNumData(0) - 6.6) < 1e-5 );
+  newassert( treeDataC.feature(6)->isMissing(1) );
+  newassert( fabs(treeDataC.feature(6)->getNumData(2) - 6.666) < 1e-5 );
 
   useContrasts = false;
 
@@ -227,27 +224,27 @@ void treedata_newtest_readTransposedAFM() {
   newassert( treeData.getFeatureIdx("N:var6_CONTRAST") == treeData.end() );
   newassert( treeData.getFeatureIdx("T:var7_CONTRAST") == treeData.end() );
 
-  newassert( datadefs::isNAN(treeData.getFeatureData(0,0)) );
-  newassert( fabs(treeData.getFeatureData(0,1) - 0.00) < datadefs::EPS );
-  newassert( fabs(treeData.getFeatureData(0,2) - 0.000) < datadefs::EPS );
-  newassert( treeData.getRawFeatureData(1,(size_t)0) == "foo" );
-  newassert( datadefs::isNAN_STR(treeData.getRawFeatureData(1,(size_t)1)) );
-  newassert( treeData.getRawFeatureData(1,(size_t)2) == "bar" );
-  newassert( fabs(treeData.getFeatureData(2,0) - 2.2) < datadefs::EPS );
-  newassert( fabs(treeData.getFeatureData(2,1) - 2.22) < datadefs::EPS );
-  newassert( fabs(treeData.getFeatureData(2,2) - 2.222) < datadefs::EPS );
-  newassert( fabs(treeData.getFeatureData(3,0) - 3.3) < datadefs::EPS );
-  newassert( fabs(treeData.getFeatureData(3,1) - 3.33) < datadefs::EPS );
-  newassert( fabs(treeData.getFeatureData(3,2) - 3.333) < datadefs::EPS );
-  newassert( fabs(treeData.getFeatureData(4,0) - 4.4) < datadefs::EPS );
-  newassert( fabs(treeData.getFeatureData(4,1) - 4.44) < datadefs::EPS );
-  newassert( fabs(treeData.getFeatureData(4,2) - 4.444) < datadefs::EPS );
-  newassert( fabs(treeData.getFeatureData(5,0) - 5.5) < datadefs::EPS );
-  newassert( fabs(treeData.getFeatureData(5,1) - 5.55) < datadefs::EPS );
-  newassert( fabs(treeData.getFeatureData(5,2) - 5.555) < datadefs::EPS );
-  newassert( fabs(treeData.getFeatureData(6,0) - 6.6) < datadefs::EPS );
-  newassert( datadefs::isNAN(treeData.getFeatureData(6,1)) );
-  newassert( fabs(treeData.getFeatureData(6,2) - 6.666) < datadefs::EPS );
+  newassert( treeData.feature(0)->isMissing(0) );
+  newassert( fabs(treeData.feature(0)->getNumData(1) - 0.00) < 1e-5 );
+  newassert( fabs(treeData.feature(0)->getNumData(2) - 0.000) < 1e-5 );
+  newassert( treeData.feature(1)->getCatData(0) == "foo" );
+  newassert( treeData.feature(1)->isMissing(1) );
+  newassert( treeData.feature(1)->getCatData(2) == "bar" );
+  newassert( fabs(treeData.feature(2)->getNumData(0) - 2.2) < 1e-5 );
+  newassert( fabs(treeData.feature(2)->getNumData(1) - 2.22) < 1e-5 );
+  newassert( fabs(treeData.feature(2)->getNumData(2) - 2.222) < 1e-5 );
+  newassert( fabs(treeData.feature(3)->getNumData(0) - 3.3) < 1e-5 );
+  newassert( fabs(treeData.feature(3)->getNumData(1) - 3.33) < 1e-5 );
+  newassert( fabs(treeData.feature(3)->getNumData(2) - 3.333) < 1e-5 );
+  newassert( fabs(treeData.feature(4)->getNumData(0) - 4.4) < 1e-5 );
+  newassert( fabs(treeData.feature(4)->getNumData(1) - 4.44) < 1e-5 );
+  newassert( fabs(treeData.feature(4)->getNumData(2) - 4.444) < 1e-5 );
+  newassert( fabs(treeData.feature(5)->getNumData(0) - 5.5) < 1e-5 );
+  newassert( fabs(treeData.feature(5)->getNumData(1) - 5.55) < 1e-5 );
+  newassert( fabs(treeData.feature(5)->getNumData(2) - 5.555) < 1e-5 );
+  newassert( fabs(treeData.feature(6)->getNumData(0) - 6.6) < 1e-5 );
+  newassert( treeData.feature(6)->isMissing(1) );
+  newassert( fabs(treeData.feature(6)->getNumData(2) - 6.666) < 1e-5 );
 
 }
 
@@ -272,60 +269,60 @@ void treedata_newtest_readARFF() {
   newassert( treeData.nRealSamples(0,1) == 9 );
   newassert( treeData.nRealSamples(1,2) == 8 );
 
-  newassert( fabs( treeData.feature(0)->data[0] - 0.8147 ) < datadefs::EPS );
-  newassert( fabs( treeData.feature(0)->data[1] - 0.9058 ) < datadefs::EPS );
-  newassert( fabs( treeData.feature(0)->data[2] - 0.1270 ) < datadefs::EPS );
-  newassert( fabs( treeData.feature(0)->data[3] - 0.9134 ) < datadefs::EPS );
-  newassert( fabs( treeData.feature(0)->data[4] - 0.6324 ) < datadefs::EPS );
-  newassert( fabs( treeData.feature(0)->data[5] - 0.0975 ) < datadefs::EPS );
-  newassert( fabs( treeData.feature(0)->data[6] - 0.2785 ) < datadefs::EPS );
-  newassert( fabs( treeData.feature(0)->data[7] - 0.5469 ) < datadefs::EPS );
-  newassert( fabs( treeData.feature(0)->data[8] - 0.9575 ) < datadefs::EPS );
-  newassert( fabs( treeData.feature(0)->data[9] - 0.9649 ) < datadefs::EPS );
+  newassert( fabs( treeData.feature(0)->getNumData(0) - 0.8147 ) < 1e-5 );
+  newassert( fabs( treeData.feature(0)->getNumData(1) - 0.9058 ) < 1e-5 );
+  newassert( fabs( treeData.feature(0)->getNumData(2) - 0.1270 ) < 1e-5 );
+  newassert( fabs( treeData.feature(0)->getNumData(3) - 0.9134 ) < 1e-5 );
+  newassert( fabs( treeData.feature(0)->getNumData(4) - 0.6324 ) < 1e-5 );
+  newassert( fabs( treeData.feature(0)->getNumData(5) - 0.0975 ) < 1e-5 );
+  newassert( fabs( treeData.feature(0)->getNumData(6) - 0.2785 ) < 1e-5 );
+  newassert( fabs( treeData.feature(0)->getNumData(7) - 0.5469 ) < 1e-5 );
+  newassert( fabs( treeData.feature(0)->getNumData(8) - 0.9575 ) < 1e-5 );
+  newassert( fabs( treeData.feature(0)->getNumData(9) - 0.9649 ) < 1e-5 );
 
-  newassert( fabs( treeData.feature(1)->data[0] - 1.0000 ) < datadefs::EPS );
-  newassert( fabs( treeData.feature(1)->data[1] - 2.0000 ) < datadefs::EPS );
-  newassert( fabs( treeData.feature(1)->data[2] - 3.0000 ) < datadefs::EPS );
-  newassert( fabs( treeData.feature(1)->data[3] - 4.0000 ) < datadefs::EPS );
-  newassert( fabs( treeData.feature(1)->data[4] - 5.0000 ) < datadefs::EPS );
-  newassert( fabs( treeData.feature(1)->data[5] - 6.0000 ) < datadefs::EPS );
-  newassert( fabs( treeData.feature(1)->data[6] - 7.0000 ) < datadefs::EPS );
-  newassert( datadefs::isNAN(treeData.feature(1)->data[7]) );
-  newassert( fabs( treeData.feature(1)->data[8] - 9.0000 ) < datadefs::EPS );
-  newassert( fabs( treeData.feature(1)->data[9] - 10.0000 ) < datadefs::EPS );
+  newassert( fabs( treeData.feature(1)->getNumData(0) - 1.0000 ) < 1e-5 );
+  newassert( fabs( treeData.feature(1)->getNumData(1) - 2.0000 ) < 1e-5 );
+  newassert( fabs( treeData.feature(1)->getNumData(2) - 3.0000 ) < 1e-5 );
+  newassert( fabs( treeData.feature(1)->getNumData(3) - 4.0000 ) < 1e-5 );
+  newassert( fabs( treeData.feature(1)->getNumData(4) - 5.0000 ) < 1e-5 );
+  newassert( fabs( treeData.feature(1)->getNumData(5) - 6.0000 ) < 1e-5 );
+  newassert( fabs( treeData.feature(1)->getNumData(6) - 7.0000 ) < 1e-5 );
+  newassert( treeData.feature(1)->isMissing(7) );
+  newassert( fabs( treeData.feature(1)->getNumData(8) - 9.0000 ) < 1e-5 );
+  newassert( fabs( treeData.feature(1)->getNumData(9) - 10.0000 ) < 1e-5 );
 
-  newassert( fabs( treeData.feature(2)->data[0] - 0.0596 ) < datadefs::EPS );
-  newassert( fabs( treeData.feature(2)->data[1] - 0.6820 ) < datadefs::EPS );
-  newassert( fabs( treeData.feature(2)->data[2] - 0.0424 ) < datadefs::EPS );
-  newassert( fabs( treeData.feature(2)->data[3] - 0.0714 ) < datadefs::EPS );
-  newassert( datadefs::isNAN(treeData.feature(2)->data[4]) );
-  newassert( fabs( treeData.feature(2)->data[5] - 0.0967 ) < datadefs::EPS );
-  newassert( fabs( treeData.feature(2)->data[6] - 0.8181 ) < datadefs::EPS );
-  newassert( fabs( treeData.feature(2)->data[7] - 0.8175 ) < datadefs::EPS );
-  newassert( fabs( treeData.feature(2)->data[8] - 0.7224 ) < datadefs::EPS );
-  newassert( fabs( treeData.feature(2)->data[9] - 0.1499 ) < datadefs::EPS );
+  newassert( fabs( treeData.feature(2)->getNumData(0) - 0.0596 ) < 1e-5 );
+  newassert( fabs( treeData.feature(2)->getNumData(1) - 0.6820 ) < 1e-5 );
+  newassert( fabs( treeData.feature(2)->getNumData(2) - 0.0424 ) < 1e-5 );
+  newassert( fabs( treeData.feature(2)->getNumData(3) - 0.0714 ) < 1e-5 );
+  newassert( treeData.feature(2)->isMissing(4) );
+  newassert( fabs( treeData.feature(2)->getNumData(5) - 0.0967 ) < 1e-5 );
+  newassert( fabs( treeData.feature(2)->getNumData(6) - 0.8181 ) < 1e-5 );
+  newassert( fabs( treeData.feature(2)->getNumData(7) - 0.8175 ) < 1e-5 );
+  newassert( fabs( treeData.feature(2)->getNumData(8) - 0.7224 ) < 1e-5 );
+  newassert( fabs( treeData.feature(2)->getNumData(9) - 0.1499 ) < 1e-5 );
 
-  newassert( fabs( treeData.feature(3)->data[0] - 0.9160 ) < datadefs::EPS );
-  newassert( fabs( treeData.feature(3)->data[1] - 0.0012 ) < datadefs::EPS );
-  newassert( fabs( treeData.feature(3)->data[2] - 0.4624 ) < datadefs::EPS );
-  newassert( fabs( treeData.feature(3)->data[3] - 0.4243 ) < datadefs::EPS );
-  newassert( fabs( treeData.feature(3)->data[4] - 0.4609 ) < datadefs::EPS );
-  newassert( fabs( treeData.feature(3)->data[5] - 0.7702 ) < datadefs::EPS );
-  newassert( fabs( treeData.feature(3)->data[6] - 0.3225 ) < datadefs::EPS );
-  newassert( fabs( treeData.feature(3)->data[7] - 0.7847 ) < datadefs::EPS );
-  newassert( fabs( treeData.feature(3)->data[8] - 0.4714 ) < datadefs::EPS );
-  newassert( fabs( treeData.feature(3)->data[9] - 0.0358 ) < datadefs::EPS );
+  newassert( fabs( treeData.feature(3)->getNumData(0) - 0.9160 ) < 1e-5 );
+  newassert( fabs( treeData.feature(3)->getNumData(1) - 0.0012 ) < 1e-5 );
+  newassert( fabs( treeData.feature(3)->getNumData(2) - 0.4624 ) < 1e-5 );
+  newassert( fabs( treeData.feature(3)->getNumData(3) - 0.4243 ) < 1e-5 );
+  newassert( fabs( treeData.feature(3)->getNumData(4) - 0.4609 ) < 1e-5 );
+  newassert( fabs( treeData.feature(3)->getNumData(5) - 0.7702 ) < 1e-5 );
+  newassert( fabs( treeData.feature(3)->getNumData(6) - 0.3225 ) < 1e-5 );
+  newassert( fabs( treeData.feature(3)->getNumData(7) - 0.7847 ) < 1e-5 );
+  newassert( fabs( treeData.feature(3)->getNumData(8) - 0.4714 ) < 1e-5 );
+  newassert( fabs( treeData.feature(3)->getNumData(9) - 0.0358 ) < 1e-5 );
 
-  newassert( fabs( treeData.feature(4)->data[0] - 6.0000 ) < datadefs::EPS );
-  newassert( fabs( treeData.feature(4)->data[1] - 14.0000 ) < datadefs::EPS );
-  newassert( fabs( treeData.feature(4)->data[2] - 24.0000 ) < datadefs::EPS );
-  newassert( fabs( treeData.feature(4)->data[3] - 36.0000 ) < datadefs::EPS );
-  newassert( fabs( treeData.feature(4)->data[4] - 50.0000 ) < datadefs::EPS );
-  newassert( fabs( treeData.feature(4)->data[5] - 66.0000 ) < datadefs::EPS );
-  newassert( fabs( treeData.feature(4)->data[6] - 84.0000 ) < datadefs::EPS );
-  newassert( fabs( treeData.feature(4)->data[7] - 104.0000 ) < datadefs::EPS );
-  newassert( fabs( treeData.feature(4)->data[8] - 126.0000 ) < datadefs::EPS );
-  newassert( fabs( treeData.feature(4)->data[9] - 150.0000 ) < datadefs::EPS );
+  newassert( fabs( treeData.feature(4)->getNumData(0) - 6.0000 ) < 1e-5 );
+  newassert( fabs( treeData.feature(4)->getNumData(1) - 14.0000 ) < 1e-5 );
+  newassert( fabs( treeData.feature(4)->getNumData(2) - 24.0000 ) < 1e-5 );
+  newassert( fabs( treeData.feature(4)->getNumData(3) - 36.0000 ) < 1e-5 );
+  newassert( fabs( treeData.feature(4)->getNumData(4) - 50.0000 ) < 1e-5 );
+  newassert( fabs( treeData.feature(4)->getNumData(5) - 66.0000 ) < 1e-5 );
+  newassert( fabs( treeData.feature(4)->getNumData(6) - 84.0000 ) < 1e-5 );
+  newassert( fabs( treeData.feature(4)->getNumData(7) - 104.0000 ) < 1e-5 );
+  newassert( fabs( treeData.feature(4)->getNumData(8) - 126.0000 ) < 1e-5 );
+  newassert( fabs( treeData.feature(4)->getNumData(9) - 150.0000 ) < 1e-5 );
 
   Treedata treeData2("test/data/12by21_categorical_matrix.arff",'\t',':');
 
@@ -378,8 +375,8 @@ void treedata_newtest_numericalFeatureSplitsNumericalTarget() {
     set<size_t> leftIcs(sampleIcs_left.begin(),sampleIcs_left.end());
     set<size_t> rightIcs(sampleIcs_right.begin(),sampleIcs_right.end());
 
-    newassert( fabs( deltaImpurity - 1.289680394982406 ) < 1e-10 );
-    newassert( fabs( splitValue - 4.387 ) < 1e-10 );
+    newassert( fabs( deltaImpurity - 1.289680394982406 ) < 1e-5 );
+    newassert( fabs( splitValue - 4.387 ) < 1e-5 );
 
     newassert( sampleIcs_left.size() == 127 );
     newassert( sampleIcs_right.size() == 173 );
@@ -428,8 +425,8 @@ void treedata_newtest_numericalFeatureSplitsCategoricalTarget() {
     set<size_t> leftIcs(sampleIcs_left.begin(),sampleIcs_left.end());
     set<size_t> rightIcs(sampleIcs_right.begin(),sampleIcs_right.end());
 
-    newassert( fabs( deltaImpurity - 0.012389077212806 ) < 1e-10 );
-    newassert( fabs( splitValue - 9.827 ) < 1e-10 );
+    newassert( fabs( deltaImpurity - 0.012389077212806 ) < 1e-5 );
+    newassert( fabs( splitValue - 9.827 ) < 1e-5 );
 
     newassert( sampleIcs_left.size() == 295 );
     newassert( sampleIcs_right.size() == 5 );
@@ -456,7 +453,7 @@ void treedata_newtest_categoricalFeatureSplitsNumericalTarget() {
   vector<size_t> sampleIcs_right = utils::range(300);
   vector<size_t> sampleIcs_missing(0);
 
-  unordered_set<num_t> splitValues_left,splitValues_right;
+  unordered_set<cat_t> splitValues_left,splitValues_right;
   
   size_t featureIdx = 1;
   size_t targetIdx = 0;
@@ -464,14 +461,14 @@ void treedata_newtest_categoricalFeatureSplitsNumericalTarget() {
   
   datadefs::num_t deltaImpurity = treeData.categoricalFeatureSplit(targetIdx,
 								   featureIdx,
-								   {1,2},
+								   {"1","2"},
 								   minSamples,
 								   sampleIcs_left,
 								   sampleIcs_right,
 								   splitValues_left);
   
 
-  newassert( fabs( deltaImpurity - 1.102087375288799 ) < 1e-10 );
+  newassert( fabs( deltaImpurity - 1.102087375288799 ) < 1e-5 );
 
 }
 
@@ -490,7 +487,7 @@ void treedata_newtest_replaceFeatureData() {
   treeData.replaceFeatureData(0,vector<num_t>(treeData.nSamples(),0.0));
 
   for ( size_t i = 0; i < treeData.nSamples(); ++i ) {
-    newassert( treeData.getFeatureData(0,i) == 0.0 );
+    newassert( treeData.feature(0)->getNumData(i) == 0.0 );
   }
 
 }
@@ -549,8 +546,8 @@ void treedata_newtest_bootstrapRealSamples() {
     oobFraction += 1.0 * oobIcs.size();
 
     newassert( ics.size() == treeData.nRealSamples(featureIdx) );
-    newassert( !datadefs::containsNAN(treeData.getFeatureData(featureIdx,ics)) );
-    newassert( !datadefs::containsNAN(treeData.getFeatureData(featureIdx,oobIcs)) );
+    newassert( !datadefs::containsNAN(treeData.feature(featureIdx)->getNumData(ics)) );
+    newassert( !datadefs::containsNAN(treeData.feature(featureIdx)->getNumData(oobIcs)) );
 
   }
 
@@ -611,17 +608,17 @@ void treedata_newtest_separateMissingSamples() {
 
   treeData.separateMissingSamples(0,sampleIcs,missingIcs);
 
-  vector<num_t> filteredData = treeData.getFeatureData(0,sampleIcs);
+  vector<num_t> filteredData = treeData.feature(0)->getNumData(sampleIcs);
 
   newassert( filteredData.size() == 8 );
-  newassert( fabs( filteredData[0] - 8.5 ) < datadefs::EPS );
-  newassert( fabs( filteredData[1] - 3.4 ) < datadefs::EPS );
-  newassert( fabs( filteredData[2] - 7.2 ) < datadefs::EPS );
-  newassert( fabs( filteredData[3] - 5 )   < datadefs::EPS );
-  newassert( fabs( filteredData[4] - 6 )   < datadefs::EPS );
-  newassert( fabs( filteredData[5] - 7 )   < datadefs::EPS );
-  newassert( fabs( filteredData[6] - 11 )  < datadefs::EPS );
-  newassert( fabs( filteredData[7] - 9 )   < datadefs::EPS );
+  newassert( fabs( filteredData[0] - 8.5 ) < 1e-5 );
+  newassert( fabs( filteredData[1] - 3.4 ) < 1e-5 );
+  newassert( fabs( filteredData[2] - 7.2 ) < 1e-5 );
+  newassert( fabs( filteredData[3] - 5 )   < 1e-5 );
+  newassert( fabs( filteredData[4] - 6 )   < 1e-5 );
+  newassert( fabs( filteredData[5] - 7 )   < 1e-5 );
+  newassert( fabs( filteredData[6] - 11 )  < 1e-5 );
+  newassert( fabs( filteredData[7] - 9 )   < 1e-5 );
 
   newassert( sampleIcs.size() == 8 );
 
@@ -636,14 +633,14 @@ void treedata_newtest_separateMissingSamples() {
   //sampleIcs = utils::range(10);
   treeData.separateMissingSamples(1,sampleIcs,missingIcs);
 
-  filteredData = treeData.getFeatureData(1,sampleIcs);
+  filteredData = treeData.feature(1)->getNumData(sampleIcs);
 
   newassert( filteredData.size() == 5 );
-  newassert( fabs( filteredData[0] - 3 ) < datadefs::EPS );
-  newassert( fabs( filteredData[1] - 4 ) < datadefs::EPS );
-  newassert( fabs( filteredData[2] - 5 ) < datadefs::EPS );
-  newassert( fabs( filteredData[3] - 6 ) < datadefs::EPS );
-  newassert( fabs( filteredData[4] - 9 ) < datadefs::EPS );
+  newassert( fabs( filteredData[0] - 3 ) < 1e-5 );
+  newassert( fabs( filteredData[1] - 4 ) < 1e-5 );
+  newassert( fabs( filteredData[2] - 5 ) < 1e-5 );
+  newassert( fabs( filteredData[3] - 6 ) < 1e-5 );
+  newassert( fabs( filteredData[4] - 9 ) < 1e-5 );
 
   newassert( sampleIcs.size() == 5 );
   newassert( sampleIcs[0] == 1 );
@@ -660,11 +657,11 @@ void treedata_newtest_separateMissingSamples() {
 
   treeData.separateMissingSamples(0,sampleIcs,missingIcs);
 
-  filteredData = treeData.getFeatureData(0,sampleIcs);
+  filteredData = treeData.feature(0)->getNumData(sampleIcs);
 
   newassert( filteredData.size() == 2 );
-  newassert( fabs( filteredData[0] - 6 ) < datadefs::EPS );
-  newassert( fabs( filteredData[1] - 6 ) < datadefs::EPS );
+  newassert( fabs( filteredData[0] - 6 ) < 1e-5 );
+  newassert( fabs( filteredData[1] - 6 ) < 1e-5 );
 
   newassert( sampleIcs.size() == 2 );
   newassert( sampleIcs[0] == 5 );
@@ -672,11 +669,11 @@ void treedata_newtest_separateMissingSamples() {
 
   treeData.separateMissingSamples(1,sampleIcs,missingIcs);
 
-  filteredData = treeData.getFeatureData(1,sampleIcs);
+  filteredData = treeData.feature(1)->getNumData(sampleIcs);
 
   newassert( filteredData.size() == 0 );
   newassert( sampleIcs.size() == 0 );
-
+  
 }
 
 
