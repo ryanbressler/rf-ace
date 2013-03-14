@@ -66,8 +66,8 @@ public:
     bool isTargetNumerical;
     vector<num_t> numPredictions;
     vector<num_t> numTrueData;
-    vector<string> catPredictions;
-    vector<string> catTrueData;
+    vector<cat_t> catPredictions;
+    vector<cat_t> catTrueData;
     vector<num_t> confidence;
     vector<string> sampleNames;
   };
@@ -304,7 +304,7 @@ public:
     if ( trainedModel_->isTargetNumerical() ) {
       testOutput.isTargetNumerical = true;
       if ( targetIdx != testData->end() ) {
-	testOutput.numTrueData = testData->getFeatureData(targetIdx);
+	testOutput.numTrueData = testData->feature(targetIdx)->getNumData();
       } else {
 	testOutput.numTrueData = vector<num_t>(testData->nSamples(),datadefs::NUM_NAN);
       }
@@ -314,11 +314,11 @@ public:
     } else {
       testOutput.isTargetNumerical = false;
       if ( targetIdx != testData->end() ) {
-	testOutput.catTrueData = testData->getRawFeatureData(targetIdx);
+	testOutput.catTrueData = testData->feature(targetIdx)->getCatData();
       } else {
 	testOutput.catTrueData = vector<string>(testData->nSamples(),datadefs::STR_NAN);
       }
-      vector<string> predictions;
+      vector<cat_t> predictions;
       trainedModel_->predict(testData,predictions,confidence,nThreads);
       testOutput.catPredictions = predictions;
     }
@@ -345,7 +345,7 @@ public:
     size_t targetIdx = testData->getFeatureIdx(qPredOut.targetName);
 
     if ( targetIdx != testData->end() ) {
-      qPredOut.trueData = testData->getFeatureData(targetIdx);
+      qPredOut.trueData = testData->feature(targetIdx)->getNumData();
     } else {
       qPredOut.trueData = vector<num_t>(testData->nSamples(),datadefs::NUM_NAN);
     }
@@ -436,7 +436,7 @@ public:
     size_t targetIdx = testData->getFeatureIdx(qPredOut.targetName);
 
     if ( targetIdx != testData->end() ) {
-      qPredOut.trueData = testData->getFeatureData(targetIdx);
+      qPredOut.trueData = testData->feature(targetIdx)->getNumData();
     } else {
       qPredOut.trueData = vector<num_t>(testData->nSamples(),datadefs::NUM_NAN);
     }

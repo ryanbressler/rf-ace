@@ -27,13 +27,10 @@ void utils_newtest_chomp();
 void utils_newtest_split();
 void utils_newtest_permute();
 void utils_newtest_splitRange();
-void utils_newtest_strv2catv();
 void utils_newtest_strv2numv();
 void utils_newtest_sortDataAndMakeRef();
 void utils_newtest_sortFromRef();
 void utils_newtest_text2tokens();
-
-
 
 void utils_newtest() {
 
@@ -48,7 +45,6 @@ void utils_newtest() {
   newtest( "split(x)", &utils_newtest_split );
   newtest( "permute(x)", &utils_newtest_permute );
   newtest( "splitRange(x)", &utils_newtest_splitRange );
-  newtest( "strv2catv(x)", &utils_newtest_strv2catv );
   newtest( "strv2numv(x)", &utils_newtest_strv2numv );
   newtest( "sortAndMakeRef(x)", &utils_newtest_sortDataAndMakeRef );
   newtest( "sortFromRef(x)", &utils_newtest_sortFromRef );
@@ -58,20 +54,20 @@ void utils_newtest() {
 
 void utils_newtest_categoricalFeatureSplitsNumericalTarget() {
 
-  vector<num_t> fv = {1,1,1,2,2,2,3,3,3,4,4,4};
+  vector<cat_t> fv = {"1","1","1","2","2","2","3","3","3","4","4","4"};
   vector<num_t> tv = {1,1,1,2,3,4,5,6,7,8,9,10};
 
-  unordered_map<num_t,vector<size_t> > fmap_left,fmap_right;
+  unordered_map<cat_t,vector<size_t> > fmap_left,fmap_right;
 
-  num_t DI = utils::categoricalFeatureSplitsNumericalTarget2(tv,fv,1,{1,2,3,4},fmap_left,fmap_right);
+  num_t DI = utils::categoricalFeatureSplitsNumericalTarget(tv,fv,1,{"1","2","3","4"},fmap_left,fmap_right);
   
   num_t DI_ref = math::deltaImpurity_regr(math::mean(tv),12,math::mean({1,1,1,2,3,4}),6,math::mean({5,6,7,8,9,10}),6);
   
   newassert( fabs( DI - DI_ref ) < 1e-5 );
 
-  fv = {1,1,1,1,1,1,1,1,1,1,1,1};
+  fv = {"1","1","1","1","1","1","1","1","1","1","1","1"};
 
-  DI = utils::categoricalFeatureSplitsNumericalTarget2(tv,fv,1,{1},fmap_left,fmap_right);
+  DI = utils::categoricalFeatureSplitsNumericalTarget(tv,fv,1,{"1"},fmap_left,fmap_right);
 
   DI_ref = 0;
 
@@ -81,14 +77,14 @@ void utils_newtest_categoricalFeatureSplitsNumericalTarget() {
 
 void utils_newtest_categoricalFeatureSplitsCategoricalTarget() {
   
-  vector<num_t> fv = {1,1,1,2,2,2,3,3,3,4,4,4};
-  vector<num_t> tv = {1,1,1,2,3,4,5,6,7,8,9,10};
+  vector<cat_t> fv = {"1","1","1","2","2","2","3","3","3","4","4","4"};
+  vector<cat_t> tv = {"1","1","1","2","3","4","5","6","7","8","9","10"};
 
-  unordered_map<num_t,vector<size_t> > fmap_left,fmap_right;
+  unordered_map<cat_t,vector<size_t> > fmap_left,fmap_right;
 
-  num_t DI = utils::categoricalFeatureSplitsCategoricalTarget2(tv,fv,1,{1,2,3,4},fmap_left,fmap_right);
+  num_t DI = utils::categoricalFeatureSplitsCategoricalTarget(tv,fv,1,{"1","2","3","4"},fmap_left,fmap_right);
 
-  unordered_map<num_t,size_t> freq_left,freq_right,freq_tot;
+  unordered_map<cat_t,size_t> freq_left,freq_right,freq_tot;
   size_t sf_left = 0;
   size_t sf_right = 0;
   size_t sf_tot = 0;
@@ -109,9 +105,9 @@ void utils_newtest_categoricalFeatureSplitsCategoricalTarget() {
  
   newassert( fabs( DI - DI_ref ) < 1e-5 );
 
-  fv = {1,1,1,1,1,1,1,1,1,1,1,1};
+  fv = {"1","1","1","1","1","1","1","1","1","1","1","1"};
 
-  DI = utils::categoricalFeatureSplitsNumericalTarget2(tv,fv,1,{1},fmap_left,fmap_right);
+  DI = utils::categoricalFeatureSplitsCategoricalTarget(tv,fv,1,{"1"},fmap_left,fmap_right);
 
   DI_ref = 0;
 
@@ -327,59 +323,24 @@ void utils_newtest_splitRange() {
 
 }
 
-void utils_newtest_strv2catv() {
-  vector<string> strvec(51,"");
-  vector<datadefs::num_t> catvec(51,0.0);
-  map<string,datadefs::num_t> mapping;
-  map<datadefs::num_t,string> backMapping;
-  strvec[0] = "a";
-  strvec[1] = "b";
-  strvec[2] = "c";
-  strvec[3] = "A";
-  strvec[50] = "NaN";
-  utils::strv2catv(strvec, catvec, mapping, backMapping);
-
-  newassert(catvec[0] == 0.0);
-  newassert(catvec[1] == 1.0);
-  newassert(catvec[2] == 2.0);
-  newassert(catvec[3] == 3.0);
-  for (int i = 4; i < 50; ++i) {
-    newassert(4.0);
-  }
-  newassert(datadefs::isNAN(catvec[50]));
-
-  newassert( mapping["a"] == 0.0 );
-  newassert( mapping["b"] == 1.0 );
-  newassert( mapping["c"] == 2.0 );
-  newassert( mapping["A"] == 3.0 );
-  newassert( mapping[""]  == 4.0 );
-
-  newassert( backMapping[0.0] == "a" );
-  newassert( backMapping[1.0] == "b" );
-  newassert( backMapping[2.0] == "c" );
-  newassert( backMapping[3.0] == "A" );
-  newassert( backMapping[4.0]  == "" );
-
-}
-
 void utils_newtest_strv2numv() {
   vector<string> strvec(51,"3.0");
-  vector<datadefs::num_t> catvec(51,0.0);
+  vector<datadefs::num_t> numvec(51,0.0);
   strvec[0] = "0.0";
   strvec[1] = "1.0";
   strvec[2] = "2.0";
   strvec[3] = "0.00";
   strvec[50] = "NaN";
-  utils::strv2numv(strvec, catvec);
+  utils::strv2numv(strvec, numvec);
 
-  newassert(catvec[0] == 0.0);
-  newassert(catvec[1] == 1.0);
-  newassert(catvec[2] == 2.0);
-  newassert(catvec[3] == 0.0);
+  newassert(numvec[0] == 0.0);
+  newassert(numvec[1] == 1.0);
+  newassert(numvec[2] == 2.0);
+  newassert(numvec[3] == 0.0);
   for (int i = 4; i < 50; ++i) {
-    newassert(catvec[i] == 3.0);
+    newassert(numvec[i] == 3.0);
   }
-  newassert(datadefs::isNAN(catvec[50]));
+  newassert(datadefs::isNAN(numvec[50]));
 }
 
 void utils_newtest_sortDataAndMakeRef() {

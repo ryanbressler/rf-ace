@@ -94,19 +94,20 @@ void RootNode::loadTree(ifstream& treeStream) {
     Node* nodep = treeMap[nodeMap["NODE"]];
     
     string rawTrainPrediction = nodeMap["PRED"];
-    num_t trainPrediction = datadefs::NUM_NAN;
-    
+    vector<string> rawTrainData = utils::split(nodeMap["DATA"],',');
+
+    // Set the prediction and data for the node
     if ( isTargetNumerical_ || (!isTargetNumerical_ && forestType_ == forest_t::GBT) ) {
-      trainPrediction = utils::str2<num_t>(rawTrainPrediction);
+      nodep->setNumTrainPrediction( utils::str2<num_t>(rawTrainPrediction) );
+      vector<num_t> numTrainData(rawTrainData.size());
+      transform(rawTrainData.begin(),rawTrainData.end(),numTrainData.begin(),utils::str2<num_t>);
+      nodep->setNumTrainData(numTrainData);
+    } else { 
+      nodep->setCatTrainPrediction( rawTrainPrediction );
+      vector<cat_t> catTrainData(rawTrainData);
+      //transform(rawTrainData.begin(),rawTrainData.end(),catTrainData.begin(),utils::str2<cat_t>);
+      nodep->setCatTrainData(catTrainData);
     }
-    
-    vector<string> foo2 = utils::split(nodeMap["DATA"],',');
-    vector<num_t> trainData(foo2.size());
-    transform(foo2.begin(),foo2.end(),trainData.begin(),utils::str2<num_t>);
-    
-    // Set train data prediction of the node
-    nodep->setTrainPrediction(trainPrediction, rawTrainPrediction);
-    nodep->setTrainData(trainData);
     
     // If the node has a splitter... 
     if ( nodeMap.find("SPLITTER") != nodeMap.end() ) {
@@ -203,32 +204,6 @@ void RootNode::growTree(Treedata* trainData, const size_t targetIdx, const distr
   //Generate bootstrap indices and oob-indices
   trainData->bootstrapFromRealSamples(random, forestOptions->sampleWithReplacement, forestOptions->inBoxFraction, targetIdx, bootstrapIcs_, oobIcs_);
 
-  //This is to check that the bootstrap sample doesn't contain any missing values (it shouldn't!)
-  if ( false ) {
-    vector<num_t> targetData = trainData->getFeatureData(targetIdx,bootstrapIcs_);
-    for(size_t i = 0; i < targetData.size(); ++i) {
-      assert(!datadefs::isNAN(targetData[i]));
-    }
-
-    targetData = trainData->getFeatureData(targetIdx,oobIcs_);
-    for(size_t i = 0; i < targetData.size(); ++i) {
-      assert(!datadefs::isNAN(targetData[i]));
-    }
-    cout << "bootstrap samples look ok, no missing values detected" << endl;
-  }
-
-  if(false) {
-    cout << "tree bootstrap indices [";
-    for(size_t i = 0; i < bootstrapIcs_.size(); ++i) {
-      cout << " " << bootstrapIcs_[i];
-    }
-    cout << " ]  oob [";
-    for(size_t i = 0; i < oobIcs_.size(); ++i) {
-      cout << " " << oobIcs_[i];
-    }
-    cout << " ]" << endl << endl;
-  }
-
   featuresInTree_.clear();
 
   PredictionFunctionType predictionFunctionType;
@@ -268,13 +243,13 @@ void RootNode::growTree(Treedata* trainData, const size_t targetIdx, const distr
   
   children_.resize(nChildren);
 
-  if ( forestOptions->forestType == forest_t::QRF ) {
-    //assert( trainData->feature(targetIdx)->isNumerical() );
-    for ( size_t i = 0; i < oobIcs_.size(); ++i ) {
-      num_t x = trainData->feature(targetIdx)->data[oobIcs_[i]];
-      this->percolate(trainData,oobIcs_[i])->addTrainData(x);
-    }
-  }
+  //if ( forestOptions->forestType == forest_t::QRF ) {
+  //assert( trainData->feature(targetIdx)->isNumerical() );
+  //for ( size_t i = 0; i < oobIcs_.size(); ++i ) {
+  //  num_t x = trainData->feature(targetIdx)->getNumData[oobIcs_[i]];
+  //  this->percolate(trainData,oobIcs_[i])->addTrainData(x);
+  //}
+  //}
   
 }
 
@@ -368,26 +343,19 @@ size_t RootNode::nOobSamples() {
   return( oobIcs_.size() ); 
 }
 
-num_t RootNode::getTestPrediction(Treedata* testData, const size_t sampleIdx) {
-  
-  return( this->percolate(testData,sampleIdx)->getTrainPrediction() );
-  
+const Node::Prediction& RootNode::getPrediction(Treedata* testData, const size_t sampleIdx) {
+  return( this->percolate(testData,sampleIdx)->getPrediction() );
 }
 
-string RootNode::getRawTestPrediction(Treedata* testData, const size_t sampleIdx) {
-
-  return( this->percolate(testData,sampleIdx)->getRawTrainPrediction() );
-
-}
 
 vector<num_t> RootNode::getChildLeafTrainData(Treedata* treeData, const size_t sampleIdx) {
 
-  vector<Node*> leaves = this->percolate(treeData,sampleIdx)->getChildLeaves();
+  vector<Node*> leaves = this->percolate(treeData,sampleIdx)->getSubTreeLeaves();
 
   vector<num_t> allTrainData;
 
   for ( size_t i = 0; i < leaves.size(); ++i ) {
-    vector<num_t> trainData = leaves[i]->getTrainData();
+    vector<num_t> trainData = leaves[i]->getPrediction().numTrainData;
     for ( size_t j = 0; j < trainData.size(); ++j ) {
       allTrainData.push_back(trainData[j]);
     }

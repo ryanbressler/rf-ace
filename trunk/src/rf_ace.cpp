@@ -136,20 +136,26 @@ int main(const int argc, char* const argv[]) {
     
     cout << "-Training the model" << endl;
     rface.train(&trainData,targetIdx,featureWeights,&options.forestOptions);
-    
-    vector<num_t> data = utils::removeNANs(trainData.getFeatureData(targetIdx));
-    
-    num_t oobError = 0; //trainedModel->getOobError();
-    num_t ibOobError = 0; // trainedModel->getError();
-    
-    cout << "RF training error measures (NULL == no model):" << endl;
+
     if ( trainData.feature(targetIdx)->isNumerical() ) {
+      vector<num_t> data = utils::removeNANs(trainData.feature(targetIdx)->getNumData());
+    
+      num_t oobError = 0; //trainedModel->getOobError();
+      num_t ibOobError = 0; // trainedModel->getError();
+      
+      cout << "RF training error measures (NULL == no model):" << endl;
       num_t nullError = math::var(data);
       cout << "              NULL std = " << sqrt( nullError ) << endl;
       cout << "               OOB std = " << sqrt( oobError ) << endl;
       cout << "            IB+OOB std = " << sqrt( ibOobError ) << endl;
       cout << "  % explained by model = " << 1 - oobError / nullError << " = 1 - (OOB var) / (NULL var)" << endl;
     } else {
+
+      vector<cat_t> data = utils::removeNANs(trainData.feature(targetIdx)->getCatData());
+
+      num_t oobError = 0; //trainedModel->getOobError();
+      num_t ibOobError = 0; // trainedModel->getError();
+
       num_t nullError = math::nMismatches( data, math::mode(data) );
       cout << "       NULL % mispred. = " << 1.0 * nullError / data.size() << endl;
       cout << "        OOB % mispred. = " << oobError << endl;

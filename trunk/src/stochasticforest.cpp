@@ -174,8 +174,6 @@ void StochasticForest::learnGBT(Treedata* trainData, const size_t targetIdx,
 
   bool isTargetNumerical = trainData->feature(targetIdx)->isNumerical();
 
-  vector<string> categories = trainData->feature(targetIdx)->categories();
-
   assert(trainData->nFeatures() == featureWeights.size());
   assert(fabs(featureWeights[targetIdx]) < datadefs::EPS);
   assert(randoms.size() == 1);
@@ -183,6 +181,7 @@ void StochasticForest::learnGBT(Treedata* trainData, const size_t targetIdx,
   distributions::PMF pmf(featureWeights);
 
   if (!isTargetNumerical) {
+    vector<cat_t> categories = trainData->feature(targetIdx)->categories();
     size_t nCategories = categories.size();
     size_t nTrees = forestOptions->nTrees * nCategories;
     rootNodes_.resize(nTrees);
@@ -203,14 +202,6 @@ void StochasticForest::learnGBT(Treedata* trainData, const size_t targetIdx,
     this->growCategoricalGBT(trainData, targetIdx, forestOptions, &pmf, randoms);
   }
 
-  // Get features in the forest for fast look-up
-  for ( size_t treeIdx = 0; treeIdx < rootNodes_.size(); ++treeIdx ) {
-    set<size_t> featuresInTree = rootNodes_[treeIdx]->getFeaturesInTree();
-    for ( set<size_t>::const_iterator it(featuresInTree.begin()); it != featuresInTree.end(); ++it ) {
-      //featuresInForest_.insert(*it);
-    }
-  }
-
 }
 
 // Grow a GBT "forest" for a numerical target variable
@@ -224,7 +215,7 @@ void StochasticForest::growNumericalGBT(Treedata* trainData,
 
   size_t nSamples = trainData->nSamples();
   // save a copy of the target column because it will be overwritten
-  vector<num_t> trueTargetData = trainData->getFeatureData(targetIdx);
+  vector<num_t> trueTargetData = trainData->feature(targetIdx)->getNumData();
 
   // Target for GBT is different for each tree
   // reference to the target column, will overwrite it
@@ -234,7 +225,7 @@ void StochasticForest::growNumericalGBT(Treedata* trainData,
   vector<size_t> missingIcs;
   trainData->separateMissingSamples(targetIdx,sampleIcs,missingIcs);
   assert(GBTConstants_.size() == 1);
-  GBTConstants_[0] = math::mean(trainData->getFeatureData(targetIdx, sampleIcs));
+  GBTConstants_[0] = math::mean(trainData->feature(targetIdx)->getNumData(sampleIcs));
 
   // Set the initial prediction to be the mean
   vector<num_t> prediction(nSamples, GBTConstants_[0]);
@@ -254,7 +245,7 @@ void StochasticForest::growNumericalGBT(Treedata* trainData,
     // What kind of a prediction does the new tree produce?
     vector<num_t> curPrediction(nSamples); // = rootNodes_[treeIdx]->getTrainPrediction(); 
     for (size_t i = 0; i < nSamples; ++i) {
-      curPrediction[i] = rootNodes_[treeIdx]->getTestPrediction(trainData, i);
+      curPrediction[i] = rootNodes_[treeIdx]->getPrediction(trainData, i).numTrainPrediction;
     }
 
     // Calculate the current total prediction adding the newly generated tree
@@ -279,7 +270,7 @@ void StochasticForest::growCategoricalGBT(Treedata* trainData,
 
   size_t nTrees = rootNodes_.size();
 
-  vector<string> categories = trainData->feature(targetIdx)->categories();
+  vector<cat_t> categories = trainData->feature(targetIdx)->categories();
 
   size_t nCategories = categories.size();
 
@@ -290,18 +281,18 @@ void StochasticForest::growCategoricalGBT(Treedata* trainData,
   // Save a copy of the target column because it will be overwritten later.
   // We also know that it must be categorical.
   size_t nSamples = trainData->nSamples();
-  vector<num_t> trueTargetData = trainData->getFeatureData(targetIdx);
-  vector < string > trueRawTargetData = trainData->getRawFeatureData(targetIdx);
+  vector<cat_t> trueTargetData = trainData->feature(targetIdx)->getCatData();
+  //vector<string> trueRawTargetData = trainData->getRawFeatureData(targetIdx);
 
   // Target for GBT is different for each tree.
   // We use the original target column to save each temporary target.
   // Reference to the target column, will overwrite it:
-  vector<num_t> curTargetData = trueTargetData;
+  vector<cat_t> curTargetData = trueTargetData;
 
   for (size_t categoryIdx = 0; categoryIdx < nCategories; ++categoryIdx) {
     GBTConstants_[categoryIdx] = 0.0;
     for (size_t sampleIdx = 0; sampleIdx < nSamples; ++sampleIdx) {
-      if (trueRawTargetData[sampleIdx] == categories[categoryIdx]) {
+      if (trueTargetData[sampleIdx] == categories[categoryIdx]) {
         ++GBTConstants_[categoryIdx];
       }
     }
@@ -326,7 +317,7 @@ void StochasticForest::growCategoricalGBT(Treedata* trainData,
       // target for class k is ...
       for (size_t i = 0; i < nSamples; ++i) {
         // ... the difference between true target and current prediction
-        curTargetData[i] = (categories[k] == trueRawTargetData[i]) - curProbability[i][k];
+        curTargetData[i] = (categories[k] == trueTargetData[i]) - curProbability[i][k];
       }
 
       // utils::write(cout,curTargetData.begin(),curTargetData.end());
@@ -346,7 +337,7 @@ void StochasticForest::growCategoricalGBT(Treedata* trainData,
       // out of the whole training data set?
       curPrediction[k] = vector<num_t> (nSamples); //rootNodes_[treeIdx]->getTrainPrediction();
       for (size_t i = 0; i < nSamples; ++i) {
-        curPrediction[k][i] = rootNodes_[treeIdx]->getTestPrediction(trainData, i);
+        curPrediction[k][i] = rootNodes_[treeIdx]->getPrediction(trainData, i).numTrainPrediction;
       }
 
       // Calculate the current total prediction adding the newly generated tree
@@ -358,59 +349,8 @@ void StochasticForest::growCategoricalGBT(Treedata* trainData,
 
   // GBT-forest is now done!
   // restore the true target
-  trainData->replaceFeatureData(targetIdx, trueRawTargetData);
+  trainData->replaceFeatureData(targetIdx, trueTargetData);
 }
-
-
-/*
-  num_t StochasticForest::error(const vector<num_t>& data1,
-  const vector<num_t>& data2) {
-  
-  size_t nSamples = data1.size();
-  assert(nSamples == data2.size());
-  
-  num_t predictionError = 0.0;
-  size_t nRealSamples = 0;
-  
-  if (this->isTargetNumerical()) {
-  for (size_t sampleIdx = 0; sampleIdx < nSamples; ++sampleIdx) {
-  if (!datadefs::isNAN(data1[sampleIdx]) && !datadefs::isNAN(data2[sampleIdx])) {
-  ++nRealSamples;
-  predictionError += pow(data1[sampleIdx] - data2[sampleIdx], 2);
-  }
-  }
-  } else {
-  for (size_t sampleIdx = 0; sampleIdx < nSamples; ++sampleIdx) {
-  if (!datadefs::isNAN(data1[sampleIdx]) && !datadefs::isNAN(data2[sampleIdx])) {
-  ++nRealSamples;
-  predictionError += 1.0 * (data1[sampleIdx] != data2[sampleIdx]);
-  }
-  }
-  }
-  
-  if (nRealSamples > 0) {
-  predictionError /= nRealSamples;
-  } else {
-  predictionError = datadefs::NUM_NAN;
-  }
-  
-  return (predictionError);
-  
-  }
-*/
-
-/*
- num_t StochasticForest::getOobError() {
-
- vector<num_t> oobPredictions = this->getOobPredictions();
-
- size_t targetIdx = trainData_->getFeatureIdx(params_->targetStr);
- vector<num_t> trueData = trainData_->getFeatureData(targetIdx);
-
- return( this->error(oobPredictions,trueData) );
-
- }
- */
 
 /*
  void StochasticForest::getImportanceValues(vector<num_t>& importanceValues, vector<num_t>& contrastImportanceValues) {
@@ -474,9 +414,9 @@ void predictCatPerThread(Treedata* testData,
 			 vector<RootNode*>& rootNodes,
 			 forest_t forestType,
 			 vector<size_t>& sampleIcs, 
-			 vector<string>* predictions,
+			 vector<cat_t>* predictions,
 			 vector<num_t>* confidence, 
-			 vector<string>& categories,
+			 vector<cat_t>& categories,
 			 vector<num_t>& GBTConstants, 
 			 num_t& GBTShrinkage) {
 
@@ -500,7 +440,7 @@ void predictCatPerThread(Treedata* testData,
 
         for ( size_t iterIdx = 0; iterIdx < nTrees / nCategories; ++iterIdx ) {
           size_t treeIdx = iterIdx * nCategories + categoryIdx;
-          cumProb += GBTShrinkage * rootNodes[treeIdx]->getTestPrediction(testData, sampleIdx);
+          cumProb += GBTShrinkage * rootNodes[treeIdx]->getPrediction(testData, sampleIdx).numTrainPrediction;
         }
 
         if (cumProb > maxProb) {
@@ -517,7 +457,7 @@ void predictCatPerThread(Treedata* testData,
 
       vector<string> predictionVec(nTrees);
       for ( size_t treeIdx = 0; treeIdx < nTrees; ++treeIdx ) {
-        predictionVec[treeIdx] = rootNodes[treeIdx]->getRawTestPrediction(testData, sampleIdx);
+        predictionVec[treeIdx] = rootNodes[treeIdx]->getPrediction(testData, sampleIdx).catTrainPrediction;
       }
 
       (*predictions)[sampleIdx] = math::mode(predictionVec);
@@ -540,7 +480,7 @@ void predictNumPerThread(Treedata* testData,
     size_t sampleIdx = sampleIcs[i];
     vector<num_t> predictionVec(nTrees);
     for (size_t treeIdx = 0; treeIdx < nTrees; ++treeIdx) {
-      predictionVec[treeIdx] = rootNodes[treeIdx]->getTestPrediction(testData,sampleIdx);
+      predictionVec[treeIdx] = rootNodes[treeIdx]->getPrediction(testData,sampleIdx).numTrainPrediction;
     }
     if (forestType == forest_t::GBT) {
       (*predictions)[sampleIdx] = GBTConstants[0];
@@ -556,7 +496,7 @@ void predictNumPerThread(Treedata* testData,
   }
 }
 
-void StochasticForest::predict(Treedata* testData, vector<string>& predictions,vector<num_t>& confidence, size_t nThreads) {
+void StochasticForest::predict(Treedata* testData, vector<cat_t>& predictions,vector<num_t>& confidence, size_t nThreads) {
 
   assert( nThreads > 0 );
 
@@ -571,7 +511,7 @@ void StochasticForest::predict(Treedata* testData, vector<string>& predictions,v
   assert( nThreads == 1 );
 #endif
 
-  vector<string> categories = {};
+  vector<cat_t> categories = {};
 
   size_t nSamples = testData->nSamples();
 
@@ -676,83 +616,6 @@ void StochasticForest::predictDistributions(Treedata* testData,
   
 }
 
-/*
- vector<num_t> StochasticForest::getOobPredictions() {
-
- size_t nSamples = trainData_->nSamples();
- size_t nTrees = this->nTrees();
- vector<vector<num_t> > predictionMatrix(nSamples);
- vector<num_t> predictions(nSamples);
- for ( size_t treeIdx = 0; treeIdx < nTrees; ++treeIdx ) {
- vector<size_t> oobIcs = rootNodes_[treeIdx]->getOobIcs();
- for ( vector<size_t>::const_iterator it( oobIcs.begin() ); it != oobIcs.end(); ++it ) {
- size_t sampleIdx = *it;
- predictionMatrix[sampleIdx].push_back( rootNodes_[treeIdx]->getTrainPrediction(sampleIdx) );
- }
- }
-
- for ( size_t sampleIdx = 0; sampleIdx < nSamples; ++sampleIdx ) {
- predictions[sampleIdx] = this->isTargetNumerical() ? math::mean(predictionMatrix[sampleIdx]) : math::mode(predictionMatrix[sampleIdx]);
- }
-
- return( predictions );
-
- }
- */
-
-/*
- vector<num_t> StochasticForest::getPermutedOobPredictions(const size_t featureIdx) {
-
- size_t nSamples = trainData_->nSamples();
- size_t nTrees = this->nTrees();
- vector<vector<num_t> > predictionMatrix(nSamples);
- vector<num_t> predictions(nSamples);
- for ( size_t treeIdx = 0; treeIdx < nTrees; ++treeIdx ) {
- vector<size_t> oobIcs = rootNodes_[treeIdx]->getOobIcs();
- for ( vector<size_t>::const_iterator it( oobIcs.begin() ); it != oobIcs.end(); ++it ) {
- size_t sampleIdx = *it;
- predictionMatrix[sampleIdx].push_back( rootNodes_[treeIdx]->getPermutedTrainPrediction(featureIdx,sampleIdx) );
- }
- }
-
- for ( size_t sampleIdx = 0; sampleIdx < nSamples; ++sampleIdx ) {
- predictions[sampleIdx] = this->isTargetNumerical() ? math::mean(predictionMatrix[sampleIdx]) : math::mode(predictionMatrix[sampleIdx]);
- }
-
- return( predictions );
-
- }
- */
-
-/**
- Returns a vector of node counts in the trees of the forest
- */
-/*
-  size_t StochasticForest::nNodes() {
-  
-  size_t nNodes = 0;
-  
-  // Loop through all trees
-  for (size_t treeIdx = 0; treeIdx < this->nTrees(); ++treeIdx) {
-  
-  // Get the node count for the tree
-  nNodes += this->nNodes(treeIdx);
-  
-  }
-  
-  return (nNodes);
-  }
-*/
-  
-/**
- Returns the number of nodes in tree treeIdx
- */
-/*
-  size_t StochasticForest::nNodes(const size_t treeIdx) {
-  return (rootNodes_[treeIdx]->nNodes());
-  }
-*/
-
 /**
  Returns the number of trees in the forest
  */
@@ -764,10 +627,6 @@ size_t StochasticForest::nTrees() {
 void StochasticForest::getMeanMinimalDepthValues(Treedata* trainData,
 						 vector<num_t>& depthValues, 
 						 vector<num_t>& contrastDepthValues) {
-
-  //if (featuresInForest_.size() == 0) {
-  //  cout << "NOTE: featuresInForest_ is empty!" << endl;
-  //}
 
   size_t nRealFeatures = trainData->nFeatures();
   size_t nAllFeatures = 2 * nRealFeatures;
@@ -802,8 +661,7 @@ void StochasticForest::getMeanMinimalDepthValues(Treedata* trainData,
 
   contrastDepthValues.resize(nRealFeatures);
 
-  copy(depthValues.begin() + nRealFeatures, depthValues.end(),
-      contrastDepthValues.begin());
+  copy(depthValues.begin() + nRealFeatures, depthValues.end(), contrastDepthValues.begin());
 
   depthValues.resize(nRealFeatures);
 

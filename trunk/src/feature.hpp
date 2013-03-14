@@ -11,26 +11,37 @@
 
 using namespace std;
 using datadefs::num_t;
+using datadefs::cat_t;
 
 class Feature {
 public:
 
   enum Type { NUM, CAT, TXT, UNKNOWN };
 
-  vector<num_t> data;
-  map<string,num_t> mapping;
-  map<num_t,string> backMapping;
-  vector<unordered_set<uint32_t> > hashSet;
+  vector<num_t> numData;
+  vector<cat_t> catData;
+  vector<unordered_set<uint32_t> > txtData;
 
   Feature();
   Feature(Type newType, const string& newName, const size_t nSamples);
-  Feature(const vector<num_t>& newData, const string& newName);
-  Feature(const vector<string>& newStringData, const string& newName, bool doHash = false);
+  Feature(const vector<num_t>& newNumData, const string& newName);
+  Feature(const vector<cat_t>& newCatData, const string& newName);
+  Feature(const vector<string>& newTxtData, const string& newName, const bool doHash);
   ~Feature();
 
   void setNumSampleValue(const size_t sampleIdx, const num_t   val);
-  void setCatSampleValue(const size_t sampleIdx, const string& str);
+  void setCatSampleValue(const size_t sampleIdx, const cat_t&  val);
   void setTxtSampleValue(const size_t sampleIdx, const string& str);
+
+  num_t getNumData(const size_t sampleIdx) const;
+  vector<num_t> getNumData() const;
+  vector<num_t> getNumData(const vector<size_t>& sampleIcs) const;
+
+  cat_t getCatData(const size_t sampleIdx) const;
+  vector<cat_t> getCatData() const;
+  vector<cat_t> getCatData(const vector<size_t>& sampleIcs) const;
+
+  unordered_set<uint32_t> getTxtData(const size_t sampleIdx) const;
 
   bool isNumerical() const;
   bool isCategorical() const;
@@ -38,11 +49,13 @@ public:
 
   bool isMissing(const size_t sampleIdx) const;
 
+  size_t nSamples() const;
+
   string name() const;
   void setName(const string& newName);
   
-  vector<string> categories() const;
-  size_t nCategories() const;
+  vector<cat_t> categories() const;
+  //size_t nCategories() const;
 
   uint32_t getHash(const size_t sampleIdx, const size_t integer) const;
   bool hasHash(const size_t sampleIdx, const uint32_t hashIdx) const;

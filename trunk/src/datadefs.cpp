@@ -18,6 +18,7 @@ using namespace std;
 // CONSTANTS
 ////////////////////////////////////////////////////////////
 const datadefs::num_t datadefs::NUM_NAN = numeric_limits<double>::quiet_NaN();//numeric_limits<double>::infinity();
+//const datadefs::cat_t datadefs::CAT_NAN = "NA";
 const string datadefs::STR_NAN = "NA";
 const datadefs::num_t datadefs::NUM_INF = numeric_limits<double>::infinity();
 const size_t datadefs::MAX_IDX = numeric_limits<int32_t>::max() - 1;
@@ -153,28 +154,3 @@ void datadefs::countRealValues(vector<num_t> const& data, size_t& nRealValues) {
   }
 }
 
-
-/**
-   !! Documentation
-*/
-void datadefs::map_data(vector<datadefs::num_t> const& data, 
-                        unordered_map<datadefs::num_t,vector<size_t> >& datamap, 
-                        size_t& nRealValues) {
-
-  datamap.clear();
-  datamap.rehash(2*data.size());
-
-  unordered_map<datadefs::num_t,vector<size_t> >::iterator it;
-  nRealValues = 0;
-  for(size_t i = 0; i < data.size(); ++i) {
-    if(!datadefs::isNAN(data[i])) {
-      ++nRealValues;
-      it = datamap.find(data[i]);
-      if(it == datamap.end()) {
-        datamap.insert(pair<datadefs::num_t,vector<size_t> >(data[i],vector<size_t>(1,i)));
-      } else {
-        it->second.push_back(i);
-      }
-    }
-  }
-}

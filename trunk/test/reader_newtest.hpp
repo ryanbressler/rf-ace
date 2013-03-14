@@ -112,7 +112,7 @@ void reader_newtest_readAFM() {
   // Variables for storing all data on line 2
   string s0;
   num_t  v1,v3,v4,v5,v6,v7;
-  string v2,v8;
+  cat_t v2,v8;
   
   // Read the 2nd line in one pass
   reader >> s0 >> v1 >> v2 >> v3 >> v4 >> v5 >> v6 >> v7 >> v8; 
@@ -124,11 +124,11 @@ void reader_newtest_readAFM() {
   newassert( s0 == "s0" ); 
   newassert( datadefs::isNAN(v1) ); 
   newassert( v2 == "foo" ); 
-  newassert( fabs( v3 - 2.2 ) < datadefs::EPS ); 
-  newassert( fabs( v4 - 3.3 ) < datadefs::EPS ); 
-  newassert( fabs( v5 - 4.4 ) < datadefs::EPS ); 
-  newassert( fabs( v6 - 5.5 ) < datadefs::EPS ); 
-  newassert( fabs( v7 - 6.6 ) < datadefs::EPS ); 
+  newassert( fabs( v3 - 2.2 ) < 1e-5 ); 
+  newassert( fabs( v4 - 3.3 ) < 1e-5 ); 
+  newassert( fabs( v5 - 4.4 ) < 1e-5 ); 
+  newassert( fabs( v6 - 5.5 ) < 1e-5 ); 
+  newassert( fabs( v7 - 6.6 ) < 1e-5 ); 
   newassert( v8 == "Ah, be so good. Yes, no?" ); 
 
   // Go back to the beginning

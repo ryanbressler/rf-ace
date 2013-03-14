@@ -12,11 +12,11 @@
 #include <unordered_map>
 
 #include "datadefs.hpp"
-//#include "math.hpp"
 #include "distributions.hpp"
 
 using namespace std;
 using datadefs::num_t;
+using datadefs::cat_t;
 
 class Treedata;
 
@@ -27,7 +27,7 @@ namespace utils {
   string suffix(const string& str);
 
   // Removes missing values from the provided data vector
-  vector<num_t> removeNANs(vector<num_t> x);
+  //vector<num_t> removeNANs(vector<num_t> x);
     
   // Chomps a string, i.e. removes all the trailing end-of-line characters
   string chomp(const string& str, const string& eof = "\r\n");
@@ -58,10 +58,19 @@ namespace utils {
 
   // Reads a list of items from a file
   vector<string> readListFromFile(const string& fileName, const char delimiter);
-
+  
+  template<typename T>
+  vector<T> removeNANs(vector<T> data) {
+    
+    data.erase( remove_if(data.begin(),data.end(),&datadefs::isNAN<T>), data.end() );
+    
+    return(data);
+    
+  }
+  
   template<typename StartIterator, typename StopIterator>
   inline void write(ostream& os, StartIterator startIt, StopIterator stopIt, const char delimiter = ' ') {
-
+    
     if ( startIt != stopIt ) {
       os << *startIt;
       ++startIt;
@@ -82,10 +91,12 @@ namespace utils {
   void strv2numv(const vector<string>& strvec,
 		 vector<datadefs::num_t>& numvec);
 
-  void strv2catv(const vector<string>& strvec, 
-		 vector<datadefs::num_t>& catvec, 
-		 map<string,datadefs::num_t>& mapping, 
-		 map<datadefs::num_t,string>& backMapping);
+  /*
+    void strv2catv(const vector<string>& strvec, 
+    vector<datadefs::num_t>& catvec, 
+    map<string,datadefs::num_t>& mapping, 
+    map<datadefs::num_t,string>& backMapping);
+  */
 
   void sortDataAndMakeRef(const bool isIncreasingOrder,
 			  vector<datadefs::num_t>& data,
@@ -152,40 +163,24 @@ namespace utils {
 					      const size_t minSamples,
 					      size_t& splitIdx);
   
-  num_t numericalFeatureSplitsCategoricalTarget(const vector<num_t>& tv,
+  num_t numericalFeatureSplitsCategoricalTarget(const vector<cat_t>& tv,
 						const vector<num_t>& fv,
 						const size_t minSamples,
 						size_t& splitIdx);
   
-  /*
-    num_t categoricalFeatureSplitsNumericalTarget(const vector<num_t>& tv,
-    const vector<num_t>& fv,
-    const size_t minSamples,
-    unordered_map<num_t,vector<size_t> >& fmap_left,
-    unordered_map<num_t,vector<size_t> >& fmap_right);
-  */ 
-
-  num_t categoricalFeatureSplitsNumericalTarget2(const vector<num_t>& tv,
-						 const vector<num_t>& fv,
-						 const size_t minSamples,
-						 const vector<num_t>& catOrder,
-						 unordered_map<num_t,vector<size_t> >& fmap_left,
-						 unordered_map<num_t,vector<size_t> >& fmap_right);
- 
-  /*
-    num_t categoricalFeatureSplitsCategoricalTarget(const vector<num_t>& tv,
-    const vector<num_t>& fv,
-    const size_t minSamples,
-    unordered_map<num_t,vector<size_t> >& fmap_left,
-    unordered_map<num_t,vector<size_t> >& fmap_right);
-  */
-
-  num_t categoricalFeatureSplitsCategoricalTarget2(const vector<num_t>& tv,
-						   const vector<num_t>& fv,
-						   const size_t minSamples,
-						   const vector<num_t>& catOrder,
-						   unordered_map<num_t,vector<size_t> >& fmap_left,
-						   unordered_map<num_t,vector<size_t> >& fmap_right);
+  num_t categoricalFeatureSplitsNumericalTarget(const vector<num_t>& tv,
+						const vector<cat_t>& fv,
+						const size_t minSamples,
+						const vector<cat_t>& catOrder,
+						unordered_map<cat_t,vector<size_t> >& fmap_left,
+						unordered_map<cat_t,vector<size_t> >& fmap_right);
+  
+  num_t categoricalFeatureSplitsCategoricalTarget(const vector<cat_t>& tv,
+						  const vector<cat_t>& fv,
+						  const size_t minSamples,
+						  const vector<cat_t>& catOrder,
+						  unordered_map<cat_t,vector<size_t> >& fmap_left,
+						  unordered_map<cat_t,vector<size_t> >& fmap_right);
   
   
 }

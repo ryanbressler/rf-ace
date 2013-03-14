@@ -367,7 +367,8 @@ public:
   string featureWeightsFile; const string featureWeightsFile_s; const string featureWeightsFile_l;
   string whiteListFile; const string whiteListFile_s; const string whiteListFile_l;
   string blackListFile; const string blackListFile_s; const string blackListFile_l;
-  
+
+  bool trainStream; const string trainStream_s; const string trainStream_l;
   
   IO():
     filterDataFile_s("F"), filterDataFile_l("filterData"),
@@ -381,7 +382,8 @@ public:
     logFile_s("G"), logFile_l("log"),
     featureWeightsFile_s("w"), featureWeightsFile_l("featureWeights"),
     whiteListFile_s("W"), whiteListFile_l("whiteList"),
-    blackListFile_s("B"), blackListFile_l("blackList") {}
+    blackListFile_s("B"), blackListFile_l("blackList"),
+    trainStream(false), trainStream_s("S"), trainStream_l("trainStream") {}
 
   ~IO() {}
 
@@ -399,12 +401,15 @@ public:
     parser.getArgument<string>(featureWeightsFile_s,featureWeightsFile_l,featureWeightsFile);
     parser.getArgument<string>(whiteListFile_s,whiteListFile_l,whiteListFile);
     parser.getArgument<string>(blackListFile_s,blackListFile_l,blackListFile);
+
+    parser.getFlag(trainStream_s,trainStream_l,trainStream);
   }
 
   void help() {
     cout << "File Options:" << endl;
     this->printHelpLine(filterDataFile_s,filterDataFile_l,"Load data file (.afm or .arff) for feature selection");
     this->printHelpLine(trainDataFile_s,trainDataFile_l,"Load data file (.afm or .arff) for training a model");
+    this->printHelpLine(trainStream_s,trainStream_l,"Read data in a serial format from stream");
     this->printHelpLine(featureWeightsFile_s,featureWeightsFile_l,"Load feature weights from file");
     this->printHelpLine(whiteListFile_s,whiteListFile_l,"Load white list from file");
     this->printHelpLine(blackListFile_s,blackListFile_l,"Load black list from file");

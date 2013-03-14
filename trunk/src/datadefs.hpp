@@ -21,14 +21,17 @@ namespace datadefs {
   // CONSTANTS
   ////////////////////////////////////////////////////////////
   // Numerical data type
-  typedef double num_t; /** Baseline numeric representation used throughout
+  typedef float num_t; /** Baseline numeric representation used throughout
                          *   RF-ACE. Currently, double. */
+
+  typedef string cat_t;
 
   typedef unordered_map<size_t,unordered_map<size_t,size_t> > ftable_t;
 
-  extern const num_t NUM_NAN;       /** Numeric representation of not-a-number */
+  extern const num_t  NUM_NAN;       /** Numeric representation of not-a-number */
+  //extern const cat_t  CAT_NAN;
   extern const string STR_NAN;
-  extern const num_t EPS;           /** Desired relative error. Literally,
+  extern const num_t  EPS;           /** Desired relative error. Literally,
                                      *   "machine EPSilon." See:
                                      *   http://en.wikipedia.org/wiki/Machine_epsilon
                                      *   and http://www.mathworks.com/help/techdoc/ref/eps.html
@@ -135,9 +138,6 @@ namespace datadefs {
   
   void countRealValues(vector<num_t> const& data, size_t& nRealValues);
 
-  void map_data(vector<num_t> const& data, 
-                unordered_map<num_t,vector<size_t> >& datamap,
-                size_t& nRealValues);
 
   ////////////////////////////////////////////////////////////
   // INLINE METHOD DEFINITIONS
@@ -151,12 +151,17 @@ namespace datadefs {
     return( NANs.find(toUpperCase(str)) != NANs.end() ? true : false );
   }
 
-
   /**
    * Performs an equivalence test to discern if this value is NAN.
    */
-  inline bool isNAN(const num_t value) {
+  template<typename T>
+  inline bool isNAN(const T& value) {
     return( value != value ? true : false );
+  }
+
+  template<>
+  inline bool isNAN(const cat_t& value) {
+    return(isNAN_STR(value));
   }
 
   /**
@@ -172,6 +177,29 @@ namespace datadefs {
 
   inline bool pairedIsNAN(const pair<num_t,size_t>& value) {
     return( value.first != value.first ? true : false );
+  }
+
+  template<typename T>
+  void map_data(vector<T> const& data,
+                unordered_map<T,vector<size_t> >& datamap,
+                size_t& nRealValues) {
+
+    datamap.clear();
+    datamap.rehash(2*data.size());
+
+    typename unordered_map<T,vector<size_t> >::iterator it;
+    nRealValues = 0;
+    for(size_t i = 0; i < data.size(); ++i) {
+      if(!isNAN<T>(data[i])) {
+        ++nRealValues;
+        it = datamap.find(data[i]);
+        if(it == datamap.end()) {
+          datamap.insert(pair<T,vector<size_t> >(data[i],vector<size_t>(1,i)));
+        } else {
+          it->second.push_back(i);
+        }
+      }
+    }
   }
   
   /**

@@ -71,6 +71,22 @@ template<> inline Reader& operator>>(Reader& reader, datadefs::num_t& val) {
   return(reader);
 }
 
+/*
+  template<> inline Reader& operator>>(Reader& reader, datadefs::cat_t& val) {
+  reader.checkLineFeed();
+  std::string field;
+  std::getline(reader.lineFeed_,field,reader.delimiter_);
+  field = utils::chomp(field);
+  if ( datadefs::isNAN_STR(field) ) {
+  val = datadefs::CAT_NAN;
+  } else {
+  std::stringstream ss( utils::chomp(field) );
+  ss >> val;
+  }
+  return(reader);
+  }
+*/
+
 template<> inline Reader& operator>>(Reader& reader, string& str) {
   reader.checkLineFeed();
   std::getline(reader.lineFeed_,str,reader.delimiter_);
