@@ -27,6 +27,7 @@
 
 using namespace std;
 using datadefs::num_t;
+using datadefs::cat_t;
 using datadefs::forest_t;
 using datadefs::ftable_t;
 
@@ -40,16 +41,16 @@ public:
     trainedModel_(NULL) {
     this->resetRandomNumberGenerators(nThreads,seed);
   }
-
+  
   ~RFACE() {
-
+    
     if ( trainedModel_ ) {
       delete trainedModel_;
       trainedModel_ = NULL;
     }
     
   }
-
+  
   struct FilterOutput {
     size_t nAllFeatures;
     size_t nSignificantFeatures;
@@ -60,7 +61,7 @@ public:
     vector<num_t> correlations;
     vector<num_t> sampleCounts;
   };
-
+  
   struct TestOutput {
     string targetName;
     bool isTargetNumerical;
@@ -71,14 +72,74 @@ public:
     vector<num_t> confidence;
     vector<string> sampleNames;
   };
-
-  struct QuantilePredictionOutput {
+  
+  struct NumQRFPredictionOutput {
+    
     string targetName;
-    vector<num_t> quantiles;
-    vector<vector<num_t> > predictions;
+
     vector<num_t> trueData;
     vector<string> sampleNames;
+    vector<num_t> quantiles;
     vector<vector<num_t> > distributions;
+    vector<vector<num_t> > quantilePredictions;
+    
+    void makeQuantilePredictions() {
+      
+      size_t nSamples = sampleNames.size();
+      size_t nQuantiles = quantiles.size();
+
+      cout << "Making quantiles for " << nSamples << " samples and " << nQuantiles << " quantiles" << endl;
+      
+      quantilePredictions.resize(nSamples,vector<num_t>(nQuantiles,datadefs::NUM_NAN));
+
+      for ( size_t sampleIdx = 0; sampleIdx < nSamples; ++sampleIdx ) {
+	sort(distributions[sampleIdx].begin(),distributions[sampleIdx].end());
+	for ( size_t q = 0; q < nQuantiles; ++q ) {
+	  quantilePredictions[sampleIdx][q] = math::percentile(distributions[sampleIdx],quantiles[q]);
+	}
+      }
+      
+    }
+    
+  };
+  
+  struct CatQRFPredictionOutput {
+    
+    string targetName;
+
+    vector<cat_t> trueData;
+    vector<string> sampleNames;
+    vector<cat_t> categories;
+    vector<vector<cat_t> > distributions;
+    vector<unordered_map<cat_t,num_t> > catProbabilities;
+    
+    void makeCategoryPredictions() {
+      
+      size_t nSamples = sampleNames.size();
+      size_t nCategories = categories.size();
+      
+      catProbabilities.resize(nSamples);
+      
+      for ( size_t sampleIdx = 0; sampleIdx < nSamples; ++sampleIdx ) {
+	
+	size_t nSamplesPerDistribution = distributions[sampleIdx].size();
+
+	for ( size_t c = 0; c < nCategories; ++c ) {
+	  catProbabilities[sampleIdx][ categories[c] ] = 0.0;
+	}
+	
+	for ( size_t i = 0; i < nSamplesPerDistribution; ++i ) {
+	  catProbabilities[sampleIdx][ distributions[sampleIdx][i] ]++;
+	}
+	
+	for ( size_t c = 0; c < nCategories; ++c ) {
+	  catProbabilities[sampleIdx][ categories[c] ] /= nSamplesPerDistribution;
+	}
+	
+      }
+
+    }
+    
   };
   
   void train(Treedata* trainData, 
@@ -331,11 +392,15 @@ public:
     return( testOutput );
   }
 
-  QuantilePredictionOutput predictQuantiles(Treedata* testData, const vector<num_t>& quantiles, const size_t nSamplesPerTree) {
+  NumQRFPredictionOutput predictNumQRF(Treedata* testData, const vector<num_t>& quantiles, const size_t nSamplesPerTree) {
     
+    cout << "Started predictNumQRF" << endl;
+
     assert(trainedModel_);
 
-    QuantilePredictionOutput qPredOut;
+    NumQRFPredictionOutput qPredOut;
+
+    cout << "Initialized output" << endl;
 
     qPredOut.targetName = trainedModel_->getTargetName();
     qPredOut.quantiles = quantiles;
@@ -350,17 +415,17 @@ public:
       qPredOut.trueData = vector<num_t>(testData->nSamples(),datadefs::NUM_NAN);
     }
 
+    cout << "Starting collection of distributions" << endl;
+
     trainedModel_->predictDistributions(testData,qPredOut.distributions,&randoms_[0],nSamplesPerTree);
 
+    cout << "Done" << endl;
+
     qPredOut.sampleNames.resize( testData->nSamples() );
-    qPredOut.predictions = vector<vector<num_t> >(testData->nSamples(),vector<num_t>(quantiles.size()));
     for ( size_t i = 0; i < testData->nSamples(); ++i ) {
       qPredOut.sampleNames[i] = testData->getSampleName(i);
-      sort(qPredOut.distributions[i].begin(),qPredOut.distributions[i].end());
-      for ( size_t q = 0; q < quantiles.size(); ++q ) {
-	qPredOut.predictions[i][q] = math::percentile(qPredOut.distributions[i],qPredOut.quantiles[q]);
-      }
     }
+    qPredOut.makeQuantilePredictions();
 
     return( qPredOut );
 
@@ -377,29 +442,30 @@ public:
     trainedModel_->loadForest(fileName);
   }
 
-  QuantilePredictionOutput loadForestAndPredictQuantiles(const string& fileName, Treedata* testData, const vector<num_t>& quantiles, const size_t nSamplesPerTree) {
+  NumQRFPredictionOutput loadForestAndPredictNumQRF(const string& forestFile, Treedata* testData, const vector<num_t>& quantiles, const size_t nSamplesPerTree) {
     
-    QuantilePredictionOutput qPredOut;
+    NumQRFPredictionOutput qPredOut;
 
-    ifstream forestStream(fileName.c_str());
+    ifstream forestStream(forestFile.c_str());
     assert(forestStream.good());
-
-    size_t nQuantiles = quantiles.size();
+    
     size_t nSamples = testData->nSamples();
+
+    qPredOut.quantiles = quantiles;
+
+    assert(qPredOut.quantiles.size() > 0);
 
     qPredOut.distributions = vector<vector<num_t> >(nSamples);
 
-    qPredOut.predictions.resize(nSamples,vector<num_t>(nQuantiles,datadefs::NUM_NAN));
-
-    size_t iter = 0;
+    size_t treeIdx = 0;
     while ( forestStream.good() ) {
 
       RootNode rootNode(forestStream);
 
       qPredOut.targetName = rootNode.getTargetName();
 
-      cout << "Tree " << iter << " loaded" << endl;
-      iter++;
+      cout << "Tree " << treeIdx << " loaded" << endl;
+      treeIdx++;
 
       for ( size_t sampleIdx = 0; sampleIdx < nSamples; ++sampleIdx ) {
 
@@ -407,31 +473,22 @@ public:
         size_t nSamplesInTreeData = treeData.size();
 
 	// Extend the distribution container by the number of new samples
-	qPredOut.distributions[sampleIdx].resize(iter*nSamplesPerTree,datadefs::NUM_NAN);
+	qPredOut.distributions[sampleIdx].resize(treeIdx*nSamplesPerTree,datadefs::NUM_NAN);
 
 	// Get the new samples
         for ( size_t i = 0; i < nSamplesPerTree; ++i ) {
-          qPredOut.distributions[sampleIdx][ (iter-1) * nSamplesPerTree + i ] = treeData[ randoms_[0].integer() % nSamplesInTreeData ];
+          qPredOut.distributions[sampleIdx][ (treeIdx-1) * nSamplesPerTree + i ] = treeData[ randoms_[0].integer() % nSamplesInTreeData ];
         }
 
       }
     }
 
+    // This can be done once the distributions and quantile points are loaded into qPredOut
     qPredOut.sampleNames.resize( testData->nSamples() );
-    for ( size_t sampleIdx = 0; sampleIdx < nSamples; ++sampleIdx ) {
-      qPredOut.sampleNames[sampleIdx] = testData->getSampleName(sampleIdx);
-      //cout << "Test sample " << sampleIdx << " yielded " << finalData[sampleIdx].size() << " samples from the conditional distribution" << endl;
-      sort(qPredOut.distributions[sampleIdx].begin(),qPredOut.distributions[sampleIdx].end());
-      for ( size_t q = 0; q < nQuantiles; ++q ) {
-        qPredOut.predictions[sampleIdx][q] = math::percentile(qPredOut.distributions[sampleIdx],quantiles[q]);
-      }
+    for ( size_t i = 0; i < testData->nSamples(); ++i ) {
+      qPredOut.sampleNames[i] = testData->getSampleName(i);
     }
-
-    cout << nQuantiles << " quantiles collected" << endl;
-
-    qPredOut.quantiles = quantiles;
-
-    assert(qPredOut.quantiles.size() > 0);
+    qPredOut.makeQuantilePredictions(); 
 
     size_t targetIdx = testData->getFeatureIdx(qPredOut.targetName);
 
@@ -440,7 +497,7 @@ public:
     } else {
       qPredOut.trueData = vector<num_t>(testData->nSamples(),datadefs::NUM_NAN);
     }
-    
+
     return(qPredOut);
 
   }
