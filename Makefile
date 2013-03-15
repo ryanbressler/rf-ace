@@ -28,6 +28,9 @@ debug: $(SOURCEFILES)
 static: $(SOURCEFILES)
 	$(COMPILER) $(CFLAGS) src/rf_ace.cpp $(STATICFLAGS) $(SOURCEFILES) $(TFLAGS) -o bin/rf-ace
 
+static-no-threads: $(SOURCEFILES)
+	$(COMPILER) $(CFLAGS) -DNOTHREADS src/rf_ace.cpp $(STATICFLAGS) $(SOURCEFILES) -o bin/rf-ace
+
 GBT_benchmark: test/GBT_benchmark.cpp $(SOURCEFILES)
 	$(COMPILER) $(CFLAGS) test/GBT_benchmark.cpp $(SOURCEFILES) $(TFLAGS) -o bin/GBT_benchmark
 
