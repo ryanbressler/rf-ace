@@ -88,8 +88,6 @@ public:
       size_t nSamples = sampleNames.size();
       size_t nQuantiles = quantiles.size();
 
-      cout << "Making quantiles for " << nSamples << " samples and " << nQuantiles << " quantiles" << endl;
-      
       quantilePredictions.resize(nSamples,vector<num_t>(nQuantiles,datadefs::NUM_NAN));
 
       for ( size_t sampleIdx = 0; sampleIdx < nSamples; ++sampleIdx ) {
@@ -394,13 +392,9 @@ public:
 
   NumQRFPredictionOutput predictNumQRF(Treedata* testData, const vector<num_t>& quantiles, const size_t nSamplesPerTree) {
     
-    cout << "Started predictNumQRF" << endl;
-
     assert(trainedModel_);
 
     NumQRFPredictionOutput qPredOut;
-
-    cout << "Initialized output" << endl;
 
     qPredOut.targetName = trainedModel_->getTargetName();
     qPredOut.quantiles = quantiles;
@@ -415,11 +409,7 @@ public:
       qPredOut.trueData = vector<num_t>(testData->nSamples(),datadefs::NUM_NAN);
     }
 
-    cout << "Starting collection of distributions" << endl;
-
     trainedModel_->predictDistributions(testData,qPredOut.distributions,&randoms_[0],nSamplesPerTree);
-
-    cout << "Done" << endl;
 
     qPredOut.sampleNames.resize( testData->nSamples() );
     for ( size_t i = 0; i < testData->nSamples(); ++i ) {

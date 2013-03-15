@@ -145,8 +145,6 @@ RcppExport SEXP rfaceTrain(SEXP trainDataFrameObj,
 
 RcppExport SEXP rfacePredict(SEXP rfaceObj, SEXP testDataFrameObj, SEXP quantilesR, SEXP nSamplesForQuantilesR) {
 
-  cout << "Started prediction through R" << endl;
-
   Rcpp::XPtr<RFACE> rface(rfaceObj);
 
   vector<num_t> quantiles = Rcpp::as<vector<num_t> >(quantilesR);
@@ -163,15 +161,7 @@ RcppExport SEXP rfacePredict(SEXP rfaceObj, SEXP testDataFrameObj, SEXP quantile
 
   if ( quantiles.size() > 0 ) {
 
-    cout << "Making quantile predictions" << endl;
-    
-    RFACE::NumQRFPredictionOutput qPredOut;
-    
-    cout << "Created qPredOut" << endl;
-
-    cout << "Starting prediction with " << quantiles.size() << " quantiles and " << nSamplesForQuantiles << " samples for quantiles" << endl;
-
-    qPredOut = rface->predictNumQRF(&testData,quantiles,nSamplesForQuantiles);
+    RFACE::NumQRFPredictionOutput qPredOut = rface->predictNumQRF(&testData,quantiles,nSamplesForQuantiles);
     
     return( Rcpp::List::create(Rcpp::Named("targetName")=qPredOut.targetName,
     			       Rcpp::Named("sampleNames")=qPredOut.sampleNames,
