@@ -532,7 +532,7 @@ num_t utils::categoricalFeatureSplitsNumericalTarget(const vector<num_t>& tv,
     num_t DI = math::deltaImpurity_regr(mu_tot,n_tot,mu_left,n_left,mu_right,n_right);
     
     if ( DI > DI_best ) { 
-      
+
       DI_best = DI;
       
       fmap_left.insert( *it );

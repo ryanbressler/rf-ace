@@ -34,7 +34,7 @@ void printDataStatistics(Treedata& treeData, const size_t targetIdx);
 void writeFilterOutputToFile(RFACE::FilterOutput& filterOutput, const string& fileName);
 
 void printPredictionsToFile(RFACE::TestOutput& testOutput, const string& fileName);
-void printQuantilePredictionsToFile(RFACE::QuantilePredictionOutput& qPredOutput, const string& fileName);
+void printQuantilePredictionsToFile(RFACE::NumQRFPredictionOutput& qPredOutput, const string& fileName);
 
 int main(const int argc, char* const argv[]) {
 
@@ -63,7 +63,8 @@ int main(const int argc, char* const argv[]) {
 
   RFACE::FilterOutput filterOutput;
   RFACE::TestOutput testOutput;
-  RFACE::QuantilePredictionOutput qPredOutput;
+  RFACE::NumQRFPredictionOutput qPredOutput;
+  RFACE::CatQRFPredictionOutput foo;
 
   timer.tic("Total time elapsed");
 
@@ -108,7 +109,7 @@ int main(const int argc, char* const argv[]) {
 
     cout << "-Loading model '" << options.io.loadForestFile << "', making on-the-fly quantile predictions and saving to file '" << options.io.predictionsFile << "'" << endl;
     Treedata testData(options.io.testDataFile,options.generalOptions.dataDelimiter,options.generalOptions.headerDelimiter);
-    qPredOutput = rface.loadForestAndPredictQuantiles(options.io.loadForestFile,&testData,options.forestOptions.quantiles,options.forestOptions.nSamplesForQuantiles);
+    qPredOutput = rface.loadForestAndPredictNumQRF(options.io.loadForestFile,&testData,options.forestOptions.quantiles,options.forestOptions.nSamplesForQuantiles);
     printQuantilePredictionsToFile(qPredOutput,options.io.predictionsFile);
     return(EXIT_SUCCESS);
   } 
@@ -171,7 +172,7 @@ int main(const int argc, char* const argv[]) {
     Treedata testData(options.io.testDataFile,options.generalOptions.dataDelimiter,options.generalOptions.headerDelimiter);
     if ( options.forestOptions.forestType == forest_t::QRF && options.forestOptions.quantiles.size() > 0 ) {
       cout << "-Making quantile predictions" << endl;
-      qPredOutput = rface.predictQuantiles(&testData,options.forestOptions.quantiles,options.forestOptions.nSamplesForQuantiles);
+      qPredOutput = rface.predictNumQRF(&testData,options.forestOptions.quantiles,options.forestOptions.nSamplesForQuantiles);
     } else {
       cout << "-Making predictions" << endl;
       testOutput = rface.test(&testData);
@@ -357,7 +358,7 @@ void printPredictionsToFile(RFACE::TestOutput& testOutput, const string& fileNam
 
 }
 
-void printQuantilePredictionsToFile(RFACE::QuantilePredictionOutput& qPredOutput, const string& fileName) {
+void printQuantilePredictionsToFile(RFACE::NumQRFPredictionOutput& qPredOutput, const string& fileName) {
 
   ofstream toPredictionFile(fileName.c_str());
 
@@ -371,8 +372,10 @@ void printQuantilePredictionsToFile(RFACE::QuantilePredictionOutput& qPredOutput
   toPredictionFile << "\t" << qPredOutput.targetName << "_DISTRIBUTION" << endl;
 
   for ( size_t i = 0; i < nSamples; ++i ) {
-    toPredictionFile << qPredOutput.sampleNames[i] << "\t" << qPredOutput.trueData[i] << "\t" << flush;
-    utils::write(toPredictionFile,qPredOutput.predictions[i].begin(),qPredOutput.predictions[i].end(),'\t');
+    toPredictionFile << qPredOutput.sampleNames[i] << "\t" << qPredOutput.trueData[i];
+    for ( size_t q = 0; q < qPredOutput.quantiles.size(); ++q ) {
+      toPredictionFile << "\t" << qPredOutput.quantilePredictions[i][qPredOutput.quantiles[q]];
+    }
     toPredictionFile << "\t";
     utils::write(toPredictionFile,qPredOutput.distributions[i].begin(),qPredOutput.distributions[i].end(),',');
     toPredictionFile << endl;
