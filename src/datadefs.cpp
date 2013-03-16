@@ -79,7 +79,7 @@ const bool                    datadefs::QRF_DEFAULT_USE_CONTRASTS = false;
 const datadefs::num_t         datadefs::QRF_DEFAULT_CONTRAST_FRACTION = 0.5;
 const bool                    datadefs::QRF_DEFAULT_IS_RANDOM_SPLIT = true;
 const datadefs::num_t         datadefs::QRF_DEFAULT_SHRINKAGE = 0.0;
-const vector<datadefs::num_t> datadefs::QRF_DEFAULT_QUANTILES = {};
+const vector<datadefs::num_t> datadefs::QRF_DEFAULT_QUANTILES = {0.25,0.5,0.75};
 const size_t                  datadefs::QRF_DEFAULT_N_SAMPLES_FOR_QUANTILES = 10;
 
 // Gradient Boosting Trees default configuration

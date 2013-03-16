@@ -594,27 +594,50 @@ void StochasticForest::predict(Treedata* testData, vector<num_t>& predictions,ve
 #endif
 }
 
-void StochasticForest::predictDistributions(Treedata* testData,
-					    vector<vector<num_t> >& distribution,
-					    distributions::Random* random,
-					    const size_t nSamplesPerTree) {
+void StochasticForest::getNumDistributions(Treedata* testData,
+					   vector<vector<num_t> >& distributions,
+					   distributions::Random* random,
+					   const size_t nSamplesPerTree) {
   
   size_t nTrees = this->nTrees();
   size_t nSamples = testData->nSamples();
 
-  distribution.resize(nSamples,vector<num_t>(nTrees*nSamplesPerTree));
+  distributions.resize(nSamples,vector<num_t>(nTrees*nSamplesPerTree));
   
   for ( size_t sampleIdx = 0; sampleIdx < nSamples; ++sampleIdx ) {
     for ( size_t treeIdx = 0; treeIdx < nTrees; ++treeIdx ) {
-      vector<num_t> treeData = rootNodes_[treeIdx]->getChildLeafTrainData(testData,sampleIdx);
+      vector<num_t> treeData = rootNodes_[treeIdx]->getChildLeafNumTrainData(testData,sampleIdx);
       size_t nSamplesInTreeData = treeData.size();
       for ( size_t i = 0; i < nSamplesPerTree; ++i ) {
-	distribution[sampleIdx][ treeIdx * nSamplesPerTree + i ] = treeData[ random->integer() % nSamplesInTreeData ];
+	distributions[sampleIdx][ treeIdx * nSamplesPerTree + i ] = treeData[ random->integer() % nSamplesInTreeData ];
       }
     }
   }
   
 }
+
+void StochasticForest::getCatDistributions(Treedata* testData,
+                                           vector<vector<cat_t> >& distributions,
+                                           distributions::Random* random,
+                                           const size_t nSamplesPerTree) {
+
+  size_t nTrees = this->nTrees();
+  size_t nSamples = testData->nSamples();
+
+  distributions.resize(nSamples,vector<cat_t>(nTrees*nSamplesPerTree));
+
+  for ( size_t sampleIdx = 0; sampleIdx < nSamples; ++sampleIdx ) {
+    for ( size_t treeIdx = 0; treeIdx < nTrees; ++treeIdx ) {
+      vector<cat_t> treeData = rootNodes_[treeIdx]->getChildLeafCatTrainData(testData,sampleIdx);
+      size_t nSamplesInTreeData = treeData.size();
+      for ( size_t i = 0; i < nSamplesPerTree; ++i ) {
+        distributions[sampleIdx][ treeIdx * nSamplesPerTree + i ] = treeData[ random->integer() % nSamplesInTreeData ];
+      }
+    }
+  }
+
+}
+
 
 /**
  Returns the number of trees in the forest
