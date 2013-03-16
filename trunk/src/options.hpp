@@ -139,8 +139,10 @@ public:
     string quantilesAsStr;
     parser.getArgument<string>( quantiles_s,        quantiles_l,        quantilesAsStr );
     vector<string> quantileList = utils::split(quantilesAsStr,',');
-    quantiles.resize(quantileList.size());
-    transform(quantileList.begin(),quantileList.end(),quantiles.begin(),utils::str2<num_t>);
+    if ( quantileList.size() > 0) {
+      quantiles.resize(quantileList.size());
+      transform(quantileList.begin(),quantileList.end(),quantiles.begin(),utils::str2<num_t>);
+    }
 
     parser.getArgument<size_t>( nSamplesForQuantiles_s, nSamplesForQuantiles_l, nSamplesForQuantiles );
 

@@ -348,7 +348,7 @@ const Node::Prediction& RootNode::getPrediction(Treedata* testData, const size_t
 }
 
 
-vector<num_t> RootNode::getChildLeafTrainData(Treedata* treeData, const size_t sampleIdx) {
+vector<num_t> RootNode::getChildLeafNumTrainData(Treedata* treeData, const size_t sampleIdx) {
 
   vector<Node*> leaves = this->percolate(treeData,sampleIdx)->getSubTreeLeaves();
 
@@ -364,4 +364,22 @@ vector<num_t> RootNode::getChildLeafTrainData(Treedata* treeData, const size_t s
   return(allTrainData);
   
 }
+
+vector<cat_t> RootNode::getChildLeafCatTrainData(Treedata* treeData, const size_t sampleIdx) {
+
+  vector<Node*> leaves = this->percolate(treeData,sampleIdx)->getSubTreeLeaves();
+
+  vector<cat_t> allTrainData;
+
+  for ( size_t i = 0; i < leaves.size(); ++i ) {
+    vector<cat_t> trainData = leaves[i]->getPrediction().catTrainData;
+    for ( size_t j = 0; j < trainData.size(); ++j ) {
+      allTrainData.push_back(trainData[j]);
+    }
+  }
+
+  return(allTrainData);
+
+}
+
 

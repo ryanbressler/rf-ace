@@ -31,13 +31,6 @@ public:
 				      distributions::Random* random,
 				      vector<vector<num_t> >& predictions); 
 
-  //void loadForestAndPredictQuantiles(const string& fileName, 
-  //				     Treedata* testData, 
-  //				     vector<vector<num_t> >& predictions, 
-  //				     const vector<num_t>& quantiles, 
-  //				     distributions::Random* random, 
-  //				     size_t nSamplesPerTree);
-  
   //num_t getError() { return(0.0); }
   //num_t getOobError();
 
@@ -49,7 +42,8 @@ public:
 
   //bool useQuantiles() const;
 
-  void predictDistributions(Treedata* testData, vector<vector<num_t> >& distribution, distributions::Random* random, const size_t nSamplesPerTree);
+  void getNumDistributions(Treedata* testData, vector<vector<num_t> >& distributions, distributions::Random* random, const size_t nSamplesPerTree);
+  void getCatDistributions(Treedata* testData, vector<vector<cat_t> >& distributions, distributions::Random* random, const size_t nSamplesPerTree);
 
   //vector<num_t> getOobPredictions();
   //vector<num_t> getPermutedOobPredictions(const size_t featureIdx);

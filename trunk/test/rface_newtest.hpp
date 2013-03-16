@@ -53,7 +53,7 @@ RFACE::TestOutput make_predictions(ForestOptions& forestOptions, const string& t
 
 }
 
-RFACE::QuantilePredictionOutput make_quantile_predictions(ForestOptions& forestOptions, const string& targetStr) {
+RFACE::QRFPredictionOutput make_quantile_predictions(ForestOptions& forestOptions, const string& targetStr) {
 
   string fileName = "test_103by300_mixed_nan_matrix.afm";
   Treedata trainData(fileName,'\t',':',false);
@@ -65,7 +65,7 @@ RFACE::QuantilePredictionOutput make_quantile_predictions(ForestOptions& forestO
 
   rface.train(&trainData,targetIdx,weights,&forestOptions);
 
-  return( rface.predictQuantiles(&trainData,forestOptions.quantiles,forestOptions.nSamplesForQuantiles) );
+  return( rface.predictQRF(&trainData,forestOptions) );
 
 }
 
@@ -93,7 +93,7 @@ RFACE::TestOutput make_save_load_predictions(ForestOptions& forestOptions, const
   
 }
 
-RFACE::QuantilePredictionOutput make_save_load_quantile_predictions(ForestOptions& forestOptions, const string& targetStr) {
+RFACE::QRFPredictionOutput make_save_load_quantile_predictions(ForestOptions& forestOptions, const string& targetStr) {
   
   string fileName = "test_103by300_mixed_nan_matrix.afm";
   Treedata trainData(fileName,'\t',':',false);
@@ -111,7 +111,7 @@ RFACE::QuantilePredictionOutput make_save_load_quantile_predictions(ForestOption
   
   rface2.load("foo.sf");
   
-  return( rface2.predictQuantiles(&trainData,forestOptions.quantiles,forestOptions.nSamplesForQuantiles) );
+  return( rface2.predictQRF(&trainData,forestOptions) );
 
 }
 
@@ -141,14 +141,14 @@ num_t regression_error(const RFACE::TestOutput& predictions) {
 
 }
 
-vector<num_t> quantile_regression_error(const RFACE::QuantilePredictionOutput& qPredOut) {
+vector<num_t> quantile_regression_error(const RFACE::QRFPredictionOutput& qPredOut) {
 
   vector<num_t> QDEV(qPredOut.quantiles.size(),0.0);
-  num_t n = static_cast<num_t>(qPredOut.predictions.size());
+  num_t n = static_cast<num_t>(qPredOut.numPredictions.size());
 
   for ( size_t q = 0; q < qPredOut.quantiles.size(); ++q ) {
-    for ( size_t i = 0; i < qPredOut.predictions.size(); ++i ) {
-      bool b = qPredOut.trueData[i] < qPredOut.predictions[i][q];
+    for ( size_t i = 0; i < qPredOut.numPredictions.size(); ++i ) {
+      bool b = qPredOut.trueNumData[i] < qPredOut.numPredictions[i][q];
       QDEV[q] += b/n;
     }
     QDEV[q] = fabs(QDEV[q] - qPredOut.quantiles[q]);

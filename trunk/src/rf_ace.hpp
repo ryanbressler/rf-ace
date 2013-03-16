@@ -73,69 +73,69 @@ public:
     vector<string> sampleNames;
   };
   
-  struct NumQRFPredictionOutput {
+  struct QRFPredictionOutput {
     
     string targetName;
+    bool isTargetNumerical;
 
-    vector<num_t> trueData;
+    vector<num_t> trueNumData;
+    vector<cat_t> trueCatData;
     vector<string> sampleNames;
     vector<num_t> quantiles;
-    vector<vector<num_t> > distributions;
-    vector<vector<num_t> > quantilePredictions;
+    vector<cat_t> categories;
+    vector<vector<num_t> > numDistributions;
+    vector<vector<cat_t> > catDistributions;
+    vector<vector<num_t> > numPredictions;
+    vector<unordered_map<cat_t,num_t> > catPredictions;
     
-    void makeQuantilePredictions() {
-      
+    void makeNumPredictions() {
       size_t nSamples = sampleNames.size();
       size_t nQuantiles = quantiles.size();
-
-      quantilePredictions.resize(nSamples,vector<num_t>(nQuantiles,datadefs::NUM_NAN));
-
+      numPredictions.resize(nSamples,vector<num_t>(nQuantiles,datadefs::NUM_NAN));
       for ( size_t sampleIdx = 0; sampleIdx < nSamples; ++sampleIdx ) {
-	sort(distributions[sampleIdx].begin(),distributions[sampleIdx].end());
+	sort(numDistributions[sampleIdx].begin(),numDistributions[sampleIdx].end());
 	for ( size_t q = 0; q < nQuantiles; ++q ) {
-	  quantilePredictions[sampleIdx][q] = math::percentile(distributions[sampleIdx],quantiles[q]);
+	  numPredictions[sampleIdx][q] = math::percentile(numDistributions[sampleIdx],quantiles[q]);
 	}
       }
-      
     }
-    
-  };
-  
-  struct CatQRFPredictionOutput {
-    
-    string targetName;
 
-    vector<cat_t> trueData;
-    vector<string> sampleNames;
-    vector<cat_t> categories;
-    vector<vector<cat_t> > distributions;
-    vector<unordered_map<cat_t,num_t> > catProbabilities;
-    
-    void makeCategoryPredictions() {
-      
+    void makeCatPredictions() {
       size_t nSamples = sampleNames.size();
-      size_t nCategories = categories.size();
-      
-      catProbabilities.resize(nSamples);
-      
+      categories.clear();
+      unordered_set<cat_t> categoriesSet;
+      catPredictions.resize(nSamples);
       for ( size_t sampleIdx = 0; sampleIdx < nSamples; ++sampleIdx ) {
-	
-	size_t nSamplesPerDistribution = distributions[sampleIdx].size();
-
-	for ( size_t c = 0; c < nCategories; ++c ) {
-	  catProbabilities[sampleIdx][ categories[c] ] = 0.0;
-	}
-	
-	for ( size_t i = 0; i < nSamplesPerDistribution; ++i ) {
-	  catProbabilities[sampleIdx][ distributions[sampleIdx][i] ]++;
-	}
-	
-	for ( size_t c = 0; c < nCategories; ++c ) {
-	  catProbabilities[sampleIdx][ categories[c] ] /= nSamplesPerDistribution;
-	}
-	
+	sort(catDistributions[sampleIdx].begin(),catDistributions[sampleIdx].end());
+        size_t nSamplesPerDistribution = catDistributions[sampleIdx].size();
+        for ( size_t i = 0; i < nSamplesPerDistribution; ++i ) {
+	  cat_t x = catDistributions[sampleIdx][i];
+	  unordered_map<cat_t,num_t>::iterator it( catPredictions[sampleIdx].find(x) );
+	  if ( it == catPredictions[sampleIdx].end() ) {
+	    catPredictions[sampleIdx][x] = 0;
+	    categoriesSet.insert(x);
+	  } else {
+	    catPredictions[sampleIdx][x]++;
+	  }
+        }
+        for ( unordered_map<cat_t,num_t>::iterator it(catPredictions[sampleIdx].begin()); it != catPredictions[sampleIdx].end(); ++it ) {
+          it->second /= nSamplesPerDistribution;
+        }
       }
+      categories = vector<cat_t>(categoriesSet.begin(),categoriesSet.end());
+    }
 
+    void validate() {
+      size_t nSamples = sampleNames.size();
+      if ( isTargetNumerical ) {
+	assert(numDistributions.size() == nSamples);
+	assert(numPredictions.size() == nSamples);
+	assert(quantiles.size() > 0);
+      } else {
+	assert(catDistributions.size() == nSamples);
+	assert(catPredictions.size() == nSamples);
+	assert(categories.size() > 0);
+      }
     }
     
   };
@@ -345,7 +345,7 @@ public:
     utils::sortFromRef(filterOutput->correlations,sortIcs);
     utils::sortFromRef(filterOutput->sampleCounts,sortIcs);
     utils::sortFromRef(filterOutput->featureNames,sortIcs);
-
+    
   }
 
   TestOutput test(Treedata* testData) {
@@ -363,9 +363,9 @@ public:
     if ( trainedModel_->isTargetNumerical() ) {
       testOutput.isTargetNumerical = true;
       if ( targetIdx != testData->end() ) {
-	testOutput.numTrueData = testData->feature(targetIdx)->getNumData();
+        testOutput.numTrueData = testData->feature(targetIdx)->getNumData();
       } else {
-	testOutput.numTrueData = vector<num_t>(testData->nSamples(),datadefs::NUM_NAN);
+        testOutput.numTrueData = vector<num_t>(testData->nSamples(),datadefs::NUM_NAN);
       }
       vector<num_t> predictions;
       trainedModel_->predict(testData,predictions,confidence,nThreads);
@@ -373,9 +373,9 @@ public:
     } else {
       testOutput.isTargetNumerical = false;
       if ( targetIdx != testData->end() ) {
-	testOutput.catTrueData = testData->feature(targetIdx)->getCatData();
+        testOutput.catTrueData = testData->feature(targetIdx)->getCatData();
       } else {
-	testOutput.catTrueData = vector<string>(testData->nSamples(),datadefs::STR_NAN);
+        testOutput.catTrueData = vector<string>(testData->nSamples(),datadefs::STR_NAN);
       }
       vector<cat_t> predictions;
       trainedModel_->predict(testData,predictions,confidence,nThreads);
@@ -390,35 +390,46 @@ public:
     return( testOutput );
   }
 
-  NumQRFPredictionOutput predictNumQRF(Treedata* testData, const vector<num_t>& quantiles, const size_t nSamplesPerTree) {
+  
+  QRFPredictionOutput predictQRF(Treedata* testData, ForestOptions& forestOptions) {
     
     assert(trainedModel_);
-
-    NumQRFPredictionOutput qPredOut;
-
+    
+    QRFPredictionOutput qPredOut;
+    
     qPredOut.targetName = trainedModel_->getTargetName();
-    qPredOut.quantiles = quantiles;
-
-    assert(qPredOut.quantiles.size() > 0);
-
+    qPredOut.quantiles = forestOptions.quantiles;
+    qPredOut.isTargetNumerical = trainedModel_->isTargetNumerical();
+    
     size_t targetIdx = testData->getFeatureIdx(qPredOut.targetName);
-
-    if ( targetIdx != testData->end() ) {
-      qPredOut.trueData = testData->feature(targetIdx)->getNumData();
-    } else {
-      qPredOut.trueData = vector<num_t>(testData->nSamples(),datadefs::NUM_NAN);
-    }
-
-    trainedModel_->predictDistributions(testData,qPredOut.distributions,&randoms_[0],nSamplesPerTree);
-
+    
     qPredOut.sampleNames.resize( testData->nSamples() );
     for ( size_t i = 0; i < testData->nSamples(); ++i ) {
       qPredOut.sampleNames[i] = testData->getSampleName(i);
     }
-    qPredOut.makeQuantilePredictions();
-
+    
+    if ( qPredOut.isTargetNumerical ) {
+      if ( targetIdx != testData->end() ) {
+	qPredOut.trueNumData = testData->feature(targetIdx)->getNumData();
+      } else {
+	qPredOut.trueNumData = vector<num_t>(testData->nSamples(),datadefs::NUM_NAN);
+      }
+      trainedModel_->getNumDistributions(testData,qPredOut.numDistributions,&randoms_[0],forestOptions.nSamplesForQuantiles);
+      qPredOut.makeNumPredictions();
+    } else {
+      if ( targetIdx != testData->end() ) {
+        qPredOut.trueCatData = testData->feature(targetIdx)->getCatData();
+      } else {
+        qPredOut.trueCatData = vector<cat_t>(testData->nSamples(),datadefs::STR_NAN);
+      }
+      trainedModel_->getCatDistributions(testData,qPredOut.catDistributions,&randoms_[0],forestOptions.nSamplesForQuantiles);
+      qPredOut.makeCatPredictions();
+    }
+    
+    qPredOut.validate();
+    
     return( qPredOut );
-
+    
   }
   
   void load(const string& fileName) {
@@ -432,20 +443,19 @@ public:
     trainedModel_->loadForest(fileName);
   }
 
-  NumQRFPredictionOutput loadForestAndPredictNumQRF(const string& forestFile, Treedata* testData, const vector<num_t>& quantiles, const size_t nSamplesPerTree) {
+  QRFPredictionOutput loadForestAndPredictQRF(const string& forestFile, Treedata* testData, const ForestOptions& forestOptions) {
     
-    NumQRFPredictionOutput qPredOut;
+    QRFPredictionOutput qPredOut;
 
     ifstream forestStream(forestFile.c_str());
     assert(forestStream.good());
     
     size_t nSamples = testData->nSamples();
 
-    qPredOut.quantiles = quantiles;
+    qPredOut.quantiles = forestOptions.quantiles;
 
-    assert(qPredOut.quantiles.size() > 0);
-
-    qPredOut.distributions = vector<vector<num_t> >(nSamples);
+    qPredOut.numDistributions = vector<vector<num_t> >(nSamples);
+    qPredOut.catDistributions = vector<vector<cat_t> >(nSamples);
 
     size_t treeIdx = 0;
     while ( forestStream.good() ) {
@@ -453,21 +463,39 @@ public:
       RootNode rootNode(forestStream);
 
       qPredOut.targetName = rootNode.getTargetName();
+      qPredOut.isTargetNumerical = rootNode.isTargetNumerical();
 
       cout << "Tree " << treeIdx << " loaded" << endl;
       treeIdx++;
 
-      for ( size_t sampleIdx = 0; sampleIdx < nSamples; ++sampleIdx ) {
+      if ( qPredOut.isTargetNumerical ) {
+	
+	for ( size_t sampleIdx = 0; sampleIdx < nSamples; ++sampleIdx ) {
+	  
+	  vector<num_t> treeData = rootNode.getChildLeafNumTrainData(testData,sampleIdx);
+	  size_t nSamplesInTreeData = treeData.size();
+	  
+	  // Extend the distribution container by the number of new samples
+	  qPredOut.numDistributions[sampleIdx].resize(treeIdx*forestOptions.nSamplesForQuantiles,datadefs::NUM_NAN);
+	  
+	  // Get the new samples
+	  for ( size_t i = 0; i < forestOptions.nSamplesForQuantiles; ++i ) {
+	    qPredOut.numDistributions[sampleIdx][ (treeIdx-1) * forestOptions.nSamplesForQuantiles + i ] = treeData[ randoms_[0].integer() % nSamplesInTreeData ];
+	  }
+	}
+      } else {
+	for ( size_t sampleIdx = 0; sampleIdx < nSamples; ++sampleIdx ) {
 
-        vector<num_t> treeData = rootNode.getChildLeafTrainData(testData,sampleIdx);
-        size_t nSamplesInTreeData = treeData.size();
+          vector<cat_t> treeData = rootNode.getChildLeafCatTrainData(testData,sampleIdx);
+          size_t nSamplesInTreeData = treeData.size();
 
-	// Extend the distribution container by the number of new samples
-	qPredOut.distributions[sampleIdx].resize(treeIdx*nSamplesPerTree,datadefs::NUM_NAN);
+          // Extend the distribution container by the number of new samples
+          qPredOut.catDistributions[sampleIdx].resize(treeIdx*forestOptions.nSamplesForQuantiles,datadefs::STR_NAN);
 
-	// Get the new samples
-        for ( size_t i = 0; i < nSamplesPerTree; ++i ) {
-          qPredOut.distributions[sampleIdx][ (treeIdx-1) * nSamplesPerTree + i ] = treeData[ randoms_[0].integer() % nSamplesInTreeData ];
+          // Get the new samples
+          for ( size_t i = 0; i < forestOptions.nSamplesForQuantiles; ++i ) {
+            qPredOut.catDistributions[sampleIdx][ (treeIdx-1) * forestOptions.nSamplesForQuantiles + i ] = treeData[ randoms_[0].integer() % nSamplesInTreeData ];
+          }
         }
 
       }
@@ -478,15 +506,26 @@ public:
     for ( size_t i = 0; i < testData->nSamples(); ++i ) {
       qPredOut.sampleNames[i] = testData->getSampleName(i);
     }
-    qPredOut.makeQuantilePredictions(); 
 
     size_t targetIdx = testData->getFeatureIdx(qPredOut.targetName);
 
-    if ( targetIdx != testData->end() ) {
-      qPredOut.trueData = testData->feature(targetIdx)->getNumData();
+    if ( qPredOut.isTargetNumerical ) {
+      qPredOut.makeNumPredictions();
+      if ( targetIdx != testData->end() ) {
+	qPredOut.trueNumData = testData->feature(targetIdx)->getNumData();
+      } else {
+	qPredOut.trueNumData = vector<num_t>(testData->nSamples(),datadefs::NUM_NAN);
+      }
     } else {
-      qPredOut.trueData = vector<num_t>(testData->nSamples(),datadefs::NUM_NAN);
-    }
+      qPredOut.makeCatPredictions();
+      if ( targetIdx != testData->end() ) {
+	qPredOut.trueCatData = testData->feature(targetIdx)->getCatData();
+      } else {
+	qPredOut.trueCatData = vector<cat_t>(testData->nSamples(),datadefs::STR_NAN);
+      }
+    } 
+
+    qPredOut.validate();
 
     return(qPredOut);
 

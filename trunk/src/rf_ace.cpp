@@ -33,8 +33,7 @@ void printDataStatistics(Treedata& treeData, const size_t targetIdx);
 
 void writeFilterOutputToFile(RFACE::FilterOutput& filterOutput, const string& fileName);
 
-void printPredictionsToFile(RFACE::TestOutput& testOutput, const string& fileName);
-void printQuantilePredictionsToFile(RFACE::NumQRFPredictionOutput& qPredOutput, const string& fileName);
+void printQRFPredictionsToFile(RFACE::QRFPredictionOutput& qPredOut, const string& fileName);
 
 int main(const int argc, char* const argv[]) {
 
@@ -62,9 +61,7 @@ int main(const int argc, char* const argv[]) {
   RFACE rface(options.generalOptions.nThreads,options.generalOptions.seed);
 
   RFACE::FilterOutput filterOutput;
-  RFACE::TestOutput testOutput;
-  RFACE::NumQRFPredictionOutput qPredOutput;
-  RFACE::CatQRFPredictionOutput foo;
+  RFACE::QRFPredictionOutput qPredOut;
 
   timer.tic("Total time elapsed");
 
@@ -104,13 +101,12 @@ int main(const int argc, char* const argv[]) {
   if ( options.io.loadForestFile != "" && 
        options.io.testDataFile != "" && 
        options.forestOptions.forestType == forest_t::QRF && 
-       options.io.predictionsFile != "" && 
-       options.forestOptions.quantiles.size() > 0 ) {
+       options.io.predictionsFile != "" ) {
 
-    cout << "-Loading model '" << options.io.loadForestFile << "', making on-the-fly quantile predictions and saving to file '" << options.io.predictionsFile << "'" << endl;
+    cout << "-Loading model '" << options.io.loadForestFile << "', making on-the-fly predictions and saving to file '" << options.io.predictionsFile << "'" << endl;
     Treedata testData(options.io.testDataFile,options.generalOptions.dataDelimiter,options.generalOptions.headerDelimiter);
-    qPredOutput = rface.loadForestAndPredictNumQRF(options.io.loadForestFile,&testData,options.forestOptions.quantiles,options.forestOptions.nSamplesForQuantiles);
-    printQuantilePredictionsToFile(qPredOutput,options.io.predictionsFile);
+    qPredOut = rface.loadForestAndPredictQRF(options.io.loadForestFile,&testData,options.forestOptions);
+    printQRFPredictionsToFile(qPredOut,options.io.predictionsFile);
     return(EXIT_SUCCESS);
   } 
 
@@ -170,22 +166,13 @@ int main(const int argc, char* const argv[]) {
   if ( options.io.testDataFile != "" ) {  
     cout << "-Reading test file '" << options.io.testDataFile << "'" << endl;
     Treedata testData(options.io.testDataFile,options.generalOptions.dataDelimiter,options.generalOptions.headerDelimiter);
-    if ( options.forestOptions.forestType == forest_t::QRF && options.forestOptions.quantiles.size() > 0 ) {
-      cout << "-Making quantile predictions" << endl;
-      qPredOutput = rface.predictNumQRF(&testData,options.forestOptions.quantiles,options.forestOptions.nSamplesForQuantiles);
-    } else {
-      cout << "-Making predictions" << endl;
-      testOutput = rface.test(&testData);
-    }
+    cout << "-Making predictions" << endl;
+    qPredOut = rface.predictQRF(&testData,options.forestOptions);
   }
 
   if ( options.io.predictionsFile != "" ) {
     cout << "-Writing predictions to file '" << options.io.predictionsFile << "'" << endl; 
-    if ( options.forestOptions.forestType == forest_t::QRF && options.forestOptions.quantiles.size() > 0 ) {
-      printQuantilePredictionsToFile(qPredOutput,options.io.predictionsFile);
-    } else {
-      printPredictionsToFile(testOutput,options.io.predictionsFile);
-    }
+    printQRFPredictionsToFile(qPredOut,options.io.predictionsFile);
   }
     
 
@@ -358,27 +345,49 @@ void printPredictionsToFile(RFACE::TestOutput& testOutput, const string& fileNam
 
 }
 
-void printQuantilePredictionsToFile(RFACE::NumQRFPredictionOutput& qPredOutput, const string& fileName) {
+void printQRFPredictionsToFile(RFACE::QRFPredictionOutput& qPredOut, const string& fileName) {
 
   ofstream toPredictionFile(fileName.c_str());
 
-  size_t nSamples = qPredOutput.sampleNames.size();
+  size_t nSamples = qPredOut.sampleNames.size();
 
-  toPredictionFile << "SAMPLE_ID\t" << qPredOutput.targetName << "_TRUE" << flush;
+  toPredictionFile << "SAMPLE_ID\t" << qPredOut.targetName << "_TRUE" << flush;
 
-  for ( size_t q = 0; q < qPredOutput.quantiles.size(); ++q ) {
-    toPredictionFile << "\t" << qPredOutput.targetName << "_Q" << qPredOutput.quantiles[q] << flush;
-  }
-  toPredictionFile << "\t" << qPredOutput.targetName << "_DISTRIBUTION" << endl;
-
-  for ( size_t i = 0; i < nSamples; ++i ) {
-    toPredictionFile << qPredOutput.sampleNames[i] << "\t" << qPredOutput.trueData[i];
-    for ( size_t q = 0; q < qPredOutput.quantiles.size(); ++q ) {
-      toPredictionFile << "\t" << qPredOutput.quantilePredictions[i][qPredOutput.quantiles[q]];
+  if ( qPredOut.isTargetNumerical ) {
+    
+    for ( size_t q = 0; q < qPredOut.quantiles.size(); ++q ) {
+      toPredictionFile << "\t" << qPredOut.targetName << "_Q" << qPredOut.quantiles[q] << flush;
     }
-    toPredictionFile << "\t";
-    utils::write(toPredictionFile,qPredOutput.distributions[i].begin(),qPredOutput.distributions[i].end(),',');
-    toPredictionFile << endl;
-  }
+    toPredictionFile << "\t" << qPredOut.targetName << "_DISTRIBUTION" << endl;
+    
+    for ( size_t i = 0; i < nSamples; ++i ) {
+      toPredictionFile << qPredOut.sampleNames[i] << "\t" << qPredOut.trueNumData[i];
+      for ( size_t q = 0; q < qPredOut.quantiles.size(); ++q ) {
+	toPredictionFile << "\t" << qPredOut.numPredictions[i][q];
+      }
+      toPredictionFile << "\t";
+      utils::write(toPredictionFile,qPredOut.numDistributions[i].begin(),qPredOut.numDistributions[i].end(),',');
+      toPredictionFile << endl;
+    }
+  } else {
 
+    for ( size_t c = 0; c < qPredOut.categories.size(); ++c ) {
+      toPredictionFile << "\t" << qPredOut.targetName << "_" << qPredOut.categories[c] << flush;
+    }
+
+    toPredictionFile << endl;
+    
+    for ( size_t i = 0; i < nSamples; ++i ) {
+      toPredictionFile << qPredOut.sampleNames[i] << "\t" << qPredOut.trueCatData[i];
+      for ( size_t c = 0; c < qPredOut.categories.size(); ++c ) {
+	if ( qPredOut.catPredictions[i].find(qPredOut.categories[c]) == qPredOut.catPredictions[i].end() ) {
+	  toPredictionFile << "\t0"; 
+	} else {
+	  toPredictionFile << "\t" << qPredOut.catPredictions[i][qPredOut.categories[c]];
+	}
+      }
+      toPredictionFile << endl;
+    }
+  }
+  
 }

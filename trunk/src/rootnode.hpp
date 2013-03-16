@@ -46,7 +46,8 @@ public:
 
   const Prediction& getPrediction(Treedata* treeData, const size_t sampleIdx);
 
-  vector<num_t> getChildLeafTrainData(Treedata* treeData, const size_t sampleIdx);
+  vector<num_t> getChildLeafNumTrainData(Treedata* treeData, const size_t sampleIdx);
+  vector<cat_t> getChildLeafCatTrainData(Treedata* treeData, const size_t sampleIdx);
 
   vector<size_t> getOobIcs();
 
