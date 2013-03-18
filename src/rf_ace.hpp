@@ -86,7 +86,7 @@ public:
     vector<vector<num_t> > numDistributions;
     vector<vector<cat_t> > catDistributions;
     vector<vector<num_t> > numPredictions;
-    vector<unordered_map<cat_t,num_t> > catPredictions;
+    vector<vector<num_t> > catPredictions;
     
     void makeNumPredictions() {
       size_t nSamples = sampleNames.size();
@@ -102,29 +102,42 @@ public:
 
     void makeCatPredictions() {
       size_t nSamples = sampleNames.size();
-      categories.clear();
-      unordered_set<cat_t> categoriesSet;
-      catPredictions.resize(nSamples);
+
+      unordered_map<cat_t,size_t> cat2idx;
+      unordered_map<size_t,cat_t> idx2cat;
+      size_t nCategories = 0;
+
+      for ( size_t sampleIdx = 0; sampleIdx < nSamples; ++sampleIdx ) {
+	for( size_t i = 0; i < catDistributions[sampleIdx].size(); ++i ) {
+	  cat_t x = catDistributions[sampleIdx][i];
+	  if ( cat2idx.find(x) == cat2idx.end() ) {
+	    cat2idx[x] = nCategories;
+	    idx2cat[nCategories] = x;
+	    nCategories++;
+	  }
+	}
+      }
+
+      categories.resize(nCategories);
+
+      for ( size_t c = 0; c < nCategories; ++c ) {
+	categories[c] = idx2cat[c];
+      }
+
+      catPredictions.resize(nSamples,vector<num_t>(nCategories,0.0));
+      
       for ( size_t sampleIdx = 0; sampleIdx < nSamples; ++sampleIdx ) {
 	sort(catDistributions[sampleIdx].begin(),catDistributions[sampleIdx].end());
         size_t nSamplesPerDistribution = catDistributions[sampleIdx].size();
         for ( size_t i = 0; i < nSamplesPerDistribution; ++i ) {
-	  cat_t x = catDistributions[sampleIdx][i];
-	  unordered_map<cat_t,num_t>::iterator it( catPredictions[sampleIdx].find(x) );
-	  if ( it == catPredictions[sampleIdx].end() ) {
-	    catPredictions[sampleIdx][x] = 0;
-	    categoriesSet.insert(x);
-	  } else {
-	    catPredictions[sampleIdx][x]++;
-	  }
-        }
-        for ( unordered_map<cat_t,num_t>::iterator it(catPredictions[sampleIdx].begin()); it != catPredictions[sampleIdx].end(); ++it ) {
-          it->second /= nSamplesPerDistribution;
-        }
+	  catPredictions[sampleIdx][ cat2idx[catDistributions[sampleIdx][i]] ]++;
+	}
+	for ( size_t c = 0; c < nCategories; ++c ) {
+	  catPredictions[sampleIdx][c] /= nSamplesPerDistribution;
+	}
       }
-      categories = vector<cat_t>(categoriesSet.begin(),categoriesSet.end());
     }
-
+    
     void validate() {
       size_t nSamples = sampleNames.size();
       if ( isTargetNumerical ) {

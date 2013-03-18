@@ -139,6 +139,24 @@ namespace utils {
     return( ret );
   }
 
+  template<typename T>
+  vector<vector<T> > transpose(const vector<vector<T> >& data) {
+    
+    size_t nRows = data.size();
+    size_t nCols = data[0].size();
+
+    vector<vector<T> > dataTransposed(nCols,vector<T>(nRows,datadefs::NUM_NAN));
+
+    for ( size_t i = 0; i < nRows; ++i ) {
+      for ( size_t j = 0; j < nCols; ++j ) {
+	dataTransposed[j][i] = data[i][j];
+      }
+    }
+
+    return(dataTransposed);
+
+  }
+
   vector<size_t> range(const size_t n);
 
   istream& safeGetline(istream& is, string& t);

@@ -72,6 +72,7 @@ public:
   bool noNABranching; const string noNABranching_s; const string noNABranching_l;
   vector<num_t> quantiles; const string quantiles_s; const string quantiles_l;
   size_t nSamplesForQuantiles; const string nSamplesForQuantiles_s; const string nSamplesForQuantiles_l;
+  bool distributions; const string distributions_s; const string distributions_l; 
 
   num_t inBoxFraction;
   bool sampleWithReplacement;
@@ -86,10 +87,11 @@ public:
     nodeSize_s("s"),nodeSize_l("nodeSize"),
     shrinkage_s("k"),shrinkage_l("shrinkage"),
     contrastFraction_s("c"), contrastFraction_l("contrastFraction"),
-    noNABranching(datadefs::SF_DEFAULT_NO_NA_BRANCHING),noNABranching_s("N"), noNABranching_l("noNABranching"),
+    noNABranching(false),noNABranching_s("N"), noNABranching_l("noNABranching"),
     quantiles_s("q"), quantiles_l("quantiles"),
-    nSamplesForQuantiles_s("r"), nSamplesForQuantiles_l("qSamples") {
-
+    nSamplesForQuantiles_s("r"), nSamplesForQuantiles_l("qSamples"),
+    distributions(false), distributions_s("d"), distributions_l("distributions") {
+    
     forestType = forest_t::QRF;
 
     if ( forestType == forest_t::RF ) {
@@ -135,6 +137,7 @@ public:
     parser.getArgument<num_t>(  shrinkage_s,        shrinkage_l,        shrinkage );
     parser.getArgument<num_t>(  contrastFraction_s, contrastFraction_l, contrastFraction );
     parser.getFlag(             noNABranching_s,    noNABranching_l,    noNABranching );
+    parser.getFlag(             distributions_s,    distributions_l,    distributions);
 
     string quantilesAsStr;
     parser.getArgument<string>( quantiles_s,        quantiles_l,        quantilesAsStr );
@@ -261,6 +264,7 @@ public:
     this->printHelpLine(noNABranching_s,noNABranching_l,"If set, the splitter will NOT create a third branch for cases where the splitter is NA");
     this->printHelpLine(quantiles_s,quantiles_l,"[QRF] comma-separated list of quantiles to build a Quantile Random Forest from");
     this->printHelpLine(nSamplesForQuantiles_s,nSamplesForQuantiles_l,"[QRF] specify the number of samples per tree for calculating the quantiles");
+    this->printHelpLine(distributions_s,distributions_l,"[QRF] If set, distributions will be output in the prediction file");
   }
 
   void print() {
@@ -278,6 +282,7 @@ public:
       this->printOption(nMaxLeaves_s,nMaxLeaves_l,nMaxLeaves);
       this->printOption(quantiles_s,quantiles_l,quantiles.begin(),quantiles.end());
       this->printOption(nSamplesForQuantiles_s,nSamplesForQuantiles_l,nSamplesForQuantiles);
+      this->printOption(distributions_s,distributions_l,distributions);
     } else if ( forestType == forest_t::GBT ) { 
       cout << "Gradient Boosting Tree (GBT) configuration:" << endl;
       this->printOption(nTrees_s,nTrees_l,nTrees);

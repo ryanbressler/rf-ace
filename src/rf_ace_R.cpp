@@ -6,6 +6,7 @@
 #include "treedata.hpp"
 #include "datadefs.hpp"
 #include "options.hpp"
+#include "utils.hpp"
 
 using namespace std;
 using datadefs::num_t;
@@ -92,7 +93,7 @@ RcppExport SEXP rfaceTrain(SEXP trainDataFrameObj,
 			   SEXP nThreadsR) {
 
 
-  ForestOptions forestOptions( datadefs::forestTypeAssign.at(Rcpp::as<string>(forestTypeR)) );
+  ForestOptions forestOptions( forest_t::QRF );
 
   string targetStr            = Rcpp::as<string>(targetStrR);
   forestOptions.nTrees        = Rcpp::as<size_t>(nTreesR);
@@ -143,12 +144,21 @@ RcppExport SEXP rfaceTrain(SEXP trainDataFrameObj,
 
 }
 
-RcppExport SEXP rfacePredict(SEXP rfaceObj, SEXP testDataFrameObj, SEXP quantilesR, SEXP nSamplesForQuantilesR) {
+RcppExport SEXP rfacePredict(SEXP rfaceObj, SEXP testDataFrameObj, SEXP quantilesR, SEXP nSamplesForQuantilesR, SEXP distributionsR) {
 
   Rcpp::XPtr<RFACE> rface(rfaceObj);
 
-  vector<num_t> quantiles = Rcpp::as<vector<num_t> >(quantilesR);
-  size_t nSamplesForQuantiles = Rcpp::as<size_t>(nSamplesForQuantilesR);
+  ForestOptions forestOptions(forest_t::QRF);
+
+  {
+    vector<num_t> quantiles = Rcpp::as<vector<num_t> >(quantilesR);
+    if ( quantiles.size() > 0 ) {
+      forestOptions.quantiles = quantiles;
+    }
+  }
+
+  forestOptions.nSamplesForQuantiles = Rcpp::as<size_t>(nSamplesForQuantilesR);
+  forestOptions.distributions = Rcpp::as<bool>(distributionsR);
 
   vector<Feature> testDataMatrix;
   vector<string> sampleHeaders;
@@ -159,36 +169,40 @@ RcppExport SEXP rfacePredict(SEXP rfaceObj, SEXP testDataFrameObj, SEXP quantile
 
   Treedata testData(testDataMatrix,useContrasts,sampleHeaders);
 
-  if ( quantiles.size() > 0 ) {
+  RFACE::QRFPredictionOutput qPredOut = rface->predictQRF(&testData,forestOptions);
+  
+  if ( qPredOut.isTargetNumerical ) {
 
-    RFACE::NumQRFPredictionOutput qPredOut = rface->predictNumQRF(&testData,quantiles,nSamplesForQuantiles);
+    vector<vector<num_t> > numPredictionsTrans = utils::transpose(qPredOut.numPredictions);
+
+    if ( forestOptions.distributions ) {
+      
+      return( Rcpp::List::create(Rcpp::Named("targetName")=qPredOut.targetName,
+				 Rcpp::Named("sampleNames")=qPredOut.sampleNames,
+				 Rcpp::Named("trueData")=qPredOut.trueNumData,
+				 Rcpp::Named("predictions")=numPredictionsTrans,
+				 Rcpp::Named("quantiles")=qPredOut.quantiles,
+				 Rcpp::Named("distributions")=qPredOut.numDistributions));
+
+    } else {
+
+      return( Rcpp::List::create(Rcpp::Named("targetName")=qPredOut.targetName,
+                                 Rcpp::Named("sampleNames")=qPredOut.sampleNames,
+                                 Rcpp::Named("trueData")=qPredOut.trueNumData,
+                                 Rcpp::Named("predictions")=numPredictionsTrans,
+                                 Rcpp::Named("quantiles")=qPredOut.quantiles));
+
+    }    
+
+  } else {
+
+    vector<vector<num_t> > catPredictionsTrans = utils::transpose(qPredOut.catPredictions);
     
     return( Rcpp::List::create(Rcpp::Named("targetName")=qPredOut.targetName,
-    			       Rcpp::Named("sampleNames")=qPredOut.sampleNames,
-    			       Rcpp::Named("trueData")=qPredOut.trueData,
-    			       Rcpp::Named("predictions")=qPredOut.quantilePredictions,
-    			       Rcpp::Named("quantiles")=qPredOut.quantiles) );
-    
-  } else if ( rface->forestRef()->isTargetNumerical() ){
-    
-    RFACE::TestOutput testOut = rface->test(&testData);
-    
-    return( Rcpp::List::create(Rcpp::Named("targetName")=testOut.targetName,
-			       Rcpp::Named("sampleNames")=testOut.sampleNames,
-			       Rcpp::Named("trueData")=testOut.numTrueData,
-			       Rcpp::Named("predData")=testOut.numPredictions,
-			       Rcpp::Named("predError")=testOut.confidence) );
-    
-  } else {
-    
-    RFACE::TestOutput testOut = rface->test(&testData);
-    
-    return( Rcpp::List::create(Rcpp::Named("targetName")=testOut.targetName,
-			       Rcpp::Named("sampleNames")=testOut.sampleNames,
-			       Rcpp::Named("trueData")=testOut.catTrueData,
-			       Rcpp::Named("predData")=testOut.catPredictions,
-			       Rcpp::Named("predError")=testOut.confidence) );
-    
+			       Rcpp::Named("sampleNames")=qPredOut.sampleNames,
+			       Rcpp::Named("trueData")=qPredOut.trueCatData,
+			       Rcpp::Named("predictions")=catPredictionsTrans,
+			       Rcpp::Named("categories")=qPredOut.categories));
   }
   
 }
