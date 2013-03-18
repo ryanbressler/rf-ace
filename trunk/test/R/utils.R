@@ -81,7 +81,7 @@ makeData <- function(nSamples,std,offset,pMissing) {
 getRFACEOutput <- function(trainData,testData,forestType,noNABranching,quantiles=vector(length(0))) {
 
 rface <- rface.train(trainData,"N:output",nTrees=50,mTry=3,nodeSize=3,forestType=forestType,noNABranching=noNABranching)
-return(rface.predict(rface,testData))
+return(rface.predict(rface,testData,quantiles=as.vector(c(0.5))))
 
 }
 
@@ -101,8 +101,8 @@ testCalibration <- function(rfaceOut) {
   nSamples <- length(rfaceOut$trueData)
   cal <- 1*vector(length=nQuantiles)
 
-  for ( i in 1:nSamples ) {
-    cal <- cal + 1*(rfaceOut$trueData[i] < rfaceOut$predictions[[i]])/nSamples
+  for ( q in 1:nQuantiles ) {
+    cal[q] <- sum( rfaceOut$trueData < rfaceOut$predictions[[q]] )/nSamples
   }
 
   return(cal)
@@ -122,18 +122,29 @@ icsNumTxt <- as.vector(c(1,2,3,4,6,7,8,9))
 icsNumCat <- as.vector(c(1,2,3,5,6,7,8,9))
 
 outA <- getRFACEOutput(trainData[icsNum],testData[icsNum],"RF",TRUE)
-outB <- getRFACEOutput(trainData[icsNumTxt],testData[icsNumTxt],"RF",TRUE)
-outC <- getRFACEOutput(trainData[icsNumCat],testData[icsNumCat],"RF",TRUE)
-outD <- getRFACEOutput(trainData[icsNum],testData[icsNum],"RF",FALSE)
-outE <- getRFACEOutput(trainData[icsNumTxt],testData[icsNumTxt],"RF",FALSE)
-outF <- getRFACEOutput(trainData[icsNumCat],testData[icsNumCat],"RF",FALSE)
+outA$predData <- outA$predData[[1]]
 
-outG <- getRFACEOutput(trainData[icsNum],testData[icsNum],"RF",TRUE,quantiles=vector(c(0.5)))
-outH <- getRFACEOutput(trainData[icsNumTxt],testData[icsNumTxt],"RF",TRUE,quantiles=vector(c(0.5)))
-outI <- getRFACEOutput(trainData[icsNumCat],testData[icsNumCat],"RF",TRUE,quantiles=vector(c(0.5)))
-outJ <- getRFACEOutput(trainData[icsNum],testData[icsNum],"RF",FALSE,quantiles=vector(c(0.5)))
-outK <- getRFACEOutput(trainData[icsNumTxt],testData[icsNumTxt],"RF",FALSE,quantiles=vector(c(0.5)))
-outL <- getRFACEOutput(trainData[icsNumCat],testData[icsNumCat],"RF",FALSE,quantiles=vector(c(0.5)))
+outB <- getRFACEOutput(trainData[icsNumTxt],testData[icsNumTxt],"RF",TRUE)
+outB$predData <- outB$predData[[1]]
+
+outC <- getRFACEOutput(trainData[icsNumCat],testData[icsNumCat],"RF",TRUE)
+outC$predData <- outC$predData[[1]]
+
+outD <- getRFACEOutput(trainData[icsNum],testData[icsNum],"RF",FALSE)
+outD$predData <- outD$predData[[1]]
+
+outE <- getRFACEOutput(trainData[icsNumTxt],testData[icsNumTxt],"RF",FALSE)
+outE$predData <- outE$predData[[1]]
+
+outF <- getRFACEOutput(trainData[icsNumCat],testData[icsNumCat],"RF",FALSE)
+outF$predData <- outF$predData[[1]]
+
+#outG <- getRFACEOutput(trainData[icsNum],testData[icsNum],"RF",TRUE,quantiles=vector(c(0.5)))
+#outH <- getRFACEOutput(trainData[icsNumTxt],testData[icsNumTxt],"RF",TRUE,quantiles=vector(c(0.5)))
+#outI <- getRFACEOutput(trainData[icsNumCat],testData[icsNumCat],"RF",TRUE,quantiles=vector(c(0.5)))
+#outJ <- getRFACEOutput(trainData[icsNum],testData[icsNum],"RF",FALSE,quantiles=vector(c(0.5)))
+#outK <- getRFACEOutput(trainData[icsNumTxt],testData[icsNumTxt],"RF",FALSE,quantiles=vector(c(0.5)))
+#outL <- getRFACEOutput(trainData[icsNumCat],testData[icsNumCat],"RF",FALSE,quantiles=vector(c(0.5)))
 
 trainData$"C:class" <- as.factor(trainData$"C:class")
 testData$"C:class"  <- as.factor(testData$"C:class")
@@ -159,49 +170,6 @@ pdf("scattermatrix.pdf")
 pairs(testData[c(1,2,3,7)],col=colors)
 dev.off()
 
-# dev.new()
-pdf("predictions.pdf",width=8,height=8)
-par(mfcol=c(3,2))
-plot(outA$predData,outA$trueData,col=colors,pch='.')
-title("RF-ACE (binary) (A)")
-lines( par()$usr[1:2], par()$usr[1:2] )
-grid()
-plot(outB$predData,outB$trueData,col=colors,pch='.')
-title("RF-ACE (binary) (text) (B)")
-lines( par()$usr[1:2], par()$usr[1:2] )
-grid()
-plot(outC$predData,outC$trueData,col=colors,pch='.')
-title("RF-ACE (binary) (classes) (C)")
-lines( par()$usr[1:2], par()$usr[1:2] )
-grid()
-plot(outD$predData,outD$trueData,col=colors,pch='.')
-title("RF-ACE (ternary) (D)")
-lines( par()$usr[1:2], par()$usr[1:2] )
-grid()
-plot(outE$predData,outE$trueData,col=colors,pch='.')
-title("RF-ACE (ternary) (text) (E)")
-lines( par()$usr[1:2], par()$usr[1:2] )
-grid()
-plot(outF$predData,outF$trueData,col=colors,pch='.')
-title("RF-ACE (ternary) (classes) (F)")
-lines( par()$usr[1:2], par()$usr[1:2] )
-grid()
-dev.off()
-
-pdf("predictions_ref1.pdf")
-plot(outRef1$predData,outRef1$trueData,col=colors,pch='.')
-title("RF (ref.)")
-lines( par()$usr[1:2], par()$usr[1:2] )
-grid()
-dev.off()
-
-#pdf("predictions_ref2.pdf")
-#plot(outH$predData,outH$trueData,col=colors,pch='.')
-#title("RF (ref.)")
-#lines( par()$usr[1:2], par()$usr[1:2] )
-#grid()
-#dev.off()
-
 errors <- list()
 errors$num <- c(rmse(outRef1),rmse(outA),rmse(outD))
 names(errors$num) <- c("RF\nImputed","RF-ACE\nBinary","RF-ACE\nTernary")
@@ -211,7 +179,7 @@ errors$cat <- c(rmse(outRef2),rmse(outC),rmse(outF))
 names(errors$cat) <- c("RF\nImputed","RF-ACE\nBinary","RF-ACE\nTernary")
 errors$title <- paste(c("n=",as.character(nSamples), ", pMissing=",as.character(pMissing*100)),collapse='')
 
-return(list(errors=errors,data=testData,idata=imputedTestData,rf=rfOut1,outG=outG,outH=outH))
+return(list(errors=errors,data=testData,idata=imputedTestData,rf=rfOut1))
 
 }
 

@@ -33,7 +33,7 @@ void printDataStatistics(Treedata& treeData, const size_t targetIdx);
 
 void writeFilterOutputToFile(RFACE::FilterOutput& filterOutput, const string& fileName);
 
-void printQRFPredictionsToFile(RFACE::QRFPredictionOutput& qPredOut, const string& fileName);
+void printQRFPredictionsToFile(RFACE::QRFPredictionOutput& qPredOut, const bool printDistributions, const string& fileName);
 
 int main(const int argc, char* const argv[]) {
 
@@ -106,7 +106,7 @@ int main(const int argc, char* const argv[]) {
     cout << "-Loading model '" << options.io.loadForestFile << "', making on-the-fly predictions and saving to file '" << options.io.predictionsFile << "'" << endl;
     Treedata testData(options.io.testDataFile,options.generalOptions.dataDelimiter,options.generalOptions.headerDelimiter);
     qPredOut = rface.loadForestAndPredictQRF(options.io.loadForestFile,&testData,options.forestOptions);
-    printQRFPredictionsToFile(qPredOut,options.io.predictionsFile);
+    printQRFPredictionsToFile(qPredOut,options.forestOptions.distributions,options.io.predictionsFile);
     return(EXIT_SUCCESS);
   } 
 
@@ -172,7 +172,7 @@ int main(const int argc, char* const argv[]) {
 
   if ( options.io.predictionsFile != "" ) {
     cout << "-Writing predictions to file '" << options.io.predictionsFile << "'" << endl; 
-    printQRFPredictionsToFile(qPredOut,options.io.predictionsFile);
+    printQRFPredictionsToFile(qPredOut,options.forestOptions.distributions,options.io.predictionsFile);
   }
     
 
@@ -345,49 +345,59 @@ void printPredictionsToFile(RFACE::TestOutput& testOutput, const string& fileNam
 
 }
 
-void printQRFPredictionsToFile(RFACE::QRFPredictionOutput& qPredOut, const string& fileName) {
+void printQRFPredictionsToFile(RFACE::QRFPredictionOutput& qPredOut, const bool printDistributions, const string& fileName) {
 
   ofstream toPredictionFile(fileName.c_str());
 
   size_t nSamples = qPredOut.sampleNames.size();
 
-  toPredictionFile << "SAMPLE_ID\t" << qPredOut.targetName << "_TRUE" << flush;
+  toPredictionFile << "SAMPLE_ID\t" << qPredOut.targetName << "_TRUE";
 
   if ( qPredOut.isTargetNumerical ) {
     
+    // Print quantile headers
     for ( size_t q = 0; q < qPredOut.quantiles.size(); ++q ) {
-      toPredictionFile << "\t" << qPredOut.targetName << "_Q" << qPredOut.quantiles[q] << flush;
+      toPredictionFile << "\t" << qPredOut.targetName << "_Q" << qPredOut.quantiles[q];
     }
-    toPredictionFile << "\t" << qPredOut.targetName << "_DISTRIBUTION" << endl;
-    
+
+    // If we print also the distributions, print the header for that
+    if ( printDistributions ) {
+      toPredictionFile << "\t" << qPredOut.targetName << "_DISTRIBUTION";
+    }
+    toPredictionFile << endl;
+
+    // Loop through all samples
     for ( size_t i = 0; i < nSamples; ++i ) {
-      toPredictionFile << qPredOut.sampleNames[i] << "\t" << qPredOut.trueNumData[i];
-      for ( size_t q = 0; q < qPredOut.quantiles.size(); ++q ) {
-	toPredictionFile << "\t" << qPredOut.numPredictions[i][q];
+
+      // Print sample name and true numerical data
+      toPredictionFile << qPredOut.sampleNames[i] << "\t" << qPredOut.trueNumData[i] << "\t";
+
+      // Print all requested quantiles
+      utils::write(toPredictionFile,qPredOut.numPredictions[i].begin(),qPredOut.numPredictions[i].end(),'\t');
+
+      // Print distribution if requested
+      if ( printDistributions ) {
+	toPredictionFile << "\t";
+	utils::write(toPredictionFile,qPredOut.numDistributions[i].begin(),qPredOut.numDistributions[i].end(),',');
       }
-      toPredictionFile << "\t";
-      utils::write(toPredictionFile,qPredOut.numDistributions[i].begin(),qPredOut.numDistributions[i].end(),',');
       toPredictionFile << endl;
     }
+
   } else {
-
+    
+    // Print category headers
     for ( size_t c = 0; c < qPredOut.categories.size(); ++c ) {
-      toPredictionFile << "\t" << qPredOut.targetName << "_" << qPredOut.categories[c] << flush;
+      toPredictionFile << "\t" << qPredOut.targetName << "_" << qPredOut.categories[c];
     }
-
     toPredictionFile << endl;
     
+    // Write category probabilities for all samples
     for ( size_t i = 0; i < nSamples; ++i ) {
-      toPredictionFile << qPredOut.sampleNames[i] << "\t" << qPredOut.trueCatData[i];
-      for ( size_t c = 0; c < qPredOut.categories.size(); ++c ) {
-	if ( qPredOut.catPredictions[i].find(qPredOut.categories[c]) == qPredOut.catPredictions[i].end() ) {
-	  toPredictionFile << "\t0"; 
-	} else {
-	  toPredictionFile << "\t" << qPredOut.catPredictions[i][qPredOut.categories[c]];
-	}
-      }
+      toPredictionFile << qPredOut.sampleNames[i] << "\t" << qPredOut.trueCatData[i] << "\t";
+      utils::write(toPredictionFile,qPredOut.catPredictions[i].begin(),qPredOut.catPredictions[i].end(),'\t');
       toPredictionFile << endl;
     }
+    
   }
   
 }
