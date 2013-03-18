@@ -81,7 +81,9 @@ makeData <- function(nSamples,std,offset,pMissing) {
 getRFACEOutput <- function(trainData,testData,forestType,noNABranching,quantiles=vector(length(0))) {
 
 rface <- rface.train(trainData,"N:output",nTrees=50,mTry=3,nodeSize=3,forestType=forestType,noNABranching=noNABranching)
-return(rface.predict(rface,testData,quantiles=as.vector(c(0.5))))
+rfaceOut <- rface.predict(rface,testData,quantiles=as.vector(c(0.5)))
+rfaceOut$predData <- rfaceOut$predictions[[1]]
+return(rfaceOut)
 
 }
 
@@ -122,22 +124,11 @@ icsNumTxt <- as.vector(c(1,2,3,4,6,7,8,9))
 icsNumCat <- as.vector(c(1,2,3,5,6,7,8,9))
 
 outA <- getRFACEOutput(trainData[icsNum],testData[icsNum],"RF",TRUE)
-outA$predData <- outA$predData[[1]]
-
 outB <- getRFACEOutput(trainData[icsNumTxt],testData[icsNumTxt],"RF",TRUE)
-outB$predData <- outB$predData[[1]]
-
 outC <- getRFACEOutput(trainData[icsNumCat],testData[icsNumCat],"RF",TRUE)
-outC$predData <- outC$predData[[1]]
-
 outD <- getRFACEOutput(trainData[icsNum],testData[icsNum],"RF",FALSE)
-outD$predData <- outD$predData[[1]]
-
 outE <- getRFACEOutput(trainData[icsNumTxt],testData[icsNumTxt],"RF",FALSE)
-outE$predData <- outE$predData[[1]]
-
 outF <- getRFACEOutput(trainData[icsNumCat],testData[icsNumCat],"RF",FALSE)
-outF$predData <- outF$predData[[1]]
 
 #outG <- getRFACEOutput(trainData[icsNum],testData[icsNum],"RF",TRUE,quantiles=vector(c(0.5)))
 #outH <- getRFACEOutput(trainData[icsNumTxt],testData[icsNumTxt],"RF",TRUE,quantiles=vector(c(0.5)))
@@ -205,7 +196,8 @@ speed$rface <- as.matrix(speed$rface + diff)[1]
 }
 
 RMSE <- list()
-rfaceOut <- rface.predict(rface,testData)
+rfaceOut <- rface.predict(rface,testData,quantiles=as.vector(c(0.5)))
+rfaceOut$predData <- rfaceOut$predictions[[1]]
 RMSE$rface <- rmse(rfaceOut)
 
 trainData$"C:class" <- as.factor(trainData$"C:class")
