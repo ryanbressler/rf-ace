@@ -25,7 +25,8 @@ Node::~Node() { }
 // !! Documentation: consider combining with the documentation in the header
 // !! file, fleshing it out a bit. Ideally, implementation notes should fall
 // !! here; notes on the abstraction should fall in the header file.
-void Node::setSplitter(const string& splitterName,  
+void Node::setSplitter(const num_t splitFitness,
+		       const string& splitterName,  
 		       const num_t splitLeftLeqValue, 
 		       Node& leftChild, 
 		       Node& rightChild) {
@@ -35,6 +36,7 @@ void Node::setSplitter(const string& splitterName,
     exit(1);
   }
 
+  splitter_.fitness = splitFitness;
   splitter_.name = splitterName;
   splitter_.type = Feature::Type::NUM;
   splitter_.leftLeqValue = splitLeftLeqValue;
@@ -47,7 +49,8 @@ void Node::setSplitter(const string& splitterName,
 // !! Documentation: consider combining with the documentation in the header
 // !! file, fleshing it out a bit. Ideally, implementation notes should fall
 // !! here; notes on the abstraction should fall in the header file.
-void Node::setSplitter(const string& splitterName,  
+void Node::setSplitter(const num_t splitFitness,
+		       const string& splitterName,  
 		       const unordered_set<string>& leftSplitValues, 
 		       Node& leftChild,
 		       Node& rightChild) {
@@ -57,6 +60,7 @@ void Node::setSplitter(const string& splitterName,
     exit(1);
   }
 
+  splitter_.fitness = splitFitness,
   splitter_.name = splitterName;
   splitter_.type = Feature::Type::CAT;
   splitter_.leftValues = leftSplitValues;
@@ -66,7 +70,8 @@ void Node::setSplitter(const string& splitterName,
 
 }
 
-void Node::setSplitter(const string& splitterName,
+void Node::setSplitter(const num_t splitFitness,
+		       const string& splitterName,
 		       const uint32_t hashIdx,
 		       Node& leftChild,
 		       Node& rightChild) {
@@ -76,6 +81,7 @@ void Node::setSplitter(const string& splitterName,
     exit(1);
   }
 
+  splitter_.fitness = splitFitness;
   splitter_.name = splitterName;
   splitter_.type = Feature::Type::TXT;
   splitter_.hashValue = hashIdx;
@@ -207,7 +213,7 @@ void Node::recursiveWriteTree(string& traversal, ofstream& toFile) {
   
   if ( this->hasChildren() ) {
     
-    toFile << ",SPLITTER=" << "\"" << splitter_.name << "\"";
+    toFile << ",DI=" << splitter_.fitness <<",SPLITTER=" << "\"" << splitter_.name << "\"";
 
     if (splitter_.type == Feature::Type::NUM ) {
       toFile << ",SPLITTERTYPE=NUMERICAL"
@@ -287,6 +293,11 @@ const Node::Prediction& Node::getPrediction() {
   return( prediction_ );
 }
 
+const Node::Splitter& Node::getSplitter() {
+  assert(prediction_.type != Feature::Type::UNKNOWN);
+  return( splitter_ );
+}
+
 void Node::recursiveNodeSplit(Treedata* treeData,
 			      const size_t targetIdx,
 			      const ForestOptions* forestOptions,
@@ -294,9 +305,6 @@ void Node::recursiveNodeSplit(Treedata* treeData,
 			      const PredictionFunctionType& predictionFunctionType,
 			      const distributions::PMF* pmf,
 			      const vector<size_t>& sampleIcs,
-			      const size_t treeDepth,
-			      set<size_t>& featuresInTree,
-			      vector<size_t>& minDistToRoot,
 			      size_t* nLeaves,
 			      size_t& childIdx,
 			      vector<Node>& children,
@@ -309,7 +317,6 @@ void Node::recursiveNodeSplit(Treedata* treeData,
     cout << " " << nLeaves << endl;
   }
 
-  //splitCache.trainData = treeData->getFeatureData(targetIdx,sampleIcs);
   splitCache.nSamples = sampleIcs.size();
 
   if ( predictionFunctionType == MEAN ) {
@@ -394,12 +401,6 @@ void Node::recursiveNodeSplit(Treedata* treeData,
     return;
   }
   
-  if ( minDistToRoot[splitCache.splitFeatureIdx] > treeDepth ) {
-    minDistToRoot[splitCache.splitFeatureIdx] = treeDepth;
-  }
-  
-  featuresInTree.insert(splitCache.splitFeatureIdx);
-  
   *nLeaves += 1;
 
   vector<size_t> sampleIcs_left = splitCache.sampleIcs_left;
@@ -414,9 +415,6 @@ void Node::recursiveNodeSplit(Treedata* treeData,
 					predictionFunctionType,
 					pmf,
 					sampleIcs_left,
-					treeDepth+1,
-					featuresInTree,
-					minDistToRoot,
 					nLeaves,
 					childIdx,
 					children,
@@ -431,9 +429,6 @@ void Node::recursiveNodeSplit(Treedata* treeData,
 					 predictionFunctionType,
 					 pmf,
 					 sampleIcs_right,
-					 treeDepth+1,
-					 featuresInTree,
-					 minDistToRoot,
 					 nLeaves,
 					 childIdx,
 					 children,
@@ -455,9 +450,6 @@ void Node::recursiveNodeSplit(Treedata* treeData,
 					     predictionFunctionType,
 					     pmf,
 					     sampleIcs_missing,
-					     treeDepth+1,
-					     featuresInTree,
-					     minDistToRoot,
 					     nLeaves,
 					     childIdx,
 					     children,
@@ -578,15 +570,15 @@ bool Node::regularSplitterSeek(Treedata* treeData,
 
   if ( splitFeature->isNumerical() ) {
 
-    this->setSplitter(splitFeature->name(),splitCache.splitValue,children[childIdx],children[childIdx+1]);
+    this->setSplitter(splitCache.splitFitness,splitFeature->name(),splitCache.splitValue,children[childIdx],children[childIdx+1]);
 
   } else if ( splitFeature->isCategorical() ) {
     
-    this->setSplitter(splitFeature->name(),splitCache.splitValues_left,children[childIdx],children[childIdx+1]);
+    this->setSplitter(splitCache.splitFitness,splitFeature->name(),splitCache.splitValues_left,children[childIdx],children[childIdx+1]);
 
   } else if ( splitFeature->isTextual() ) {
     
-    this->setSplitter(splitFeature->name(),splitCache.hashIdx,children[childIdx],children[childIdx+1]);
+    this->setSplitter(splitCache.splitFitness,splitFeature->name(),splitCache.hashIdx,children[childIdx],children[childIdx+1]);
 
   }
 

@@ -261,7 +261,7 @@ public:
 	toFile.close();
       }
 
-      SF.getMeanMinimalDepthValues(filterData,importanceMat[permIdx],contrastImportanceMat[permIdx]);
+      SF.getMDI(filterData,importanceMat[permIdx],contrastImportanceMat[permIdx]);
 
       // Store the new percentile value in the vector contrastImportanceSample
       contrastImportanceSample[permIdx] = math::mean( utils::removeNANs( contrastImportanceMat[permIdx] ) );
@@ -303,7 +303,7 @@ public:
 	
 	// Perform WS-approximated t-test against the contrast sample
 	bool WS = true;
-	filterOutput.pValues[featureIdx] = math::ttest(contrastImportanceSample,featureImportanceSample,WS);
+	filterOutput.pValues[featureIdx] = math::ttest(featureImportanceSample,contrastImportanceSample,WS);
 	
 	// If for some reason the t-test returns NAN, turn that into 1.0
 	// NOTE: 1.0 is better number than NAN when sorting

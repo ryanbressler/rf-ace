@@ -31,13 +31,13 @@ public:
   ~RootNode();
 
   void reset(const size_t nNodes);
-
+  
   void loadTree(ifstream& treeStream);
-
+  
   void writeTree(ofstream& toFile);
-
+  
   void growTree(Treedata* trainData, const size_t targetIdx, const distributions::PMF* pmf, const ForestOptions* forestOptions, distributions::Random* random);
-
+  
   Node& childRef(const size_t childIdx);
   
   size_t nNodes() const;
@@ -58,7 +58,7 @@ public:
   string getTargetName() const { return( targetName_ ); }
   bool isTargetNumerical() const { return( isTargetNumerical_ ); }
 
-  vector<pair<size_t,size_t> > getMinDistFeatures();
+  unordered_map<string,num_t> getDI();
 
   void verifyIntegrity() const;
 

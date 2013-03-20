@@ -647,30 +647,34 @@ size_t StochasticForest::nTrees() {
 }
 
 
-void StochasticForest::getMeanMinimalDepthValues(Treedata* trainData,
-						 vector<num_t>& depthValues, 
-						 vector<num_t>& contrastDepthValues) {
+void StochasticForest::getMDI(Treedata* trainData,
+			      vector<num_t>& MDI, 
+			      vector<num_t>& contrastMDI) {
 
   size_t nRealFeatures = trainData->nFeatures();
   size_t nAllFeatures = 2 * nRealFeatures;
 
-  depthValues.clear();
-  depthValues.resize(nAllFeatures, 0.0);
+  MDI.clear();
+  MDI.resize(nAllFeatures, 0.0);
 
   vector<size_t> featureCounts(nAllFeatures, 0);
 
   for (size_t treeIdx = 0; treeIdx < this->nTrees(); ++treeIdx) {
 
-    vector<pair<size_t,size_t> > minDistPairs = rootNodes_[treeIdx]->getMinDistFeatures();
+    unordered_map<string,num_t> DIByFeature = rootNodes_[treeIdx]->getDI();
 
-    for (size_t i = 0; i < minDistPairs.size(); ++i) {
+    for ( unordered_map<string,num_t>::const_iterator it(DIByFeature.begin()); it != DIByFeature.end(); ++it ) {
+      
+      size_t featureIdx = trainData->getFeatureIdx(it->first);
+      if ( featureIdx == trainData->end() ) {
+	continue;
+      }
 
-      size_t featureIdx = minDistPairs[i].first;
-      size_t newDepthValue = minDistPairs[i].second;
+      num_t DI = it->second;
 
       ++featureCounts[featureIdx];
 
-      depthValues[featureIdx] += 1.0 * (newDepthValue - depthValues[featureIdx]) / featureCounts[featureIdx];
+      MDI[featureIdx] += 1.0 * (DI - MDI[featureIdx]) / featureCounts[featureIdx];
 
     }
 
@@ -678,14 +682,14 @@ void StochasticForest::getMeanMinimalDepthValues(Treedata* trainData,
 
   for (size_t featureIdx = 0; featureIdx < nAllFeatures; ++featureIdx) {
     if (featureCounts[featureIdx] == 0) {
-      depthValues[featureIdx] = datadefs::NUM_NAN;
+      MDI[featureIdx] = datadefs::NUM_NAN;
     }
   }
 
-  contrastDepthValues.resize(nRealFeatures);
+  contrastMDI.resize(nRealFeatures);
 
-  copy(depthValues.begin() + nRealFeatures, depthValues.end(), contrastDepthValues.begin());
+  copy(MDI.begin() + nRealFeatures, MDI.end(), contrastMDI.begin());
 
-  depthValues.resize(nRealFeatures);
+  MDI.resize(nRealFeatures);
 
 }
