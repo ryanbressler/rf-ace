@@ -35,7 +35,7 @@ public:
   //num_t getOobError();
 
   //void getImportanceValues(Treedata* trainData, vector<num_t>& importanceValues, vector<num_t>& contrastImportanceValues);
-  void getMeanMinimalDepthValues(Treedata* trainData, vector<num_t>& depthValues, vector<num_t>& contrastDepthValues);
+  void getMDI(Treedata* trainData, vector<num_t>& impurityValues, vector<num_t>& contrastImpurityValues);
 
   void predict(Treedata* testData, vector<string>& predictions, vector<num_t>& confidence, size_t nThreads = 1);
   void predict(Treedata* testData, vector<num_t>& predictions, vector<num_t>& confidence, size_t nThreads = 1);

@@ -31,6 +31,19 @@ public:
     vector<num_t> numTrainData;
     vector<cat_t> catTrainData;
   };
+  
+  struct Splitter {
+    
+    num_t fitness;
+    string name;
+    Feature::Type type;
+    uint32_t hashValue;
+    num_t leftLeqValue;
+    unordered_set<cat_t> leftValues;
+    
+    Splitter(): fitness(0.0), name(""), type(Feature::Type::UNKNOWN) {}
+    
+  };
 
   //Initializes node.
   Node();
@@ -41,17 +54,20 @@ public:
   
   //Sets a splitter feature for the node.
   //NOTE: splitter can be assigned only once! Subsequent setter calls will raise an assertion failure.
-  void setSplitter(const string& splitterName,
+  void setSplitter(const num_t splitFitness,
+		   const string& splitterName,
                    const num_t splitLeftLeqValue,
 		   Node& leftChild,
 		   Node& rightChild);
   
-  void setSplitter(const string& splitterName,
+  void setSplitter(const num_t splitFitness,
+		   const string& splitterName,
                    const unordered_set<cat_t>& leftSplitValues,
 		   Node& leftChild,
 		   Node& rightChild);
   
-  void setSplitter(const string& splitterName,
+  void setSplitter(const num_t splitFitness,
+		   const string& splitterName,
 		   const uint32_t hashIdx,
 		   Node& leftChild,
 		   Node& rightChild);
@@ -78,6 +94,8 @@ public:
 
   const Prediction& getPrediction();
 
+  const Splitter& getSplitter();
+
   void recursiveWriteTree(string& traversal, ofstream& toFile);
 
   enum PredictionFunctionType { MEAN, MODE, GAMMA };
@@ -90,7 +108,6 @@ protected:
 
     size_t nSamples;
     vector<size_t> featureSampleIcs;
-    //vector<num_t> trainData;
 
     vector<size_t> sampleIcs_left;
     vector<size_t> sampleIcs_right;
@@ -119,9 +136,6 @@ protected:
 			  const PredictionFunctionType& predictionFunctionType,
 			  const distributions::PMF* pmf,
 			  const vector<size_t>& sampleIcs,
-			  const size_t treeDepth,
-			  set<size_t>& featuresInTree,
-			  vector<size_t>& minDistToRoot,
                           size_t* nLeaves,
 			  size_t& childIdx,
 			  vector<Node>& children,
@@ -143,15 +157,7 @@ protected:
 private:
 #endif
 
-  struct Splitter {
-
-    string name;
-    Feature::Type type;
-    uint32_t hashValue;
-    num_t leftLeqValue;
-    unordered_set<cat_t> leftValues;
-    
-  } splitter_;
+  Splitter splitter_;
 
   Prediction prediction_;
 

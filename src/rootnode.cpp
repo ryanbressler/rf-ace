@@ -122,19 +122,21 @@ void RootNode::loadTree(ifstream& treeStream) {
       
       Node& lChild = this->childRef(leftChildIdx);
       Node& rChild = this->childRef(rightChildIdx);
+
+      num_t splitFitness = utils::str2<num_t>(nodeMap["DI"]);
       
       if ( nodeMap["SPLITTERTYPE"] == "NUMERICAL" ) {
 
-        nodep->setSplitter(nodeMap["SPLITTER"], utils::str2<num_t>(nodeMap["LVALUES"]), lChild, rChild);
+        nodep->setSplitter(splitFitness,nodeMap["SPLITTER"], utils::str2<num_t>(nodeMap["LVALUES"]), lChild, rChild);
 
       } else if ( nodeMap["SPLITTERTYPE"] == "CATEGORICAL" ){
 
         unordered_set<string> splitLeftValues = utils::keys(nodeMap["LVALUES"], ':');
 
-        nodep->setSplitter(nodeMap["SPLITTER"], splitLeftValues, lChild, rChild);
+        nodep->setSplitter(splitFitness,nodeMap["SPLITTER"], splitLeftValues, lChild, rChild);
 
       } else if ( nodeMap["SPLITTERTYPE"] == "TEXTUAL" ) {
-        nodep->setSplitter(nodeMap["SPLITTER"], utils::str2<uint32_t>(nodeMap["LVALUES"]), lChild, rChild);
+        nodep->setSplitter(splitFitness,nodeMap["SPLITTER"], utils::str2<uint32_t>(nodeMap["LVALUES"]), lChild, rChild);
       } else {
         cerr << "ERROR: incompatible splitter type '" << nodeMap["SPLITTERTYPE"] << endl;
         exit(1);
@@ -204,7 +206,7 @@ void RootNode::growTree(Treedata* trainData, const size_t targetIdx, const distr
   //Generate bootstrap indices and oob-indices
   trainData->bootstrapFromRealSamples(random, forestOptions->sampleWithReplacement, forestOptions->inBoxFraction, targetIdx, bootstrapIcs_, oobIcs_);
 
-  featuresInTree_.clear();
+  //featuresInTree_.clear();
 
   PredictionFunctionType predictionFunctionType;
 
@@ -218,11 +220,6 @@ void RootNode::growTree(Treedata* trainData, const size_t targetIdx, const distr
 
   nLeaves_ = 1;
 
-  size_t treeDist = 0;
-
-  minDistToRoot_.clear();
-  minDistToRoot_.resize(2*trainData->nFeatures(),datadefs::MAX_IDX);
-
   size_t nChildren = 0;
 
   //Start the recursive node splitting from the root node. This will generate the tree.
@@ -233,36 +230,36 @@ void RootNode::growTree(Treedata* trainData, const size_t targetIdx, const distr
 			   predictionFunctionType,
 			   pmf,
 			   bootstrapIcs_,
-			   treeDist,
-			   featuresInTree_,
-			   minDistToRoot_,
 			   &nLeaves_,
 			   nChildren,
 			   children_,
 			   splitCache_);
   
   children_.resize(nChildren);
-
-  //if ( forestOptions->forestType == forest_t::QRF ) {
-  //assert( trainData->feature(targetIdx)->isNumerical() );
-  //for ( size_t i = 0; i < oobIcs_.size(); ++i ) {
-  //  num_t x = trainData->feature(targetIdx)->getNumData[oobIcs_[i]];
-  //  this->percolate(trainData,oobIcs_[i])->addTrainData(x);
-  //}
-  //}
   
 }
 
-vector<pair<size_t,size_t> > RootNode::getMinDistFeatures() {
+unordered_map<string,num_t> RootNode::getDI() {
 
-  vector<pair<size_t,size_t> > minDistFeatures;
+  unordered_map<string,num_t> DI;
 
-  for ( set<size_t>::const_iterator it( featuresInTree_.begin() ); it != featuresInTree_.end(); ++it ) {
-    size_t featureIdx = *it;
-    minDistFeatures.push_back( pair<size_t,size_t>(featureIdx,minDistToRoot_[featureIdx]) );
+  for ( size_t nodeIdx = 0; nodeIdx < children_.size(); ++nodeIdx ) {
+    unordered_map<string,num_t>::iterator it(DI.find(children_[nodeIdx].getSplitter().name));
+    if ( it == DI.end() ) {
+      DI[ children_[nodeIdx].getSplitter().name ] = children_[nodeIdx].getSplitter().fitness;
+    } else {
+      DI[ children_[nodeIdx].getSplitter().name ] += children_[nodeIdx].getSplitter().fitness;
+    }
   }
 
-  return(minDistFeatures);
+  unordered_map<string,num_t>::iterator it(DI.find(this->getSplitter().name));
+  if ( it == DI.end() ) {
+    DI[ this->getSplitter().name ]  = this->getSplitter().fitness;
+  } else {
+    DI[ this->getSplitter().name ] += this->getSplitter().fitness;
+  }
+
+  return(DI);
 
 }
 

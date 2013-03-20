@@ -39,8 +39,8 @@ void node_newtest_getChildLeaves() {
 
   Node node,nodeL,nodeR,nodeM,nodeLL,nodeLR;
 
-  node.setSplitter("foo",static_cast<num_t>(5.0),nodeL,nodeR);
-  nodeL.setSplitter("bar",static_cast<num_t>(6.0),nodeLL,nodeLR);
+  node.setSplitter(0.0,"foo",static_cast<num_t>(5.0),nodeL,nodeR);
+  nodeL.setSplitter(0.0,"bar",static_cast<num_t>(6.0),nodeLL,nodeLR);
   node.missingChild_ = &nodeM;
 
   nodeR.setNumTrainPrediction(1.3);
@@ -99,7 +99,7 @@ void node_newtest_setSplitter() {
   
   Node node,leftChild,rightChild;
 
-  node.setSplitter("foo",splitLeftLeqValue,leftChild,rightChild);
+  node.setSplitter(0.0,"foo",splitLeftLeqValue,leftChild,rightChild);
   
   //newassert( node.splitterIdx() == splitterIdx );
   newassert( node.splitter_.type == Feature::Type::NUM );
@@ -118,7 +118,7 @@ void node_newtest_percolateData() {
 
   Node node,leftChild,rightChild;
 
-  node.setSplitter("T:in",h,leftChild,rightChild);
+  node.setSplitter(0.0,"T:in",h,leftChild,rightChild);
   
   newassert( &leftChild == node.leftChild() );
   newassert( &rightChild == node.rightChild() );
