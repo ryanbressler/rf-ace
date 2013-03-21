@@ -17,15 +17,15 @@ public:
   
   ~StochasticForest();
 
-  void learnRF(Treedata* trainData, const size_t targetIdx, const ForestOptions* forestOptions, const vector<num_t>& featureWeights, vector<distributions::Random>& randoms);
-  void learnGBT(Treedata* trainData, const size_t targetIdx, const ForestOptions* forestOptions, const vector<num_t>& featureWeights, vector<distributions::Random>& randoms);
+  void learnRF(TreeData* trainData, const size_t targetIdx, const ForestOptions* forestOptions, const vector<num_t>& featureWeights, vector<distributions::Random>& randoms);
+  void learnGBT(TreeData* trainData, const size_t targetIdx, const ForestOptions* forestOptions, const vector<num_t>& featureWeights, vector<distributions::Random>& randoms);
 
   void loadForest(const string& fileName);
 
 
-  void trainForestAndPredictQuantiles(Treedata* trainData,
+  void trainForestAndPredictQuantiles(TreeData* trainData,
 				      const size_t targetIdx,
-				      Treedata* testData,
+				      TreeData* testData,
 				      distributions::PMF* pmf,
 				      ForestOptions* forestOptions,
 				      distributions::Random* random,
@@ -34,16 +34,16 @@ public:
   //num_t getError() { return(0.0); }
   //num_t getOobError();
 
-  //void getImportanceValues(Treedata* trainData, vector<num_t>& importanceValues, vector<num_t>& contrastImportanceValues);
-  void getMDI(Treedata* trainData, vector<num_t>& impurityValues, vector<num_t>& contrastImpurityValues);
+  //void getImportanceValues(TreeData* trainData, vector<num_t>& importanceValues, vector<num_t>& contrastImportanceValues);
+  void getMDI(TreeData* trainData, vector<num_t>& impurityValues, vector<num_t>& contrastImpurityValues);
 
-  void predict(Treedata* testData, vector<string>& predictions, vector<num_t>& confidence, size_t nThreads = 1);
-  void predict(Treedata* testData, vector<num_t>& predictions, vector<num_t>& confidence, size_t nThreads = 1);
+  void predict(TreeData* testData, vector<string>& predictions, vector<num_t>& confidence, size_t nThreads = 1);
+  void predict(TreeData* testData, vector<num_t>& predictions, vector<num_t>& confidence, size_t nThreads = 1);
 
   //bool useQuantiles() const;
 
-  void getNumDistributions(Treedata* testData, vector<vector<num_t> >& distributions, distributions::Random* random, const size_t nSamplesPerTree);
-  void getCatDistributions(Treedata* testData, vector<vector<cat_t> >& distributions, distributions::Random* random, const size_t nSamplesPerTree);
+  void getNumDistributions(TreeData* testData, vector<vector<num_t> >& distributions, distributions::Random* random, const size_t nSamplesPerTree);
+  void getCatDistributions(TreeData* testData, vector<vector<cat_t> >& distributions, distributions::Random* random, const size_t nSamplesPerTree);
 
   //vector<num_t> getOobPredictions();
   //vector<num_t> getPermutedOobPredictions(const size_t featureIdx);
@@ -68,8 +68,8 @@ private:
 
   void readForestHeader(ifstream& forestStream);
   
-  void growNumericalGBT(Treedata* trainData, const size_t targetIdx, const ForestOptions* forestOptions, const distributions::PMF* pmf, vector<distributions::Random>& randoms);
-  void growCategoricalGBT(Treedata* trainData, const size_t targetIdx, const ForestOptions* forestOptions, const distributions::PMF* pmf, vector<distributions::Random>& randoms);
+  void growNumericalGBT(TreeData* trainData, const size_t targetIdx, const ForestOptions* forestOptions, const distributions::PMF* pmf, vector<distributions::Random>& randoms);
+  void growCategoricalGBT(TreeData* trainData, const size_t targetIdx, const ForestOptions* forestOptions, const distributions::PMF* pmf, vector<distributions::Random>& randoms);
 
   //num_t error(const vector<num_t>& data1,
   //	      const vector<num_t>& data2); 

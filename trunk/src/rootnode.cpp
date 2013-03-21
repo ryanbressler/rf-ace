@@ -10,7 +10,7 @@ using datadefs::forest_t;
 
 RootNode::RootNode() {}
 
-RootNode::RootNode(Treedata* trainData, const size_t targetIdx, const distributions::PMF* pmf, const ForestOptions* forestOptions, distributions::Random* random):
+RootNode::RootNode(TreeData* trainData, const size_t targetIdx, const distributions::PMF* pmf, const ForestOptions* forestOptions, distributions::Random* random):
   forestType_(forestOptions->forestType),
   targetName_(trainData->feature(targetIdx)->name()),
   isTargetNumerical_(trainData->feature(targetIdx)->isNumerical()),
@@ -190,13 +190,13 @@ void RootNode::writeTree(ofstream& toFile) {
 }
 
 
-void RootNode::growTree(Treedata* trainData, const size_t targetIdx, const distributions::PMF* pmf, const ForestOptions* forestOptions, distributions::Random* random) {
+void RootNode::growTree(TreeData* trainData, const size_t targetIdx, const distributions::PMF* pmf, const ForestOptions* forestOptions, distributions::Random* random) {
 
   forestType_ = forestOptions->forestType;
   targetName_ = trainData->feature(targetIdx)->name();
   isTargetNumerical_ = trainData->feature(targetIdx)->isNumerical();
 
-  size_t nMaxNodes = this->getTreeSizeEstimate(trainData->nRealSamples(targetIdx),forestOptions->nMaxLeaves,forestOptions->nodeSize);
+  size_t nMaxNodes = this->getTreeSizeEstimate(trainData->feature(targetIdx)->nRealSamples(),forestOptions->nMaxLeaves,forestOptions->nodeSize);
 
   this->reset(nMaxNodes);
 
@@ -340,12 +340,12 @@ size_t RootNode::nOobSamples() {
   return( oobIcs_.size() ); 
 }
 
-const Node::Prediction& RootNode::getPrediction(Treedata* testData, const size_t sampleIdx) {
+const Node::Prediction& RootNode::getPrediction(TreeData* testData, const size_t sampleIdx) {
   return( this->percolate(testData,sampleIdx)->getPrediction() );
 }
 
 
-vector<num_t> RootNode::getChildLeafNumTrainData(Treedata* treeData, const size_t sampleIdx) {
+vector<num_t> RootNode::getChildLeafNumTrainData(TreeData* treeData, const size_t sampleIdx) {
 
   vector<Node*> leaves = this->percolate(treeData,sampleIdx)->getSubTreeLeaves();
 
@@ -362,7 +362,7 @@ vector<num_t> RootNode::getChildLeafNumTrainData(Treedata* treeData, const size_
   
 }
 
-vector<cat_t> RootNode::getChildLeafCatTrainData(Treedata* treeData, const size_t sampleIdx) {
+vector<cat_t> RootNode::getChildLeafCatTrainData(TreeData* treeData, const size_t sampleIdx) {
 
   vector<Node*> leaves = this->percolate(treeData,sampleIdx)->getSubTreeLeaves();
 

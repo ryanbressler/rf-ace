@@ -1,10 +1,9 @@
 COMPILER = g++
 CFLAGS = -O3 -std=c++0x -Wall -Wextra -pedantic -Isrc/ -lz
 TFLAGS = -pthread
-SOURCEFILES = src/murmurhash3.cpp src/datadefs.cpp src/progress.cpp src/statistics.cpp src/math.cpp src/stochasticforest.cpp src/rootnode.cpp src/node.cpp src/treedata.cpp src/utils.cpp src/distributions.cpp src/reader.cpp src/feature.cpp
+SOURCEFILES = src/densetreedata.cpp src/murmurhash3.cpp src/datadefs.cpp src/progress.cpp src/statistics.cpp src/math.cpp src/stochasticforest.cpp src/rootnode.cpp src/node.cpp src/utils.cpp src/distributions.cpp src/reader.cpp src/feature.cpp
 STATICFLAGS = -static-libgcc -static
-TESTFILES = test/rface_test.hpp test/distributions_test.hpp test/argparse_test.hpp test/datadefs_test.hpp test/stochasticforest_test.hpp test/utils_test.hpp test/math_test.hpp test/rootnode_test.hpp test/node_test.hpp test/treedata_test.hpp
-NEWTESTFILES = test/reader_newtest.hpp
+TESTFILES = test/rface_test.hpp test/distributions_test.hpp test/argparse_test.hpp test/datadefs_test.hpp test/stochasticforest_test.hpp test/utils_test.hpp test/math_test.hpp test/rootnode_test.hpp test/node_test.hpp test/densetreedata_test.hpp
 TESTFLAGS = -std=c++0x -L${HOME}/lib/ -L/usr/local/lib -lcppunit -ldl -pedantic -I${HOME}/include/ -I/usr/local/include -Itest/ -Isrc/
 .PHONY: all test clean  # Squash directory checks for the usual suspects
 
@@ -34,10 +33,10 @@ static-no-threads: $(SOURCEFILES)
 GBT_benchmark: test/GBT_benchmark.cpp $(SOURCEFILES)
 	$(COMPILER) $(CFLAGS) test/GBT_benchmark.cpp $(SOURCEFILES) $(TFLAGS) -o bin/GBT_benchmark
 
-test: $(SOURCEFILES) $(NEWTESTFILES)
+test: $(SOURCEFILES) 
 	rm -f bin/newtest; $(COMPILER) $(CFLAGS) test/run_newtests.cpp $(SOURCEFILES) $(TFLAGS) -o bin/newtest -ggdb; ./bin/newtest
 
-test-no-threads: $(SOURCEFILES) $(NEWTESTFILES)
+test-no-threads: $(SOURCEFILES)
 	rm -f bin/newtest; $(COMPILER) $(CFLAGS) -DNOTHREADS test/run_newtests.cpp $(SOURCEFILES) -o bin/newtest -ggdb; ./bin/newtest
 
 clean:

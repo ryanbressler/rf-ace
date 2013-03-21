@@ -153,7 +153,7 @@ public:
     
   };
   
-  void train(Treedata* trainData, 
+  void train(TreeData* trainData, 
 	     const size_t targetIdx, 
 	     const vector<num_t>& featureWeights, 
 	     ForestOptions* forestOptions) {
@@ -181,7 +181,7 @@ public:
     }
   }
 
-  FilterOutput filter(Treedata* filterData, 
+  FilterOutput filter(TreeData* filterData, 
 		      const size_t targetIdx, 
 		      const vector<num_t>& featureWeights, 
 		      ForestOptions* forestOptions,
@@ -213,7 +213,7 @@ public:
 
   }
 
-  void executeRandomForest(Treedata* filterData,
+  void executeRandomForest(TreeData* filterData,
 			   const size_t targetIdx,
 			   const vector<num_t>& featureWeights,
 			   ForestOptions* forestOptions,
@@ -314,8 +314,8 @@ public:
       
       // Calculate mean importace score from the sample
       filterOutput.importances[featureIdx] = math::mean(featureImportanceSample);
-      filterOutput.correlations[featureIdx] = filterData->pearsonCorrelation(targetIdx,featureIdx);
-      filterOutput.sampleCounts[featureIdx] = filterData->nRealSamples(targetIdx,featureIdx);
+      filterOutput.correlations[featureIdx] = datadefs::NUM_NAN; //filterData->pearsonCorrelation(targetIdx,featureIdx);
+      filterOutput.sampleCounts[featureIdx] = datadefs::NUM_NAN; //filterData->nRealSamples(targetIdx,featureIdx);
       filterOutput.featureNames[featureIdx] = filterData->feature(featureIdx)->name();
     }
     
@@ -361,7 +361,7 @@ public:
     
   }
 
-  TestOutput test(Treedata* testData) {
+  TestOutput test(TreeData* testData) {
 
     assert(trainedModel_);
 
@@ -404,7 +404,7 @@ public:
   }
 
   
-  QRFPredictionOutput predictQRF(Treedata* testData, ForestOptions& forestOptions) {
+  QRFPredictionOutput predictQRF(TreeData* testData, ForestOptions& forestOptions) {
     
     assert(trainedModel_);
     
@@ -456,7 +456,7 @@ public:
     trainedModel_->loadForest(fileName);
   }
 
-  QRFPredictionOutput loadForestAndPredictQRF(const string& forestFile, Treedata* testData, const ForestOptions& forestOptions) {
+  QRFPredictionOutput loadForestAndPredictQRF(const string& forestFile, TreeData* testData, const ForestOptions& forestOptions) {
     
     QRFPredictionOutput qPredOut;
 
@@ -556,83 +556,6 @@ public:
 
   StochasticForest* forestRef() { return( trainedModel_ ); }
   
-  /*
-    void updateFeatureFrequency(ftable_t& frequency, StochasticForest* SF) {
-    
-    // We loop through all the trees
-    for ( size_t treeIdx = 0; treeIdx < SF->nTrees(); ++treeIdx ) {
-    
-    set<size_t> featuresInTree = SF->tree(treeIdx)->getFeaturesInTree();
-    
-    for ( set<size_t>::const_iterator it1(featuresInTree.begin() ); it1 != featuresInTree.end(); ++it1 ) {
-    set<size_t>::const_iterator it2( it1 );
-    ++it2;
-    while ( it2 != featuresInTree.end() ) {
-    
-    size_t lokey,hikey;
-    if ( *it1 <= *it2 ) {
-    lokey = *it1;
-    hikey = *it2;
-    } else {
-    lokey = *it2;
-    hikey = *it1;
-    }
-    
-    if ( frequency.find(lokey) == frequency.end() || frequency[lokey].find(hikey) == frequency[lokey].end() ) {
-    frequency[lokey][hikey] = 1;
-    } else {
-    ++frequency[lokey][hikey];
-    }
-    
-    ++it2;
-    
-    }
-    }
-    
-    }
-    
-    }
-  */
-
-
-  /*
-    template<typename T, size_t pos, bool isAscending>
-    struct SortBy {
-    
-    bool operator()(const vector<T>& a, const vector<T>& b) {
-    return( isAscending ? a[pos] < b[pos] : a[pos] > b[pos] );
-    }
-    
-    };
-    
-    void printPairInteractionsToFile(Treedata* trainData, ftable_t& frequency, const string& fileName) {
-    
-    ofstream toFile(fileName.c_str());
-    
-    vector<vector<size_t> > fTuples;
-    
-    for ( ftable_t::const_iterator it1( frequency.begin() ); it1 != frequency.end(); ++it1 ) {
-    for ( unordered_map<size_t,size_t>::const_iterator it2( it1->second.begin()); it2 != it1->second.end(); ++it2 ) {
-    fTuples.push_back( {it1->first,it2->first,it2->second} );
-    //toFile << trainData->getFeatureName( it1->first ) << "\t" << trainData->getFeatureName( it2->first ) << "\t" << it2->second << endl;
-    }
-    }
-    
-    SortBy<size_t,2,false> sorter;
-    
-    //cout << sorter(fTuples[0],fTuples[1]) << endl;
-    
-    sort(fTuples.begin(),fTuples.end(),sorter);
-    
-    for ( size_t i = 0; i < fTuples.size(); ++i ) {
-    toFile << trainData->getFeatureName( fTuples[i][0] ) << "\t" << trainData->getFeatureName( fTuples[i][1] ) << "\t" << 100.0 * fTuples[i][2] / ( filterOptions->nPerms * forestOptions->nTrees ) << endl;
-    }
-    
-    toFile.close();
-    
-    }
-  */
-
   void resetRandomNumberGenerators(const size_t nThreads, int seed) {
 
     assert( nThreads >= 1 );

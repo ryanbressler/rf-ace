@@ -50,12 +50,12 @@ public:
   bool isMissing(const size_t sampleIdx) const;
 
   size_t nSamples() const;
+  size_t nRealSamples() const;
 
   string name() const;
   void setName(const string& newName);
   
   vector<cat_t> categories() const;
-  //size_t nCategories() const;
 
   uint32_t getHash(const size_t sampleIdx, const size_t integer) const;
   bool hasHash(const size_t sampleIdx, const uint32_t hashIdx) const;

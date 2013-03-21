@@ -54,7 +54,7 @@ void StochasticForest::writeForest(ofstream& toFile) {
 
 }
 
-void growTreesPerThread(vector<RootNode*>& rootNodes, Treedata* trainData,
+void growTreesPerThread(vector<RootNode*>& rootNodes, TreeData* trainData,
     const size_t targetIdx, const ForestOptions* forestOptions,
     const distributions::PMF* pmf, distributions::Random* random) {
 
@@ -64,7 +64,7 @@ void growTreesPerThread(vector<RootNode*>& rootNodes, Treedata* trainData,
 
 }
 
-void StochasticForest::learnRF(Treedata* trainData, 
+void StochasticForest::learnRF(TreeData* trainData, 
 			       const size_t targetIdx,
 			       const ForestOptions* forestOptions, 
 			       const vector<num_t>& featureWeights,
@@ -157,7 +157,7 @@ void StochasticForest::learnRF(Treedata* trainData,
 
 }
 
-void StochasticForest::learnGBT(Treedata* trainData, const size_t targetIdx,
+void StochasticForest::learnGBT(TreeData* trainData, const size_t targetIdx,
     const ForestOptions* forestOptions, const vector<num_t>& featureWeights,
     vector<distributions::Random>& randoms) {
 
@@ -205,7 +205,7 @@ void StochasticForest::learnGBT(Treedata* trainData, const size_t targetIdx,
 }
 
 // Grow a GBT "forest" for a numerical target variable
-void StochasticForest::growNumericalGBT(Treedata* trainData,
+void StochasticForest::growNumericalGBT(TreeData* trainData,
 					const size_t targetIdx, 
 					const ForestOptions* forestOptions,
 					const distributions::PMF* pmf, 
@@ -237,7 +237,9 @@ void StochasticForest::growNumericalGBT(Treedata* trainData,
       curTargetData[i] = trueTargetData[i] - prediction[i];
     }
 
-    trainData->replaceFeatureData(targetIdx, curTargetData);
+    cout << "REPLACE FEATURE DATA" << endl;
+
+    //trainData->replaceFeatureData(targetIdx, curTargetData);
 
     // Grow a tree to predict the current target
     rootNodes_[treeIdx]->growTree(trainData, targetIdx, pmf, forestOptions, &randoms[0]);
@@ -257,12 +259,13 @@ void StochasticForest::growNumericalGBT(Treedata* trainData,
 
   // GBT-forest is now done!
   // restore true target
-  trainData->replaceFeatureData(targetIdx, trueTargetData);
+  cout << "REPLACE FEATURE DATA" << endl;
+  //trainData->replaceFeatureData(targetIdx, trueTargetData);
 
 }
 
 // Grow a GBT "forest" for a categorical target variable
-void StochasticForest::growCategoricalGBT(Treedata* trainData,
+void StochasticForest::growCategoricalGBT(TreeData* trainData,
 					  const size_t targetIdx, 
 					  const ForestOptions* forestOptions,
 					  const distributions::PMF* pmf, 
@@ -324,7 +327,8 @@ void StochasticForest::growCategoricalGBT(Treedata* trainData,
       // cout << endl;
 
       // For each tree the target data becomes the recently computed residuals
-      trainData->replaceFeatureData(targetIdx, curTargetData);
+      cout << "REPLACE FEATURE DATA" << endl;
+      //trainData->replaceFeatureData(targetIdx, curTargetData);
 
       // Grow a tree to predict the current target
       size_t treeIdx = m * nCategories + k; // tree index
@@ -349,7 +353,8 @@ void StochasticForest::growCategoricalGBT(Treedata* trainData,
 
   // GBT-forest is now done!
   // restore the true target
-  trainData->replaceFeatureData(targetIdx, trueTargetData);
+  cout << "REPLACE FEATURE DATA" << endl;
+  //trainData->replaceFeatureData(targetIdx, trueTargetData);
 }
 
 /*
@@ -410,7 +415,7 @@ void StochasticForest::growCategoricalGBT(Treedata* trainData,
  }
  */
 
-void predictCatPerThread(Treedata* testData, 
+void predictCatPerThread(TreeData* testData, 
 			 vector<RootNode*>& rootNodes,
 			 forest_t forestType,
 			 vector<size_t>& sampleIcs, 
@@ -466,7 +471,7 @@ void predictCatPerThread(Treedata* testData,
   }
 }
 
-void predictNumPerThread(Treedata* testData, 
+void predictNumPerThread(TreeData* testData, 
 			 vector<RootNode*>& rootNodes,
 			 forest_t forestType, 
 			 vector<size_t>& sampleIcs,
@@ -496,7 +501,7 @@ void predictNumPerThread(Treedata* testData,
   }
 }
 
-void StochasticForest::predict(Treedata* testData, vector<cat_t>& predictions,vector<num_t>& confidence, size_t nThreads) {
+void StochasticForest::predict(TreeData* testData, vector<cat_t>& predictions,vector<num_t>& confidence, size_t nThreads) {
 
   assert( nThreads > 0 );
 
@@ -547,7 +552,7 @@ void StochasticForest::predict(Treedata* testData, vector<cat_t>& predictions,ve
 #endif
 }
 
-void StochasticForest::predict(Treedata* testData, vector<num_t>& predictions,vector<num_t>& confidence, size_t nThreads) {
+void StochasticForest::predict(TreeData* testData, vector<num_t>& predictions,vector<num_t>& confidence, size_t nThreads) {
 
   assert( nThreads > 0 );
 
@@ -594,7 +599,7 @@ void StochasticForest::predict(Treedata* testData, vector<num_t>& predictions,ve
 #endif
 }
 
-void StochasticForest::getNumDistributions(Treedata* testData,
+void StochasticForest::getNumDistributions(TreeData* testData,
 					   vector<vector<num_t> >& distributions,
 					   distributions::Random* random,
 					   const size_t nSamplesPerTree) {
@@ -616,7 +621,7 @@ void StochasticForest::getNumDistributions(Treedata* testData,
   
 }
 
-void StochasticForest::getCatDistributions(Treedata* testData,
+void StochasticForest::getCatDistributions(TreeData* testData,
                                            vector<vector<cat_t> >& distributions,
                                            distributions::Random* random,
                                            const size_t nSamplesPerTree) {
@@ -647,7 +652,7 @@ size_t StochasticForest::nTrees() {
 }
 
 
-void StochasticForest::getMDI(Treedata* trainData,
+void StochasticForest::getMDI(TreeData* trainData,
 			      vector<num_t>& MDI, 
 			      vector<num_t>& contrastMDI) {
 

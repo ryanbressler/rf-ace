@@ -110,7 +110,7 @@ void node_newtest_setSplitter() {
 
 void node_newtest_percolateData() {
   
-  Treedata treeData("test_2by10_text_matrix.afm",'\t',':');
+  DenseTreeData treeData("test_2by10_text_matrix.afm",'\t',':');
 
   uint32_t h;
 

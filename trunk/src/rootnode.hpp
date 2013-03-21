@@ -23,7 +23,7 @@ public:
   RootNode();
   
   // Learn Tree from data
-  RootNode(Treedata* trainData, const size_t targetIdx, const distributions::PMF* pmf, const ForestOptions* forestOptions, distributions::Random* random);
+  RootNode(TreeData* trainData, const size_t targetIdx, const distributions::PMF* pmf, const ForestOptions* forestOptions, distributions::Random* random);
 
   // Load tree from file
   RootNode(ifstream& treeStream);
@@ -36,7 +36,7 @@ public:
   
   void writeTree(ofstream& toFile);
   
-  void growTree(Treedata* trainData, const size_t targetIdx, const distributions::PMF* pmf, const ForestOptions* forestOptions, distributions::Random* random);
+  void growTree(TreeData* trainData, const size_t targetIdx, const distributions::PMF* pmf, const ForestOptions* forestOptions, distributions::Random* random);
   
   Node& childRef(const size_t childIdx);
   
@@ -44,10 +44,10 @@ public:
   
   size_t nLeaves() const;
 
-  const Prediction& getPrediction(Treedata* treeData, const size_t sampleIdx);
+  const Prediction& getPrediction(TreeData* treeData, const size_t sampleIdx);
 
-  vector<num_t> getChildLeafNumTrainData(Treedata* treeData, const size_t sampleIdx);
-  vector<cat_t> getChildLeafCatTrainData(Treedata* treeData, const size_t sampleIdx);
+  vector<num_t> getChildLeafNumTrainData(TreeData* treeData, const size_t sampleIdx);
+  vector<cat_t> getChildLeafCatTrainData(TreeData* treeData, const size_t sampleIdx);
 
   vector<size_t> getOobIcs();
 
