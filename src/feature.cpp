@@ -1,6 +1,9 @@
 #include "feature.hpp"
 
+#include <algorithm>
+
 #include "utils.hpp"
+
 
 Feature::Feature():
   type_(Feature::Type::UNKNOWN) {
@@ -9,7 +12,7 @@ Feature::Feature():
 Feature::Feature(Feature::Type newType, const string& newName, const size_t nSamples):
   type_(newType),
   name_(newName) {
-
+  
   if ( type_ == Feature::Type::NUM ) {
     numData.resize(nSamples);
     catData.clear();
@@ -137,11 +140,11 @@ bool Feature::isTextual() const {
 bool Feature::isMissing(const size_t sampleIdx) const {
   switch (type_) {
   case NUM:
-    return( datadefs::isNAN(numData[sampleIdx]) );
+    return( datadefs::isNAN<num_t>(numData[sampleIdx]) );
   case CAT:
-    return( datadefs::isNAN(catData[sampleIdx]) );
+    return( datadefs::isNAN<cat_t>(catData[sampleIdx]) );
   case TXT:
-    return( datadefs::isNAN(txtData[sampleIdx]) );
+    return( txtData[sampleIdx].size() == 0 );
   case UNKNOWN:
     break;
   } 
@@ -164,6 +167,20 @@ size_t Feature::nSamples() const {
 
   cerr << "Feature::nSamples() -- tried to use with unset feature object!" << endl;
   exit(1);
+}
+									      
+size_t Feature::nRealSamples() const {
+  
+  size_t n = 0;
+
+  for ( size_t i = 0; i < this->nSamples(); ++i ) {
+    if ( !this->isMissing(i) ) {
+      ++n;
+    }
+  }
+
+  return(n);
+  
 }
 
 string Feature::name() const {

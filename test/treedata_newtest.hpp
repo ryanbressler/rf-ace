@@ -6,18 +6,18 @@
 #include "newtest.hpp"
 #include "murmurhash3.hpp"
 #include "distributions.hpp"
+#include "densetreedata.hpp"
 
 using namespace std;
 
 void treedata_newtest_readAFM();
-void treedata_newtest_readARFF();
 void treedata_newtest_readTransposedAFM();
 void treedata_newtest_nRealSamples();
 void treedata_newtest_name2idxMap();
 void treedata_newtest_numericalFeatureSplitsNumericalTarget();
 void treedata_newtest_numericalFeatureSplitsCategoricalTarget();
 void treedata_newtest_categoricalFeatureSplitsNumericalTarget();
-void treedata_newtest_replaceFeatureData();
+//void treedata_newtest_replaceFeatureData();
 void treedata_newtest_end();
 void treedata_newtest_hashFeature();
 void treedata_newtest_bootstrapRealSamples();
@@ -26,14 +26,13 @@ void treedata_newtest_separateMissingSamples();
 void treedata_newtest() {
 
   newtest( "readAFM(x)", &treedata_newtest_readAFM );
-  newtest( "readARFF(x)", &treedata_newtest_readARFF );
   newtest( "readTransposedAFM(x)", &treedata_newtest_readTransposedAFM );
   newtest( "nRealSamples(x)", &treedata_newtest_nRealSamples );
   newtest( "name2idxMap(x)", &treedata_newtest_name2idxMap ); 
   newtest( "numericalFeatureSplitsNumericalTarget(x)", &treedata_newtest_numericalFeatureSplitsNumericalTarget );
   newtest( "numericalFeatureSplitsCategoricalTarget(x)", &treedata_newtest_numericalFeatureSplitsCategoricalTarget );
   newtest( "categoricalFeatureSplitsNumericalTarget(x)", &treedata_newtest_categoricalFeatureSplitsNumericalTarget );
-  newtest( "replaceFeatureData(x)", &treedata_newtest_replaceFeatureData );
+  //newtest( "replaceFeatureData(x)", &treedata_newtest_replaceFeatureData );
   newtest( "end(x)" , &treedata_newtest_end );
   newtest( "hashFeature(x)", &treedata_newtest_hashFeature );
   newtest( "bootstrapRealSamples(x)", &treedata_newtest_bootstrapRealSamples );
@@ -48,7 +47,7 @@ void treedata_newtest_readAFM() {
 
   Reader reader(fileName,'\t');
 
-  Treedata treeDataC(fileName,'\t',':',useContrasts);
+  DenseTreeData treeDataC(fileName,'\t',':',useContrasts);
 
   newassert( treeDataC.nFeatures() == 8 );
   newassert( treeDataC.nSamples() == 3  );
@@ -101,7 +100,7 @@ void treedata_newtest_readAFM() {
 
   useContrasts = false;
   
-  Treedata treeData(fileName,'\t',':',useContrasts);
+  DenseTreeData treeData(fileName,'\t',':',useContrasts);
 
   newassert( treeData.nFeatures() == 8 );
   newassert( treeData.nSamples() == 3 );
@@ -149,7 +148,7 @@ void treedata_newtest_readTransposedAFM() {
   string fileName = "test/data/3by8_mixed_NA_transposed_matrix.afm";
   bool useContrasts = true;
 
-  Treedata treeDataC(fileName,'\t',':',useContrasts);
+  DenseTreeData treeDataC(fileName,'\t',':',useContrasts);
 
   newassert( treeDataC.nFeatures() == 8 );
   newassert( treeDataC.nSamples() == 3  );
@@ -199,7 +198,7 @@ void treedata_newtest_readTransposedAFM() {
 
   useContrasts = false;
 
-  Treedata treeData(fileName,'\t',':',useContrasts);
+  DenseTreeData treeData(fileName,'\t',':',useContrasts);
 
   newassert( treeData.nFeatures() == 8 );
   newassert( treeData.nSamples() == 3 );
@@ -248,109 +247,20 @@ void treedata_newtest_readTransposedAFM() {
 
 }
 
-void treedata_newtest_readARFF() {
-
-  Treedata treeData("test/data/5by10_numeric_matrix.arff",'\t',':');
-
-  newassert( treeData.nFeatures() == 5 );
-  newassert( treeData.feature(0)->name() == "x1" ); newassert( treeData.feature(0)->isNumerical() );
-  newassert( treeData.feature(1)->name() == "x2" ); newassert( treeData.feature(1)->isNumerical() );
-  newassert( treeData.feature(2)->name() == "x3" ); newassert( treeData.feature(2)->isNumerical() );
-  newassert( treeData.feature(3)->name() == "x4" ); newassert( treeData.feature(3)->isNumerical() );
-  newassert( treeData.feature(4)->name() == "y"  ); newassert( treeData.feature(4)->isNumerical() );
-
-  newassert( treeData.nSamples() == 10 );
-  newassert( treeData.nRealSamples(0) == 10 );
-  newassert( treeData.nRealSamples(1) == 9 );
-  newassert( treeData.nRealSamples(2) == 9 );
-  newassert( treeData.nRealSamples(3) == 10 );
-  newassert( treeData.nRealSamples(4) == 10 );
-
-  newassert( treeData.nRealSamples(0,1) == 9 );
-  newassert( treeData.nRealSamples(1,2) == 8 );
-
-  newassert( fabs( treeData.feature(0)->getNumData(0) - 0.8147 ) < 1e-5 );
-  newassert( fabs( treeData.feature(0)->getNumData(1) - 0.9058 ) < 1e-5 );
-  newassert( fabs( treeData.feature(0)->getNumData(2) - 0.1270 ) < 1e-5 );
-  newassert( fabs( treeData.feature(0)->getNumData(3) - 0.9134 ) < 1e-5 );
-  newassert( fabs( treeData.feature(0)->getNumData(4) - 0.6324 ) < 1e-5 );
-  newassert( fabs( treeData.feature(0)->getNumData(5) - 0.0975 ) < 1e-5 );
-  newassert( fabs( treeData.feature(0)->getNumData(6) - 0.2785 ) < 1e-5 );
-  newassert( fabs( treeData.feature(0)->getNumData(7) - 0.5469 ) < 1e-5 );
-  newassert( fabs( treeData.feature(0)->getNumData(8) - 0.9575 ) < 1e-5 );
-  newassert( fabs( treeData.feature(0)->getNumData(9) - 0.9649 ) < 1e-5 );
-
-  newassert( fabs( treeData.feature(1)->getNumData(0) - 1.0000 ) < 1e-5 );
-  newassert( fabs( treeData.feature(1)->getNumData(1) - 2.0000 ) < 1e-5 );
-  newassert( fabs( treeData.feature(1)->getNumData(2) - 3.0000 ) < 1e-5 );
-  newassert( fabs( treeData.feature(1)->getNumData(3) - 4.0000 ) < 1e-5 );
-  newassert( fabs( treeData.feature(1)->getNumData(4) - 5.0000 ) < 1e-5 );
-  newassert( fabs( treeData.feature(1)->getNumData(5) - 6.0000 ) < 1e-5 );
-  newassert( fabs( treeData.feature(1)->getNumData(6) - 7.0000 ) < 1e-5 );
-  newassert( treeData.feature(1)->isMissing(7) );
-  newassert( fabs( treeData.feature(1)->getNumData(8) - 9.0000 ) < 1e-5 );
-  newassert( fabs( treeData.feature(1)->getNumData(9) - 10.0000 ) < 1e-5 );
-
-  newassert( fabs( treeData.feature(2)->getNumData(0) - 0.0596 ) < 1e-5 );
-  newassert( fabs( treeData.feature(2)->getNumData(1) - 0.6820 ) < 1e-5 );
-  newassert( fabs( treeData.feature(2)->getNumData(2) - 0.0424 ) < 1e-5 );
-  newassert( fabs( treeData.feature(2)->getNumData(3) - 0.0714 ) < 1e-5 );
-  newassert( treeData.feature(2)->isMissing(4) );
-  newassert( fabs( treeData.feature(2)->getNumData(5) - 0.0967 ) < 1e-5 );
-  newassert( fabs( treeData.feature(2)->getNumData(6) - 0.8181 ) < 1e-5 );
-  newassert( fabs( treeData.feature(2)->getNumData(7) - 0.8175 ) < 1e-5 );
-  newassert( fabs( treeData.feature(2)->getNumData(8) - 0.7224 ) < 1e-5 );
-  newassert( fabs( treeData.feature(2)->getNumData(9) - 0.1499 ) < 1e-5 );
-
-  newassert( fabs( treeData.feature(3)->getNumData(0) - 0.9160 ) < 1e-5 );
-  newassert( fabs( treeData.feature(3)->getNumData(1) - 0.0012 ) < 1e-5 );
-  newassert( fabs( treeData.feature(3)->getNumData(2) - 0.4624 ) < 1e-5 );
-  newassert( fabs( treeData.feature(3)->getNumData(3) - 0.4243 ) < 1e-5 );
-  newassert( fabs( treeData.feature(3)->getNumData(4) - 0.4609 ) < 1e-5 );
-  newassert( fabs( treeData.feature(3)->getNumData(5) - 0.7702 ) < 1e-5 );
-  newassert( fabs( treeData.feature(3)->getNumData(6) - 0.3225 ) < 1e-5 );
-  newassert( fabs( treeData.feature(3)->getNumData(7) - 0.7847 ) < 1e-5 );
-  newassert( fabs( treeData.feature(3)->getNumData(8) - 0.4714 ) < 1e-5 );
-  newassert( fabs( treeData.feature(3)->getNumData(9) - 0.0358 ) < 1e-5 );
-
-  newassert( fabs( treeData.feature(4)->getNumData(0) - 6.0000 ) < 1e-5 );
-  newassert( fabs( treeData.feature(4)->getNumData(1) - 14.0000 ) < 1e-5 );
-  newassert( fabs( treeData.feature(4)->getNumData(2) - 24.0000 ) < 1e-5 );
-  newassert( fabs( treeData.feature(4)->getNumData(3) - 36.0000 ) < 1e-5 );
-  newassert( fabs( treeData.feature(4)->getNumData(4) - 50.0000 ) < 1e-5 );
-  newassert( fabs( treeData.feature(4)->getNumData(5) - 66.0000 ) < 1e-5 );
-  newassert( fabs( treeData.feature(4)->getNumData(6) - 84.0000 ) < 1e-5 );
-  newassert( fabs( treeData.feature(4)->getNumData(7) - 104.0000 ) < 1e-5 );
-  newassert( fabs( treeData.feature(4)->getNumData(8) - 126.0000 ) < 1e-5 );
-  newassert( fabs( treeData.feature(4)->getNumData(9) - 150.0000 ) < 1e-5 );
-
-  Treedata treeData2("test/data/12by21_categorical_matrix.arff",'\t',':');
-
-  newassert( treeData2.nSamples() == 12 );
-  newassert( treeData2.nFeatures() == 21 );
-  for ( size_t i = 0; i < treeData2.nFeatures(); ++i ) {
-    newassert( treeData2.feature(i)->isCategorical() );
-  }
-
-}
-
-
 void treedata_newtest_nRealSamples() {
 
   string fileName = "test/data/3by8_mixed_NA_matrix.afm";
   bool useContrasts = false;
   
-  Treedata treeData(fileName,'\t',':',useContrasts);
+  DenseTreeData treeData(fileName,'\t',':',useContrasts);
 
   newassert(treeData.nFeatures() == 8);
-  newassert(treeData.nRealSamples(0,1) == 1);
-  newassert(treeData.nRealSamples(6,7) == 2);
 
 }
 
 void treedata_newtest_numericalFeatureSplitsNumericalTarget() {
 
-  Treedata treeData("test_103by300_mixed_matrix.afm",'\t',':',true);
+  DenseTreeData treeData("test_103by300_mixed_matrix.afm",'\t',':',true);
 
   vector<size_t> sampleIcs_left(0);
   vector<size_t> sampleIcs_right = utils::range(300);
@@ -400,7 +310,7 @@ void treedata_newtest_numericalFeatureSplitsNumericalTarget() {
 
 void treedata_newtest_numericalFeatureSplitsCategoricalTarget() {
 
-  Treedata treeData("test_103by300_mixed_matrix.afm",'\t',':',true);
+  DenseTreeData treeData("test_103by300_mixed_matrix.afm",'\t',':',true);
 
   size_t targetIdx = 1; // categorical
   size_t featureIdx = 2; // numerical
@@ -447,7 +357,7 @@ void treedata_newtest_numericalFeatureSplitsCategoricalTarget() {
 
 void treedata_newtest_categoricalFeatureSplitsNumericalTarget() {
 
-  Treedata treeData("test_103by300_mixed_matrix.afm",'\t',':',true);
+  DenseTreeData treeData("test_103by300_mixed_matrix.afm",'\t',':',true);
 
   vector<size_t> sampleIcs_left(0);
   vector<size_t> sampleIcs_right = utils::range(300);
@@ -474,21 +384,9 @@ void treedata_newtest_categoricalFeatureSplitsNumericalTarget() {
 
 void treedata_newtest_end() {
 
-  Treedata treeData("test_103by300_mixed_matrix.afm",'\t',':',true);
+  DenseTreeData treeData("test_103by300_mixed_matrix.afm",'\t',':',true);
 
   newassert( treeData.getFeatureIdx("IDontExist") == treeData.end() );
-
-}
-
-void treedata_newtest_replaceFeatureData() {
-
-  Treedata treeData("test_103by300_mixed_matrix.afm",'\t',':',true);
-
-  treeData.replaceFeatureData(0,vector<num_t>(treeData.nSamples(),0.0));
-
-  for ( size_t i = 0; i < treeData.nSamples(); ++i ) {
-    newassert( treeData.feature(0)->getNumData(i) == 0.0 );
-  }
 
 }
 
@@ -528,7 +426,7 @@ void treedata_newtest_hashFeature() {
 
 void treedata_newtest_bootstrapRealSamples() {
 
-  Treedata treeData("test_103by300_mixed_matrix.afm",'\t',':',true);
+  DenseTreeData treeData("test_103by300_mixed_matrix.afm",'\t',':',true);
 
   distributions::Random random;
 
@@ -545,13 +443,13 @@ void treedata_newtest_bootstrapRealSamples() {
 
     oobFraction += 1.0 * oobIcs.size();
 
-    newassert( ics.size() == treeData.nRealSamples(featureIdx) );
+    newassert( ics.size() == treeData.feature(featureIdx)->nRealSamples() );
     newassert( !datadefs::containsNAN(treeData.feature(featureIdx)->getNumData(ics)) );
     newassert( !datadefs::containsNAN(treeData.feature(featureIdx)->getNumData(oobIcs)) );
 
   }
 
-  oobFraction /= 1000 * treeData.nRealSamples(featureIdx);
+  oobFraction /= 1000 * treeData.feature(featureIdx)->nRealSamples();
 
   newassert( fabs( oobFraction - 0.36 ) < 0.05 );
 
@@ -562,7 +460,7 @@ void treedata_newtest_name2idxMap() {
 
   string fileName = "test_6by10_mixed_matrix.tsv";
 
-  Treedata treeData(fileName,'\t',':',true);
+  DenseTreeData treeData(fileName,'\t',':',true);
 
   newassert( treeData.name2idx_.size() == 2*treeData.nFeatures() );
   newassert( treeData.features_.size() == 2*treeData.nFeatures() );
@@ -601,7 +499,7 @@ void treedata_newtest_separateMissingSamples() {
 
   string fileName = "test_6by10_mixed_matrix.tsv";
 
-  Treedata treeData(fileName,'\t',':');
+  DenseTreeData treeData(fileName,'\t',':');
 
   vector<size_t> sampleIcs = utils::range(10);
   vector<size_t> missingIcs;

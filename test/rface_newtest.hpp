@@ -4,7 +4,7 @@
 #include <cstdlib>
 #include <cmath>
 #include "options.hpp"
-#include "treedata.hpp"
+#include "densetreedata.hpp"
 #include "rf_ace.hpp"
 #include "newtest.hpp"
 
@@ -40,7 +40,7 @@ void rface_newtest() {
 RFACE::TestOutput make_predictions(ForestOptions& forestOptions, const string& targetStr) {
 
   string fileName = "test_103by300_mixed_nan_matrix.afm";
-  Treedata trainData(fileName,'\t',':',false);
+  DenseTreeData trainData(fileName,'\t',':',false);
   size_t targetIdx = trainData.getFeatureIdx(targetStr);
   vector<num_t> weights = trainData.getFeatureWeights();
   weights[targetIdx] = 0;
@@ -56,7 +56,7 @@ RFACE::TestOutput make_predictions(ForestOptions& forestOptions, const string& t
 RFACE::QRFPredictionOutput make_quantile_predictions(ForestOptions& forestOptions, const string& targetStr) {
 
   string fileName = "test_103by300_mixed_nan_matrix.afm";
-  Treedata trainData(fileName,'\t',':',false);
+  DenseTreeData trainData(fileName,'\t',':',false);
   size_t targetIdx = trainData.getFeatureIdx(targetStr);
   vector<num_t> weights = trainData.getFeatureWeights();
   weights[targetIdx] = 0;
@@ -74,7 +74,7 @@ RFACE::QRFPredictionOutput make_quantile_predictions(ForestOptions& forestOption
 RFACE::TestOutput make_save_load_predictions(ForestOptions& forestOptions, const string& targetStr) {
 
   string fileName = "test_103by300_mixed_nan_matrix.afm";
-  Treedata trainData(fileName,'\t',':',false);
+  DenseTreeData trainData(fileName,'\t',':',false);
   size_t targetIdx = trainData.getFeatureIdx(targetStr);
   vector<num_t> weights = trainData.getFeatureWeights();
   weights[targetIdx] = 0;
@@ -96,7 +96,7 @@ RFACE::TestOutput make_save_load_predictions(ForestOptions& forestOptions, const
 RFACE::QRFPredictionOutput make_save_load_quantile_predictions(ForestOptions& forestOptions, const string& targetStr) {
   
   string fileName = "test_103by300_mixed_nan_matrix.afm";
-  Treedata trainData(fileName,'\t',':',false);
+  DenseTreeData trainData(fileName,'\t',':',false);
   size_t targetIdx = trainData.getFeatureIdx(targetStr);
   vector<num_t> weights = trainData.getFeatureWeights();
   weights[targetIdx] = 0;

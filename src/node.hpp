@@ -75,7 +75,7 @@ public:
   void setMissingChild(Node& missingChild);
   
   //Given a value, descends to either one of the child nodes, if existing, otherwise returns a pointer to the current node
-  Node* percolate(Treedata* testData, const size_t sampleIdx, const size_t scrambleFeatureIdx = datadefs::MAX_IDX);
+  Node* percolate(TreeData* testData, const size_t sampleIdx, const size_t scrambleFeatureIdx = datadefs::MAX_IDX);
   
   void setNumTrainPrediction(const num_t& numTrainPrediction);
   void setCatTrainPrediction(const cat_t& catTrainPrediction);
@@ -129,7 +129,7 @@ protected:
 
   };
 
-  void recursiveNodeSplit(Treedata* treeData,
+  void recursiveNodeSplit(TreeData* treeData,
                           const size_t targetIdx,
 			  const ForestOptions* forestOptions,
 			  distributions::Random* random,
@@ -141,7 +141,7 @@ protected:
 			  vector<Node>& children,
 			  SplitCache& splitCache);
 
-  bool regularSplitterSeek(Treedata* treeData,
+  bool regularSplitterSeek(TreeData* treeData,
 			   const size_t targetIdx,
 			   const ForestOptions* forestOptions,
 			   distributions::Random* random,

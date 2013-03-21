@@ -1,4 +1,4 @@
-#include "treedata.hpp"
+#include "densetreedata.hpp"
 #include <cstdlib>
 #include <fstream>
 #include <cassert>
@@ -13,11 +13,11 @@
 
 using namespace std;
 
-Treedata::Treedata(const vector<Feature>& features, const bool useContrasts, const vector<string>& sampleHeaders):
+DenseTreeData::DenseTreeData(const vector<Feature>& features, const bool useContrasts, const vector<string>& sampleHeaders):
   useContrasts_(useContrasts),
   features_(features),
   sampleHeaders_(sampleHeaders) {
-
+  
   size_t nFeatures = features_.size();
 
   assert( nFeatures > 0 );
@@ -61,19 +61,10 @@ Treedata::Treedata(const vector<Feature>& features, const bool useContrasts, con
    NOTE: dataDelimiter and headerDelimiter are used only when the format is AFM, for 
    ARFF default delimiter (comma) is used 
 */
-Treedata::Treedata(string fileName, const char dataDelimiter, const char headerDelimiter, const bool useContrasts):
+DenseTreeData::DenseTreeData(string fileName, const char dataDelimiter, const char headerDelimiter, const bool useContrasts):
   useContrasts_(useContrasts) {
-
-  FileType fileType = this->getFileType(fileName);
-
-  if ( fileType == AFM ) {
-    this->readAFM(fileName,dataDelimiter,headerDelimiter);
-  } else if ( fileType == ARFF ) {
-    this->readARFF(fileName);
-  } else {
-    cerr << "ERROR: unknown file type in '" << fileName << "'" << endl;
-    exit(1);
-  }
+  
+  this->readAFM(fileName,dataDelimiter,headerDelimiter);
   
   for ( size_t featureIdx = 0; featureIdx < this->nFeatures(); ++featureIdx ) {
     if ( this->feature(featureIdx)->isTextual() ) {
@@ -87,11 +78,11 @@ Treedata::Treedata(string fileName, const char dataDelimiter, const char headerD
   
 }
 
-Treedata::~Treedata() {
+DenseTreeData::~DenseTreeData() {
   /* Empty destructor */
 }
 
-void Treedata::createContrasts() {
+void DenseTreeData::createContrasts() {
 
   // Resize the feature data container to fit the
   // original AND contrast features ( so 2*nFeatures )
@@ -107,24 +98,7 @@ void Treedata::createContrasts() {
 
 }
 
-Treedata::FileType Treedata::getFileType(const string& fileName) {
-  
-  FileType fileType;
-  
-  string suffix = utils::tolower( utils::suffix(fileName) );
-  
-  if ( suffix == "afm" ) {
-    fileType = AFM;
-  } else if ( suffix == "arff" ) {
-    fileType = ARFF;
-  } else {
-    fileType = AFM;
-  }
-
-  return(fileType);
-}
-
-bool Treedata::isValidNumericalHeader(const string& str, const char headerDelimiter) {
+bool DenseTreeData::isValidNumericalHeader(const string& str, const char headerDelimiter) {
   if ( str.size() > 1 ) {
     return( str[0] == 'N' && str[1] == headerDelimiter );
   } else {
@@ -132,7 +106,7 @@ bool Treedata::isValidNumericalHeader(const string& str, const char headerDelimi
   }
 }
 
-bool Treedata::isValidCategoricalHeader(const string& str, const char headerDelimiter) {
+bool DenseTreeData::isValidCategoricalHeader(const string& str, const char headerDelimiter) {
   if ( str.size() > 1 ) {
     return( ( str[0] == 'C' || str[0] == 'B' ) && str[1] == headerDelimiter );
   } else {
@@ -140,7 +114,7 @@ bool Treedata::isValidCategoricalHeader(const string& str, const char headerDeli
   }
 }
 
-bool Treedata::isValidTextHeader(const string& str, const char headerDelimiter) {
+bool DenseTreeData::isValidTextHeader(const string& str, const char headerDelimiter) {
   if ( str.size() > 1 ) {
     return( str[0] == 'T' && str[1] == headerDelimiter );
   } else {
@@ -148,11 +122,11 @@ bool Treedata::isValidTextHeader(const string& str, const char headerDelimiter) 
   }
 }
 
-bool Treedata::isValidFeatureHeader(const string& str, const char headerDelimiter) {
+bool DenseTreeData::isValidFeatureHeader(const string& str, const char headerDelimiter) {
   return( isValidNumericalHeader(str,headerDelimiter) || isValidCategoricalHeader(str,headerDelimiter) || isValidTextHeader(str,headerDelimiter) );
 }
 
-bool Treedata::isRowsAsSamplesInAFM(Reader& reader, const char headerDelimiter) {
+bool DenseTreeData::isRowsAsSamplesInAFM(Reader& reader, const char headerDelimiter) {
 
   reader.rewind();
   reader.nextLine();
@@ -182,7 +156,7 @@ bool Treedata::isRowsAsSamplesInAFM(Reader& reader, const char headerDelimiter) 
   
 }
 
-void Treedata::readAFM(const string& fileName, const char dataDelimiter, const char headerDelimiter) {
+void DenseTreeData::readAFM(const string& fileName, const char dataDelimiter, const char headerDelimiter) {
 
   Reader reader(fileName,dataDelimiter);
 
@@ -304,180 +278,15 @@ void Treedata::readAFM(const string& fileName, const char dataDelimiter, const c
 
 }
 
-void Treedata::readARFF(const string& fileName) {
-
-  Reader reader(fileName,' ');
-
-  string row;
-
-  bool hasRelation = false;
-  bool hasData = false;
-  bool hasFeatures = false;
-
-  size_t nFeatures = 0;
-  size_t nLines = reader.nLines();
-
-  vector<string> featureHeaders;
-  vector<Feature::Type> featureTypes;
-
-  // Prepare feature containers and name2idx mapping
-  features_.resize(0);
-  name2idx_.clear();
-
-  //Read one line from the ARFF file
-  while ( reader.nextLine() ) {
-
-    --nLines;
-
-    if ( reader.endOfLine() ) {
-      continue;
-    }
-
-    string prefix; reader >> prefix;
-
-    //Comment lines and empty lines are omitted
-    if ( prefix[0] == '%' ) {
-      continue;
-    }
-
-    prefix = utils::tolower(prefix);
-
-    //Read relation
-    if ( prefix == "@relation" ) {
-      hasRelation = true;
-      continue;
-    }
-
-    if ( prefix == "@attribute" ) { //Read attribute
-
-      hasFeatures = true;
-
-      assert( featureHeaders.size() == nFeatures );
-      assert( featureTypes.size() == nFeatures );
-
-      ++nFeatures;
-
-      string featureHeader,featureType; reader >> featureHeader >> featureType;
-      
-      featureType = utils::tolower(featureType);
-
-      featureHeaders.push_back(featureHeader);
-
-      if ( featureType == "real" || featureType == "numeric" ) {
-	featureTypes.push_back(Feature::Type::NUM);
-      } else {
-	featureTypes.push_back(Feature::Type::CAT);
-      }
-      continue;
-    }
-      
-    if ( prefix == "@data" ) { //Read data header
-      hasData = true;
-      break;
-    }
-  }
-  
-  if ( !hasData ) {
-    cerr << "Treedata::readARFF() -- could not find @data/@DATA identifier" << endl;
-    exit(1);
-  }
-
-  if ( !hasRelation ) {
-    cerr << "Treedata::readARFF() -- could not find @relation/@RELATION identifier" << endl;
-    exit(1);
-  }
-
-  if ( !hasFeatures ) {
-    cerr << "Treedata::readARFF() -- could not find @attribute/@ATTRIBUTE" << endl;
-    exit(1);
-  }
-
-  for ( size_t i = 0; i < nFeatures; ++i ) {
-    features_.push_back(Feature(featureTypes[i],featureHeaders[i],nLines));
-    name2idx_[featureHeaders[i]] = i;
-  }
-
-  reader.setDelimiter(',');
-
-  size_t sampleIdx = 0;
-
-  //Read data row-by-row
-  while ( reader.nextLine() ) {
-
-    for ( size_t i = 0; i < nFeatures; ++i ) {
-      //cout << "  " << i << features_[i].isNumerical() << flush;
-      if ( features_[i].isNumerical() ) {
-	num_t val; reader >> val;
-	features_[i].setNumSampleValue(sampleIdx,val);
-      } else {
-	cat_t str; reader >> str;
-	features_[i].setCatSampleValue(sampleIdx,str);
-      }
-    }
-    //cout << endl;
-    ++sampleIdx;
-  }
-
-  size_t nSamples = sampleIdx;
-
-  assert(nSamples == nLines);
-  sampleHeaders_.resize(nSamples,"NO_SAMPLE_ID");
-
-}
-
-
-void Treedata::parseARFFattribute(const string& str, string& attributeName, bool& isFeatureNumerical) {
-
-  stringstream ss(str);
-  string attributeHeader = "";
-  attributeName = "";
-  string attributeType = "";
-
-  getline(ss,attributeHeader,' ');
-  getline(ss,attributeName,' ');
-  getline(ss,attributeType);
-
-  //string prefix;
-  if(datadefs::toUpperCase(attributeType) == "NUMERIC" ||
-     datadefs::toUpperCase(attributeType) == "REAL" ) {
-    isFeatureNumerical = true;
-  } else {
-    isFeatureNumerical = false;
-  }
-  //prefix.append(attributeName);
-  //attributeName = prefix;
-}
-
-size_t Treedata::nFeatures() const {
+size_t DenseTreeData::nFeatures() const {
   return( useContrasts_ ? features_.size() / 2 : features_.size() );
 }
 
-size_t Treedata::nSamples() const {
+size_t DenseTreeData::nSamples() const {
   return( sampleHeaders_.size() );
 }
 
-// WILL BECOME DEPRECATED
-num_t Treedata::pearsonCorrelation(size_t featureIdx1, size_t featureIdx2) {
-  
-  if ( ! this->feature(featureIdx1)->isNumerical() || ! this->feature(featureIdx2)->isNumerical() ) {
-    return( datadefs::NUM_NAN );
-  }
-
-  vector<size_t> sampleIcs = utils::range( this->nSamples() );
-
-  vector<size_t> missingIcs;
-
-  this->separateMissingSamples(featureIdx1,sampleIcs,missingIcs);
-  this->separateMissingSamples(featureIdx2,sampleIcs,missingIcs);
-
-  vector<num_t> featureData1 = this->feature(featureIdx1)->getNumData(sampleIcs);
-  vector<num_t> featureData2 = this->feature(featureIdx2)->getNumData(sampleIcs);
-
-  return( math::pearsonCorrelation(featureData1,featureData2) );
-
-}
-
-size_t Treedata::getFeatureIdx(const string& featureName) const {
+size_t DenseTreeData::getFeatureIdx(const string& featureName) const {
   
   unordered_map<string,size_t>::const_iterator it( name2idx_.find(featureName) );
   
@@ -489,11 +298,11 @@ size_t Treedata::getFeatureIdx(const string& featureName) const {
   return( it->second );
 }
 
-string Treedata::getSampleName(const size_t sampleIdx) {
+string DenseTreeData::getSampleName(const size_t sampleIdx) {
   return( sampleHeaders_.at(sampleIdx) );
 }
 
-vector<num_t> Treedata::getFeatureWeights() const {
+vector<num_t> DenseTreeData::getFeatureWeights() const {
 
   vector<num_t> weights(this->nFeatures(),1.0);
 
@@ -510,7 +319,7 @@ vector<num_t> Treedata::getFeatureWeights() const {
 
 }
 
-void Treedata::permuteContrasts(distributions::Random* random) {
+void DenseTreeData::permuteContrasts(distributions::Random* random) {
 
   size_t nFeatures = this->nFeatures();
   size_t nSamples = this->nSamples();
@@ -546,30 +355,7 @@ void Treedata::permuteContrasts(distributions::Random* random) {
   
 }
 
-size_t Treedata::nRealSamples(const size_t featureIdx) { 
-  
-  size_t nRealSamples = 0;
-  for ( size_t i = 0; i < Treedata::nSamples(); ++i ) {
-    if ( !this->feature(featureIdx)->isMissing(i) ) {
-      ++nRealSamples;
-    }
-  }
-  return( nRealSamples );
-
-}
-
-size_t Treedata::nRealSamples(const size_t featureIdx1, const size_t featureIdx2) {
-
-  size_t nRealSamples = 0;
-  for( size_t i = 0; i < Treedata::nSamples(); ++i ) {
-    if( !this->feature(featureIdx1)->isMissing(i) && !this->feature(featureIdx2)->isMissing(i) ) {
-      ++nRealSamples;
-    }
-  }
-  return( nRealSamples );
-}
-
-void Treedata::bootstrapFromRealSamples(distributions::Random* random,
+void DenseTreeData::bootstrapFromRealSamples(distributions::Random* random,
 					const bool withReplacement, 
                                         const num_t sampleSize, 
                                         const size_t featureIdx, 
@@ -624,47 +410,10 @@ void Treedata::bootstrapFromRealSamples(distributions::Random* random,
   oobIcs.resize(nOob);
   //cout << "nOob=" << nOob << endl;
 }
-
-
-/*
-  vector<num_t> Treedata::getFeatureData(size_t featureIdx) {
   
-  vector<num_t> data( features_[featureIdx].data.size() );
-  
-  for(size_t i = 0; i < Treedata::nSamples(); ++i) {
-  data[i] = features_[featureIdx].data[i];
-  }
-  
-  return( data );
-  }
-*/
-
-/*
-  num_t Treedata::getFeatureData(size_t featureIdx, const size_t sampleIdx) {
-  
-  num_t data = features_[featureIdx].data[sampleIdx];
-  
-  return( data ); 
-  }
-*/
-
-/*
-  vector<num_t> Treedata::getFeatureData(size_t featureIdx, const vector<size_t>& sampleIcs) {
-  
-  vector<num_t> data(sampleIcs.size());
-  
-  for(size_t i = 0; i < sampleIcs.size(); ++i) {
-  data[i] = features_[featureIdx].data[sampleIcs[i]];
-  }
-  
-  return( data );
-  
-  }
-*/
-  
-void Treedata::separateMissingSamples(const size_t featureIdx,
-				      vector<size_t>& sampleIcs,
-				      vector<size_t>& missingIcs) {
+  void DenseTreeData::separateMissingSamples(const size_t featureIdx,
+					     vector<size_t>& sampleIcs,
+					     vector<size_t>& missingIcs) {
   
   size_t nReal = 0;
   size_t nMissing = 0;
@@ -686,12 +435,12 @@ void Treedata::separateMissingSamples(const size_t featureIdx,
 
 }
 
-num_t Treedata::numericalFeatureSplit(const size_t targetIdx,
-				      const size_t featureIdx,
-				      const size_t minSamples,
-				      vector<size_t>& sampleIcs_left,
-				      vector<size_t>& sampleIcs_right,
-				      num_t& splitValue) {
+num_t DenseTreeData::numericalFeatureSplit(const size_t targetIdx,
+					   const size_t featureIdx,
+					   const size_t minSamples,
+					   vector<size_t>& sampleIcs_left,
+					   vector<size_t>& sampleIcs_right,
+					   num_t& splitValue) {
 
   num_t DI_best = 0.0;
 
@@ -755,14 +504,14 @@ num_t Treedata::numericalFeatureSplit(const size_t targetIdx,
 }
 
 // !! Inadequate Abstraction: Refactor me.
-num_t Treedata::categoricalFeatureSplit(const size_t targetIdx,
-					const size_t featureIdx,
-					const vector<cat_t>& catOrder,
-					const size_t minSamples,
-					vector<size_t>& sampleIcs_left,
-					vector<size_t>& sampleIcs_right,
-					unordered_set<cat_t>& splitValues_left) {
-
+num_t DenseTreeData::categoricalFeatureSplit(const size_t targetIdx,
+					     const size_t featureIdx,
+					     const vector<cat_t>& catOrder,
+					     const size_t minSamples,
+					     vector<size_t>& sampleIcs_left,
+					     vector<size_t>& sampleIcs_right,
+					     unordered_set<cat_t>& splitValues_left) {
+  
   num_t DI_best = 0.0;
 
   sampleIcs_left.clear();
@@ -835,7 +584,7 @@ num_t Treedata::categoricalFeatureSplit(const size_t targetIdx,
 
 }
 
-num_t Treedata::textualFeatureSplit(const size_t targetIdx,
+num_t DenseTreeData::textualFeatureSplit(const size_t targetIdx,
 				    const size_t featureIdx,
 				    const uint32_t hashIdx,
 				    const size_t minSamples,
@@ -910,28 +659,6 @@ num_t Treedata::textualFeatureSplit(const size_t targetIdx,
   
   return(DI_best);
   
-}
-
-void Treedata::replaceFeatureData(const size_t featureIdx, const vector<num_t>& featureData) {
-
-  if(featureData.size() != this->feature(featureIdx)->nSamples() ) {
-    cerr << "Treedata::replaceFeatureData(num_t) -- data dimension mismatch" << endl;
-    exit(1);
-  }
-
-  features_[featureIdx] = Feature( featureData, this->feature(featureIdx)->name() );
-
-}
-
-void Treedata::replaceFeatureData(const size_t featureIdx, const vector<string>& rawFeatureData) {
-
-  if(rawFeatureData.size() != this->feature(featureIdx)->nSamples() ) {
-    cerr << "Treedata::replaceFeatureData(string) -- data dimension mismatch" << endl;
-    exit(1);
-  }
-  
-  features_[featureIdx] = Feature( rawFeatureData, this->feature(featureIdx)->name() );
-
 }
 
 

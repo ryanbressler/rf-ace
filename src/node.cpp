@@ -95,7 +95,7 @@ void Node::setMissingChild(Node& missingChild) {
   missingChild_ = &missingChild;
 }
 
-Node* Node::percolate(Treedata* testData, const size_t sampleIdx, const size_t scrambleFeatureIdx) {
+Node* Node::percolate(TreeData* testData, const size_t sampleIdx, const size_t scrambleFeatureIdx) {
   
   if ( !this->hasChildren() ) { return( this ); }
   
@@ -298,7 +298,7 @@ const Node::Splitter& Node::getSplitter() {
   return( splitter_ );
 }
 
-void Node::recursiveNodeSplit(Treedata* treeData,
+void Node::recursiveNodeSplit(TreeData* treeData,
 			      const size_t targetIdx,
 			      const ForestOptions* forestOptions,
 			      distributions::Random* random,
@@ -365,7 +365,7 @@ void Node::recursiveNodeSplit(Treedata* treeData,
 	// If the sampled feature is a contrast... 
 	if ( ! treeData->feature(splitCache.featureSampleIcs[i])->isTextual() && random->uniform() < forestOptions->contrastFraction ) { // p% sampling rate
 	  
-	  // Contrast features in Treedata are indexed with an offset of the number of features: nFeatures
+	  // Contrast features in TreeData are indexed with an offset of the number of features: nFeatures
 	  splitCache.featureSampleIcs[i] += treeData->nFeatures();
 	}
       }
@@ -458,7 +458,7 @@ void Node::recursiveNodeSplit(Treedata* treeData,
   
 }
 
-bool Node::regularSplitterSeek(Treedata* treeData,
+bool Node::regularSplitterSeek(TreeData* treeData,
 			       const size_t targetIdx,
 			       const ForestOptions* forestOptions,
 			       distributions::Random* random,
