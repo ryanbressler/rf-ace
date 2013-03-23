@@ -20,16 +20,6 @@ using datadefs::num_t;
 class TreeData {
 public:
 
-  //TreeData();
-
-  // Initializes the object 
-  //TreeData(const vector<Feature>& features, bool useContrasts = false, const vector<string>& sampleHeaders = vector<string>(0));
-
-  // Initializes the object and reads in a data matrix
-  //TreeData(string fileName, const char dataDelimiter, const char headerDelimiter, const bool useContrasts = false);
-
-  //~TreeData();
-
   // Reveals the Feature class interface to the user
   virtual const Feature* feature(const size_t featureIdx) const = 0;
   
@@ -43,7 +33,7 @@ public:
   virtual size_t end() const = 0;
   
   // Returns sample name, given sample index
-  virtual string getSampleName(const size_t sampleIdx);
+  virtual string getSampleName(const size_t sampleIdx) = 0;
   
   // Returns the number of samples
   virtual size_t nSamples() const = 0;
