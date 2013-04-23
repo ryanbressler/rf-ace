@@ -45,8 +45,8 @@ RFACE::TestOutput make_predictions(ForestOptions& forestOptions, const string& t
   vector<num_t> weights = trainData.getFeatureWeights();
   weights[targetIdx] = 0;
 
-  RFACE rface;
-
+  RFACE rface(1);
+  
   rface.train(&trainData,targetIdx,weights,&forestOptions);
 
   return( rface.test(&trainData) );
