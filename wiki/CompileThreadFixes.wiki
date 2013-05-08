@@ -9,8 +9,8 @@ Here is a list of the stable compilations that have been achieved with v1.2.5, b
 On Mac OS X 10.7 Lion, install [http://mxcl.github.io/homebrew/ Homebrew] as described in the instructions.
 
 From the Mac OS X terminal, install gcc 4.7:
-`brew tap homebrew/versions`
-`brew install gcc-4.7`
+{{{brew tap homebrew/versions
+brew install gcc-4.7}}}
 
 or gcc 4.8 instead, the second command should be:
 `brew install gcc-4.8`
