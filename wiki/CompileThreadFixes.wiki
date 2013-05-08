@@ -17,22 +17,7 @@ or gcc 4.8 instead, the second command should be:
 brew install gcc-4.8
 }}}
 
-Checkout the rf-ace code to a local directory using the instructions in [Manual].
-
-To compile rf-ace successfully, edit the Makefile in the root directory of the project.  Change the first line to:
-{{{
-COMPILER = g++-4.7
-}}}
-
-or g++-4.8 is you've installed that.
-
-no you may run 
-{{{
-make
-make test
-}}}
-
-from the terminal.  Tests on Mac OS X 10.7 using these instructions have been all successful, with the output: "ALL DONE! 4887 tests run: 4887 successes and 0 failures"
+Follow the instructions in the section [CompileThreadFixes#Checkout_and_Compile_RF-ACE Checkout and Compile RF-ACE]
 
 = Linux (Debian) =
 
@@ -48,7 +33,7 @@ at this point, gcc-4.7 should be available.  Test whether the default gcc is poi
 gcc --version
 }}}
 
-If it is not pointing at this version, call g++-4.7 directly by making the same change to the Makefile as described in the Mac OS X section.
+If it is not pointing at this version, call g++-4.7 directly by making the same change to the Makefile as described in the [CompileThreadFixes#Checkout_and_Compile_RF-ACE Checkout and Compile RF-ACE] section.
 
 = Linux (Red Hat/CentOS) =
 
@@ -64,6 +49,25 @@ at this point, gcc-4.7 should be available.  Test whether the default gcc is poi
 gcc --version
 }}}
 
-If it is not pointing at this version, call g++-4.7 directly by making the same change to the Makefile as described in the Mac OS X section.
+If it is not pointing at this version, call g++-4.7 directly by making the same change to the Makefile as described in the [CompileThreadFixes#Checkout_and_Compile_RF-ACE Checkout and Compile RF-ACE] section.
+
+= Checkout and Compile RF-ACE =
+
+Checkout the rf-ace code to a local directory using the instructions in [Manual].
+
+To compile rf-ace successfully, edit the Makefile in the root directory of the project.  Change the first line to:
+{{{
+COMPILER = g++-4.7
+}}}
+
+or g++-4.8 is you've installed that.
+
+no you may run 
+{{{
+make
+make test
+}}}
+
+from the terminal.  Tests on Mac OS X 10.7 and LinuxMint 14 using these instructions have been all successful, with the output: "ALL DONE! 4887 tests run: 4887 successes and 0 failures"
 
 For questions about these specific instructions, you can email `codefor@systemsbiology.org`
