@@ -15,8 +15,21 @@ From the Mac OS X terminal, install gcc 4.7:
 or gcc 4.8 instead, the second command should be:
 `brew install gcc-4.8`
 
-Checkout the rf-ace code to a local directory using the instructions [
+Checkout the rf-ace code to a local directory using the instructions in [Manual].
 
+To compile rf-ace successfully, edit the Makefile in the root directory of the project.  Change the first line to:
+`COMPILER = g++-4.7`
+
+or g++-4.8 is you've installed that.
+
+no you may run 
+`make`
+
+and 
+
+`make test`
+
+from the terminal.  Tests on Mac OS X 10.7 using these instructions have been all successful, with the output: "ALL DONE! 4887 tests run: 4887 successes and 0 failures"
 
 Add your content here.  Format your content with:
   * Text in *bold* or _italic_
