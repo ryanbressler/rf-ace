@@ -53,7 +53,10 @@ If it is not pointing at this version, call g++-4.7 directly by making the same 
 
 = Checkout and Compile RF-ACE =
 
-Checkout the rf-ace code to a local directory using the instructions in [Manual].
+Grab the `thread-fixes` branch of rf-ace by cloning to a local directory:
+{{{
+svn checkout https://rf-ace.googlecode.com/svn/branches/thread-fixes rf-ace
+}}}
 
 To compile rf-ace successfully, edit the Makefile in the root directory of the project.  Change the first line to:
 {{{
