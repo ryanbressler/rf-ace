@@ -22,8 +22,7 @@ brew install gcc-4.8
 Checkout the rf-ace code to a local directory using the instructions in [Manual].
 
 To compile rf-ace successfully, edit the Makefile in the root directory of the project.  Change the first line to:
-{{{
-COMPILER = g++-4.7
+{{{COMPILER = g++-4.7
 }}}
 
 or g++-4.8 is you've installed that.
