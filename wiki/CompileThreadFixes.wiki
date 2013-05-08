@@ -76,7 +76,7 @@ from the terminal.  Tests on Mac OS X 10.7 and Linux Mint 14 using these instruc
 ALL DONE! 4887 tests run: 4887 successes and 0 failures
 }}}
 
-If the project fails to compile, it may compile with the target
+If the project fails to compile, try to compile using:
 {{{
 make no-threads
 }}}
