@@ -22,7 +22,8 @@ brew install gcc-4.8
 Checkout the rf-ace code to a local directory using the instructions in [Manual].
 
 To compile rf-ace successfully, edit the Makefile in the root directory of the project.  Change the first line to:
-{{{COMPILER = g++-4.7
+{{{
+COMPILER = g++-4.7
 }}}
 
 or g++-4.8 is you've installed that.
@@ -35,7 +36,36 @@ make test
 
 from the terminal.  Tests on Mac OS X 10.7 using these instructions have been all successful, with the output: "ALL DONE! 4887 tests run: 4887 successes and 0 failures"
 
-Add your content here.  Format your content with:
-  * Text in *bold* or _italic_
-  * Headings, paragraphs, and lists
-  * Automatic links to other wiki pages
+= Linux (Debian) =
+
+To install gcc-4.7, you can search for and install the package:
+
+{{{
+sudo aptitude search gcc-4.7
+sudo apt-get install gcc-4.7
+}}}
+
+at this point, gcc-4.7 should be available.  Test whether the default gcc is pointing to this version
+{{{
+gcc --version
+}}}
+
+If it is not pointing at this version, call g++-4.7 directly by making the same change to the Makefile as described in the Mac OS X section.
+
+= Linux (Red Hat/CentOS) =
+
+To install gcc-4.7, you can search for and install the package:
+
+{{{
+sudo yum search gcc-4.7
+sudo yum install gcc-4.7
+}}}
+
+at this point, gcc-4.7 should be available.  Test whether the default gcc is pointing to this version
+{{{
+gcc --version
+}}}
+
+If it is not pointing at this version, call g++-4.7 directly by making the same change to the Makefile as described in the Mac OS X section.
+
+For questions about these specific instructions, you can email `codefor@systemsbiology.org`
