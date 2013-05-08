@@ -1,7 +1,5 @@
 #summary How to Compile v1.2.5 branch thread-fixes
 
-= Introduction =
-
 Here is a list of the stable compilations that have been achieved with v1.2.5, branch thread-fixes:
 
 = Mac OS X =
