@@ -68,6 +68,6 @@ make
 make test
 }}}
 
-from the terminal.  Tests on Mac OS X 10.7 and LinuxMint 14 using these instructions have been all successful, with the output: "ALL DONE! 4887 tests run: 4887 successes and 0 failures"
+from the terminal.  Tests on Mac OS X 10.7 and Linux Mint 14 using these instructions have been all successful, with the output: "ALL DONE! 4887 tests run: 4887 successes and 0 failures"
 
 For questions about these specific instructions, you can email `codefor@systemsbiology.org`
